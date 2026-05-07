@@ -308,6 +308,11 @@ export interface Content {
   admin_guidelines: string | null;
   // Sphere phase
   sphere_phase: 'engage' | 'solution' | 'remarketing' | 'fidelize' | null;
+  // Script generation output blocks
+  director_output: string | null;
+  marketing_output: string | null;
+  captions: string | null;
+  broll_output: string | null;
   // Marketing fields
   marketing_campaign_id: string | null;
   marketing_approved_at: string | null;
@@ -322,12 +327,70 @@ export interface Content {
   show_on_client_profile: boolean;
   is_collaborative: boolean;
   shared_at: string | null;
+  // AI Generation metadata
+  metadata?: ContentMetadata | null;
   // Relaciones
   client?: Partial<Client>;
   creator?: Partial<Profile>;
   editor?: Partial<Profile>;
   strategist?: Partial<Profile>;
   product_rel?: Partial<Product>;
+}
+
+export interface SkillExecution {
+  skill: string;
+  confidence: number;
+  executed_at: string;
+}
+
+export interface ViralityScore {
+  viralidad: number;
+  humanidad: number;
+  efectividad: number;
+  prediccion?: string;
+}
+
+export interface CaptionVariation {
+  type: 'organic' | 'ads';
+  variant: number;
+  title: string;
+  content: string;
+  objective: string;
+  platform: string;
+  compliance?: boolean;
+}
+
+export interface SceneRow {
+  number: number;
+  time: string;
+  verbalScript: string;
+  tone?: string;
+  visualScript: {
+    action: string;
+    shot: string;
+    angle: string;
+    productVisible: boolean;
+  };
+  notes?: string;
+}
+
+export interface DirectorOutput {
+  totalDuration: number;
+  totalScenes: number;
+  setupRequired: string[];
+  scenes: SceneRow[];
+  directorNotes: string[];
+}
+
+export interface ContentMetadata {
+  skills_executed?: SkillExecution[];
+  skills_metadata?: {
+    skillsCount: number;
+    totalExecutionTime: number;
+  };
+  virality_score?: ViralityScore;
+  director_output?: DirectorOutput;
+  captions?: CaptionVariation[];
 }
 
 export interface ContentComment {

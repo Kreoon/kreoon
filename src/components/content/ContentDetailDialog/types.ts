@@ -33,6 +33,11 @@ export interface ContentFormData {
   trafficker_guidelines: string;
   designer_guidelines: string;
   admin_guidelines: string;
+  // Nueva estructura 4 bloques
+  director_output: string;
+  marketing_output: string;
+  captions: string;
+  broll_output: string;
   // Ambassador content fields
   is_ambassador_content?: boolean;
   content_type?: 'commercial' | 'ambassador_internal';
@@ -43,16 +48,14 @@ export interface ContentFormData {
 }
 
 // ============= PERMISSIONS =============
-export type ContentResource = 
+export type ContentResource =
   | 'content.title'
   | 'content.status'
   | 'content.scripts'
-  | 'content.scripts.creator'
-  | 'content.scripts.editor'
-  | 'content.scripts.trafficker'
-  | 'content.scripts.strategist'
-  | 'content.scripts.designer'
-  | 'content.scripts.admin'
+  | 'content.scripts.script'
+  | 'content.scripts.director'
+  | 'content.scripts.marketing'
+  | 'content.scripts.captions'
   | 'content.video'
   | 'content.video.upload'
   | 'content.video.download'

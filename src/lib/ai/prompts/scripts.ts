@@ -43,59 +43,64 @@ export const SCRIPT_ROLE_PROMPTS: Record<string, PromptConfig> = {
     description: "Guión principal para el creador de contenido - Estructura por escenas",
     systemPrompt: `${MASTER_SCRIPT_PROMPT}
 
-🎬 BLOQUE CREADOR - GUIÓN POR ESCENAS
+🎬 BLOQUE CREADOR - GUIÓN TELEPROMPTER
 
-IMPORTANTE: Genera un guión organizado por ESCENAS NUMERADAS.
-Cada escena debe incluir: diálogo exacto, indicación de actuación, y emoción objetivo.
+⚠️ REGLAS CRÍTICAS:
 
----
+1. HOOKS = ESCENAS SEPARADAS (para A/B testing en ads):
+   - Cada hook es una ESCENA INDEPENDIENTE que el creador graba por separado
+   - Genera EXACTAMENTE {cantidad_hooks} escenas de hook (1A, 1B, 1C, etc.)
+   - Esto permite al trafficker hacer A/B testing con diferentes hooks
 
-## ESTRUCTURA DE SALIDA
+2. FORMATO TELEPROMPTER (para el CREADOR):
+   - Escribe como si el creador fuera a leer esto directamente
+   - Usa segunda persona: "Di:", "Haz:", "Mira a cámara y..."
+   - ✅ CORRECTO: "Mira a cámara con sorpresa y di: '¿Sabías que...?'"
+   - ❌ INCORRECTO: "El creador aparece en pantalla mencionando..."
 
-<h2>📜 ESCENA 1: HOOK [00:00-00:03]</h2>
-<p><strong>🎙️ Diálogo:</strong> "Texto exacto que debe decir el creador"</p>
-<p><strong>🎭 Actuación:</strong> [Expresión facial específica, tono de voz, energía, gestos]</p>
-<p><strong>📹 Cámara:</strong> [Plano sugerido, ángulo]</p>
-<p><strong>💫 Emoción:</strong> [Emoción a transmitir + intensidad 1-10]</p>
-
-<h2>📜 ESCENA 2: PROBLEMA [00:03-00:12]</h2>
-<p><strong>🎙️ Diálogo:</strong> "..."</p>
-<p><strong>🎭 Actuación:</strong> [...]</p>
-<p><strong>📹 Cámara:</strong> [...]</p>
-<p><strong>💫 Emoción:</strong> [...]</p>
-
-<h2>📜 ESCENA 3: TRANSICIÓN [00:12-00:15]</h2>
-...
-
-<h2>📜 ESCENA 4: SOLUCIÓN [00:15-00:30]</h2>
-...
-
-<h2>📜 ESCENA 5: PRUEBA/RESULTADO [00:30-00:38]</h2>
-...
-
-<h2>📜 ESCENA 6: CTA [00:38-00:45]</h2>
-...
+3. INDICACIONES DE ACTUACIÓN:
+   - Usa [CORCHETES] para instrucciones de grabación
+   - Ejemplo: [Acércate a cámara, expresión de sorpresa]
 
 ---
 
-<h2>📝 RESUMEN TÉCNICO</h2>
+## ESTRUCTURA DE SALIDA (ejemplo con 3 hooks)
+
+<h2>🎬 ESCENA 1A: HOOK CURIOSIDAD [00:00-00:03]</h2>
+<p>[Mira a cámara con expresión intrigante, pausa dramática]</p>
+<p>Di: "¿Sabías que el 80% de las personas...?"</p>
+
+<h2>🎬 ESCENA 1B: HOOK PROBLEMA [00:00-00:03]</h2>
+<p>[Expresión de frustración, suspiro, contacto visual]</p>
+<p>Di: "Si esto te pasa, necesitas ver esto..."</p>
+
+<h2>🎬 ESCENA 1C: HOOK CONTROVERSIA [00:00-00:03]</h2>
+<p>[Tono serio, acércate a cámara, baja la voz]</p>
+<p>Di: "Nadie te dice esto pero..."</p>
+
+<h2>🎬 ESCENA 2: DESARROLLO [00:03-00:15]</h2>
+<p>[Cambia a tono conversacional, gesticula naturalmente]</p>
+<p>Di: "Mira, déjame contarte..."</p>
+
+<h2>🎬 ESCENA 3: SOLUCIÓN [00:15-00:25]</h2>
+<p>[Muestra el producto, energía positiva]</p>
+<p>Di: "Con [producto] puedes..."</p>
+
+<h2>🎬 ESCENA 4: CTA [00:25-00:30]</h2>
+<p>[Acércate a cámara, tono urgente pero amigable]</p>
+<p>Di: "{cta}"</p>
+
+---
+
+<h2>📝 NOTAS PARA EL CREADOR</h2>
 <ul>
 <li><strong>Duración total:</strong> XX segundos</li>
-<li><strong>Número de escenas:</strong> X</li>
+<li><strong>Hooks a grabar:</strong> {cantidad_hooks} versiones separadas</li>
 <li><strong>Vestuario sugerido:</strong> ...</li>
 <li><strong>Props necesarios:</strong> ...</li>
 <li><strong>Locación ideal:</strong> ...</li>
 <li><strong>Tono general:</strong> ...</li>
-</ul>
-
----
-
-REGLAS:
-1. Timecodes SIEMPRE entre corchetes [00:00-00:03]
-2. Diálogos entre comillas, listos para leer
-3. Actuación específica (no "actúa natural", sino "sonríe levemente, contacto visual directo")
-4. Adaptar número de escenas a la duración del video
-5. Incluir indicaciones de cámara adaptadas al nivel de producción`,
+</ul>`,
     variables: [
       { key: "producto_nombre", description: "Nombre del producto", required: true, type: "string" },
       { key: "producto_descripcion", description: "Descripción del producto", required: true, type: "string" },

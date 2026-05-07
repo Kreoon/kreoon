@@ -10,24 +10,22 @@ import { useBlockConfig } from '../hooks/useBlockConfig';
 import { SCRIPT_SUB_TABS, ScriptSubTab } from './types';
 import { BlockKey } from '../Config/types';
 
-// Sub-tab components
+// Sub-tab components - Nueva estructura 5 bloques
 import { IASubTab } from './subtabs/IASubTab';
 import { ScriptSubTab as ScriptSubTabComponent } from './subtabs/ScriptSubTab';
-import { EditorSubTab } from './subtabs/EditorSubTab';
-import { StrategistSubTab } from './subtabs/StrategistSubTab';
-import { DesignerSubTab } from './subtabs/DesignerSubTab';
-import { TraffickerSubTab } from './subtabs/TraffickerSubTab';
-import { AdminSubTab } from './subtabs/AdminSubTab';
+import { DirectorSubTab } from './subtabs/DirectorSubTab';
+import { BrollSubTab } from './subtabs/BrollSubTab';
+import { MarketingSubTab } from './subtabs/MarketingSubTab';
+import { CaptionsSubTab } from './subtabs/CaptionsSubTab';
 
-// Map ScriptSubTab to BlockKey
+// Map ScriptSubTab to BlockKey - Nueva estructura
 const SUBTAB_TO_BLOCK: Record<ScriptSubTab, BlockKey> = {
   ia: 'ia',
   script: 'script',
-  editor: 'editor',
-  strategist: 'strategist',
-  designer: 'designer',
-  trafficker: 'trafficker',
-  admin: 'admin',
+  director: 'director',
+  broll: 'broll', // B-Roll es su propio bloque, visible para todos
+  marketing: 'marketing',
+  captions: 'captions',
 };
 
 interface ScriptsTabContainerProps extends TabProps {
@@ -112,7 +110,7 @@ export function ScriptsTabContainer({
     readOnly: isEffectiveReadOnly(tabKey), // Explicit read-only flag
   });
 
-  // Render the appropriate sub-tab component
+  // Render the appropriate sub-tab component - Nueva estructura 5 bloques
   const renderSubTab = (tabKey: ScriptSubTab) => {
     const props = getSubTabProps(tabKey);
     switch (tabKey) {
@@ -120,16 +118,14 @@ export function ScriptsTabContainer({
         return <IASubTab {...props} />;
       case 'script':
         return <ScriptSubTabComponent {...props} />;
-      case 'editor':
-        return <EditorSubTab {...props} />;
-      case 'strategist':
-        return <StrategistSubTab {...props} />;
-      case 'designer':
-        return <DesignerSubTab {...props} />;
-      case 'trafficker':
-        return <TraffickerSubTab {...props} />;
-      case 'admin':
-        return <AdminSubTab {...props} />;
+      case 'director':
+        return <DirectorSubTab {...props} />;
+      case 'broll':
+        return <BrollSubTab {...props} />;
+      case 'marketing':
+        return <MarketingSubTab {...props} />;
+      case 'captions':
+        return <CaptionsSubTab {...props} />;
       default:
         return null;
     }

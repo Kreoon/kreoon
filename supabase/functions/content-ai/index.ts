@@ -13,13 +13,21 @@ import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-
 import { logAIUsage as sharedLogAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 // SECURITY: Rate limiting para proteger APIs costosas
 import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
+// Skills System - Agentes especializados
+import {
+  executeSkillChain,
+  getActiveSkills,
+  type SkillContext,
+  type SkillChainResult,
+} from "../_shared/skills/index.ts";
 
 interface ContentAIRequest {
-  action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate";
+  action: "generate_script" | "analyze_content" | "chat" | "improve_script" | "research_and_generate" | "generate_with_skills";
   organizationId: string;
   ai_provider?: "gemini" | "openai" | "anthropic";
   ai_model?: string;
   use_perplexity?: boolean; // Enable pre-research with Perplexity
+  use_skills?: boolean; // Enable Skills system (agents)
   perplexity_queries?: {
     trends?: boolean;
     hooks?: boolean;
@@ -163,6 +171,7 @@ function buildProductContext(product?: ContentAIRequest['product']): string {
 const ACTION_TO_MODULE: Record<string, string> = {
   generate_script: "scripts",
   research_and_generate: "scripts",
+  generate_with_skills: "scripts",
   analyze_content: "content_detail",
   chat: "content_detail",
   improve_script: "scripts",
@@ -328,25 +337,144 @@ async function callAI(
   return typeof result === "string" ? result : String(result ?? "");
 }
 
-// Genera el bloque HTML para cada rol (simplified version)
+// Genera el bloque HTML para cada rol - Nueva estructura 4 bloques
+// OPTIMIZADO: Prompts concisos con instrucciones de completar TODO
 function getGenerationTypePrompt(generation_type?: string, customRolePrompts?: any): string {
+  // Prompts específicos para la nueva estructura de 4 bloques
+  const NEW_BLOCK_PROMPTS: Record<string, string> = {
+    script: `🎬 GUIÓN TELEPROMPTER UGC
+
+⚠️ OBLIGATORIO: Genera el guión COMPLETO. NO te detengas hasta terminar TODAS las escenas incluyendo el CTA final.
+
+FORMATO HTML requerido:
+<h2>🎥 GUION DE VIDEO UGC</h2>
+<h3>Fase ENGANCHAR</h3>
+[Escenas 1A, 1B, 1C - Hooks alternativos]
+
+<h3>Fase DESARROLLO</h3>
+[Escenas 2, 3 - Problema y agitación]
+
+<h3>Fase SOLUCIÓN</h3>
+[Escenas 4, 5 - Producto como solución]
+
+<h3>Fase CTA</h3>
+[Escena final con llamado a la acción]
+
+<h3>📝 NOTAS PARA EL CREADOR</h3>
+[Vestuario, props, locación, tips]
+
+Cada escena debe tener: Número, Tiempo, Acción visual, Diálogo exacto.
+Genera EXACTAMENTE la cantidad de hooks solicitada (1A, 1B, 1C, etc.).
+COMPLETA TODO EL GUIÓN hasta la última escena.`,
+
+    director: `🎥 TABLA DE PRODUCCIÓN - DIRECTOR
+
+⚠️ OBLIGATORIO: Genera la tabla COMPLETA para TODAS las escenas del guión.
+
+FORMATO HTML requerido:
+<h2>🎬 TABLA DE PRODUCCIÓN</h2>
+<table>
+<tr><th>#</th><th>ESCENA</th><th>PLANO</th><th>ÁNGULO</th><th>LUZ</th><th>AUDIO</th><th>NOTAS</th></tr>
+[Una fila por CADA escena del guión: 1A, 1B, 1C, 2, 3, 4, CTA]
+</table>
+
+<h3>📋 CHECKLIST PRE-PRODUCCIÓN</h3>
+<h3>🎬 EQUIPO NECESARIO</h3>
+<h3>⏱️ TIEMPO ESTIMADO</h3>
+
+Planos: PP (primer plano), PM (plano medio), PE (plano entero), PD (detalle)
+COMPLETA TODAS las escenas sin omitir ninguna.`,
+
+    marketing: `📊 ESTRATEGIA DE MARKETING Y PAUTA
+
+⚠️ OBLIGATORIO: Genera las 3 tablas COMPLETAS.
+
+FORMATO HTML:
+<h2>📊 ESTRATEGIA DE MARKETING</h2>
+
+<h3>🎯 SEGMENTACIÓN</h3>
+<table>
+<tr><th>Audiencia</th><th>Intereses</th><th>Comportamiento</th><th>Exclusiones</th></tr>
+<tr><td>Cold</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>Warm</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>Hot</td><td>...</td><td>...</td><td>...</td></tr>
+</table>
+
+<h3>✍️ COPIES PARA ADS</h3>
+<table>
+<tr><th>Variante</th><th>Primary Text</th><th>Headline</th><th>Description</th></tr>
+[3-4 variantes completas]
+</table>
+
+<h3>📱 DISTRIBUCIÓN</h3>
+<table>
+<tr><th>Plataforma</th><th>Formato</th><th>Budget %</th><th>Objetivo</th></tr>
+[Meta, TikTok, YouTube Shorts]
+</table>
+
+<h3>📈 KPIs Y RECOMENDACIONES</h3>
+COMPLETA todas las secciones.`,
+
+    captions: `📱 CAPTIONS PARA REDES SOCIALES
+
+⚠️ OBLIGATORIO: Genera los 4 captions COMPLETOS con todos sus elementos.
+
+FORMATO HTML:
+<h2>📱 CAPTIONS GENERADOS</h2>
+
+<h3>📱 ORGÁNICO #1: Hook + Storytelling</h3>
+[Caption completo 150-200 caracteres + 8-10 hashtags relevantes]
+
+<h3>📱 ORGÁNICO #2: Trend/Humor</h3>
+[Caption completo con referencia cultural + hashtags trending]
+
+<h3>💰 ADS #1: Conversión Directa</h3>
+[Caption con beneficio + CTA claro, SIN hashtags]
+
+<h3>💰 ADS #2: FOMO/Urgencia</h3>
+[Caption con escasez/urgencia + CTA, SIN hashtags]
+
+Cada caption debe incluir: emoji al inicio, texto completo, hashtags (solo orgánicos).
+COMPLETA los 4 captions sin truncar ninguno.`,
+
+    broll: `🎬 IDEAS DE B-ROLL
+
+⚠️ OBLIGATORIO: Genera las tablas COMPLETAS con 10-14 B-Rolls totales.
+
+FORMATO HTML (usa color:#1f2937 en todas las celdas):
+<h2 style="color:#1a1a1a;">🎬 IDEAS DE B-ROLL</h2>
+
+<h3 style="color:#059669;">📋 B-ROLLS ESENCIALES (6-8 tomas)</h3>
+<table style="width:100%; border-collapse:collapse;">
+<tr style="background:#d1fae5;"><th style="color:#065f46;">#</th><th style="color:#065f46;">TOMA</th><th style="color:#065f46;">ESCENA</th><th style="color:#065f46;">QUÉ FILMAR</th><th style="color:#065f46;">PLANO</th><th style="color:#065f46;">DUR</th></tr>
+[6-8 filas con descripciones MUY específicas, color:#1f2937 en cada td]
+</table>
+
+<h3 style="color:#f59e0b;">⭐ B-ROLLS OPCIONALES (4-6 tomas)</h3>
+<table>[4-6 filas adicionales]</table>
+
+<h3 style="color:#3b82f6;">🎯 SECUENCIA DE GRABACIÓN</h3>
+[Setup 1: Cenital, Setup 2: Lateral, Setup 3: En uso]
+
+<h3 style="color:#8b5cf6;">💡 TIPS</h3>
+[Iluminación, Configuración, Cantidad]
+
+Cada B-Roll debe ser ESPECÍFICO ("Close-up de pipeta dispensando 3 gotas sobre la palma").
+COMPLETA todas las secciones.`,
+  };
+
+  // Si hay prompts personalizados de la organización, usarlos
   if (customRolePrompts) {
-    switch (generation_type) {
-      case "editor":
-        return customRolePrompts.editor || `📦 GENERANDO: BLOQUE EDITOR ✂️ - Pensado para edición fluida y rápida.`;
-      case "strategist":
-        return customRolePrompts.strategist || `📦 GENERANDO: BLOQUE ESTRATEGA ♟️ - Pensamiento de fondo y estrategia.`;
-      case "trafficker":
-        return customRolePrompts.trafficker || `📦 GENERANDO: BLOQUE TRAFFICKER 📊 - Pensado para escalar en pauta.`;
-      case "designer":
-        return customRolePrompts.designer || `📦 GENERANDO: BLOQUE DISEÑADOR 🎨 - Guía visual clara.`;
-      case "admin":
-        return customRolePrompts.admin || `📦 GENERANDO: BLOQUE ADMIN / PROJECT MANAGER 📅 - Control y ejecución.`;
-      default:
-        return customRolePrompts.creator || `📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.`;
-    }
+    const customPrompt = customRolePrompts[generation_type || "script"];
+    if (customPrompt) return customPrompt;
   }
-  
+
+  // Usar los nuevos prompts para la estructura de 4 bloques
+  if (generation_type && NEW_BLOCK_PROMPTS[generation_type]) {
+    return NEW_BLOCK_PROMPTS[generation_type];
+  }
+
+  // Fallback para tipos legacy
   switch (generation_type) {
     case "editor":
       return `📦 GENERANDO: BLOQUE EDITOR ✂️ - Pensado para edición fluida y rápida.`;
@@ -359,7 +487,7 @@ function getGenerationTypePrompt(generation_type?: string, customRolePrompts?: a
     case "admin":
       return `📦 GENERANDO: BLOQUE ADMIN / PROJECT MANAGER 📅 - Control y ejecución.`;
     default:
-      return `📦 GENERANDO: BLOQUE CREADOR 🎥 - Guion estructurado por escenas, listo para grabar.`;
+      return NEW_BLOCK_PROMPTS.script;
   }
 }
 
@@ -448,8 +576,283 @@ serve(async (req) => {
     const startTime = Date.now();
 
     switch (action) {
+      // ══════════════════════════════════════════════════════════════
+      // NUEVA ACCIÓN: Generación con Sistema de Skills (Agentes)
+      // ══════════════════════════════════════════════════════════════
+      case "generate_with_skills": {
+        console.log("[content-ai] 🎯 Usando sistema de Skills");
+
+        // Token guard
+        if (organizationId) {
+          const tokenCheck = await checkAndDeductTokens(supabase, organizationId, "scripts.skills_generation", undefined, {
+            ai_provider: body.ai_provider,
+            ai_model: body.ai_model,
+            description: "Script generation with Skills system",
+          });
+          if (!tokenCheck.allowed) {
+            return insufficientTokensResponse(tokenCheck);
+          }
+        }
+
+        // Preparar investigación Perplexity si está habilitada
+        let perplexityResearch = "";
+        if (body.use_perplexity) {
+          const queries = body.perplexity_queries || { trends: true, hooks: true };
+          const productName = product?.name || "";
+          const platform = body.script_params?.platform || "TikTok";
+          const targetCountry = body.script_params?.target_country || "Colombia";
+          const idealAvatar = product?.ideal_avatar || body.script_params?.ideal_avatar || "";
+
+          const searchPromises: Promise<{ type: string; result: { content: string; citations?: string[] } }>[] = [];
+
+          if (queries.trends !== false) {
+            searchPromises.push(
+              PerplexitySearches.contentTrends(supabase, organizationId, {
+                niche: productName,
+                platform,
+                country: targetCountry,
+              }).then((r) => ({ type: "trends", result: r }))
+            );
+          }
+          if (queries.hooks !== false) {
+            searchPromises.push(
+              PerplexitySearches.hookResearch(supabase, organizationId, {
+                productType: productName,
+                platform,
+                targetAudience: idealAvatar || undefined,
+              }).then((r) => ({ type: "hooks", result: r }))
+            );
+          }
+
+          try {
+            const searchResults = await Promise.allSettled(searchPromises);
+            const results: string[] = [];
+
+            for (const res of searchResults) {
+              if (res.status === "fulfilled" && res.value.result.content) {
+                const { type, result: data } = res.value;
+                results.push(`### ${type.toUpperCase()}\n${data.content}`);
+              }
+            }
+
+            if (results.length > 0) {
+              perplexityResearch = results.join("\n---\n");
+              console.log("[content-ai] Perplexity research added for skills");
+            }
+          } catch (e) {
+            console.log("[content-ai] Perplexity skipped:", (e as Error).message);
+          }
+        }
+
+        // Construir contexto para los Skills
+        const skillContext: SkillContext = {
+          product: {
+            name: product?.name || "",
+            description: product?.description || "",
+            strategy: product?.strategy || "",
+            market_research: product?.market_research || "",
+            ideal_avatar: product?.ideal_avatar || "",
+            sales_angles: product?.sales_angles || [],
+          },
+          formData: {
+            sales_angle: body.script_params?.sales_angle || "",
+            cta: body.script_params?.cta || "",
+            hooks_count: body.script_params?.hooks_count || 3,
+            target_country: body.script_params?.target_country || "Colombia",
+            narrative_structure: body.script_params?.narrative_structure || "problema-solución",
+            sphere_phase: body.script_params?.sphere_phase || "solution",
+            consciousness_level: body.script_params?.consciousness_level || "problem_aware",
+            additional_context: body.script_params?.additional_instructions || "",
+          },
+          perplexityResearch: perplexityResearch || undefined,
+        };
+
+        // Log skills que se van a ejecutar
+        const activeSkills = getActiveSkills({
+          sphere_phase: skillContext.formData.sphere_phase,
+          consciousness_level: skillContext.formData.consciousness_level,
+          narrative_structure: skillContext.formData.narrative_structure,
+        });
+        console.log(`[content-ai] Skills activos: ${activeSkills.map(s => s.id).join(", ")}`);
+
+        // Ejecutar cadena de skills
+        const skillsStartTime = Date.now();
+        const skillsResult: SkillChainResult = await executeSkillChain(skillContext, {
+          provider: aiConfig.provider,
+          apiKey: aiConfig.apiKey,
+          model: aiConfig.model,
+        });
+        const skillsResponseTime = Date.now() - skillsStartTime;
+
+        console.log("[content-ai] Skills chain result:", {
+          success: skillsResult.success,
+          executionsCount: skillsResult.executions.length,
+          totalDurationMs: skillsResult.totalDurationMs,
+          errors: skillsResult.errors,
+        });
+
+        // Log de uso
+        await logAIUsage(supabase, {
+          organizationId,
+          userId: "system",
+          provider: aiConfig.provider,
+          model: aiConfig.model,
+          action: "generate_with_skills",
+          success: skillsResult.success,
+          response_time_ms: skillsResponseTime,
+          errorMessage: skillsResult.errors?.join("; "),
+        });
+
+        return new Response(
+          JSON.stringify({
+            success: skillsResult.success,
+            script: skillsResult.finalOutput,
+            ai_provider: aiConfig.provider,
+            ai_model: aiConfig.model,
+            used_perplexity: body.use_perplexity && perplexityResearch.length > 0,
+            skills_metadata: {
+              skills_executed: skillsResult.executions.map((e) => ({
+                skill: e.skillId,
+                confidence: e.confidence,
+                duration_ms: e.durationMs,
+                executed_at: e.executedAt,
+              })),
+              total_duration_ms: skillsResult.totalDurationMs,
+              errors: skillsResult.errors,
+            },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       case "research_and_generate":
       case "generate_script": {
+        // ═══════════════════════════════════════════════════════════════
+        // OPCIÓN: Redirigir a Skills si use_skills=true
+        // ═══════════════════════════════════════════════════════════════
+        if (body.use_skills === true && prompt && product) {
+          console.log("[content-ai] 🔀 Redirigiendo generate_script → Skills system");
+
+          // Preparar investigación Perplexity si está habilitada
+          let perplexityResearch = "";
+          if (body.use_perplexity) {
+            const queries = body.perplexity_queries || { trends: true, hooks: true };
+            const productName = product?.name || "";
+            const platform = body.script_params?.platform || "TikTok";
+            const targetCountry = body.script_params?.target_country || "Colombia";
+            const idealAvatar = product?.ideal_avatar || body.script_params?.ideal_avatar || "";
+
+            const searchPromises: Promise<{ type: string; result: { content: string; citations?: string[] } }>[] = [];
+
+            if (queries.trends !== false) {
+              searchPromises.push(
+                PerplexitySearches.contentTrends(supabase, organizationId, {
+                  niche: productName,
+                  platform,
+                  country: targetCountry,
+                }).then((r) => ({ type: "trends", result: r }))
+              );
+            }
+            if (queries.hooks !== false) {
+              searchPromises.push(
+                PerplexitySearches.hookResearch(supabase, organizationId, {
+                  productType: productName,
+                  platform,
+                  targetAudience: idealAvatar || undefined,
+                }).then((r) => ({ type: "hooks", result: r }))
+              );
+            }
+
+            try {
+              const searchResults = await Promise.allSettled(searchPromises);
+              const results: string[] = [];
+
+              for (const res of searchResults) {
+                if (res.status === "fulfilled" && res.value.result.content) {
+                  const { type, result: data } = res.value;
+                  results.push(`### ${type.toUpperCase()}\n${data.content}`);
+                }
+              }
+
+              if (results.length > 0) {
+                perplexityResearch = results.join("\n---\n");
+              }
+            } catch (e) {
+              console.log("[content-ai] Perplexity skipped:", (e as Error).message);
+            }
+          }
+
+          // Construir contexto para Skills
+          const skillContext: SkillContext = {
+            product: {
+              name: product?.name || "",
+              description: product?.description || "",
+              strategy: product?.strategy || "",
+              market_research: product?.market_research || "",
+              ideal_avatar: product?.ideal_avatar || "",
+              sales_angles: product?.sales_angles || [],
+            },
+            formData: {
+              sales_angle: body.script_params?.sales_angle || "",
+              cta: body.script_params?.cta || "",
+              hooks_count: body.script_params?.hooks_count || 3,
+              target_country: body.script_params?.target_country || "Colombia",
+              narrative_structure: body.script_params?.narrative_structure || "problema-solución",
+              sphere_phase: body.script_params?.sphere_phase || "solution",
+              consciousness_level: body.script_params?.consciousness_level || "problem_aware",
+              additional_context: body.script_params?.additional_instructions || "",
+            },
+            perplexityResearch: perplexityResearch || undefined,
+          };
+
+          // Ejecutar cadena de skills
+          const skillsResult: SkillChainResult = await executeSkillChain(skillContext, {
+            provider: aiConfig.provider,
+            apiKey: aiConfig.apiKey,
+            model: aiConfig.model,
+          });
+
+          console.log("[content-ai] Skills result:", {
+            success: skillsResult.success,
+            skills: skillsResult.executions.map(e => e.skillId),
+          });
+
+          // Log de uso
+          await logAIUsage(supabase, {
+            organizationId,
+            userId: "system",
+            provider: aiConfig.provider,
+            model: aiConfig.model,
+            action: "generate_script_with_skills",
+            success: skillsResult.success,
+            response_time_ms: skillsResult.totalDurationMs,
+          });
+
+          return new Response(
+            JSON.stringify({
+              success: skillsResult.success,
+              script: skillsResult.finalOutput,
+              ai_provider: aiConfig.provider,
+              ai_model: aiConfig.model,
+              used_perplexity: body.use_perplexity && perplexityResearch.length > 0,
+              used_skills: true,
+              skills_metadata: {
+                skills_executed: skillsResult.executions.map((e) => ({
+                  skill: e.skillId,
+                  confidence: e.confidence,
+                  duration_ms: e.durationMs,
+                })),
+                total_duration_ms: skillsResult.totalDurationMs,
+              },
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FLUJO LEGACY (sin skills)
+        // ═══════════════════════════════════════════════════════════════
+
         // Token guard: deduct tokens per block when generation_type is specified
         if (generation_type && organizationId) {
           const actionKey = `scripts.block.${generation_type}`;

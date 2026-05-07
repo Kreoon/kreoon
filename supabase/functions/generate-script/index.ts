@@ -316,7 +316,7 @@ Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
         systemPrompt,
         userPrompt,
         temperature: 0.7, // V2: Balance creatividad/coherencia
-        maxTokens: 4096,  // V2: Guion completo con ejemplos
+        maxTokens: 16384, // V2: Tokens suficientes para guiones completos con tablas HTML
       });
 
       if (!aiResult.success || !aiResult.content) {

@@ -49,11 +49,40 @@ const HTML_FORMAT_RULES = `REGLAS DE FORMATO HTML:
 4. Estructura de mayor a menor importancia
 5. Cada sección debe tener un propósito claro
 
-ESTRUCTURA REQUERIDA:
-<h2>🎣 HOOKS</h2>
-<h3>Hook A: [Nombre descriptivo]</h3>
-<p>[Texto del hook]</p>
-<p><strong>[ACCIÓN]:</strong> [Indicación para el creador]</p>
+⚠️ REGLAS CRÍTICAS DEL GUIÓN:
+
+1. HOOKS = ESCENAS SEPARADAS (para A/B testing):
+   - Cada hook es una ESCENA INDEPENDIENTE (1A, 1B, 1C, etc.)
+   - El creador GRABA CADA HOOK por separado para testing de ads
+   - Genera EXACTAMENTE {cantidad_hooks} escenas de hook
+   - Si {cantidad_hooks}=3, genera: ESCENA 1A, ESCENA 1B, ESCENA 1C
+
+2. FORMATO TELEPROMPTER (para el CREADOR):
+   - El guión es para que el CREADOR lo lea y sepa exactamente qué hacer
+   - Usa instrucciones DIRECTAS de acción, no descripciones en tercera persona
+   - ✅ CORRECTO: "Mira a cámara, sonríe y di: '¿Sabías que...?'"
+   - ❌ INCORRECTO: "El creador aparece en pantalla y menciona..."
+
+3. INDICACIONES DE ACTUACIÓN:
+   - Usa [CORCHETES] para instrucciones de grabación/actuación
+   - Ejemplo: [Acércate a cámara con expresión de sorpresa]
+
+ESTRUCTURA REQUERIDA (ejemplo con 3 hooks):
+<h2>🎬 ESCENA 1A: HOOK CURIOSIDAD [00:00-00:03]</h2>
+<p>[Mira a cámara con expresión intrigante]</p>
+<p>Di: "¿Sabías que el 80% de las personas...?"</p>
+
+<h2>🎬 ESCENA 1B: HOOK PROBLEMA [00:00-00:03]</h2>
+<p>[Expresión de frustración, suspiro]</p>
+<p>Di: "Si esto te pasa, necesitas ver esto..."</p>
+
+<h2>🎬 ESCENA 1C: HOOK CONTROVERSIA [00:00-00:03]</h2>
+<p>[Tono serio, contacto visual directo]</p>
+<p>Di: "Nadie te dice esto pero..."</p>
+
+<h2>🎬 ESCENA 2: DESARROLLO [00:03-00:15]</h2>
+<p>[Cambia a tono conversacional]</p>
+<p>Di: "Déjame contarte cómo..."</p>
 ...`;
 
 export const MASTER_SCRIPT_PROMPT = `${KREOON_IDENTITY}

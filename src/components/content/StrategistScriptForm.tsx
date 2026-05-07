@@ -20,6 +20,7 @@ import {
   Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { SkillsLoadingState } from "./SkillsLoadingState";
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 
@@ -44,11 +45,10 @@ interface Product {
 
 interface GeneratedContent {
   script: string;
-  editor_guidelines?: string;
-  strategist_guidelines?: string;
-  trafficker_guidelines?: string;
-  designer_guidelines?: string;
-  admin_guidelines?: string;
+  director_output?: string;
+  marketing_output?: string;
+  captions?: string;
+  broll_output?: string;
 }
 
 interface StrategistScriptFormProps {
@@ -78,11 +78,10 @@ interface ScriptFormData {
   additional_instructions: string;
   hooks: string[];
   script_prompt: string;
-  editor_prompt: string;
-  strategist_prompt: string;
-  trafficker_prompt: string;
-  designer_prompt: string;
-  admin_prompt: string;
+  director_prompt: string;
+  marketing_prompt: string;
+  captions_prompt: string;
+  broll_prompt: string;
   reference_transcription: string;
   video_strategies: string;
   ai_model: string;
@@ -99,7 +98,7 @@ interface PerplexityQueriesState {
 }
 
 interface GenerationStep {
-  key: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin";
+  key: "script" | "director" | "marketing" | "captions" | "broll";
   label: string;
   status: "pending" | "generating" | "done" | "error";
 }
@@ -250,902 +249,165 @@ function getSpherePhaseInfo(phase: string) {
 
 const BLOCK_ACTION_KEYS: Record<string, string> = {
   script: "scripts.block.script",
-  editor: "scripts.block.editor",
-  trafficker: "scripts.block.trafficker",
-  strategist: "scripts.block.strategist",
-  designer: "scripts.block.designer",
-  admin: "scripts.block.admin",
+  director: "scripts.block.director",
+  marketing: "scripts.block.marketing",
+  captions: "scripts.block.captions",
+  broll: "scripts.block.broll",
 };
 
 const BLOCK_LABELS: Record<string, { emoji: string; short: string }> = {
-  script: { emoji: "\uD83E\uDDCD", short: "Guion" },
-  editor: { emoji: "\uD83C\uDFAC", short: "Editor" },
-  trafficker: { emoji: "\uD83D\uDCB0", short: "Trafico" },
-  strategist: { emoji: "\uD83E\uDDE0", short: "Estrategia" },
-  designer: { emoji: "\uD83C\uDFA8", short: "Diseno" },
-  admin: { emoji: "\uD83D\uDCCB", short: "Admin" },
+  script: { emoji: "\uD83C\uDFAC", short: "Guion" },
+  director: { emoji: "\uD83C\uDFA5", short: "Director" },
+  marketing: { emoji: "\uD83D\uDCCA", short: "Marketing" },
+  captions: { emoji: "\uD83D\uDCF1", short: "Captions" },
+  broll: { emoji: "\uD83C\uDFAC", short: "B-Roll" },
 };
 
 const CONTENT_AI_FUNCTION = "content-ai";
 
 const DEFAULT_PROMPTS = {
-  script: `🧍‍♂️ ROL: Eres un ESTRATEGA DIGITAL EXPERTO en contenido UGC, storytelling y performance ads.
+  script: `🎬 GUIÓN TELEPROMPTER UGC
 
-Tu tarea es crear el BLOQUE 1 – CREADOR con toda la información necesaria para la grabación del video.
+⚠️ IMPORTANTE: Genera el guión COMPLETO. NO te detengas hasta terminar TODAS las escenas incluyendo el CTA final y las notas para el creador.
 
----
-📦 INFORMACIÓN DEL PRODUCTO:
-- Nombre: {producto_nombre}
-- Descripción: {producto_descripcion}
-- Estrategia: {producto_estrategia}
-- Avatar Ideal: {producto_avatar}
-- Ángulos de Venta: {producto_angulos}
+ESTRUCTURA REQUERIDA (HTML):
+1. <h2>🎥 GUION DE VIDEO UGC</h2>
+2. Escenas 1A, 1B, 1C (HOOKS - genera EXACTAMENTE {cantidad_hooks})
+3. Escenas 2-3 (DESARROLLO)
+4. Escenas 4-5 (SOLUCIÓN con producto)
+5. Escena final (CTA: {cta})
+6. <h3>📝 NOTAS PARA EL CREADOR</h3> con vestuario, props, locación
 
-🎯 PARÁMETROS DEL CONTENIDO:
-- CTA Principal: {cta}
-- Ángulo de Venta: {angulo_venta}
-- Estructura Narrativa: {estructura_narrativa}
-- País Objetivo: {pais_objetivo}
-- Cantidad de Hooks: {cantidad_hooks}
+Cada escena incluye: Número, Tiempo (ej: 0-3s), Acción visual [entre corchetes], Diálogo exacto "entre comillas"
 
-📝 HOOKS SUGERIDOS:
-{hooks_sugeridos}
+REGLAS:
+- Genera {cantidad_hooks} hooks alternativos (1A, 1B, 1C...)
+- Adapta lenguaje a {pais_objetivo}
+- COMPLETA TODO hasta las notas finales`,
 
-📄 DOCUMENTOS DE REFERENCIA:
-Brief: {documento_brief}
-Onboarding: {documento_onboarding}
-Research: {documento_research}
+  director: `🎥 TABLA DE PRODUCCIÓN - DIRECTOR
 
-📹 ESTRATEGIAS DE VIDEO:
-{estrategias_video}
+⚠️ IMPORTANTE: Genera la tabla COMPLETA para TODAS las escenas del guión (1A, 1B, 1C, 2, 3, 4, 5, CTA). NO omitas ninguna.
 
-🎬 TRANSCRIPCIÓN DE REFERENCIA:
-{transcripcion_referencia}
+ESTRUCTURA HTML REQUERIDA:
+<h2>🎬 TABLA DE PRODUCCIÓN</h2>
+<p>Duración: X segundos | Escenas: X | Setup: [lista]</p>
 
-💡 INSTRUCCIONES ADICIONALES:
-{instrucciones_adicionales}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>🧍‍♂️ BLOQUE 1 – CREADOR</h2>
-
-<h3>📋 INFORMACIÓN GENERAL</h3>
 <table>
-  <tr><td><strong>Título del video:</strong></td><td>[Título descriptivo y atractivo]</td></tr>
-  <tr><td><strong>Objetivo del video:</strong></td><td>[Awareness / Engagement / Conversión / Educación]</td></tr>
-  <tr><td><strong>Duración sugerida:</strong></td><td>[XX-XX segundos]</td></tr>
-  <tr><td><strong>Formato:</strong></td><td>[9:16 vertical / 1:1 cuadrado / 16:9 horizontal]</td></tr>
+<tr><th>#</th><th>Tiempo</th><th>Guión Verbal</th><th>Guión Visual</th><th>Plano</th><th>Notas</th></tr>
+[Una fila por CADA escena del guión]
 </table>
 
-<h3>👤 AVATAR / PÚBLICO OBJETIVO</h3>
-<p><strong>Perfil ideal:</strong> {producto_avatar}</p>
-<ul>
-  <li><strong>Demografía:</strong> [Edad, género, ubicación]</li>
-  <li><strong>Dolor principal:</strong> [Problema que resuelve el producto]</li>
-  <li><strong>Deseo principal:</strong> [Resultado que busca]</li>
-  <li><strong>Nivel de consciencia:</strong> [Inconsciente / Consciente del problema / Buscando solución]</li>
-</ul>
+<h3>📋 CHECKLIST PRE-PRODUCCIÓN</h3>
+[Lista de verificación]
 
-<h3>🎭 PERFIL DE PERSONA PARA GRABAR</h3>
-<table>
-  <tr><td><strong>Género recomendado:</strong></td><td>[Cualquiera / Femenino / Masculino]</td></tr>
-  <tr><td><strong>Rango de edad:</strong></td><td>[XX-XX años]</td></tr>
-  <tr><td><strong>Tono de voz:</strong></td><td>[Cercano y amigable / Profesional / Enérgico / Tipo chisme]</td></tr>
-  <tr><td><strong>Nivel de energía:</strong></td><td>[Alta / Media / Baja-reflexiva]</td></tr>
-  <tr><td><strong>Entorno sugerido:</strong></td><td>[Casa / Oficina / Exterior / Estudio neutro]</td></tr>
-  <tr><td><strong>Outfit sugerido:</strong></td><td>[Casual / Profesional / Acorde al producto]</td></tr>
-  <tr><td><strong>Look general:</strong></td><td>[Descripción del aspecto ideal]</td></tr>
+<h3>🎬 EQUIPO NECESARIO</h3>
+[Cámara, luces, audio, etc.]
+
+<h3>⏱️ TIEMPO ESTIMADO DE GRABACIÓN</h3>
+
+Planos: PP (primer plano), PM (plano medio), PE (plano entero), PD (detalle)
+Producto: {producto_nombre} | País: {pais_objetivo}
+
+COMPLETA TODAS las escenas y secciones.`,
+
+  marketing: `📊 ESTRATEGIA DE MARKETING Y PAUTA
+
+⚠️ IMPORTANTE: Genera TODAS las secciones COMPLETAS. NO te detengas hasta terminar presupuesto y próximos contenidos.
+
+ESTRUCTURA HTML REQUERIDA:
+<h2>📊 BLOQUE MARKETING</h2>
+
+<h3>🎯 ESTRATEGIA</h3>
+Fase ESFERA | Objetivo | KPI Principal
+
+<h3>👥 AUDIENCIAS</h3>
+🔵 COLD: Intereses, comportamientos, lookalike
+🟡 WARM: Retargeting (video viewers, engagement, web)
+🔴 HOT: Cart abandonados, visitantes producto
+
+<h3>📱 DISTRIBUCIÓN</h3>
+<table><tr><th>Plataforma</th><th>Formato</th><th>Budget %</th><th>Objetivo</th></tr>
+[Meta 60%, TikTok 30%, YouTube 10%]</table>
+
+<h3>🔥 3 VARIACIONES DE AD</h3>
+Variación A (Cold): Hook + Copy + CTA
+Variación B (Warm): Hook + Copy + CTA
+Variación C (Hot): Hook + Copy + CTA
+
+<h3>📈 MÉTRICAS OBJETIVO</h3>
+Hook Rate, CTR, CPC, ROAS (mínimo/objetivo/excelente)
+
+<h3>💵 PRESUPUESTO</h3>
+Testing: $X/día x X días | Escala: $X/día
+
+<h3>📅 PRÓXIMOS CONTENIDOS</h3>
+3 videos sugeridos para el embudo
+
+Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo} | CTA: {cta}
+
+COMPLETA TODAS las secciones.`,
+
+  captions: `📱 CAPTIONS PARA REDES SOCIALES
+
+⚠️ IMPORTANTE: Genera los 4 captions COMPLETOS. Cada uno con su texto íntegro, hashtags (orgánicos) y especificaciones.
+
+ESTRUCTURA HTML REQUERIDA:
+<h2>📱 CAPTIONS GENERADOS</h2>
+
+<h3>📱 ORGÁNICO #1: Hook + Storytelling</h3>
+[Caption COMPLETO 150-200 caracteres con emojis + 8-10 hashtags relevantes]
+Objetivo: Engagement | Plataforma: Feed IG/FB
+
+<h3>📱 ORGÁNICO #2: Trend/Humor</h3>
+[Caption COMPLETO con referencia cultural/trend + hashtags trending]
+Objetivo: Viralidad | Plataforma: Reels/TikTok
+
+<h3>💰 ADS #1: Problema-Solución</h3>
+[Caption COMPLETO 80-125 caracteres, beneficio + CTA directo, SIN hashtags]
+Objetivo: Conversión | Cumple políticas: ✅
+
+<h3>💰 ADS #2: FOMO/Urgencia</h3>
+[Caption COMPLETO con escasez/urgencia + CTA, SIN hashtags]
+Objetivo: Ventas | Cumple políticas: ✅
+
+Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo} | CTA: {cta}
+
+REGLAS: No claims médicos, no "milagro", beneficios verificables.
+COMPLETA los 4 captions sin truncar.`,
+
+  broll: `🎬 IDEAS DE B-ROLL
+
+⚠️ IMPORTANTE: Genera las tablas COMPLETAS con 10-14 B-Rolls totales. NO te detengas hasta completar todas las secciones.
+
+FORMATO: Solo HTML con estilos inline. Usa color:#1f2937 en TODAS las celdas td.
+
+ESTRUCTURA REQUERIDA:
+<h2 style="color:#1a1a1a;">🎬 IDEAS DE B-ROLL</h2>
+<p>Producto: {producto_nombre} | Setup: Celular + Trípode + Ring light</p>
+
+<h3 style="color:#059669;">📋 B-ROLLS ESENCIALES (6-8 tomas)</h3>
+<table><tr style="background:#d1fae5;"><th style="color:#065f46;">#</th><th style="color:#065f46;">TOMA</th><th style="color:#065f46;">ESCENA</th><th style="color:#065f46;">QUÉ FILMAR</th><th style="color:#065f46;">PLANO</th><th style="color:#065f46;">DUR</th></tr>
+[6-8 filas con descripciones MUY específicas, color:#1f2937 en cada td]
 </table>
 
-<h3>🗣️ TONO DE COMUNICACIÓN</h3>
-<p><strong>Estilo principal:</strong> [Cercano tipo chisme / Educativo / Inspirador / Directo / Storytelling]</p>
-<ul>
-  <li><strong>Velocidad de habla:</strong> [Rápida-dinámica / Normal / Pausada-reflexiva]</li>
-  <li><strong>Conexión emocional:</strong> [Tipo de emoción a transmitir]</li>
-  <li><strong>Lenguaje:</strong> [Coloquial / Semi-formal / Técnico accesible]</li>
-  <li><strong>Adaptación regional:</strong> {pais_objetivo}</li>
-</ul>
-
-<h3>🎣 3 HOOKS DISRUPTIVOS (formato director - A/B/C)</h3>
-
-<h4>HOOK A - [Tipo: Curioso/Pregunta]</h4>
-<p><em>[Indicación de actuación: Expresión facial, tono, velocidad]</em></p>
-<p><strong>Texto:</strong> "[Hook A completo - diseñado para scroll-stopper]"</p>
-<p><em>Por qué funciona: [Explicación breve]</em></p>
-
-<h4>HOOK B - [Tipo: Impactante/Declaración]</h4>
-<p><em>[Indicación de actuación]</em></p>
-<p><strong>Texto:</strong> "[Hook B completo]"</p>
-<p><em>Por qué funciona: [Explicación breve]</em></p>
-
-<h4>HOOK C - [Tipo: Storytelling/Personal]</h4>
-<p><em>[Indicación de actuación]</em></p>
-<p><strong>Texto:</strong> "[Hook C completo]"</p>
-<p><em>Por qué funciona: [Explicación breve]</em></p>
-
-<h3>🎬 GUION FORMATO DIRECTOR</h3>
-<p><em>Con descripciones visuales, emocionales y de actuación.</em></p>
-
-<h4>📍 APERTURA (Hook) - 0:00-0:03</h4>
-<p><strong>Visual:</strong> [Descripción del plano, movimiento, ubicación]</p>
-<p><strong>Emocional:</strong> [Estado emocional del creador]</p>
-<p><strong>Acción:</strong> [Qué está haciendo el creador]</p>
-<p><strong>Texto:</strong> "[Elegir Hook A, B o C]"</p>
-
-<h4>📍 DESARROLLO - 0:03-0:XX</h4>
-<p><strong>Visual:</strong> [Descripción de cambios de plano]</p>
-<p><strong>Emocional:</strong> [Transición emocional]</p>
-<p><strong>Texto:</strong> "[Desarrollo del mensaje principal siguiendo estructura {estructura_narrativa}]"</p>
-
-<h4>📍 BENEFICIO/PRUEBA - 0:XX-0:XX</h4>
-<p><strong>Visual:</strong> [Mostrar producto, resultado, o prueba social]</p>
-<p><strong>Emocional:</strong> [Emoción de transformación o descubrimiento]</p>
-<p><strong>Texto:</strong> "[Conexión con el beneficio principal]"</p>
-
-<h4>📍 CIERRE/CTA - Últimos 3-5 segundos</h4>
-<p><strong>Visual:</strong> [Plano de cierre]</p>
-<p><strong>Emocional:</strong> [Urgencia amigable o invitación]</p>
-<p><strong>Texto:</strong> "{cta}"</p>
-
-<h3>📺 GUION PARA TELEPROMPTER</h3>
-<p><em>Versión limpia y natural para leer directamente. Solo texto hablado, fluido y conversacional.</em></p>
-
-<h4>🎣 HOOK (elegir uno para la grabación)</h4>
-<p style="font-size: 1.2em; line-height: 2;">
-<strong>A:</strong> "[Hook A - texto exacto para leer]"
-</p>
-<p style="font-size: 1.2em; line-height: 2;">
-<strong>B:</strong> "[Hook B - texto exacto para leer]"
-</p>
-<p style="font-size: 1.2em; line-height: 2;">
-<strong>C:</strong> "[Hook C - texto exacto para leer]"
-</p>
-
-<h4>💬 CUERPO</h4>
-<p style="font-size: 1.2em; line-height: 2;">
-"[Texto completo del desarrollo - escrito de forma natural y conversacional, como si hablaras con un amigo. Sin indicaciones de actuación, solo el texto hablado.]"
-</p>
-
-<h4>📢 CIERRE</h4>
-<p style="font-size: 1.2em; line-height: 2;">
-"{cta}"
-</p>
-
-<h4>📋 GUIÓN COMPLETO (una sola pieza para copiar)</h4>
-<blockquote style="font-size: 1.1em; line-height: 2; padding: 20px; background: #f5f5f5; border-left: 4px solid #333;">
-[Hook elegido]
-
-[Desarrollo completo]
-
-[Cierre con CTA]
-
-<br><br>
-<em>Duración aproximada de lectura: XX segundos</em>
-</blockquote>
-
-<h3>📢 CTA SUGERIDO</h3>
-<table>
-  <tr><td><strong>Para Orgánico:</strong></td><td>[CTA enfocado en engagement: comentar, seguir, guardar]</td></tr>
-  <tr><td><strong>Para Ads:</strong></td><td>{cta}</td></tr>
-  <tr><td><strong>Alternativa 1:</strong></td><td>[Variación del CTA]</td></tr>
-  <tr><td><strong>Alternativa 2:</strong></td><td>[Otra variación]</td></tr>
-</table>
-
-<h3>💡 NOTAS ADICIONALES PARA EL CREADOR</h3>
-<ul>
-  <li><strong>Tip de actuación:</strong> [Consejo específico]</li>
-  <li><strong>Expresiones faciales:</strong> [Sugerencias]</li>
-  <li><strong>Gestos recomendados:</strong> [Movimientos de manos, postura]</li>
-  <li><strong>Errores a evitar:</strong> [Qué NO hacer]</li>
-  <li><strong>Referencias de estilo:</strong> [Creadores o videos de referencia]</li>
-</ul>`,
-
-  editor: `🎬 ROL: Eres un EDITOR DE VIDEO PROFESIONAL especializado en contenido de alto rendimiento para TikTok, Reels y Shorts.
-
-Tu tarea es crear el BLOQUE 2 – EDITOR con todas las pautas de edición basadas en el GUIÓN GENERADO.
-
-⚠️ IMPORTANTE: Debes basar TODO en el guión del Bloque 1. Cada escena del storyboard debe corresponder a una sección del guión.
-
----
-📦 CONTEXTO DEL PROYECTO:
-- Producto: {producto_nombre}
-- Descripción: {producto_descripcion}
-- Avatar objetivo: {producto_avatar}
-- País: {pais_objetivo}
-
-🎯 ENFOQUE DEL CONTENIDO:
-- Ángulo de venta: {angulo_venta}
-- Estructura narrativa: {estructura_narrativa}
-- CTA: {cta}
-
-📄 DOCUMENTOS:
-Brief: {documento_brief}
-Estrategias de video: {estrategias_video}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>🎬 BLOQUE 2 – EDITOR</h2>
-
-<h3>📝 NOTAS DE EDICIÓN</h3>
-<table>
-  <tr><td><strong>Velocidad general:</strong></td><td>[Rápida y dinámica / Moderada / Pausada]</td></tr>
-  <tr><td><strong>Ritmo de cortes:</strong></td><td>[Cada X segundos / Por frase / Por idea]</td></tr>
-  <tr><td><strong>Estilo de corte:</strong></td><td>[Jump cuts / Smooth transitions / Match cuts / Sin cortes]</td></tr>
-  <tr><td><strong>Duración por escena:</strong></td><td>[Especificar por sección]</td></tr>
-  <tr><td><strong>Estilo general:</strong></td><td>[UGC orgánico / Producido / Híbrido]</td></tr>
-</table>
-
-<h3>🎥 STORYBOARD (4-6 escenas basadas en el guión)</h3>
-
-<h4>📍 ESCENA 1: HOOK (0:00 - 0:03)</h4>
-<p><em>Referencia del guión: [Texto del hook elegido]</em></p>
-<table>
-  <tr><td><strong>Tipo de plano:</strong></td><td>[Close-up / Medio / Americano / General]</td></tr>
-  <tr><td><strong>Movimiento de cámara:</strong></td><td>[Estático / Zoom in / Zoom out / Pan / Seguimiento]</td></tr>
-  <tr><td><strong>Elementos visuales:</strong></td><td>[Qué se ve en pantalla además del creador]</td></tr>
-  <tr><td><strong>Texto en pantalla:</strong></td><td>"[Frase clave del hook]"</td></tr>
-  <tr><td><strong>Efecto/Transición:</strong></td><td>[Zoom 1.1x / Shake / Flash / Ninguno]</td></tr>
-  <tr><td><strong>Emoción transmitida:</strong></td><td>[Curiosidad / Sorpresa / Intriga]</td></tr>
-</table>
-
-<h4>📍 ESCENA 2: DESARROLLO PARTE 1 (0:03 - 0:XX)</h4>
-<p><em>Referencia del guión: [Primera parte del desarrollo]</em></p>
-<table>
-  <tr><td><strong>Tipo de plano:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Movimiento de cámara:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Elementos visuales:</strong></td><td>[B-roll, producto, demos]</td></tr>
-  <tr><td><strong>Texto en pantalla:</strong></td><td>"[Frase clave]"</td></tr>
-  <tr><td><strong>Efecto/Transición:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Emoción transmitida:</strong></td><td>[Descripción]</td></tr>
-</table>
-
-<h4>📍 ESCENA 3: DESARROLLO PARTE 2 (0:XX - 0:XX)</h4>
-<p><em>Referencia del guión: [Segunda parte del desarrollo]</em></p>
-<table>
-  <tr><td><strong>Tipo de plano:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Movimiento de cámara:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Elementos visuales:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Texto en pantalla:</strong></td><td>"[Frase clave]"</td></tr>
-  <tr><td><strong>Efecto/Transición:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Emoción transmitida:</strong></td><td>[Descripción]</td></tr>
-</table>
-
-<h4>📍 ESCENA 4: BENEFICIO/PRUEBA (0:XX - 0:XX)</h4>
-<p><em>Referencia del guión: [Sección de beneficio]</em></p>
-<table>
-  <tr><td><strong>Tipo de plano:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Movimiento de cámara:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Elementos visuales:</strong></td><td>[Producto, resultado, antes/después]</td></tr>
-  <tr><td><strong>Texto en pantalla:</strong></td><td>"[Frase del beneficio]"</td></tr>
-  <tr><td><strong>Efecto/Transición:</strong></td><td>[Descripción]</td></tr>
-  <tr><td><strong>Emoción transmitida:</strong></td><td>[Transformación / Satisfacción]</td></tr>
-</table>
-
-<h4>📍 ESCENA 5: CIERRE/CTA (Últimos 3-5 seg)</h4>
-<p><em>Referencia del guión: "{cta}"</em></p>
-<table>
-  <tr><td><strong>Tipo de plano:</strong></td><td>[Close-up o Medio]</td></tr>
-  <tr><td><strong>Movimiento de cámara:</strong></td><td>[Zoom in sutil]</td></tr>
-  <tr><td><strong>Elementos visuales:</strong></td><td>[Botón CTA, flecha, logo]</td></tr>
-  <tr><td><strong>Texto en pantalla:</strong></td><td>"{cta}"</td></tr>
-  <tr><td><strong>Efecto/Transición:</strong></td><td>[Bounce / Pulse / Destacado]</td></tr>
-  <tr><td><strong>Emoción transmitida:</strong></td><td>[Urgencia / Invitación]</td></tr>
-</table>
-
-<h3>🎵 MÚSICA O AMBIENTACIÓN SUGERIDA</h3>
-<table>
-  <tr><td><strong>Género/Estilo:</strong></td><td>[Upbeat / Chill / Dramático / Trending]</td></tr>
-  <tr><td><strong>BPM sugerido:</strong></td><td>[XX BPM]</td></tr>
-  <tr><td><strong>Ejemplos de tracks:</strong></td><td>[Nombres o descripciones]</td></tr>
-  <tr><td><strong>Volumen música:</strong></td><td>[-12dB a -15dB bajo la voz]</td></tr>
-  <tr><td><strong>Volumen voz:</strong></td><td>[-3dB a -6dB]</td></tr>
-</table>
-
-<h4>🔊 SFX (Efectos de Sonido)</h4>
-<ul>
-  <li><strong>Hook:</strong> [Whoosh / Pop / Impact]</li>
-  <li><strong>Transiciones:</strong> [Swoosh / Click]</li>
-  <li><strong>Puntos clave:</strong> [Ding / Notification]</li>
-  <li><strong>CTA:</strong> [Bell / Success sound]</li>
-</ul>
-
-<h3>📝 ESTILO DE SUBTÍTULOS / ANIMACIONES</h3>
-<table>
-  <tr><td><strong>Fuente:</strong></td><td>[Montserrat Bold / Poppins / Bebas Neue]</td></tr>
-  <tr><td><strong>Tamaño:</strong></td><td>[Grande para móvil - 48-64px]</td></tr>
-  <tr><td><strong>Color principal:</strong></td><td>[#FFFFFF con sombra]</td></tr>
-  <tr><td><strong>Color destacado:</strong></td><td>[Color de marca para palabras clave]</td></tr>
-  <tr><td><strong>Posición:</strong></td><td>[Centro-inferior / Centro / Siguiendo al hablante]</td></tr>
-  <tr><td><strong>Animación:</strong></td><td>[Pop in / Typewriter / Word by word / Karaoke]</td></tr>
-  <tr><td><strong>Palabras a destacar:</strong></td><td>[Lista de palabras clave del guión]</td></tr>
-</table>
-
-<h3>🎨 FILTROS O COLOR GRADING</h3>
-<table>
-  <tr><td><strong>Look general:</strong></td><td>[Natural / Warm / Cool / Vintage / High contrast]</td></tr>
-  <tr><td><strong>Saturación:</strong></td><td>[+5% a +15%]</td></tr>
-  <tr><td><strong>Contraste:</strong></td><td>[+5% a +10%]</td></tr>
-  <tr><td><strong>Exposición:</strong></td><td>[+0.1 a +0.3 si es necesario]</td></tr>
-  <tr><td><strong>Preset sugerido:</strong></td><td>[Nombre del preset o LUT]</td></tr>
-</table>
-
-<h3>✅ CHECKLIST DEL EDITOR</h3>
-<ul>
-  <li>[ ] Hook impactante en primer frame (sin intro)</li>
-  <li>[ ] Cortes cada 2-3 segundos máximo</li>
-  <li>[ ] Subtítulos sincronizados con el guión</li>
-  <li>[ ] Palabras clave destacadas en color</li>
-  <li>[ ] Música no compite con la voz</li>
-  <li>[ ] SFX en puntos de impacto</li>
-  <li>[ ] CTA visible mínimo 3 segundos</li>
-  <li>[ ] Audio balanceado (voz clara)</li>
-  <li>[ ] Safe zones respetadas (UI de redes)</li>
-  <li>[ ] Duración final: [XX segundos]</li>
-</ul>`,
-
-  strategist: `🧠 ROL: Eres un ESTRATEGA DE CONTENIDO Y GROWTH HACKER experto en embudos de conversión, viralidad y performance.
-
-Tu tarea es crear el BLOQUE 4 – ESTRATEGA con el análisis estratégico basado en el GUIÓN GENERADO.
-
-⚠️ IMPORTANTE: Tu análisis debe partir del guión del Bloque 1 para determinar fase de embudo, hipótesis y métricas.
-
----
-📦 CONTEXTO:
-- Producto: {producto_nombre}
-- Avatar ideal: {producto_avatar}
-- Investigación: {producto_investigacion}
-- Estrategia general: {producto_estrategia}
-- País objetivo: {pais_objetivo}
-
-🎯 ENFOQUE:
-- Ángulo: {angulo_venta}
-- Estructura: {estructura_narrativa}
-- CTA del guión: {cta}
-
-📄 DOCUMENTOS:
-Research: {documento_research}
-Brief: {documento_brief}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>🧠 BLOQUE 4 – ESTRATEGA</h2>
-
-<h3>📊 FASE DEL EMBUDO</h3>
-<table>
-  <tr><td><strong>Fase:</strong></td><td>[ENGANCHE / SOLUCIÓN / FIDELIZAR / ENVOLVER]</td></tr>
-  <tr><td><strong>Nivel TOFU/MOFU/BOFU:</strong></td><td>[Top / Middle / Bottom of Funnel]</td></tr>
-  <tr><td><strong>Objetivo de la fase:</strong></td><td>[Qué buscamos lograr en esta etapa]</td></tr>
-</table>
-
-<h4>📍 Descripción de la Fase</h4>
-<ul>
-  <li><strong>ENGANCHE (TOFU):</strong> Captar atención, generar curiosidad, awareness</li>
-  <li><strong>SOLUCIÓN (MOFU):</strong> Educar, mostrar beneficios, construir confianza</li>
-  <li><strong>FIDELIZAR (BOFU):</strong> Convertir, generar urgencia, cerrar venta</li>
-  <li><strong>ENVOLVER:</strong> Retención, comunidad, upsell, referidos</li>
-</ul>
-<p><strong>Este contenido está en fase:</strong> [Fase] porque [justificación basada en el guión]</p>
-
-<h3>🎯 OBJETIVO ESTRATÉGICO DEL VIDEO</h3>
-<table>
-  <tr><td><strong>Objetivo principal:</strong></td><td>[Awareness / Engagement / Tráfico / Leads / Conversión]</td></tr>
-  <tr><td><strong>Objetivo secundario:</strong></td><td>[Branding / Educación / Prueba social]</td></tr>
-  <tr><td><strong>Acción deseada:</strong></td><td>[Qué queremos que haga el usuario]</td></tr>
-  <tr><td><strong>Conexión con negocio:</strong></td><td>[Cómo impacta en ventas/crecimiento]</td></tr>
-</table>
-
-<h3>🔬 HIPÓTESIS DEL MENSAJE / PRUEBA A/B</h3>
-<table>
-  <tr><th>Elemento</th><th>Versión A</th><th>Versión B</th><th>Qué medimos</th></tr>
-  <tr><td>Hook</td><td>[Hook A del guión]</td><td>[Hook B del guión]</td><td>Retención 0-3s</td></tr>
-  <tr><td>Ángulo</td><td>{angulo_venta}</td><td>[Ángulo alternativo]</td><td>CTR / Engagement</td></tr>
-  <tr><td>CTA</td><td>{cta}</td><td>[CTA alternativo]</td><td>Conversión</td></tr>
-</table>
-
-<h4>📝 Hipótesis Principal</h4>
-<p><em>"Si usamos [elemento del guión], entonces [resultado esperado] porque [razón basada en avatar/investigación]"</em></p>
-
-<h3>💡 INSIGHT EMOCIONAL O RACIONAL</h3>
-<table>
-  <tr><td><strong>Tipo de insight:</strong></td><td>[Emocional / Racional / Mixto]</td></tr>
-  <tr><td><strong>Insight principal:</strong></td><td>[El insight que activa el guión]</td></tr>
-  <tr><td><strong>Pain point:</strong></td><td>[Dolor del avatar que ataca el guión]</td></tr>
-  <tr><td><strong>Deseo activado:</strong></td><td>[Deseo que despierta]</td></tr>
-  <tr><td><strong>Trigger emocional:</strong></td><td>[FOMO / Aspiración / Miedo / Pertenencia]</td></tr>
-</table>
-
-<h3>📈 MÉTRICAS DE ÉXITO ESPERADAS</h3>
-<table>
-  <tr><th>Métrica</th><th>Benchmark</th><th>Objetivo</th><th>Excelente</th></tr>
-  <tr><td>Watch time (retención)</td><td>>40%</td><td>>50%</td><td>>60%</td></tr>
-  <tr><td>Engagement rate</td><td>>3%</td><td>>5%</td><td>>8%</td></tr>
-  <tr><td>Hook retention (3s)</td><td>>60%</td><td>>70%</td><td>>80%</td></tr>
-  <tr><td>Shares</td><td>1% de views</td><td>2% de views</td><td>3%+</td></tr>
-  <tr><td>Saves</td><td>0.5% de views</td><td>1% de views</td><td>2%+</td></tr>
-  <tr><td>CTR (si ads)</td><td>>1%</td><td>>1.5%</td><td>>2%</td></tr>
-</table>
-
-<h3>🔄 SUGERENCIA DE CONTENIDO COMPLEMENTARIO</h3>
-<h4>📍 Siguiente video en el embudo:</h4>
-<table>
-  <tr><td><strong>Tipo:</strong></td><td>[Respuesta a objeción / Profundización / Testimonio]</td></tr>
-  <tr><td><strong>Ángulo:</strong></td><td>[Ángulo complementario]</td></tr>
-  <tr><td><strong>Objetivo:</strong></td><td>[Mover al siguiente nivel del embudo]</td></tr>
-  <tr><td><strong>Hook sugerido:</strong></td><td>"[Idea de hook para siguiente video]"</td></tr>
-</table>
-
-<h4>📍 Contenido para remarketing:</h4>
-<ul>
-  <li><strong>Para quienes vieron +50%:</strong> [Tipo de contenido]</li>
-  <li><strong>Para quienes interactuaron:</strong> [Tipo de contenido]</li>
-  <li><strong>Para quienes hicieron clic:</strong> [Tipo de contenido]</li>
-</ul>
-
-<h4>📍 Serie de contenido sugerida:</h4>
-<ol>
-  <li>Este video (actual)</li>
-  <li>[Video 2 - descripción]</li>
-  <li>[Video 3 - descripción]</li>
-  <li>[Video 4 - cierre/conversión]</li>
-</ol>`,
-
-  trafficker: `💰 ROL: Eres un MEDIA BUYER Y TRAFFICKER EXPERTO en campañas de paid media para Meta Ads, TikTok Ads y Google Ads.
-
-Tu tarea es crear el BLOQUE 3 – TRAFFICKER con todas las pautas publicitarias basadas en el GUIÓN GENERADO.
-
-⚠️ IMPORTANTE: Todas las variaciones de anuncio deben usar los hooks y mensajes del guión del Bloque 1.
-
----
-📦 CONTEXTO:
-- Producto: {producto_nombre}
-- Avatar: {producto_avatar}
-- Investigación: {producto_investigacion}
-- Ángulos disponibles: {producto_angulos}
-
-🎯 ENFOQUE:
-- CTA del guión: {cta}
-- Ángulo: {angulo_venta}
-- País: {pais_objetivo}
-
-📄 DOCUMENTOS:
-Brief: {documento_brief}
-Research: {documento_research}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>💰 BLOQUE 3 – TRAFFICKER</h2>
-
-<h3>🎯 ÁNGULO DE VENTA PRINCIPAL</h3>
-<table>
-  <tr><td><strong>Ángulo:</strong></td><td>[Emocional / Educativo / Aspiracional / Prueba social / Urgencia / Curiosidad]</td></tr>
-  <tr><td><strong>Sub-ángulo:</strong></td><td>{angulo_venta}</td></tr>
-  <tr><td><strong>Justificación:</strong></td><td>[Por qué este ángulo funciona para el avatar]</td></tr>
-</table>
-
-<h3>📊 OBJETIVO DE CAMPAÑA</h3>
-<table>
-  <tr><td><strong>Objetivo principal:</strong></td><td>[Clics / Leads / Awareness / Engagement / Conversiones / Ventas]</td></tr>
-  <tr><td><strong>Tipo de campaña:</strong></td><td>[Prospección / Retargeting / Lookalike]</td></tr>
-  <tr><td><strong>Optimización:</strong></td><td>[Landing page views / Add to cart / Purchase]</td></tr>
-</table>
-
-<h3>👥 PÚBLICO OBJETIVO Y SEGMENTACIÓN</h3>
-
-<h4>Audiencia 1 - Intereses (Cold)</h4>
-<table>
-  <tr><td><strong>Edad:</strong></td><td>[XX-XX años]</td></tr>
-  <tr><td><strong>Género:</strong></td><td>[Todos / Femenino / Masculino]</td></tr>
-  <tr><td><strong>Ubicación:</strong></td><td>{pais_objetivo}</td></tr>
-  <tr><td><strong>Intereses:</strong></td><td>[Lista de intereses relevantes]</td></tr>
-  <tr><td><strong>Comportamientos:</strong></td><td>[Compradores online, etc.]</td></tr>
-</table>
-
-<h4>Audiencia 2 - Lookalike</h4>
-<table>
-  <tr><td><strong>Base:</strong></td><td>[Compradores / Leads / Visitantes web]</td></tr>
-  <tr><td><strong>Porcentaje:</strong></td><td>[1-3% para testing]</td></tr>
-  <tr><td><strong>Ubicación:</strong></td><td>{pais_objetivo}</td></tr>
-</table>
-
-<h4>Audiencia 3 - Retargeting</h4>
-<table>
-  <tr><td><strong>Fuente:</strong></td><td>[Visitantes web / Engagement IG/FB / Video viewers]</td></tr>
-  <tr><td><strong>Ventana:</strong></td><td>[7-30 días]</td></tr>
-  <tr><td><strong>Exclusiones:</strong></td><td>[Compradores recientes]</td></tr>
-</table>
-
-<h3>📱 FORMATO DE ANUNCIO RECOMENDADO</h3>
-<table>
-  <tr><th>Plataforma</th><th>Formato</th><th>Ubicación</th><th>Prioridad</th></tr>
-  <tr><td>Meta</td><td>Reels / Stories</td><td>IG Reels, IG Stories, FB Reels</td><td>Alta</td></tr>
-  <tr><td>Meta</td><td>Feed</td><td>IG Feed, FB Feed</td><td>Media</td></tr>
-  <tr><td>TikTok</td><td>In-Feed Video</td><td>For You Page</td><td>Alta</td></tr>
-  <tr><td>YouTube</td><td>Shorts</td><td>Shorts Feed</td><td>Media</td></tr>
-</table>
-
-<h3>📢 CTA PUBLICITARIO PRINCIPAL</h3>
-<table>
-  <tr><td><strong>CTA del guión:</strong></td><td>{cta}</td></tr>
-  <tr><td><strong>Botón Meta:</strong></td><td>[Más información / Comprar / Registrarse]</td></tr>
-  <tr><td><strong>Botón TikTok:</strong></td><td>[Learn More / Shop Now]</td></tr>
-</table>
-
-<h3>🔥 3 VARIACIONES DE ANUNCIO (Hook + Copy corto)</h3>
-
-<h4>Variación A - Hook 1 del guión</h4>
-<p><strong>Hook:</strong> "[Primer hook del guión]"</p>
-<p><strong>Copy:</strong> [Desarrollo breve 1-2 líneas] + {cta}</p>
-<p><strong>Ángulo:</strong> [Tipo de ángulo]</p>
-
-<h4>Variación B - Hook 2 del guión</h4>
-<p><strong>Hook:</strong> "[Segundo hook del guión]"</p>
-<p><strong>Copy:</strong> [Desarrollo breve 1-2 líneas] + {cta}</p>
-<p><strong>Ángulo:</strong> [Tipo de ángulo]</p>
-
-<h4>Variación C - Hook 3 del guión</h4>
-<p><strong>Hook:</strong> "[Tercer hook del guión]"</p>
-<p><strong>Copy:</strong> [Desarrollo breve 1-2 líneas] + {cta}</p>
-<p><strong>Ángulo:</strong> [Tipo de ángulo]</p>
-
-<h3>📝 4 VARIACIONES DE COPY LARGO PARA ADS</h3>
-
-<h4>1. Copy Emocional</h4>
-<p><em>[Copy de 3-4 líneas enfocado en emociones, dolor/deseo, transformación personal. Basado en el mensaje del guión.]</em></p>
-
-<h4>2. Copy Educativo</h4>
-<p><em>[Copy de 3-4 líneas enfocado en información, datos, cómo funciona. Basado en beneficios del guión.]</em></p>
-
-<h4>3. Copy Storytelling</h4>
-<p><em>[Copy de 4-5 líneas contando una historia breve. Inspirado en la narrativa del guión.]</em></p>
-
-<h4>4. Copy Directo</h4>
-<p><em>[Copy de 2-3 líneas directo al grano. Beneficio + CTA. Basado en el cierre del guión.]</em></p>
-
-<h3>📊 KPIs A MEDIR</h3>
-<table>
-  <tr><th>KPI</th><th>Benchmark</th><th>Objetivo</th><th>Excelente</th></tr>
-  <tr><td>CTR (Click-through rate)</td><td>>0.8%</td><td>>1.5%</td><td>>2.5%</td></tr>
-  <tr><td>CPL (Cost per lead)</td><td>Según industria</td><td>[Monto]</td><td>[Monto]</td></tr>
-  <tr><td>CPC (Cost per click)</td><td><$1.50</td><td><$1.00</td><td><$0.50</td></tr>
-  <tr><td>ROAS</td><td>>1.5x</td><td>>2.5x</td><td>>4x</td></tr>
-  <tr><td>CPM</td><td><$15</td><td><$10</td><td><$7</td></tr>
-  <tr><td>Video retention (3s)</td><td>>50%</td><td>>65%</td><td>>75%</td></tr>
-  <tr><td>Video retention (50%)</td><td>>25%</td><td>>35%</td><td>>45%</td></tr>
-</table>
-
-<h3>💵 PRESUPUESTO SUGERIDO</h3>
-<table>
-  <tr><th>Fase</th><th>Presupuesto/día</th><th>Duración</th><th>Objetivo</th></tr>
-  <tr><td>Testing inicial</td><td>$20-50 USD</td><td>3-5 días</td><td>Validar creative</td></tr>
-  <tr><td>Validación</td><td>$50-100 USD</td><td>7 días</td><td>Confirmar performance</td></tr>
-  <tr><td>Escala</td><td>Variable (2-3x)</td><td>Ongoing</td><td>Maximizar resultados</td></tr>
-</table>`,
-
-  designer: `🎨 ROL: Eres un DISEÑADOR GRÁFICO Y MOTION DESIGNER experto en contenido visual para redes sociales.
-
-Tu tarea es crear el BLOQUE 5 – DISEÑADOR con todas las pautas de diseño basadas en el GUIÓN GENERADO.
-
-⚠️ IMPORTANTE: Todos los textos, thumbnails y assets deben reflejar el mensaje y frases del guión del Bloque 1.
-
----
-📦 CONTEXTO:
-- Producto: {producto_nombre}
-- Avatar: {producto_avatar}
-- País: {pais_objetivo}
-
-🎯 ENFOQUE:
-- CTA del guión: {cta}
-- Ángulo: {angulo_venta}
-
-📄 DOCUMENTOS:
-Brief: {documento_brief}
-Onboarding: {documento_onboarding}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>🎨 BLOQUE 5 – DISEÑADOR</h2>
-
-<h3>🎨 LINEAMIENTO GRÁFICO</h3>
-
-<h4>Paleta de Colores</h4>
-<table>
-  <tr><th>Uso</th><th>Color</th><th>HEX</th><th>Aplicación</th></tr>
-  <tr><td>Primario</td><td>[Nombre]</td><td>#XXXXXX</td><td>CTAs, acentos, palabras clave</td></tr>
-  <tr><td>Secundario</td><td>[Nombre]</td><td>#XXXXXX</td><td>Fondos, elementos de apoyo</td></tr>
-  <tr><td>Acento</td><td>[Nombre]</td><td>#XXXXXX</td><td>Destacados, alertas</td></tr>
-  <tr><td>Texto principal</td><td>[Nombre]</td><td>#FFFFFF</td><td>Subtítulos, headlines</td></tr>
-  <tr><td>Texto secundario</td><td>[Nombre]</td><td>#XXXXXX</td><td>Descripciones, secundarios</td></tr>
-</table>
-
-<h4>Tipografía</h4>
-<table>
-  <tr><th>Uso</th><th>Fuente</th><th>Peso</th><th>Tamaño</th></tr>
-  <tr><td>Headlines/Hooks</td><td>[Montserrat/Bebas Neue/Poppins]</td><td>Bold/Black</td><td>48-64px</td></tr>
-  <tr><td>Subtítulos</td><td>[Fuente]</td><td>SemiBold</td><td>32-40px</td></tr>
-  <tr><td>Cuerpo</td><td>[Fuente]</td><td>Regular</td><td>24-32px</td></tr>
-  <tr><td>CTA</td><td>[Fuente]</td><td>Bold + MAYÚSCULAS</td><td>36-48px</td></tr>
-</table>
-
-<h4>Estilo Visual / Mood</h4>
-<ul>
-  <li><strong>Estética general:</strong> [UGC orgánico / Producido minimalista / Bold y colorido / Premium]</li>
-  <li><strong>Feeling:</strong> [Moderno / Retro / Minimalista / Maximalista / Playful]</li>
-  <li><strong>Atmósfera:</strong> [Energética / Tranquila / Urgente / Inspiradora]</li>
-</ul>
-
-<h3>🖼️ REFERENCIAS VISUALES (Look & Feel UGC)</h3>
-<ul>
-  <li><strong>Referencia 1:</strong> [Descripción del estilo - Creator X en TikTok]</li>
-  <li><strong>Referencia 2:</strong> [Descripción del estilo - Marca Y en Instagram]</li>
-  <li><strong>Referencia 3:</strong> [Descripción del estilo]</li>
-  <li><strong>Lo que SÍ queremos:</strong> [Características visuales a replicar]</li>
-  <li><strong>Lo que NO queremos:</strong> [Características visuales a evitar]</li>
-</ul>
-
-<h3>🧩 PLANTILLAS Y ELEMENTOS REUTILIZABLES</h3>
-
-<h4>Stickers/Elementos</h4>
-<ul>
-  <li><strong>Sticker 1:</strong> [Emoji relevante + estilo]</li>
-  <li><strong>Sticker 2:</strong> [Flecha animada para CTA]</li>
-  <li><strong>Sticker 3:</strong> [Badge/Sello de oferta o beneficio]</li>
-</ul>
-
-<h4>Íconos</h4>
-<ul>
-  <li><strong>Estilo:</strong> [Línea / Sólido / Duotono]</li>
-  <li><strong>Set recomendado:</strong> [Phosphor / Feather / Custom]</li>
-  <li><strong>Íconos necesarios:</strong> [Lista según el guión]</li>
-</ul>
-
-<h4>Marcos/Overlays</h4>
-<ul>
-  <li><strong>Marco de video:</strong> [Descripción del borde o marco]</li>
-  <li><strong>Overlay de texto:</strong> [Fondo semi-transparente, gradiente, etc.]</li>
-  <li><strong>Lower third:</strong> [Diseño para nombre/usuario]</li>
-</ul>
-
-<h3>🏷️ LOGO Y BRANDING EN PANTALLA</h3>
-<table>
-  <tr><td><strong>Logo:</strong></td><td>[Versión a usar: full / isotipo / wordmark]</td></tr>
-  <tr><td><strong>Tamaño:</strong></td><td>[Pequeño - no intrusivo]</td></tr>
-  <tr><td><strong>Posición:</strong></td><td>[Esquina superior derecha / inferior izquierda]</td></tr>
-  <tr><td><strong>Opacidad:</strong></td><td>[70-100%]</td></tr>
-  <tr><td><strong>Aparición:</strong></td><td>[Siempre visible / Solo al final / Sutil]</td></tr>
-</table>
-
-<h3>📐 PROPORCIONES DE TEXTO Y JERARQUÍA VISUAL</h3>
-<table>
-  <tr><th>Elemento</th><th>Proporción pantalla</th><th>Posición</th><th>Duración</th></tr>
-  <tr><td>Hook (texto grande)</td><td>30-40% del área</td><td>Centro o centro-superior</td><td>0-3 segundos</td></tr>
-  <tr><td>Puntos clave</td><td>20-30% del área</td><td>Centro o tercio inferior</td><td>Según guión</td></tr>
-  <tr><td>CTA</td><td>25-35% del área</td><td>Centro o centro-inferior</td><td>Últimos 3-5 seg</td></tr>
-  <tr><td>Subtítulos</td><td>15-20% del área</td><td>Tercio inferior</td><td>Continuo</td></tr>
-</table>
-
-<h3>📍 UBICACIÓN DE CTA VISUAL / COPY DESTACADO</h3>
-<p><strong>CTA del guión:</strong> "{cta}"</p>
-<table>
-  <tr><td><strong>Posición en pantalla:</strong></td><td>[Centro-inferior / Centro]</td></tr>
-  <tr><td><strong>Estilo del texto:</strong></td><td>[Bold + Color primario + Sombra]</td></tr>
-  <tr><td><strong>Elementos de apoyo:</strong></td><td>[Flecha pulsante / Botón animado / Subrayado]</td></tr>
-  <tr><td><strong>Animación:</strong></td><td>[Bounce / Scale up / Slide in]</td></tr>
-  <tr><td><strong>Fondo:</strong></td><td>[Caja de color / Gradiente / Sin fondo]</td></tr>
-</table>
-
-<h3>📱 ASSETS A CREAR (basados en el guión)</h3>
-
-<h4>1. Thumbnail / Cover (1080x1080 o 1080x1920)</h4>
-<ul>
-  <li><strong>Texto principal:</strong> "[Frase del hook del guión]"</li>
-  <li><strong>Imagen:</strong> [Frame del video / Foto del creador / Producto]</li>
-  <li><strong>Elementos:</strong> [Emoji / Badge / Marco]</li>
-  <li><strong>Estilo:</strong> [Alto contraste, legible en miniatura]</li>
-</ul>
-
-<h4>2. Textos en Pantalla (del guión)</h4>
-<ul>
-  <li><strong>Texto 1 (Hook):</strong> "[Frase del hook]" - Animación: [Pop in]</li>
-  <li><strong>Texto 2 (Punto clave 1):</strong> "[Frase del desarrollo]" - Animación: [Slide]</li>
-  <li><strong>Texto 3 (Punto clave 2):</strong> "[Frase del beneficio]" - Animación: [Fade]</li>
-  <li><strong>Texto 4 (CTA):</strong> "{cta}" - Animación: [Bounce + Flecha]</li>
-</ul>
-
-<h4>3. End Card / CTA Animado</h4>
-<ul>
-  <li><strong>Texto principal:</strong> "{cta}"</li>
-  <li><strong>Elementos:</strong> [Logo + Flecha + Botón]</li>
-  <li><strong>Animación:</strong> [Secuencia de entrada]</li>
-  <li><strong>Duración:</strong> [2-3 segundos]</li>
-</ul>
-
-<h3>✅ CHECKLIST DEL DISEÑADOR</h3>
-<ul>
-  <li>[ ] Paleta de colores consistente</li>
-  <li>[ ] Tipografía legible en móvil</li>
-  <li>[ ] Thumbnail con hook del guión</li>
-  <li>[ ] Textos en pantalla reflejan el guión</li>
-  <li>[ ] Safe zones respetadas (sin texto en bordes)</li>
-  <li>[ ] CTA visual claro y destacado</li>
-  <li>[ ] Assets en alta resolución (1080p mínimo)</li>
-  <li>[ ] Archivos organizados y nombrados</li>
-  <li>[ ] Versiones para diferentes plataformas</li>
-</ul>`,
-
-  admin: `📋 ROL: Eres un PROJECT MANAGER / ADMINISTRADOR experto en producción de contenido digital.
-
-Tu tarea es crear el BLOQUE 6 – ADMINISTRADOR / PROJECT MANAGER con el plan de ejecución completo.
-
-⚠️ IMPORTANTE: El cronograma y checklists deben coordinar todos los bloques anteriores (Creador, Editor, Trafficker, Estratega, Diseñador).
-
----
-📦 CONTEXTO:
-- Producto: {producto_nombre}
-- País: {pais_objetivo}
-
-🎯 ENFOQUE:
-- CTA del guión: {cta}
-- Ángulo: {angulo_venta}
-- Estructura: {estructura_narrativa}
-
-📄 DOCUMENTOS:
-Brief: {documento_brief}
-Estrategia: {producto_estrategia}
-
----
-FORMATO DE ENTREGA (HTML estructurado):
-
-<h2>📋 BLOQUE 6 – ADMINISTRADOR / PROJECT MANAGER</h2>
-
-<h3>📅 CRONOGRAMA SUGERIDO</h3>
-<table>
-  <tr><th>Día</th><th>Fase</th><th>Tarea</th><th>Responsable</th><th>Entregable</th><th>Deadline</th></tr>
-  <tr><td>1</td><td>Pre-producción</td><td>Revisión y aprobación del guión</td><td>Estratega + Cliente</td><td>Guión aprobado</td><td>[Hora]</td></tr>
-  <tr><td>1</td><td>Pre-producción</td><td>Briefing al creador con guión</td><td>Admin</td><td>Brief enviado</td><td>[Hora]</td></tr>
-  <tr><td>1</td><td>Pre-producción</td><td>Asignación de editor y diseñador</td><td>Admin</td><td>Equipo confirmado</td><td>[Hora]</td></tr>
-  <tr><td>2-3</td><td>Producción</td><td>Grabación del video</td><td>Creador</td><td>Video raw</td><td>[Fecha]</td></tr>
-  <tr><td>3</td><td>Producción</td><td>Subida de material raw</td><td>Creador</td><td>Archivos en Drive</td><td>[Hora]</td></tr>
-  <tr><td>4</td><td>Post-producción</td><td>Edición según pautas Bloque 2</td><td>Editor</td><td>Video editado V1</td><td>[Fecha]</td></tr>
-  <tr><td>4</td><td>Post-producción</td><td>Creación de assets según Bloque 5</td><td>Diseñador</td><td>Thumbnails + Textos</td><td>[Fecha]</td></tr>
-  <tr><td>5</td><td>Post-producción</td><td>Integración de assets en video</td><td>Editor</td><td>Video editado V2</td><td>[Fecha]</td></tr>
-  <tr><td>5</td><td>Revisión</td><td>QA interno</td><td>Admin</td><td>Feedback documentado</td><td>[Hora]</td></tr>
-  <tr><td>6</td><td>Revisión</td><td>Correcciones (si aplica)</td><td>Editor</td><td>Video final</td><td>[Fecha]</td></tr>
-  <tr><td>6-7</td><td>Aprobación</td><td>Envío a cliente para aprobación</td><td>Admin</td><td>Aprobación recibida</td><td>[Fecha]</td></tr>
-  <tr><td>7-8</td><td>Publicación</td><td>Publicación orgánica según Bloque 4</td><td>Estratega</td><td>Posts en vivo</td><td>[Fecha + Hora]</td></tr>
-  <tr><td>8</td><td>Publicación</td><td>Configuración de campaña según Bloque 3</td><td>Trafficker</td><td>Ads activos</td><td>[Fecha]</td></tr>
-</table>
-
-<h3>👥 RESPONSABLES POR TAREA</h3>
-<table>
-  <tr><th>Rol</th><th>Responsabilidades</th><th>Input que recibe</th><th>Output que entrega</th></tr>
-  <tr><td>🧍‍♂️ Creador</td><td>Grabación del video según guión</td><td>Bloque 1 (Guión completo + Brief)</td><td>Video raw grabado</td></tr>
-  <tr><td>🎬 Editor</td><td>Edición completa del video</td><td>Video raw + Bloque 2 (Pautas edición)</td><td>Video editado final</td></tr>
-  <tr><td>💰 Trafficker</td><td>Configuración y gestión de campañas</td><td>Video final + Bloque 3 (Pautas ads)</td><td>Campañas activas + Reportes</td></tr>
-  <tr><td>🧠 Estratega</td><td>Estrategia de publicación y análisis</td><td>Video final + Bloque 4 (Estrategia)</td><td>Posts publicados + Análisis</td></tr>
-  <tr><td>🎨 Diseñador</td><td>Assets gráficos y visuales</td><td>Guión + Bloque 5 (Pautas diseño)</td><td>Thumbnails + Textos + Assets</td></tr>
-  <tr><td>📋 Admin/PM</td><td>Coordinación y seguimiento</td><td>Todos los bloques</td><td>Proyecto completado</td></tr>
-</table>
-
-<h3>📦 ENTREGABLES ESPERADOS</h3>
-
-<h4>Entregables del Creador:</h4>
-<ul>
-  <li>[ ] Video raw en alta calidad (1080p mínimo)</li>
-  <li>[ ] Múltiples tomas de cada hook (A/B/C)</li>
-  <li>[ ] Audio limpio y claro</li>
-  <li>[ ] B-roll adicional (si aplica)</li>
-</ul>
-
-<h4>Entregables del Editor:</h4>
-<ul>
-  <li>[ ] Video editado principal (9:16)</li>
-  <li>[ ] Versiones adicionales (1:1, 16:9 si aplica)</li>
-  <li>[ ] Video con 3 variaciones de hook</li>
-  <li>[ ] Archivo de proyecto editable</li>
-</ul>
-
-<h4>Entregables del Diseñador:</h4>
-<ul>
-  <li>[ ] Thumbnail principal (1080x1080)</li>
-  <li>[ ] Thumbnail stories (1080x1920)</li>
-  <li>[ ] Pack de textos animados</li>
-  <li>[ ] Assets en formato editable (PSD/AI/Figma)</li>
-</ul>
-
-<h4>Entregables del Trafficker:</h4>
-<ul>
-  <li>[ ] 3 variaciones de ad configuradas</li>
-  <li>[ ] Audiencias creadas</li>
-  <li>[ ] Copies para cada variación</li>
-  <li>[ ] Reporte de performance (semanal)</li>
-</ul>
-
-<h4>Entregables del Estratega:</h4>
-<ul>
-  <li>[ ] Posts publicados en todas las plataformas</li>
-  <li>[ ] Captions y hashtags finales</li>
-  <li>[ ] Comentario fijado</li>
-  <li>[ ] Reporte de engagement (semanal)</li>
-</ul>
-
-<h3>📆 FECHA ESTIMADA DE ENTREGA</h3>
-<table>
-  <tr><td><strong>Inicio del proyecto:</strong></td><td>[Fecha]</td></tr>
-  <tr><td><strong>Video raw listo:</strong></td><td>[Fecha + 2-3 días]</td></tr>
-  <tr><td><strong>Video editado V1:</strong></td><td>[Fecha + 4 días]</td></tr>
-  <tr><td><strong>Video final aprobado:</strong></td><td>[Fecha + 6-7 días]</td></tr>
-  <tr><td><strong>Publicación:</strong></td><td>[Fecha + 7-8 días]</td></tr>
-  <tr><td><strong>Ads activos:</strong></td><td>[Fecha + 8 días]</td></tr>
-</table>
-
-<h3>✅ CHECKLIST DE REVISIÓN FINAL</h3>
-
-<h4>🎙️ VOZ / AUDIO</h4>
-<ul>
-  <li>[ ] Voz clara y audible</li>
-  <li>[ ] Sin ruido de fondo molesto</li>
-  <li>[ ] Volumen consistente</li>
-  <li>[ ] Música no compite con la voz</li>
-  <li>[ ] Pronunciación correcta del producto/marca</li>
-</ul>
-
-<h4>🖼️ IMAGEN / VIDEO</h4>
-<ul>
-  <li>[ ] Calidad de video (1080p mínimo)</li>
-  <li>[ ] Iluminación adecuada</li>
-  <li>[ ] Encuadre correcto (safe zones)</li>
-  <li>[ ] Sin elementos distractores</li>
-  <li>[ ] Color grading consistente</li>
-</ul>
-
-<h4>📝 COHERENCIA CON MARCA</h4>
-<ul>
-  <li>[ ] Tono de voz acorde a la marca</li>
-  <li>[ ] Colores de marca respetados</li>
-  <li>[ ] Logo visible (si aplica)</li>
-  <li>[ ] Mensajes alineados con estrategia</li>
-  <li>[ ] Sin errores de ortografía</li>
-</ul>
-
-<h4>📢 CTA CLARO</h4>
-<ul>
-  <li>[ ] CTA visible mínimo 3 segundos</li>
-  <li>[ ] CTA coincide con objetivo: "{cta}"</li>
-  <li>[ ] Fácil de entender y ejecutar</li>
-  <li>[ ] Urgencia/motivación presente</li>
-</ul>
-
-<h4>⚡ TÉCNICO</h4>
-<ul>
-  <li>[ ] Formato correcto (9:16, 1:1, etc.)</li>
-  <li>[ ] Duración dentro del rango sugerido</li>
-  <li>[ ] Subtítulos sincronizados</li>
-  <li>[ ] Archivo exportado correctamente</li>
-  <li>[ ] Nombrado según convención</li>
-</ul>
-
-<h3>⚠️ RIESGOS Y MITIGACIÓN</h3>
-<table>
-  <tr><th>Riesgo</th><th>Probabilidad</th><th>Impacto</th><th>Mitigación</th></tr>
-  <tr><td>Retraso en grabación</td><td>Media</td><td>Alto</td><td>Creador backup asignado + Comunicación proactiva</td></tr>
-  <tr><td>Cambios al guión post-grabación</td><td>Alta</td><td>Alto</td><td>Máximo 1 ronda de cambios + Aprobación previa obligatoria</td></tr>
-  <tr><td>Assets de diseño no listos</td><td>Baja</td><td>Medio</td><td>Diseño en paralelo con grabación</td></tr>
-  <tr><td>Rechazo de cliente</td><td>Media</td><td>Alto</td><td>Preview parcial antes de finalizar</td></tr>
-  <tr><td>Problemas técnicos de exportación</td><td>Baja</td><td>Medio</td><td>Checklist técnico antes de envío</td></tr>
-</table>
-
-<h3>💬 COMUNICACIÓN</h3>
-<table>
-  <tr><td><strong>Canal principal:</strong></td><td>[Slack / WhatsApp / Email]</td></tr>
-  <tr><td><strong>Reunión de kick-off:</strong></td><td>[Fecha y hora]</td></tr>
-  <tr><td><strong>Check-ins:</strong></td><td>[Frecuencia y formato]</td></tr>
-  <tr><td><strong>Escalación:</strong></td><td>[A quién y cuándo]</td></tr>
-</table>`,
+<h3 style="color:#f59e0b;">⭐ B-ROLLS OPCIONALES (4-6 tomas)</h3>
+<table>[4-6 filas adicionales con color:#1f2937]</table>
+
+<h3 style="color:#3b82f6;">🎯 SECUENCIA DE GRABACIÓN</h3>
+Setup 1 Cenital: B-Rolls X, X, X
+Setup 2 Lateral: B-Rolls X, X
+Setup 3 En uso: B-Rolls X, X, X
+
+<h3 style="color:#8b5cf6;">💡 TIPS</h3>
+Iluminación | Configuración (1080p, 30-60fps) | Cantidad (2-3 tomas cada uno)
+
+REGLAS:
+- Solo HTML, color:#1f2937 en todas las celdas
+- B-Rolls ESPECÍFICOS ("Close-up pipeta dispensando 3 gotas" NO "toma del producto")
+- Planos: PD, PM, PP, PE | Duración: 2-5s
+
+COMPLETA las 10-14 tomas y todas las secciones.`,
 };
 
 export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId, spherePhase }: StrategistScriptFormProps) {
@@ -1158,8 +420,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   // Block selection state
   const [selectedBlocks, setSelectedBlocks] = useState<Record<string, boolean>>({
-    script: true, editor: true, trafficker: true,
-    strategist: true, designer: true, admin: true,
+    script: true, director: true, marketing: true, captions: true, broll: true,
   });
 
   // Token balance
@@ -1208,12 +469,11 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const [docsLoaded, setDocsLoaded] = useState(false);
 
   const [generationSteps, setGenerationSteps] = useState<GenerationStep[]>([
-    { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
-    { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
-    { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
-    { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
-    { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
-    { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
+    { key: "script", label: "🎬 Guión Principal", status: "pending" },
+    { key: "director", label: "🎥 Modo Director", status: "pending" },
+    { key: "marketing", label: "📊 Marketing (Tráfico + Estrategia)", status: "pending" },
+    { key: "captions", label: "📱 Captions (4 variaciones)", status: "pending" },
+    { key: "broll", label: "🎬 B-Roll (Ideas de tomas)", status: "pending" },
   ]);
 
   const [formData, setFormData] = useState<ScriptFormData>({
@@ -1229,14 +489,13 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     additional_instructions: "",
     hooks: [],
     script_prompt: DEFAULT_PROMPTS.script,
-    editor_prompt: DEFAULT_PROMPTS.editor,
-    strategist_prompt: DEFAULT_PROMPTS.strategist,
-    trafficker_prompt: DEFAULT_PROMPTS.trafficker,
-    designer_prompt: DEFAULT_PROMPTS.designer,
-    admin_prompt: DEFAULT_PROMPTS.admin,
+    director_prompt: DEFAULT_PROMPTS.director,
+    marketing_prompt: DEFAULT_PROMPTS.marketing,
+    captions_prompt: DEFAULT_PROMPTS.captions,
+    broll_prompt: DEFAULT_PROMPTS.broll,
     reference_transcription: "",
     video_strategies: "",
-    ai_model: "google/gemini-2.5-flash",
+    ai_model: "mistralai/mistral-large-latest",
     video_duration: "",
     target_platform: "",
     use_perplexity: false,
@@ -1354,12 +613,10 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     if (!loadingPrompts && customPrompts) {
       setFormData(prev => ({
         ...prev,
-        script_prompt: customPrompts.script,
-        editor_prompt: customPrompts.editor,
-        strategist_prompt: customPrompts.strategist,
-        trafficker_prompt: customPrompts.trafficker,
-        designer_prompt: customPrompts.designer,
-        admin_prompt: customPrompts.admin,
+        script_prompt: customPrompts.script || DEFAULT_PROMPTS.script,
+        director_prompt: customPrompts.director || DEFAULT_PROMPTS.director,
+        marketing_prompt: customPrompts.marketing || DEFAULT_PROMPTS.marketing,
+        captions_prompt: customPrompts.captions || DEFAULT_PROMPTS.captions,
       }));
     }
   }, [customPrompts, loadingPrompts]);
@@ -1722,12 +979,10 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   const resetSteps = () => {
     setGenerationSteps([
-      { key: "script", label: "🧍‍♂️ Bloque Creador (Guión)", status: "pending" },
-      { key: "editor", label: "🎬 Bloque Editor", status: "pending" },
-      { key: "trafficker", label: "💰 Bloque Trafficker", status: "pending" },
-      { key: "strategist", label: "🧠 Bloque Estratega", status: "pending" },
-      { key: "designer", label: "🎨 Bloque Diseñador", status: "pending" },
-      { key: "admin", label: "📋 Bloque Admin/PM", status: "pending" },
+      { key: "script", label: "🎬 Guión", status: "pending" },
+      { key: "director", label: "🎥 Director", status: "pending" },
+      { key: "marketing", label: "📊 Marketing", status: "pending" },
+      { key: "captions", label: "📱 Captions", status: "pending" },
     ]);
   };
 
@@ -1769,6 +1024,8 @@ PAÍS OBJETIVO: ${formData.target_country}
 ${formData.video_duration ? `DURACIÓN DEL VIDEO: ${durationLabel}` : ''}
 ${formData.target_platform ? `PLATAFORMA DESTINO: ${platformLabel}` : ''}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
+
+⚠️ CANTIDAD DE HOOKS: ${formData.hooks_count} (OBLIGATORIO: genera EXACTAMENTE esta cantidad en la ESCENA 1)
 
 `;
 
@@ -1863,7 +1120,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   };
 
   const generateContent = async (
-    type: "script" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
+    type: "script" | "director" | "marketing" | "captions" | "broll" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
     customPrompt: string,
     previousScript?: string
   ): Promise<string> => {
@@ -1967,21 +1224,17 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
     const generatedContent: GeneratedContent = {
       script: "",
-      editor_guidelines: "",
-      strategist_guidelines: "",
-      trafficker_guidelines: "",
-      designer_guidelines: "",
-      admin_guidelines: "",
+      director_output: "",
+      marketing_output: "",
+      captions: "",
     };
 
     const emitProgress = (patch: Partial<GeneratedContent>) => {
       console.log("[StrategistScriptForm] emitProgress", {
         script: patch.script?.length,
-        editor: patch.editor_guidelines?.length,
-        strategist: patch.strategist_guidelines?.length,
-        trafficker: patch.trafficker_guidelines?.length,
-        designer: patch.designer_guidelines?.length,
-        admin: patch.admin_guidelines?.length,
+        director: patch.director_output?.length,
+        marketing: patch.marketing_output?.length,
+        captions: patch.captions?.length,
       });
       onScriptGenerated({ ...generatedContent, ...patch });
     };
@@ -2012,17 +1265,16 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         scriptContext = formData.script_prompt;
       }
 
-      // Step 2-6: Other blocks (only selected ones)
+      // Step 2-5: Other blocks (only selected ones)
       const otherBlocks: Array<{
-        key: "editor" | "strategist" | "trafficker" | "designer" | "admin";
+        key: "director" | "marketing" | "captions" | "broll";
         field: keyof GeneratedContent;
         prompt: string;
       }> = [
-        { key: "editor", field: "editor_guidelines", prompt: formData.editor_prompt },
-        { key: "trafficker", field: "trafficker_guidelines", prompt: formData.trafficker_prompt },
-        { key: "strategist", field: "strategist_guidelines", prompt: formData.strategist_prompt },
-        { key: "designer", field: "designer_guidelines", prompt: formData.designer_prompt },
-        { key: "admin", field: "admin_guidelines", prompt: formData.admin_prompt },
+        { key: "director", field: "director_output", prompt: formData.director_prompt || "" },
+        { key: "marketing", field: "marketing_output", prompt: formData.marketing_prompt || "" },
+        { key: "captions", field: "captions", prompt: formData.captions_prompt || "" },
+        { key: "broll", field: "broll_output", prompt: formData.broll_prompt || "" },
       ];
 
       for (const block of otherBlocks) {
@@ -2227,29 +1479,6 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
-      {/* AI Provider Selection */}
-      <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-4">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          <Label className="text-xs sm:text-sm font-medium">Modelo IA</Label>
-        </div>
-        
-        <Select 
-          value={formData.ai_model} 
-          onValueChange={(v) => setFormData({ ...formData, ai_model: v })}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Seleccionar modelo" />
-          </SelectTrigger>
-          <SelectContent>
-            {AI_MODELS.map((model) => (
-              <SelectItem key={model.value} value={model.value}>
-                {model.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {/* CTA */}
@@ -2501,7 +1730,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
               {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
                 const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                const situation = a?.situation || a?.currentSituation || "";
+                const rawSituation = a?.situation || a?.currentSituation;
+                const situation = typeof rawSituation === 'string'
+                  ? rawSituation
+                  : (rawSituation?.dayToDay || '');
 
                 const formatted = [
                   `AVATAR: ${name}`,
@@ -2791,50 +2023,30 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Prompt para Pautas del Editor</Label>
+            <Label className="text-sm font-medium">🎥 Prompt para Modo Director</Label>
             <Textarea
-              value={formData.editor_prompt}
-              onChange={(e) => setFormData({ ...formData, editor_prompt: e.target.value })}
+              value={formData.director_prompt}
+              onChange={(e) => setFormData({ ...formData, director_prompt: e.target.value })}
               rows={3}
               className="text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Prompt para Pautas del Estratega</Label>
+            <Label className="text-sm font-medium">📊 Prompt para Marketing</Label>
             <Textarea
-              value={formData.strategist_prompt}
-              onChange={(e) => setFormData({ ...formData, strategist_prompt: e.target.value })}
+              value={formData.marketing_prompt}
+              onChange={(e) => setFormData({ ...formData, marketing_prompt: e.target.value })}
               rows={3}
               className="text-sm"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Prompt para Pautas del Trafficker</Label>
+            <Label className="text-sm font-medium">📱 Prompt para Captions</Label>
             <Textarea
-              value={formData.trafficker_prompt}
-              onChange={(e) => setFormData({ ...formData, trafficker_prompt: e.target.value })}
-              rows={3}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">🎨 Prompt para Pautas del Diseñador</Label>
-            <Textarea
-              value={formData.designer_prompt}
-              onChange={(e) => setFormData({ ...formData, designer_prompt: e.target.value })}
-              rows={3}
-              className="text-sm"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">📋 Prompt para Pautas del Admin/PM</Label>
-            <Textarea
-              value={formData.admin_prompt}
-              onChange={(e) => setFormData({ ...formData, admin_prompt: e.target.value })}
+              value={formData.captions_prompt}
+              onChange={(e) => setFormData({ ...formData, captions_prompt: e.target.value })}
               rows={3}
               className="text-sm"
             />
@@ -2846,11 +2058,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             onClick={() => setFormData(prev => ({
               ...prev,
               script_prompt: DEFAULT_PROMPTS.script,
-              editor_prompt: DEFAULT_PROMPTS.editor,
-              strategist_prompt: DEFAULT_PROMPTS.strategist,
-              trafficker_prompt: DEFAULT_PROMPTS.trafficker,
-              designer_prompt: DEFAULT_PROMPTS.designer,
-              admin_prompt: DEFAULT_PROMPTS.admin,
+              director_prompt: DEFAULT_PROMPTS.director,
+              marketing_prompt: DEFAULT_PROMPTS.marketing,
+              captions_prompt: DEFAULT_PROMPTS.captions,
             }))}
           >
             Restaurar prompts por defecto
@@ -2860,20 +2070,26 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Generation Progress */}
       {loading && (
-        <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-sm">
-          <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3">Progreso:</p>
-          <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
-            {generationSteps.filter((step) => selectedBlocks[step.key]).map((step) => (
-              <div key={step.key} className="flex items-center gap-1.5 sm:gap-3">
-                {step.status === "pending" && <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
-                {step.status === "generating" && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary shrink-0" />}
-                {step.status === "done" && <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />}
-                {step.status === "error" && <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive shrink-0" />}
-                <span className={`text-xs sm:text-sm truncate ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
-                  {step.label}
-                </span>
-              </div>
-            ))}
+        <div className="space-y-4">
+          {/* Skills Loading State */}
+          <SkillsLoadingState isGenerating={loading} />
+
+          {/* Blocks Progress */}
+          <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-sm">
+            <p className="text-xs sm:text-sm font-medium mb-2 sm:mb-3">Progreso por bloques:</p>
+            <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 sm:gap-2">
+              {generationSteps.filter((step) => selectedBlocks[step.key]).map((step) => (
+                <div key={step.key} className="flex items-center gap-1.5 sm:gap-3">
+                  {step.status === "pending" && <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 border-muted-foreground/30 shrink-0" />}
+                  {step.status === "generating" && <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin text-primary shrink-0" />}
+                  {step.status === "done" && <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 shrink-0" />}
+                  {step.status === "error" && <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive shrink-0" />}
+                  <span className={`text-xs sm:text-sm truncate ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

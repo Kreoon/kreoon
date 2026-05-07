@@ -1,13 +1,13 @@
 // Content Block Configuration Types
 
-export type BlockKey = 
-  | 'ia' 
-  | 'script' 
-  | 'editor' 
-  | 'strategist' 
-  | 'designer' 
-  | 'trafficker' 
-  | 'admin'
+// Nueva estructura: 5 bloques principales de scripts
+export type BlockKey =
+  | 'ia'
+  | 'script'
+  | 'director'
+  | 'broll'
+  | 'marketing'
+  | 'captions'
   | 'material'
   | 'video'
   | 'team'
@@ -87,15 +87,14 @@ export interface ContentConfigState {
   loading: boolean;
 }
 
-// Block metadata for UI
+// Block metadata for UI - Nueva estructura 5 bloques
 export const BLOCK_METADATA: Record<BlockKey, { label: string; icon: string; description: string }> = {
-  ia: { label: 'IA', icon: '🤖', description: 'Asistente de inteligencia artificial' },
-  script: { label: 'Guión', icon: '📝', description: 'Contenido del guión principal' },
-  editor: { label: 'Productor AV', icon: '🎬', description: 'Instrucciones para el productor audio-visual' },
-  strategist: { label: 'Estratega', icon: '🧠', description: 'Estrategia de contenido' },
-  designer: { label: 'Diseñador', icon: '🎨', description: 'Lineamientos gráficos' },
-  trafficker: { label: 'Trafficker', icon: '💰', description: 'Indicaciones de pauta' },
-  admin: { label: 'Admin', icon: '📋', description: 'Cronograma y responsables' },
+  ia: { label: 'IA', icon: '🤖', description: 'Generación de guiones con IA' },
+  script: { label: 'Guión', icon: '🎬', description: 'Guión completo para el creador' },
+  director: { label: 'Director', icon: '🎥', description: 'Tabla de producción por escenas' },
+  broll: { label: 'B-Roll', icon: '🎬', description: 'Ideas de tomas de cobertura' },
+  marketing: { label: 'Marketing', icon: '📊', description: 'Estrategia + Tráfico combinado' },
+  captions: { label: 'Captions', icon: '📱', description: '4 variaciones: 2 orgánico + 2 ads' },
   material: { label: 'Material', icon: '📦', description: 'Archivos y recursos' },
   video: { label: 'Video', icon: '🎥', description: 'Video final y miniaturas' },
   team: { label: 'Equipo', icon: '👥', description: 'Asignación de equipo' },
@@ -106,7 +105,7 @@ export const BLOCK_METADATA: Record<BlockKey, { label: string; icon: string; des
 
 export const AVAILABLE_ROLES = [
   'admin',
-  'creator', 
+  'creator',
   'editor',
   'strategist',
   'designer',
@@ -115,7 +114,6 @@ export const AVAILABLE_ROLES = [
 ] as const;
 
 export const DEFAULT_BLOCKS: BlockKey[] = [
-  'ia', 'script', 'editor', 'strategist', 'designer', 
-  'trafficker', 'admin', 'material', 'video', 'team', 
-  'dates', 'payments', 'comments'
+  'ia', 'script', 'director', 'broll', 'marketing', 'captions',
+  'material', 'video', 'team', 'dates', 'payments', 'comments'
 ];

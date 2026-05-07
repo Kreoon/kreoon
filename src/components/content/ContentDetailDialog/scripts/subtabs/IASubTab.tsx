@@ -1,5 +1,6 @@
 import { ProductSelector } from '@/components/products/ProductSelector';
 import { StrategistScriptForm } from '@/components/content/StrategistScriptForm';
+import { SkillsExecutionBadge } from '@/components/content/SkillsExecutionBadge';
 import { SectionCard, FieldRow } from '../../components/SectionCard';
 import { Sparkles, Package, History } from 'lucide-react';
 import { SubTabProps } from './types';
@@ -29,23 +30,37 @@ export function IASubTab({
 
   const handleScriptGenerated = (generated: {
     script: string;
-    editor_guidelines: string;
-    trafficker_guidelines: string;
-    strategist_guidelines: string;
-    designer_guidelines: string;
-    admin_guidelines: string;
+    director_output?: string;
+    marketing_output?: string;
+    captions?: string;
+    broll_output?: string;
   }) => {
+    // Guardar TODOS los bloques generados en el formulario
     setFormData(prev => ({
       ...prev,
-      script: generated.script,
-      editor_guidelines: generated.editor_guidelines,
-      trafficker_guidelines: generated.trafficker_guidelines,
-      strategist_guidelines: generated.strategist_guidelines,
-      designer_guidelines: generated.designer_guidelines,
-      admin_guidelines: generated.admin_guidelines,
+      script: generated.script || prev.script,
+      director_output: generated.director_output || prev.director_output,
+      marketing_output: generated.marketing_output || prev.marketing_output,
+      captions: generated.captions || prev.captions,
+      broll_output: generated.broll_output || prev.broll_output,
     }));
     if (!editMode) setEditMode(true);
-    toast({ title: 'Guión generado', description: 'Revisa y edita en la pestaña Guión' });
+
+    // Mostrar qué bloques se generaron
+    const blocksGenerated = [
+      generated.script && 'Guión',
+      generated.director_output && 'Director',
+      generated.marketing_output && 'Marketing',
+      generated.captions && 'Captions',
+      generated.broll_output && 'B-Roll',
+    ].filter(Boolean);
+
+    toast({
+      title: 'Contenido generado',
+      description: blocksGenerated.length > 0
+        ? `${blocksGenerated.join(' + ')} listos`
+        : 'Generación completada'
+    });
   };
 
   return (
@@ -85,6 +100,16 @@ export function IASubTab({
             onScriptGenerated={handleScriptGenerated}
             organizationId={organizationId}
             spherePhase={formData.sphere_phase}
+          />
+        </SectionCard>
+      )}
+
+      {/* Skills Execution Info */}
+      {content?.metadata?.skills_executed && content.metadata.skills_executed.length > 0 && (
+        <SectionCard title="Skills IA Ejecutados" iconEmoji="🤖">
+          <SkillsExecutionBadge
+            skillsExecuted={content.metadata.skills_executed}
+            viralityScore={content.metadata.virality_score}
           />
         </SectionCard>
       )}

@@ -65,6 +65,10 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     trafficker_guidelines: '',
     designer_guidelines: '',
     admin_guidelines: '',
+    director_output: '',
+    marketing_output: '',
+    captions: '',
+    broll_output: '',
     sphere_phase: ''
   };
 
@@ -138,6 +142,10 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         trafficker_guidelines: (content as any).trafficker_guidelines || '',
         designer_guidelines: (content as any).designer_guidelines || '',
         admin_guidelines: (content as any).admin_guidelines || '',
+        director_output: (content as any).director_output || '',
+        marketing_output: (content as any).marketing_output || '',
+        captions: (content as any).captions || '',
+        broll_output: (content as any).broll_output || '',
         sphere_phase: (content as any).sphere_phase || ''
       };
       
@@ -385,6 +393,11 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('trafficker_guidelines')) updates.trafficker_guidelines = data.trafficker_guidelines || null;
       if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+      // Script generation blocks
+      if (changed('director_output')) updates.director_output = data.director_output || null;
+      if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;
+      if (changed('captions')) updates.captions = data.captions || null;
+      if (changed('broll_output')) updates.broll_output = data.broll_output || null;
 
       // Video fields
       if (changed('video_url')) updates.video_url = data.video_url || null;
@@ -431,6 +444,11 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
       if (changed('admin_guidelines')) updates.admin_guidelines = data.admin_guidelines || null;
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+      // Script generation blocks
+      if (changed('director_output')) updates.director_output = data.director_output || null;
+      if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;
+      if (changed('captions')) updates.captions = data.captions || null;
+      if (changed('broll_output')) updates.broll_output = data.broll_output || null;
 
       // Video fields: ONLY include if explicitly modified by admin (protected by VIDEO_FIELDS set)
       if (changed('video_url')) updates.video_url = data.video_url || null;

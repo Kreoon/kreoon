@@ -39,6 +39,7 @@ import {
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 import { AIFeedbackWidget } from "@/components/ai/AIFeedbackWidget";
+import { SkillsLoadingState } from "./SkillsLoadingState";
 
 interface Product {
   id: string;
@@ -676,7 +677,10 @@ export function ScriptGenerator({ product, contentId, onScriptGenerated, organiz
 
   const formatAvatarForField = (a: any, index: number) => {
     const name = a?.name || a?.avatarName || `Avatar ${index + 1}`;
-    const situation = a?.situation || a?.currentSituation || "";
+    const rawSituation = a?.situation || a?.currentSituation;
+    const situation = typeof rawSituation === 'string'
+      ? rawSituation
+      : (rawSituation?.dayToDay || '');
     const awareness = a?.awarenessLevel || a?.awareness || "";
     const drivers = Array.isArray(a?.drivers)
       ? a.drivers.join(", ")
@@ -1399,7 +1403,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             {researchAvatars.length > 0 ? (
               researchAvatars.map((a: any, idx: number) => {
                 const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                const situation = a?.situation || a?.currentSituation || "";
+                const rawSituation = a?.situation || a?.currentSituation;
+                const situation = typeof rawSituation === 'string'
+                  ? rawSituation
+                  : (rawSituation?.dayToDay || '');
                 const awareness = a?.awarenessLevel || a?.awareness || "";
 
                 return (
@@ -1677,19 +1684,25 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
       {/* Generation Progress */}
       {loading && (
-        <div className="space-y-2 p-4 bg-muted/50 rounded-sm">
-          <p className="text-sm font-medium mb-3">Progreso (IA):</p>
-          {generationSteps.map((step) => (
-            <div key={step.key} className="flex items-center gap-3">
-              {step.status === "pending" && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
-              {step.status === "generating" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-              {step.status === "done" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-              {step.status === "error" && <X className="h-5 w-5 text-destructive" />}
-              <span className={`text-sm ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
-                {step.label}
-              </span>
-            </div>
-          ))}
+        <div className="space-y-4">
+          {/* Skills Loading State */}
+          <SkillsLoadingState isGenerating={loading} />
+
+          {/* Steps Progress */}
+          <div className="space-y-2 p-4 bg-muted/50 rounded-sm">
+            <p className="text-sm font-medium mb-3">Progreso por bloques:</p>
+            {generationSteps.map((step) => (
+              <div key={step.key} className="flex items-center gap-3">
+                {step.status === "pending" && <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />}
+                {step.status === "generating" && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
+                {step.status === "done" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                {step.status === "error" && <X className="h-5 w-5 text-destructive" />}
+                <span className={`text-sm ${step.status === "generating" ? "text-primary font-medium" : ""}`}>
+                  {step.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

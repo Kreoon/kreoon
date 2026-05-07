@@ -219,7 +219,9 @@ export function ProductResearchSelector({
       return selectedProduct.market_research.strategicAvatars.map((a: any) => ({
         name: a.name || a.avatarName,
         age: a.age,
-        situation: a.situation || a.currentSituation,
+        situation: typeof (a.situation || a.currentSituation) === 'string'
+          ? (a.situation || a.currentSituation)
+          : (a.situation?.dayToDay || a.currentSituation?.dayToDay || ''),
         awarenessLevel: a.awarenessLevel || a.awareness,
         drivers: a.drivers || (Array.isArray(a.emotionalDrivers) ? a.emotionalDrivers.join(', ') : a.emotionalDrivers),
         biases: a.biases || (Array.isArray(a.cognitiveBiases) ? a.cognitiveBiases.join(', ') : a.cognitiveBiases),

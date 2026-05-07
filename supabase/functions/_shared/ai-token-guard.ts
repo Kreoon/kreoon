@@ -7,7 +7,7 @@ import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /**
  * Costo en tokens por acción de IA.
- * SYNC: src/lib/finance/constants.ts v2026.02.17
+ * SYNC: src/lib/finance/constants.ts v2026.05.06
  * Estos valores deben coincidir con AI_TOKEN_COSTS del frontend.
  */
 const AI_TOKEN_COSTS: Record<string, number> = {
@@ -24,11 +24,9 @@ const AI_TOKEN_COSTS: Record<string, number> = {
   "board.analyze_card": 80,
   "talent.match": 60,
   "scripts.block.script": 25,
-  "scripts.block.editor": 20,
-  "scripts.block.trafficker": 20,
-  "scripts.block.strategist": 20,
-  "scripts.block.designer": 20,
-  "scripts.block.admin": 15,
+  "scripts.block.director": 20,
+  "scripts.block.marketing": 25,
+  "scripts.block.captions": 15,
   "scripts.improve": 60,
   "content.improve_script": 60,
   "portfolio.bio": 50,

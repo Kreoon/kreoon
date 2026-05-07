@@ -37,7 +37,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.7,
       };
       if (tools) {
@@ -66,7 +66,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.7,
       };
       if (tools) {
@@ -91,7 +91,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
       model: model || "claude-sonnet-4-20250514",
-      max_tokens: 4096,
+      max_tokens: 16384,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
@@ -109,7 +109,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 4096,
+      max_tokens: 16384,
       temperature: 0.2,
       return_citations: true,
     }),
@@ -129,7 +129,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.7,
       };
       if (tools) {
@@ -159,7 +159,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.7,
       };
       if (tools) {
@@ -325,7 +325,7 @@ export async function makeAIRequest(config: {
   temperature?: number;
   maxTokens?: number;
 }): Promise<{ success: boolean; content?: string; error?: string }> {
-  const { provider, model, apiKey, systemPrompt, userPrompt, temperature = 0.7, maxTokens = 4096 } = config;
+  const { provider, model, apiKey, systemPrompt, userPrompt, temperature = 0.7, maxTokens = 16384 } = config;
 
   try {
     const prov = AI_PROVIDERS[provider] || AI_PROVIDERS.gemini;

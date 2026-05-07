@@ -1,6 +1,7 @@
 // ============= SCRIPT PERMISSIONS TYPES =============
 
-export type ScriptSubTab = 'ia' | 'script' | 'editor' | 'strategist' | 'designer' | 'trafficker' | 'admin';
+// Nueva estructura: 5 bloques principales (Guión, Director, B-Roll, Marketing, Captions)
+export type ScriptSubTab = 'ia' | 'script' | 'director' | 'broll' | 'marketing' | 'captions';
 
 export type ScriptAction = 'view' | 'edit' | 'generate' | 'approve' | 'lock';
 
@@ -9,17 +10,16 @@ export interface ScriptTabPermission {
   edit: boolean;
   generate?: boolean;  // Only for IA tab
   approve?: boolean;   // Only for script tab
-  lock?: boolean;      // Only for admin tab
+  lock?: boolean;      // Only for admin/captions tab
 }
 
 export interface ScriptPermissions {
   ia: ScriptTabPermission;
   script: ScriptTabPermission;
-  editor: ScriptTabPermission;
-  strategist: ScriptTabPermission;
-  designer: ScriptTabPermission;
-  trafficker: ScriptTabPermission;
-  admin: ScriptTabPermission;
+  director: ScriptTabPermission;
+  broll: ScriptTabPermission;
+  marketing: ScriptTabPermission;
+  captions: ScriptTabPermission;
 }
 
 export interface ScriptPermissionsHook {
@@ -34,7 +34,7 @@ export interface ScriptPermissionsHook {
   visibleTabs: ScriptSubTab[];
 }
 
-// Database row type
+// Database row type - Nueva estructura 4 bloques
 export interface ScriptPermissionRow {
   id: string;
   organization_id: string;
@@ -45,17 +45,13 @@ export interface ScriptPermissionRow {
   script_view: boolean;
   script_edit: boolean;
   script_approve: boolean;
-  editor_view: boolean;
-  editor_edit: boolean;
-  strategist_view: boolean;
-  strategist_edit: boolean;
-  designer_view: boolean;
-  designer_edit: boolean;
-  trafficker_view: boolean;
-  trafficker_edit: boolean;
-  admin_view: boolean;
-  admin_edit: boolean;
-  admin_lock: boolean;
+  director_view: boolean;
+  director_edit: boolean;
+  marketing_view: boolean;
+  marketing_edit: boolean;
+  captions_view: boolean;
+  captions_edit: boolean;
+  captions_lock: boolean;
   status_overrides: Record<string, Partial<ScriptPermissions>>;
 }
 
@@ -67,80 +63,81 @@ export interface ScriptSubTabConfig {
   description: string;
 }
 
-// Orden según bloques: IA, 1-Creador, 2-Editor, 3-Trafficker, 4-Estratega, 5-Diseñador, 6-Admin
+// Orden: IA, Guión, Director, B-Roll, Marketing, Captions (5 bloques principales)
 export const SCRIPT_SUB_TABS: ScriptSubTabConfig[] = [
   { key: 'ia', label: 'IA', icon: '🤖', description: 'Generación de guiones con IA' },
-  { key: 'script', label: '1. Creador', icon: '🧍‍♂️', description: 'Bloque 1 - Guión del Creador' },
-  { key: 'editor', label: '2. Editor', icon: '🎬', description: 'Bloque 2 - Pautas de Edición' },
-  { key: 'trafficker', label: '3. Trafficker', icon: '💰', description: 'Bloque 3 - Pautas de Pauta' },
-  { key: 'strategist', label: '4. Estratega', icon: '🧠', description: 'Bloque 4 - Estrategia' },
-  { key: 'designer', label: '5. Diseñador', icon: '🎨', description: 'Bloque 5 - Pautas de Diseño' },
-  { key: 'admin', label: '6. Admin', icon: '📋', description: 'Bloque 6 - Project Manager' },
+  { key: 'script', label: 'Guión', icon: '🎬', description: 'Guión completo para el creador' },
+  { key: 'director', label: 'Director', icon: '🎥', description: 'Tabla de producción por escenas' },
+  { key: 'broll', label: 'B-Roll', icon: '🎬', description: 'Ideas de tomas de cobertura' },
+  { key: 'marketing', label: 'Marketing', icon: '📊', description: 'Estrategia + Tráfico combinado' },
+  { key: 'captions', label: 'Captions', icon: '📱', description: '4 variaciones: 2 orgánico + 2 ads' },
 ];
 
 // Default permissions by role (fallback if DB doesn't have them)
+// TODOS los roles pueden VER todas las pestañas, solo varía quién puede EDITAR
 export const DEFAULT_PERMISSIONS: Record<string, ScriptPermissions> = {
   admin: {
     ia: { view: true, edit: true, generate: true },
     script: { view: true, edit: true, approve: true },
-    editor: { view: true, edit: true },
-    strategist: { view: true, edit: true },
-    designer: { view: true, edit: true },
-    trafficker: { view: true, edit: true },
-    admin: { view: true, edit: true, lock: true },
+    director: { view: true, edit: true },
+    broll: { view: true, edit: true },
+    marketing: { view: true, edit: true },
+    captions: { view: true, edit: true, lock: true },
   },
   creator: {
-    ia: { view: false, edit: false, generate: false },
+    ia: { view: true, edit: false, generate: false },
     script: { view: true, edit: true, approve: false },
-    editor: { view: true, edit: false },
-    strategist: { view: true, edit: false },
-    designer: { view: true, edit: false },
-    trafficker: { view: false, edit: false },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: false },
+    broll: { view: true, edit: false },
+    marketing: { view: true, edit: false },
+    captions: { view: true, edit: false, lock: false },
   },
   editor: {
-    ia: { view: false, edit: false, generate: false },
+    ia: { view: true, edit: false, generate: false },
     script: { view: true, edit: false, approve: false },
-    editor: { view: true, edit: true },
-    strategist: { view: true, edit: false },
-    designer: { view: true, edit: false },
-    trafficker: { view: false, edit: false },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: true },
+    broll: { view: true, edit: true },
+    marketing: { view: true, edit: false },
+    captions: { view: true, edit: false, lock: false },
   },
   strategist: {
     ia: { view: true, edit: true, generate: true },
     script: { view: true, edit: true, approve: false },
-    editor: { view: true, edit: true },
-    strategist: { view: true, edit: true },
-    designer: { view: true, edit: true },
-    trafficker: { view: true, edit: true },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: true },
+    broll: { view: true, edit: true },
+    marketing: { view: true, edit: true },
+    captions: { view: true, edit: true, lock: false },
   },
   designer: {
-    ia: { view: false, edit: false, generate: false },
+    ia: { view: true, edit: false, generate: false },
     script: { view: true, edit: false, approve: false },
-    editor: { view: true, edit: false },
-    strategist: { view: true, edit: false },
-    designer: { view: true, edit: true },
-    trafficker: { view: false, edit: false },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: false },
+    broll: { view: true, edit: false },
+    marketing: { view: true, edit: false },
+    captions: { view: true, edit: false, lock: false },
   },
   trafficker: {
-    ia: { view: false, edit: false, generate: false },
+    ia: { view: true, edit: false, generate: false },
     script: { view: true, edit: false, approve: false },
-    editor: { view: true, edit: false },
-    strategist: { view: true, edit: false },
-    designer: { view: true, edit: false },
-    trafficker: { view: true, edit: true },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: false },
+    broll: { view: true, edit: false },
+    marketing: { view: true, edit: true },
+    captions: { view: true, edit: true, lock: false },
   },
   client: {
-    ia: { view: false, edit: false, generate: false },
+    ia: { view: true, edit: false, generate: false },
     script: { view: true, edit: false, approve: true },
-    editor: { view: false, edit: false },
-    strategist: { view: false, edit: false },
-    designer: { view: false, edit: false },
-    trafficker: { view: false, edit: false },
-    admin: { view: false, edit: false, lock: false },
+    director: { view: true, edit: false },
+    broll: { view: true, edit: false },
+    marketing: { view: true, edit: false },
+    captions: { view: true, edit: false, lock: false },
+  },
+  guest: {
+    ia: { view: true, edit: false, generate: false },
+    script: { view: true, edit: false, approve: false },
+    director: { view: true, edit: false },
+    broll: { view: true, edit: false },
+    marketing: { view: true, edit: false },
+    captions: { view: true, edit: false, lock: false },
   },
 };

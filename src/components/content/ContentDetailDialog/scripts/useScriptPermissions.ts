@@ -84,39 +84,36 @@ export function useScriptPermissions(
     // Get base permissions
     let base: ScriptPermissions = DEFAULT_PERMISSIONS[effectiveRole] || DEFAULT_PERMISSIONS.client;
 
-    // Override with DB permissions if available
+    // Override with DB permissions if available (nueva estructura 5 bloques)
     if (dbPermissions) {
       base = {
         ia: {
-          view: dbPermissions.ia_view,
-          edit: dbPermissions.ia_edit,
-          generate: dbPermissions.ia_generate,
+          view: dbPermissions.ia_view ?? true,
+          edit: dbPermissions.ia_edit ?? false,
+          generate: dbPermissions.ia_generate ?? false,
         },
         script: {
-          view: dbPermissions.script_view,
-          edit: dbPermissions.script_edit,
-          approve: dbPermissions.script_approve,
+          view: dbPermissions.script_view ?? true,
+          edit: dbPermissions.script_edit ?? false,
+          approve: dbPermissions.script_approve ?? false,
         },
-        editor: {
-          view: dbPermissions.editor_view,
-          edit: dbPermissions.editor_edit,
+        director: {
+          view: dbPermissions.director_view ?? true,
+          edit: dbPermissions.director_edit ?? false,
         },
-        strategist: {
-          view: dbPermissions.strategist_view,
-          edit: dbPermissions.strategist_edit,
+        broll: {
+          // B-Roll hereda permisos de director, visible para todos
+          view: true,
+          edit: dbPermissions.director_edit ?? false,
         },
-        designer: {
-          view: dbPermissions.designer_view,
-          edit: dbPermissions.designer_edit,
+        marketing: {
+          view: dbPermissions.marketing_view ?? true,
+          edit: dbPermissions.marketing_edit ?? false,
         },
-        trafficker: {
-          view: dbPermissions.trafficker_view,
-          edit: dbPermissions.trafficker_edit,
-        },
-        admin: {
-          view: dbPermissions.admin_view,
-          edit: dbPermissions.admin_edit,
-          lock: dbPermissions.admin_lock,
+        captions: {
+          view: dbPermissions.captions_view ?? true,
+          edit: dbPermissions.captions_edit ?? false,
+          lock: dbPermissions.captions_lock ?? false,
         },
       };
 
