@@ -6,6 +6,8 @@ import { QueryClient, QueryClientProvider, dehydrate, hydrate } from "@tanstack/
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { DemoModeProvider } from "@/contexts/DemoModeContext";
+import { isDemoUser } from "@/lib/demo-data";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -98,6 +100,7 @@ const CreatorDashboard = lazyWithRetry(() => import("./pages/CreatorDashboard"))
 const EditorDashboard = lazyWithRetry(() => import("./pages/EditorDashboard"));
 const StrategistDashboard = lazyWithRetry(() => import("./pages/StrategistDashboard"));
 const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
+const DemoClientDashboard = lazyWithRetry(() => import("./pages/DemoClientDashboard"));
 const ClientContentBoard = lazyWithRetry(() => import("./pages/ClientContentBoard"));
 const VideosPage = lazyWithRetry(() => import("./pages/portfolio/VideosPage"));
 const SavedPage = lazyWithRetry(() => import("./pages/portfolio/SavedPage"));
@@ -342,6 +345,13 @@ function OrgAuthRedirect() {
   return <Navigate to={`/auth/org/${slug}${search}`} replace />;
 }
 
+// Routes to demo dashboard when the logged-in user is the demo account
+function ClientDashboardRouter() {
+  const { user } = useAuth();
+  if (isDemoUser(user?.email)) return <DemoClientDashboard />;
+  return <ClientDashboard />;
+}
+
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -503,7 +513,8 @@ function AppRoutes() {
         <Route path="/creator-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboardRouter /></MainLayout></ProtectedRoute>} />
+        <Route path="/demo" element={<ProtectedRoute allowNoRoles><DemoClientDashboard /></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'content_creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/ambassador" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AmbassadorPage /></MainLayout></ProtectedRoute>} />
@@ -525,6 +536,7 @@ function AppContent() {
       <BrandingProvider>
         <AuthProvider>
           <AuthStoreBridge />
+          <DemoModeProvider>
           <OnboardingGateProvider>
             <RoleLegalGateProvider>
             <CurrencyProvider>
@@ -560,6 +572,7 @@ function AppContent() {
             </CurrencyProvider>
             </RoleLegalGateProvider>
           </OnboardingGateProvider>
+          </DemoModeProvider>
         </AuthProvider>
       </BrandingProvider>
     </BrowserRouter>
