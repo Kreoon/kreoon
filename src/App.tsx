@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { DemoModeProvider } from "@/contexts/DemoModeContext";
-import { isDemoUser } from "@/lib/demo-data";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -345,12 +344,6 @@ function OrgAuthRedirect() {
   return <Navigate to={`/auth/org/${slug}${search}`} replace />;
 }
 
-// Routes to demo dashboard when the logged-in user is the demo account
-function ClientDashboardRouter() {
-  const { user } = useAuth();
-  if (isDemoUser(user?.email)) return <DemoClientDashboard />;
-  return <ClientDashboard />;
-}
 
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
@@ -513,7 +506,7 @@ function AppRoutes() {
         <Route path="/creator-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/strategist-dashboard" element={<ProtectedRoute allowedRoles={['strategist']}><MainLayout><StrategistDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboardRouter /></MainLayout></ProtectedRoute>} />
+        <Route path="/client-dashboard" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/demo" element={<ProtectedRoute allowNoRoles><DemoClientDashboard /></ProtectedRoute>} />
         <Route path="/client-board" element={<ProtectedRoute allowedRoles={['client']}><MainLayout><ClientContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/ranking" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'creator', 'content_creator', 'editor']}><MainLayout><Ranking /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
