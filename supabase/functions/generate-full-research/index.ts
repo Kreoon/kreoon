@@ -280,7 +280,7 @@ async function callAI(
   if (perplexityKey) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 50000); // 50s (was 120s)
+      const timeout = setTimeout(() => controller.abort(), 25000); // 25s per provider
       const res = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${perplexityKey}`, "Content-Type": "application/json" },
@@ -311,7 +311,7 @@ async function callAI(
   // Gemini fallback
   if (!geminiKey) throw new Error("No AI API key available");
   const geminiController = new AbortController();
-  const geminiTimeout = setTimeout(() => geminiController.abort(), 50000); // 50s
+  const geminiTimeout = setTimeout(() => geminiController.abort(), 25000); // 25s per provider
   const res = await fetch(
     "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
     {

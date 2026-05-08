@@ -57,8 +57,9 @@ function KiroLoader({ size = 140 }: { size?: number }) {
             rx="45"
             ry="8"
             fill="rgba(0,0,0,0.2)"
-            animate={{ rx: [45, 40, 45], opacity: [0.2, 0.15, 0.2] }}
+            animate={{ scaleX: [1, 0.88, 1], opacity: [0.2, 0.15, 0.2] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            style={{ transformOrigin: "100px 185px" }}
           />
 
           {/* Legs */}
