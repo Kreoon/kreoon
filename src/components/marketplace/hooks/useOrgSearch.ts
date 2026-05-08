@@ -13,7 +13,7 @@ export function useOrgSearch(filters: MarketplaceFilters) {
         // Query organizations table for marketplace-enabled orgs only
         const { data: rows } = await supabase
           .from('organizations')
-          .select('id, slug, name, logo_url, org_tagline, created_at')
+          .select('id, slug, name, logo_url, org_tagline, created_at, is_official_agency')
           .eq('marketplace_enabled', true)
           .order('name');
 
@@ -35,6 +35,7 @@ export function useOrgSearch(filters: MarketplaceFilters) {
           org_budget_currency: 'COP',
           org_response_time: null,
           portfolio_color: null,
+          is_official_agency: row.is_official_agency || false,
         }));
 
         setAllOrgs(mapped);
@@ -86,6 +87,13 @@ export function useOrgSearch(filters: MarketplaceFilters) {
       default:
         result.sort((a, b) => b.org_marketplace_rating_avg - a.org_marketplace_rating_avg);
     }
+
+    // La agencia oficial siempre aparece primero, independientemente del orden seleccionado
+    result.sort((a, b) => {
+      if (a.is_official_agency && !b.is_official_agency) return -1;
+      if (!a.is_official_agency && b.is_official_agency) return 1;
+      return 0;
+    });
 
     return { orgs: result, totalCount: result.length };
   }, [allOrgs, filters]);

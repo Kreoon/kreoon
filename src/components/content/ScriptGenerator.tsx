@@ -249,7 +249,7 @@ IMPORTANTE: Debes entregar el contenido en formato HTML limpio y estructurado, l
 - Usa tono cercano, tipo conversación o chisme entre amigos.
 - Evita lenguaje publicitario forzado.
 - Prioriza autenticidad, ritmo natural y storytelling.
-- Adáptalo al **tono y estilo de UGC Colombia**: natural, humano, colaborativo y con enfoque en resultados.
+- Adáptalo al **tono y estilo de KREOON by UGC Colombia**: natural, humano, colaborativo y con enfoque en resultados.
 
 ### 📋 FORMATO DE ENTREGA (HTML):
 Entrega el contenido en HTML estructurado siguiendo este formato exacto:

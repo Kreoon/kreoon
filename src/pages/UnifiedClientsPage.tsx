@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin, Loader2,
+  Phone, MapPin, Loader2, Link2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,7 @@ import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
+import { LinkBrandDialog } from '@/components/clients/LinkBrandDialog';
 import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
@@ -105,6 +106,8 @@ const UnifiedClientsPage = () => {
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
+  const [linkBrandOpen, setLinkBrandOpen] = useState(false);
+  const [linkBrandPreselectedClientId, setLinkBrandPreselectedClientId] = useState<string | undefined>(undefined);
   const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
   const [creatingCompany, setCreatingCompany] = useState(false);
   const { toast } = useToast();
@@ -168,6 +171,12 @@ const UnifiedClientsPage = () => {
       u.linked_companies.some(c => c.client_name.toLowerCase().includes(q)),
     );
   }, [clientUsers, search]);
+
+  // Abre el LinkBrandDialog desde una card de cliente (modo fusión preseleccionado)
+  const handleLinkBrandFromCard = (clientId: string) => {
+    setLinkBrandPreselectedClientId(clientId);
+    setLinkBrandOpen(true);
+  };
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
@@ -347,6 +356,10 @@ const UnifiedClientsPage = () => {
                     <Contact className="h-4 w-4 mr-2" />
                     Nuevo Contacto
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLinkBrandOpen(true)}>
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Vincular Brand
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -498,6 +511,8 @@ const UnifiedClientsPage = () => {
                         isSelected={selectedEntity?.id === e.id}
                         canEdit={canSeeInternal}
                         onUpdate={() => refetch()}
+                        orgId={currentOrgId}
+                        onLinkBrand={e.entity_type === 'empresa' ? handleLinkBrandFromCard : undefined}
                       />
                     ))}
                   </div>
@@ -702,6 +717,16 @@ const UnifiedClientsPage = () => {
           onOpenChange={setCreateContactOpen}
           organizationId={currentOrgId}
         />
+
+        {/* Link Brand Dialog */}
+        {currentOrgId && (
+          <LinkBrandDialog
+            open={linkBrandOpen}
+            onOpenChange={setLinkBrandOpen}
+            orgId={currentOrgId}
+            orgCompanies={allCompanies}
+          />
+        )}
       </div>
     </div>
   );

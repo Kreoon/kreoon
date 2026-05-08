@@ -19,6 +19,19 @@ export interface UnifiedClientEntity {
   users_count: number;
   username: string | null;
   client_notes: string | null;
+  // Datos completos de empresa
+  bio: string | null;
+  category: string | null;
+  main_contact: string | null;
+  address: string | null;
+  city: string | null;
+  country: string | null;
+  website: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  linkedin: string | null;
+  is_public: boolean;
   // Contacto fields (null for empresas)
   company: string | null;
   position: string | null;
@@ -30,6 +43,11 @@ export interface UnifiedClientEntity {
   contact_notes: string | null;
   tags: string[] | null;
   custom_fields: Record<string, unknown>;
+  brand_id: string | null;
+  brand_slug: string | null;
+  brand_website: string | null;
+  brand_industry: string | null;
+  brand_description: string | null;
 }
 
 /** A linked company entry for a client user */

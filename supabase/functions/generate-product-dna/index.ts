@@ -68,33 +68,76 @@ function repairJsonForParse(str: string): string {
   }
 }
 
-// ── Whisper transcription ───────────────────────────────────────────────
-async function transcribeWithWhisper(audioBlob: Blob): Promise<string> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) throw new Error("OPENAI_API_KEY not configured for transcription");
+// ── Gemini audio transcription fallback ────────────────────────────────
+async function transcribeWithGemini(audioBlob: Blob): Promise<string> {
+  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured for transcription fallback");
 
-  console.log("[generate-product-dna] Transcribing audio with Whisper...");
-  const formData = new FormData();
-  formData.append("file", audioBlob, "audio.webm");
-  formData.append("model", "whisper-1");
-  formData.append("language", "es");
-  formData.append("response_format", "text");
+  console.log("[generate-product-dna] Transcribing audio with Gemini (fallback)...");
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+  const mimeType = audioBlob.type || "audio/webm";
 
-  const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${apiKey}` },
-    body: formData,
-  });
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: "Transcribe exactamente lo que dice este audio en español. Devuelve solo la transcripción, sin comentarios ni formato adicional." },
+            { inline_data: { mime_type: mimeType, data: base64Audio } },
+          ],
+        }],
+        generationConfig: { temperature: 0 },
+      }),
+    }
+  );
 
   if (!response.ok) {
     const errText = await response.text();
-    console.error("[generate-product-dna] Whisper error:", errText);
-    throw new Error(`Whisper API error: ${response.status}`);
+    console.error("[generate-product-dna] Gemini transcription error:", errText);
+    throw new Error(`Gemini transcription error: ${response.status}`);
   }
 
-  const transcription = await response.text();
-  console.log(`[generate-product-dna] Transcription: ${transcription.length} chars`);
+  const data = await response.json();
+  const transcription = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  console.log(`[generate-product-dna] Gemini transcription: ${transcription.length} chars`);
   return transcription.trim();
+}
+
+// ── Whisper transcription (with Gemini fallback) ────────────────────────
+async function transcribeWithWhisper(audioBlob: Blob): Promise<string> {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+
+  if (apiKey) {
+    console.log("[generate-product-dna] Transcribing audio with Whisper...");
+    const formData = new FormData();
+    formData.append("file", audioBlob, "audio.webm");
+    formData.append("model", "whisper-1");
+    formData.append("language", "es");
+    formData.append("response_format", "text");
+
+    const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}` },
+      body: formData,
+    });
+
+    if (response.ok) {
+      const transcription = await response.text();
+      console.log(`[generate-product-dna] Transcription: ${transcription.length} chars`);
+      return transcription.trim();
+    }
+
+    const errText = await response.text();
+    console.warn(`[generate-product-dna] Whisper failed (${response.status}), falling back to Gemini:`, errText);
+  } else {
+    console.warn("[generate-product-dna] No OPENAI_API_KEY, using Gemini for transcription");
+  }
+
+  return transcribeWithGemini(audioBlob);
 }
 
 // ── Emotional analysis with Gemini ──────────────────────────────────────
@@ -1093,22 +1136,14 @@ Deno.serve(async (req: Request) => {
       try {
         console.log(`[generate-product-dna] Downloading audio from: ${record.audio_url}`);
 
-        // Download audio from Supabase Storage
+        // Download audio using service role client (works for both public and private buckets)
         let audioBlob: Blob;
-        if (record.audio_url.includes("supabase.co/storage")) {
-          // Direct URL - fetch it
-          const audioResponse = await fetch(record.audio_url);
-          if (!audioResponse.ok) throw new Error(`Failed to download audio: ${audioResponse.status}`);
-          audioBlob = await audioResponse.blob();
-        } else {
-          // Storage path - use supabase storage
-          const path = record.audio_url.replace(/^.*\/audio-recordings\//, "");
-          const { data: audioData, error: audioError } = await supabase.storage
-            .from("audio-recordings")
-            .download(path);
-          if (audioError || !audioData) throw new Error(`Storage download error: ${audioError?.message}`);
-          audioBlob = audioData;
-        }
+        const storagePath = record.audio_url.replace(/^.*\/audio-recordings\//, "").replace(/^.*\/object\/public\/audio-recordings\//, "");
+        const { data: audioData, error: audioError } = await supabase.storage
+          .from("audio-recordings")
+          .download(storagePath);
+        if (audioError || !audioData) throw new Error(`Storage download error: ${audioError?.message}`);
+        audioBlob = audioData;
 
         console.log(`[generate-product-dna] Audio downloaded: ${audioBlob.size} bytes`);
 

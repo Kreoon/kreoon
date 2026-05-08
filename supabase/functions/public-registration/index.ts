@@ -348,7 +348,7 @@ async function registerCreator(
       full_name: data.full_name,
       registration_source: "ugccolombia.co",
       registration_type: "creator",
-      partner_community: community?.name || "UGC Colombia",
+      partner_community: community?.name || "KREOON by UGC Colombia",
       legal_accepted_at: new Date().toISOString(),
       legal_accepted_from: "ugccolombia.co",
     },
@@ -473,7 +473,7 @@ async function registerCreator(
     await resend.emails.send({
       from: "KREOON <noreply@kreoon.com>",
       to: [data.email],
-      subject: "¡Bienvenido a la Comunidad UGC Colombia! 🎬",
+      subject: "¡Bienvenido a KREOON by UGC Colombia! 🎬",
       html: getCreatorWelcomeEmail(data.full_name, community, magicLink),
     });
   } catch (e) {
@@ -485,7 +485,7 @@ async function registerCreator(
   return new Response(
     JSON.stringify({
       success: true,
-      message: "Registro exitoso. Ya puedes usar KREOON como freelance. Tu solicitud para unirte a UGC Colombia esta en revision.",
+      message: "Registro exitoso. Ya puedes usar KREOON como freelance. Tu solicitud para unirte a KREOON by UGC Colombia esta en revision.",
       user_id: userId,
       login_url: "https://kreoon.com/auth",
       status: "pending_approval",
@@ -528,7 +528,7 @@ async function registerBrand(
       company_name: data.company_name,
       registration_source: "ugccolombia.co",
       registration_type: "brand",
-      partner_community: community?.name || "UGC Colombia",
+      partner_community: community?.name || "KREOON by UGC Colombia",
       legal_accepted_at: new Date().toISOString(),
       legal_accepted_from: "ugccolombia.co",
     },
@@ -633,7 +633,7 @@ async function registerBrand(
     await resend.emails.send({
       from: "KREOON <noreply@kreoon.com>",
       to: [data.email],
-      subject: "¡Bienvenido a la Comunidad UGC Colombia! 🚀",
+      subject: "¡Bienvenido a KREOON by UGC Colombia! 🚀",
       html: getBrandWelcomeEmail(data.contact_name, data.company_name, community, magicLink),
     });
   } catch (e) {
@@ -645,7 +645,7 @@ async function registerBrand(
   return new Response(
     JSON.stringify({
       success: true,
-      message: "Registro exitoso. Ya puedes explorar KREOON. Tu solicitud para unirte a UGC Colombia esta en revision.",
+      message: "Registro exitoso. Ya puedes explorar KREOON. Tu solicitud para unirte a KREOON by UGC Colombia esta en revision.",
       user_id: userId,
       login_url: "https://kreoon.com/auth",
       status: "pending_approval",
@@ -706,9 +706,9 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
   <div class="container">
     <div class="header">
       <span class="logo">
-        <span class="logo-ugc">UGC Colombia</span>
-        <span class="logo-x">×</span>
         <span class="logo-kreoon">KREOON</span>
+        <span class="logo-x"> by </span>
+        <span class="logo-ugc">UGC Colombia</span>
       </span>
     </div>
 
@@ -721,7 +721,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
       <p style="color: #a1a1aa; margin: 0; font-size: 14px;">Tu cuenta esta activa. Puedes crear tu portafolio y recibir proyectos.</p>
     </div>
 
-    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
+    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad KREOON by UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
 
     ${pendingBenefits}
 
@@ -751,7 +751,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
 
     <div class="footer">
       <p>¿Preguntas? Escribenos a <a href="mailto:hola@ugccolombia.co" style="color: #f97316;">hola@ugccolombia.co</a></p>
-      <p style="margin-top: 16px;">© 2026 UGC Colombia × KREOON</p>
+      <p style="margin-top: 16px;">© 2026 KREOON by UGC Colombia</p>
     </div>
   </div>
 </body>
@@ -804,9 +804,9 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
   <div class="container">
     <div class="header">
       <span class="logo">
-        <span class="logo-ugc">UGC Colombia</span>
-        <span class="logo-x">×</span>
         <span class="logo-kreoon">KREOON</span>
+        <span class="logo-x"> by </span>
+        <span class="logo-ugc">UGC Colombia</span>
       </span>
     </div>
 
@@ -819,7 +819,7 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
       <p style="color: #a1a1aa; margin: 0; font-size: 14px;">Tu cuenta esta activa. Puedes ver creadores y explorar la plataforma.</p>
     </div>
 
-    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
+    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad KREOON by UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
 
     ${pendingBenefits}
 
@@ -849,7 +849,7 @@ function getBrandWelcomeEmail(contactName: string, companyName: string, communit
 
     <div class="footer">
       <p>¿Preguntas? Escribenos a <a href="mailto:hola@ugccolombia.co" style="color: #f97316;">hola@ugccolombia.co</a></p>
-      <p style="margin-top: 16px;">© 2026 UGC Colombia × KREOON</p>
+      <p style="margin-top: 16px;">© 2026 KREOON by UGC Colombia</p>
     </div>
   </div>
 </body>

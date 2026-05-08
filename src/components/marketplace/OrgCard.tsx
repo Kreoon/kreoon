@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Star, Users, Briefcase, Building2 } from 'lucide-react';
+import { Star, Users, Briefcase, Building2, ShieldCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceOrg } from './types/marketplace';
 import { ORG_TYPE_LABELS, ORG_TYPE_COLORS, TEAM_SIZE_LABELS } from './types/marketplace';
@@ -48,6 +48,14 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
         {typeColor && typeLabel && (
           <div className={cn('absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold z-10', typeColor.bg, typeColor.text)}>
             {typeLabel}
+          </div>
+        )}
+
+        {/* Badge agencia oficial Kreoon */}
+        {org.is_official_agency && (
+          <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold z-10 bg-amber-500/20 text-amber-300 border border-amber-500/40 backdrop-blur-sm">
+            <ShieldCheck className="w-2.5 h-2.5" />
+            Oficial
           </div>
         )}
 

@@ -119,7 +119,7 @@ export default function WelcomeUGCColombia() {
         particleCount: 80,
         spread: 60,
         origin: { y: 0.6 },
-        colors: ['#a855f7', '#22c55e', '#3b82f6', '#f59e0b'],
+        colors: ['#a855f7', '#22c55e', '#3b82f6', '#f97316'],
       });
     }, 600);
     return () => clearTimeout(timer);
@@ -127,7 +127,7 @@ export default function WelcomeUGCColombia() {
 
   const userName = profile?.full_name?.split(' ')[0] || 'Creador';
   const contactEmail = community?.partner_contact_email || 'soporte@kreoon.com';
-  const communityName = community?.name || 'UGC Colombia';
+  const communityName = community?.name || 'KREOON by UGC Colombia';
 
   const isLoading = authLoading || communityLoading;
 
@@ -151,7 +151,7 @@ export default function WelcomeUGCColombia() {
             <div className="flex items-center gap-3">
               <KreoonLogo heightClass="h-8" />
               <span className="text-lg font-bold text-foreground tracking-tight uppercase">
-                KREOON
+                {communityName}
               </span>
             </div>
             <button
@@ -203,7 +203,7 @@ export default function WelcomeUGCColombia() {
             >
               ¡Bienvenido a{' '}
               <span className="bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent">
-                KREOON
+                {communityName}
               </span>
               , {userName}!
             </motion.h1>
@@ -354,7 +354,7 @@ export default function WelcomeUGCColombia() {
                 "hover:-translate-y-0.5"
               )}
             >
-              Comenzar a usar KREOON
+              Ir a mi dashboard
               <ArrowRight className="w-5 h-5" />
             </button>
 

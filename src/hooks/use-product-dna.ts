@@ -397,7 +397,15 @@ export function useProductDNAList(options: UseProductDNAListOptions = {}): UsePr
         .order('created_at', { ascending: false })
         .range((page - 1) * pageSize, page * pageSize - 1);
 
-      if (filters.clientId) query = query.eq('client_id', filters.clientId);
+      if (filters.clientId) {
+        // Resolve related client_ids (same user: freelance + org same brand)
+        const { data: relatedIds } = await supabase
+          .rpc('get_related_client_ids', { p_client_id: filters.clientId });
+        const clientIds: string[] = Array.isArray(relatedIds) && relatedIds.length > 0
+          ? relatedIds
+          : [filters.clientId];
+        query = query.in('client_id', clientIds);
+      }
       if (filters.status) query = query.eq('status', filters.status);
       if (filters.serviceGroup) query = query.eq('service_group', filters.serviceGroup);
 

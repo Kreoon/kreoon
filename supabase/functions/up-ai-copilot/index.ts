@@ -517,13 +517,13 @@ async function detectEvents(
   let systemPrompt: string;
   try {
     const promptConfig = await getPrompt(supabase, "up", "detect_events");
-    systemPrompt = promptConfig.systemPrompt || `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
+    systemPrompt = promptConfig.systemPrompt || `Eres un sistema de detección de eventos para gamificación de KREOON by UGC Colombia.
 Analiza la actividad del contenido y detecta eventos implícitos que podrían no haberse registrado.
 Solo detecta eventos con alta confianza (>0.7).
 
 Responde con un JSON válido.`;
   } catch {
-    systemPrompt = `Eres un sistema de detección de eventos para gamificación de UGC Colombia.
+    systemPrompt = `Eres un sistema de detección de eventos para gamificación de KREOON by UGC Colombia.
 Analiza la actividad del contenido y detecta eventos implícitos que podrían no haberse registrado.
 Solo detecta eventos con alta confianza (>0.7).
 
@@ -659,7 +659,7 @@ async function checkAntiFraud(
   let systemPrompt: string;
   try {
     const promptConfig = await getPrompt(supabase, "up", "anti_fraud");
-    systemPrompt = promptConfig.systemPrompt || `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
+    systemPrompt = promptConfig.systemPrompt || `Eres un sistema anti-fraude para el sistema de gamificación UP de KREOON by UGC Colombia.
 Detecta patrones sospechosos como:
 - Rachas perfectas irreales
 - Asignaciones repetidas entre mismos usuarios
@@ -669,7 +669,7 @@ Solo reporta patrones con evidencia clara.
 
 Responde con un JSON válido.`;
   } catch {
-    systemPrompt = `Eres un sistema anti-fraude para el sistema de gamificación UP de UGC Colombia.
+    systemPrompt = `Eres un sistema anti-fraude para el sistema de gamificación UP de KREOON by UGC Colombia.
 Detecta patrones sospechosos como:
 - Rachas perfectas irreales
 - Asignaciones repetidas entre mismos usuarios
@@ -791,7 +791,7 @@ async function generateQuests(
   let systemPrompt: string;
   try {
     const promptConfig = await getPrompt(supabase, "up", "generate_quests");
-    systemPrompt = promptConfig.systemPrompt || `Eres un generador de misiones/retos para el sistema de gamificación UP de UGC Colombia.
+    systemPrompt = promptConfig.systemPrompt || `Eres un generador de misiones/retos para el sistema de gamificación UP de KREOON by UGC Colombia.
 Crea misiones semanales relevantes basadas en:
 - Cuellos de botella detectados
 - Objetivos de mejora de la agencia
@@ -800,7 +800,7 @@ Las misiones deben ser alcanzables pero desafiantes.
 
 Responde con un JSON válido.`;
   } catch {
-    systemPrompt = `Eres un generador de misiones/retos para el sistema de gamificación UP de UGC Colombia.
+    systemPrompt = `Eres un generador de misiones/retos para el sistema de gamificación UP de KREOON by UGC Colombia.
 Crea misiones semanales relevantes basadas en:
 - Cuellos de botella detectados
 - Objetivos de mejora de la agencia
@@ -906,7 +906,7 @@ async function getRuleRecommendations(
   let systemPrompt: string;
   try {
     const promptConfig = await getPrompt(supabase, "up", "rule_recommendations");
-    systemPrompt = promptConfig.systemPrompt || `Eres un consultor de gamificación experto para UGC Colombia.
+    systemPrompt = promptConfig.systemPrompt || `Eres un consultor de gamificación experto para KREOON by UGC Colombia.
 Analiza las reglas actuales y sugiere mejoras basándote en:
 - Balance de puntos
 - Engagement del equipo
@@ -915,7 +915,7 @@ Analiza las reglas actuales y sugiere mejoras basándote en:
 
 Responde con un JSON válido.`;
   } catch {
-    systemPrompt = `Eres un consultor de gamificación experto para UGC Colombia.
+    systemPrompt = `Eres un consultor de gamificación experto para KREOON by UGC Colombia.
 Analiza las reglas actuales y sugiere mejoras basándote en:
 - Balance de puntos
 - Engagement del equipo

@@ -113,7 +113,15 @@ export async function listProductDNAs(options?: {
 
     if (options?.serviceGroup) query = query.eq('service_group', options.serviceGroup);
     if (options?.status) query = query.eq('status', options.status);
-    if (options?.clientId) query = query.eq('client_id', options.clientId);
+    if (options?.clientId) {
+      // Resolve related client_ids (same user: freelance + org same brand)
+      const { data: relatedIds } = await supabase
+        .rpc('get_related_client_ids', { p_client_id: options.clientId });
+      const clientIds: string[] = Array.isArray(relatedIds) && relatedIds.length > 0
+        ? relatedIds
+        : [options.clientId];
+      query = query.in('client_id', clientIds);
+    }
 
     query = query.range(offset, offset + pageSize - 1);
 

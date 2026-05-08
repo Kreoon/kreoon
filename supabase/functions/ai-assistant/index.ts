@@ -17,7 +17,7 @@ const ROLE_ACCESS_LEVELS: Record<string, string[]> = {
 
 // Base knowledge that ALL organizations share - platform capabilities
 const PLATFORM_BASE_KNOWLEDGE = `
-## 🎯 Acerca de la Plataforma UGC Colombia
+## 🎯 Acerca de la Plataforma KREOON by UGC Colombia
 
 ### ¿Qué es esta plataforma?
 Es un sistema integral de gestión de contenido UGC (User Generated Content) que permite:

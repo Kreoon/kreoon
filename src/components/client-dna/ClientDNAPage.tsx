@@ -23,11 +23,17 @@ export function ClientDNAPage({ clientId }: ClientDNAPageProps) {
     setError(null);
 
     try {
-      // Always fetch the latest DNA (most recent one)
+      // Resolve all client_ids sharing the same user (freelance + org same brand)
+      const { data: relatedIds } = await supabase
+        .rpc('get_related_client_ids', { p_client_id: clientId });
+      const clientIds: string[] = Array.isArray(relatedIds) && relatedIds.length > 0
+        ? relatedIds
+        : [clientId];
+
       const { data: latest, error: fetchError } = await supabase
         .from('client_dna')
         .select('*')
-        .eq('client_id', clientId)
+        .in('client_id', clientIds)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();

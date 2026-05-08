@@ -21,17 +21,29 @@ export function AudioStep({ audioUrl, onAudioComplete }: AudioStepProps) {
     recordingStartRef.current = Date.now();
 
     try {
-      // Generate unique filename
-      const filename = `product-dna/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Tu sesión ha expirado. Por favor recarga la página e inicia sesión nuevamente.');
+      }
+
+      // Use actual blob MIME type (Safari iOS produces video/mp4, Chrome produces audio/webm)
+      const mimeType = blob.type || 'audio/webm';
+      const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+      const filename = `product-dna/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       const { data, error } = await supabase.storage
         .from('audio-recordings')
         .upload(filename, blob, {
-          contentType: 'audio/webm',
+          contentType: mimeType,
           upsert: false,
         });
 
-      if (error) throw error;
+      if (error) {
+        if ((error as any).statusCode === 400 || error.message?.includes('400')) {
+          throw new Error('Error al subir el audio. Tu sesión puede haber expirado. Recarga la página e intenta de nuevo.');
+        }
+        throw error;
+      }
 
       const { data: urlData } = supabase.storage
         .from('audio-recordings')

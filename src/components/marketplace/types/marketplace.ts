@@ -705,6 +705,7 @@ export interface MarketplaceOrg {
   org_budget_currency: string;
   org_response_time: string | null;
   portfolio_color: string | null;
+  is_official_agency?: boolean;
 }
 
 export interface OrgFullProfile extends MarketplaceOrg {

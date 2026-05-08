@@ -161,13 +161,28 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
 
       // Step 1: Upload audio to storage
       setProcessingStep('uploading');
-      const filename = `product-dna/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+
+      // Ensure session is active before uploading (expired token causes 400 in storage)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Tu sesión ha expirado. Por favor recarga la página e inicia sesión nuevamente.');
+      }
+
+      // Use actual blob MIME type (Safari iOS produces video/mp4, Chrome produces audio/webm)
+      const mimeType = audioBlob.type || 'audio/webm';
+      const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+      const filename = `product-dna/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('audio-recordings')
-        .upload(filename, audioBlob, { contentType: 'audio/webm', upsert: false });
+        .upload(filename, audioBlob, { contentType: mimeType, upsert: false });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        if (uploadError.message?.includes('400') || uploadError.statusCode === 400) {
+          throw new Error('Error al subir el audio. Tu sesión puede haber expirado. Recarga la página e intenta de nuevo.');
+        }
+        throw uploadError;
+      }
 
       const { data: urlData } = supabase.storage
         .from('audio-recordings')

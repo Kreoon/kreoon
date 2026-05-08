@@ -11,7 +11,7 @@ const PARTNER_BRANDS = [
   { label: "Beemo", logo: "https://beemo.tv/img/logo_smartbeemo.svg" },
   { label: "Los Reyes del Contenido", logo: "https://lwfiles.mycourse.app/68dc04362e776ced248cac8e-public/b5b23fe7d48093ee532a2206f6cd2049.png" },
   { label: "Vitalcom", logo: "/brand/logos/vitalcom.png" },
-  { label: "UGC Colombia", logo: "/brand/logos/ugc-colombia.png" },
+  { label: "KREOON by UGC Colombia", logo: "/brand/logos/ugc-colombia.png" },
 ];
 
 const LOOP = [...PARTNER_BRANDS, ...PARTNER_BRANDS, ...PARTNER_BRANDS];
