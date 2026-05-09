@@ -53,6 +53,7 @@ import {
   Megaphone, Mail, DollarSign, BarChart3, Search, Handshake, Heart
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
+import { AdnRecargadoBanner } from "./AdnRecargadoBanner";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
 import {
   SERVICE_TYPE_OPTIONS,
@@ -764,28 +765,24 @@ export function ProductDetailDialog({
                     isRegenerating={dnaRegenerating}
                   />
 
-                  {/* Generate Full Research — KIRO Branded (Solo admins de org pueden activar) */}
+                  {/* Generate Full Research — Banner pro nuevo (CONVERT 360) */}
                   {dnaRecord.status === 'ready' && (isAdmin || isClient) && (
-                    researchGenerating ? (
-                      <KiroResearchProgress
-                        progress={researchProgress}
-                        elapsed={researchElapsed}
-                      />
-                    ) : (
-                      <KiroResearchButton
-                        onClick={handleGenerateResearch}
-                        onViewDetails={() => setActiveTab("adn-landing")}
-                        tokenCost={RESEARCH_COST}
-                        hasEnoughTokens={hasEnoughTokens}
-                        balanceLoading={balanceLoading}
-                        isClient={isClient}
-                        isAdmin={isAdmin || isOrgOwner || isPlatformRoot}
-                        monthlyUsageCount={monthlyUsageCount || 0}
-                        monthlyLimit={monthlyLimit}
-                        limitReached={limitReached || planDisabled}
-                        isRegenerate={!!product?.research_generated_at}
-                      />
-                    )
+                    <AdnRecargadoBanner
+                      onActivate={handleGenerateResearch}
+                      onViewDetails={() => setActiveTab("adn-landing")}
+                      tokenCost={RESEARCH_COST}
+                      hasEnoughTokens={hasEnoughTokens}
+                      balanceLoading={balanceLoading}
+                      isClient={isClient}
+                      isAdmin={isAdmin || isOrgOwner || isPlatformRoot}
+                      monthlyUsageCount={monthlyUsageCount || 0}
+                      monthlyLimit={monthlyLimit}
+                      limitReached={limitReached || planDisabled}
+                      isRegenerate={!!product?.research_generated_at}
+                      isGenerating={researchGenerating}
+                      completedTabs={researchProgress?.step ?? 0}
+                      totalTabs={21}
+                    />
                   )}
                 </>
               ) : (
