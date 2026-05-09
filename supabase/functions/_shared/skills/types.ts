@@ -28,7 +28,13 @@ export type SkillType =
   // Output Structurers (post-generación)
   | 'scene_director'
   | 'broll_generator'
-  | 'caption_generator';
+  | 'caption_generator'
+  // Método C·O·N·V·E·R·T (Kreoon)
+  | 'consciousness_mapper'      // Capa C — Niveles de Schwartz
+  | 'storybrand_architect'      // Capa O — SB7 Miller
+  | 'offer_engineer'            // Capa V — Hormozi + Brunson
+  | 'social_funnel_builder'     // Capa E — Funnel orgánico+paid
+  | 'production_director';      // Capa E — Brief de producción detallado
 
 export interface SkillTriggers {
   sphere_phase?: string[];

@@ -24,6 +24,12 @@ import { adComplianceChecker } from './ad-compliance-checker.ts';
 import { sceneDirector } from './scene-director.ts';
 import { brollGenerator } from './broll-generator.ts';
 import { captionGenerator } from './caption-generator.ts';
+// Método C·O·N·V·E·R·T (Kreoon)
+import { consciousnessMapper } from './consciousness-mapper.ts';
+import { storybrandArchitect } from './storybrand-architect.ts';
+import { offerEngineer } from './offer-engineer.ts';
+import { socialFunnelBuilder } from './social-funnel-builder.ts';
+import { productionDirector } from './production-director.ts';
 
 /**
  * Registro de Skills disponibles (20 skills)
@@ -75,6 +81,12 @@ export const skillsRegistry: Partial<Record<SkillType, Skill>> = {
   scene_director: sceneDirector,
   broll_generator: brollGenerator,
   caption_generator: captionGenerator,
+  // Método C·O·N·V·E·R·T (Kreoon)
+  consciousness_mapper: consciousnessMapper,
+  storybrand_architect: storybrandArchitect,
+  offer_engineer: offerEngineer,
+  social_funnel_builder: socialFunnelBuilder,
+  production_director: productionDirector,
 };
 
 /**
