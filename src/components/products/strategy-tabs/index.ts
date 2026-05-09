@@ -16,3 +16,5 @@ export { LandingPagesTab } from './LandingPagesTab';
 export { WhatsappFunnelTab } from './WhatsappFunnelTab';
 // Tabs 360 (genéricas con render JSON)
 export { GenericJsonTab } from './GenericJsonTab';
+// Landing interna del ADN
+export { AdnLandingTab } from './AdnLandingTab';

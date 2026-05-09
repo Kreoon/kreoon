@@ -2033,7 +2033,7 @@ async function processRequest(body: any): Promise<void> {
 
     // ── Token consumption (phase 0, fresh start only) ────────────────
     if (phase === 0 && isFreshStart && (userId || organizationId)) {
-      const TOKEN_COST = 600;
+      const TOKEN_COST = 1500; // ADN Recargado V2 — 21 pasos del Método CONVERT (360 completo)
       console.log(`[step 2/6] Tokens: consuming ${TOKEN_COST} — user=${userId?.substring(0,8)} org=${organizationId?.substring(0,8)}`);
 
       const { data: tokenResult, error: tokenError } = await supabase.rpc("consume_ai_tokens", {

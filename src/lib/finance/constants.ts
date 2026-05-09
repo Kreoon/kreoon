@@ -59,7 +59,7 @@ export const REFERRAL_RATES = {
 // ═══════════════════════════════════════════════════════════════
 
 export const AI_TOKEN_COSTS = {
-  "research.full": 600,
+  "research.full": 1500,
   "dna.full_analysis": 500,
   "dna.project_analysis": 400,
   "scripts.generate": 120,
