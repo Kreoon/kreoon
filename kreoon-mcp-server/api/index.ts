@@ -115,6 +115,7 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (profileToolDefinitions.some(t => t.name === name)) return handleProfileTool(name, args, auth);
   if (walletToolDefinitions.some(t => t.name === name)) return handleWalletTool(name, args, auth);
   if (socialToolDefinitions.some(t => t.name === name)) return handleSocialTool(name, args, auth);
+  throw Object.assign(new Error(`Tool no manejada: ${name}`), { status: 500 });
 }
 
 // ─── Audit logging ───────────────────────────────────────────────────────────
