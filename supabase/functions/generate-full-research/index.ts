@@ -71,7 +71,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ── 12 research steps ──────────────────────────────────────────────────────
+// ── 14 research steps ──────────────────────────────────────────────────────
 const RESEARCH_STEPS = [
   { id: "market_overview", name: "Panorama de Mercado" },
   { id: "jtbd", name: "Jobs To Be Done" },
@@ -85,26 +85,30 @@ const RESEARCH_STEPS = [
   { id: "video_creatives", name: "Creativos de Video" },
   { id: "content_calendar", name: "Parrilla de Contenido" },
   { id: "launch_strategy", name: "Estrategia de Lanzamiento" },
+  { id: "landing_pages", name: "Landing Pages" },
+  { id: "whatsapp_funnel", name: "Funnel de WhatsApp" },
 ];
 
 // ── Step sequence: 1 phase = 1 step = 1 invocation ──────────────────────
 // Each step is a dedicated Edge Function call (~20-40s per step).
 // Sequential chain via self-invocation — 12 calls total.
 const STEP_SEQUENCE: string[] = [
-  "market_overview",    // Phase 0  — research (Perplexity → Mistral → Gemini)
-  "jtbd",               // Phase 1  — analysis (Mistral → Perplexity → Gemini)
-  "pains_desires",      // Phase 2  — analysis (Mistral → Perplexity → Gemini)
-  "competitors",        // Phase 3  — research (Perplexity → Mistral → Gemini)
-  "avatars",            // Phase 4  — generation (Mistral → Perplexity → Gemini)
-  "differentiation",    // Phase 5  — synthesis (Mistral → Perplexity → Gemini)
-  "sales_angles",       // Phase 6  — creative (Mistral → Perplexity → Gemini)
-  "puv_transformation", // Phase 7  — creative (Mistral → Perplexity → Gemini)
-  "lead_magnets",       // Phase 8  — creative (Mistral → Perplexity → Gemini)
-  "video_creatives",    // Phase 9  — creative (Mistral → Perplexity → Gemini)
-  "content_calendar",   // Phase 10 — generation (Mistral → Perplexity → Gemini)
-  "launch_strategy",    // Phase 11 — strategy (Mistral → Perplexity → Gemini)
+  "market_overview",    // Phase 0  — research
+  "jtbd",               // Phase 1  — analysis
+  "pains_desires",      // Phase 2  — analysis
+  "competitors",        // Phase 3  — research
+  "avatars",            // Phase 4  — generation
+  "differentiation",    // Phase 5  — synthesis
+  "sales_angles",       // Phase 6  — creative
+  "puv_transformation", // Phase 7  — creative
+  "lead_magnets",       // Phase 8  — creative
+  "video_creatives",    // Phase 9  — creative
+  "content_calendar",   // Phase 10 — generation
+  "launch_strategy",    // Phase 11 — strategy
+  "landing_pages",      // Phase 12 — conversion (CONVERT V+E)
+  "whatsapp_funnel",    // Phase 13 — closer (CONVERT E LATAM)
 ];
-const TOTAL_PHASES = STEP_SEQUENCE.length; // 12
+const TOTAL_PHASES = STEP_SEQUENCE.length; // 14
 
 // Steps that use web search (Perplexity as first provider)
 const RESEARCH_STEPS_SET = new Set(["market_overview", "competitors"]);
@@ -134,6 +138,8 @@ const STEP_SKILLS: Record<string, SkillType[]> = {
   video_creatives:     ["consciousness_mapper", "hooks_specialist", "storytelling_specialist", "production_director", "social_funnel_builder", "virality_optimizer"],
   content_calendar:    ["consciousness_mapper", "social_funnel_builder", "platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
   launch_strategy:     ["offer_engineer", "neuro_persuader", "cta_specialist", "storytelling_specialist"],
+  landing_pages:       ["landing_page_architect", "consciousness_mapper", "storybrand_architect", "offer_engineer", "copy_sharpener", "cta_specialist", "objection_crusher"],
+  whatsapp_funnel:     ["whatsapp_closer", "consciousness_mapper", "offer_engineer", "objection_crusher", "cta_specialist", "cultural_adapter"],
 };
 
 // ── Token limits per step ──────────────────────────────────────────────────
@@ -152,6 +158,8 @@ const TOKEN_MAP: Record<string, number> = {
   video_creatives: 16000, // 25+ creativos
   content_calendar: 24000, // 28-35 posts completos
   launch_strategy: 14000,
+  landing_pages: 16000,    // 2 variaciones completas con todas las secciones
+  whatsapp_funnel: 14000,  // 3 secuencias completas (captacion, cierre, reactivacion)
 };
 
 // ── JSON repair ────────────────────────────────────────────────────────────
@@ -365,6 +373,160 @@ const SCHEMAS: Record<string, any> = {
       metrics: { type: "object", properties: { preLaunch: { type: "array", items: { type: "object", properties: { metric: { type: "string" }, target: { type: "string" } } } }, launch: { type: "array", items: { type: "object", properties: { metric: { type: "string" }, target: { type: "string" } } } }, postLaunch: { type: "array", items: { type: "object", properties: { metric: { type: "string" }, target: { type: "string" } } } } } },
     },
   },
+  // ── Tab 12: Landing Pages (2 variaciones) ────────────────────────────────
+  landing_pages: {
+    type: "object", additionalProperties: false, required: ["landing_pages"],
+    properties: {
+      landing_pages: {
+        type: "array", minItems: 2, maxItems: 2,
+        items: {
+          type: "object",
+          required: ["variation", "variation_name", "target_consciousness", "funnel_temperature", "sections"],
+          properties: {
+            variation: { type: "string", enum: ["A", "B"] },
+            variation_name: { type: "string" },
+            target_consciousness: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+            funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] },
+            best_for: { type: "string" },
+            strategy: { type: "string" },
+            estimated_conversion_rate: { type: "string" },
+            sections: {
+              type: "array", minItems: 8,
+              items: {
+                type: "object",
+                required: ["section_id", "section_name", "copy_full"],
+                properties: {
+                  section_id: { type: "string" },
+                  section_name: { type: "string" },
+                  headline: { type: "string" },
+                  subheadline: { type: "string" },
+                  cta_primary: { type: "string" },
+                  cta_secondary: { type: "string" },
+                  hero_image_description: { type: "string" },
+                  trust_indicator: { type: "string" },
+                  copy_full: { type: "string" },
+                  product_intro: { type: "string" },
+                  how_it_works: { type: "array", items: { type: "object", properties: { step: { type: "number" }, title: { type: "string" }, description: { type: "string" } } } },
+                  for_who: { type: "string" },
+                  not_for_who: { type: "string" },
+                  testimonials: { type: "array", items: { type: "object", properties: { name: { type: "string" }, avatar_match: { type: "string" }, result: { type: "string" }, quote: { type: "string" } } } },
+                  social_proof_numbers: { type: "string" },
+                  authority_statement: { type: "string" },
+                  origin_story_short: { type: "string" },
+                  core_offer: { type: "string" },
+                  bonuses: { type: "array", items: { type: "object", properties: { name: { type: "string" }, value_usd: { type: "string" }, solves_objection: { type: "string" } } } },
+                  total_value: { type: "string" },
+                  your_price: { type: "string" },
+                  price_anchor: { type: "string" },
+                  guarantee_type: { type: "string", enum: ["reembolso","resultado","satisfaccion"] },
+                  duration_days: { type: "number" },
+                  conditions_simple: { type: "string" },
+                  faqs: { type: "array", items: { type: "object", properties: { question: { type: "string" }, answer: { type: "string" } } } },
+                  recap_promise: { type: "string" },
+                  cta_text: { type: "string" },
+                  reassurance: { type: "string" },
+                  key_insight: { type: "string" },
+                },
+              },
+            },
+            seo_title: { type: "string" },
+            meta_description: { type: "string" },
+            page_url_suggestion: { type: "string" },
+            ab_test_hypothesis: { type: "string" },
+          },
+        },
+      },
+      ab_testing_plan: {
+        type: "object",
+        properties: {
+          test_1: { type: "object", properties: { element: { type: "string" }, variation_a: { type: "string" }, variation_b: { type: "string" }, success_metric: { type: "string" }, minimum_sample: { type: "string" } } },
+          test_2: { type: "object", properties: { element: { type: "string" }, variation_a: { type: "string" }, variation_b: { type: "string" }, success_metric: { type: "string" }, minimum_sample: { type: "string" } } },
+        },
+      },
+      tech_stack_recommendation: {
+        type: "object",
+        properties: {
+          builders: { type: "array", items: { type: "string" } },
+          analytics: { type: "array", items: { type: "string" } },
+          split_testing: { type: "array", items: { type: "string" } },
+          hosting_latam: { type: "string" },
+        },
+      },
+    },
+  },
+  // ── Tab 13: Funnel WhatsApp ──────────────────────────────────────────────
+  whatsapp_funnel: {
+    type: "object", additionalProperties: false, required: ["whatsapp_funnels"],
+    properties: {
+      whatsapp_funnels: {
+        type: "array", minItems: 3, maxItems: 4,
+        items: {
+          type: "object",
+          required: ["funnel_type", "funnel_name", "objective", "messages"],
+          properties: {
+            funnel_type: { type: "string", enum: ["captacion","cierre","upsell","reactivacion"] },
+            funnel_name: { type: "string" },
+            objective: { type: "string" },
+            trigger: { type: "string" },
+            total_messages: { type: "number" },
+            total_duration_days: { type: "number" },
+            messages: {
+              type: "array", minItems: 3,
+              items: {
+                type: "object",
+                required: ["message_number", "day", "type", "objective", "text"],
+                properties: {
+                  message_number: { type: "number" },
+                  day: { type: "number" },
+                  send_time: { type: "string" },
+                  type: { type: "string", enum: ["texto","audio","imagen","video"] },
+                  consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+                  objective: { type: "string" },
+                  text: { type: "string" },
+                  audio_script: { type: ["string","null"] },
+                  if_responds: { type: "string" },
+                  if_no_response: { type: "string" },
+                  forbidden: { type: "array", items: { type: "string" } },
+                },
+              },
+            },
+            branch_flows: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  trigger: { type: "string" },
+                  action: { type: "string" },
+                  response_template: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+      },
+      whatsapp_setup: {
+        type: "object",
+        properties: {
+          account_type: { type: "string" },
+          profile_optimization: { type: "array", items: { type: "string" } },
+          automation_tools: { type: "array", items: { type: "object", properties: { tool: { type: "string" }, use_case: { type: "string" }, latam_availability: { type: "string" }, approximate_cost: { type: "string" } } } },
+          compliance_notes: { type: "array", items: { type: "string" } },
+          list_management: { type: "object", properties: { segmentation: { type: "array", items: { type: "string" } }, opt_in_strategy: { type: "string" }, opt_out_handling: { type: "string" } } },
+        },
+      },
+      performance_benchmarks: {
+        type: "object",
+        properties: {
+          open_rate_whatsapp: { type: "string" },
+          response_rate_cold: { type: "string" },
+          response_rate_warm: { type: "string" },
+          conversion_rate_from_sequence: { type: "string" },
+          best_days: { type: "array", items: { type: "string" } },
+          best_hours: { type: "string" },
+        },
+      },
+    },
+  },
 };
 
 // ── Per-Tab Perplexity Queries (V2) ─────────────────────────────────────────
@@ -449,6 +611,22 @@ function buildPerplexityQuery(
       `Mejores prácticas de launches en LATAM: timing, canales, secuencias de email/WhatsApp. ` +
       `Presupuestos de lanzamiento típicos para startups en ${market}. ` +
       `Casos de estudio de lanzamientos exitosos en este sector.`,
+
+    landing_pages:
+      `Mejores prácticas de landing pages de alta conversión para ${product} en ${market} 2025-2026. ` +
+      `Ejemplos de landing pages exitosas en esta industria. ` +
+      `Elementos above-the-fold que más convierten en mercados latinoamericanos. ` +
+      `Benchmarks de tasa de conversión para este tipo de producto. ` +
+      `Headlines y CTAs que mejor funcionan en ${market}. ` +
+      `Longitud óptima de landing page para esta categoría en LATAM.`,
+
+    whatsapp_funnel:
+      `Estrategias de venta por WhatsApp en ${market} 2025-2026 para ${product}. ` +
+      `Mejores prácticas de WhatsApp Business para PYMEs en LATAM. ` +
+      `Tasas de respuesta y conversión típicas en funnels de WhatsApp para esta industria. ` +
+      `Herramientas de automatización de WhatsApp permitidas en LATAM (Botcake, WATI, ManyChat, Tidio). ` +
+      `Casos de estudio de empresas que venden por WhatsApp en Colombia, México, Perú. ` +
+      `Horarios de mayor respuesta en WhatsApp por país en LATAM.`,
   };
 
   return queries[stepId] || `Investigación actualizada sobre ${product} en ${market} 2025-2026.`;
@@ -1049,6 +1227,71 @@ INSTRUCCIONES CRITICAS:
 - INTEGRA los canales y targeting del ADN de marca
 
 Genera: preLaunch (duration, objectives, actions, contentPlan, checklist), launch (dayPlan, offer con bonuses/urgency/scarcity/guarantee, emailSequence 5-7, channels), postLaunch (retentionActions, postSaleContent, referralStrategy, nonBuyerFollowUp, analysisChecklist), budget (organic/paid/totalEstimated), timeline (6-8 hitos), team, metrics (preLaunch/launch/postLaunch).`,
+
+    landing_pages: `Genera 2 VARIACIONES COMPLETAS de landing page para este producto.
+Cada variacion es una propuesta diferente — no la misma con cambios menores.
+
+${baseContext}
+
+PUV (de paso anterior):
+${prev.puv_transformation?.puv?.statement || "N/A"}
+
+AVATAR PRIMARIO:
+${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 800)}
+
+DOLORES CRITICOS:
+${prevPains?.pains?.slice(0, 5).map((p: any) => `- ${p.pain}: ${p.impact}`).join("\n") || "N/A"}
+
+OBJECIONES PRINCIPALES:
+${prevPains?.objections?.slice(0, 4).map((o: any) => `- ${o.objection}`).join("\n") || "N/A"}
+
+TRANSFORMACION:
+${JSON.stringify(prev.puv_transformation?.transformation || {}).substring(0, 600)}
+
+LEAD MAGNETS:
+${prev.lead_magnets?.leadMagnets?.slice(0, 2).map((l: any) => `- ${l.name}: ${l.promise}`).join("\n") || "N/A"}
+
+ANGULOS TOP 3:
+${prevSales?.salesAngles?.slice(0, 3).map((a: any) => `- ${a.hookExample}`).join("\n") || "N/A"}
+
+INSTRUCCIONES CRITICAS:
+- VARIACION A "La Directa" → para audiencia caliente (nivel 4-5 Schwartz), oferta visible desde el hero
+- VARIACION B "La Educativa" → para audiencia tibia (nivel 2-3 Schwartz), construye confianza primero
+- Cada variacion debe tener 8-11 secciones completas (hero, problem, agitation, solution, social_proof, authority, offer, guarantee, faq, final_cta)
+- Cada seccion incluye copy_full LISTO PARA COPIAR Y PEGAR
+- Headlines pasan el test de 3 segundos
+- Testimoniales con nombre + ciudad + resultado especifico (ficticios pero creibles)
+- Garantia simple sin condiciones complicadas
+- Incluir ab_testing_plan con 2 tests + tech_stack_recommendation`,
+
+    whatsapp_funnel: `Genera el FUNNEL COMPLETO DE VENTAS POR WHATSAPP con 3-4 tipos de secuencias.
+
+${baseContext}
+
+PUV:
+${prev.puv_transformation?.puv?.statement || "N/A"}
+
+LEAD MAGNET PRINCIPAL:
+${prev.lead_magnets?.leadMagnets?.[0]?.name || "N/A"} - ${prev.lead_magnets?.leadMagnets?.[0]?.promise || ""}
+
+OBJECIONES PRINCIPALES:
+${prevPains?.objections?.slice(0, 5).map((o: any) => `- ${o.objection}`).join("\n") || "N/A"}
+
+AVATAR PRIMARIO:
+${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 800)}
+
+MERCADO: ${targetMarket}
+
+INSTRUCCIONES CRITICAS:
+- 3 tipos de funnel obligatorios: CAPTACION (5-7 mensajes en 7-10 dias), CIERRE (3-5 mensajes en 3-5 dias), REACTIVACION (2-3 mensajes en 3 dias)
+- Cada mensaje LISTO PARA COPIAR Y PEGAR (incluir emojis adecuados)
+- Maximo 150 palabras por mensaje (se leen en movil)
+- Personalizacion con [Nombre] siempre
+- Primer mensaje NUNCA con pitch directo de venta
+- Incluir audio_script para mensajes clave (60-90 segundos)
+- branch_flows con respuestas a objeciones comunes ("muy caro", "lo pienso", "no me interesa")
+- Respeta horarios LATAM (8am-8pm hora local)
+- Incluir whatsapp_setup (account_type, automation_tools, compliance) y performance_benchmarks`,
   };
 
   return prompts[stepId] || "";
@@ -1137,6 +1380,8 @@ async function reconstructPrevResults(
   if (hasData(sa.videoCreatives)) stepResults.video_creatives = { creatives: sa.videoCreatives };
   if (hasData(p.content_calendar?.calendar)) stepResults.content_calendar = p.content_calendar;
   if (hasData(p.launch_strategy?.preLaunch)) stepResults.launch_strategy = p.launch_strategy;
+  if (hasData(sa.landingPages)) stepResults.landing_pages = { landing_pages: sa.landingPages };
+  if (hasData(sa.whatsappFunnels)) stepResults.whatsapp_funnel = { whatsapp_funnels: sa.whatsappFunnels };
 
   return { stepResults, marketResearch: mr, competitorAnalysis: ca, salesAnglesData: sa };
 }
@@ -1218,7 +1463,7 @@ async function finalizeProduct(
 
   await supabase.from("products").update({
     research_generated_at: new Date().toISOString(),
-    research_progress: { step: 12, total: 12, label: "Completado", done: true },
+    research_progress: { step: 14, total: 14, label: "Completado", done: true },
     brief_status: "completed",
     brief_completed_at: new Date().toISOString(),
     brief_data: briefData,
@@ -1271,7 +1516,7 @@ async function chainToNextPhase(
       supabase.from("products").update({
         research_progress: {
           step: nextPhase,
-          total: 12,
+          total: 14,
           label: `Error al continuar (${getStepName(STEP_SEQUENCE[nextPhase])})`,
           error: true,
         },
@@ -1313,7 +1558,7 @@ async function processRequest(body: any): Promise<void> {
     if (forceRegenerate && phase === 0) {
       const lockId = crypto.randomUUID();
       await supabase.from("products").update({
-        research_progress: { step: 0, total: 12, label: "Iniciando...", lockId },
+        research_progress: { step: 0, total: 14, label: "Iniciando...", lockId },
       }).eq("id", productId);
       await new Promise(r => setTimeout(r, 600));
       const { data: lockCheck } = await supabase
@@ -1366,7 +1611,7 @@ async function processRequest(body: any): Promise<void> {
         const reason = tokenError?.message || tokenResult?.error || "insufficient_tokens";
         console.warn(`[full-research] Token consumption failed: ${reason}`);
         await supabase.from("products").update({
-          research_progress: { step: 0, total: 12, label: "Tokens insuficientes", error: true },
+          research_progress: { step: 0, total: 14, label: "Tokens insuficientes", error: true },
         }).eq("id", productId);
         return;
       }
@@ -1458,7 +1703,7 @@ async function processRequest(body: any): Promise<void> {
         content_calendar: null,
         launch_strategy: null,
         research_generated_at: null,
-        research_progress: { step: 0, total: 12, label: "Iniciando regeneracion..." },
+        research_progress: { step: 0, total: 14, label: "Iniciando regeneracion..." },
       }).eq("id", productId);
     }
 
@@ -1498,7 +1743,7 @@ async function processRequest(body: any): Promise<void> {
 
     // ── Update progress: starting this step ──────────────────────────
     await supabase.from("products").update({
-      research_progress: { step: phase, total: 12, label: getStepName(stepId), stepId },
+      research_progress: { step: phase, total: 14, label: getStepName(stepId), stepId },
     }).eq("id", productId);
 
     console.log(`[step 5/6] Running AI: phase=${phase} step="${stepId}"`);
@@ -1513,7 +1758,7 @@ async function processRequest(body: any): Promise<void> {
       await supabase.from("products").update({
         research_progress: {
           step: phase,
-          total: 12,
+          total: 14,
           label: `Error: ${getStepName(stepId)} fallo`,
           error: true,
           stepId,
@@ -1534,7 +1779,7 @@ async function processRequest(body: any): Promise<void> {
       updated_at: now,
       research_progress: {
         step: phase + 1,
-        total: 12,
+        total: 14,
         label: getStepName(stepId),
         stepId,
       },
@@ -1638,6 +1883,35 @@ async function processRequest(body: any): Promise<void> {
       case "launch_strategy":
         update.launch_strategy = { ...result, generatedAt: now };
         break;
+
+      case "landing_pages": {
+        // Guardado en sales_angles_data para no requerir migracion
+        const lpData = result.landing_pages || result;
+        const lpList = Array.isArray(lpData) ? lpData : (lpData?.landing_pages || []);
+        salesAnglesData = {
+          ...salesAnglesData,
+          landingPages: lpList,
+          landingPagesAbTesting: result.ab_testing_plan || {},
+          landingPagesTechStack: result.tech_stack_recommendation || {},
+          generatedAt: now,
+        };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+
+      case "whatsapp_funnel": {
+        const wfData = result.whatsapp_funnels || result;
+        const wfList = Array.isArray(wfData) ? wfData : (wfData?.whatsapp_funnels || []);
+        salesAnglesData = {
+          ...salesAnglesData,
+          whatsappFunnels: wfList,
+          whatsappSetup: result.whatsapp_setup || {},
+          whatsappBenchmarks: result.performance_benchmarks || {},
+          generatedAt: now,
+        };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
     }
 
     const { error: updateErr } = await supabase.from("products").update(update).eq("id", productId);
@@ -1657,7 +1931,7 @@ async function processRequest(body: any): Promise<void> {
       try {
         const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
         await sb.from("products").update({
-          research_progress: { step: 0, total: 12, label: `Error: ${message.substring(0, 100)}`, error: true },
+          research_progress: { step: 0, total: 14, label: `Error: ${message.substring(0, 100)}`, error: true },
         }).eq("id", productId);
       } catch { /* best-effort */ }
     }
