@@ -209,6 +209,9 @@ export function ProductDetailDialog({
     target_locations: string[];
   } | null>(null);
 
+  // Tab activa (controlada para permitir navegacion programatica desde botones)
+  const [activeTab, setActiveTab] = useState<string>(product ? "brief" : "info");
+
   // Full research generation state
   const [researchGenerating, setResearchGenerating] = useState(false);
   const [researchProgress, setResearchProgress] = useState<{
@@ -603,7 +606,7 @@ export function ProductDetailDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs defaultValue={isNew ? "info" : "brief"} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Tabs en dos filas */}
           <div className="px-4 sm:px-6 pt-4 shrink-0 space-y-1">
             {/* Row 1: ADN + steps 1-6 (in research invocation order) */}
@@ -771,6 +774,7 @@ export function ProductDetailDialog({
                     ) : (
                       <KiroResearchButton
                         onClick={handleGenerateResearch}
+                        onViewDetails={() => setActiveTab("adn-landing")}
                         tokenCost={RESEARCH_COST}
                         hasEnoughTokens={hasEnoughTokens}
                         balanceLoading={balanceLoading}
@@ -1478,22 +1482,31 @@ function RetryResearchBanner({
 }
 
 // ════════════════════════════════════════════════════════════════════
-// KIRO Research — Step definitions for the 12-step progress
+// KIRO Research — Step definitions for the 21-step progress (CONVERT 360)
 // ════════════════════════════════════════════════════════════════════
 
 const KIRO_STEPS = [
-  { icon: Globe,     label: 'Mercado' },
-  { icon: Target,    label: 'JTBD' },
-  { icon: Brain,     label: 'Dolores' },
-  { icon: Swords,    label: 'Competencia' },
-  { icon: Users,     label: 'Avatares' },
-  { icon: Lightbulb, label: 'ESFERA' },
-  { icon: Sparkles,  label: 'Ángulos' },
-  { icon: Trophy,    label: 'PUV' },
-  { icon: Gift,      label: 'Leads' },
-  { icon: Rocket,    label: 'Creativos' },
-  { icon: Calendar,  label: 'Parrilla' },
-  { icon: FileText,  label: 'Lanzamiento' },
+  { icon: Globe,         label: 'Mercado' },
+  { icon: Target,        label: 'JTBD' },
+  { icon: Brain,         label: 'Dolores' },
+  { icon: Swords,        label: 'Competencia' },
+  { icon: Users,         label: 'Avatares' },
+  { icon: Lightbulb,     label: 'ESFERA' },
+  { icon: Sparkles,      label: 'Ángulos' },
+  { icon: Trophy,        label: 'PUV' },
+  { icon: Gift,          label: 'Leads' },
+  { icon: Rocket,        label: 'Creativos' },
+  { icon: Calendar,      label: 'Parrilla' },
+  { icon: FileText,      label: 'Lanzamiento' },
+  { icon: Globe,         label: 'Landing' },
+  { icon: MessageCircle, label: 'WhatsApp' },
+  { icon: Megaphone,     label: 'Paid Ads' },
+  { icon: Mail,          label: 'Email' },
+  { icon: DollarSign,    label: 'Precios' },
+  { icon: BarChart3,     label: 'KPIs' },
+  { icon: Search,        label: 'SEO' },
+  { icon: Handshake,     label: 'Alianzas' },
+  { icon: Heart,         label: 'Comunidad' },
 ];
 
 // ════════════════════════════════════════════════════════════════════
@@ -1502,6 +1515,7 @@ const KIRO_STEPS = [
 
 function KiroResearchButton({
   onClick,
+  onViewDetails,
   tokenCost,
   hasEnoughTokens,
   balanceLoading,
@@ -1513,6 +1527,7 @@ function KiroResearchButton({
   isRegenerate = false,
 }: {
   onClick: (includeClientDna: boolean, forceRegenerate: boolean) => void;
+  onViewDetails?: () => void;
   tokenCost: number;
   hasEnoughTokens: boolean;
   balanceLoading: boolean;
@@ -1594,39 +1609,51 @@ function KiroResearchButton({
           </div>
         </div>
 
-        {/* CTA Button */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <button
-                  onClick={disabled ? undefined : () => onClick(includeClientDna, isRegenerate)}
-                  disabled={disabled}
-                  className={`relative group flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-medium
-                    transition-colors duration-150 flex items-center gap-2
-                    ${disabled
-                      ? 'bg-zinc-700/50 text-zinc-400 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-purple-600 to-pink-500 text-zinc-100 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:brightness-110'
-                    }`}
-                >
-                  {disabled ? (
-                    <AlertTriangle className="w-4 h-4" />
-                  ) : isRegenerate ? (
-                    <RefreshCw className="w-4 h-4" />
-                  ) : (
-                    <Rocket className="w-4 h-4" />
-                  )}
-                  {isRegenerate ? 'Recrear' : 'Activar'}
-                </button>
-              </div>
-            </TooltipTrigger>
-            {disabled && tooltipMessage && (
-              <TooltipContent side="top" className="bg-zinc-900 text-zinc-200 border-zinc-700">
-                <p>{tooltipMessage}</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        {/* CTA Buttons (primario + secundario "Ver detalle 360°") */}
+        <div className="flex flex-col gap-2 flex-shrink-0">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <button
+                    onClick={disabled ? undefined : () => onClick(includeClientDna, isRegenerate)}
+                    disabled={disabled}
+                    className={`relative group w-full px-5 py-2.5 rounded-lg text-sm font-medium
+                      transition-colors duration-150 flex items-center justify-center gap-2
+                      ${disabled
+                        ? 'bg-zinc-700/50 text-zinc-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-600 to-pink-500 text-zinc-100 shadow-[0_0_20px_rgba(168,85,247,0.3)] hover:brightness-110'
+                      }`}
+                  >
+                    {disabled ? (
+                      <AlertTriangle className="w-4 h-4" />
+                    ) : isRegenerate ? (
+                      <RefreshCw className="w-4 h-4" />
+                    ) : (
+                      <Rocket className="w-4 h-4" />
+                    )}
+                    {isRegenerate ? 'Recrear' : 'Activar'}
+                  </button>
+                </div>
+              </TooltipTrigger>
+              {disabled && tooltipMessage && (
+                <TooltipContent side="top" className="bg-zinc-900 text-zinc-200 border-zinc-700">
+                  <p>{tooltipMessage}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
+          {onViewDetails && (
+            <button
+              onClick={onViewDetails}
+              className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors flex items-center justify-center gap-1 underline-offset-2 hover:underline"
+            >
+              <Sparkles className="w-3 h-3" />
+              Ver detalle 360°
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Step preview dots */}
