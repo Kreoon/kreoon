@@ -10,6 +10,7 @@ import { handleSocialTool, socialToolDefinitions } from '../src/tools/social.js'
 import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/operations.js';
 import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
 import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
+import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
 // ─── CORS helper ────────────────────────────────────────────────────────────
@@ -94,10 +95,19 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   // Social
   publish_to_social: 'social:write',
   // Operations (content board)
+  get_content_item: 'campaigns:read',
+  approve_content_script: 'campaigns:write',
+  record_content_delivery: 'campaigns:write',
+  mark_content_payment: 'campaigns:write',
   create_content_item: 'campaigns:write',
   list_content_items: 'campaigns:read',
   assign_content_team: 'campaigns:write',
   update_content_status: 'campaigns:write',
+  // Org management
+  get_org_dashboard: 'campaigns:read',
+  list_org_members: 'campaigns:read',
+  list_clients: 'campaigns:read',
+  create_client: 'campaigns:write',
   // Campaigns (marketplace)
   create_marketplace_campaign: 'campaigns:write',
   list_marketplace_campaigns: 'campaigns:read',
@@ -119,6 +129,7 @@ const ALL_TOOL_DEFS = [
   ...operationsToolDefinitions,
   ...campaignsToolDefinitions,
   ...projectsToolDefinitions,
+  ...orgToolDefinitions,
 ];
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
@@ -144,6 +155,7 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (operationsToolDefinitions.some(t => t.name === name)) return handleOperationsTool(name, args, auth);
   if (campaignsToolDefinitions.some(t => t.name === name))  return handleCampaignsTool(name, args, auth);
   if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
+  if (orgToolDefinitions.some(t => t.name === name))         return handleOrgTool(name, args, auth);
   throw Object.assign(new Error(`Tool no manejada: ${name}`), { status: 500 });
 }
 
@@ -184,7 +196,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   // GET /health (también acepta /api/index.ts como ruta raíz de Vercel)
   const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
   if (req.method === 'GET' && isHealthPath) {
-    return json(response, 200, { status: 'ok', version: '2.0.0', tools: ALL_TOOL_DEFS.length });
+    return json(response, 200, { status: 'ok', version: '3.0.0', tools: ALL_TOOL_DEFS.length });
   }
 
   try {

@@ -10,6 +10,71 @@ const supabase = createClient(
 
 export const operationsToolDefinitions = [
   {
+    name: "get_content_item",
+    description:
+      "Obtiene el detalle completo de un ítem de contenido: brief, guión, equipo asignado, " +
+      "pagos, fechas, estado de entrega y URLs de video.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+      },
+      required: ["content_id"],
+    },
+  },
+  {
+    name: "approve_content_script",
+    description:
+      "Aprueba o solicita cambios en el guión de un ítem de contenido. " +
+      "Al aprobar, el estado pasa a 'script_approved' automáticamente.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+        action: {
+          type: "string",
+          enum: ["approve", "request_changes"],
+          description: "Aprobar el guión o solicitar correcciones",
+        },
+        feedback: {
+          type: "string",
+          description: "Feedback o instrucciones de corrección (requerido si action=request_changes)",
+        },
+      },
+      required: ["content_id", "action"],
+    },
+  },
+  {
+    name: "record_content_delivery",
+    description:
+      "Registra la entrega de un contenido terminado: guarda la URL del video y marca como entregado. " +
+      "Mueve el estado a 'review' automáticamente.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+        video_url: { type: "string", description: "URL del video entregado (Bunny CDN, Drive, etc.)" },
+        notes: { type: "string", description: "Notas de la entrega (opcional)" },
+      },
+      required: ["content_id", "video_url"],
+    },
+  },
+  {
+    name: "mark_content_payment",
+    description:
+      "Marca el pago al creador y/o editor de un ítem de contenido como realizado. " +
+      "Úsalo después de transferir el pago para mantener el registro actualizado.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+        pay_creator: { type: "boolean", description: "Marcar pago al creador como realizado" },
+        pay_editor: { type: "boolean", description: "Marcar pago al editor como realizado" },
+      },
+      required: ["content_id"],
+    },
+  },
+  {
     name: "create_content_item",
     description:
       "Crea un nuevo ítem de contenido en el tablero de la organización. " +
@@ -114,10 +179,14 @@ export async function handleOperationsTool(
   auth: AuthContext
 ): Promise<ToolResult> {
   switch (toolName) {
-    case "create_content_item":   return createContentItem(args, auth);
-    case "list_content_items":    return listContentItems(args, auth);
-    case "assign_content_team":   return assignContentTeam(args, auth);
-    case "update_content_status": return updateContentStatus(args, auth);
+    case "get_content_item":       return getContentItem(args, auth);
+    case "approve_content_script": return approveContentScript(args, auth);
+    case "record_content_delivery":return recordContentDelivery(args, auth);
+    case "mark_content_payment":   return markContentPayment(args, auth);
+    case "create_content_item":    return createContentItem(args, auth);
+    case "list_content_items":     return listContentItems(args, auth);
+    case "assign_content_team":    return assignContentTeam(args, auth);
+    case "update_content_status":  return updateContentStatus(args, auth);
     default: return { success: false, error: `Tool desconocida: ${toolName}` };
   }
 }
@@ -198,6 +267,100 @@ async function assignContentTeam(args: Record<string, unknown>, auth: AuthContex
     .single();
 
   if (error) return { success: false, error: `assign_content_team: ${error.message}` };
+  if (!data)  return { success: false, error: "Contenido no encontrado o sin acceso" };
+  return { success: true, data };
+}
+
+async function getContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const { data, error } = await supabase
+    .from("content")
+    .select("id, title, description, status, target_platform, content_type, product_id, client_id, creator_id, editor_id, strategist_id, script, deadline, creator_payment, editor_payment, creator_paid, editor_paid, video_url, video_urls, notes, funnel_stage, hook, cta, created_at, updated_at, delivered_at, approved_at_v2, published_at")
+    .eq("id", args.content_id)
+    .eq("organization_id", auth.org_id)
+    .is("deleted_at", null)
+    .single();
+
+  if (error || !data) return { success: false, error: "Contenido no encontrado o sin acceso" };
+  return { success: true, data };
+}
+
+async function approveContentScript(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const { content_id, action, feedback } = args;
+  const now = new Date().toISOString();
+
+  if (action === "request_changes" && !feedback) {
+    return { success: false, error: "feedback es requerido cuando action=request_changes" };
+  }
+
+  const updates: Record<string, unknown> = { updated_at: now };
+
+  if (action === "approve") {
+    updates.status = "script_approved";
+    updates.script_approved_at_v2 = now;
+    updates.script_approved_by = auth.user_id;
+    updates.change_request_status = null;
+  } else {
+    updates.status = "script_pending";
+    updates.change_request_status = "requested";
+    updates.change_requests = { feedback, requested_at: now, requested_by: auth.user_id };
+  }
+
+  const { data, error } = await supabase
+    .from("content")
+    .update(updates)
+    .eq("id", content_id)
+    .eq("organization_id", auth.org_id)
+    .select("id, title, status, script_approved_at_v2, change_request_status")
+    .single();
+
+  if (error) return { success: false, error: `approve_content_script: ${error.message}` };
+  if (!data)  return { success: false, error: "Contenido no encontrado o sin acceso" };
+  return { success: true, data };
+}
+
+async function recordContentDelivery(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const { content_id, video_url, notes } = args;
+  const now = new Date().toISOString();
+
+  const updates: Record<string, unknown> = {
+    video_url,
+    delivered_at: now,
+    status: "review",
+    review_at: now,
+    updated_at: now,
+  };
+  if (notes) updates.notes = notes;
+
+  const { data, error } = await supabase
+    .from("content")
+    .update(updates)
+    .eq("id", content_id)
+    .eq("organization_id", auth.org_id)
+    .select("id, title, status, video_url, delivered_at")
+    .single();
+
+  if (error) return { success: false, error: `record_content_delivery: ${error.message}` };
+  if (!data)  return { success: false, error: "Contenido no encontrado o sin acceso" };
+  return { success: true, data };
+}
+
+async function markContentPayment(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const { content_id, pay_creator, pay_editor } = args;
+  const now = new Date().toISOString();
+
+  const updates: Record<string, unknown> = { updated_at: now };
+  if (pay_creator) updates.creator_paid = true;
+  if (pay_editor)  updates.editor_paid  = true;
+
+  const { data, error } = await supabase
+    .from("content")
+    .update(updates)
+    .eq("id", content_id)
+    .eq("organization_id", auth.org_id)
+    .select("id, title, creator_paid, editor_paid, updated_at")
+    .single();
+
+  if (error) return { success: false, error: `mark_content_payment: ${error.message}` };
   if (!data)  return { success: false, error: "Contenido no encontrado o sin acceso" };
   return { success: true, data };
 }
