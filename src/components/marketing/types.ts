@@ -406,6 +406,43 @@ export function getSpherePhaseConfig(phase: SpherePhase): SpherePhaseConfig {
   return SPHERE_PHASES.find(p => p.value === phase) || SPHERE_PHASES[0];
 }
 
+// =====================================================
+// MÉTODO C·O·N·V·E·R·T DE KREOON (Marco propio)
+// =====================================================
+// Fuente unica: src/lib/marketing/kreoon-method.ts
+// Backward compatible con SpherePhase legado.
+
+export type ConvertPhase =
+  | 'conciencia'    // Nivel 1-2 Schwartz — TOFU, audiencia fría
+  | 'conexion'      // Nivel 2-3 Schwartz — identificación con el problema
+  | 'consideracion' // Nivel 3-4 Schwartz — educación sobre la solución
+  | 'conversion'    // Nivel 4-5 Schwartz — oferta y cierre
+  | 'retencion';    // Post-compra — deleitar, retener, referir
+
+// Mapeo de compatibilidad bidireccional
+export const CONVERT_TO_SPHERE: Record<ConvertPhase, SpherePhase> = {
+  conciencia:     'engage',
+  conexion:       'engage',
+  consideracion:  'solution',
+  conversion:     'remarketing',
+  retencion:      'fidelize',
+} as const;
+
+export const SPHERE_TO_CONVERT: Record<SpherePhase, ConvertPhase> = {
+  engage:      'conciencia',
+  solution:    'consideracion',
+  remarketing: 'conversion',
+  fidelize:    'retencion',
+} as const;
+
+export const CONVERT_PHASE_LABELS: Record<ConvertPhase, string> = {
+  conciencia:     'Conciencia — Audiencia fría',
+  conexion:       'Conexión — Identificación con el problema',
+  consideracion:  'Consideración — Evaluando soluciones',
+  conversion:     'Conversión — Listo para comprar',
+  retencion:      'Retención — Cliente activo',
+} as const;
+
 export interface EsferaPhaseData {
   description: string;
   objective: string;
