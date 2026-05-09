@@ -212,6 +212,14 @@ export function ProductDetailDialog({
 
   // Tab activa (controlada para permitir navegacion programatica desde botones)
   const [activeTab, setActiveTab] = useState<string>(product ? "brief" : "info");
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Resetear scroll al inicio cuando cambia la pestana activa
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [activeTab]);
 
   // Full research generation state
   const [researchGenerating, setResearchGenerating] = useState(false);
@@ -737,7 +745,7 @@ export function ProductDetailDialog({
             </TabsList>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-6 pb-6">
 
           {/* Banner: Retry incomplete research (for brief-based products without DNA) */}
           {product && !dnaRecord && product.brief_data && product.brief_status !== 'completed' &&
