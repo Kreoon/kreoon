@@ -152,9 +152,9 @@ async function getOrgDashboard(auth: AuthContext): Promise<ToolResult> {
 
   // Resolver UUIDs de creators/editors a nombres reales
   const allUserIds = new Set<string>();
-  for (const item of [...(overdueRes.data ?? []), ...(pendingPayRes.data ?? []), ...(marketplaceRes.data ?? [])]) {
-    if (item.creator_id) allUserIds.add(item.creator_id);
-    if (item.editor_id)  allUserIds.add(item.editor_id);
+  for (const item of [...(overdueRes.data ?? []), ...(pendingPayRes.data ?? []), ...(marketplaceRes.data ?? [])] as Record<string, unknown>[]) {
+    if (item.creator_id) allUserIds.add(item.creator_id as string);
+    if (item.editor_id)  allUserIds.add(item.editor_id  as string);
   }
 
   const nameMap: Record<string, string> = {};

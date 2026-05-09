@@ -115,7 +115,8 @@ export const operationsToolDefinitions = [
     name: "update_content_item",
     description:
       "Actualiza los campos de metadata de un ítem de contenido existente: cliente, producto, " +
-      "plataforma, tipo, funnel, notas y deadline. Úsalo para asignar cliente a un ítem ya creado.",
+      "plataforma, tipo, funnel, notas, deadline, guión, director, B-roll y captions. " +
+      "Úsalo para asignar cliente a un ítem ya creado o guardar outputs de producción.",
     inputSchema: {
       type: "object",
       properties: {
@@ -129,7 +130,10 @@ export const operationsToolDefinitions = [
         funnel_stage:    { type: "string", enum: ["tofu", "mofu", "bofu"], description: "Etapa del funnel" },
         deadline:        { type: "string", format: "date-time", description: "Fecha límite ISO 8601" },
         notes:           { type: "string", description: "Notas internas" },
-        script:          { type: "string", description: "Texto completo del guión (hook + cuerpo + CTA). Úsalo para guardar un guión escrito manualmente o generado por IA." },
+        script:          { type: "string", description: "Texto completo del guión (hook + cuerpo + CTA)." },
+        director_output: { type: "string", description: "Instrucciones de dirección: encuadres, expresiones, movimientos de cámara, vestuario, locación." },
+        broll_output:    { type: "string", description: "Lista de tomas B-roll: planos de apoyo, recursos visuales, textos en pantalla." },
+        captions:        { type: "string", description: "Variaciones de captions para publicación: orgánicos (engagement) y ads (conversión)." },
       },
       required: ["content_id"],
     },
@@ -255,7 +259,7 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
 
 async function updateContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { content_id, ...fields } = args;
-  const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes", "script"];
+  const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes", "script", "director_output", "broll_output", "captions"];
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of allowed) {
@@ -271,7 +275,7 @@ async function updateContentItem(args: Record<string, unknown>, auth: AuthContex
     .update(updates)
     .eq("id", content_id)
     .eq("organization_id", auth.org_id)
-    .select("id, title, status, client_id, product_id, target_platform, content_type, funnel_stage, script, notes, updated_at")
+    .select("id, title, status, client_id, product_id, target_platform, content_type, funnel_stage, script, notes, director_output, broll_output, captions, updated_at")
     .single();
 
   if (error) return { success: false, error: `update_content_item: ${error.message}` };
