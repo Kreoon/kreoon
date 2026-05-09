@@ -1,25 +1,14 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles, Rocket, RefreshCw, ArrowRight, AlertTriangle, Coins,
-  CheckCircle2, Globe, Target, Heart, Swords, Users, Lightbulb,
-  Brain, Trophy, Gift, Calendar, Megaphone, Mail, DollarSign,
+  Sparkles, ArrowRight, Brain, Coins,
+  Globe, Target, Heart, Swords, Users, Lightbulb, Trophy,
+  Gift, Calendar, Rocket, Megaphone, Mail, DollarSign,
   BarChart3, Search, Handshake, MessageCircle, FileText, Dna,
 } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AdnRecargadoBannerProps {
   tokenCost: number;
-  hasEnoughTokens: boolean;
-  balanceLoading: boolean;
-  isClient: boolean;
-  isAdmin?: boolean;
-  monthlyUsageCount: number;
-  monthlyLimit?: number | null;
-  limitReached: boolean;
-  isRegenerate?: boolean;
-  onActivate: (includeClientDna: boolean, forceRegenerate: boolean) => void;
-  onViewDetails?: () => void;
+  onViewDetails: () => void;
   completedTabs?: number;
   totalTabs?: number;
   isGenerating?: boolean;
@@ -33,54 +22,28 @@ const TAB_ICONS = [
 
 export function AdnRecargadoBanner({
   tokenCost,
-  hasEnoughTokens,
-  balanceLoading,
-  isClient,
-  isAdmin,
-  monthlyUsageCount,
-  monthlyLimit,
-  limitReached,
-  isRegenerate = false,
-  onActivate,
   onViewDetails,
   completedTabs = 0,
   totalTabs = 21,
   isGenerating = false,
 }: AdnRecargadoBannerProps) {
-  const [includeClientDna, setIncludeClientDna] = useState(true);
-
-  const canActivate = isAdmin || isClient;
-  const disabled = !canActivate || !hasEnoughTokens || limitReached || balanceLoading;
-  const tooltipMessage = balanceLoading
-    ? "Verificando Tokens IA..."
-    : !canActivate
-      ? "Solo administradores o clientes pueden activar"
-      : limitReached
-        ? monthlyLimit === 0 ? "Tu plan no incluye ADN Recargado" : `Límite mensual alcanzado (${monthlyUsageCount}/${monthlyLimit})`
-        : !hasEnoughTokens
-          ? `Tokens IA insuficientes (necesitas ${tokenCost.toLocaleString()})`
-          : "";
-
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 bg-gradient-to-br from-[#0a0a1a] via-[#1a0a2e] to-[#0a0a1a] shadow-2xl shadow-violet-500/20">
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/40 bg-gradient-to-br from-[#0a0118] via-[#1a0830] to-[#0a0118] shadow-2xl shadow-violet-500/30">
       {/* Glow ambient layers */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
-        {/* Violet glow top-left */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-violet-600/30 rounded-full blur-3xl animate-pulse-slow" />
-        {/* Pink glow bottom-right */}
-        <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-pink-500/30 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }} />
-        {/* Center orange glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="absolute -top-32 left-1/4 w-96 h-96 bg-violet-600/40 rounded-full blur-3xl animate-pulse-slow" />
+        <div className="absolute -bottom-32 right-1/4 w-96 h-96 bg-pink-500/40 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-64 bg-fuchsia-500/15 rounded-full blur-3xl" />
 
         {/* Star particles */}
-        <svg className="absolute inset-0 w-full h-full opacity-40" preserveAspectRatio="none">
+        <svg className="absolute inset-0 w-full h-full opacity-60" preserveAspectRatio="none">
           <defs>
-            <radialGradient id="star-gradient">
+            <radialGradient id="star-grad-v2">
               <stop offset="0%" stopColor="#fff" stopOpacity="1" />
               <stop offset="100%" stopColor="#fff" stopOpacity="0" />
             </radialGradient>
           </defs>
-          {Array.from({ length: 40 }).map((_, i) => {
+          {Array.from({ length: 50 }).map((_, i) => {
             const x = (i * 137.5) % 100;
             const y = (i * 89.3) % 100;
             const r = 1 + (i % 3) * 0.5;
@@ -91,7 +54,7 @@ export function AdnRecargadoBanner({
                 cx={`${x}%`}
                 cy={`${y}%`}
                 r={r}
-                fill="url(#star-gradient)"
+                fill="url(#star-grad-v2)"
                 className="animate-twinkle"
                 style={{ animationDelay: `${delay}s` }}
               />
@@ -100,22 +63,22 @@ export function AdnRecargadoBanner({
         </svg>
       </div>
 
-      {/* Animated DNA Helix in background (centered) */}
-      <div aria-hidden className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-64 opacity-40 pointer-events-none">
+      {/* DNA Helix de fondo (centered, behind text) */}
+      <div aria-hidden className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-80 opacity-25 pointer-events-none">
         <DnaHelixSvg />
       </div>
 
-      {/* Floating data nodes (21 entregables) */}
+      {/* 21 nodos orbitando */}
       <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden">
         {TAB_ICONS.map((Icon, i) => {
           const angle = (i / TAB_ICONS.length) * Math.PI * 2;
-          const radius = 40 + (i % 3) * 8;
+          const radius = 38 + (i % 3) * 6;
           const x = 50 + Math.cos(angle) * radius;
-          const y = 50 + Math.sin(angle) * radius * 0.4;
+          const y = 50 + Math.sin(angle) * radius * 0.55;
           return (
             <div
               key={i}
-              className="absolute w-7 h-7 rounded-full bg-gradient-to-br from-violet-500/40 to-pink-500/40 backdrop-blur-sm border border-white/10 flex items-center justify-center animate-float"
+              className="absolute w-7 h-7 rounded-full bg-gradient-to-br from-violet-500/50 to-pink-500/50 backdrop-blur-sm border border-white/20 flex items-center justify-center animate-float shadow-lg shadow-violet-500/20"
               style={{
                 left: `${x}%`,
                 top: `${y}%`,
@@ -124,139 +87,74 @@ export function AdnRecargadoBanner({
                 animationDuration: `${4 + (i % 3)}s`,
               }}
             >
-              <Icon className="w-3 h-3 text-white/70" />
+              <Icon className="w-3 h-3 text-white" />
             </div>
           );
         })}
       </div>
 
-      {/* Content layer */}
-      <div className="relative z-10 p-6 md:p-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
-          {/* Left: branding + texto */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-600 via-purple-500 to-pink-500 p-[2px]">
-                  <div className="w-full h-full rounded-full bg-[#0a0a1a] flex items-center justify-center">
-                    <Dna className="w-5 h-5 text-white animate-pulse" />
-                  </div>
-                </div>
-                {/* Glow ring */}
-                <div className="absolute inset-0 rounded-full bg-violet-500 blur-xl opacity-50 animate-pulse-slow" />
-              </div>
-              <div className="flex flex-col">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-wider text-violet-300 uppercase">
-                  <Sparkles className="w-3 h-3" />
-                  Método C·O·N·V·E·R·T
-                </span>
-                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-violet-100 to-pink-100 bg-clip-text text-transparent">
-                  ADN Recargado
-                </h2>
-              </div>
-            </div>
-
-            <p className="text-sm text-violet-100/70 max-w-xl leading-relaxed">
-              Estrategia de marketing 360° en 21 entregables ejecutables.
-              Mercado, avatares, ángulos, parrilla, landing pages, WhatsApp, paid ads, email, precios, KPIs y más.
-            </p>
-
-            {/* Stats chips */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              <Chip icon={<Sparkles className="w-3 h-3" />} label={`${totalTabs} entregables`} />
-              <Chip icon={<Brain className="w-3 h-3" />} label="22 skills IA" />
-              <Chip icon={<Coins className="w-3 h-3" />} label={`${tokenCost.toLocaleString()} tokens`} highlight />
-              {isClient && monthlyLimit !== null && monthlyLimit !== undefined && (
-                <Chip
-                  icon={<CheckCircle2 className="w-3 h-3" />}
-                  label={`${monthlyUsageCount}/${monthlyLimit === 0 ? 0 : monthlyLimit} este mes`}
-                  variant={limitReached ? "danger" : "success"}
-                />
-              )}
-            </div>
-
-            {/* Checkbox Client DNA */}
-            <label className="inline-flex items-center gap-2 cursor-pointer group pt-1">
-              <input
-                type="checkbox"
-                checked={includeClientDna}
-                onChange={(e) => setIncludeClientDna(e.target.checked)}
-                className="w-4 h-4 rounded border-violet-400/50 bg-violet-900/40 text-violet-500 focus:ring-violet-500/50 focus:ring-offset-0"
-              />
-              <span className="text-xs text-violet-200/80 group-hover:text-violet-100 transition-colors">
-                Incluir ADN de Marca (Client DNA)
-              </span>
-            </label>
-          </div>
-
-          {/* Right: CTAs */}
-          <div className="flex flex-col gap-2 min-w-[200px]">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      onClick={disabled ? undefined : () => onActivate(includeClientDna, isRegenerate)}
-                      disabled={disabled || isGenerating}
-                      size="lg"
-                      className={`w-full gap-2 transition-all ${
-                        disabled
-                          ? "bg-zinc-700/50 text-zinc-400 cursor-not-allowed"
-                          : "bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 hover:from-violet-700 hover:via-purple-700 hover:to-pink-700 text-white border-0 shadow-lg shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-[1.02]"
-                      }`}
-                    >
-                      {disabled ? (
-                        <AlertTriangle className="w-5 h-5" />
-                      ) : isGenerating ? (
-                        <RefreshCw className="w-5 h-5 animate-spin" />
-                      ) : isRegenerate ? (
-                        <RefreshCw className="w-5 h-5" />
-                      ) : (
-                        <Rocket className="w-5 h-5" />
-                      )}
-                      <span className="font-semibold">
-                        {isGenerating
-                          ? `Generando ${completedTabs}/${totalTabs}`
-                          : isRegenerate
-                            ? "Recrear"
-                            : "Activar"}
-                      </span>
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {disabled && tooltipMessage && (
-                  <TooltipContent side="top" className="bg-zinc-900 text-zinc-200 border-zinc-700">
-                    <p>{tooltipMessage}</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-
-            {onViewDetails && (
-              <Button
-                onClick={onViewDetails}
-                variant="ghost"
-                size="sm"
-                className="w-full gap-1 text-violet-300 hover:text-violet-200 hover:bg-violet-500/10"
-              >
-                <Sparkles className="w-3 h-3" />
-                Ver detalle 360°
-                <ArrowRight className="w-3 h-3" />
-              </Button>
-            )}
-          </div>
+      {/* Contenido — TODO CENTRADO */}
+      <div className="relative z-10 px-6 py-10 md:py-14 flex flex-col items-center text-center">
+        {/* Badge de método arriba */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-400/40 backdrop-blur-md mb-4">
+          <Sparkles className="w-3.5 h-3.5 text-violet-200" />
+          <span className="text-[11px] font-bold tracking-wider text-violet-100 uppercase">
+            Método C·O·N·V·E·R·T
+          </span>
         </div>
 
-        {/* Progress bar (solo cuando está generando) */}
+        {/* Logo + Título */}
+        <div className="flex items-center gap-4 mb-3">
+          <div className="relative">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 p-[3px] shadow-2xl shadow-violet-500/50">
+              <div className="w-full h-full rounded-full bg-[#0a0118] flex items-center justify-center">
+                <Dna className="w-6 h-6 text-white animate-pulse" />
+              </div>
+            </div>
+            <div className="absolute inset-0 rounded-full bg-violet-500 blur-2xl opacity-60 animate-pulse-slow" />
+          </div>
+          <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-[0_0_20px_rgba(168,85,247,0.8)]">
+            ADN Recargado
+          </h2>
+        </div>
+
+        {/* Subtítulo con alto contraste */}
+        <p className="text-base md:text-lg text-white/95 max-w-2xl leading-relaxed font-medium drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          Estrategia de marketing 360° en{" "}
+          <span className="text-pink-300 font-bold">21 entregables ejecutables</span>
+        </p>
+        <p className="text-sm text-white/75 max-w-2xl mt-2 leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+          Mercado · Avatares · Ángulos · Parrilla · Landing Pages · WhatsApp · Paid Ads · Email · Precios · KPIs · SEO · Alianzas · Comunidad
+        </p>
+
+        {/* Stats chips centrados */}
+        <div className="flex flex-wrap justify-center gap-2 mt-6">
+          <Chip icon={<Sparkles className="w-3.5 h-3.5" />} label={`${totalTabs} entregables`} />
+          <Chip icon={<Brain className="w-3.5 h-3.5" />} label="22 skills IA" />
+          <Chip icon={<Coins className="w-3.5 h-3.5" />} label={`${tokenCost.toLocaleString()} tokens`} highlight />
+        </div>
+
+        {/* CTA único — Ver detalle */}
+        <Button
+          onClick={onViewDetails}
+          size="lg"
+          className="mt-8 gap-2 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 text-white border-0 shadow-2xl shadow-violet-500/50 hover:shadow-violet-500/70 hover:scale-105 transition-all duration-300 px-8 py-6 text-base font-semibold"
+        >
+          <Sparkles className="w-5 h-5" />
+          {isGenerating ? `Ver progreso · ${completedTabs}/${totalTabs}` : "Ver detalle 360° y activar"}
+          <ArrowRight className="w-5 h-5" />
+        </Button>
+
+        {/* Progress bar (solo cuando genera) */}
         {isGenerating && (
-          <div className="mt-5 space-y-2">
-            <div className="h-1.5 bg-violet-950/50 rounded-full overflow-hidden border border-violet-500/20">
+          <div className="w-full max-w-md mt-6 space-y-2">
+            <div className="h-2 bg-violet-950/60 rounded-full overflow-hidden border border-violet-400/30">
               <div
-                className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 transition-all duration-500 shadow-lg shadow-violet-500/50"
+                className="h-full bg-gradient-to-r from-violet-500 via-fuchsia-500 to-pink-500 transition-all duration-500 shadow-lg shadow-violet-500/60"
                 style={{ width: `${(completedTabs / totalTabs) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-violet-300/80">
+            <p className="text-xs text-white/80 font-medium">
               KIRO está generando: paso {completedTabs} de {totalTabs}
             </p>
           </div>
@@ -264,13 +162,13 @@ export function AdnRecargadoBanner({
       </div>
 
       {/* Bottom edge gradient line */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent opacity-50" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-400 to-transparent opacity-60" />
 
-      {/* Inline animations + helpers (no requires tailwind config changes) */}
+      {/* Animations */}
       <style>{`
         @keyframes pulse-slow {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.1); }
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.1); }
         }
         @keyframes twinkle {
           0%, 100% { opacity: 0.3; }
@@ -278,7 +176,7 @@ export function AdnRecargadoBanner({
         }
         @keyframes float {
           0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-          50% { transform: translate(-50%, -50%) translateY(-8px); }
+          50% { transform: translate(-50%, -50%) translateY(-10px); }
         }
         .animate-pulse-slow { animation: pulse-slow 4s ease-in-out infinite; }
         .animate-twinkle { animation: twinkle 3s ease-in-out infinite; }
@@ -288,32 +186,29 @@ export function AdnRecargadoBanner({
   );
 }
 
-// ── Helper: Stat chip ────────────────────────────────────────────────
+// ── Helper: Stat chip ───────────────────────────────────────────────
 function Chip({
   icon,
   label,
   highlight = false,
-  variant,
 }: {
   icon: React.ReactNode;
   label: string;
   highlight?: boolean;
-  variant?: "danger" | "success";
 }) {
-  let className = "bg-white/5 text-violet-100/90 border-white/10";
-  if (highlight) className = "bg-gradient-to-r from-violet-500/20 to-pink-500/20 text-white border-violet-400/40";
-  if (variant === "danger") className = "bg-red-500/20 text-red-200 border-red-400/30";
-  if (variant === "success") className = "bg-emerald-500/20 text-emerald-200 border-emerald-400/30";
+  const className = highlight
+    ? "bg-gradient-to-r from-violet-500/40 to-pink-500/40 text-white border-violet-300/60 font-semibold"
+    : "bg-white/10 text-white/95 border-white/20 font-medium";
 
   return (
-    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full border backdrop-blur-sm ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border backdrop-blur-md shadow-md ${className}`}>
       {icon}
       {label}
     </span>
   );
 }
 
-// ── DNA Helix SVG animado (vertical, centered) ──────────────────────
+// ── DNA Helix SVG animado ──────────────────────────────────────────
 function DnaHelixSvg() {
   const points = Array.from({ length: 30 }, (_, i) => {
     const t = i / 29;
@@ -327,12 +222,12 @@ function DnaHelixSvg() {
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
       <defs>
-        <linearGradient id="strand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="strand-gradient-v2" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#a855f7" stopOpacity="0.9" />
           <stop offset="50%" stopColor="#c026d3" stopOpacity="1" />
           <stop offset="100%" stopColor="#ec4899" stopOpacity="0.9" />
         </linearGradient>
-        <filter id="glow">
+        <filter id="glow-v2">
           <feGaussianBlur stdDeviation="0.8" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
@@ -341,26 +236,20 @@ function DnaHelixSvg() {
         </filter>
       </defs>
 
-      {/* Strand 1 (left) */}
       <path
         d={points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x1} ${p.y}`).join(" ")}
         fill="none"
-        stroke="url(#strand-gradient)"
+        stroke="url(#strand-gradient-v2)"
         strokeWidth="0.6"
-        filter="url(#glow)"
-        className="animate-pulse-slow"
+        filter="url(#glow-v2)"
       />
-      {/* Strand 2 (right) */}
       <path
         d={points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x2} ${p.y}`).join(" ")}
         fill="none"
-        stroke="url(#strand-gradient)"
+        stroke="url(#strand-gradient-v2)"
         strokeWidth="0.6"
-        filter="url(#glow)"
-        className="animate-pulse-slow"
-        style={{ animationDelay: "1s" }}
+        filter="url(#glow-v2)"
       />
-      {/* Connecting bars (rungs) */}
       {points.filter((_, i) => i % 3 === 0).map((p, i) => (
         <line
           key={i}
@@ -375,11 +264,10 @@ function DnaHelixSvg() {
           style={{ animationDelay: `${i * 0.2}s` }}
         />
       ))}
-      {/* Glow nodes on strands */}
       {points.filter((_, i) => i % 4 === 0).map((p, i) => (
         <g key={`nodes-${i}`}>
-          <circle cx={p.x1} cy={p.y} r="0.8" fill="#fff" opacity="0.9" filter="url(#glow)" />
-          <circle cx={p.x2} cy={p.y} r="0.8" fill="#fff" opacity="0.9" filter="url(#glow)" />
+          <circle cx={p.x1} cy={p.y} r="0.8" fill="#fff" opacity="0.9" filter="url(#glow-v2)" />
+          <circle cx={p.x2} cy={p.y} r="0.8" fill="#fff" opacity="0.9" filter="url(#glow-v2)" />
         </g>
       ))}
     </svg>

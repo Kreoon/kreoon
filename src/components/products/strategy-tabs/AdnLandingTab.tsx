@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import {
   Sparkles, Globe, Target, Heart, Swords, Users, Lightbulb,
   Brain, Trophy, Gift, Calendar, Rocket, MessageCircle,
   Megaphone, Mail, DollarSign, BarChart3, Search, Handshake,
-  Zap, CheckCircle2, ArrowRight, Coins, Clock, TrendingUp,
+  Zap, CheckCircle2, ArrowRight, Coins, Clock, TrendingUp, RefreshCw,
 } from "lucide-react";
 
 interface AdnLandingTabProps {
@@ -15,8 +16,9 @@ interface AdnLandingTabProps {
   totalTokens: number;
   researchCost: number;
   isResearchGenerating: boolean;
-  onActivate: () => void;
+  onActivate: (includeClientDna: boolean, forceRegenerate: boolean) => void;
   canActivate: boolean;
+  isRegenerate?: boolean;
   reasonNotAllowed?: string;
 }
 
@@ -110,12 +112,15 @@ export function AdnLandingTab({
   isResearchGenerating,
   onActivate,
   canActivate,
+  isRegenerate = false,
   reasonNotAllowed,
 }: AdnLandingTabProps) {
+  const [includeClientDna, setIncludeClientDna] = useState(true);
   const totalMarketValue = VALOR_REAL.reduce((sum, item) => sum + item.market, 0);
   const completedTabs = countCompleted(product);
   const totalTabs = 21;
   const isComplete = completedTabs >= totalTabs - 2;
+  const handleActivate = () => onActivate(includeClientDna, isRegenerate);
 
   return (
     <div className="space-y-6">
@@ -158,12 +163,24 @@ export function AdnLandingTab({
 
           {/* CTA o estado */}
           {isComplete ? (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 flex items-center gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-emerald-700 dark:text-emerald-300">ADN Recargado completado</p>
-                <p className="text-sm text-muted-foreground">{completedTabs}/{totalTabs} pestañas generadas. Explora cada una en el menú superior.</p>
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-emerald-700 dark:text-emerald-300">ADN Recargado completado</p>
+                  <p className="text-sm text-muted-foreground">{completedTabs}/{totalTabs} pestañas generadas. Explora cada una en el menú superior.</p>
+                </div>
               </div>
+              <Button
+                onClick={handleActivate}
+                disabled={!canActivate || !hasEnoughTokens}
+                variant="outline"
+                size="sm"
+                className="gap-2 border-violet-500/40"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Recrear desde cero
+              </Button>
             </div>
           ) : isResearchGenerating ? (
             <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-4">
@@ -172,16 +189,40 @@ export function AdnLandingTab({
               <p className="text-xs text-muted-foreground mt-2">{completedTabs} de {totalTabs} pestañas generadas</p>
             </div>
           ) : (
-            <Button
-              onClick={onActivate}
-              disabled={!canActivate || !hasEnoughTokens}
-              size="lg"
-              className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700 text-white border-0 gap-2 shadow-lg shadow-violet-500/30"
-            >
-              <Sparkles className="h-5 w-5" />
-              {hasEnoughTokens ? "Activar ADN Recargado" : `Faltan ${(researchCost - totalTokens).toLocaleString()} tokens`}
-              <ArrowRight className="h-5 w-5" />
-            </Button>
+            <div className="space-y-3">
+              {/* Checkbox Incluir ADN de Marca */}
+              <label className="inline-flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={includeClientDna}
+                  onChange={(e) => setIncludeClientDna(e.target.checked)}
+                  className="w-4 h-4 rounded border-violet-500/50 bg-violet-100 dark:bg-violet-900/30 text-violet-600 focus:ring-violet-500/50"
+                />
+                <span className="text-sm text-foreground/90 group-hover:text-foreground transition-colors">
+                  Incluir <strong>ADN de Marca</strong> (Client DNA) — recomendado para mejor personalización
+                </span>
+              </label>
+
+              {/* CTA principal */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button
+                  onClick={handleActivate}
+                  disabled={!canActivate || !hasEnoughTokens}
+                  size="lg"
+                  className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 text-white border-0 gap-2 shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-105 transition-all px-6 py-6 text-base font-semibold"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  {hasEnoughTokens
+                    ? (isRegenerate ? "Recrear ADN Recargado" : "Activar ADN Recargado")
+                    : `Faltan ${(researchCost - totalTokens).toLocaleString()} tokens`}
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+                <span className="inline-flex items-center gap-1 text-sm font-semibold text-violet-700 dark:text-violet-300 bg-violet-500/10 px-3 py-1.5 rounded-full">
+                  <Coins className="h-4 w-4" />
+                  {researchCost.toLocaleString()} tokens
+                </span>
+              </div>
+            </div>
           )}
 
           {reasonNotAllowed && !isResearchGenerating && (
@@ -326,20 +367,43 @@ export function AdnLandingTab({
       {/* CTA FINAL si no completado */}
       {!isComplete && !isResearchGenerating && (
         <Card className="border-violet-500/30 bg-gradient-to-br from-violet-600/10 to-pink-500/10">
-          <CardContent className="pt-6 text-center">
-            <h3 className="text-xl font-bold mb-2">¿Listo para tu estrategia 360?</h3>
-            <p className="text-muted-foreground mb-4">
-              En ~25 minutos tendrás todo lo que necesitas para ejecutar marketing como una agencia top.
-            </p>
-            <Button
-              onClick={onActivate}
-              disabled={!canActivate || !hasEnoughTokens}
-              size="lg"
-              className="bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-700 hover:to-pink-700 text-white border-0 gap-2"
-            >
-              <Sparkles className="h-5 w-5" />
-              Activar ADN Recargado · {researchCost.toLocaleString()} tokens
-            </Button>
+          <CardContent className="pt-6 text-center space-y-4">
+            <div>
+              <h3 className="text-xl font-bold mb-2">¿Listo para tu estrategia 360°?</h3>
+              <p className="text-muted-foreground">
+                En ~25 minutos tendrás todo lo que necesitas para ejecutar marketing como una agencia top.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-center gap-3">
+              <label className="inline-flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={includeClientDna}
+                  onChange={(e) => setIncludeClientDna(e.target.checked)}
+                  className="w-4 h-4 rounded border-violet-500/50 bg-violet-100 dark:bg-violet-900/30 text-violet-600 focus:ring-violet-500/50"
+                />
+                <span className="text-sm">
+                  Incluir <strong>ADN de Marca</strong> (Client DNA)
+                </span>
+              </label>
+
+              <Button
+                onClick={handleActivate}
+                disabled={!canActivate || !hasEnoughTokens}
+                size="lg"
+                className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 text-white border-0 gap-2 shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-105 transition-all px-8 py-6 text-base font-semibold"
+              >
+                <Sparkles className="h-5 w-5" />
+                {hasEnoughTokens
+                  ? (isRegenerate ? `Recrear · ${researchCost.toLocaleString()} tokens` : `Activar · ${researchCost.toLocaleString()} tokens`)
+                  : `Faltan ${(researchCost - totalTokens).toLocaleString()} tokens`}
+              </Button>
+
+              {reasonNotAllowed && (
+                <p className="text-xs text-amber-600 dark:text-amber-400">{reasonNotAllowed}</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

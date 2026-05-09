@@ -765,20 +765,11 @@ export function ProductDetailDialog({
                     isRegenerating={dnaRegenerating}
                   />
 
-                  {/* Generate Full Research — Banner pro nuevo (CONVERT 360) */}
+                  {/* Banner pro CONVERT 360 — solo CTA hacia la landing */}
                   {dnaRecord.status === 'ready' && (isAdmin || isClient) && (
                     <AdnRecargadoBanner
-                      onActivate={handleGenerateResearch}
                       onViewDetails={() => setActiveTab("adn-landing")}
                       tokenCost={RESEARCH_COST}
-                      hasEnoughTokens={hasEnoughTokens}
-                      balanceLoading={balanceLoading}
-                      isClient={isClient}
-                      isAdmin={isAdmin || isOrgOwner || isPlatformRoot}
-                      monthlyUsageCount={monthlyUsageCount || 0}
-                      monthlyLimit={monthlyLimit}
-                      limitReached={limitReached || planDisabled}
-                      isRegenerate={!!product?.research_generated_at}
                       isGenerating={researchGenerating}
                       completedTabs={researchProgress?.step ?? 0}
                       totalTabs={21}
@@ -810,8 +801,9 @@ export function ProductDetailDialog({
               totalTokens={totalTokens}
               researchCost={RESEARCH_COST}
               isResearchGenerating={researchGenerating}
-              onActivate={() => handleGenerateResearch(true, false)}
+              onActivate={handleGenerateResearch}
               canActivate={(isAdmin || isClient) && !!dnaRecord}
+              isRegenerate={!!product?.research_generated_at}
               reasonNotAllowed={
                 !dnaRecord
                   ? "Completa primero el ADN del producto en la pestaña ADN"
