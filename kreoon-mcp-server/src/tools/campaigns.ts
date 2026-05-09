@@ -25,8 +25,8 @@ export const campaignsToolDefinitions = [
         },
         campaign_type: {
           type: "string",
-          enum: ["ugc_video", "reels", "review", "unboxing", "tutorial", "testimonial", "livestream"],
-          description: "Tipo de contenido requerido",
+          enum: ["paid", "exchange", "hybrid"],
+          description: "Modelo económico de la campaña: paid (pago monetario), exchange (canje de producto), hybrid (mixto)",
         },
         campaign_purpose: {
           type: "string",
@@ -35,8 +35,8 @@ export const campaignsToolDefinitions = [
         },
         compensation_type: {
           type: "string",
-          enum: ["paid", "product_exchange", "mixed"],
-          description: "Tipo de compensación para creadores",
+          enum: ["paid", "product_exchange", "hybrid", "credits"],
+          description: "Tipo de compensación para creadores: paid (USD), product_exchange (canje), hybrid (mixto), credits (créditos plataforma)",
         },
         budget_per_video: { type: "number", description: "Pago por video en USD (para campañas paid/mixed)" },
         total_budget: { type: "number", description: "Presupuesto total en USD" },
@@ -45,8 +45,8 @@ export const campaignsToolDefinitions = [
         application_deadline: { type: "string", format: "date-time", description: "Fecha límite para aplicaciones" },
         visibility: {
           type: "string",
-          enum: ["public", "invite_only", "private"],
-          description: "Visibilidad de la campaña (default: public)",
+          enum: ["public", "internal", "selective"],
+          description: "Visibilidad: public (marketplace abierto), internal (solo organización), selective (solo creadores invitados). Default: public",
         },
         content_guidelines: { type: "string", description: "Guía de contenido y requisitos específicos" },
         desired_roles: {
