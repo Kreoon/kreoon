@@ -32,6 +32,8 @@ import { socialFunnelBuilder } from './social-funnel-builder.ts';
 import { productionDirector } from './production-director.ts';
 import { landingPageArchitect } from './landing-page-architect.ts';
 import { whatsappCloser } from './whatsapp-closer.ts';
+import { paidAdsArchitect } from './paid-ads-architect.ts';
+import { emailSequenceBuilder } from './email-sequence-builder.ts';
 
 /**
  * Registro de Skills disponibles (20 skills)
@@ -91,6 +93,8 @@ export const skillsRegistry: Partial<Record<SkillType, Skill>> = {
   production_director: productionDirector,
   landing_page_architect: landingPageArchitect,
   whatsapp_closer: whatsappCloser,
+  paid_ads_architect: paidAdsArchitect,
+  email_sequence_builder: emailSequenceBuilder,
 };
 
 /**

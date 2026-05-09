@@ -71,7 +71,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// ── 14 research steps ──────────────────────────────────────────────────────
+// ── 21 research steps ──────────────────────────────────────────────────────
 const RESEARCH_STEPS = [
   { id: "market_overview", name: "Panorama de Mercado" },
   { id: "jtbd", name: "Jobs To Be Done" },
@@ -87,6 +87,13 @@ const RESEARCH_STEPS = [
   { id: "launch_strategy", name: "Estrategia de Lanzamiento" },
   { id: "landing_pages", name: "Landing Pages" },
   { id: "whatsapp_funnel", name: "Funnel de WhatsApp" },
+  { id: "paid_ads", name: "Paid Ads (Meta + TikTok)" },
+  { id: "email_marketing", name: "Email Marketing" },
+  { id: "pricing_strategy", name: "Estrategia de Precios" },
+  { id: "kpis_dashboard", name: "KPIs y Dashboard" },
+  { id: "seo_strategy", name: "SEO y Contenido Largo" },
+  { id: "partnerships", name: "Alianzas y Colaboraciones" },
+  { id: "community_strategy", name: "Estrategia de Comunidad" },
 ];
 
 // ── Step sequence: 1 phase = 1 step = 1 invocation ──────────────────────
@@ -107,8 +114,15 @@ const STEP_SEQUENCE: string[] = [
   "launch_strategy",    // Phase 11 — strategy
   "landing_pages",      // Phase 12 — conversion (CONVERT V+E)
   "whatsapp_funnel",    // Phase 13 — closer (CONVERT E LATAM)
+  "paid_ads",           // Phase 14 — paid (CONVERT E+T)
+  "email_marketing",    // Phase 15 — retention (CONVERT R+V)
+  "pricing_strategy",   // Phase 16 — pricing (CONVERT V)
+  "kpis_dashboard",     // Phase 17 — analytics (CONVERT T)
+  "seo_strategy",       // Phase 18 — long-term (CONVERT E)
+  "partnerships",       // Phase 19 — growth (CONVERT E)
+  "community_strategy", // Phase 20 — retention (CONVERT R)
 ];
-const TOTAL_PHASES = STEP_SEQUENCE.length; // 14
+const TOTAL_PHASES = STEP_SEQUENCE.length; // 21
 
 // Steps that use web search (Perplexity as first provider)
 const RESEARCH_STEPS_SET = new Set(["market_overview", "competitors"]);
@@ -140,6 +154,14 @@ const STEP_SKILLS: Record<string, SkillType[]> = {
   launch_strategy:     ["offer_engineer", "neuro_persuader", "cta_specialist", "storytelling_specialist"],
   landing_pages:       ["landing_page_architect", "consciousness_mapper", "storybrand_architect", "offer_engineer", "copy_sharpener", "cta_specialist", "objection_crusher"],
   whatsapp_funnel:     ["whatsapp_closer", "consciousness_mapper", "offer_engineer", "objection_crusher", "cta_specialist", "cultural_adapter"],
+  // Tabs 360 (CONVERT completo)
+  paid_ads:            ["paid_ads_architect", "consciousness_mapper", "offer_engineer", "copy_sharpener"],
+  email_marketing:     ["email_sequence_builder", "storybrand_architect", "cta_specialist", "objection_crusher"],
+  pricing_strategy:    ["offer_engineer", "neuro_persuader", "objection_crusher"],
+  kpis_dashboard:      [],  // analisis puro
+  seo_strategy:        ["seo_discoverer", "hooks_specialist", "copy_sharpener"],
+  partnerships:        ["virality_optimizer", "storybrand_architect", "offer_engineer"],
+  community_strategy:  ["social_funnel_builder", "emotion_architect", "cta_specialist"],
 };
 
 // ── Token limits per step ──────────────────────────────────────────────────
@@ -160,6 +182,14 @@ const TOKEN_MAP: Record<string, number> = {
   launch_strategy: 14000,
   landing_pages: 16000,    // 2 variaciones completas con todas las secciones
   whatsapp_funnel: 14000,  // 3 secuencias completas (captacion, cierre, reactivacion)
+  // Tabs 360
+  paid_ads: 12000,
+  email_marketing: 10000,
+  pricing_strategy: 7000,
+  kpis_dashboard: 6000,
+  seo_strategy: 8000,
+  partnerships: 6000,
+  community_strategy: 7000,
 };
 
 // ── JSON repair ────────────────────────────────────────────────────────────
@@ -527,6 +557,205 @@ const SCHEMAS: Record<string, any> = {
       },
     },
   },
+  // ── Tab 14: Paid Ads (Meta + TikTok) ─────────────────────────────────────
+  paid_ads: {
+    type: "object", additionalProperties: false, required: ["paid_ads_strategy"],
+    properties: {
+      paid_ads_strategy: {
+        type: "object",
+        properties: {
+          budget_recommendation: {
+            type: "object",
+            properties: {
+              minimum_usd_monthly: { type: "number" },
+              recommended_usd_monthly: { type: "number" },
+              distribution: { type: "object", properties: { cold_percentage: { type: "number" }, warm_percentage: { type: "number" }, hot_percentage: { type: "number" } } },
+              rationale: { type: "string" },
+            },
+          },
+          meta_ads: {
+            type: "object",
+            properties: {
+              account_structure: {
+                type: "object",
+                properties: {
+                  campaigns: { type: "array", items: { type: "object", properties: { name: { type: "string" }, objective: { type: "string" }, temperature: { type: "string", enum: ["frio","tibio","caliente"] }, daily_budget_usd: { type: "number" }, ad_sets: { type: "array", items: { type: "object" } }, creatives: { type: "array", items: { type: "object" } } } } },
+                },
+              },
+              testing_plan: { type: "object", properties: { week_1: { type: "string" }, week_2: { type: "string" }, scaling_criteria: { type: "string" }, kill_criteria: { type: "string" } } },
+              benchmarks_latam: { type: "object", properties: { cpm_cold: { type: "string" }, cpm_warm: { type: "string" }, ctr_target: { type: "string" }, cpa_target: { type: "string" }, roas_target: { type: "string" } } },
+            },
+          },
+          tiktok_ads: {
+            type: "object",
+            properties: {
+              account_structure: { type: "object", properties: { campaigns: { type: "array", items: { type: "object" } } } },
+              spark_ads_strategy: { type: "string" },
+              benchmarks_latam: { type: "object" },
+            },
+          },
+          retargeting_sequences: { type: "array", items: { type: "object" } },
+          monthly_execution_calendar: { type: "array", items: { type: "object", properties: { week: { type: "number" }, focus: { type: "string" }, budget_allocation: { type: "string" }, key_action: { type: "string" } } } },
+          common_mistakes_to_avoid: { type: "array", items: { type: "string" } },
+        },
+      },
+    },
+  },
+  // ── Tab 15: Email Marketing ──────────────────────────────────────────────
+  email_marketing: {
+    type: "object", additionalProperties: false, required: ["email_strategy"],
+    properties: {
+      email_strategy: {
+        type: "object",
+        properties: {
+          platform_recommendation: { type: "object", properties: { tool: { type: "string" }, reason: { type: "string" }, estimated_cost_usd_monthly: { type: "string" }, key_features_needed: { type: "array", items: { type: "string" } } } },
+          welcome_sequence: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              trigger: { type: "string" },
+              total_emails: { type: "number" },
+              emails: {
+                type: "array", minItems: 5, maxItems: 10,
+                items: {
+                  type: "object",
+                  required: ["number", "day", "subject", "body"],
+                  properties: {
+                    number: { type: "number" },
+                    day: { type: "number" },
+                    send_time: { type: "string" },
+                    subject: { type: "string" },
+                    preview_text: { type: "string" },
+                    objective: { type: "string" },
+                    consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+                    body: { type: "string" },
+                    cta_text: { type: "string" },
+                    cta_url_placeholder: { type: "string" },
+                    open_rate_benchmark: { type: "string" },
+                  },
+                },
+              },
+            },
+          },
+          launch_sequence: {
+            type: "object",
+            properties: {
+              pre_launch_emails: { type: "array", items: { type: "object" } },
+              launch_emails: { type: "array", items: { type: "object" } },
+            },
+          },
+          reactivation_sequence: { type: "object", properties: { trigger: { type: "string" }, emails: { type: "array", items: { type: "object" } } } },
+          best_practices_latam: { type: "object", properties: { best_days: { type: "array", items: { type: "string" } }, best_hours: { type: "string" }, subject_formulas: { type: "array", items: { type: "string" } }, words_to_avoid: { type: "array", items: { type: "string" } }, words_that_work: { type: "array", items: { type: "string" } } } },
+          list_building_strategy: { type: "object", properties: { primary_channel: { type: "string" }, opt_in_incentive: { type: "string" }, growth_tactics: { type: "array", items: { type: "string" } }, monthly_growth_target: { type: "string" } } },
+          kpis: { type: "object", properties: { open_rate_target: { type: "string" }, click_rate_target: { type: "string" }, conversion_rate_target: { type: "string" }, list_growth_rate_target: { type: "string" } } },
+        },
+      },
+    },
+  },
+  // ── Tab 16: Pricing Strategy ─────────────────────────────────────────────
+  pricing_strategy: {
+    type: "object", additionalProperties: false, required: ["pricing_strategy"],
+    properties: {
+      pricing_strategy: {
+        type: "object",
+        properties: {
+          market_positioning: { type: "object", properties: { current_position: { type: "string", enum: ["economico","medio","premium","super-premium"] }, recommended_position: { type: "string" }, rationale: { type: "string" } } },
+          price_analysis: { type: "object", properties: { competition_range: { type: "object", properties: { lowest: { type: "string" }, average: { type: "string" }, highest: { type: "string" } } }, recommended_price_usd: { type: "number" }, price_in_local_currency: { type: "array", items: { type: "object", properties: { country: { type: "string" }, currency: { type: "string" }, price: { type: "string" }, psychological_price: { type: "string" } } } }, price_justification: { type: "string" } } },
+          psychological_pricing: { type: "object", properties: { anchoring_strategy: { type: "string" }, charm_pricing: { type: "string" }, decoy_pricing: { type: "string" }, bundle_options: { type: "array", items: { type: "object" } } } },
+          payment_plans: { type: "object", properties: { recommended_for_latam: { type: "boolean" }, options: { type: "array", items: { type: "object" } }, payment_platforms_latam: { type: "array", items: { type: "string" } } } },
+          value_ladder_complete: { type: "object", properties: { free: { type: "object" }, entry: { type: "object" }, core: { type: "object" }, premium: { type: "object" }, continuity: { type: "object" } } },
+          discount_policy: { type: "object", properties: { when_to_discount: { type: "string" }, when_not_to_discount: { type: "string" }, launch_discount: { type: "string" }, loyalty_discount: { type: "string" } } },
+          revenue_projections: { type: "object", properties: { conservative_monthly_usd: { type: "number" }, realistic_monthly_usd: { type: "number" }, optimistic_monthly_usd: { type: "number" }, assumptions: { type: "string" } } },
+        },
+      },
+    },
+  },
+  // ── Tab 17: KPIs Dashboard ───────────────────────────────────────────────
+  kpis_dashboard: {
+    type: "object", additionalProperties: false, required: ["kpis_dashboard"],
+    properties: {
+      kpis_dashboard: {
+        type: "object",
+        properties: {
+          north_star_metric: { type: "object", properties: { metric: { type: "string" }, definition: { type: "string" }, current_baseline: { type: "string" }, target_90_days: { type: "string" }, target_6_months: { type: "string" } } },
+          aarrr_metrics: {
+            type: "object",
+            properties: {
+              acquisition: { type: "object", properties: { metrics: { type: "array", items: { type: "object" } } } },
+              activation: { type: "object", properties: { metrics: { type: "array", items: { type: "object" } } } },
+              retention: { type: "object", properties: { metrics: { type: "array", items: { type: "object" } } } },
+              revenue: { type: "object", properties: { metrics: { type: "array", items: { type: "object" } } } },
+              referral: { type: "object", properties: { metrics: { type: "array", items: { type: "object" } } } },
+            },
+          },
+          channel_kpis: { type: "object", properties: { organic_social: { type: "object" }, paid_ads: { type: "object" }, email: { type: "object" }, whatsapp: { type: "object" }, landing_page: { type: "object" } } },
+          decision_triggers: { type: "array", items: { type: "object", properties: { if: { type: "string" }, then: { type: "string" }, priority: { type: "string", enum: ["urgente","esta semana","proximo mes"] } } } },
+          weekly_review_checklist: { type: "array", items: { type: "string" } },
+          monthly_review_checklist: { type: "array", items: { type: "string" } },
+          tools_stack: { type: "array", items: { type: "object", properties: { tool: { type: "string" }, purpose: { type: "string" }, cost: { type: "string" }, latam_availability: { type: "string", enum: ["disponible","limitado","no disponible"] } } } },
+          red_flags: { type: "array", items: { type: "object", properties: { signal: { type: "string" }, diagnosis: { type: "string" }, action: { type: "string" } } } },
+        },
+      },
+    },
+  },
+  // ── Tab 18: SEO Strategy ─────────────────────────────────────────────────
+  seo_strategy: {
+    type: "object", additionalProperties: false, required: ["seo_strategy"],
+    properties: {
+      seo_strategy: {
+        type: "object",
+        properties: {
+          keyword_research: {
+            type: "object",
+            properties: {
+              primary_keywords: { type: "array", items: { type: "object", properties: { keyword: { type: "string" }, search_intent: { type: "string", enum: ["informacional","comercial","transaccional","navegacional"] }, estimated_volume: { type: "string" }, difficulty: { type: "string", enum: ["baja","media","alta"] }, content_type: { type: "string" } } } },
+              long_tail_keywords: { type: "array", items: { type: "object", properties: { keyword: { type: "string" }, why_valuable: { type: "string" }, content_idea: { type: "string" } } } },
+              question_keywords: { type: "array", items: { type: "object", properties: { question: { type: "string" }, platform: { type: "string", enum: ["Google","YouTube","TikTok"] }, answer_format: { type: "string" } } } },
+            },
+          },
+          blog_strategy: { type: "object", properties: { domain_recommendation: { type: "string" }, posting_frequency: { type: "string" }, pillar_articles: { type: "array", items: { type: "object" } }, cluster_topics: { type: "array", items: { type: "object" } } } },
+          youtube_strategy: { type: "object", properties: { channel_positioning: { type: "string" }, video_types: { type: "array", items: { type: "string" } }, first_10_videos: { type: "array", items: { type: "object" } } } },
+          local_seo: { type: "object", properties: { applies: { type: "boolean" }, google_business: { type: "string" }, local_keywords: { type: "array", items: { type: "string" } } } },
+          timeline: { type: "object", properties: { month_1_2: { type: "string" }, month_3_6: { type: "string" }, results_expected: { type: "string" } } },
+        },
+      },
+    },
+  },
+  // ── Tab 19: Partnerships ─────────────────────────────────────────────────
+  partnerships: {
+    type: "object", additionalProperties: false, required: ["partnerships_strategy"],
+    properties: {
+      partnerships_strategy: {
+        type: "object",
+        properties: {
+          affiliate_program: { type: "object", properties: { should_create: { type: "boolean" }, commission_percentage: { type: "number" }, commission_type: { type: "string", enum: ["por venta","por lead","recurrente"] }, cookie_duration_days: { type: "number" }, ideal_affiliates: { type: "array", items: { type: "string" } }, recruitment_strategy: { type: "string" }, tools: { type: "array", items: { type: "string" } }, launch_sequence: { type: "array", items: { type: "string" } } } },
+          influencer_marketing: { type: "object", properties: { tier_strategy: { type: "object", properties: { nano: { type: "object" }, micro: { type: "object" } } }, ideal_influencer_profile: { type: "string" }, outreach_template: { type: "string" }, metrics_to_evaluate: { type: "array", items: { type: "string" } } } },
+          co_marketing: { type: "object", properties: { ideal_partners: { type: "array", items: { type: "object", properties: { type: { type: "string" }, why_complementary: { type: "string" }, collaboration_idea: { type: "string" }, mutual_benefit: { type: "string" } } } }, collaboration_formats: { type: "array", items: { type: "string" } }, outreach_strategy: { type: "string" } } },
+          community_partnerships: { type: "array", items: { type: "object", properties: { community_type: { type: "string" }, approach: { type: "string" }, value_to_offer: { type: "string" } } } },
+          pr_strategy: { type: "object", properties: { media_targets: { type: "array", items: { type: "string" } }, pitch_angle: { type: "string" }, guest_post_targets: { type: "array", items: { type: "string" } } } },
+        },
+      },
+    },
+  },
+  // ── Tab 20: Community Strategy ───────────────────────────────────────────
+  community_strategy: {
+    type: "object", additionalProperties: false, required: ["community_strategy"],
+    properties: {
+      community_strategy: {
+        type: "object",
+        properties: {
+          community_concept: { type: "object", properties: { name: { type: "string" }, tagline: { type: "string" }, platform: { type: "string", enum: ["WhatsApp","Telegram","Discord","Circle","Facebook Groups","Skool"] }, platform_rationale: { type: "string" }, model: { type: "string", enum: ["gratuita","paga","freemium"] }, paid_price_usd: { type: "string" }, content_pillars: { type: "array", items: { type: "string" } } } },
+          onboarding_flow: { type: "object", properties: { step_1: { type: "string" }, step_2: { type: "string" }, step_3: { type: "string" }, aha_moment: { type: "string" }, time_to_aha: { type: "string" } } },
+          content_calendar_community: { type: "array", items: { type: "object", properties: { day: { type: "string" }, content_type: { type: "string" }, who_posts: { type: "string", enum: ["admin","miembros","invitado"] }, example: { type: "string" } } } },
+          engagement_mechanics: { type: "object", properties: { daily_rituals: { type: "array", items: { type: "string" } }, weekly_events: { type: "array", items: { type: "string" } }, monthly_events: { type: "array", items: { type: "string" } }, gamification: { type: "array", items: { type: "string" } } } },
+          monetization: { type: "object", properties: { if_free_community: { type: "object" }, if_paid_community: { type: "object" } } },
+          growth_strategy: { type: "object", properties: { launch_plan: { type: "string" }, first_100_members: { type: "string" }, referral_mechanism: { type: "string" }, monthly_growth_target: { type: "string" } } },
+          moderation_rules: { type: "array", items: { type: "string" } },
+          metrics: { type: "array", items: { type: "object", properties: { metric: { type: "string" }, target: { type: "string" }, frequency: { type: "string" } } } },
+        },
+      },
+    },
+  },
 };
 
 // ── Per-Tab Perplexity Queries (V2) ─────────────────────────────────────────
@@ -627,6 +856,54 @@ function buildPerplexityQuery(
       `Herramientas de automatización de WhatsApp permitidas en LATAM (Botcake, WATI, ManyChat, Tidio). ` +
       `Casos de estudio de empresas que venden por WhatsApp en Colombia, México, Perú. ` +
       `Horarios de mayor respuesta en WhatsApp por país en LATAM.`,
+
+    paid_ads:
+      `Benchmarks de Meta Ads y TikTok Ads para ${product} en ${market} 2025-2026. ` +
+      `CPM promedio, CTR esperado, CPA típico para este tipo de producto en LATAM. ` +
+      `Mejores estructuras de campaña para marcas pequeñas en ${market}. ` +
+      `Creativos de ads que más convierten en este sector. ` +
+      `Presupuesto mínimo recomendado para validar paid ads en este nicho.`,
+
+    email_marketing:
+      `Mejores prácticas de email marketing para ${product} en LATAM 2025-2026. ` +
+      `Tasas de apertura y click promedio en ${market}. ` +
+      `Herramientas de email marketing más usadas en LATAM para pequeños negocios. ` +
+      `Secuencias de email que más convierten para info-productos y servicios en español. ` +
+      `Mejores días y horarios para enviar emails en ${market}.`,
+
+    pricing_strategy:
+      `Estrategia de precios para ${product} en ${market} 2025-2026. ` +
+      `Precios de mercado actuales para productos similares en LATAM. ` +
+      `Psicología de precios que funciona en mercados latinoamericanos. ` +
+      `Planes de pago y cuotas más efectivos en ${market}. ` +
+      `Benchmarks de ticket promedio en este sector para emprendedores LATAM.`,
+
+    kpis_dashboard:
+      `KPIs más importantes para medir marketing digital en el sector de ${product} en LATAM. ` +
+      `Benchmarks de conversión, LTV y CAC para este tipo de negocio en ${market}. ` +
+      `Herramientas de analytics gratuitas y económicas para emprendedores LATAM. ` +
+      `Métricas AARRR aplicadas a negocios digitales pequeños en español.`,
+
+    seo_strategy:
+      `Keywords de búsqueda más populares para ${product} en ${market} 2025-2026. ` +
+      `Volumen de búsqueda y dificultad de keywords relacionadas con esta categoría. ` +
+      `Preguntas que hace el avatar en Google, YouTube y TikTok sobre este tema. ` +
+      `Contenido de blog y YouTube que más rankea para este nicho en español. ` +
+      `Tendencias de búsqueda en ${market} para este tema.`,
+
+    partnerships:
+      `Alianzas de co-marketing más comunes en el sector de ${product} en LATAM. ` +
+      `Programas de afiliados exitosos en este sector en ${market}. ` +
+      `Influencers y creadores relevantes para este nicho en LATAM. ` +
+      `Comunidades y grupos donde está el avatar de ${product}. ` +
+      `Marcas complementarias (no competidoras) que comparten el mismo avatar.`,
+
+    community_strategy:
+      `Estrategias de comunidad online exitosas para ${product} en LATAM 2025-2026. ` +
+      `Plataformas de comunidad más usadas por emprendedores en ${market}. ` +
+      `Cómo las marcas exitosas en este nicho construyen comunidades leales en LATAM. ` +
+      `Métricas de comunidad que predicen retención y LTV alto. ` +
+      `Casos de estudio de comunidades de pago exitosas en español.`,
   };
 
   return queries[stepId] || `Investigación actualizada sobre ${product} en ${market} 2025-2026.`;
@@ -1292,6 +1569,159 @@ INSTRUCCIONES CRITICAS:
 - branch_flows con respuestas a objeciones comunes ("muy caro", "lo pienso", "no me interesa")
 - Respeta horarios LATAM (8am-8pm hora local)
 - Incluir whatsapp_setup (account_type, automation_tools, compliance) y performance_benchmarks`,
+
+    paid_ads: `Genera la ESTRATEGIA COMPLETA DE PAID ADS para Meta y TikTok.
+
+${baseContext}
+
+PUV: ${prev.puv_transformation?.puv?.statement || "N/A"}
+AVATAR PRIMARIO: ${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 600)}
+ANGULOS TOP 5: ${prevSales?.salesAngles?.slice(0, 5).map((a: any) => `- ${a.hookExample}`).join("\n") || "N/A"}
+CREATIVOS DISPONIBLES: ${prev.video_creatives?.creatives?.length || 0} creativos generados
+LANDING PRINCIPAL: ${prev.landing_pages?.landing_pages?.[0]?.sections?.[0]?.headline || "N/A"}
+MERCADO: ${targetMarket}
+
+BENCHMARKS:
+(La investigacion web de Perplexity esta integrada en este prompt)
+
+INSTRUCCIONES CRITICAS:
+- Estructura por temperatura: 20-30% frio, 40-50% tibio, 30-40% caliente
+- Meta ads: minimo 3 campanas (awareness, consideration, conversion)
+- TikTok ads: incluir Spark Ads para usar contenido organico ganador
+- Presupuestos en USD/dia, considerar minimos LATAM (Meta $10/dia, TikTok $20/dia)
+- Cada creativo referenciado a uno de los video_creatives generados
+- Incluir testing plan, kill criteria, scaling criteria
+- benchmarks_latam con CPM, CTR, CPA, ROAS reales del sector
+- monthly_execution_calendar con foco semanal por mes
+- common_mistakes_to_avoid especificos a LATAM`,
+
+    email_marketing: `Genera la ESTRATEGIA COMPLETA DE EMAIL MARKETING con secuencias listas.
+
+${baseContext}
+
+PUV: ${prev.puv_transformation?.puv?.statement || "N/A"}
+LEAD MAGNET: ${prev.lead_magnets?.leadMagnets?.[0]?.name || "N/A"} - ${prev.lead_magnets?.leadMagnets?.[0]?.promise || ""}
+OBJECIONES: ${prevPains?.objections?.slice(0, 5).map((o: any) => `- ${o.objection}`).join("\n") || "N/A"}
+AVATAR: ${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 600)}
+PRECIO: A definir (consultar baseContext)
+MERCADO: ${targetMarket}
+
+INSTRUCCIONES CRITICAS:
+- welcome_sequence: 7 emails LISTOS PARA COPIAR Y PEGAR (no plantillas vacias)
+- Cada email: subject (30-50 chars), preview_text, body completo (150-300 palabras)
+- Tono: persona escribiendole a otra persona, NUNCA corporativo
+- Parrafos maximo 3 lineas (se lee en movil)
+- 1 solo CTA por email
+- launch_sequence con pre-launch (5 emails) y launch (3 emails)
+- reactivation_sequence: 3 emails para lista fria (60+ dias sin abrir)
+- platform_recommendation: ActiveCampaign, Mailchimp, Klaviyo o Brevo segun caso
+- best_practices_latam: dias, horarios, palabras a evitar y que funcionan
+- KPIs target reales (open >25%, click >3%)`,
+
+    pricing_strategy: `Genera la ESTRATEGIA COMPLETA DE PRECIOS para este producto/servicio.
+
+${baseContext}
+
+PUV: ${prev.puv_transformation?.puv?.statement || "N/A"}
+COMPETIDORES: ${prevCompetitors?.competitors?.slice(0, 5).map((c: any) => `- ${c.name}: ${c.price}`).join("\n") || "N/A"}
+DOLORES CRITICOS: ${prevPains?.pains?.slice(0, 5).map((p: any) => `- ${p.pain} (impacto: ${p.impact})`).join("\n") || "N/A"}
+LEAD MAGNETS: ${JSON.stringify(prev.lead_magnets?.leadMagnets?.slice(0, 2) || []).substring(0, 400)}
+MERCADO: ${targetMarket}
+
+BENCHMARKS:
+(La investigacion web de Perplexity esta integrada en este prompt)
+
+INSTRUCCIONES CRITICAS:
+- recommended_price_usd basado en analisis competitivo y posicionamiento
+- price_in_local_currency con conversion + precio psicologico ($497 vs $500)
+- Mostrar costo del PROBLEMA antes del precio (anclaje Hormozi)
+- value_ladder_complete: free, entry, core, premium, continuity (todos los peldanos)
+- payment_plans: planes de cuotas SIEMPRE en LATAM (Wompi, PayU, MercadoPago)
+- discount_policy: cuando si y cuando no descontar (la urgencia falsa destruye confianza)
+- revenue_projections con 3 escenarios (conservador, realista, optimista) + assumptions`,
+
+    kpis_dashboard: `Genera el DASHBOARD COMPLETO DE KPIs para esta estrategia 360.
+
+${baseContext}
+
+CANALES ACTIVOS: Organico (parrilla generada), Paid (Meta+TikTok), Email, WhatsApp, Landing
+PRESUPUESTO PAID: ${prev.paid_ads?.paid_ads_strategy?.budget_recommendation?.minimum_usd_monthly || 0} USD/mes minimo
+PRECIO: ${prev.pricing_strategy?.pricing_strategy?.price_analysis?.recommended_price_usd || 0} USD
+MERCADO: ${targetMarket}
+
+INSTRUCCIONES CRITICAS:
+- north_star_metric: LA metrica unica que define el exito (ej: clientes mensuales recurrentes)
+- aarrr_metrics: completo (Acquisition, Activation, Retention, Revenue, Referral) con formula y target
+- channel_kpis para cada canal con metricas, frecuencia de revision y herramientas LATAM
+- decision_triggers: condiciones if/then accionables (ej: "Si CTR<1% por 3 dias → cambiar hook")
+- weekly y monthly review_checklist con acciones especificas
+- tools_stack con herramientas reales (GA4, Hotjar, Microsoft Clarity, Make, Zapier, etc) y costos
+- red_flags con sintomas, diagnostico y accion inmediata`,
+
+    seo_strategy: `Genera la ESTRATEGIA COMPLETA DE SEO Y CONTENIDO LARGO.
+
+${baseContext}
+
+AVATAR: ${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 600)}
+COMPETIDORES: ${prevCompetitors?.competitors?.slice(0, 5).map((c: any) => `- ${c.name} (${c.website || "sin web"})`).join("\n") || "N/A"}
+PARRILLA TEMAS: ${JSON.stringify(prev.content_calendar?.weeklyThemes?.slice(0, 2) || []).substring(0, 300)}
+MERCADO: ${targetMarket}
+
+DATOS SEO:
+(La investigacion web de Perplexity esta integrada en este prompt)
+
+INSTRUCCIONES CRITICAS:
+- primary_keywords: 8-12 keywords con search_intent, volumen estimado, dificultad
+- long_tail_keywords: 6-10 con menor competencia y alta intencion
+- question_keywords: preguntas exactas que hace el avatar (Google + YouTube + TikTok)
+- blog_strategy: 3-5 pillar articles + cluster topics (topic clusters)
+- youtube_strategy: 10 primeros videos con titulos optimizados
+- local_seo si aplica al negocio
+- timeline realista: trafico organico tarda 3-6 meses minimo`,
+
+    partnerships: `Genera la ESTRATEGIA COMPLETA DE ALIANZAS Y COLABORACIONES.
+
+${baseContext}
+
+PUV: ${prev.puv_transformation?.puv?.statement || "N/A"}
+AVATAR: ${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 600)}
+PRECIO: A definir (consultar baseContext)
+DIFERENCIADORES: ${JSON.stringify(prev.differentiation?.differentiation?.positioningOpportunities?.slice(0, 3) || []).substring(0, 400)}
+MERCADO: ${targetMarket}
+
+POTENCIALES ALIADOS:
+(La investigacion web de Perplexity esta integrada en este prompt)
+
+INSTRUCCIONES CRITICAS:
+- affiliate_program: si conviene crearlo, comision (15-30% tipico LATAM), cookie 30-60 dias
+- influencer_marketing: tier nano (1K-10K) y micro (10K-100K) con compensacion realista
+- ideal_influencer_profile especifico al avatar y mercado
+- co_marketing: 3-5 partners IDEALES (no competidores, mismo avatar) con idea concreta de colaboracion
+- community_partnerships: comunidades existentes (FB groups, Telegram, Discord) donde esta el avatar
+- pr_strategy: medios, podcasts, newsletters reales del nicho
+- outreach_template: mensaje listo para copiar y enviar`,
+
+    community_strategy: `Genera la ESTRATEGIA COMPLETA DE COMUNIDAD para este negocio.
+
+${baseContext}
+
+AVATAR: ${JSON.stringify(prevAvatars?.avatars?.[0] || {}).substring(0, 600)}
+DOLORES PROFUNDOS: ${prevPains?.pains?.slice(0, 5).map((p: any) => `- ${p.pain}`).join("\n") || "N/A"}
+LEAD MAGNETS: ${JSON.stringify(prev.lead_magnets?.leadMagnets?.slice(0, 2) || []).substring(0, 400)}
+MERCADO: ${targetMarket}
+
+BENCHMARKS:
+(La investigacion web de Perplexity esta integrada en este prompt)
+
+INSTRUCCIONES CRITICAS:
+- community_concept: nombre + tagline + plataforma adecuada al avatar (WhatsApp para LATAM low-tech, Discord/Skool para tech-savvy)
+- onboarding_flow: que ve el nuevo miembro, cuando siente el aha_moment (max 7 dias)
+- content_calendar_community: 7 dias con que postear cada dia
+- engagement_mechanics: rituales diarios, eventos semanales y mensuales
+- monetization clara: si gratis, como genera ingresos; si paga, que justifica
+- growth_strategy con plan de los primeros 100 miembros
+- moderation_rules para evitar problemas comunes (spam, trolls)
+- metrics: que medir y target realista`,
   };
 
   return prompts[stepId] || "";
@@ -1382,6 +1812,13 @@ async function reconstructPrevResults(
   if (hasData(p.launch_strategy?.preLaunch)) stepResults.launch_strategy = p.launch_strategy;
   if (hasData(sa.landingPages)) stepResults.landing_pages = { landing_pages: sa.landingPages };
   if (hasData(sa.whatsappFunnels)) stepResults.whatsapp_funnel = { whatsapp_funnels: sa.whatsappFunnels };
+  if (hasData(sa.paidAds)) stepResults.paid_ads = { paid_ads_strategy: sa.paidAds };
+  if (hasData(sa.emailMarketing)) stepResults.email_marketing = { email_strategy: sa.emailMarketing };
+  if (hasData(sa.pricingStrategy)) stepResults.pricing_strategy = { pricing_strategy: sa.pricingStrategy };
+  if (hasData(sa.kpisDashboard)) stepResults.kpis_dashboard = { kpis_dashboard: sa.kpisDashboard };
+  if (hasData(sa.seoStrategy)) stepResults.seo_strategy = { seo_strategy: sa.seoStrategy };
+  if (hasData(sa.partnerships)) stepResults.partnerships = { partnerships_strategy: sa.partnerships };
+  if (hasData(sa.communityStrategy)) stepResults.community_strategy = { community_strategy: sa.communityStrategy };
 
   return { stepResults, marketResearch: mr, competitorAnalysis: ca, salesAnglesData: sa };
 }
@@ -1463,7 +1900,7 @@ async function finalizeProduct(
 
   await supabase.from("products").update({
     research_generated_at: new Date().toISOString(),
-    research_progress: { step: 14, total: 14, label: "Completado", done: true },
+    research_progress: { step: 21, total: 21, label: "Completado", done: true },
     brief_status: "completed",
     brief_completed_at: new Date().toISOString(),
     brief_data: briefData,
@@ -1516,7 +1953,7 @@ async function chainToNextPhase(
       supabase.from("products").update({
         research_progress: {
           step: nextPhase,
-          total: 14,
+          total: 21,
           label: `Error al continuar (${getStepName(STEP_SEQUENCE[nextPhase])})`,
           error: true,
         },
@@ -1558,7 +1995,7 @@ async function processRequest(body: any): Promise<void> {
     if (forceRegenerate && phase === 0) {
       const lockId = crypto.randomUUID();
       await supabase.from("products").update({
-        research_progress: { step: 0, total: 14, label: "Iniciando...", lockId },
+        research_progress: { step: 0, total: 21, label: "Iniciando...", lockId },
       }).eq("id", productId);
       await new Promise(r => setTimeout(r, 600));
       const { data: lockCheck } = await supabase
@@ -1611,7 +2048,7 @@ async function processRequest(body: any): Promise<void> {
         const reason = tokenError?.message || tokenResult?.error || "insufficient_tokens";
         console.warn(`[full-research] Token consumption failed: ${reason}`);
         await supabase.from("products").update({
-          research_progress: { step: 0, total: 14, label: "Tokens insuficientes", error: true },
+          research_progress: { step: 0, total: 21, label: "Tokens insuficientes", error: true },
         }).eq("id", productId);
         return;
       }
@@ -1703,7 +2140,7 @@ async function processRequest(body: any): Promise<void> {
         content_calendar: null,
         launch_strategy: null,
         research_generated_at: null,
-        research_progress: { step: 0, total: 14, label: "Iniciando regeneracion..." },
+        research_progress: { step: 0, total: 21, label: "Iniciando regeneracion..." },
       }).eq("id", productId);
     }
 
@@ -1743,7 +2180,7 @@ async function processRequest(body: any): Promise<void> {
 
     // ── Update progress: starting this step ──────────────────────────
     await supabase.from("products").update({
-      research_progress: { step: phase, total: 14, label: getStepName(stepId), stepId },
+      research_progress: { step: phase, total: 21, label: getStepName(stepId), stepId },
     }).eq("id", productId);
 
     console.log(`[step 5/6] Running AI: phase=${phase} step="${stepId}"`);
@@ -1758,7 +2195,7 @@ async function processRequest(body: any): Promise<void> {
       await supabase.from("products").update({
         research_progress: {
           step: phase,
-          total: 14,
+          total: 21,
           label: `Error: ${getStepName(stepId)} fallo`,
           error: true,
           stepId,
@@ -1779,7 +2216,7 @@ async function processRequest(body: any): Promise<void> {
       updated_at: now,
       research_progress: {
         step: phase + 1,
-        total: 14,
+        total: 21,
         label: getStepName(stepId),
         stepId,
       },
@@ -1905,10 +2342,47 @@ async function processRequest(body: any): Promise<void> {
         salesAnglesData = {
           ...salesAnglesData,
           whatsappFunnels: wfList,
-          whatsappSetup: result.whatsapp_setup || {},
+          whatsappSetup: result.whatsap_setup || result.whatsapp_setup || {},
           whatsappBenchmarks: result.performance_benchmarks || {},
           generatedAt: now,
         };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+
+      // ── Tabs 360 (todas a sales_angles_data sin migracion) ──────────────
+      case "paid_ads": {
+        salesAnglesData = { ...salesAnglesData, paidAds: result.paid_ads_strategy || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "email_marketing": {
+        salesAnglesData = { ...salesAnglesData, emailMarketing: result.email_strategy || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "pricing_strategy": {
+        salesAnglesData = { ...salesAnglesData, pricingStrategy: result.pricing_strategy || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "kpis_dashboard": {
+        salesAnglesData = { ...salesAnglesData, kpisDashboard: result.kpis_dashboard || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "seo_strategy": {
+        salesAnglesData = { ...salesAnglesData, seoStrategy: result.seo_strategy || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "partnerships": {
+        salesAnglesData = { ...salesAnglesData, partnerships: result.partnerships_strategy || result, generatedAt: now };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+      case "community_strategy": {
+        salesAnglesData = { ...salesAnglesData, communityStrategy: result.community_strategy || result, generatedAt: now };
         update.sales_angles_data = salesAnglesData;
         break;
       }
@@ -1931,7 +2405,7 @@ async function processRequest(body: any): Promise<void> {
       try {
         const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
         await sb.from("products").update({
-          research_progress: { step: 0, total: 14, label: `Error: ${message.substring(0, 100)}`, error: true },
+          research_progress: { step: 0, total: 21, label: `Error: ${message.substring(0, 100)}`, error: true },
         }).eq("id", productId);
       } catch { /* best-effort */ }
     }
