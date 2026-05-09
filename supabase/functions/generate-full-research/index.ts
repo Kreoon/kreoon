@@ -118,19 +118,22 @@ function getStepName(stepId: string): string {
 }
 
 // ── Skills per step ────────────────────────────────────────────────────────
+// Skills CONVERT integradas: consciousness_mapper (siempre), storybrand_architect (PUV/angulos),
+// offer_engineer (lead_magnets/lanzamiento), social_funnel_builder (parrilla/creativos),
+// production_director (creativos de video).
 const STEP_SKILLS: Record<string, SkillType[]> = {
   market_overview:     [],  // investigación pura — sin skills
-  jtbd:                ["neuro_persuader", "avatar_mirrorer", "emotion_architect"],
-  pains_desires:       ["neuro_persuader", "emotion_architect", "objection_crusher", "avatar_mirrorer"],
+  jtbd:                ["consciousness_mapper", "neuro_persuader", "avatar_mirrorer", "emotion_architect"],
+  pains_desires:       ["consciousness_mapper", "neuro_persuader", "emotion_architect", "objection_crusher", "avatar_mirrorer"],
   competitors:         [],  // investigación pura — sin skills
-  avatars:             ["avatar_mirrorer", "neuro_persuader", "cultural_adapter"],
-  differentiation:     ["neuro_persuader", "hooks_specialist", "copy_sharpener"],
-  sales_angles:        ["hooks_specialist", "neuro_persuader", "virality_optimizer", "cta_specialist", "objection_crusher"],
-  puv_transformation:  ["copy_sharpener", "neuro_persuader", "storytelling_specialist"],
-  lead_magnets:        ["hooks_specialist", "cta_specialist", "copy_sharpener"],
-  video_creatives:     ["hooks_specialist", "storytelling_specialist", "scene_director", "virality_optimizer"],
-  content_calendar:    ["platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
-  launch_strategy:     ["neuro_persuader", "cta_specialist", "storytelling_specialist"],
+  avatars:             ["consciousness_mapper", "avatar_mirrorer", "neuro_persuader", "cultural_adapter"],
+  differentiation:     ["consciousness_mapper", "storybrand_architect", "neuro_persuader", "hooks_specialist", "copy_sharpener"],
+  sales_angles:        ["consciousness_mapper", "storybrand_architect", "hooks_specialist", "social_funnel_builder", "cta_specialist", "objection_crusher"],
+  puv_transformation:  ["storybrand_architect", "copy_sharpener", "neuro_persuader", "storytelling_specialist"],
+  lead_magnets:        ["offer_engineer", "hooks_specialist", "cta_specialist", "copy_sharpener"],
+  video_creatives:     ["consciousness_mapper", "hooks_specialist", "storytelling_specialist", "production_director", "social_funnel_builder", "virality_optimizer"],
+  content_calendar:    ["consciousness_mapper", "social_funnel_builder", "platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
+  launch_strategy:     ["offer_engineer", "neuro_persuader", "cta_specialist", "storytelling_specialist"],
 };
 
 // ── Token limits per step ──────────────────────────────────────────────────
@@ -285,6 +288,9 @@ const SCHEMAS: Record<string, any> = {
         angle: { type: "string" }, type: { type: "string", enum: ["educativo","emocional","aspiracional","autoridad","comparativo","anti-mercado","storytelling","prueba-social","error-comun"] },
         avatar: { type: "string" }, emotion: { type: "string" }, whyItWorks: { type: "string" }, contentType: { type: "string" },
         hookExample: { type: "string" }, ctaExample: { type: "string" }, funnelPhase: { type: "string", enum: ["tofu","mofu","bofu"] },
+        // Método CONVERT — Capa C (Conciencia) + E (Engagement)
+        consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+        funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] },
         hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }, developmentTips: { type: "string" },
       }
     }}},
@@ -316,6 +322,20 @@ const SCHEMAS: Record<string, any> = {
       properties: { number: { type: "number" }, angle: { type: "string" }, avatar: { type: "string" }, title: { type: "string" }, idea: { type: "string" },
         structure: { type: "object", properties: { hook: { type: "string" }, body: { type: "string" }, climax: { type: "string" }, cta: { type: "string" } } },
         format: { type: "string" }, esferaPhase: { type: "string", enum: ["enganchar","solucion","remarketing","fidelizar"] }, duration: { type: "string" }, platform: { type: "string" }, productionNotes: { type: "string" },
+        // Método CONVERT — Capa C (Conciencia) + E (Engagement)
+        consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+        funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] },
+        production_brief: {
+          type: "object",
+          properties: {
+            scenario: { type: "string" },
+            light: { type: "string" },
+            framing: { type: "string" },
+            wardrobe: { type: "string" },
+            editing_notes: { type: "string" },
+            subtitles: { type: "boolean" },
+          },
+        },
       }
     }}},
   },
@@ -323,7 +343,11 @@ const SCHEMAS: Record<string, any> = {
     type: "object", additionalProperties: false, required: ["calendar"],
     properties: {
       calendar: { type: "array", minItems: 28, maxItems: 35, items: { type: "object", additionalProperties: false, required: ["week","day","dayLabel","platform","format","pillar","title","hook","description","copy","cta","hashtags","esferaPhase","avatar","productionNotes"],
-        properties: { week: { type: "number" }, day: { type: "number" }, dayLabel: { type: "string" }, platform: { type: "string" }, format: { type: "string" }, pillar: { type: "string", enum: ["educativo","emocional","autoridad","venta","comunidad"] }, title: { type: "string" }, hook: { type: "string" }, description: { type: "string" }, copy: { type: "string" }, cta: { type: "string" }, hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }, esferaPhase: { type: "string", enum: ["enganchar","solucion","remarketing","fidelizar"] }, avatar: { type: "string" }, productionNotes: { type: "string" } }
+        properties: { week: { type: "number" }, day: { type: "number" }, dayLabel: { type: "string" }, platform: { type: "string" }, format: { type: "string" }, pillar: { type: "string", enum: ["educativo","emocional","autoridad","venta","comunidad"] }, title: { type: "string" }, hook: { type: "string" }, description: { type: "string" }, copy: { type: "string" }, cta: { type: "string" }, hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }, esferaPhase: { type: "string", enum: ["enganchar","solucion","remarketing","fidelizar"] }, avatar: { type: "string" }, productionNotes: { type: "string" },
+          // Método CONVERT — Capa C (Conciencia) + E (Engagement)
+          consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+          funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] }
+        }
       }},
       weeklyThemes: { type: "array", minItems: 4, maxItems: 4, items: { type: "object", properties: { week: { type: "number" }, theme: { type: "string" }, objective: { type: "string" }, focusPhase: { type: "string" } } } },
       leadMagnetDays: { type: "array", minItems: 3, maxItems: 3, items: { type: "object", properties: { week: { type: "number" }, day: { type: "number" }, leadMagnetName: { type: "string" }, promotionCopy: { type: "string" } } } },
