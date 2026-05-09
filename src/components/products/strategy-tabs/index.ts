@@ -14,3 +14,5 @@ export { LaunchStrategyTab } from './LaunchStrategyTab';
 // Método CONVERT — nuevas tabs (V+E)
 export { LandingPagesTab } from './LandingPagesTab';
 export { WhatsappFunnelTab } from './WhatsappFunnelTab';
+// Tabs 360 (genéricas con render JSON)
+export { GenericJsonTab } from './GenericJsonTab';

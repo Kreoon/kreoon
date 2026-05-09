@@ -34,6 +34,7 @@ import {
   LaunchStrategyTab,
   LandingPagesTab,
   WhatsappFunnelTab,
+  GenericJsonTab,
 } from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +48,8 @@ import {
   Package, FileText, Users, Target, Save,
   File, FolderOpen, Plus, X, Sparkles, Dna,
   Globe, Swords, Lightbulb, Brain, Trophy, Gift, Download, Calendar, Rocket, ExternalLink,
-  RefreshCw, Mic, Check, Coins, AlertTriangle, MessageCircle
+  RefreshCw, Mic, Check, Coins, AlertTriangle, MessageCircle,
+  Megaphone, Mail, DollarSign, BarChart3, Search, Handshake, Heart
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
@@ -672,6 +674,48 @@ export function ProductDetailDialog({
                   : <MessageCircle className="h-3 w-3" />}
                 WhatsApp
               </TabsTrigger>
+              <TabsTrigger value="paid-ads" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.paidAds
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Megaphone className="h-3 w-3" />}
+                Paid Ads
+              </TabsTrigger>
+              <TabsTrigger value="email-marketing" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.emailMarketing
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Mail className="h-3 w-3" />}
+                Email
+              </TabsTrigger>
+              <TabsTrigger value="pricing-strategy" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.pricingStrategy
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <DollarSign className="h-3 w-3" />}
+                Precios
+              </TabsTrigger>
+              <TabsTrigger value="kpis-dashboard" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.kpisDashboard
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <BarChart3 className="h-3 w-3" />}
+                KPIs
+              </TabsTrigger>
+              <TabsTrigger value="seo-strategy" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.seoStrategy
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Search className="h-3 w-3" />}
+                SEO
+              </TabsTrigger>
+              <TabsTrigger value="partnerships" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.partnerships
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Handshake className="h-3 w-3" />}
+                Alianzas
+              </TabsTrigger>
+              <TabsTrigger value="community-strategy" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.communityStrategy
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Heart className="h-3 w-3" />}
+                Comunidad
+              </TabsTrigger>
               <TabsTrigger value="adn-v3" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
                 <Sparkles className="h-3 w-3 text-violet-400" />
                 ADN v3
@@ -931,6 +975,70 @@ export function ProductDetailDialog({
           {/* Tab 13: Funnel WhatsApp (Método CONVERT — Capa E LATAM) */}
           <TabsContent value="whatsapp-funnel" className="mt-4">
             <WhatsappFunnelTab funnels={(product?.sales_angles_data as any)?.whatsappFunnels} setup={(product?.sales_angles_data as any)?.whatsappSetup} benchmarks={(product?.sales_angles_data as any)?.whatsappBenchmarks} />
+          </TabsContent>
+
+          {/* Tabs 360 (CONVERT completo) */}
+          <TabsContent value="paid-ads" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.paidAds}
+              emptyIcon={<Megaphone className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de Paid Ads se genera al activar el ADN Recargado."
+              emptyHint="Estructura completa Meta + TikTok con presupuestos, creativos y benchmarks LATAM"
+            />
+          </TabsContent>
+
+          <TabsContent value="email-marketing" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.emailMarketing}
+              emptyIcon={<Mail className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de Email Marketing se genera al activar el ADN Recargado."
+              emptyHint="Secuencias de bienvenida (7 emails), lanzamiento y reactivación, listas para copiar"
+            />
+          </TabsContent>
+
+          <TabsContent value="pricing-strategy" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.pricingStrategy}
+              emptyIcon={<DollarSign className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de precios se genera al activar el ADN Recargado."
+              emptyHint="Posicionamiento, value ladder, planes de pago en LATAM, proyecciones"
+            />
+          </TabsContent>
+
+          <TabsContent value="kpis-dashboard" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.kpisDashboard}
+              emptyIcon={<BarChart3 className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="El dashboard de KPIs se genera al activar el ADN Recargado."
+              emptyHint="North Star metric + AARRR + decision triggers + tools stack"
+            />
+          </TabsContent>
+
+          <TabsContent value="seo-strategy" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.seoStrategy}
+              emptyIcon={<Search className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de SEO se genera al activar el ADN Recargado."
+              emptyHint="Keywords, blog strategy, YouTube strategy, local SEO y timeline"
+            />
+          </TabsContent>
+
+          <TabsContent value="partnerships" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.partnerships}
+              emptyIcon={<Handshake className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de alianzas se genera al activar el ADN Recargado."
+              emptyHint="Programa de afiliados + influencers + co-marketing + PR"
+            />
+          </TabsContent>
+
+          <TabsContent value="community-strategy" className="mt-4">
+            <GenericJsonTab
+              data={(product?.sales_angles_data as any)?.communityStrategy}
+              emptyIcon={<Heart className="h-12 w-12 text-muted-foreground" />}
+              emptyTitle="La estrategia de comunidad se genera al activar el ADN Recargado."
+              emptyHint="Concepto, plataforma, onboarding, engagement, monetización"
+            />
           </TabsContent>
 
           {/* ADN Recargado v3 - 22 secciones */}
