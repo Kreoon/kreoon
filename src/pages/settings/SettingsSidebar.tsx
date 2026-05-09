@@ -3,7 +3,7 @@ import {
   User, Bell, Shield, HelpCircle, Building2, History,
   Landmark, Users, Share2, CreditCard, Settings2, ShieldCheck,
   Bot, UserCog, ChevronRight, LockKeyhole, BarChart3, Brain, Store, Paintbrush,
-  MessageSquareCode, Palette, ExternalLink
+  MessageSquareCode, Palette, ExternalLink, Plug
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SettingsPermissions, SettingsSectionKey } from '@/hooks/useSettingsPermissions';
@@ -41,6 +41,7 @@ const ALL_SECTIONS: SectionGroup[] = [
       { key: 'client_company', icon: Building2, title: 'Mi Empresa', description: 'Datos de tu empresa' },
       { key: 'notifications', icon: Bell, title: 'Notificaciones', description: 'Alertas y preferencias' },
       { key: 'security', icon: Shield, title: 'Seguridad', description: 'Contraseña y 2FA' },
+      { key: 'mcp_integrations', icon: Plug, title: 'Integraciones MCP', description: 'Conecta n8n, Make, Claude' },
       { key: 'tour', icon: HelpCircle, title: 'Tour Guiado', description: 'Introducción' },
       { key: 'referrals', icon: Share2, title: 'Referidos', description: 'Invitar y ganar' },
     ],

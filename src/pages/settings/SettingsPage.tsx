@@ -37,6 +37,7 @@ const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPag
 const WhiteLabelSection = lazy(() => import('./sections/WhiteLabelSection'));
 const OrgReferralsSection = lazy(() => import('./sections/OrgReferralsSection'));
 const PromptsSection = lazy(() => import('./sections/PromptsSection'));
+const MCPIntegrationsSection = lazy(() => import('./sections/MCPIntegrationsSection'));
 
 // Loading fallback
 const SectionLoader = memo(() => (
@@ -76,6 +77,7 @@ referrals: ReferralSection,
   platform_admin: PlatformAdminSection,
   ai_tokenization: AITokenizationSection,
   prompts: PromptsSection,
+  mcp_integrations: MCPIntegrationsSection,
 };
 
 // Wide sections that need more space

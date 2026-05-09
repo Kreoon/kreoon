@@ -33,6 +33,7 @@ export type SettingsSectionKey =
   | 'tracking'           // Tracking & Analytics engine (platform level)
   | 'ai_tokenization'    // AI-powered profile tokenization
   | 'prompts'            // AI prompts management (platform root only)
+  | 'mcp_integrations'  // MCP API keys para conectar herramientas externas
 
 export interface SectionPermission {
   canAccess: boolean;
@@ -85,6 +86,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   tracking: 'platform',
   ai_tokenization: 'platform',
   prompts: 'platform',
+  mcp_integrations: 'user',
 };
 
 // Module key mapping for database lookup

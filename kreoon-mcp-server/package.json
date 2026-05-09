@@ -10,7 +10,12 @@
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit"
   },
-  "keywords": ["mcp", "kreoon", "automation", "ai"],
+  "keywords": [
+    "mcp",
+    "kreoon",
+    "automation",
+    "ai"
+  ],
   "author": "Alexander Castaño",
   "license": "MIT",
   "dependencies": {
@@ -20,8 +25,9 @@
   },
   "devDependencies": {
     "@types/node": "^20.8.0",
-    "typescript": "^5.2.2",
-    "tsx": "^4.0.0"
+    "@vercel/node": "^5.7.15",
+    "tsx": "^4.0.0",
+    "typescript": "^5.2.2"
   },
   "engines": {
     "node": ">=18.0.0"
