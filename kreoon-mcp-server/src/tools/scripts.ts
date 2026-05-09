@@ -122,10 +122,11 @@ async function generateScript(
   // Modo 1: producto registrado en Kreoon
   if (product_id) {
     // products.client_id no tiene FK declarada hacia clients, así que PostgREST
-    // no puede resolver embeds. Resolvemos el aislamiento multi-tenant en dos pasos.
+    // no puede resolver embeds. Resolvemos el aislamiento multi-tenant en dos pasos
+    // y a la vez traemos los campos que la edge function generate-script necesita.
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("id, client_id")
+      .select("id, client_id, name, description, ideal_avatar, sales_angles, market_research, strategy")
       .eq("id", product_id)
       .single();
 
@@ -144,16 +145,34 @@ async function generateScript(
       return { success: false, error: "Producto sin acceso para esta organización" };
     }
 
+    // La edge function generate-script usa camelCase y nombres específicos.
+    // platform/style/hooks_count no son parámetros nativos: los pasamos como contexto.
+    const platformLabel: Record<string, string> = {
+      tiktok: "TikTok",
+      instagram_reels: "Instagram Reels",
+      youtube_shorts: "YouTube Shorts",
+    };
+    const salesAngleStr = Array.isArray(product.sales_angles)
+      ? product.sales_angles.join(" | ")
+      : (product.sales_angles ?? "");
+    const marketResearchStr = typeof product.market_research === "string"
+      ? product.market_research
+      : product.market_research ? JSON.stringify(product.market_research) : "";
+
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
       "generate-script",
       {
         body: {
-          product_id,
-          organization_id: auth.org_id,
-          platform,
-          style,
-          hooks_count,
-          user_id: auth.user_id,
+          organizationId: auth.org_id,
+          product_name: product.name ?? "Producto",
+          strategy: product.strategy ?? product.description ?? "",
+          market_research: marketResearchStr,
+          ideal_avatar: product.ideal_avatar ?? "",
+          sales_angle: salesAngleStr || style,
+          additional_context:
+            `Plataforma: ${platformLabel[platform] ?? platform}. ` +
+            `Estilo: ${style}. Generar ${hooks_count} variantes de hook.`,
+          sphere_phase: "engage",
         },
       }
     );
@@ -207,14 +226,19 @@ Formato de respuesta JSON:
   "brand": "${brand_name}"
 }`;
 
+  // multi-ai espera { messages: Message[], mode, models } y devuelve { response, ... }
   const { data: fnData, error: fnError } = await supabase.functions.invoke(
     "multi-ai",
     {
       body: {
-        action: "generate",
-        prompt,
-        organization_id: auth.org_id,
-        max_tokens: 2000,
+        messages: [
+          {
+            role: "system",
+            content: "Eres un experto en guiones UGC. Responde SOLO con JSON válido siguiendo el formato pedido por el usuario.",
+          },
+          { role: "user", content: prompt },
+        ],
+        mode: "first",
       },
     }
   );
@@ -223,10 +247,10 @@ Formato de respuesta JSON:
     return { success: false, error: `Error generando guión: ${fnError.message}` };
   }
 
-  // Intentar parsear JSON de la respuesta
+  // Intentar parsear JSON de la respuesta — multi-ai devuelve .response
   let parsed: GenerateScriptOutput;
   try {
-    const text = fnData?.content ?? fnData?.result ?? JSON.stringify(fnData);
+    const text = fnData?.response ?? fnData?.content ?? fnData?.result ?? JSON.stringify(fnData);
     parsed = typeof text === "string" ? JSON.parse(text) : text;
   } catch {
     parsed = fnData as GenerateScriptOutput;
