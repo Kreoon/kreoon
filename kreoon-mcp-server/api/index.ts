@@ -13,6 +13,53 @@ import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projec
 import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
+// ─── OAuth authorize page HTML ───────────────────────────────────────────────
+
+function authorizeHtml(redirectUri: string, state: string, error?: string) {
+  const errorBlock = error
+    ? `<p class="error">${error}</p>`
+    : '';
+  return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Kreoon — Conectar con Claude</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    .card{background:#13131a;border:1px solid #2a2a3a;border-radius:16px;padding:40px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+    .logo{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px;margin-bottom:8px}
+    .logo span{color:#a855f7}
+    .sub{color:#6b6b80;font-size:14px;margin-bottom:32px}
+    label{display:block;font-size:13px;color:#9090a8;margin-bottom:8px}
+    input{width:100%;padding:12px 16px;background:#1e1e2e;border:1px solid #2a2a3a;border-radius:10px;color:#fff;font-size:14px;font-family:monospace;outline:none;transition:border .2s}
+    input:focus{border-color:#a855f7}
+    button{width:100%;margin-top:20px;padding:13px;background:linear-gradient(135deg,#a855f7,#7c3aed);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .2s}
+    button:hover{opacity:.9}
+    .error{color:#f87171;font-size:13px;margin-top:16px;text-align:center}
+    .hint{color:#4a4a5a;font-size:12px;margin-top:16px;text-align:center}
+    .hint a{color:#a855f7;text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">KREOON <span>MCP</span></div>
+    <p class="sub">Conecta Claude con tu cuenta de Kreoon</p>
+    <form method="POST" action="/oauth/authorize">
+      <input type="hidden" name="redirect_uri" value="${redirectUri}"/>
+      <input type="hidden" name="state" value="${state}"/>
+      <label>Tu API Key de Kreoon</label>
+      <input type="password" name="api_key" placeholder="sk-kreoon-..." autocomplete="off" required/>
+      ${errorBlock}
+      <button type="submit">Conectar</button>
+      <p class="hint">Genera tu key en <a href="https://app.kreoon.com/settings" target="_blank">Settings → MCP</a></p>
+    </form>
+  </div>
+</body>
+</html>`;
+}
+
 // ─── CORS helper ────────────────────────────────────────────────────────────
 
 function setCORS(res: ServerResponse) {
@@ -169,7 +216,7 @@ function audit(auth: AuthContext, action: string, status: number, ms: number, to
   }).then(() => {});
 }
 
-// ─── Body parser ─────────────────────────────────────────────────────────────
+// ─── Body parsers ────────────────────────────────────────────────────────────
 
 function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
@@ -178,6 +225,22 @@ function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
     req.on('end', () => {
       try { resolve(body ? JSON.parse(body) : {}); }
       catch { reject(Object.assign(new Error('JSON inválido en el body'), { status: 400 })); }
+    });
+    req.on('error', reject);
+  });
+}
+
+function readFormBody(req: IncomingMessage): Promise<Record<string, string>> {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const params = new URLSearchParams(body);
+        const result: Record<string, string> = {};
+        params.forEach((v, k) => { result[k] = v; });
+        resolve(result);
+      } catch { reject(Object.assign(new Error('Form data inválido'), { status: 400 })); }
     });
     req.on('error', reject);
   });
@@ -197,6 +260,105 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
   if (req.method === 'GET' && isHealthPath) {
     return json(response, 200, { status: 'ok', version: '3.0.0', tools: ALL_TOOL_DEFS.length });
+  }
+
+  // ── OAuth 2.0 — para Claude.ai web connector ─────────────────────────────
+
+  const proto = (req.headers['x-forwarded-proto'] as string | undefined) ?? 'https';
+  const host  = req.headers.host ?? 'mcp.kreoon.com';
+  const base  = `${proto}://${host}`;
+
+  // GET /.well-known/oauth-authorization-server — metadatos OAuth
+  if (req.method === 'GET' && path === '/.well-known/oauth-authorization-server') {
+    return json(response, 200, {
+      issuer: base,
+      authorization_endpoint: `${base}/oauth/authorize`,
+      token_endpoint: `${base}/oauth/token`,
+      response_types_supported: ['code'],
+      grant_types_supported: ['authorization_code'],
+      code_challenge_methods_supported: [],
+    });
+  }
+
+  // GET /oauth/authorize — mostrar formulario HTML
+  if (req.method === 'GET' && path === '/oauth/authorize') {
+    const redirectUri = url.searchParams.get('redirect_uri') ?? '';
+    const state       = url.searchParams.get('state') ?? '';
+    response.setHeader('Content-Type', 'text/html; charset=utf-8');
+    response.statusCode = 200;
+    response.end(authorizeHtml(redirectUri, state));
+    return;
+  }
+
+  // POST /oauth/authorize — validar key, redirigir con code
+  if (req.method === 'POST' && path === '/oauth/authorize') {
+    const form = await readFormBody(req);
+    const { api_key, redirect_uri, state } = form;
+
+    const showError = (msg: string) => {
+      response.setHeader('Content-Type', 'text/html; charset=utf-8');
+      response.statusCode = 200;
+      response.end(authorizeHtml(redirect_uri ?? '', state ?? '', msg));
+    };
+
+    if (!api_key?.startsWith('sk-kreoon-')) {
+      return showError('API key inválida. Debe comenzar con sk-kreoon-');
+    }
+
+    const keyHash = crypto.createHash('sha256').update(api_key).digest('hex');
+    const { data, error } = await supabase
+      .from('mcp_api_keys')
+      .select('id, is_revoked, expires_at')
+      .eq('key_hash', keyHash)
+      .single();
+
+    if (error || !data || data.is_revoked || new Date(data.expires_at) < new Date()) {
+      return showError('API key no encontrada o expirada');
+    }
+
+    // El code ES la api_key — redirigir de vuelta a Claude.ai
+    const redirectUrl = new URL(redirect_uri);
+    redirectUrl.searchParams.set('code', api_key);
+    if (state) redirectUrl.searchParams.set('state', state);
+    response.setHeader('Location', redirectUrl.toString());
+    response.statusCode = 302;
+    response.end();
+    return;
+  }
+
+  // POST /oauth/token — intercambiar code por access_token
+  if (req.method === 'POST' && path === '/oauth/token') {
+    const contentType = (req.headers['content-type'] ?? '');
+    let code: string;
+
+    if (contentType.includes('application/json')) {
+      const body = await readBody(req);
+      code = (body.code as string) ?? '';
+    } else {
+      const form = await readFormBody(req);
+      code = form.code ?? '';
+    }
+
+    if (!code.startsWith('sk-kreoon-')) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'Code inválido' });
+    }
+
+    const keyHash = crypto.createHash('sha256').update(code).digest('hex');
+    const { data, error } = await supabase
+      .from('mcp_api_keys')
+      .select('id, is_revoked, expires_at')
+      .eq('key_hash', keyHash)
+      .single();
+
+    if (error || !data || data.is_revoked || new Date(data.expires_at) < new Date()) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'API key inválida o expirada' });
+    }
+
+    return json(response, 200, {
+      access_token: code,
+      token_type: 'bearer',
+      expires_in: 31_536_000, // 1 año
+    });
   }
 
   // ── POST /mcp — MCP Streamable HTTP (protocolo nativo para Claude.ai web) ──
