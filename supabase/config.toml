@@ -1,8 +1,5 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
-[functions.apify-scraper]
-verify_jwt = true
-
 [functions.public-showcase]
 verify_jwt = false
 
