@@ -30,8 +30,8 @@ export const campaignsToolDefinitions = [
         },
         campaign_purpose: {
           type: "string",
-          enum: ["brand_awareness", "conversions", "engagement", "reach", "leads"],
-          description: "Objetivo principal de la campaña",
+          enum: ["content", "activation", "talent"],
+          description: "Propósito de la campaña: content (UGC/contenido), activation (activaciones de marca), talent (búsqueda de talento)",
         },
         compensation_type: {
           type: "string",

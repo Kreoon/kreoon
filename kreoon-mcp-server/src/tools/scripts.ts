@@ -92,12 +92,12 @@ async function generateScript(
 ): Promise<ToolResult<GenerateScriptOutput>> {
   const { product_id, platform, style = "viral", hooks_count = 3 } = input;
 
-  // Obtener datos del producto para el prompt
+  // products no tiene organization_id; el aislamiento multi-tenant va por clients.organization_id
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, name, description, target_audience, key_benefits")
+    .select("id, name, description, ideal_avatar, sales_angles, clients!inner(organization_id)")
     .eq("id", product_id)
-    .eq("organization_id", auth.org_id)
+    .eq("clients.organization_id", auth.org_id)
     .single();
 
   if (productError || !product) {
@@ -136,9 +136,10 @@ async function improveScript(
 ): Promise<ToolResult> {
   const { script_id, feedback, focus = "all" } = input;
 
+  // Los guiones viven en content.script (no existe tabla scripts)
   const { data: script, error: scriptError } = await supabase
-    .from("scripts")
-    .select("id, content, platform, product_id")
+    .from("content")
+    .select("id, script, platform, product_id")
     .eq("id", script_id)
     .eq("organization_id", auth.org_id)
     .single();
@@ -153,7 +154,7 @@ async function improveScript(
       body: {
         action: "improve_script",
         script_id,
-        original_content: script.content,
+        original_content: script.script,
         feedback,
         focus,
         platform: script.platform,
