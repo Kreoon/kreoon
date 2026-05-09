@@ -618,7 +618,7 @@ export function ProductDetailDialog({
               </TabsTrigger>
               <TabsTrigger value="adn-landing" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
                 <Sparkles className="h-3 w-3 text-violet-500" />
-                Sobre el ADN
+                ADN Recargado
               </TabsTrigger>
               <TabsTrigger value="market" className="gap-1 text-xs py-2">
                 {product?.market_research?.market_overview ? <Check className="h-3 w-3 text-emerald-400" /> : <Globe className="h-3 w-3" />}
@@ -793,7 +793,7 @@ export function ProductDetailDialog({
             )}
           </TabsContent>
 
-          {/* Pestaña destacada: Sobre el ADN — Landing interna del 360 */}
+          {/* Pestaña destacada: ADN Recargado — Landing interna del 360 */}
           <TabsContent value="adn-landing" className="mt-4">
             <AdnLandingTab
               product={product}
@@ -1566,7 +1566,7 @@ function KiroResearchButton({
             ADN Recargado
           </h3>
           <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-            Estrategia 360° en 21 entregables: mercado, avatares, ángulos, parrilla, landing pages, WhatsApp, paid ads, email, precios, KPIs y más. Ver detalle en pestaña <strong>Sobre el ADN</strong>.
+            Estrategia 360° en 21 entregables: mercado, avatares, ángulos, parrilla, landing pages, WhatsApp, paid ads, email, precios, KPIs y más. Ver detalle en pestaña <strong>ADN Recargado</strong>.
           </p>
           {/* Checkbox para incluir ADN de Marca */}
           <label className="flex items-center gap-2 mt-2 cursor-pointer group">
