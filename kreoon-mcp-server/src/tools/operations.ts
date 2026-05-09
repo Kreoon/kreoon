@@ -94,6 +94,7 @@ export const operationsToolDefinitions = [
           enum: ["ugc", "review", "tutorial", "unboxing", "lifestyle", "other"],
           description: "Tipo de contenido",
         },
+        client_id: { type: "string", description: "UUID del cliente/marca asociada (opcional). Usar list_clients para obtener el UUID." },
         product_id: { type: "string", description: "UUID del producto relacionado (opcional)" },
         creator_id: { type: "string", description: "UUID del creador asignado (opcional)" },
         editor_id: { type: "string", description: "UUID del editor asignado (opcional)" },
@@ -200,6 +201,7 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
     description:     args.description ?? null,
     target_platform: args.target_platform,
     content_type:    args.content_type ?? null,
+    client_id:       args.client_id ?? null,
     product_id:      args.product_id ?? null,
     creator_id:      args.creator_id ?? null,
     editor_id:       args.editor_id ?? null,
@@ -220,7 +222,7 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
   const { data, error } = await supabase
     .from("content")
     .insert(insert)
-    .select("id, title, status, target_platform, creator_id, editor_id, deadline, created_at")
+    .select("id, title, status, target_platform, content_type, funnel_stage, client_id, creator_id, editor_id, deadline, created_at")
     .single();
 
   if (error) return { success: false, error: `create_content_item: ${error.message}` };
