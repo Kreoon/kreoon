@@ -16,7 +16,10 @@ const corsHeaders = {
 };
 
 const APIFY_BASE_URL = "https://api.apify.com/v2";
-const APIFY_TIMEOUT_MS = 120000; // 2 min por actor
+// Edge Functions de Supabase tienen idle timeout de 150s.
+// Los 3 actors corren en paralelo, así que el timeout aplica al MÁS LENTO.
+// 100s deja margen para que TikTok e Instagram completen aunque Meta tarde.
+const APIFY_TIMEOUT_MS = 100000;
 const MAX_RESULTS_PER_SOURCE = 20;
 
 interface Competitor {
@@ -51,7 +54,10 @@ async function runApifyActor(
   apiKey: string,
   timeoutMs = APIFY_TIMEOUT_MS,
 ): Promise<any[]> {
-  const runUrl = `${APIFY_BASE_URL}/acts/${actorId}/runs?token=${apiKey}`;
+  // Apify URL uses tilde "~" between username and actor name (NOT "/")
+  // ej: "apify/facebook-ads-scraper" → "apify~facebook-ads-scraper"
+  const apifyActorPath = actorId.replace("/", "~");
+  const runUrl = `${APIFY_BASE_URL}/acts/${apifyActorPath}/runs?token=${apiKey}`;
 
   // Iniciar el run
   const runResponse = await fetch(runUrl, {
@@ -103,62 +109,108 @@ async function runApifyActor(
 
 // ── Scrapers individuales por fuente ───────────────────────────────────────
 
+// Wrapper que devuelve {data, error} para no perder el error en silencio
+async function scrapeWithCapture(
+  source: string,
+  fn: () => Promise<any[]>,
+): Promise<{ data: any[]; error: string | null }> {
+  try {
+    const data = await fn();
+    return { data, error: null };
+  } catch (err: any) {
+    const errorMsg = `${source}: ${err.message || "unknown error"}`;
+    console.error(`[apify-scraper] ${errorMsg}`);
+    return { data: [], error: errorMsg };
+  }
+}
+
+// Mapeo de país a código ISO de 2 letras de Meta Ads Library
+const COUNTRY_CODES: Record<string, string> = {
+  colombia: "CO", "méxico": "MX", mexico: "MX", peru: "PE", chile: "CL",
+  argentina: "AR", "españa": "ES", spain: "ES", venezuela: "VE",
+  ecuador: "EC", uruguay: "UY", "estados unidos": "US", usa: "US",
+};
+
+function buildMetaAdsLibraryUrl(searchTerm: string, countryCode: string): string {
+  const params = new URLSearchParams({
+    active_status: "active",
+    ad_type: "all",
+    country: countryCode,
+    q: searchTerm,
+    sort_data: JSON.stringify({ direction: "desc", mode: "relevancy_monthly_grouped" }),
+    search_type: "keyword_unordered",
+  });
+  return `https://www.facebook.com/ads/library/?${params.toString()}`;
+}
+
 async function scrapeMetaAds(
   competitor: Competitor,
   keywords: string[],
   country: string,
   apiKey: string,
-): Promise<any[]> {
+): Promise<{ data: any[]; error: string | null }> {
+  const cc = COUNTRY_CODES[country.toLowerCase()] || country.toUpperCase().slice(0, 2) || "CO";
+
+  // Construir startUrls basados en el nombre del competidor + keywords
   const searchTerms = [
     competitor.name,
     ...(competitor.facebook_page ? [competitor.facebook_page] : []),
-    ...keywords.slice(0, 3),
+    ...keywords.slice(0, 2),
   ].filter(Boolean);
 
+  if (searchTerms.length === 0) {
+    return { data: [], error: "Sin terminos de busqueda para Meta Ads" };
+  }
+
+  const startUrls = searchTerms.map((term) => ({
+    url: buildMetaAdsLibraryUrl(term, cc),
+  }));
+
   const input = {
-    searchTerms,
-    adType: "all",
-    publisherPlatforms: ["facebook", "instagram"],
-    adActiveStatus: "active",
-    mediaType: "all",
-    countries: [country.toUpperCase().slice(0, 2) || "CO"],
-    maxResultsPerPage: MAX_RESULTS_PER_SOURCE,
+    startUrls,
+    count: MAX_RESULTS_PER_SOURCE,
+    "scrapeAdDetails": false,
+    "scrapePageAds.activeStatus": "active",
   };
 
-  try {
-    return await runApifyActor("apify/facebook-ads-scraper", input, apiKey);
-  } catch (err: any) {
-    console.error(`[apify-scraper] Meta Ads failed for ${competitor.name}: ${err.message}`);
-    return [];
-  }
+  return scrapeWithCapture("Meta Ads", () => runApifyActor("apify/facebook-ads-scraper", input, apiKey));
 }
 
 async function scrapeTikTok(
   competitor: Competitor,
-  keywords: string[],
+  _keywords: string[],
   apiKey: string,
-): Promise<any[]> {
-  if (!competitor.tiktok && !competitor.name) return [];
+): Promise<{ data: any[]; error: string | null }> {
+  // Solo scrapeamos perfiles directos, NO hashtags (los hashtags rompen con caracteres especiales)
+  if (!competitor.tiktok) {
+    return { data: [], error: "Competidor sin handle TikTok — saltado" };
+  }
 
-  const input: any = {
-    profiles: competitor.tiktok ? [competitor.tiktok.replace("@", "").replace(/\/$/, "")] : [],
-    hashtags: keywords.slice(0, 3),
+  const profileName = competitor.tiktok.replace("@", "").replace(/\/$/, "").trim();
+  if (!profileName) return { data: [], error: "Handle TikTok invalido" };
+
+  const input = {
+    profiles: [profileName],
+    profileScrapeSections: ["videos"],
+    profileSorting: "latest",
+    excludePinnedPosts: false,
+    resultsPerPage: MAX_RESULTS_PER_SOURCE,
     shouldDownloadVideos: false,
     shouldDownloadCovers: false,
-    maxProfilesPerQuery: 1,
-    resultsPerPage: MAX_RESULTS_PER_SOURCE,
+    shouldDownloadSubtitles: false,
+    shouldDownloadSlideshowImages: false,
   };
 
-  try {
-    return await runApifyActor("clockworks/free-tiktok-scraper", input, apiKey);
-  } catch (err: any) {
-    console.error(`[apify-scraper] TikTok failed for ${competitor.name}: ${err.message}`);
-    return [];
-  }
+  return scrapeWithCapture("TikTok", () => runApifyActor("clockworks/free-tiktok-scraper", input, apiKey));
 }
 
-async function scrapeInstagram(competitor: Competitor, apiKey: string): Promise<any[]> {
-  if (!competitor.instagram) return [];
+async function scrapeInstagram(
+  competitor: Competitor,
+  apiKey: string,
+): Promise<{ data: any[]; error: string | null }> {
+  if (!competitor.instagram) {
+    return { data: [], error: "Competidor sin handle Instagram — saltado" };
+  }
 
   const username = competitor.instagram
     .replace("https://www.instagram.com/", "")
@@ -167,21 +219,18 @@ async function scrapeInstagram(competitor: Competitor, apiKey: string): Promise<
     .replace(/\/$/, "")
     .trim();
 
-  if (!username) return [];
+  if (!username) return { data: [], error: "Username Instagram invalido" };
 
+  // El actor apify/instagram-scraper requiere "directUrls" en formato URL completa
   const input = {
-    usernames: [username],
-    resultsLimit: MAX_RESULTS_PER_SOURCE,
+    directUrls: [`https://www.instagram.com/${username}/`],
     resultsType: "posts",
-    expandOwners: false,
+    resultsLimit: MAX_RESULTS_PER_SOURCE,
+    searchType: "user",
+    addParentData: false,
   };
 
-  try {
-    return await runApifyActor("apify/instagram-scraper", input, apiKey);
-  } catch (err: any) {
-    console.error(`[apify-scraper] Instagram failed for ${competitor.name}: ${err.message}`);
-    return [];
-  }
+  return scrapeWithCapture("Instagram", () => runApifyActor("apify/instagram-scraper", input, apiKey));
 }
 
 // ── Orquestador: scraping completo de N competidores ───────────────────────
@@ -203,30 +252,21 @@ async function scrapeAllCompetitors(
       errors: [],
     };
 
-    // 3 actors en paralelo para este competidor
-    const [metaAds, tiktokPosts, instagramPosts] = await Promise.allSettled([
+    // 3 actors en paralelo para este competidor (cada uno expone su error real)
+    const [metaResult, tiktokResult, instagramResult] = await Promise.all([
       scrapeMetaAds(competitor, input.keywords, input.country, apiKey),
       scrapeTikTok(competitor, input.keywords, apiKey),
       scrapeInstagram(competitor, apiKey),
     ]);
 
-    if (metaAds.status === "fulfilled") {
-      competitorData.meta_ads = metaAds.value;
-    } else {
-      competitorData.errors.push(`Meta Ads: ${metaAds.reason?.message || "unknown"}`);
-    }
+    competitorData.meta_ads = metaResult.data;
+    if (metaResult.error) competitorData.errors.push(metaResult.error);
 
-    if (tiktokPosts.status === "fulfilled") {
-      competitorData.tiktok_posts = tiktokPosts.value;
-    } else {
-      competitorData.errors.push(`TikTok: ${tiktokPosts.reason?.message || "unknown"}`);
-    }
+    competitorData.tiktok_posts = tiktokResult.data;
+    if (tiktokResult.error) competitorData.errors.push(tiktokResult.error);
 
-    if (instagramPosts.status === "fulfilled") {
-      competitorData.instagram_posts = instagramPosts.value;
-    } else {
-      competitorData.errors.push(`Instagram: ${instagramPosts.reason?.message || "unknown"}`);
-    }
+    competitorData.instagram_posts = instagramResult.data;
+    if (instagramResult.error) competitorData.errors.push(instagramResult.error);
 
     results.push(competitorData);
   }
