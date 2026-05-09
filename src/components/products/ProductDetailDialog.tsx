@@ -32,6 +32,8 @@ import {
   LeadMagnetsCreativesTab,
   ContentCalendarTab,
   LaunchStrategyTab,
+  LandingPagesTab,
+  WhatsappFunnelTab,
 } from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -45,7 +47,7 @@ import {
   Package, FileText, Users, Target, Save,
   File, FolderOpen, Plus, X, Sparkles, Dna,
   Globe, Swords, Lightbulb, Brain, Trophy, Gift, Download, Calendar, Rocket, ExternalLink,
-  RefreshCw, Mic, Check, Coins, AlertTriangle
+  RefreshCw, Mic, Check, Coins, AlertTriangle, MessageCircle
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { CreateContentFromResearchDialog } from "./CreateContentFromResearchDialog";
@@ -658,6 +660,18 @@ export function ProductDetailDialog({
                 {product?.launch_strategy ? <Check className="h-3 w-3 text-emerald-400" /> : <Rocket className="h-3 w-3" />}
                 Lanzamiento
               </TabsTrigger>
+              <TabsTrigger value="landing-pages" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.landingPages?.length > 0
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Globe className="h-3 w-3" />}
+                Landing Pages
+              </TabsTrigger>
+              <TabsTrigger value="whatsapp-funnel" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.whatsappFunnels?.length > 0
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <MessageCircle className="h-3 w-3" />}
+                WhatsApp
+              </TabsTrigger>
               <TabsTrigger value="adn-v3" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
                 <Sparkles className="h-3 w-3 text-violet-400" />
                 ADN v3
@@ -907,6 +921,16 @@ export function ProductDetailDialog({
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          {/* Tab 12: Landing Pages (2 variaciones del Método CONVERT) */}
+          <TabsContent value="landing-pages" className="mt-4">
+            <LandingPagesTab landingPages={(product?.sales_angles_data as any)?.landingPages} abTesting={(product?.sales_angles_data as any)?.landingPagesAbTesting} techStack={(product?.sales_angles_data as any)?.landingPagesTechStack} />
+          </TabsContent>
+
+          {/* Tab 13: Funnel WhatsApp (Método CONVERT — Capa E LATAM) */}
+          <TabsContent value="whatsapp-funnel" className="mt-4">
+            <WhatsappFunnelTab funnels={(product?.sales_angles_data as any)?.whatsappFunnels} setup={(product?.sales_angles_data as any)?.whatsappSetup} benchmarks={(product?.sales_angles_data as any)?.whatsappBenchmarks} />
           </TabsContent>
 
           {/* ADN Recargado v3 - 22 secciones */}

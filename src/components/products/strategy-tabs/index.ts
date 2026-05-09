@@ -11,3 +11,6 @@ export { LeadMagnetsCreativesTab } from './LeadMagnetsCreativesTab';
 export { StrategicPlaybookTab } from './StrategicPlaybookTab';
 export { ContentCalendarTab } from './ContentCalendarTab';
 export { LaunchStrategyTab } from './LaunchStrategyTab';
+// Método CONVERT — nuevas tabs (V+E)
+export { LandingPagesTab } from './LandingPagesTab';
+export { WhatsappFunnelTab } from './WhatsappFunnelTab';
