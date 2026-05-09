@@ -121,15 +121,27 @@ async function generateScript(
 
   // Modo 1: producto registrado en Kreoon
   if (product_id) {
+    // products.client_id no tiene FK declarada hacia clients, así que PostgREST
+    // no puede resolver embeds. Resolvemos el aislamiento multi-tenant en dos pasos.
     const { data: product, error: productError } = await supabase
       .from("products")
-      .select("id, name, description, ideal_avatar, sales_angles, clients!inner(organization_id)")
+      .select("id, client_id")
       .eq("id", product_id)
-      .eq("clients.organization_id", auth.org_id)
       .single();
 
     if (productError || !product) {
-      return { success: false, error: "Producto no encontrado o sin acceso" };
+      return { success: false, error: "Producto no encontrado" };
+    }
+
+    const { data: client, error: clientError } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("id", product.client_id)
+      .eq("organization_id", auth.org_id)
+      .maybeSingle();
+
+    if (clientError || !client) {
+      return { success: false, error: "Producto sin acceso para esta organización" };
     }
 
     const { data: fnData, error: fnError } = await supabase.functions.invoke(
