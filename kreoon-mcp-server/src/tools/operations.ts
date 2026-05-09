@@ -129,6 +129,7 @@ export const operationsToolDefinitions = [
         funnel_stage:    { type: "string", enum: ["tofu", "mofu", "bofu"], description: "Etapa del funnel" },
         deadline:        { type: "string", format: "date-time", description: "Fecha límite ISO 8601" },
         notes:           { type: "string", description: "Notas internas" },
+        script:          { type: "string", description: "Texto completo del guión (hook + cuerpo + CTA). Úsalo para guardar un guión escrito manualmente o generado por IA." },
       },
       required: ["content_id"],
     },
@@ -254,7 +255,7 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
 
 async function updateContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { content_id, ...fields } = args;
-  const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes"];
+  const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes", "script"];
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of allowed) {
@@ -270,7 +271,7 @@ async function updateContentItem(args: Record<string, unknown>, auth: AuthContex
     .update(updates)
     .eq("id", content_id)
     .eq("organization_id", auth.org_id)
-    .select("id, title, status, client_id, product_id, target_platform, content_type, funnel_stage, notes, updated_at")
+    .select("id, title, status, client_id, product_id, target_platform, content_type, funnel_stage, script, notes, updated_at")
     .single();
 
   if (error) return { success: false, error: `update_content_item: ${error.message}` };
