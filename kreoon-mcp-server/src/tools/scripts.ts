@@ -16,14 +16,32 @@ export const scriptToolDefinitions = [
   {
     name: "generate_script",
     description:
-      "Genera guiones UGC optimizados para una plataforma específica usando el ADN del producto. " +
+      "Genera guiones UGC optimizados para una plataforma. " +
+      "Modo 1: con product_id (producto registrado en Kreoon). " +
+      "Modo 2: sin product_id — usa brand_name + brand_description para generar directamente. " +
       "Devuelve múltiples variantes con hook, cuerpo y CTA.",
     inputSchema: {
       type: "object",
       properties: {
         product_id: {
           type: "string",
-          description: "UUID del producto en Kreoon",
+          description: "UUID del producto registrado en Kreoon (opcional si se provee brand_name)",
+        },
+        brand_name: {
+          type: "string",
+          description: "Nombre de la marca o producto (requerido si no hay product_id)",
+        },
+        brand_description: {
+          type: "string",
+          description: "Descripción del producto/servicio, propuesta de valor, beneficios clave",
+        },
+        target_audience: {
+          type: "string",
+          description: "Audiencia objetivo: quiénes son, sus dolores, deseos",
+        },
+        key_benefits: {
+          type: "string",
+          description: "Beneficios principales o USPs del producto",
         },
         platform: {
           type: "string",
@@ -42,7 +60,7 @@ export const scriptToolDefinitions = [
           maximum: 5,
         },
       },
-      required: ["product_id", "platform"],
+      required: ["platform"],
     },
   },
   {
@@ -90,31 +108,101 @@ async function generateScript(
   input: GenerateScriptInput,
   auth: AuthContext
 ): Promise<ToolResult<GenerateScriptOutput>> {
-  const { product_id, platform, style = "viral", hooks_count = 3 } = input;
+  const { product_id, brand_name, brand_description, target_audience, key_benefits, platform, style = "viral", hooks_count = 3 } = input as GenerateScriptInput & {
+    brand_name?: string;
+    brand_description?: string;
+    target_audience?: string;
+    key_benefits?: string;
+  };
 
-  // products no tiene organization_id; el aislamiento multi-tenant va por clients.organization_id
-  const { data: product, error: productError } = await supabase
-    .from("products")
-    .select("id, name, description, ideal_avatar, sales_angles, clients!inner(organization_id)")
-    .eq("id", product_id)
-    .eq("clients.organization_id", auth.org_id)
-    .single();
-
-  if (productError || !product) {
-    return { success: false, error: "Producto no encontrado o sin acceso" };
+  if (!product_id && !brand_name) {
+    return { success: false, error: "Se requiere product_id o brand_name para generar el guión" };
   }
 
-  // Llamar a la Edge Function generate-script existente
+  // Modo 1: producto registrado en Kreoon
+  if (product_id) {
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("id, name, description, ideal_avatar, sales_angles, clients!inner(organization_id)")
+      .eq("id", product_id)
+      .eq("clients.organization_id", auth.org_id)
+      .single();
+
+    if (productError || !product) {
+      return { success: false, error: "Producto no encontrado o sin acceso" };
+    }
+
+    const { data: fnData, error: fnError } = await supabase.functions.invoke(
+      "generate-script",
+      {
+        body: {
+          product_id,
+          organization_id: auth.org_id,
+          platform,
+          style,
+          hooks_count,
+          user_id: auth.user_id,
+        },
+      }
+    );
+
+    if (fnError) {
+      return { success: false, error: `Error generando guión: ${fnError.message}` };
+    }
+
+    return {
+      success: true,
+      data: fnData as GenerateScriptOutput,
+      tokens_used: fnData?.tokens_used ?? 150,
+    };
+  }
+
+  // Modo 2: sin product_id — generar directamente con brand context
+  const platformLabel: Record<string, string> = {
+    tiktok: "TikTok",
+    instagram_reels: "Instagram Reels",
+    youtube_shorts: "YouTube Shorts",
+  };
+
+  const prompt = `Eres un experto en guiones UGC para ${platformLabel[platform] ?? platform}.
+
+MARCA/PRODUCTO: ${brand_name}
+${brand_description ? `DESCRIPCIÓN: ${brand_description}` : ""}
+${target_audience  ? `AUDIENCIA: ${target_audience}` : ""}
+${key_benefits     ? `BENEFICIOS CLAVE: ${key_benefits}` : ""}
+
+TAREA: Genera ${hooks_count} variantes de guión UGC en español con estilo "${style}" para ${platformLabel[platform] ?? platform}.
+
+Cada variante debe incluir:
+- HOOK (primeros 3 segundos, texto para pantalla o frase de apertura)
+- CUERPO (desarrollo del mensaje, 30-45 segundos)
+- CTA (llamada a la acción final)
+- DURACIÓN ESTIMADA (segundos)
+
+Formato de respuesta JSON:
+{
+  "scripts": [
+    {
+      "variant": 1,
+      "hook": "...",
+      "body": "...",
+      "cta": "...",
+      "duration_seconds": 30,
+      "style_notes": "..."
+    }
+  ],
+  "platform": "${platform}",
+  "brand": "${brand_name}"
+}`;
+
   const { data: fnData, error: fnError } = await supabase.functions.invoke(
-    "generate-script",
+    "multi-ai",
     {
       body: {
-        product_id,
+        action: "generate",
+        prompt,
         organization_id: auth.org_id,
-        platform,
-        style,
-        hooks_count,
-        user_id: auth.user_id,
+        max_tokens: 2000,
       },
     }
   );
@@ -123,9 +211,18 @@ async function generateScript(
     return { success: false, error: `Error generando guión: ${fnError.message}` };
   }
 
+  // Intentar parsear JSON de la respuesta
+  let parsed: GenerateScriptOutput;
+  try {
+    const text = fnData?.content ?? fnData?.result ?? JSON.stringify(fnData);
+    parsed = typeof text === "string" ? JSON.parse(text) : text;
+  } catch {
+    parsed = fnData as GenerateScriptOutput;
+  }
+
   return {
     success: true,
-    data: fnData as GenerateScriptOutput,
+    data: parsed,
     tokens_used: fnData?.tokens_used ?? 150,
   };
 }
