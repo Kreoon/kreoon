@@ -113,6 +113,7 @@ const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
 const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
 const WelcomeNewMember = lazyWithRetry(() => import("./pages/WelcomeNewMember"));
 const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
+const MCPDocumentation = lazyWithRetry(() => import("./pages/MCPDocumentation"));
 // OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const PortfolioShowcasePage = lazyWithRetry(() => import("./pages/PortfolioShowcasePage"));
@@ -413,6 +414,7 @@ function AppRoutes() {
         <Route path="/onboarding/profile" element={<OnboardingProfile />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
+        <Route path="/mcp-docs" element={<MCPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
         {/* /org/:slug redirige a /auth/org/:slug (OrgAuth eliminado) */}
