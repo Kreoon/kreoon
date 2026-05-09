@@ -112,6 +112,28 @@ export const operationsToolDefinitions = [
     },
   },
   {
+    name: "update_content_item",
+    description:
+      "Actualiza los campos de metadata de un ítem de contenido existente: cliente, producto, " +
+      "plataforma, tipo, funnel, notas y deadline. Úsalo para asignar cliente a un ítem ya creado.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido a actualizar" },
+        client_id:       { type: "string", description: "UUID del cliente/marca a asignar (list_clients para obtenerlo)" },
+        product_id:      { type: "string", description: "UUID del producto relacionado" },
+        title:           { type: "string", description: "Nuevo título" },
+        description:     { type: "string", description: "Nuevo brief o descripción" },
+        target_platform: { type: "string", enum: ["instagram_reels", "tiktok", "youtube_shorts", "instagram_post", "other"], description: "Plataforma de destino" },
+        content_type:    { type: "string", enum: ["ugc", "review", "tutorial", "unboxing", "lifestyle", "commercial", "other"], description: "Tipo de contenido" },
+        funnel_stage:    { type: "string", enum: ["tofu", "mofu", "bofu"], description: "Etapa del funnel" },
+        deadline:        { type: "string", format: "date-time", description: "Fecha límite ISO 8601" },
+        notes:           { type: "string", description: "Notas internas" },
+      },
+      required: ["content_id"],
+    },
+  },
+  {
     name: "list_content_items",
     description:
       "Lista los ítems de contenido del tablero de la organización con filtros. " +
@@ -185,6 +207,7 @@ export async function handleOperationsTool(
     case "record_content_delivery":return recordContentDelivery(args, auth);
     case "mark_content_payment":   return markContentPayment(args, auth);
     case "create_content_item":    return createContentItem(args, auth);
+    case "update_content_item":    return updateContentItem(args, auth);
     case "list_content_items":     return listContentItems(args, auth);
     case "assign_content_team":    return assignContentTeam(args, auth);
     case "update_content_status":  return updateContentStatus(args, auth);
@@ -226,6 +249,32 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
     .single();
 
   if (error) return { success: false, error: `create_content_item: ${error.message}` };
+  return { success: true, data };
+}
+
+async function updateContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const { content_id, ...fields } = args;
+  const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes"];
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  for (const key of allowed) {
+    if (fields[key] !== undefined) updates[key] = fields[key];
+  }
+
+  if (Object.keys(updates).length === 1) {
+    return { success: false, error: "No se proporcionaron campos a actualizar" };
+  }
+
+  const { data, error } = await supabase
+    .from("content")
+    .update(updates)
+    .eq("id", content_id)
+    .eq("organization_id", auth.org_id)
+    .select("id, title, status, client_id, product_id, target_platform, content_type, funnel_stage, notes, updated_at")
+    .single();
+
+  if (error) return { success: false, error: `update_content_item: ${error.message}` };
+  if (!data)  return { success: false, error: "Contenido no encontrado o sin acceso" };
   return { success: true, data };
 }
 

@@ -147,6 +147,7 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   record_content_delivery: 'campaigns:write',
   mark_content_payment: 'campaigns:write',
   create_content_item: 'campaigns:write',
+  update_content_item: 'campaigns:write',
   list_content_items: 'campaigns:read',
   assign_content_team: 'campaigns:write',
   update_content_status: 'campaigns:write',
