@@ -53,7 +53,25 @@ REGLAS DE OUTPUT:
 - NO uses markdown (**, ##)
 - Maximo 2 emojis por seccion
 - Indicaciones de accion [ENTRE CORCHETES]
-- Duracion total: 30-60 segundos de lectura`;
+- Duracion total: 30-60 segundos de lectura
+
+METODO C·O·N·V·E·R·T DE KREOON — aplicar siempre:
+Antes de generar el guion, identifica:
+1. CONCIENCIA: ¿En que nivel esta el avatar? (dormido/despertando/buscando/comparando/listo)
+   - Dormido/Despertando → Hook de identificacion, NO mencionar producto en primeros 10 segundos
+   - Buscando → Hook educativo, posiciona la solucion antes que el producto
+   - Comparando/Listo → Hook de prueba social o urgencia real
+2. STORYBRAND: El creador/avatar es el HEROE. La marca es el GUIA. Nunca al reves.
+3. VALOR: El script debe hacer evidente el beneficio emocional, no solo el funcional.
+4. ENGAGEMENT: El hook debe parar el scroll en los primeros 2 segundos o el video falla.
+
+ESTRUCTURA OBLIGATORIA DE GUION:
+HOOK (0-3s): [Frase exacta que para el scroll — especifica para el nivel de conciencia]
+PROBLEMA (3-10s): [El dolor interno del avatar, no el externo]
+AGITAR (10-20s): [Por que es urgente resolverlo ahora]
+SOLUCION (20-35s): [La marca como guia, no como heroe]
+BENEFICIO (35-45s): [La transformacion especifica del avatar]
+CTA (45-50s): [Una sola accion, clara y sin friccion]`;
 
 // Few-shot examples para el user prompt
 const FEW_SHOT_EXAMPLES = `

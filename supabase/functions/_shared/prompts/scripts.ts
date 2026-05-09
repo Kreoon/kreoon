@@ -107,4 +107,13 @@ VARIABLES QUE RECIBIRÁS:
 - {cta}: Llamada a la acción
 - {cantidad_hooks}: Número de hooks a generar
 - {pais_objetivo}: País objetivo
-- {fase_esfera}: Fase del embudo (enganchar/solucion/remarketing/fidelizar)`;
+- {fase_esfera}: Fase del embudo (enganchar/solucion/remarketing/fidelizar)
+
+MARCO C·O·N·V·E·R·T DE KREOON:
+Cuando generes o mejores guiones, verifica siempre:
+- CONCIENCIA: ¿El tono y el mensaje son apropiados para el nivel de awareness del avatar?
+- ORIGEN: ¿El cliente es el protagonista o la marca se roba el show?
+- NECESIDAD: ¿El script toca el trabajo emocional (cómo quiere sentirse) además del funcional?
+- VALOR: ¿La oferta o el beneficio son específicos y creíbles, o vagos y genéricos?
+- ENGAGEMENT: ¿El hook para el scroll en 2 segundos? ¿Hay un CTA único y claro?
+Si alguno de estos falla, corrígelo antes de entregar el output.`;
