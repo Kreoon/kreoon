@@ -7,6 +7,9 @@ import { handleCreatorTool, creatorToolDefinitions } from '../src/tools/creators
 import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles.js';
 import { handleWalletTool, walletToolDefinitions } from '../src/tools/wallet.js';
 import { handleSocialTool, socialToolDefinitions } from '../src/tools/social.js';
+import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/operations.js';
+import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
+import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
 // ─── CORS helper ────────────────────────────────────────────────────────────
@@ -74,16 +77,36 @@ async function authenticate(req: IncomingMessage, res: ServerResponse): Promise<
 // ─── Tool scope map ──────────────────────────────────────────────────────────
 
 const TOOL_SCOPES: Record<string, AuthScope> = {
+  // Scripts
   generate_script: 'scripts:write',
   improve_script: 'scripts:write',
+  // ADN
   start_adn_research: 'adn:write',
   get_adn_status: 'adn:read',
+  // Creators
   search_creators: 'creators:read',
   score_creator_for_campaign: 'creators:read',
+  // Profiles
   optimize_creator_profile: 'profiles:write',
+  // Wallet
   get_wallet_overview: 'wallet:read',
   request_withdrawal: 'wallet:write',
+  // Social
   publish_to_social: 'social:write',
+  // Operations (content board)
+  create_content_item: 'campaigns:write',
+  list_content_items: 'campaigns:read',
+  assign_content_team: 'campaigns:write',
+  update_content_status: 'campaigns:write',
+  // Campaigns (marketplace)
+  create_marketplace_campaign: 'campaigns:write',
+  list_marketplace_campaigns: 'campaigns:read',
+  manage_campaign_application: 'campaigns:write',
+  // Projects (marketplace)
+  create_marketplace_project: 'campaigns:write',
+  list_marketplace_projects: 'campaigns:read',
+  assign_editor_to_project: 'campaigns:write',
+  update_project_status: 'campaigns:write',
 };
 
 const ALL_TOOL_DEFS = [
@@ -93,6 +116,9 @@ const ALL_TOOL_DEFS = [
   ...profileToolDefinitions,
   ...walletToolDefinitions,
   ...socialToolDefinitions,
+  ...operationsToolDefinitions,
+  ...campaignsToolDefinitions,
+  ...projectsToolDefinitions,
 ];
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
@@ -109,12 +135,15 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
     throw Object.assign(new Error(`Scope insuficiente. Se requiere: ${scope}`), { status: 403 });
   }
 
-  if (scriptToolDefinitions.some(t => t.name === name)) return handleScriptTool(name, args, auth);
-  if (adnToolDefinitions.some(t => t.name === name)) return handleADNTool(name, args, auth);
-  if (creatorToolDefinitions.some(t => t.name === name)) return handleCreatorTool(name, args, auth);
-  if (profileToolDefinitions.some(t => t.name === name)) return handleProfileTool(name, args, auth);
-  if (walletToolDefinitions.some(t => t.name === name)) return handleWalletTool(name, args, auth);
-  if (socialToolDefinitions.some(t => t.name === name)) return handleSocialTool(name, args, auth);
+  if (scriptToolDefinitions.some(t => t.name === name))     return handleScriptTool(name, args, auth);
+  if (adnToolDefinitions.some(t => t.name === name))        return handleADNTool(name, args, auth);
+  if (creatorToolDefinitions.some(t => t.name === name))    return handleCreatorTool(name, args, auth);
+  if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
+  if (walletToolDefinitions.some(t => t.name === name))     return handleWalletTool(name, args, auth);
+  if (socialToolDefinitions.some(t => t.name === name))     return handleSocialTool(name, args, auth);
+  if (operationsToolDefinitions.some(t => t.name === name)) return handleOperationsTool(name, args, auth);
+  if (campaignsToolDefinitions.some(t => t.name === name))  return handleCampaignsTool(name, args, auth);
+  if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
   throw Object.assign(new Error(`Tool no manejada: ${name}`), { status: 500 });
 }
 
@@ -155,7 +184,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   // GET /health (también acepta /api/index.ts como ruta raíz de Vercel)
   const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
   if (req.method === 'GET' && isHealthPath) {
-    return json(response, 200, { status: 'ok', version: '1.0.0', tools: ALL_TOOL_DEFS.length });
+    return json(response, 200, { status: 'ok', version: '2.0.0', tools: ALL_TOOL_DEFS.length });
   }
 
   try {
