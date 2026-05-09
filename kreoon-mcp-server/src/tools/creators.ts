@@ -134,18 +134,16 @@ async function searchCreators(
   let dbQuery = supabase
     .from("profiles")
     .select(
-      "id, display_name, bio, country, specializations, marketplace_score, " +
+      "id, full_name, display_name, bio, country, specializations, marketplace_score, " +
       "ranking_tier, portfolio_count, projects_completed, response_rate, avatar_url"
     )
-    .eq("account_type", "talent")
-    .eq("is_public", true)
     .gte("marketplace_score", min_score)
     .order("marketplace_score", { ascending: false })
     .limit(Math.min(limit, 50));
 
   if (query) {
     dbQuery = dbQuery.or(
-      `display_name.ilike.%${query}%,bio.ilike.%${query}%`
+      `full_name.ilike.%${query}%,display_name.ilike.%${query}%,bio.ilike.%${query}%`
     );
   }
 

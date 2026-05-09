@@ -33,6 +33,10 @@ export const orgToolDefinitions = [
           type: "string",
           description: "Filtrar por rol: admin, creator, editor, strategist, trafficker, client, team_leader",
         },
+        search: {
+          type: "string",
+          description: "Buscar miembro por nombre (búsqueda parcial, ej: 'Diana', 'Torres')",
+        },
         include_clients: {
           type: "boolean",
           description: "Incluir miembros con rol client (default: false)",
@@ -103,10 +107,7 @@ export async function handleOrgTool(
 // ─── Implementations ─────────────────────────────────────────────────────────
 
 async function getOrgDashboard(auth: AuthContext): Promise<ToolResult> {
-  const [contentStats, overdueRes, pendingPayRes, marketplaceRes] = await Promise.all([
-    // Conteo de contenido por estado
-    supabase.rpc("get_content_status_counts" as never, { org_id: auth.org_id }).maybeSingle(),
-
+  const [overdueRes, pendingPayRes, marketplaceRes] = await Promise.all([
     // Ítems vencidos sin completar
     supabase
       .from("content")
@@ -136,7 +137,7 @@ async function getOrgDashboard(auth: AuthContext): Promise<ToolResult> {
       .limit(5),
   ]);
 
-  // Conteo manual por estado (fallback si no existe la RPC)
+  // Conteo por estado
   const { data: allContent } = await supabase
     .from("content")
     .select("status")
@@ -149,16 +150,42 @@ async function getOrgDashboard(auth: AuthContext): Promise<ToolResult> {
     statusCounts[s] = (statusCounts[s] ?? 0) + 1;
   }
 
+  // Resolver UUIDs de creators/editors a nombres reales
+  const allUserIds = new Set<string>();
+  for (const item of [...(overdueRes.data ?? []), ...(pendingPayRes.data ?? []), ...(marketplaceRes.data ?? [])]) {
+    if (item.creator_id) allUserIds.add(item.creator_id);
+    if (item.editor_id)  allUserIds.add(item.editor_id);
+  }
+
+  const nameMap: Record<string, string> = {};
+  if (allUserIds.size > 0) {
+    const { data: profileRows } = await supabase
+      .from("profiles")
+      .select("id, full_name, display_name")
+      .in("id", [...allUserIds]);
+
+    for (const p of profileRows ?? []) {
+      nameMap[p.id] = p.full_name ?? p.display_name ?? p.id;
+    }
+  }
+
+  const resolveNames = (items: Record<string, unknown>[]) =>
+    items.map(item => ({
+      ...item,
+      creator_name: item.creator_id ? (nameMap[item.creator_id as string] ?? item.creator_id) : null,
+      editor_name:  item.editor_id  ? (nameMap[item.editor_id  as string] ?? item.editor_id)  : null,
+    }));
+
   return {
     success: true,
     data: {
       content_pipeline: statusCounts,
       total_content: allContent?.length ?? 0,
-      overdue_items: overdueRes.data ?? [],
+      overdue_items: resolveNames(overdueRes.data ?? []),
       overdue_count: overdueRes.count ?? 0,
-      pending_payments: pendingPayRes.data ?? [],
+      pending_payments: resolveNames(pendingPayRes.data ?? []),
       pending_payments_count: pendingPayRes.count ?? 0,
-      active_marketplace_projects: marketplaceRes.data ?? [],
+      active_marketplace_projects: resolveNames(marketplaceRes.data ?? []),
       active_marketplace_count: marketplaceRes.count ?? 0,
     },
   };
@@ -166,6 +193,7 @@ async function getOrgDashboard(auth: AuthContext): Promise<ToolResult> {
 
 async function listOrgMembers(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const includeClients = args.include_clients === true;
+  const searchName = (args.search as string | undefined)?.trim();
 
   let membersQuery = supabase
     .from("organization_members")
@@ -181,18 +209,32 @@ async function listOrgMembers(args: Record<string, unknown>, auth: AuthContext):
   if (!members?.length) return { success: true, data: { members: [], count: 0 } };
 
   const userIds = members.map(m => m.user_id);
-  const { data: profiles } = await supabase
+
+  let profilesQuery = supabase
     .from("profiles")
-    .select("id, full_name, avatar_url, user_type")
+    .select("id, full_name, display_name, avatar_url, user_type")
     .in("id", userIds);
 
+  // Filtrar por nombre en la capa de perfiles
+  if (searchName) {
+    profilesQuery = profilesQuery.or(
+      `full_name.ilike.%${searchName}%,display_name.ilike.%${searchName}%`
+    );
+  }
+
+  const { data: profiles } = await profilesQuery;
   const profileMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p]));
 
-  const result = members.map(m => ({
+  // Si hay búsqueda por nombre, excluir miembros sin perfil coincidente
+  const filteredMembers = searchName
+    ? members.filter(m => profileMap[m.user_id])
+    : members;
+
+  const result = filteredMembers.map(m => ({
     user_id: m.user_id,
     role: m.role,
     is_owner: m.is_owner ?? false,
-    full_name: profileMap[m.user_id]?.full_name ?? "Sin nombre",
+    full_name: profileMap[m.user_id]?.full_name ?? profileMap[m.user_id]?.display_name ?? "Sin nombre",
     avatar_url: profileMap[m.user_id]?.avatar_url ?? null,
     is_ambassador: m.is_ambassador ?? false,
     ambassador_level: m.ambassador_level ?? null,
