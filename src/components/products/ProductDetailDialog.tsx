@@ -616,8 +616,11 @@ export function ProductDetailDialog({
                 {dnaRecord ? <Check className="h-3 w-3 text-emerald-400" /> : <Dna className="h-3 w-3" />}
                 ADN
               </TabsTrigger>
-              <TabsTrigger value="adn-landing" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
-                <Sparkles className="h-3 w-3 text-violet-500" />
+              <TabsTrigger
+                value="adn-landing"
+                className="gap-1 text-xs py-2 font-bold border border-violet-500/50 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 text-white shadow-md shadow-violet-500/40 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-500 data-[state=active]:via-fuchsia-500 data-[state=active]:to-pink-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-violet-500/60"
+              >
+                <Sparkles className="h-3 w-3 text-amber-300 animate-pulse" />
                 ADN Recargado
               </TabsTrigger>
               <TabsTrigger value="market" className="gap-1 text-xs py-2">
