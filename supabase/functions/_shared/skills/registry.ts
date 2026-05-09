@@ -188,3 +188,49 @@ ${skill.systemPrompt}
 
   return skillPrompts;
 }
+
+/**
+ * Variante para modo research (ADN Recargado V2).
+ * Strip-ea las secciones `# OUTPUT` de cada skill (que dictan HTML)
+ * y agrega un override JSON-only al final.
+ *
+ * Las skills aportan PRINCIPIOS (cómo pensar), no formato de salida.
+ * El formato lo dicta el schema en el user prompt.
+ */
+export function buildCombinedSystemPromptForResearch(
+  skills: Skill[],
+  basePrompt: string
+): string {
+  const skillPrompts = skills
+    .map((skill) => {
+      // Eliminar la seccion `# OUTPUT` y todo lo que sigue
+      const trimmed = skill.systemPrompt.split(/^#\s*OUTPUT\b/im)[0].trim();
+      return `
+# ══════════════════════════════════════════════════════════════
+# SKILL: ${skill.name.toUpperCase()}
+# Prioridad: ${skill.priority}/10
+# ══════════════════════════════════════════════════════════════
+
+${trimmed}
+`;
+    })
+    .join('\n\n');
+
+  return `${basePrompt}
+
+# SKILLS ACTIVOS (aplica sus PRINCIPIOS al generar el JSON)
+
+${skillPrompts}
+
+# ══════════════════════════════════════════════════════════════
+# INSTRUCCIÓN FINAL DE OUTPUT (OVERRIDE)
+# ══════════════════════════════════════════════════════════════
+
+CRÍTICO: Ignora cualquier instrucción de output en HTML, markdown o texto que aparezca arriba.
+Tu output DEBE ser ÚNICAMENTE JSON válido conforme al schema indicado en el user prompt.
+- NO uses backticks ni \`\`\`json
+- NO agregues explicaciones antes o después del JSON
+- NO uses comentarios JSON
+- Empieza tu respuesta DIRECTAMENTE con { y termínala con }
+- Si un campo no tiene datos suficientes, usa string vacío "" o array vacío []`;
+}

@@ -243,6 +243,23 @@ export function ProductDetailDialog({
     return () => { cancelled = true; };
   }, [product?.brief_data, open]);
 
+  // Refetch del producto al abrir el dialog para ver datos parciales de research V2
+  useEffect(() => {
+    if (!open || !product?.id) return;
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', product.id)
+        .single();
+      if (!cancelled && data && onResearchComplete) {
+        onResearchComplete(data as any);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, product?.id]);
+
   // Elapsed timer while generating research
   useEffect(() => {
     if (!researchStartTime) return;
@@ -305,21 +322,12 @@ export function ProductDetailDialog({
       (progress, done) => {
         setResearchProgress(progress);
 
-        // Check for error from edge function
-        if ((progress as any)?.error) {
-          setResearchGenerating(false);
-          setResearchStartTime(null);
-          toast({
-            title: 'Error en investigación',
-            description: progress?.label || 'Error desconocido',
-            variant: 'destructive',
-          });
-          return;
-        }
-
-        // Refetch product on each NEW step to populate tabs live
-        if (progress && progress.step > lastRefetchedStepRef.current) {
-          lastRefetchedStepRef.current = progress.step;
+        // SIEMPRE refetch al avanzar de paso O cuando hay error/done
+        // (para que se vean los datos parciales aunque haya fallado)
+        const hasError = !!(progress as any)?.error;
+        const stepAdvanced = progress && progress.step > lastRefetchedStepRef.current;
+        if (stepAdvanced || hasError || done) {
+          if (progress) lastRefetchedStepRef.current = progress.step;
           (async () => {
             const { data } = await supabase
               .from('products')
@@ -330,6 +338,18 @@ export function ProductDetailDialog({
               onResearchComplete(data as any);
             }
           })();
+        }
+
+        // Después del refetch, manejar estados terminales
+        if (hasError) {
+          setResearchGenerating(false);
+          setResearchStartTime(null);
+          toast({
+            title: 'Error en investigación',
+            description: (progress?.label || 'Error desconocido') + ' — Las pestañas completadas siguen disponibles.',
+            variant: 'destructive',
+          });
+          return;
         }
 
         if (done) {
