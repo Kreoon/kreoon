@@ -79,23 +79,23 @@ const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
   { name: "Streaming", href: "/streaming", icon: Video },
-  { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3 },
-  { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus },
-  { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search },
-  { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar },
+  { name: "Anuncios", href: "/marketing-ads", icon: BarChart3 },
+  { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
+  { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search },
+  { name: "Análisis de Redes", href: "/admin/social-scraper", icon: Radar },
 ];
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-  { name: "Plan", href: "/planes", icon: Crown },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Mi Plan", href: "/planes", icon: Crown },
+  { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
 const adminSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Centro de Control", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
@@ -118,7 +118,7 @@ const adminSections: NavSection[] = [
   {
     label: "CRM PLATAFORMA",
     items: [
-      { name: "Dashboard", href: "/crm", icon: LayoutDashboard },
+      { name: "CRM", href: "/crm", icon: LayoutDashboard },
       { name: "Leads", href: "/crm/leads", icon: UserPlus },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
       { name: "Personas", href: "/crm/personas", icon: Users },
@@ -133,7 +133,7 @@ const strategistSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Centro de Control", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
@@ -160,7 +160,7 @@ const editorSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Editor Hub", href: "/editor-dashboard", icon: LayoutDashboard },
+      { name: "Centro de Editor", href: "/editor-dashboard", icon: LayoutDashboard },
       { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
@@ -177,7 +177,7 @@ const creatorSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Creator Hub", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Centro de Creador", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
@@ -199,8 +199,8 @@ const clientSections: NavSection[] = [
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Mi Plan", href: "/planes", icon: Crown },
+      { name: "Configuración", href: "/settings", icon: Settings },
     ]
   },
 ];
@@ -210,7 +210,7 @@ const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
     items: [
-      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Tablero", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
     ]
@@ -226,8 +226,8 @@ const freelanceSections: NavSection[] = [
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Mi Plan", href: "/planes", icon: Crown },
+      { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
 ];
@@ -253,7 +253,7 @@ const basicTalentInOrgSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Tablero", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Producciones", href: "/board", icon: Kanban },
       { name: "Portafolio", href: "/content", icon: FileText },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
@@ -270,15 +270,15 @@ const basicTalentInOrgSections: NavSection[] = [
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store },
       { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone },
-      { name: "Wallet", href: "/wallet", icon: Wallet },
+      { name: "Billetera", href: "/wallet", icon: Wallet },
     ]
   },
   {
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Plan", href: "/planes", icon: Crown },
-      { name: "Settings", href: "/settings", icon: Settings },
+      { name: "Mi Plan", href: "/planes", icon: Crown },
+      { name: "Configuración", href: "/settings", icon: Settings },
     ]
   }
 ];
@@ -339,7 +339,7 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone });
   }
 
-  items.push({ name: "Wallet", href: "/wallet", icon: Wallet });
+  items.push({ name: "Billetera", href: "/wallet", icon: Wallet });
 
   // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
@@ -613,7 +613,7 @@ export function MobileNav() {
       ...nonConfigSections,
       ...mktSections,
       ...(!effectiveMktEnabled ? [recruitSection] : []),
-      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings }] }]),
+      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings }] }]),
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
@@ -646,7 +646,7 @@ export function MobileNav() {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Toggle menu</span>
+          <span className="sr-only">Abrir menú</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0 bg-background border-border">

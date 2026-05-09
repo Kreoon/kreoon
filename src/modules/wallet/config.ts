@@ -37,7 +37,7 @@ export const WALLET_CONFIG = {
    */
   COMING_SOON: {
     title: 'Próximamente',
-    subtitle: 'Sistema de Wallet',
+    subtitle: 'Sistema de Billetera',
     description:
       'Estamos trabajando en el sistema de pagos y retiros. Pronto podrás gestionar tus ganancias directamente desde la plataforma.',
     features: [

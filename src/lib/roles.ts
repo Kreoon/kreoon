@@ -2,6 +2,7 @@ import { AppRole, AmbassadorLevel } from '@/types/database';
 import { getPermissionGroup, isDeprecatedRole, isSystemRole, type PermissionGroup } from './permissionGroups';
 import { MARKETPLACE_ROLES, MARKETPLACE_ROLES_MAP } from '@/components/marketplace/roles/marketplaceRoleConfig';
 import type { MarketplaceRoleId } from '@/components/marketplace/types/marketplace';
+import { ROLES as ROLES_LATAM, BADGES as BADGES_LATAM } from '@/lib/i18n/terminos';
 import {
   Shield,
   Camera,
@@ -24,15 +25,15 @@ export type BaseRole =
   | 'community_manager'
   | 'client';
 
-// Primary role labels in Spanish
+// Primary role labels in Spanish (apuntan al diccionario LATAM)
 const BASE_ROLE_LABELS: Record<BaseRole, string> = {
-  admin: 'Administrador',
-  content_creator: 'Creador de Contenido',
-  editor: 'Editor y Producción',
-  digital_strategist: 'Estratega Digital',
-  creative_strategist: 'Estratega Creativo',
-  community_manager: 'Community Manager',
-  client: 'Cliente / Marca',
+  admin: ROLES_LATAM.admin,
+  content_creator: ROLES_LATAM.content_creator,
+  editor: ROLES_LATAM.editor,
+  digital_strategist: ROLES_LATAM.digital_strategist,
+  creative_strategist: ROLES_LATAM.creative_strategist,
+  community_manager: ROLES_LATAM.community_manager,
+  client: ROLES_LATAM.client,
 };
 
 // Short labels for badges and compact UI
@@ -173,19 +174,19 @@ const LEGACY_TO_BASE_ROLE: Record<string, BaseRole> = {
 // ============= BACKWARD COMPAT: OLD GLOBAL ROLE LABELS =============
 // Kept for any code that still references GLOBAL_ROLE_LABELS
 const GLOBAL_ROLE_LABELS: Record<string, string> = {
-  admin: 'Administrador',
-  team_leader: 'Líder de Equipo',
-  creator: 'Creador de Contenido',
-  editor: 'Editor / Post-Producción',
-  strategist: 'Estratega & Marketing',
-  developer: 'Desarrollador',
-  educator: 'Educador',
-  client: 'Cliente',
+  admin: ROLES_LATAM.admin,
+  team_leader: ROLES_LATAM.team_leader,
+  creator: ROLES_LATAM.creator,
+  editor: ROLES_LATAM.editor,
+  strategist: ROLES_LATAM.strategist,
+  developer: ROLES_LATAM.developer,
+  educator: ROLES_LATAM.educator,
+  client: ROLES_LATAM.client,
   // New roles
-  content_creator: 'Creador de Contenido',
-  digital_strategist: 'Estratega Digital',
-  creative_strategist: 'Estratega Creativo',
-  community_manager: 'Community Manager',
+  content_creator: ROLES_LATAM.content_creator,
+  digital_strategist: ROLES_LATAM.digital_strategist,
+  creative_strategist: ROLES_LATAM.creative_strategist,
+  community_manager: ROLES_LATAM.community_manager,
 };
 
 // ============= PERMISSION GROUP-BASED LABELS =============
@@ -225,9 +226,9 @@ const PERMISSION_GROUP_SOLID_COLORS: Record<PermissionGroup, string> = {
 // Ambassador is a badge/privilege, NOT a role
 // Use organization_member_badges table for ambassador status
 export const AMBASSADOR_BADGE_LABELS: Record<AmbassadorLevel, string> = {
-  bronze: 'Embajador Bronce',
-  silver: 'Embajador Plata',
-  gold: 'Embajador Oro'
+  bronze: BADGES_LATAM.bronze,
+  silver: BADGES_LATAM.silver,
+  gold: BADGES_LATAM.gold,
 };
 
 export const AMBASSADOR_BADGE_COLORS: Record<AmbassadorLevel, string> = {
@@ -453,21 +454,21 @@ export const AMBASSADOR_LEVELS: AmbassadorLevel[] = ['bronze', 'silver', 'gold']
 
 export const ROLE_LABELS: Partial<Record<AppRole, string>> = {
   // 7 new base roles
-  admin: 'Administrador',
-  content_creator: 'Creador de Contenido',
-  editor: 'Editor y Producción',
-  digital_strategist: 'Estratega Digital',
-  creative_strategist: 'Estratega Creativo',
-  community_manager: 'Community Manager',
-  client: 'Cliente / Marca',
+  admin: ROLES_LATAM.admin,
+  content_creator: ROLES_LATAM.content_creator,
+  editor: ROLES_LATAM.editor,
+  digital_strategist: ROLES_LATAM.digital_strategist,
+  creative_strategist: ROLES_LATAM.creative_strategist,
+  community_manager: ROLES_LATAM.community_manager,
+  client: ROLES_LATAM.client,
   // Legacy roles (for backward compatibility)
-  team_leader: 'Administrador',
-  creator: 'Creador de Contenido',
-  strategist: 'Estratega Digital',
-  developer: 'Estratega Digital',
-  educator: 'Creador de Contenido',
-  trafficker: 'Estratega Digital',
-  ambassador: 'Creador de Contenido',
+  team_leader: ROLES_LATAM.admin,
+  creator: ROLES_LATAM.content_creator,
+  strategist: ROLES_LATAM.digital_strategist,
+  developer: ROLES_LATAM.digital_strategist,
+  educator: ROLES_LATAM.content_creator,
+  trafficker: ROLES_LATAM.digital_strategist,
+  ambassador: ROLES_LATAM.content_creator,
 };
 
 export const ROLE_LABELS_SHORT: Partial<Record<AppRole, string>> = {

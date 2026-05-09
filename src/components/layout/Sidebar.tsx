@@ -86,18 +86,18 @@ const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
   { name: "Streaming", href: "/streaming", icon: Video, tourId: "sidebar-live", adminOnly: true },
-  { name: "Live Hosting", href: "/streaming/hosting", icon: Users, tourId: "sidebar-live-hosting", adminOnly: true },
-  { name: "Marketing Ads", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
-  { name: "Generador Ads", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
-  { name: "Ad Intelligence", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
-  { name: "Social Scraper", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
+  { name: "Hosting en Vivo", href: "/streaming/hosting", icon: Users, tourId: "sidebar-live-hosting", adminOnly: true },
+  { name: "Anuncios", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
+  { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
+  { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
+  { name: "Análisis de Redes", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
 ];
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
   { name: "Booking", href: "/booking/calendar", icon: CalendarDays, tourId: "sidebar-booking" },
-  { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-  { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+  { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+  { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
 
 // Admin navigation organized in sections - KREOON TECH theme
@@ -105,7 +105,7 @@ const adminSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Control Center", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Centro de Control", href: "/dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
@@ -128,7 +128,7 @@ const adminSections: NavSection[] = [
   {
     label: "CRM PLATAFORMA",
     items: [
-      { name: "Dashboard", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
+      { name: "CRM", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
       { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
       { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
@@ -147,7 +147,7 @@ const strategistSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Control Center", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
+      { name: "Centro de Control", href: "/strategist-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard", requiresOrg: true },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
@@ -174,7 +174,7 @@ const editorSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Editor Hub", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Centro de Editor", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
@@ -191,7 +191,7 @@ const creatorSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Creator Hub", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Centro de Creador", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
@@ -213,8 +213,8 @@ const clientSections: NavSection[] = [
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package, tourId: "sidebar-products" },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText, tourId: "sidebar-portfolio" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   },
 ];
@@ -225,7 +225,7 @@ const basicTalentInOrgSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
     items: [
-      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      { name: "Tablero", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
@@ -242,15 +242,15 @@ const basicTalentInOrgSections: NavSection[] = [
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
       { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
-      { name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
+      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
     ]
   },
   {
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
@@ -270,7 +270,7 @@ const freelanceSections: NavSection[] = [
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
       { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
-      { name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
+      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
     ]
   },
   {
@@ -283,8 +283,8 @@ const freelanceSections: NavSection[] = [
     label: "CONFIG",
     items: [
       { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
   }
 ];
@@ -366,7 +366,7 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
-  items.push({ name: "Wallet", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
+  items.push({ name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
   // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
@@ -682,7 +682,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled ? [recruitSection] : []),
       // "EN DESARROLLO" section only for root users - separated from working features
       ...(devModulesSection ? [devModulesSection] : []),
-      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Settings", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
+      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 

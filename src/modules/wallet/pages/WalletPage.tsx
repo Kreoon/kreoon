@@ -13,7 +13,7 @@ import { useWallet } from '../hooks';
 type TabValue = 'dashboard' | 'transactions' | 'withdrawals' | 'payment-methods';
 
 const TABS = [
-  { value: 'dashboard' as const, label: 'Dashboard', icon: Wallet },
+  { value: 'dashboard' as const, label: 'Resumen', icon: Wallet },
   { value: 'transactions' as const, label: 'Movimientos', icon: ArrowDownUp },
   { value: 'withdrawals' as const, label: 'Retiros', icon: ArrowUpRight },
   { value: 'payment-methods' as const, label: 'Métodos de Pago', icon: CreditCard },
@@ -73,7 +73,7 @@ export function WalletPage() {
           </div>
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
-              Mi Wallet
+              Mi Billetera
             </h1>
             <p className="text-muted-foreground mt-1">
               Gestiona tu balance, retiros y transacciones

@@ -23,9 +23,9 @@ export function TransactionsPage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-7xl">
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No tienes un wallet activo</p>
+          <p className="text-muted-foreground">No tienes una billetera activa</p>
           <Button className="mt-4" onClick={() => navigate('/wallet')}>
-            Ir a Wallet
+            Ir a Billetera
           </Button>
         </div>
       </div>
@@ -42,13 +42,13 @@ export function TransactionsPage() {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver a Wallet
+          Volver a Billetera
         </Button>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
           Historial de Transacciones
         </h1>
         <p className="text-muted-foreground mt-1">
-          Todas las transacciones de tu wallet
+          Todas las transacciones de tu billetera
         </p>
       </div>
 

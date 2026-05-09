@@ -2,6 +2,8 @@
  * Constantes globales de la aplicación Kreoon.
  */
 
+import { ROLES as ROLES_LATAM } from '@/lib/i18n/terminos';
+
 // ─── Roles del sistema ──────────────────────────────────────────────────────
 
 export const ROLES = {
@@ -15,14 +17,14 @@ export const ROLES = {
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
-// Labels de roles en español
+// Labels de roles en español (apuntan al diccionario LATAM)
 export const ROLE_LABELS: Record<Role, string> = {
-  admin: "Administrador",
-  creator: "Creador",
-  editor: "Editor",
-  client: "Marca",
-  strategist: "Estratega",
-  ambassador: "Embajador",
+  admin: ROLES_LATAM.admin,
+  creator: ROLES_LATAM.creator,
+  editor: ROLES_LATAM.editor,
+  client: ROLES_LATAM.client,
+  strategist: ROLES_LATAM.strategist,
+  ambassador: ROLES_LATAM.ambassador,
 };
 
 // Rutas de dashboard por rol

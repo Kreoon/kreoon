@@ -69,9 +69,9 @@ export function WithdrawalsPage() {
     return (
       <div className="container mx-auto py-6 px-4 max-w-5xl">
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No tienes un wallet activo</p>
+          <p className="text-muted-foreground">No tienes una billetera activa</p>
           <Button className="mt-4" onClick={() => navigate('/wallet')}>
-            Ir a Wallet
+            Ir a Billetera
           </Button>
         </div>
       </div>
@@ -100,7 +100,7 @@ export function WithdrawalsPage() {
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Volver a Wallet
+          Volver a Billetera
         </Button>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

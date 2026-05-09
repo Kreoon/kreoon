@@ -23,7 +23,7 @@ type TabValue = 'withdrawals' | 'wallets' | 'stats';
 
 const TABS = [
   { value: 'withdrawals' as const, label: 'Retiros Pendientes', icon: Clock },
-  { value: 'wallets' as const, label: 'Wallets', icon: Users },
+  { value: 'wallets' as const, label: 'Billeteras', icon: Users },
   { value: 'stats' as const, label: 'Estadísticas', icon: BarChart3 },
 ];
 
@@ -87,10 +87,10 @@ export function AdminWalletsPage() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
-                Gestión de Wallets
+                Gestión de Billeteras
               </h1>
               <p className="text-muted-foreground mt-1">
-                Administra retiros, wallets y transacciones de la plataforma
+                Administra retiros, billeteras y transacciones de la plataforma
               </p>
             </div>
           </div>
