@@ -199,6 +199,69 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     return json(response, 200, { status: 'ok', version: '3.0.0', tools: ALL_TOOL_DEFS.length });
   }
 
+  // ── POST /mcp — MCP Streamable HTTP (protocolo nativo para Claude.ai web) ──
+  if (req.method === 'POST' && path === '/mcp') {
+    // Auth: header Authorization o query param ?key=
+    const rawKey =
+      (req.headers.authorization ?? '').replace('Bearer ', '') ||
+      (url.searchParams.get('key') ?? '');
+
+    if (!rawKey.startsWith('sk-kreoon-')) {
+      return json(response, 401, { jsonrpc: '2.0', error: { code: -32600, message: 'API key requerida' }, id: null });
+    }
+
+    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const { data: keyData, error: keyErr } = await supabase
+      .from('mcp_api_keys')
+      .select('id, creator_id, organization_id, scopes, expires_at, is_revoked, rate_limit_per_hour')
+      .eq('key_hash', keyHash)
+      .single();
+
+    if (keyErr || !keyData || keyData.is_revoked || new Date(keyData.expires_at) < new Date()) {
+      return json(response, 401, { jsonrpc: '2.0', error: { code: -32600, message: 'API key inválida o expirada' }, id: null });
+    }
+
+    const auth: AuthContext = { key_id: keyData.id, org_id: keyData.organization_id, user_id: keyData.creator_id, scopes: keyData.scopes };
+    const msg = await readBody(req) as { jsonrpc: string; method: string; params?: Record<string, unknown>; id: unknown };
+    const { method, params, id } = msg;
+
+    const rpc = (result: unknown) => json(response, 200, { jsonrpc: '2.0', result, id });
+    const rpcErr = (code: number, message: string) => json(response, 200, { jsonrpc: '2.0', error: { code, message }, id });
+
+    // initialize
+    if (method === 'initialize') {
+      return rpc({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'kreoon', version: '3.0.0' } });
+    }
+    // notifications/initialized (no respuesta requerida)
+    if (method === 'notifications/initialized') {
+      return json(response, 200, {});
+    }
+    // tools/list
+    if (method === 'tools/list') {
+      const available = ALL_TOOL_DEFS.filter(t => {
+        const scope = TOOL_SCOPES[t.name];
+        return !scope || auth.scopes.includes(scope as AuthScope);
+      });
+      return rpc({ tools: available });
+    }
+    // tools/call
+    if (method === 'tools/call') {
+      const toolName = (params?.name ?? '') as string;
+      const toolArgs = (params?.arguments ?? {}) as Record<string, unknown>;
+      try {
+        const t0 = Date.now();
+        const result = await dispatchTool(toolName, toolArgs, auth);
+        audit(auth, toolName, result?.success ? 200 : 400, Date.now() - t0, result?.tokens_used ?? 0);
+        return rpc({ content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] });
+      } catch (e) {
+        const msg2 = e instanceof Error ? e.message : String(e);
+        return rpc({ content: [{ type: 'text', text: `Error: ${msg2}` }], isError: true });
+      }
+    }
+
+    return rpcErr(-32601, `Método no soportado: ${method}`);
+  }
+
   try {
     const auth = await authenticate(req, response);
 
