@@ -1635,6 +1635,12 @@ export default function ClientDashboard() {
         open={!!selectedProduct}
         onOpenChange={(open) => !open && setSelectedProduct(null)}
         readOnly={true}
+        onResearchComplete={(updated) => {
+          // Refrescar el producto seleccionado para que las pestañas nuevas
+          // (Comunidad, SEO, Partnerships, etc.) muestren el contenido recien generado.
+          setSelectedProduct(updated as any);
+          if (selectedClientId) fetchClientData(selectedClientId);
+        }}
       />
 
       {/* Stage Content Script Review Dialog */}

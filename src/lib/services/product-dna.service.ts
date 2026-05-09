@@ -364,6 +364,10 @@ export interface TokenContext {
   isClientUser: boolean;
   includeClientDna?: boolean;
   forceRegenerate?: boolean;
+  // Upgrade opcional: Inteligencia Competitiva Real (Perplexity Deep Research)
+  // Cuesta 2000 tokens extra (3500 total). Activa sonar-pro + queries profundas
+  // en steps competitivos: market_overview, competitors, pricing, paid_ads, sales_angles, seo
+  withScrapingIntelligence?: boolean;
 }
 
 /**
@@ -388,6 +392,7 @@ export async function generateFullResearch(
         is_client_user: tokenContext?.isClientUser ?? false,
         include_client_dna: tokenContext?.includeClientDna ?? true,
         force_regenerate: tokenContext?.forceRegenerate ?? false,
+        with_scraping_intelligence: tokenContext?.withScrapingIntelligence ?? false,
       },
     }).then(({ error }) => {
       if (error) {

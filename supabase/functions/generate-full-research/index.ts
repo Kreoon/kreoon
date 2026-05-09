@@ -11,6 +11,12 @@ import {
   getSkillById,
 } from "../_shared/skills/registry.ts";
 import type { Skill, SkillType } from "../_shared/skills/types.ts";
+import {
+  batchScrape,
+  extractUrlsFromText,
+  formatScrapeContextForLLM,
+} from "../_shared/firecrawl-client.ts";
+import { validateCompetitorUrls } from "../_shared/url-validator.ts";
 
 // ── KIRO Master System Prompt (V2 — Método CONVERT) ────────────────────────
 const KIRO_MASTER_PROMPT = `Eres KIRO — el estratega de marketing digital de Kreoon, la plataforma de
@@ -78,7 +84,7 @@ const RESEARCH_STEPS = [
   { id: "pains_desires", name: "Dolores y Deseos" },
   { id: "competitors", name: "Analisis de Competencia" },
   { id: "avatars", name: "Avatares de Cliente" },
-  { id: "differentiation", name: "Diferenciacion y ESFERA" },
+  { id: "differentiation", name: "Diferenciacion y Metodo CONVERT" },
   { id: "sales_angles", name: "Angulos de Venta" },
   { id: "puv_transformation", name: "PUV y Transformacion" },
   { id: "lead_magnets", name: "Lead Magnets" },
@@ -177,7 +183,7 @@ const TOKEN_MAP: Record<string, number> = {
   sales_angles: 14000,   // 20 ángulos completos
   puv_transformation: 8000,
   lead_magnets: 7000,
-  video_creatives: 16000, // 25+ creativos
+  video_creatives: 12000, // 15-20 creativos (reducido para evitar timeout en wall-clock 150s)
   content_calendar: 24000, // 28-35 posts completos
   launch_strategy: 14000,
   landing_pages: 16000,    // 2 variaciones completas con todas las secciones
@@ -275,8 +281,16 @@ const SCHEMAS: Record<string, any> = {
   },
   competitors: {
     type: "object", additionalProperties: false, required: ["competitors"],
-    properties: { competitors: { type: "array", minItems: 8, maxItems: 10, items: { type: "object", additionalProperties: false, required: ["name","promise","price","strengths","weaknesses"],
-      properties: { name: { type: "string" }, website: { type: "string" }, instagram: { type: "string" }, tiktok: { type: "string" }, promise: { type: "string" }, differentiator: { type: "string" }, price: { type: "string" }, tone: { type: "string" }, channels: { type: "array", items: { type: "string" } }, strengths: { type: "array", minItems: 2, items: { type: "string" } }, weaknesses: { type: "array", minItems: 2, items: { type: "string" } } }
+    properties: { competitors: { type: "array", minItems: 6, maxItems: 10, items: { type: "object", additionalProperties: false, required: ["name","promise","price","strengths","weaknesses"],
+      properties: {
+        name: { type: "string" },
+        // URLs: usar SOLO si la fuente las menciona literalmente. Vacio "" si no se conoce. NUNCA inventar IDs/slugs.
+        website: { type: "string", description: "URL HTTPS exacta del sitio oficial. Vacio si no se conoce. NO inventar." },
+        instagram: { type: "string", description: "Handle @usuario o URL https://instagram.com/usuario. Vacio si no se conoce." },
+        tiktok: { type: "string", description: "Handle @usuario o URL https://tiktok.com/@usuario. Vacio si no se conoce." },
+        promise: { type: "string" }, differentiator: { type: "string" }, price: { type: "string" }, tone: { type: "string" }, channels: { type: "array", items: { type: "string" } },
+        strengths: { type: "array", minItems: 2, items: { type: "string" } }, weaknesses: { type: "array", minItems: 2, items: { type: "string" } }
+      }
     }}},
   },
   avatars: {
@@ -294,7 +308,7 @@ const SCHEMAS: Record<string, any> = {
     }}},
   },
   differentiation: {
-    type: "object", additionalProperties: false, required: ["differentiation","esferaInsights","executiveSummary"],
+    type: "object", additionalProperties: false, required: ["differentiation","castPlaybook","executiveSummary"],
     properties: {
       differentiation: { type: "object", additionalProperties: false, required: ["repeatedMessages","positioningOpportunities"], properties: {
         repeatedMessages: { type: "array", minItems: 4, maxItems: 6, items: { type: "object", properties: { message: { type: "string" }, opportunity: { type: "string" } } } },
@@ -302,11 +316,72 @@ const SCHEMAS: Record<string, any> = {
         positioningOpportunities: { type: "array", minItems: 4, maxItems: 6, items: { type: "object", properties: { opportunity: { type: "string" }, why: { type: "string" }, execution: { type: "string" } } } },
         unexploitedEmotions: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", properties: { emotion: { type: "string" }, howToUse: { type: "string" } } } },
       }},
-      esferaInsights: { type: "object", additionalProperties: false, properties: {
-        enganchar: { type: "object", properties: { marketDominance: { type: "string" }, saturated: { type: "string" }, opportunities: { type: "array", items: { type: "string" } }, hookTypes: { type: "array", items: { type: "string" } }, platforms: { type: "array", items: { type: "string" } }, contentFormats: { type: "array", items: { type: "string" } } } },
-        solucion: { type: "object", properties: { currentPromises: { type: "string" }, unresolvedObjections: { type: "string" }, trustOpportunities: { type: "array", items: { type: "string" } }, educationAngles: { type: "array", items: { type: "string" } }, proofTypes: { type: "array", items: { type: "string" } } } },
-        remarketing: { type: "object", properties: { existingProof: { type: "string" }, gaps: { type: "string" }, decisionMessages: { type: "array", items: { type: "string" } }, urgencyTactics: { type: "array", items: { type: "string" } }, objectionHandling: { type: "array", items: { type: "string" } }, touchpointSequence: { type: "array", items: { type: "string" } } } },
-        fidelizar: { type: "object", properties: { commonErrors: { type: "string" }, communityOpportunities: { type: "array", items: { type: "string" } }, retentionStrategies: { type: "array", items: { type: "string" } }, referralAngles: { type: "array", items: { type: "string" } }, postPurchaseContent: { type: "array", items: { type: "string" } } } },
+      // METODO CAST (propio de Alexander Cast): C-A-S-T = Conocer, Atraer, Seducir, Transformar.
+      // Estructura ejecutable de playbook: 4 capas + acciones + quick wins + riesgos + drivers + calendario 7 dias.
+      castPlaybook: { type: "object", additionalProperties: false, required: ["resumen_estrategico","capas_cast","acciones_inmediatas"], properties: {
+        resumen_estrategico: { type: "string", description: "2-3 oraciones sobre la estrategia central para este producto especifico" },
+        recomendacion_final: { type: "string", description: "La recomendacion mas importante para este negocio en este momento" },
+        capas_cast: { type: "object", additionalProperties: false, required: ["C","A","S","T"], properties: {
+          C: { type: "object", required: ["nombre","pregunta_clave","insight_principal"], additionalProperties: false, properties: {
+            nombre: { type: "string", description: "Conocer" },
+            pregunta_clave: { type: "string" },
+            insight_principal: { type: "string" },
+            nivel_conciencia_avatar: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+            descripcion_nivel: { type: "string" },
+          }},
+          A: { type: "object", required: ["nombre","pregunta_clave","insight_principal"], additionalProperties: false, properties: {
+            nombre: { type: "string", description: "Atraer" },
+            pregunta_clave: { type: "string" },
+            insight_principal: { type: "string" },
+          }},
+          S: { type: "object", required: ["nombre","pregunta_clave","insight_principal"], additionalProperties: false, properties: {
+            nombre: { type: "string", description: "Seducir" },
+            pregunta_clave: { type: "string" },
+            insight_principal: { type: "string" },
+          }},
+          T: { type: "object", required: ["nombre","pregunta_clave","insight_principal"], additionalProperties: false, properties: {
+            nombre: { type: "string", description: "Transformar" },
+            pregunta_clave: { type: "string" },
+            insight_principal: { type: "string" },
+          }},
+        }},
+        acciones_inmediatas: { type: "array", minItems: 4, maxItems: 7, items: { type: "object", additionalProperties: false, required: ["numero","titulo","capa_cast","descripcion"], properties: {
+          numero: { type: "number" },
+          titulo: { type: "string" },
+          capa_cast: { type: "string", enum: ["C","A","S","T"] },
+          descripcion: { type: "string" },
+          como_hacerlo: { type: "string" },
+          resultado_esperado: { type: "string" },
+          esfuerzo: { type: "string", enum: ["bajo","medio","alto"] },
+          impacto: { type: "string", enum: ["bajo","medio","alto"] },
+          tiempo_implementacion: { type: "string" },
+        }}},
+        quick_wins: { type: "array", minItems: 3, maxItems: 6, items: { type: "object", additionalProperties: false, required: ["titulo","capa_cast","descripcion"], properties: {
+          titulo: { type: "string" },
+          capa_cast: { type: "string", enum: ["C","A","S","T"] },
+          esfuerzo: { type: "string", enum: ["bajo","medio","alto"] },
+          impacto: { type: "string", enum: ["bajo","medio","alto"] },
+          descripcion: { type: "string" },
+        }}},
+        riesgos_a_evitar: { type: "array", minItems: 3, maxItems: 5, items: { type: "object", additionalProperties: false, required: ["riesgo","por_que"], properties: {
+          riesgo: { type: "string" },
+          por_que: { type: "string" },
+          como_evitarlo: { type: "string" },
+        }}},
+        drivers_psicologicos: { type: "array", minItems: 3, maxItems: 6, items: { type: "object", additionalProperties: false, required: ["driver","por_que_funciona","como_usarlo"], properties: {
+          driver: { type: "string" },
+          por_que_funciona: { type: "string" },
+          como_usarlo: { type: "string" },
+          capa_cast: { type: "string", enum: ["C","A","S","T"] },
+        }}},
+        calendario_7_dias: { type: "array", minItems: 7, maxItems: 7, items: { type: "object", additionalProperties: false, required: ["dia","accion_principal","capa_cast","canal"], properties: {
+          dia: { type: "string", description: "Dia 1, Dia 2, ..., Dia 7" },
+          accion_principal: { type: "string" },
+          capa_cast: { type: "string", enum: ["C","A","S","T"] },
+          canal: { type: "string", description: "TikTok | Instagram | WhatsApp | Email | Paid Ads | Landing" },
+          tipo_contenido: { type: "string" },
+          hook_sugerido: { type: "string" },
+        }}},
       }},
       executiveSummary: { type: "object", additionalProperties: false, properties: {
         marketSummary: { type: "string" }, opportunityScore: { type: "number" }, opportunityScoreJustification: { type: "string" },
@@ -356,10 +431,10 @@ const SCHEMAS: Record<string, any> = {
   },
   video_creatives: {
     type: "object", additionalProperties: false, required: ["creatives"],
-    properties: { creatives: { type: "array", minItems: 23, maxItems: 27, items: { type: "object", additionalProperties: false, required: ["number","title","idea","structure","format","esferaPhase"],
+    properties: { creatives: { type: "array", minItems: 15, maxItems: 20, items: { type: "object", additionalProperties: false, required: ["number","title","idea","structure","format","esferaPhase"],
       properties: { number: { type: "number" }, angle: { type: "string" }, avatar: { type: "string" }, title: { type: "string" }, idea: { type: "string" },
         structure: { type: "object", properties: { hook: { type: "string" }, body: { type: "string" }, climax: { type: "string" }, cta: { type: "string" } } },
-        format: { type: "string" }, esferaPhase: { type: "string", enum: ["enganchar","solucion","remarketing","fidelizar"] }, duration: { type: "string" }, platform: { type: "string" }, productionNotes: { type: "string" },
+        format: { type: "string" }, esferaPhase: { type: "string", enum: ["conciencia","origen","necesidad","valor","engagement","retencion","traccion"], description: "Fase del Metodo CONVERT (propio): C-O-N-V-E-R-T" }, duration: { type: "string" }, platform: { type: "string" }, productionNotes: { type: "string" },
         // Método CONVERT — Capa C (Conciencia) + E (Engagement)
         consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
         funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] },
@@ -381,7 +456,7 @@ const SCHEMAS: Record<string, any> = {
     type: "object", additionalProperties: false, required: ["calendar"],
     properties: {
       calendar: { type: "array", minItems: 28, maxItems: 35, items: { type: "object", additionalProperties: false, required: ["week","day","dayLabel","platform","format","pillar","title","hook","description","copy","cta","hashtags","esferaPhase","avatar","productionNotes"],
-        properties: { week: { type: "number" }, day: { type: "number" }, dayLabel: { type: "string" }, platform: { type: "string" }, format: { type: "string" }, pillar: { type: "string", enum: ["educativo","emocional","autoridad","venta","comunidad"] }, title: { type: "string" }, hook: { type: "string" }, description: { type: "string" }, copy: { type: "string" }, cta: { type: "string" }, hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }, esferaPhase: { type: "string", enum: ["enganchar","solucion","remarketing","fidelizar"] }, avatar: { type: "string" }, productionNotes: { type: "string" },
+        properties: { week: { type: "number" }, day: { type: "number" }, dayLabel: { type: "string" }, platform: { type: "string" }, format: { type: "string" }, pillar: { type: "string", enum: ["educativo","emocional","autoridad","venta","comunidad"] }, title: { type: "string" }, hook: { type: "string" }, description: { type: "string" }, copy: { type: "string" }, cta: { type: "string" }, hashtags: { type: "array", minItems: 3, maxItems: 5, items: { type: "string" } }, esferaPhase: { type: "string", enum: ["conciencia","origen","necesidad","valor","engagement","retencion","traccion"], description: "Fase del Metodo CONVERT (propio): C-O-N-V-E-R-T" }, avatar: { type: "string" }, productionNotes: { type: "string" },
           // Método CONVERT — Capa C (Conciencia) + E (Engagement)
           consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
           funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] }
@@ -766,9 +841,17 @@ function buildPerplexityQuery(
   stepId: string,
   productName: string,
   targetMarket: string,
+  productBrief: string = "",
 ): string {
   const market = targetMarket || "LATAM";
   const product = productName || "el producto";
+
+  // Prefijo de desambiguacion: SIEMPRE incluir el contexto del producto al inicio
+  // de cada query para que Perplexity no confunda nombres ambiguos (ej "Mordisquitos"
+  // como gomitas para niños vs snacks de mascotas).
+  const contextPrefix = productBrief
+    ? `## CONTEXTO DEL PRODUCTO (uselo para acotar la busqueda y evitar productos no relacionados):\n${productBrief}\n\n## INVESTIGACION SOLICITADA:\n`
+    : "";
 
   const queries: Record<string, string> = {
     market_overview:
@@ -790,10 +873,14 @@ function buildPerplexityQuery(
       `¿Qué desean que los productos actuales no les dan?`,
 
     competitors:
-      `Principales competidores de ${product} en ${market} y LATAM. Para cada competidor: ` +
-      `precio, propuesta de valor, redes sociales activas (Instagram, TikTok), ` +
-      `estrategia de contenido, diferenciadores, reviews de clientes. ` +
-      `Incluye competidores directos e indirectos. Datos 2025-2026.`,
+      `Identifica 8-10 competidores REALES en la MISMA CATEGORIA descrita arriba (NO en categorias adyacentes ni con nombres parecidos). ` +
+      `Validacion CRITICA: cada competidor debe atender al mismo tipo de cliente (audiencia descrita arriba) y resolver el mismo problema. ` +
+      `Si el producto es para personas, NO listes productos para mascotas. Si es para niños, NO listes productos para adultos. ` +
+      `Por cada competidor real (con URL de su sitio web verificable): nombre, URL del sitio web oficial, precio actual con moneda y fecha, ` +
+      `propuesta de valor literal de su landing, claims principales, redes sociales activas (Instagram, TikTok con @handle real), ` +
+      `estrategia de contenido observada, diferenciadores, reviews/quejas reales de clientes (G2, Trustpilot, Reddit, comentarios). ` +
+      `Incluye competidores DIRECTOS (mismo producto/categoria) e INDIRECTOS (alternativa funcional para el mismo problema). ` +
+      `Datos 2025-2026 en ${market} y LATAM.`,
 
     avatars:
       `Perfil demográfico y psicográfico del consumidor de ${product} en ${market}. ` +
@@ -906,7 +993,8 @@ function buildPerplexityQuery(
       `Casos de estudio de comunidades de pago exitosas en español.`,
   };
 
-  return queries[stepId] || `Investigación actualizada sobre ${product} en ${market} 2025-2026.`;
+  const baseQuery = queries[stepId] || `Investigacion actualizada sobre ${product} en ${market} 2025-2026.`;
+  return contextPrefix + baseQuery;
 }
 
 // Extrae el nombre del producto del baseContext (formato: "PRODUCTO/SERVICIO: X")
@@ -915,7 +1003,70 @@ function extractProductName(baseContext: string): string {
   return match?.[1]?.trim() || "el producto";
 }
 
+// Extrae un brief descriptivo y desambiguado del producto desde el baseContext.
+// CRITICO: si solo se pasa el "nombre" del producto a Perplexity, queries genericas
+// como "Mordisquitos" se confunden con productos no relacionados (e.g. snacks de mascotas).
+// Este brief captura: industria, descripcion, audiencia, beneficio principal, oferta.
+function extractProductBrief(baseContext: string): string {
+  const lines: string[] = [];
+  const get = (re: RegExp): string | null => {
+    const m = baseContext.match(re);
+    return m?.[1]?.trim().replace(/\s+/g, " ") || null;
+  };
+
+  const productName = extractProductName(baseContext);
+  const businessName = get(/NEGOCIO:\s*([^|\n]+)/i);
+  const industry = get(/Industria:\s*([^|\n]+)/i);
+  const businessModel = get(/Modelo:\s*([^|\n]+)/i);
+  const description = get(/Descripcion:\s*([^\n]+)/i);
+  const usp = get(/USP:\s*([^\n]+)/i);
+  const promise = get(/Promesa:\s*([^\n]+)/i);
+  const problem = get(/Problema que resuelve:\s*([^\n]+)/i);
+  const transformation = get(/Transformacion:\s*([^\n]+)/i);
+  const benefits = get(/Beneficios clave:\s*([^\n]+)/i);
+  const demographic = get(/Demografico:\s*([^\n]+)/i);
+  const flagshipOffer = get(/OFERTA ESTRELLA:\s*([^\n]+)/i);
+  const serviceGroup = get(/Grupo de servicio:\s*([^\n]+)/i);
+  const serviceTypes = get(/Tipos de servicio:\s*([^\n]+)/i);
+
+  // Nombre completo y desambiguacion
+  if (businessName && businessName.toLowerCase() !== productName.toLowerCase()) {
+    lines.push(`PRODUCTO: "${productName}" (marca/empresa: ${businessName})`);
+  } else {
+    lines.push(`PRODUCTO: "${productName}"`);
+  }
+
+  // Categoria precisa
+  if (industry || serviceGroup) {
+    lines.push(`CATEGORIA: ${[industry, serviceGroup, serviceTypes].filter(Boolean).join(" / ")}`);
+  }
+  if (businessModel) lines.push(`MODELO: ${businessModel}`);
+
+  // Que ES el producto exactamente
+  if (description) lines.push(`QUE ES: ${description.substring(0, 280)}`);
+  if (problem) lines.push(`PROBLEMA QUE RESUELVE: ${problem.substring(0, 200)}`);
+  if (usp) lines.push(`USP: ${usp.substring(0, 180)}`);
+  if (promise) lines.push(`PROMESA: ${promise.substring(0, 180)}`);
+  if (transformation) lines.push(`TRANSFORMACION: ${transformation.substring(0, 180)}`);
+  if (benefits) lines.push(`BENEFICIOS CLAVE: ${benefits.substring(0, 200)}`);
+
+  // A quien va dirigido
+  if (demographic) lines.push(`AUDIENCIA: ${demographic.substring(0, 200)}`);
+
+  // Oferta concreta (precio, formato)
+  if (flagshipOffer) lines.push(`OFERTA: ${flagshipOffer.substring(0, 200)}`);
+
+  return lines.join("\n");
+}
+
 // ── AI pipeline: Perplexity investiga → Mistral estructura → Gemini fallback ──
+// Budget mutable de Firecrawl: se decrementa internamente cuando callAI scrapea
+export interface FirecrawlBudget {
+  remaining: number;
+  maxForStep: number;
+  scrapedUrls: string[];
+}
+
 async function callAI(
   systemPrompt: string,
   userPrompt: string,
@@ -924,43 +1075,58 @@ async function callAI(
   maxTokens: number,
   stepId: string,
   perplexityQuery?: string,
+  deepResearchMode: boolean = false,
+  firecrawlBudget?: FirecrawlBudget,
 ): Promise<any> {
   const perplexityKey = Deno.env.get("PERPLEXITY_API_KEY");
   const mistralKey = Deno.env.get("MISTRAL_API_KEY");
   const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GOOGLE_AI_API_KEY");
+  const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
 
   // Debug: capturar raw responses para inspección post-mortem en BD
   const DEBUG_RESPONSES: Array<{ provider: string; parseError: string; contentLength: number; first800: string; last300: string }> = [];
 
-  console.log(`[AI] ${stepId} | maxTokens=${maxTokens}`);
+  console.log(`[AI] ${stepId} | maxTokens=${maxTokens}${deepResearchMode ? " | DEEP RESEARCH" : ""}`);
   console.log(`[AI] Keys: perplexity=${!!perplexityKey} | mistral=${!!mistralKey} | gemini=${!!geminiKey}`);
 
   // ── PASO 1: Perplexity hace la investigación web (devuelve texto libre) ──
   // Usa una query CORTA y ENFOCADA por pestaña, no el userPrompt completo.
+  // Modo Deep Research (upgrade): sonar-pro + max_tokens 3000 + instrucciones de búsqueda profunda
   let researchContext = "";
   if (perplexityKey && perplexityQuery) {
-    console.log(`[AI] → Paso 1: Perplexity sonar investigando (${stepId})`);
+    const pplxModel = deepResearchMode ? "sonar-pro" : "sonar";
+    const pplxMaxTokens = deepResearchMode ? 3000 : 1500;
+    console.log(`[AI] → Paso 1: Perplexity ${pplxModel} investigando (${stepId})${deepResearchMode ? " [DEEP]" : ""}`);
     console.log(`[AI]   Query: ${perplexityQuery.substring(0, 120)}...`);
+
+    const baseSystem =
+      "Eres un investigador de mercado experto en LATAM. Busca informacion factual y actualizada sobre el tema. " +
+      "Devuelve tus hallazgos en texto libre bien organizado, con datos concretos: cifras reales, fechas, " +
+      "nombres de marcas, precios, estadisticas verificables. Cita fuentes cuando sea posible. " +
+      "NO uses formato JSON. NO inventes datos. Si no encuentras un dato especifico, omitelo.";
+
+    const deepSystem =
+      "Eres un analista de inteligencia competitiva senior con acceso a Deep Research. " +
+      "Realiza una investigacion EXHAUSTIVA y PROFUNDA sobre el tema, consultando MULTIPLES fuentes recientes (ultimos 12 meses). " +
+      "Profundiza en: nombres reales de competidores, precios reales con moneda y fecha, claims publicitarios reales (textos exactos vistos en anuncios o landing pages), " +
+      "cifras de mercado verificables (TAM/SAM/SOM, CAGR, share), reviews y quejas reales de usuarios (G2, Trustpilot, Reddit, Twitter), " +
+      "hooks ganadores observados en TikTok/Instagram/YouTube, gaps de mercado evidenciados. " +
+      "Cita SIEMPRE las fuentes con URLs. NO inventes datos. Si no encuentras un dato, dilo explicitamente. " +
+      "Devuelve hallazgos extensos en texto libre estructurado por secciones tematicas.";
+
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 30000);
+    const t = setTimeout(() => ctrl.abort(), deepResearchMode ? 60000 : 30000);
     try {
       const res = await fetch("https://api.perplexity.ai/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${perplexityKey}`, "Content-Type": "application/json" },
         signal: ctrl.signal,
         body: JSON.stringify({
-          model: "sonar",
-          max_tokens: 1500,
+          model: pplxModel,
+          max_tokens: pplxMaxTokens,
           temperature: 0.1,
           messages: [
-            {
-              role: "system",
-              content:
-                "Eres un investigador de mercado experto en LATAM. Busca información factual y actualizada sobre el tema. " +
-                "Devuelve tus hallazgos en texto libre bien organizado, con datos concretos: cifras reales, fechas, " +
-                "nombres de marcas, precios, estadísticas verificables. Cita fuentes cuando sea posible. " +
-                "NO uses formato JSON. NO inventes datos. Si no encuentras un dato específico, omítelo.",
-            },
+            { role: "system", content: deepResearchMode ? deepSystem : baseSystem },
             { role: "user", content: perplexityQuery },
           ],
         }),
@@ -970,32 +1136,76 @@ async function callAI(
         const text = (data.choices?.[0]?.message?.content || "").toString().trim();
         if (text) {
           researchContext = text;
-          console.log(`[AI] ✓ Perplexity investigación OK (${stepId}) — ${text.length} chars`);
+          console.log(`[AI] OK Perplexity ${pplxModel} (${stepId}) - ${text.length} chars`);
         } else {
-          console.warn(`[AI] Perplexity devolvió contenido vacío (${stepId})`);
+          console.warn(`[AI] Perplexity devolvio contenido vacio (${stepId})`);
         }
       } else {
         const errBody = await res.text().catch(() => "");
         console.warn(`[AI] Perplexity HTTP ${res.status} (${stepId}): ${errBody.substring(0, 200)}`);
       }
     } catch (err: any) {
-      const label = err?.name === "AbortError" ? "TIMEOUT 30s" : err.message;
-      console.warn(`[AI] Perplexity falló (${stepId}): ${label} — continuando sin contexto web`);
+      const timeoutLabel = deepResearchMode ? "TIMEOUT 60s" : "TIMEOUT 30s";
+      const label = err?.name === "AbortError" ? timeoutLabel : err.message;
+      console.warn(`[AI] Perplexity fallo (${stepId}): ${label} - continuando sin contexto web`);
     } finally {
       clearTimeout(t);
     }
   }
 
+  // ── PASO 1.5: Firecrawl scrapea URLs reales (solo si upgrade activo y hay budget) ──
+  let firecrawlContext = "";
+  if (
+    deepResearchMode &&
+    firecrawlBudget &&
+    firecrawlBudget.maxForStep > 0 &&
+    firecrawlBudget.remaining > 0 &&
+    firecrawlKey &&
+    researchContext
+  ) {
+    const candidateUrls = extractUrlsFromText(researchContext, 15);
+    const newUrls = candidateUrls.filter(u => !firecrawlBudget.scrapedUrls.includes(u));
+    const limitForStep = Math.min(firecrawlBudget.maxForStep, firecrawlBudget.remaining, newUrls.length);
+    const targetUrls = newUrls.slice(0, limitForStep);
+
+    if (targetUrls.length > 0) {
+      console.log(`[AI] -> Paso 1.5: Firecrawl scrapeando ${targetUrls.length} URLs (${stepId}) | budget restante: ${firecrawlBudget.remaining}/${firecrawlBudget.remaining + 0}`);
+      try {
+        const scrapeResults = await batchScrape(targetUrls, firecrawlKey, {
+          concurrency: 4,
+          timeoutMs: 25000,
+          maxCharsPerUrl: 6000,
+          onlyMainContent: true,
+        });
+        const okResults = scrapeResults.filter(r => r.ok);
+        firecrawlContext = formatScrapeContextForLLM(okResults, `Datos reales scrapeados (${stepId})`);
+        // Decrementar budget global con todas las URLs intentadas (no solo OK) para evitar reintentos
+        for (const r of scrapeResults) firecrawlBudget.scrapedUrls.push(r.url);
+        firecrawlBudget.remaining = Math.max(0, firecrawlBudget.remaining - scrapeResults.length);
+        console.log(`[AI] OK Firecrawl ${stepId}: ${okResults.length}/${scrapeResults.length} OK, ${firecrawlContext.length} chars | budget restante: ${firecrawlBudget.remaining}`);
+      } catch (err: any) {
+        console.warn(`[AI] Firecrawl fallo (${stepId}): ${err.message} - continuando sin scraping`);
+      }
+    } else {
+      console.log(`[AI] Skip Firecrawl ${stepId}: no hay URLs nuevas candidatas`);
+    }
+  }
+
   // ── PASO 2: Mistral (o Gemini) estructura el resultado en JSON ──
-  const enrichedUserPrompt = researchContext
-    ? `${userPrompt}\n\n---\n## Investigación web recopilada por Perplexity:\n${researchContext}\n---\n\nUsando la investigación anterior, genera el JSON solicitado.`
+  const webContext = researchContext
+    ? `\n\n---\n## Investigación web recopilada por Perplexity:\n${researchContext}\n---\n`
+    : "";
+  const enrichedUserPrompt = (researchContext || firecrawlContext)
+    ? `${userPrompt}${webContext}${firecrawlContext}\n\nUsando la investigación y los datos reales scrapeados anteriores, genera el JSON solicitado. Cita precios y claims especificos cuando aparezcan en los datos scrapeados.`
     : userPrompt;
 
   const tryMistral = async (): Promise<any> => {
     if (!mistralKey) throw new Error("No MISTRAL_API_KEY");
     console.log(`[AI] → Paso 2 fallback: Mistral large (${stepId})`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 75000);
+    // Timeout dinamico segun tamaño del output (max_tokens grandes = mas tiempo)
+    const dynamicTimeout = maxTokens >= 14000 ? 110000 : maxTokens >= 10000 ? 95000 : 75000;
+    const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
     try {
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
@@ -1047,7 +1257,9 @@ async function callAI(
     if (!geminiKey) throw new Error("No GEMINI_API_KEY");
     console.log(`[AI] → Paso 2: Gemini 2.5-flash estructurando (${stepId})`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    // Timeout dinamico segun tamaño del output
+    const dynamicTimeoutG = maxTokens >= 14000 ? 100000 : maxTokens >= 10000 ? 85000 : 60000;
+    const timeout = setTimeout(() => controller.abort(), dynamicTimeoutG);
     try {
       const res = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
@@ -1113,7 +1325,7 @@ async function callAI(
       if (DEBUG_RESPONSES.length === lengthBefore) {
         DEBUG_RESPONSES.push({
           provider: providerLabels[i],
-          parseError: isTimeout ? "TIMEOUT (50s)" : (err.message || "unknown error"),
+          parseError: isTimeout ? "TIMEOUT" : (err.message || "unknown error"),
           contentLength: 0,
           first800: "",
           last300: "",
@@ -1347,13 +1559,20 @@ Genera EXACTAMENTE: 10 dolores profundos (pain/why/impact), 10 deseos aspiracion
 ${baseContext}
 
 INSTRUCCIONES CRITICAS:
-- BUSCA competidores REALES con presencia online VERIFICABLE
+- BUSCA competidores REALES con presencia online VERIFICABLE en la MISMA categoria del producto descrito arriba
+- Si el producto es para PERSONAS, NO listes productos para mascotas. Si es para NIÑOS, NO listes productos para adultos. Si es un servicio digital, NO listes productos fisicos.
 - Incluye tanto competidores directos como indirectos
 - Analiza su posicionamiento, no solo lo que venden
-- Se especifico con URLs y precios reales
 - INTEGRA los competidores ya identificados en el ADN de producto para profundizar
 
-Lista 8-10 COMPETIDORES REALES con: nombre, website, instagram, tiktok, promesa de marketing, diferenciador, tono, canales, precios, fortalezas (3+), debilidades (3+).`,
+REGLAS CRITICAS DE URL Y HANDLES (PROHIBIDO INVENTAR):
+1. WEBSITE: Usa SOLO la URL EXACTA del dominio raiz oficial (ejemplo: "https://royalcanin.com" o "https://www.pedigree.com.co"). Si NO conoces la URL real verificable, deja el campo "" (string vacio). NUNCA inventes IDs, slugs ni rutas de productos especificos. NUNCA uses URLs como "https://exito.com/producto-123456" — esos IDs son inventados.
+2. INSTAGRAM: Usa SOLO el handle real que aparezca en las fuentes (formato "@usuario" o URL "https://instagram.com/usuario"). Si NO conoces el handle real, deja "". NO inventes handles probables.
+3. TIKTOK: Misma regla que Instagram. Vacio si no sabes.
+4. Es PREFERIBLE dejar el campo vacio antes que inventar. Un campo vacio = "no encontre fuente verificable". Un campo inventado = mentira que rompe la confianza del usuario.
+5. Cuando uses Perplexity y veas que cita una URL, USA ESA URL EXACTA tal cual aparece (no la modifiques).
+
+Lista 6-10 COMPETIDORES REALES con: nombre, website (URL raiz oficial o ""), instagram (handle o ""), tiktok (handle o ""), promesa de marketing, diferenciador, tono, canales, precios, fortalezas (3+), debilidades (3+).`,
 
     avatars: `Crea 5 BUYER PERSONAS ULTRA-DETALLADOS basados en la investigacion previa.
 
@@ -1376,7 +1595,8 @@ INSTRUCCIONES CRITICAS:
 
 Crea EXACTAMENTE 5 AVATARES con: nombre simbolico, edad especifica, ocupacion, situacion familiar, ubicacion, rutina diaria, intentos previos, psicografia (awareness, drivers, sesgos, objeciones, valores, miedos), 5-7 frases textuales, comportamiento de consumo, trigger de compra.`,
 
-    differentiation: `Realiza un ANALISIS ESTRATEGICO DE DIFERENCIACION usando el framework ESFERA.
+    differentiation: `Eres el estratega del METODO CAST de Alexander Cast.
+Genera el Playbook ejecutable de marketing especifico para este producto.
 
 ${baseContext}
 
@@ -1384,16 +1604,41 @@ COMPETIDORES ANALIZADOS:
 ${prevCompetitors?.competitors?.slice(0, 5).map((c: any) => `- ${c.name}: ${c.promise} | Debilidades: ${c.weaknesses?.join(", ")}`).join("\n") || "N/A"}
 
 AVATARES DEFINIDOS:
-${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.currentFeeling || "Sin descripcion"}`).join("\n") || "N/A"}
+${prevAvatars?.avatars?.map((a: any) => `- ${a.name}: ${a.situation?.currentFeeling || "Sin descripcion"} | Awareness: ${a.psychographics?.awarenessLevel || "N/A"}`).join("\n") || "N/A"}
+
+DOLORES PROFUNDOS:
+${(prevPains?.pains_desires?.pains || prevPains?.pains)?.slice(0, 5).map((p: any) => `- ${p.pain || p}: ${p.why || ""}`).join("\n") || "N/A"}
 
 INSTRUCCIONES CRITICAS:
-- Identifica GAPS reales en el mercado
-- Cada oportunidad debe ser accionable
-- Conecta la diferenciacion con los avatares
-- Framework ESFERA: Enganchar > Solucion > Remarketing > Fidelizar
+- METODO CAST (propio): C-A-S-T = Conocer > Atraer > Seducir > Transformar
+- Cada accion debe ser ESPECIFICA para este producto, no generica
+- Usa el nombre real del producto, los dolores reales del avatar y los angulos identificados
 - INTEGRA la identidad de marca y voz del ADN de marca
+- Evita referencias a frameworks externos como ESFERA, Schwartz o Hormozi como estructura
+  (Cialdini/Kahneman pueden citarse como referencia interna en drivers psicologicos)
 
-Genera: Analisis de diferenciacion (mensajes saturados, dolores mal comunicados, oportunidades de posicionamiento, emociones no explotadas), Insights ESFERA detallados (enganchar/solucion/remarketing/fidelizar), Resumen ejecutivo (marketSummary, opportunityScore, keyInsights, psychologicalDrivers, immediateActions, quickWins, risksToAvoid, finalRecommendation).`,
+Genera estos 3 bloques en el JSON:
+
+1. **differentiation** (analisis de mercado):
+   - repeatedMessages, poorlyAddressedPains, positioningOpportunities, unexploitedEmotions
+
+2. **castPlaybook** (Playbook ejecutable del Metodo CAST):
+   - resumen_estrategico: 2-3 oraciones sobre la estrategia central de este producto
+   - recomendacion_final: La recomendacion mas importante para este negocio AHORA
+   - capas_cast: Las 4 capas C/A/S/T, cada una con:
+     * nombre (Conocer/Atraer/Seducir/Transformar)
+     * pregunta_clave que esta capa responde para ESTE producto
+     * insight_principal del research aplicado a este avatar
+     * (en C: nivel_conciencia_avatar [dormido|despertando|buscando|comparando|listo] y descripcion_nivel)
+   - acciones_inmediatas: 4-7 acciones numeradas con titulo, capa_cast, descripcion, como_hacerlo, resultado_esperado, esfuerzo, impacto, tiempo_implementacion
+   - quick_wins: 3-6 acciones de bajo esfuerzo y alto impacto
+   - riesgos_a_evitar: 3-5 errores especificos con riesgo, por_que destruye conversiones, como_evitarlo
+   - drivers_psicologicos: 3-6 principios (Cialdini, Kahneman, etc.) con driver, por_que_funciona, como_usarlo, capa_cast
+   - calendario_7_dias: EXACTAMENTE 7 dias con dia, accion_principal, capa_cast, canal (TikTok|Instagram|WhatsApp|Email|Paid Ads|Landing), tipo_contenido, hook_sugerido
+
+3. **executiveSummary** (resumen ejecutivo del research):
+   - marketSummary, opportunityScore (0-10), opportunityScoreJustification
+   - keyInsights (3-5), psychologicalDrivers (3-5), immediateActions (3-5), quickWins (2-4), risksToAvoid (2-4), finalRecommendation`,
 
     sales_angles: `Crea 20 ANGULOS DE VENTA ESTRATEGICOS basados en la investigacion completa.
 
@@ -1451,23 +1696,25 @@ INSTRUCCIONES CRITICAS:
 
 Crea 3 LEAD MAGNETS: 1 para PROBLEM AWARE, 1 para SOLUTION AWARE, 1 para PRODUCT AWARE. Cada uno con: name, format, objective, pain, avatar, awarenessPhase, promise, structure (5-7 secciones), deliveryMethod, estimatedTime.`,
 
-    video_creatives: `Crea 25 IDEAS DE CONTENIDO con guiones resumidos por fase ESFERA.
+    video_creatives: `Crea 15-18 IDEAS DE CONTENIDO con guiones resumidos por fase del METODO CONVERT (propio de KIRO).
 
 ${baseContext}
 
 ANGULOS DISPONIBLES:
-${prevSales?.salesAngles?.slice(0, 12).map((a: any) => `- [${a.type}] "${a.hookExample}" > Avatar: ${a.avatar}`).join("\n") || "N/A"}
+${prevSales?.salesAngles?.slice(0, 8).map((a: any) => `- [${a.type}] "${a.hookExample}" > Avatar: ${a.avatar}`).join("\n") || "N/A"}
 
 AVATARES:
 ${prevAvatars?.avatars?.map((a: any) => a.name).join(", ") || "N/A"}
 
 INSTRUCCIONES CRITICAS:
 - PRIORIZAR formatos faciles de producir: Carruseles, Reels con texto, Stories, Posts estaticos, Infografias, Memes, Threads
-- Maximo 5 de 25 deben ser videos con persona hablando
-- 7 para ENGANCHAR, 7 para SOLUCION, 6 para REMARKETING, 5 para FIDELIZAR
+- Maximo 4 de 18 deben ser videos con persona hablando
+- METODO CONVERT (propio): C-O-N-V-E-R-T = Conciencia > Origen > Necesidad > Valor > Engagement > Retencion > Traccion
+- Distribucion sugerida: 4 conciencia + 2 origen + 3 necesidad + 4 valor + 2 engagement + 2 retencion + 1 traccion = 18 piezas
 - INTEGRA las plataformas recomendadas del ADN de marca
+- Se conciso: titles cortos, idea en 2-3 oraciones, structure compacta. Calidad > cantidad.
 
-Cada creativo con: number, angle, avatar, title (max 15 palabras), idea (3-4 oraciones), structure (hook/body/climax/cta), format, esferaPhase, duration, platform, productionNotes.`,
+Cada creativo con: number, angle, avatar, title (max 12 palabras), idea (2-3 oraciones), structure (hook/body/climax/cta breves), format, esferaPhase (una de: conciencia/origen/necesidad/valor/engagement/retencion/traccion - fase Metodo CONVERT), duration, platform, productionNotes (1-2 oraciones).`,
 
     content_calendar: `Crea PARRILLA DE CONTENIDO PROFESIONAL para 28 DIAS (4 semanas).
 
@@ -1486,7 +1733,7 @@ INSTRUCCIONES CRITICAS:
 - Incluye 3 dias para lead magnets
 - INTEGRA la voz de marca y pilares de contenido del ADN de marca
 
-28-35 piezas con: week, day, dayLabel, platform, format, pillar, title, hook, description, copy (listo), cta, hashtags, esferaPhase, avatar, productionNotes. Ademas: 4 weeklyThemes y 3 leadMagnetDays.`,
+28-35 piezas con: week, day, dayLabel, platform, format, pillar, title, hook, description, copy (listo), cta, hashtags, esferaPhase (debe ser una de: conciencia/origen/necesidad/valor/engagement/retencion/traccion - fase del Metodo CONVERT propio), avatar, productionNotes. Ademas: 4 weeklyThemes y 3 leadMagnetDays.`,
 
     launch_strategy: `Disena ESTRATEGIA DE LANZAMIENTO COMPLETA.
 
@@ -1800,6 +2047,7 @@ async function reconstructPrevResults(
   if (hasData(ca.differentiation)) {
     stepResults.differentiation = {
       differentiation: ca.differentiation,
+      castPlaybook: cs.castPlaybook || null,
       esferaInsights: cs.esferaInsights || {},
       executiveSummary: cs.executiveSummary || {},
     };
@@ -1829,6 +2077,8 @@ async function runStep(
   baseContext: string,
   targetMarket: string,
   prevResults: Record<string, any>,
+  deepResearchMode: boolean = false,
+  firecrawlBudget?: FirecrawlBudget,
 ): Promise<{ stepId: string; result: any; debugResponses?: any[] }> {
   console.log(`[full-research] Running step: ${stepId}`);
 
@@ -1868,13 +2118,15 @@ Reglas:
 
   const prompt = basePrompt + schemaInstruction;
 
-  // Build per-tab Perplexity query (V2)
+  // Build per-tab Perplexity query (V2) con contexto rico del producto
+  // CRITICO: extraer brief del baseContext para que Perplexity no confunda nombres ambiguos
   const productName = extractProductName(baseContext);
-  const perplexityQuery = buildPerplexityQuery(stepId, productName, targetMarket);
+  const productBrief = extractProductBrief(baseContext);
+  const perplexityQuery = buildPerplexityQuery(stepId, productName, targetMarket, productBrief);
 
   try {
-    const result = await callAI(systemPrompt, prompt, schema, stepId, maxTokens, stepId, perplexityQuery);
-    console.log(`[full-research] Step ${stepId} OK`);
+    const result = await callAI(systemPrompt, prompt, schema, stepId, maxTokens, stepId, perplexityQuery, deepResearchMode, firecrawlBudget);
+    console.log(`[full-research] Step ${stepId} OK${deepResearchMode ? " [DEEP RESEARCH]" : ""}${firecrawlBudget ? ` [budget=${firecrawlBudget.remaining}]` : ""}`);
     return { stepId, result };
   } catch (err: any) {
     console.error(`[full-research] Step ${stepId} AI failed:`, err.message);
@@ -1942,11 +2194,15 @@ async function chainToNextPhase(
       organization_id: body.organization_id,
       is_client_user: body.is_client_user,
       include_client_dna: body.include_client_dna,
+      with_scraping_intelligence: body.with_scraping_intelligence === true,
+      // Propagar budget de Firecrawl entre phases (se decrementa cada vez que se scrapea)
+      firecrawl_budget_remaining: typeof body.firecrawl_budget_remaining === "number" ? body.firecrawl_budget_remaining : 8,
+      firecrawl_scraped_urls: Array.isArray(body.firecrawl_scraped_urls) ? body.firecrawl_scraped_urls : [],
       _internal: true,
     }),
   })
     .then(res => {
-      console.log(`[full-research] Phase ${nextPhase} (${STEP_SEQUENCE[nextPhase]}) triggered, HTTP ${res.status}`);
+      console.log(`[full-research] Phase ${nextPhase} (${STEP_SEQUENCE[nextPhase]}) triggered, HTTP ${res.status} | firecrawl_budget=${body.firecrawl_budget_remaining ?? 8}`);
     })
     .catch((err: any) => {
       console.error(`[full-research] Self-invoke phase ${nextPhase} failed:`, err.message);
@@ -1975,10 +2231,13 @@ async function processRequest(body: any): Promise<void> {
     const isClientUser: boolean = body.is_client_user || false;
     const includeClientDna: boolean = body.include_client_dna !== false;
     const forceRegenerate: boolean = body.force_regenerate === true;
+    // Upgrade opcional: Inteligencia Competitiva Real (Perplexity Deep Research)
+    // Cuando true: queries más largas, más resultados, max_tokens 2x en Perplexity
+    const withScrapingIntelligence: boolean = body.with_scraping_intelligence === true;
     const phase: number = body.phase ?? 0;
 
     const stepId = STEP_SEQUENCE[phase];
-    console.log(`[full-research] Product ${productId} — phase ${phase}/${TOTAL_PHASES} (${stepId || "finalize"}), forceRegenerate=${forceRegenerate}`);
+    console.log(`[full-research] Product ${productId} — phase ${phase}/${TOTAL_PHASES} (${stepId || "finalize"}), forceRegenerate=${forceRegenerate}, withIntel=${withScrapingIntelligence}`);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -2033,7 +2292,10 @@ async function processRequest(body: any): Promise<void> {
 
     // ── Token consumption (phase 0, fresh start only) ────────────────
     if (phase === 0 && isFreshStart && (userId || organizationId)) {
-      const TOKEN_COST = 1500; // ADN Recargado V2 — 21 pasos del Método CONVERT (360 completo)
+      // Costo dinamico segun upgrade activo:
+      // - Base ADN 360: 1500 tokens (21 pasos CONVERT)
+      // - + Inteligencia Competitiva Real: +2000 tokens (Perplexity Deep Research, 3500 total)
+      const TOKEN_COST = withScrapingIntelligence ? 3500 : 1500;
       console.log(`[step 2/6] Tokens: consuming ${TOKEN_COST} — user=${userId?.substring(0,8)} org=${organizationId?.substring(0,8)}`);
 
       const { data: tokenResult, error: tokenError } = await supabase.rpc("consume_ai_tokens", {
@@ -2187,7 +2449,38 @@ async function processRequest(body: any): Promise<void> {
     const t0 = Date.now();
 
     // ── Run the step ──────────────────────────────────────────────────
-    const { result, debugResponses } = await runStep(stepId, baseContext, targetMarket, stepResults);
+    // Deep Research solo se activa en pasos donde aporta valor real (datos competitivos/precios/anuncios)
+    const DEEP_RESEARCH_STEPS = new Set([
+      "market_overview",
+      "competitors",
+      "pricing_strategy",
+      "paid_ads",
+      "sales_angles",
+      "seo_strategy",
+    ]);
+    // Distribucion del budget de scraping (max 8 URLs por activacion):
+    // 5 competidores top + 1 pricing + 1 ad library + 1 landing inspiracion = 8
+    const FIRECRAWL_URLS_PER_STEP: Record<string, number> = {
+      competitors: 5,
+      pricing_strategy: 1,
+      paid_ads: 1,
+      landing_pages: 1,
+    };
+    const FIRECRAWL_TOTAL_BUDGET = 8;
+    const useDeepResearch = withScrapingIntelligence && DEEP_RESEARCH_STEPS.has(stepId);
+    const firecrawlBudget: FirecrawlBudget | undefined = withScrapingIntelligence
+      ? {
+          remaining: typeof body.firecrawl_budget_remaining === "number" ? body.firecrawl_budget_remaining : FIRECRAWL_TOTAL_BUDGET,
+          maxForStep: FIRECRAWL_URLS_PER_STEP[stepId] ?? 0,
+          scrapedUrls: Array.isArray(body.firecrawl_scraped_urls) ? body.firecrawl_scraped_urls : [],
+        }
+      : undefined;
+    const { result, debugResponses } = await runStep(stepId, baseContext, targetMarket, stepResults, useDeepResearch, firecrawlBudget);
+    // Mutated by callAI: persistir el nuevo budget en el body para el proximo chain
+    if (firecrawlBudget) {
+      body.firecrawl_budget_remaining = firecrawlBudget.remaining;
+      body.firecrawl_scraped_urls = firecrawlBudget.scrapedUrls;
+    }
     const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
 
     if (!result) {
@@ -2253,6 +2546,14 @@ async function processRequest(body: any): Promise<void> {
       case "competitors": {
         const compsData = pick("competitors");
         const compsList = Array.isArray(compsData) ? compsData : (compsData?.competitors || []);
+        // Validar URLs reales antes de guardar (HEAD requests + cleanup de handles)
+        // Esto previene hallucination tipo "https://exito.com/producto-123456"
+        try {
+          const stats = await validateCompetitorUrls(compsList);
+          console.log(`[full-research] URLs validadas: ${stats.valid}/${stats.checked} OK, ${stats.invalid} eliminadas, ${stats.cleaned} normalizadas`);
+        } catch (err: any) {
+          console.warn(`[full-research] Error validando URLs (continuando): ${err.message}`);
+        }
         competitorAnalysis = { ...competitorAnalysis, competitors: compsList, generatedAt: now };
         update.competitor_analysis = competitorAnalysis;
         break;
@@ -2270,6 +2571,8 @@ async function processRequest(body: any): Promise<void> {
         competitorAnalysis = { ...competitorAnalysis, differentiation: diffData, generatedAt: now };
         update.competitor_analysis = competitorAnalysis;
         update.content_strategy = {
+          // Nuevo: castPlaybook (Metodo CAST de Alexander Cast). Mantenemos esferaInsights por compat con productos viejos.
+          castPlaybook: result.castPlaybook || null,
           esferaInsights: result.esferaInsights || {},
           executiveSummary: result.executiveSummary || {},
           generatedAt: now,

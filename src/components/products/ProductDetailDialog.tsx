@@ -63,7 +63,6 @@ import {
 } from "@/lib/product-dna-questions";
 import { LocationSelector } from "@/components/product-dna/LocationSelector";
 import { fireProductResearch, pollProductResearchProgress } from "@/lib/productResearch";
-import { AdnResearchV3Section } from "@/components/adn-research/AdnResearchV3Section";
 
 interface Product {
   id: string;
@@ -297,12 +296,21 @@ export function ProductDetailDialog({
     }
   }, [open]);
 
-  const handleGenerateResearch = async (includeClientDna: boolean = true, forceRegenerate: boolean = false) => {
+  const handleGenerateResearch = async (
+    includeClientDna: boolean = true,
+    forceRegenerate: boolean = false,
+    withScrapingIntelligence: boolean = false,
+  ) => {
     if (!product?.id || !user?.id) return;
 
+    // Costo efectivo: base + upgrade opcional (Inteligencia Competitiva = +2000 tokens)
+    const INTELLIGENCE_UPGRADE_COST = 2000;
+    const effectiveCost = withScrapingIntelligence ? RESEARCH_COST + INTELLIGENCE_UPGRADE_COST : RESEARCH_COST;
+    const hasEnoughForEffective = totalTokens >= effectiveCost;
+
     // Pre-validation: check tokens
-    if (!hasEnoughTokens) {
-      toast({ title: 'Tokens insuficientes', description: `Necesitas ${RESEARCH_COST} tokens para ADN Recargado.`, variant: 'destructive' });
+    if (!hasEnoughForEffective) {
+      toast({ title: 'Tokens insuficientes', description: `Necesitas ${effectiveCost.toLocaleString()} tokens${withScrapingIntelligence ? ' (con Inteligencia Competitiva)' : ''}.`, variant: 'destructive' });
       return;
     }
 
@@ -312,7 +320,7 @@ export function ProductDetailDialog({
       return;
     }
 
-    // Double-check via server
+    // Double-check via server (el costo dinamico se cobra dentro del edge function)
     const canConsume = await checkCanConsume('research.full', isClient ? undefined : effectiveOrgId || undefined);
     if (!canConsume) {
       toast({ title: 'Tokens insuficientes', description: 'No hay tokens disponibles para esta acción.', variant: 'destructive' });
@@ -383,13 +391,14 @@ export function ProductDetailDialog({
     );
 
     // Fire the edge function with token context
-    console.log('[handleGenerateResearch] Calling with:', { includeClientDna, forceRegenerate });
+    console.log('[handleGenerateResearch] Calling with:', { includeClientDna, forceRegenerate, withScrapingIntelligence });
     const result = await generateFullResearch(product.id, {
       userId: user.id,
       organizationId: effectiveOrgId || undefined,
       isClientUser: isClient,
       includeClientDna,
       forceRegenerate,
+      withScrapingIntelligence,
     });
     if (!result.success) {
       toast({ title: 'Error al generar investigación', description: result.error, variant: 'destructive' });
@@ -736,10 +745,6 @@ export function ProductDetailDialog({
                   : <Heart className="h-3 w-3" />}
                 Comunidad
               </TabsTrigger>
-              <TabsTrigger value="adn-v3" className="gap-1 text-xs py-2 bg-gradient-to-r from-violet-600/10 to-pink-600/10 border-violet-500/30">
-                <Sparkles className="h-3 w-3 text-violet-400" />
-                ADN v3
-              </TabsTrigger>
               <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
               <TabsTrigger value="files" className="text-xs py-2">Archivos</TabsTrigger>
             </TabsList>
@@ -855,7 +860,7 @@ export function ProductDetailDialog({
             <AvatarSegmentationTab avatarProfiles={product?.avatar_profiles as any} />
           </TabsContent>
 
-          {/* Step 6: Diferenciación + ESFERA + Conclusión */}
+          {/* Step 6: Diferenciacion + Playbook del Metodo CAST + Conclusion */}
           <TabsContent value="differentiation" className="mt-4">
             <DifferentiationTab differentiation={product?.competitor_analysis?.differentiation as any} />
           </TabsContent>
@@ -1068,49 +1073,6 @@ export function ProductDetailDialog({
               emptyTitle="La estrategia de comunidad se genera al activar el ADN Recargado."
               emptyHint="Concepto, plataforma, onboarding, engagement, monetización"
             />
-          </TabsContent>
-
-          {/* ADN Recargado v3 - 22 secciones */}
-          <TabsContent value="adn-v3" className="mt-4">
-            {product && dnaRecord && (
-              <AdnResearchV3Section
-                productId={product.id}
-                organizationId={profile?.current_organization_id || ""}
-                productDna={{
-                  id: dnaRecord.id,
-                  product_dna_id: dnaRecord.id,
-                  product_name: product.name || "Mi Producto",
-                  product_description:
-                    product.description ||
-                    (dnaRecord as any).ai_analysis?.executive_summary ||
-                    "",
-                  has_audio: !!(dnaRecord.audio_url || (dnaRecord as any).audio_analysis),
-                  has_ai_analysis: !!(dnaRecord.market_research || dnaRecord.strategy_recommendations),
-                  has_links: !!(
-                    (dnaRecord.competitor_links?.length || 0) > 0 ||
-                    (dnaRecord.inspiration_links?.length || 0) > 0
-                  ),
-                  completeness_score: (dnaRecord as any).completeness_score || dnaRecord.ai_confidence_score || 0,
-                  confidence_score: dnaRecord.ai_confidence_score || 0,
-                }}
-                clientDna={clientDnaRecord ? {
-                  id: clientDnaRecord.id,
-                  brand_name: (clientDnaRecord as any).brand_name || (clientDnaRecord.dna_data as any)?.brand_name || "",
-                  has_dna_data: !!(clientDnaRecord.dna_data),
-                  is_complete: !!(clientDnaRecord.dna_data && (clientDnaRecord.dna_data as any)?.value_proposition),
-                } : undefined}
-                useLiteMode={true}
-              />
-            )}
-            {product && !dnaRecord && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Sparkles className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Primero genera el ADN basico</h3>
-                <p className="text-sm text-muted-foreground max-w-sm">
-                  Completa el ADN del producto en la pestana "ADN" antes de poder generar el ADN Recargado v3.
-                </p>
-              </div>
-            )}
           </TabsContent>
 
           <TabsContent value="files" className="space-y-6 mt-4">
@@ -1491,7 +1453,7 @@ const KIRO_STEPS = [
   { icon: Brain,         label: 'Dolores' },
   { icon: Swords,        label: 'Competencia' },
   { icon: Users,         label: 'Avatares' },
-  { icon: Lightbulb,     label: 'ESFERA' },
+  { icon: Lightbulb,     label: 'Playbook CAST' },
   { icon: Sparkles,      label: 'Ángulos' },
   { icon: Trophy,        label: 'PUV' },
   { icon: Gift,          label: 'Leads' },

@@ -8,7 +8,10 @@ import {
   Brain, Trophy, Gift, Calendar, Rocket, MessageCircle,
   Megaphone, Mail, DollarSign, BarChart3, Search, Handshake,
   Zap, CheckCircle2, ArrowRight, Coins, Clock, TrendingUp, RefreshCw,
+  Radar, Lock,
 } from "lucide-react";
+
+const INTELLIGENCE_UPGRADE_COST = 2000;
 
 interface AdnLandingTabProps {
   product: any;
@@ -16,7 +19,7 @@ interface AdnLandingTabProps {
   totalTokens: number;
   researchCost: number;
   isResearchGenerating: boolean;
-  onActivate: (includeClientDna: boolean, forceRegenerate: boolean) => void;
+  onActivate: (includeClientDna: boolean, forceRegenerate: boolean, withScrapingIntelligence: boolean) => void;
   canActivate: boolean;
   isRegenerate?: boolean;
   reasonNotAllowed?: string;
@@ -116,11 +119,16 @@ export function AdnLandingTab({
   reasonNotAllowed,
 }: AdnLandingTabProps) {
   const [includeClientDna, setIncludeClientDna] = useState(true);
+  const [withScrapingIntelligence, setWithScrapingIntelligence] = useState(false);
   const totalMarketValue = VALOR_REAL.reduce((sum, item) => sum + item.market, 0);
   const completedTabs = countCompleted(product);
   const totalTabs = 21;
   const isComplete = completedTabs >= totalTabs - 2;
-  const handleActivate = () => onActivate(includeClientDna, isRegenerate);
+  // Costo efectivo: base (1500) + upgrade opcional (2000) = 3500 con inteligencia
+  const effectiveCost = withScrapingIntelligence ? researchCost + INTELLIGENCE_UPGRADE_COST : researchCost;
+  const hasEnoughForEffective = totalTokens >= effectiveCost;
+  const canUpgrade = totalTokens >= researchCost + INTELLIGENCE_UPGRADE_COST;
+  const handleActivate = () => onActivate(includeClientDna, isRegenerate, withScrapingIntelligence);
 
   return (
     <div className="space-y-6">
@@ -157,7 +165,12 @@ export function AdnLandingTab({
             </div>
             <div className="bg-card/50 backdrop-blur rounded-lg p-3 border border-violet-500/20">
               <div className="flex items-center gap-2 text-xs text-muted-foreground"><Coins className="h-3 w-3" /> Tokens</div>
-              <div className="text-2xl font-bold">{researchCost.toLocaleString()}</div>
+              <div className="text-2xl font-bold transition-all">
+                {effectiveCost.toLocaleString()}
+                {withScrapingIntelligence && (
+                  <span className="text-xs text-violet-500 ml-1 line-through opacity-50">{researchCost.toLocaleString()}</span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -203,23 +216,31 @@ export function AdnLandingTab({
                 </span>
               </label>
 
+              {/* Toggle Upgrade Inteligencia Competitiva Real */}
+              <ScrapingUpgradeToggle
+                checked={withScrapingIntelligence}
+                onChange={setWithScrapingIntelligence}
+                canUpgrade={canUpgrade}
+                upgradeCost={INTELLIGENCE_UPGRADE_COST}
+              />
+
               {/* CTA principal */}
               <div className="flex items-center gap-3 flex-wrap">
                 <Button
                   onClick={handleActivate}
-                  disabled={!canActivate || !hasEnoughTokens}
+                  disabled={!canActivate || !hasEnoughForEffective}
                   size="lg"
                   className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 text-white border-0 gap-2 shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-105 transition-all px-6 py-6 text-base font-semibold"
                 >
                   <Sparkles className="h-5 w-5" />
-                  {hasEnoughTokens
+                  {hasEnoughForEffective
                     ? (isRegenerate ? "Recrear ADN Recargado" : "Activar ADN Recargado")
-                    : `Faltan ${(researchCost - totalTokens).toLocaleString()} tokens`}
+                    : `Faltan ${(effectiveCost - totalTokens).toLocaleString()} tokens`}
                   <ArrowRight className="h-5 w-5" />
                 </Button>
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-violet-700 dark:text-violet-300 bg-violet-500/10 px-3 py-1.5 rounded-full">
                   <Coins className="h-4 w-4" />
-                  {researchCost.toLocaleString()} tokens
+                  {effectiveCost.toLocaleString()} tokens
                 </span>
               </div>
             </div>
@@ -329,9 +350,14 @@ export function AdnLandingTab({
             </span>
           </div>
           <div className="mt-2 flex items-center justify-between bg-violet-500/10 -mx-4 px-4 py-3 rounded-lg">
-            <span className="font-semibold text-violet-700 dark:text-violet-300">Tu costo en KREOON:</span>
+            <span className="font-semibold text-violet-700 dark:text-violet-300">
+              Tu costo en KREOON:
+              {withScrapingIntelligence && (
+                <span className="ml-2 text-xs font-normal text-violet-500">(con Inteligencia Competitiva)</span>
+              )}
+            </span>
             <span className="text-2xl font-bold text-violet-700 dark:text-violet-300">
-              {researchCost.toLocaleString()} tokens
+              {effectiveCost.toLocaleString()} tokens
             </span>
           </div>
         </CardContent>
@@ -390,14 +416,14 @@ export function AdnLandingTab({
 
               <Button
                 onClick={handleActivate}
-                disabled={!canActivate || !hasEnoughTokens}
+                disabled={!canActivate || !hasEnoughForEffective}
                 size="lg"
                 className="bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-pink-500 text-white border-0 gap-2 shadow-xl shadow-violet-500/40 hover:shadow-violet-500/60 hover:scale-105 transition-all px-8 py-6 text-base font-semibold"
               >
                 <Sparkles className="h-5 w-5" />
-                {hasEnoughTokens
-                  ? (isRegenerate ? `Recrear · ${researchCost.toLocaleString()} tokens` : `Activar · ${researchCost.toLocaleString()} tokens`)
-                  : `Faltan ${(researchCost - totalTokens).toLocaleString()} tokens`}
+                {hasEnoughForEffective
+                  ? (isRegenerate ? `Recrear · ${effectiveCost.toLocaleString()} tokens` : `Activar · ${effectiveCost.toLocaleString()} tokens`)
+                  : `Faltan ${(effectiveCost - totalTokens).toLocaleString()} tokens`}
               </Button>
 
               {reasonNotAllowed && (
@@ -408,6 +434,91 @@ export function AdnLandingTab({
         </Card>
       )}
     </div>
+  );
+}
+
+// Toggle premium para activar Inteligencia Competitiva Real (Perplexity Deep Research)
+// +2000 tokens. Activa busqueda web profunda en steps competitivos.
+function ScrapingUpgradeToggle({
+  checked,
+  onChange,
+  canUpgrade,
+  upgradeCost,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  canUpgrade: boolean;
+  upgradeCost: number;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => canUpgrade && onChange(!checked)}
+      disabled={!canUpgrade}
+      className={`w-full text-left rounded-xl border-2 p-4 transition-all ${
+        checked
+          ? "border-amber-500/60 bg-gradient-to-br from-amber-500/15 via-orange-500/10 to-pink-500/10 shadow-lg shadow-amber-500/20"
+          : canUpgrade
+            ? "border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5 hover:border-amber-500/50 hover:bg-amber-500/10"
+            : "border-muted bg-muted/30 cursor-not-allowed opacity-60"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        {/* Icono y check */}
+        <div
+          className={`flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+            checked
+              ? "border-amber-500 bg-amber-500"
+              : "border-amber-500/40 bg-transparent"
+          }`}
+        >
+          {checked && <CheckCircle2 className="w-4 h-4 text-white" />}
+        </div>
+
+        {/* Contenido */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <Radar className={`w-4 h-4 ${checked ? "text-amber-600" : "text-amber-500/70"}`} />
+            <span className="font-bold text-sm">Inteligencia Competitiva Real</span>
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase tracking-wider ${
+                checked
+                  ? "border-amber-500/60 bg-amber-500/20 text-amber-700 dark:text-amber-300"
+                  : "border-amber-500/40 text-amber-600 dark:text-amber-400"
+              }`}
+            >
+              <Sparkles className="w-2.5 h-2.5 mr-1" />
+              Premium
+            </Badge>
+          </div>
+
+          <p className="text-xs text-muted-foreground leading-relaxed mb-2">
+            Activa <strong>Perplexity Deep Research + Firecrawl</strong> en pasos clave. Scrapea hasta 8 landing pages de competidores reales para extraer:
+            precios exactos con moneda y fecha, claims publicitarios literales, hooks de copy verificados, CTAs y testimonios. Inteligencia ejecutable, no genérica.
+          </p>
+
+          <div className="flex items-center gap-3 flex-wrap text-xs">
+            <span
+              className={`inline-flex items-center gap-1 font-semibold px-2 py-0.5 rounded-full ${
+                checked
+                  ? "bg-amber-500 text-white"
+                  : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+              }`}
+            >
+              <Coins className="w-3 h-3" />
+              +{upgradeCost.toLocaleString()} tokens
+            </span>
+            {!canUpgrade && (
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <Lock className="w-3 h-3" />
+                Tokens insuficientes
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </button>
   );
 }
 

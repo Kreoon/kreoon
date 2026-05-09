@@ -60,6 +60,8 @@ export const REFERRAL_RATES = {
 
 export const AI_TOKEN_COSTS = {
   "research.full": 1500,
+  "research.competitive_intelligence_upgrade": 2000, // Upgrade opcional: Perplexity Deep Research
+  "research.full_with_intelligence": 3500, // Total con upgrade activado (1500 + 2000)
   "dna.full_analysis": 500,
   "dna.project_analysis": 400,
   "scripts.generate": 120,

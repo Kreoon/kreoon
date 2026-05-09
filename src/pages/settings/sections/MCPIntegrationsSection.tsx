@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Copy, Plus, Trash2, Zap, CheckCircle2, AlertCircle, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Copy, Plus, Trash2, Zap, CheckCircle2, AlertCircle, ExternalLink, Eye, EyeOff, RefreshCw, Building2, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,7 +23,31 @@ interface MCPKey {
   created_at: string;
 }
 
+type TargetType = 'organization' | 'client' | 'talent';
+
+interface TargetOption {
+  value: TargetType;
+  label: string;
+  description: string;
+}
+
+const TARGET_ICONS: Record<TargetType, React.ElementType> = {
+  organization: Building2,
+  client: Users,
+  talent: User,
+};
+
 const MCP_SERVER_URL = 'https://mcp.kreoon.com';
+
+async function extractErrMsg(err: unknown): Promise<string> {
+  if (err && typeof err === 'object' && 'context' in err) {
+    try {
+      const body = await (err as { context: Response }).context.json();
+      if (body?.error) return body.error;
+    } catch { /* ignore */ }
+  }
+  return err instanceof Error ? err.message : String(err);
+}
 
 const SCOPE_LABELS: Record<string, string> = {
   'scripts:read': 'Leer guiones',
@@ -51,6 +76,7 @@ export default function MCPIntegrationsSection() {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [targetOptions, setTargetOptions] = useState<TargetOption[] | null>(null);
 
   const loadKeys = useCallback(async () => {
     setLoading(true);
@@ -73,22 +99,31 @@ export default function MCPIntegrationsSection() {
 
   useEffect(() => { loadKeys(); }, [loadKeys]);
 
-  const createKey = async () => {
+  const createKey = async (target_type?: TargetType) => {
     setCreating(true);
     setNewKey(null);
+    setTargetOptions(null);
     try {
-      const { data, error } = await supabase.functions.invoke('mcp-key-manager', {
-        body: { action: 'create' },
-      });
+      const body: Record<string, string> = { action: 'create' };
+      if (target_type) body.target_type = target_type;
+
+      const { data, error } = await supabase.functions.invoke('mcp-key-manager', { body });
 
       if (error) throw error;
+
+      // Admin sin selección → mostrar dialog de opciones
+      if (data.needs_target_selection) {
+        setTargetOptions(data.options as TargetOption[]);
+        return;
+      }
 
       setNewKey(data.key);
       setShowKey(true);
       await loadKeys();
       toast({ title: '✅ API Key creada', description: 'Cópiala ahora — no volverá a mostrarse.' });
     } catch (err) {
-      toast({ title: 'Error creando key', description: String(err), variant: 'destructive' });
+      const msg = await extractErrMsg(err);
+      toast({ title: 'Error creando key', description: msg, variant: 'destructive' });
     } finally {
       setCreating(false);
     }
@@ -130,6 +165,37 @@ export default function MCPIntegrationsSection() {
         </p>
       </div>
 
+      {/* Dialog: selección de target para admins */}
+      <Dialog open={!!targetOptions} onOpenChange={(open) => { if (!open) setTargetOptions(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>¿Para quién es esta API Key?</DialogTitle>
+            <DialogDescription>
+              Como admin puedes crear keys con distintos permisos según el tipo de cuenta que la usará.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            {targetOptions?.map((opt) => {
+              const Icon = TARGET_ICONS[opt.value];
+              return (
+                <button
+                  key={opt.value}
+                  onClick={() => createKey(opt.value)}
+                  disabled={creating}
+                  className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 text-left transition-colors disabled:opacity-50"
+                >
+                  <Icon className="h-5 w-5 mt-0.5 text-primary shrink-0" />
+                  <div>
+                    <p className="font-medium text-sm">{opt.label}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Nueva key generada — aviso único */}
       {newKey && (
         <Alert className="border-amber-500 bg-amber-500/10">
@@ -167,7 +233,7 @@ export default function MCPIntegrationsSection() {
             </Button>
             <Button
               size="sm"
-              onClick={createKey}
+              onClick={() => createKey()}
               disabled={creating || activeKeys.length >= 3}
               className="gap-1.5"
             >

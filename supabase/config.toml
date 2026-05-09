@@ -603,3 +603,9 @@ verify_jwt = true
 [functions.send-review-request]
 # Envia solicitud de resena a cliente por email/WhatsApp
 verify_jwt = true
+
+# ── MCP Integrations ──
+
+[functions.mcp-key-manager]
+# Gestión de API keys MCP — requiere sesión de usuario activa
+verify_jwt = true

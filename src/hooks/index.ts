@@ -68,7 +68,6 @@ export { useAITokens } from './useAITokens';
 export { useCustomAIApi } from './useCustomAIApi';
 export { useInterestExtractor } from './useInterestExtractor';
 export { useKaeConfig } from './useKaeConfig';
-export { useAdnResearchV3 } from './use-adn-research-v3';
 export { useProductDNA } from './use-product-dna';
 
 // ─── Marketplace ────────────────────────────────────────────────────────────
