@@ -151,8 +151,9 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`);
   const path = url.pathname.replace(/\/$/, '');
 
-  // GET /health
-  if (req.method === 'GET' && (path === '/health' || path === '')) {
+  // GET /health (también acepta /api/index.ts como ruta raíz de Vercel)
+  const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
+  if (req.method === 'GET' && isHealthPath) {
     return json(response, 200, { status: 'ok', version: '1.0.0', tools: ALL_TOOL_DEFS.length });
   }
 
