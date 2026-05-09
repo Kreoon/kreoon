@@ -34,7 +34,9 @@ export type SkillType =
   | 'storybrand_architect'      // Capa O — SB7 Miller
   | 'offer_engineer'            // Capa V — Hormozi + Brunson
   | 'social_funnel_builder'     // Capa E — Funnel orgánico+paid
-  | 'production_director';      // Capa E — Brief de producción detallado
+  | 'production_director'       // Capa E — Brief de producción detallado
+  | 'landing_page_architect'    // Capa V+E — Landing pages que convierten
+  | 'whatsapp_closer';          // Capa E — Funnel WhatsApp LATAM
 
 export interface SkillTriggers {
   sphere_phase?: string[];

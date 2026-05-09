@@ -30,6 +30,8 @@ import { storybrandArchitect } from './storybrand-architect.ts';
 import { offerEngineer } from './offer-engineer.ts';
 import { socialFunnelBuilder } from './social-funnel-builder.ts';
 import { productionDirector } from './production-director.ts';
+import { landingPageArchitect } from './landing-page-architect.ts';
+import { whatsappCloser } from './whatsapp-closer.ts';
 
 /**
  * Registro de Skills disponibles (20 skills)
@@ -87,6 +89,8 @@ export const skillsRegistry: Partial<Record<SkillType, Skill>> = {
   offer_engineer: offerEngineer,
   social_funnel_builder: socialFunnelBuilder,
   production_director: productionDirector,
+  landing_page_architect: landingPageArchitect,
+  whatsapp_closer: whatsappCloser,
 };
 
 /**
