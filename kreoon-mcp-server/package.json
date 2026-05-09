@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "MCP Server estratégico para Kreoon",
   "type": "module",
-  "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
+    "vercel-build": "echo 'API function compiled by @vercel/node'",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit"
   },

@@ -33,7 +33,7 @@ const supabase = createClient(
 // In-memory rate limit (per Vercel function instance — stateless across deploys)
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
 
-async function authenticate(req: IncomingMessage): Promise<AuthContext> {
+async function authenticate(req: IncomingMessage, res: ServerResponse): Promise<AuthContext> {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer sk-kreoon-')) {
     throw Object.assign(new Error('API key requerida. Formato: Bearer sk-kreoon-...'), { status: 401 });
@@ -70,9 +70,6 @@ async function authenticate(req: IncomingMessage): Promise<AuthContext> {
 
   return { key_id: data.id, org_id: data.organization_id, user_id: data.creator_id, scopes: data.scopes };
 }
-
-// Workaround: auth helper needs res for Retry-After header — use closure
-let res: ServerResponse;
 
 // ─── Tool scope map ──────────────────────────────────────────────────────────
 
@@ -147,7 +144,6 @@ function readBody(req: IncomingMessage): Promise<Record<string, unknown>> {
 // ─── Main handler ────────────────────────────────────────────────────────────
 
 export default async function handler(req: IncomingMessage, response: ServerResponse) {
-  res = response; // expose for rate limit header
   setCORS(response);
 
   if (req.method === 'OPTIONS') return json(response, 200, {});
@@ -161,7 +157,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   }
 
   try {
-    const auth = await authenticate(req);
+    const auth = await authenticate(req, response);
 
     // GET /v1/tools — lista de tools disponibles para este key
     if (req.method === 'GET' && path === '/v1/tools') {
