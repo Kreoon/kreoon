@@ -17,7 +17,7 @@ y administrar el marketplace.
 
 **Endpoint principal:** https://mcp.kreoon.com
 **Versión:** v3.0.0
-**Herramientas disponibles:** 29
+**Herramientas disponibles:** 35
 
 ---
 
@@ -81,21 +81,18 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 
 | Scope | Acceso |
 |-------|--------|
-| \`scripts:read\` | Leer guiones existentes |
 | \`scripts:write\` | Generar y mejorar guiones con IA |
-| \`adn:read\` | Ver estado de investigaciones ADN |
-| \`adn:write\` | Iniciar investigación de ADN del producto |
 | \`creators:read\` | Buscar y calificar creadores |
 | \`profiles:write\` | Optimizar perfil del creador con IA |
 | \`wallet:read\` | Ver saldo y transacciones |
 | \`wallet:write\` | Solicitar retiros |
 | \`social:write\` | Publicar en redes sociales |
-| \`campaigns:read\` | Ver campañas, proyectos, contenido, clientes, miembros |
-| \`campaigns:write\` | Crear/modificar campañas, proyectos, contenido, asignar equipo |
+| \`campaigns:read\` | Ver campañas, proyectos, contenido, clientes, productos, miembros, ADN |
+| \`campaigns:write\` | Crear/modificar campañas, proyectos, contenido, productos, ADN, asignar equipo |
 
 ---
 
-## Herramientas (29 en total)
+## Herramientas (35 en total)
 
 ### Scripts (scope: scripts:write)
 
@@ -112,13 +109,39 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 
 ---
 
-### ADN del Producto (scope: adn:write / adn:read)
+### Generación de Contenido IA (scope: campaigns:write)
 
-**start_adn_research** — Inicia análisis profundo de 22 pasos del producto (mercado, competencia, audiencia).
-- \`product_id\` (string, required): UUID del producto
+**generate_content_block** — Genera un bloque de producción UGC con las Skills IA de KREOON: guión, tabla de producción, B-roll, captions o estrategia de pauta. Output HTML listo para renderizar.
+- \`block_type\` (enum, required): "script" | "director" | "broll" | "captions" | "marketing"
+- \`content_id\` (string): UUID del ítem — si se provee, extrae contexto y guarda automáticamente
+- \`brand_name\` (string): Nombre de la marca (requerido sin content_id)
+- \`platform\` (enum): "tiktok" | "instagram_reels" | "youtube_shorts"
+- \`funnel_stage\` (enum): "tofu" | "mofu" | "bofu"
 
-**get_adn_status** — Obtiene progreso y resultados de una investigación ADN.
-- \`research_id\` (string, required): UUID retornado por start_adn_research
+---
+
+### ADN de Marca (scope: campaigns:write / campaigns:read)
+
+**generate_brand_dna** — Genera el ADN de marca de un cliente usando Perplexity + Gemini: posicionamiento, arquetipos, propuesta de valor, audiencia, competencia y estrategia de contenido. Reemplaza el wizard de audio del cliente.
+- \`client_id\` (string, required): UUID del cliente
+- \`brand_description\` (string, required): Descripción completa de la marca/negocio (qué hace, para quién, diferenciadores, tono)
+- \`locations\` (array): Países objetivo, ej: ["CO", "MX", "US"]
+
+**get_brand_dna** — Consulta el ADN de marca activo de un cliente.
+- \`client_id\` (string, required): UUID del cliente
+
+---
+
+### ADN de Producto V1 (scope: campaigns:write / campaigns:read)
+
+**generate_product_dna_v1** — Crea el ADN V1 de un producto/servicio: market_research, competitor_analysis, strategy_recommendations y content_brief. Equivale al wizard pero desde texto.
+- \`client_id\` (string, required): UUID del cliente al que pertenece el producto
+- \`product_description\` (string, required): Descripción completa del producto/servicio
+- \`target_audience\` (string): Cliente ideal
+- \`service_group\` (enum): "content_creation" | "post_production" | "strategy_marketing" | "technology" | "education" | "general"
+
+**get_product_dna_status** — Consulta el estado y resultados de un análisis ADN de producto.
+- \`product_dna_id\` (string, required): UUID retornado por generate_product_dna_v1
 
 ---
 
@@ -181,6 +204,9 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 - \`campaign_id\`, \`client_id\`, \`product_id\`, \`brief\`, \`platform\` (required)
 - \`creator_id\`, \`editor_id\`, \`deadline\`, \`creator_payment\`, \`editor_payment\` (optional)
 
+**update_content_item** — Actualiza los campos de metadata de un ítem existente (cliente, producto, brief, equipo, plazos, pagos) sin cambiar su estado en el pipeline.
+- \`content_id\` (required), más cualquier campo editable opcional
+
 **assign_content_team** — Asigna creador y/o editor a un contenido.
 - \`content_id\` (required), \`creator_id\`, \`editor_id\`, \`notify_team\`
 
@@ -212,6 +238,12 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 
 **create_client** — Crea un nuevo cliente o marca en la organización.
 - \`name\` (required), \`contact_email\`, \`category\`, \`website\`, \`instagram\`, \`tiktok\`, \`country\`
+
+**create_product** — Registra un producto o servicio vinculado a un cliente existente.
+- \`client_id\` (required), \`name\` (required), \`description\`, \`ideal_avatar\`, \`sales_angles\` (array), \`strategy\`
+
+**list_products** — Lista los productos registrados para un cliente o todos los de la organización.
+- \`client_id\` (string, optional), \`search\` (string), \`limit\`
 
 ---
 
@@ -264,12 +296,15 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 1. **Obtener contexto:** \`get_org_dashboard\` → estado general de la organización
 2. **Obtener miembros:** \`list_org_members\` → UUIDs de creadores y editores disponibles
 3. **Obtener clientes:** \`list_clients\` → UUIDs de clientes
-4. **Crear contenido:** \`create_content_item\` con todos los UUIDs
-5. **Asignar equipo:** \`assign_content_team\`
-6. **Generar guión:** \`generate_script\` con el product_id
-7. **Aprobar guión:** \`approve_content_script\`
-8. **Registrar entrega:** \`record_content_delivery\`
-9. **Cerrar pago:** \`mark_content_payment\`
+4. **Obtener productos:** \`list_products\` con client_id → UUIDs de productos (o \`create_product\` si no existe)
+5. **Generar ADN de marca** (opcional): \`generate_brand_dna\` con client_id + descripción
+6. **Generar ADN de producto** (opcional): \`generate_product_dna_v1\` con client_id + descripción del producto
+7. **Crear contenido:** \`create_content_item\` con todos los UUIDs
+8. **Asignar equipo:** \`assign_content_team\`
+9. **Generar guión:** \`generate_script\` con el product_id (o \`generate_content_block\` para más bloques)
+10. **Aprobar guión:** \`approve_content_script\`
+11. **Registrar entrega:** \`record_content_delivery\`
+12. **Cerrar pago:** \`mark_content_payment\`
 `;
 
 // ─── Componente CopyableBlock ─────────────────────────────────────────────────
@@ -314,11 +349,26 @@ const TOOL_GROUPS = [
     ],
   },
   {
-    name: "ADN del Producto",
+    name: "Generación de Contenido IA",
+    count: 1,
+    tools: [
+      { name: "generate_content_block", desc: "Genera bloque UGC con Skills IA: guión, tabla de producción, B-roll, captions o estrategia de pauta", scope: "campaigns:write" },
+    ],
+  },
+  {
+    name: "ADN de Marca",
     count: 2,
     tools: [
-      { name: "start_adn_research", desc: "Inicia análisis profundo de 22 pasos: mercado, competencia, audiencia", scope: "adn:write" },
-      { name: "get_adn_status", desc: "Progreso y resultados de una investigación ADN en curso", scope: "adn:read" },
+      { name: "generate_brand_dna", desc: "ADN de marca del cliente: posicionamiento, arquetipos, audiencia, competencia y estrategia", scope: "campaigns:write" },
+      { name: "get_brand_dna", desc: "Consulta el ADN de marca activo de un cliente", scope: "campaigns:read" },
+    ],
+  },
+  {
+    name: "ADN de Producto V1",
+    count: 2,
+    tools: [
+      { name: "generate_product_dna_v1", desc: "ADN V1 del producto: market_research, competitor_analysis, strategy_recommendations y content_brief", scope: "campaigns:write" },
+      { name: "get_product_dna_status", desc: "Consulta estado y resultados de un análisis ADN de producto", scope: "campaigns:read" },
     ],
   },
   {
@@ -353,11 +403,12 @@ const TOOL_GROUPS = [
   },
   {
     name: "Content Board",
-    count: 8,
+    count: 9,
     tools: [
       { name: "list_content_items", desc: "Lista ítems de contenido con filtros por estado, cliente y equipo", scope: "campaigns:read" },
       { name: "get_content_item", desc: "Detalles completos: estado, equipo, pagos, scripts y deliverables", scope: "campaigns:read" },
       { name: "create_content_item", desc: "Crea nuevo ítem con brief, equipo asignado y presupuesto", scope: "campaigns:write" },
+      { name: "update_content_item", desc: "Actualiza metadata de un ítem existente sin cambiar su estado en el pipeline", scope: "campaigns:write" },
       { name: "assign_content_team", desc: "Asigna creador y/o editor a un ítem de contenido", scope: "campaigns:write" },
       { name: "update_content_status", desc: "Mueve el ítem por el pipeline de estados", scope: "campaigns:write" },
       { name: "approve_content_script", desc: "Aprueba el script y lo marca como ready_for_creation", scope: "campaigns:write" },
@@ -367,12 +418,14 @@ const TOOL_GROUPS = [
   },
   {
     name: "Organización",
-    count: 4,
+    count: 6,
     tools: [
       { name: "get_org_dashboard", desc: "Dashboard completo: estados, vencidos, pagos pendientes, marketplace", scope: "campaigns:read" },
       { name: "list_org_members", desc: "Miembros activos con rol y UUID para asignaciones", scope: "campaigns:read" },
       { name: "list_clients", desc: "Clientes y marcas de la organización con UUIDs", scope: "campaigns:read" },
       { name: "create_client", desc: "Crea nuevo cliente o marca en la organización", scope: "campaigns:write" },
+      { name: "create_product", desc: "Registra un producto o servicio vinculado a un cliente existente", scope: "campaigns:write" },
+      { name: "list_products", desc: "Lista productos registrados para un cliente o todos los de la organización", scope: "campaigns:read" },
     ],
   },
   {
@@ -397,16 +450,14 @@ const TOOL_GROUPS = [
 ];
 
 const SCOPES = [
-  { scope: "scripts:write", desc: "Generar y mejorar guiones con IA" },
-  { scope: "adn:read", desc: "Ver estado de investigaciones ADN" },
-  { scope: "adn:write", desc: "Iniciar análisis ADN del producto" },
+  { scope: "scripts:write", desc: "Generar y mejorar guiones UGC con IA" },
   { scope: "creators:read", desc: "Buscar y calificar creadores" },
   { scope: "profiles:write", desc: "Optimizar perfil del creador con IA" },
   { scope: "wallet:read", desc: "Ver saldo y transacciones" },
   { scope: "wallet:write", desc: "Solicitar retiros de fondos" },
   { scope: "social:write", desc: "Publicar en redes sociales" },
-  { scope: "campaigns:read", desc: "Ver campañas, proyectos, contenido, clientes y miembros" },
-  { scope: "campaigns:write", desc: "Crear y modificar campañas, proyectos, contenido y asignaciones" },
+  { scope: "campaigns:read", desc: "Ver campañas, proyectos, contenido, clientes, productos, miembros y ADN" },
+  { scope: "campaigns:write", desc: "Crear y modificar campañas, proyectos, contenido, productos, ADN y asignaciones" },
 ];
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -450,7 +501,7 @@ export default function MCPDocumentation() {
             Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, campañas, content board y marketplace.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">29 herramientas</span>
+            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">35 herramientas</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
@@ -546,7 +597,7 @@ curl -X POST \\
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Herramientas disponibles
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">29 tools</Badge>
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">35 tools</Badge>
           </h2>
 
           {TOOL_GROUPS.map((group) => (
