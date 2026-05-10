@@ -128,6 +128,7 @@ export class ProjectAdapter {
         'creator_paid', 'editor_paid', 'invoiced', 'product_id', 'client_id',
         'editor_guidelines', 'strategist_guidelines', 'trafficker_guidelines',
         'designer_guidelines', 'admin_guidelines', 'creation_mode', 'manual_script',
+        'director_output', 'marketing_output', 'captions', 'broll_output',
       ];
       for (const field of passthroughFields) {
         if (field in formData && formData[field] !== undefined) {
