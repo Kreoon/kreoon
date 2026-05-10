@@ -285,35 +285,65 @@ REGLAS:
 - Adapta lenguaje a {pais_objetivo}
 - COMPLETA TODO hasta las notas finales`,
 
-  director: `🎥 TABLA DE PRODUCCIÓN - DIRECTOR
+  director: `🎬 GUÍA DE EDICIÓN - POST-PRODUCCIÓN
 
-⚠️ IMPORTANTE: Genera la tabla COMPLETA para TODAS las escenas del guión (1A, 1B, 1C, 2, 3, 4, 5, CTA). NO omitas ninguna.
+⚠️ IMPORTANTE: NO repitas el diálogo, las escenas ni las indicaciones de actuación. Eso ya está en el bloque Guion. Concéntrate ÚNICAMENTE en cómo editar el video después de grabar (post-producción).
 
 ESTRUCTURA HTML REQUERIDA:
-<h2>🎬 TABLA DE PRODUCCIÓN</h2>
-<p>Duración: X segundos | Escenas: X | Setup: [lista]</p>
+<h2>🎬 GUÍA DE EDICIÓN</h2>
+<p>Estilo: [dinámico/cinemático/documental/UGC nativo] | Duración objetivo: X seg | Plataforma: {pais_objetivo}</p>
 
+<h3>✂️ CORTES Y RITMO</h3>
 <table>
-<tr><th>#</th><th>Tiempo</th><th>Guión Verbal</th><th>Guión Visual</th><th>Plano</th><th>Notas</th></tr>
-[Una fila por CADA escena del guión]
+<tr><th>Escena</th><th>Tiempo</th><th>Tipo de corte</th><th>Transición a siguiente</th><th>Nota de edición</th></tr>
+[Fila por escena del guión: Hard cut / Match cut / J-cut / L-cut / Whip pan / Zoom punch / Jump cut]
 </table>
 
-<h3>📋 CHECKLIST PRE-PRODUCCIÓN</h3>
-[Lista de verificación]
+<h3>🎵 MÚSICA Y AUDIO</h3>
+- Estilo musical sugerido (género, BPM, mood)
+- Puntos de sincronía clave (cortes con beat, build-up, drop, clímax en CTA)
+- Mezcla de niveles: voz principal -3dB, música de fondo -18dB, SFX -12dB
+- Sound design: efectos puntuales (whoosh en transiciones, tick en hooks, swoosh en CTA)
 
-<h3>🎬 EQUIPO NECESARIO</h3>
-[Cámara, luces, audio, etc.]
+<h3>🎨 COLOR GRADING</h3>
+- Paleta sugerida (cálido/frío/neutro/saturado/desaturado)
+- LUT o filtro recomendado y plataforma
+- Ajustes base: contraste, saturación, highlights, shadows
 
-<h3>⏱️ TIEMPO ESTIMADO DE GRABACIÓN</h3>
+<h3>📝 SUBTÍTULOS Y TEXTOS EN PANTALLA</h3>
+- Tipo: captions automáticos / animados / karaoke / typewriter
+- Fuente sugerida y tamaño base
+- Highlight de palabras clave (color, animación, emojis)
+- Posición segura (centro, inferior, evitando UI de la plataforma)
 
-Planos: PP (primer plano), PM (plano medio), PE (plano entero), PD (detalle)
-Producto: {producto_nombre} | País: {pais_objetivo}
+<h3>🎞️ EFECTOS Y MOTION GRAPHICS</h3>
+- Zooms / Ken Burns / re-encuadres dinámicos
+- Glitch, light leaks, overlays, lower thirds
+- Animación de texto en cada hook (1A, 1B, 1C)
+- Tratamientos especiales en CTA (zoom punch, freeze frame, flash)
 
-COMPLETA TODAS las escenas y secciones.`,
+<h3>🎬 USO DE B-ROLL</h3>
+- Cuándo intercalar B-Roll (referencia al bloque B-Roll)
+- Duración promedio de cada inserto (1-3 seg)
+- Ratio A-Roll vs B-Roll por escena
+
+<h3>📦 ENTREGABLES</h3>
+- Resolución y aspect ratio (9:16 vertical, 1:1 cuadrado, 16:9 horizontal)
+- FPS, codec, bitrate
+- Versiones requeridas (Reels, TikTok, YouTube Shorts, feed)
+
+REGLAS:
+- NO copies ni resumas el guion verbal
+- NO incluyas indicaciones de actuación o vestuario
+- Foco 100% en post-producción/edición
+- Cada decisión debe ser ejecutable por un editor de video`,
 
   marketing: `📊 ESTRATEGIA DE MARKETING Y PAUTA
 
-⚠️ IMPORTANTE: Genera TODAS las secciones COMPLETAS. NO te detengas hasta terminar presupuesto y próximos contenidos.
+⚠️ IMPORTANTE:
+- NO incluyas el guion del video, ni los diálogos, ni las escenas. Esa información YA ESTÁ en el bloque Guion. Si lo repites, estás duplicando contenido.
+- Concéntrate ÚNICAMENTE en estrategia de pauta, audiencias, distribución, métricas y presupuesto.
+- Genera TODAS las secciones COMPLETAS. NO te detengas hasta terminar presupuesto y próximos contenidos.
 
 ESTRUCTURA HTML REQUERIDA:
 <h2>📊 BLOQUE MARKETING</h2>
