@@ -311,38 +311,46 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Crear cliente con el token del usuario para verificar permisos
-    const supabaseUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
-
-    const { data: { user } } = await supabaseUser.auth.getUser();
-    if (!user) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Token inválido", code: "INVALID_TOKEN" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const token = authHeader.replace("Bearer ", "");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const isInternalCall = token === serviceRoleKey;
 
     const input: OrchestratorInput = await req.json();
     const { action = "start", organization_id } = input;
-    const user_id = user.id;
+    let user_id = input.user_id;
 
-    // Verificar pertenencia a organización
-    const { data: membership } = await supabaseUser
-      .from("organization_members")
-      .select("id")
-      .eq("organization_id", organization_id)
-      .eq("user_id", user_id)
-      .single();
-
-    if (!membership) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Sin permisos en esta organización", code: "FORBIDDEN" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    if (!isInternalCall) {
+      // Crear cliente con el token del usuario para verificar permisos
+      const supabaseUser = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
       );
+
+      const { data: { user } } = await supabaseUser.auth.getUser();
+      if (!user) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Token inválido", code: "INVALID_TOKEN" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      user_id = user.id;
+
+      // Verificar pertenencia a organización
+      const { data: membership } = await supabaseUser
+        .from("organization_members")
+        .select("id")
+        .eq("organization_id", organization_id)
+        .eq("user_id", user_id)
+        .single();
+
+      if (!membership) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Sin permisos en esta organización", code: "FORBIDDEN" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // ─── Action Router ────────────────────────────────────────────────────────

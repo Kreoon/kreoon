@@ -156,9 +156,11 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   generate_content_block: 'campaigns:write',
   // Org management
   get_org_dashboard: 'campaigns:read',
-  list_org_members: 'campaigns:read',
-  list_clients: 'campaigns:read',
-  create_client: 'campaigns:write',
+  list_org_members:  'campaigns:read',
+  list_clients:      'campaigns:read',
+  create_client:     'campaigns:write',
+  create_product:    'campaigns:write',
+  list_products:     'campaigns:read',
   // Campaigns (marketplace)
   create_marketplace_campaign: 'campaigns:write',
   list_marketplace_campaigns: 'campaigns:read',

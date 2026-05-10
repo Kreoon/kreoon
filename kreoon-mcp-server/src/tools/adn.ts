@@ -121,14 +121,59 @@ async function startADNResearch(
     .select("id, status")
     .eq("product_id", product_id)
     .eq("organization_id", auth.org_id)
-    .in("status", ["pending", "running"])
-    .single();
+    .in("status", ["initializing", "gathering_intelligence", "researching"])
+    .maybeSingle();
 
   if (existing) {
     return {
       success: false,
       error: `Ya existe una investigación activa: ${existing.id}. Usa get_adn_status para consultar su progreso.`,
     };
+  }
+
+  // Buscar o crear un registro product_dna para el cliente del producto
+  let productDnaId: string | null = null;
+
+  const { data: existingDna } = await supabase
+    .from("product_dna")
+    .select("id")
+    .eq("client_id", product.client_id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (existingDna) {
+    productDnaId = existingDna.id;
+  } else {
+    // Obtener datos completos del producto para poblar el wizard_responses
+    const { data: fullProduct } = await supabase
+      .from("products")
+      .select("name, description, ideal_avatar, sales_angles, strategy")
+      .eq("id", product_id)
+      .single();
+
+    const { data: newDna, error: dnaError } = await supabase
+      .from("product_dna")
+      .insert({
+        client_id: product.client_id,
+        service_group: "general",
+        service_types: ["content_creation"],
+        wizard_responses: {
+          product_name: fullProduct?.name ?? product.name,
+          product_description: fullProduct?.description ?? "",
+          ideal_avatar: fullProduct?.ideal_avatar ?? "",
+          sales_angles: fullProduct?.sales_angles ?? [],
+          strategy: fullProduct?.strategy ?? "",
+        },
+        status: "draft",
+      })
+      .select("id")
+      .single();
+
+    if (dnaError || !newDna) {
+      return { success: false, error: `Error creando product_dna: ${dnaError?.message}` };
+    }
+    productDnaId = newDna.id;
   }
 
   // Llamar al adn-orchestrator con action="start"
@@ -138,6 +183,7 @@ async function startADNResearch(
       body: {
         action: "start",
         product_id,
+        product_dna_id: productDnaId,
         organization_id: auth.org_id,
         user_id: auth.user_id,
         config: {
@@ -154,11 +200,12 @@ async function startADNResearch(
     return { success: false, error: `Error iniciando ADN: ${fnError.message}` };
   }
 
+  const sessionId = fnData?.session_id ?? fnData?.research_id;
   return {
     success: true,
     data: {
-      research_id: fnData.research_id,
-      estimated_seconds: fnData.estimated_time_seconds ?? 240,
+      research_id: sessionId,
+      estimated_seconds: fnData?.estimated_time_seconds ?? 480,
     },
     tokens_used: 2400,
   };
@@ -168,48 +215,33 @@ async function getADNStatus(
   researchId: string,
   auth: AuthContext
 ): Promise<ToolResult<ADNStatusOutput>> {
-  const { data: fnData, error: fnError } = await supabase.functions.invoke(
-    "adn-orchestrator",
-    {
-      body: {
-        action: "get_status",
-        research_id: researchId,
-        organization_id: auth.org_id,
-      },
-    }
-  );
+  // Consulta directa a la tabla (más confiable que invocar el orquestador para status)
+  const { data: session, error: dbError } = await supabase
+    .from("adn_research_sessions")
+    .select("id, status, progress, current_step, total_steps, tokens_consumed, error_message, completed_at, started_at")
+    .eq("id", researchId)
+    .eq("organization_id", auth.org_id)
+    .single();
 
-  if (fnError) {
-    // Fallback: consulta directa a la tabla
-    const { data: session, error: dbError } = await supabase
-      .from("adn_research_sessions")
-      .select("id, status, progress, current_step, result, error_message, estimated_completion_at")
-      .eq("id", researchId)
-      .eq("organization_id", auth.org_id)
-      .single();
-
-    if (dbError || !session) {
-      return { success: false, error: "Sesión de investigación no encontrada" };
-    }
-
-    return {
-      success: true,
-      data: {
-        research_id: session.id,
-        status: session.status,
-        progress_percent: session.progress ?? 0,
-        current_step: session.current_step ?? "Procesando...",
-        result: session.result,
-        error: session.error_message,
-        estimated_completion_at: session.estimated_completion_at,
-      },
-      tokens_used: 0,
-    };
+  if (dbError || !session) {
+    return { success: false, error: "Sesión de investigación no encontrada" };
   }
+
+  const progressPct = session.total_steps > 0
+    ? Math.round((session.current_step / session.total_steps) * 100)
+    : 0;
 
   return {
     success: true,
-    data: fnData as ADNStatusOutput,
+    data: {
+      research_id: session.id,
+      status: session.status,
+      progress_percent: progressPct,
+      current_step: `Paso ${session.current_step} de ${session.total_steps}`,
+      result: undefined,
+      error: session.error_message ?? undefined,
+      estimated_completion_at: undefined,
+    },
     tokens_used: 0,
   };
 }
