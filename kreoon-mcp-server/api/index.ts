@@ -151,7 +151,10 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   update_content_status: 'campaigns:write',
   // Content generation with KREOON Skills
   generate_content_block: 'campaigns:write',
-  // Product DNA V1
+  // ADN de marca (client DNA)
+  generate_brand_dna: 'campaigns:write',
+  get_brand_dna:      'campaigns:read',
+  // ADN de producto V1
   generate_product_dna_v1: 'campaigns:write',
   get_product_dna_status:  'campaigns:read',
   // Org management

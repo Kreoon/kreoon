@@ -8,6 +8,54 @@ const supabase = createClient(
 
 export const productDnaToolDefinitions = [
   {
+    name: "generate_brand_dna",
+    description:
+      "Genera el ADN de marca de un cliente usando las Skills de IA de KREOON. " +
+      "Equivale al wizard de audio del cliente pero desde el MCP: recibe la descripción " +
+      "del negocio/marca en texto (sin audio) y produce el análisis completo de marca: " +
+      "posicionamiento, arquetipos, propuesta de valor, audiencia, competencia y estrategia de contenido. " +
+      "Usa Perplexity + Gemini internamente. Proceso síncrono (~2-3 min). Costo: ~400 tokens.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        client_id: {
+          type: "string",
+          description: "UUID del cliente al que pertenece la marca",
+        },
+        brand_description: {
+          type: "string",
+          description:
+            "Descripción completa de la marca/negocio. Reemplaza el audio del wizard. " +
+            "Incluir: qué hace, para quién, propuesta de valor, diferenciadores, historia, " +
+            "tono de comunicación, productos/servicios, dolores del cliente que resuelve.",
+        },
+        locations: {
+          type: "array",
+          items: { type: "string" },
+          description: "Países objetivo, ej: ['CO', 'MX', 'US']",
+        },
+      },
+      required: ["client_id", "brand_description"],
+    },
+  },
+  {
+    name: "get_brand_dna",
+    description:
+      "Consulta el ADN de marca activo de un cliente. " +
+      "Retorna el análisis completo: posicionamiento, arquetipos, audiencia, competencia y estrategia. " +
+      "Costo: 0 tokens.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        client_id: {
+          type: "string",
+          description: "UUID del cliente",
+        },
+      },
+      required: ["client_id"],
+    },
+  },
+  {
     name: "generate_product_dna_v1",
     description:
       "Crea el ADN V1 de un producto/servicio. " +
@@ -87,13 +135,119 @@ export async function handleProductDnaTool(
   args: Record<string, unknown>,
   auth: AuthContext
 ): Promise<ToolResult> {
-  if (toolName === "generate_product_dna_v1") {
-    return generateProductDnaV1(args, auth);
-  }
-  if (toolName === "get_product_dna_status") {
-    return getProductDnaStatus(args.product_dna_id as string, auth);
-  }
+  if (toolName === "generate_brand_dna")    return generateBrandDna(args, auth);
+  if (toolName === "get_brand_dna")         return getBrandDna(args.client_id as string, auth);
+  if (toolName === "generate_product_dna_v1") return generateProductDnaV1(args, auth);
+  if (toolName === "get_product_dna_status")  return getProductDnaStatus(args.product_dna_id as string, auth);
   return { success: false, error: `Tool desconocida: ${toolName}` };
+}
+
+async function generateBrandDna(
+  args: Record<string, unknown>,
+  auth: AuthContext
+): Promise<ToolResult> {
+  const { client_id, brand_description, locations = ["CO"] } = args as {
+    client_id: string;
+    brand_description: string;
+    locations?: string[];
+  };
+
+  // Verificar que el cliente pertenece a la organización
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id, name")
+    .eq("id", client_id)
+    .eq("organization_id", auth.org_id)
+    .single();
+
+  if (clientError || !client) {
+    return { success: false, error: "Cliente no encontrado o sin acceso" };
+  }
+
+  // Llamar a generate-client-dna con la descripción como "transcription"
+  const { data: fnData, error: fnError } = await supabase.functions.invoke(
+    "generate-client-dna",
+    {
+      body: {
+        client_id,
+        transcription: brand_description,
+        locations,
+      },
+    }
+  );
+
+  if (fnError) {
+    return { success: false, error: `Error generando ADN de marca: ${fnError.message}` };
+  }
+
+  if (!fnData?.success) {
+    return { success: false, error: fnData?.error ?? "Error desconocido en generate-client-dna" };
+  }
+
+  const dna = fnData.dna_data as Record<string, unknown>;
+  const sections = Object.keys(dna).filter((k) => k !== "metadata");
+
+  return {
+    success: true,
+    data: {
+      client_dna_id: fnData.dna_id,
+      client_id,
+      client_name: client.name,
+      sections_generated: sections,
+      dna_summary: {
+        posicionamiento: (dna.posicionamiento as Record<string, unknown>)?.propuesta_de_valor
+          ?? (dna.positioning as Record<string, unknown>)?.value_proposition
+          ?? "Ver dna_data completo",
+      },
+      dna_data: dna,
+    },
+    tokens_used: 400,
+  };
+}
+
+async function getBrandDna(
+  clientId: string,
+  auth: AuthContext
+): Promise<ToolResult> {
+  // Verificar acceso via clients
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id, name")
+    .eq("id", clientId)
+    .eq("organization_id", auth.org_id)
+    .single();
+
+  if (clientError || !client) {
+    return { success: false, error: "Cliente no encontrado o sin acceso" };
+  }
+
+  const { data: dna, error } = await supabase
+    .from("client_dna")
+    .select("id, status, version, dna_data, transcription, audience_locations, created_at")
+    .eq("client_id", clientId)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error || !dna) {
+    return { success: false, error: "No hay ADN de marca activo para este cliente. Usa generate_brand_dna para crearlo." };
+  }
+
+  return {
+    success: true,
+    data: {
+      client_dna_id: dna.id,
+      client_id: clientId,
+      client_name: client.name,
+      status: dna.status,
+      version: dna.version,
+      audience_locations: dna.audience_locations,
+      dna_data: dna.dna_data,
+      created_at: dna.created_at,
+    },
+    tokens_used: 0,
+  };
 }
 
 async function generateProductDnaV1(
