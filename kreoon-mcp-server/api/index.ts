@@ -2,7 +2,6 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import { handleScriptTool, scriptToolDefinitions } from '../src/tools/scripts.js';
-import { handleADNTool, adnToolDefinitions } from '../src/tools/adn.js';
 import { handleCreatorTool, creatorToolDefinitions } from '../src/tools/creators.js';
 import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles.js';
 import { handleWalletTool, walletToolDefinitions } from '../src/tools/wallet.js';
@@ -130,9 +129,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   // Scripts
   generate_script: 'scripts:write',
   improve_script: 'scripts:write',
-  // ADN
-  start_adn_research: 'adn:write',
-  get_adn_status: 'adn:read',
   // Creators
   search_creators: 'creators:read',
   score_creator_for_campaign: 'creators:read',
@@ -178,7 +174,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
 
 const ALL_TOOL_DEFS = [
   ...scriptToolDefinitions,
-  ...adnToolDefinitions,
   ...creatorToolDefinitions,
   ...profileToolDefinitions,
   ...walletToolDefinitions,
@@ -206,7 +201,6 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   }
 
   if (scriptToolDefinitions.some(t => t.name === name))     return handleScriptTool(name, args, auth);
-  if (adnToolDefinitions.some(t => t.name === name))        return handleADNTool(name, args, auth);
   if (creatorToolDefinitions.some(t => t.name === name))    return handleCreatorTool(name, args, auth);
   if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
   if (walletToolDefinitions.some(t => t.name === name))     return handleWalletTool(name, args, auth);
