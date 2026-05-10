@@ -12,6 +12,7 @@ import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/camp
 import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
 import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
 import { handleContentGenerationTool, contentGenerationToolDefinitions } from '../src/tools/content-generation.js';
+import { handleProductDnaTool, productDnaToolDefinitions } from '../src/tools/product-dna.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
 // ─── OAuth authorize page HTML ───────────────────────────────────────────────
@@ -154,6 +155,9 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   update_content_status: 'campaigns:write',
   // Content generation with KREOON Skills
   generate_content_block: 'campaigns:write',
+  // Product DNA V1
+  generate_product_dna_v1: 'campaigns:write',
+  get_product_dna_status:  'campaigns:read',
   // Org management
   get_org_dashboard: 'campaigns:read',
   list_org_members:  'campaigns:read',
@@ -181,6 +185,7 @@ const ALL_TOOL_DEFS = [
   ...socialToolDefinitions,
   ...operationsToolDefinitions,
   ...contentGenerationToolDefinitions,
+  ...productDnaToolDefinitions,
   ...campaignsToolDefinitions,
   ...projectsToolDefinitions,
   ...orgToolDefinitions,
@@ -208,6 +213,7 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (socialToolDefinitions.some(t => t.name === name))     return handleSocialTool(name, args, auth);
   if (operationsToolDefinitions.some(t => t.name === name))          return handleOperationsTool(name, args, auth);
   if (contentGenerationToolDefinitions.some(t => t.name === name))   return handleContentGenerationTool(name, args, auth);
+  if (productDnaToolDefinitions.some(t => t.name === name))          return handleProductDnaTool(name, args, auth);
   if (campaignsToolDefinitions.some(t => t.name === name))           return handleCampaignsTool(name, args, auth);
   if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
   if (orgToolDefinitions.some(t => t.name === name))         return handleOrgTool(name, args, auth);
