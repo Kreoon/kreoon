@@ -167,36 +167,52 @@ const TARGET_PLATFORMS = [
   { value: "multi", label: "Multi-plataforma" },
 ];
 
-// Sphere phase info for AI context - Aligned with Método Esfera
-const SPHERE_PHASE_INFO: Record<string, { 
-  label: string; 
-  objective: string; 
-  audience: string; 
+// CAST layer info — Método CAST de Alexander Cast (NO ESFERA, NO CONVERT)
+// Maps the legacy DB column `sphere_phase` (engage/solution/remarketing/fidelize)
+// to the corresponding CAST layer (Conocer/Atraer/Seducir/Transformar).
+const CAST_LAYER_INFO: Record<string, {
+  letter: 'C' | 'A' | 'S' | 'T';
+  layerName: string;
+  label: string;
+  nivelConciencia: string;
+  objective: string;
+  audience: string;
   tone: string;
   techniques: string[];
   keywords: string[];
   ctaStyle: string;
+  funnel: 'TOFU' | 'MOFU' | 'BOFU' | 'retention';
+  kpis: string[];
+  creativeFocus: string;
 }> = {
   engage: {
-    label: 'ENGANCHAR (Fase 1)',
-    objective: 'Viralidad, enganche, disrupción, educar. Que las personas conozcan el producto o servicio y se den cuenta que tienen el problema.',
-    audience: 'Audiencia FRÍA - personas que nunca han interactuado con la marca, no conocen el producto ni saben que tienen un problema',
-    tone: 'Disruptivo, viral, llamativo, sorprendente. Romper patrones, generar curiosidad extrema.',
+    letter: 'C',
+    layerName: 'Conocer',
+    label: 'Capa C — Conocer',
+    nivelConciencia: 'dormido / despertando',
+    objective: 'Que el avatar descubra que tiene un problema. Awareness puro: viralidad, enganche, disrupción.',
+    audience: 'Audiencia FRÍA — personas que nunca han interactuado con la marca, no conocen el producto ni saben que tienen un problema.',
+    tone: 'Disruptivo, viral, llamativo. Romper patrones, generar curiosidad extrema.',
     techniques: [
       'Hooks ultra potentes en los primeros 1-3 segundos',
-      'Pattern interrupts (romper patrones visuales/auditivos)',
+      'Pattern interrupts visuales y auditivos',
       'Declaraciones controversiales o contraintuitivas',
       'Preguntas que despiertan curiosidad',
-      'Mostrar el problema de forma dramatizada',
-      'Contenido educativo que revele un problema oculto'
+      'Problema dramatizado o revelación de problema oculto',
     ],
     keywords: ['¿Sabías que...?', 'Esto es lo que nadie te cuenta', 'Error #1', 'Por qué no funciona', 'La verdad sobre', 'Descubrí que'],
-    ctaStyle: 'Suave - invitar a seguir, comentar, guardar. NO vender directamente.',
+    ctaStyle: 'Suave: invitar a seguir, comentar, guardar. NO vender directamente.',
+    funnel: 'TOFU',
+    kpis: ['CPM', 'Hook Rate', 'View Rate (3s/15s)', 'Reach', 'Engagement orgánico'],
+    creativeFocus: 'pattern interrupt, hooks educativos, problema-revelación',
   },
   solution: {
-    label: 'SOLUCIÓN (Fase 2)',
-    objective: 'Venta directa, persuadir para comprar, ser el mejor vendiendo. Mostrar que el producto ES la solución perfecta.',
-    audience: 'Audiencia TIBIA - personas que ya saben que tienen el problema y buscan activamente una solución',
+    letter: 'A',
+    layerName: 'Atraer',
+    label: 'Capa A — Atraer',
+    nivelConciencia: 'buscando',
+    objective: 'Atraer al avatar mostrando una solución diferenciada. Persuadir mostrando que el producto ES la solución.',
+    audience: 'Audiencia TIBIA — personas que ya saben que tienen el problema y buscan activamente una solución (retargeting de video viewers, web visitors).',
     tone: 'Persuasivo, confiado, enfocado en beneficios y transformación. Venta directa pero no agresiva.',
     techniques: [
       'Demostración del producto en acción',
@@ -204,47 +220,62 @@ const SPHERE_PHASE_INFO: Record<string, {
       'Testimonios de clientes reales',
       'Comparación sutil con alternativas',
       'Storytelling de éxito',
-      'Beneficios específicos y cuantificables'
+      'Beneficios específicos y cuantificables',
     ],
-    keywords: ['La solución es', 'Esto cambió todo', 'Finalmente', 'Por eso creamos', 'Resultados garantizados', 'Funciona porque'],
-    ctaStyle: 'Directo - invitar a comprar, probar, registrarse. Link en bio, desliza arriba.',
+    keywords: ['La solución es', 'Esto cambió todo', 'Finalmente', 'Por eso creamos', 'Resultados', 'Funciona porque'],
+    ctaStyle: 'Directo: invitar a probar, registrarse, conocer más. Link en bio, desliza arriba.',
+    funnel: 'MOFU',
+    kpis: ['CTR', 'Time on page', 'Add to Cart', 'Engagement rate', 'Lead generation'],
+    creativeFocus: 'demo de producto, comparación, prueba social educativa',
   },
   remarketing: {
-    label: 'REMARKETING (Fase 3)',
-    objective: 'Mostrar lo que se está perdiendo, crear urgencia, superar objeciones finales. Cerrar la venta.',
-    audience: 'Audiencia CALIENTE - personas que ya vieron el producto, visitaron el sitio, agregaron al carrito pero NO compraron',
-    tone: 'Urgente, resolutivo, enfocado en pérdida (FOMO). Atacar objeciones directamente.',
+    letter: 'S',
+    layerName: 'Seducir',
+    label: 'Capa S — Seducir',
+    nivelConciencia: 'comparando / listo',
+    objective: 'Generar confianza y disparar la decisión de compra. Cerrar la venta superando objeciones finales.',
+    audience: 'Audiencia CALIENTE — personas que ya vieron el producto, visitaron el sitio, agregaron al carrito pero NO compraron.',
+    tone: 'Urgente, resolutivo, enfocado en escasez y FOMO. Atacar objeciones directamente.',
     techniques: [
       'Escasez real (stock limitado, tiempo limitado)',
-      'Social proof masivo (X personas ya compraron)',
+      'Social proof masivo',
       'Responder objeciones comunes',
       'Garantías y eliminación de riesgo',
       'Comparación de precio vs valor',
-      'Recordatorio de beneficios clave'
+      'Recordatorio de beneficios clave',
     ],
-    keywords: ['Últimas unidades', 'Se acaba en', 'No te pierdas', 'Mientras lees esto', 'Si no ahora, cuándo', 'Otros ya lo tienen'],
-    ctaStyle: 'Urgente - comprar ahora, última oportunidad, no esperes más.',
+    keywords: ['Últimas unidades', 'Se acaba en', 'No te pierdas', 'Si no ahora, cuándo', 'Otros ya lo tienen', 'Garantía total'],
+    ctaStyle: 'Urgente: comprar ahora, última oportunidad, no esperes más.',
+    funnel: 'BOFU',
+    kpis: ['CPA', 'ROAS', 'Conversion Rate', 'Average Order Value', 'Cart-to-purchase rate'],
+    creativeFocus: 'urgencia, escasez, garantías, testimonios, oferta clara',
   },
   fidelize: {
-    label: 'FIDELIZAR (Fase 4)',
-    objective: 'Entregar valor y confianza, buscar que nos refieran y recompren. Crear comunidad y lealtad.',
-    audience: 'CLIENTES existentes - personas que ya compraron y queremos que vuelvan a comprar y nos recomienden',
-    tone: 'Cercano, exclusivo, valorando al cliente. Contenido de alto valor, tips, comunidad.',
+    letter: 'T',
+    layerName: 'Transformar',
+    label: 'Capa T — Transformar',
+    nivelConciencia: 'cliente activo',
+    objective: 'Retención y advocacy. Convertir clientes en embajadores que recompren y refieran.',
+    audience: 'CLIENTES — compradores recientes, lista activa, miembros de la comunidad.',
+    tone: 'Cercano, exclusivo, valorando al cliente. Contenido de alto valor, comunidad.',
     techniques: [
       'Contenido exclusivo para clientes',
       'Tips de uso avanzado del producto',
       'Historias de otros clientes exitosos',
-      'Ofertas exclusivas para clientes',
-      'Invitación a programas de referidos',
-      'Behind the scenes y contenido humano'
+      'Ofertas exclusivas y upsell/cross-sell',
+      'Invitación a programa de referidos',
+      'Behind the scenes y contenido humano',
     ],
     keywords: ['Para ti que ya eres cliente', 'Tip exclusivo', 'Gracias por confiar', 'Comparte con', 'Tu experiencia importa', 'Familia [marca]'],
-    ctaStyle: 'Comunitario - compartir, etiquetar amigos, dejar reseña, referir.',
+    ctaStyle: 'Comunitario: compartir, etiquetar amigos, dejar reseña, referir.',
+    funnel: 'retention',
+    kpis: ['LTV', 'Repeat Purchase Rate', 'NPS', 'Referrals', 'Comunidad activa'],
+    creativeFocus: 'exclusividad, comunidad, upsell/cross-sell, contenido insider',
   },
 };
 
-function getSpherePhaseInfo(phase: string) {
-  return SPHERE_PHASE_INFO[phase] || null;
+function getCastLayerInfo(phase: string) {
+  return CAST_LAYER_INFO[phase] || null;
 }
 
 const BLOCK_ACTION_KEYS: Record<string, string> = {
@@ -276,134 +307,215 @@ ESTRUCTURA REQUERIDA (HTML):
 3. Escenas 2-3 (DESARROLLO)
 4. Escenas 4-5 (SOLUCIÓN con producto)
 5. Escena final (CTA: {cta})
-6. <h3>📝 NOTAS PARA EL CREADOR</h3> con vestuario, props, locación
+6. <h3>📝 NOTAS PARA EL CREADOR</h3> con vestuario, props, locación, mood emocional por escena
 
 Cada escena incluye: Número, Tiempo (ej: 0-3s), Acción visual [entre corchetes], Diálogo exacto "entre comillas"
 
 REGLAS:
 - Genera {cantidad_hooks} hooks alternativos (1A, 1B, 1C...)
 - Adapta lenguaje a {pais_objetivo}
-- COMPLETA TODO hasta las notas finales`,
+- COMPLETA TODO hasta las notas finales
 
-  director: `🎬 GUÍA DE EDICIÓN - POST-PRODUCCIÓN
+🚫 RESTRICCIONES (lo que NO debes incluir en este bloque):
+- ❌ NO incluyas tabla de producción ni indicaciones de cortes/transiciones/música/color (eso va en el bloque Director).
+- ❌ NO escribas captions ni copies de redes sociales (eso va en el bloque Captions).
+- ❌ NO incluyas estrategia de marketing, audiencias, KPIs ni presupuesto (eso va en el bloque Marketing).
+- ❌ NO listes ideas de B-Roll (eso va en el bloque B-Roll).
+- ❌ NO menciones "Método ESFERA" ni los términos legacy (Enganchar/Solución/Remarketing/Fidelizar). Solo Método CAST si necesitas referirte a la fase.
 
-⚠️ IMPORTANTE: NO repitas el diálogo, las escenas ni las indicaciones de actuación. Eso ya está en el bloque Guion. Concéntrate ÚNICAMENTE en cómo editar el video después de grabar (post-producción).
+Tu única responsabilidad es: GUION + ACTUACIÓN.`,
+
+  director: `🎬 DIRECTOR — TIPS DE SET + GUÍA DE EDICIÓN
+
+⚠️ IMPORTANTE: NO repitas el diálogo, las escenas ni el texto del guión. Tu output cubre DOS cosas: (1) tips creativos del director durante la grabación, (2) cómo editar el video después de grabar.
 
 ESTRUCTURA HTML REQUERIDA:
-<h2>🎬 GUÍA DE EDICIÓN</h2>
-<p>Estilo: [dinámico/cinemático/documental/UGC nativo] | Duración objetivo: X seg | Plataforma: {pais_objetivo}</p>
+<h2>🎬 DIRECTOR</h2>
+<p>Estilo del video: [dinámico/cinemático/documental/UGC nativo] | Duración: X seg | Plataforma: {pais_objetivo}</p>
+
+═══════════════════════════════════
+SECCIÓN A — 🎥 TIPS DEL DIRECTOR (durante grabación)
+═══════════════════════════════════
+
+<h3>🎯 ENERGÍA Y RITMO POR BLOQUE</h3>
+<table>
+<tr><th>Bloque</th><th>Energía sugerida</th><th>Ritmo</th><th>Mood</th></tr>
+[Filas: Hooks / Desarrollo / Solución / CTA. Sin reescribir diálogos]
+</table>
+
+<h3>🎭 PERFORMANCE COACHING</h3>
+- Cuándo subir/bajar la energía (sin citar el guion verbal)
+- Pausas dramáticas (dónde y cuánto)
+- Mirada a cámara vs lateral
+- Microexpresiones clave por escena
+
+<h3>📷 DIRECCIÓN DE CÁMARA EN SET</h3>
+- Handheld vs estática por escena
+- Ángulos sugeridos (frontal, picado, contrapicado, ¾)
+- Distancia (PP/PM/PE) — solo recomendación, no tabla completa
+- Iluminación rápida (clave, relleno, ring light)
+
+═══════════════════════════════════
+SECCIÓN B — ✂️ GUÍA DE EDICIÓN (post-producción)
+═══════════════════════════════════
 
 <h3>✂️ CORTES Y RITMO</h3>
 <table>
-<tr><th>Escena</th><th>Tiempo</th><th>Tipo de corte</th><th>Transición a siguiente</th><th>Nota de edición</th></tr>
-[Fila por escena del guión: Hard cut / Match cut / J-cut / L-cut / Whip pan / Zoom punch / Jump cut]
+<tr><th>Escena</th><th>Tiempo</th><th>Tipo de corte</th><th>Transición</th><th>Nota</th></tr>
+[Fila por escena: Hard cut / Match cut / J-cut / L-cut / Whip pan / Zoom punch / Jump cut. SIN incluir el diálogo]
 </table>
 
 <h3>🎵 MÚSICA Y AUDIO</h3>
-- Estilo musical sugerido (género, BPM, mood)
-- Puntos de sincronía clave (cortes con beat, build-up, drop, clímax en CTA)
-- Mezcla de niveles: voz principal -3dB, música de fondo -18dB, SFX -12dB
-- Sound design: efectos puntuales (whoosh en transiciones, tick en hooks, swoosh en CTA)
+- Estilo musical (género, BPM, mood)
+- Puntos de sincronía (cortes con beat, build-up, drop, clímax en CTA)
+- Mezcla: voz principal -3dB, música de fondo -18dB, SFX -12dB
+- Sound design (whoosh, tick, swoosh, riser)
 
 <h3>🎨 COLOR GRADING</h3>
-- Paleta sugerida (cálido/frío/neutro/saturado/desaturado)
-- LUT o filtro recomendado y plataforma
-- Ajustes base: contraste, saturación, highlights, shadows
+- Paleta (cálido/frío/neutro/saturado)
+- LUT o filtro recomendado
+- Ajustes base (contraste, saturación, highlights, shadows)
 
-<h3>📝 SUBTÍTULOS Y TEXTOS EN PANTALLA</h3>
-- Tipo: captions automáticos / animados / karaoke / typewriter
-- Fuente sugerida y tamaño base
-- Highlight de palabras clave (color, animación, emojis)
-- Posición segura (centro, inferior, evitando UI de la plataforma)
+<h3>📝 SUBTÍTULOS Y TEXTOS</h3>
+- Tipo (automáticos / animados / karaoke / typewriter)
+- Fuente y tamaño
+- Highlight de palabras clave (color/animación/emojis)
+- Posición segura (centro/inferior, evitando UI de la plataforma)
 
 <h3>🎞️ EFECTOS Y MOTION GRAPHICS</h3>
-- Zooms / Ken Burns / re-encuadres dinámicos
+- Zooms / Ken Burns / re-encuadres
 - Glitch, light leaks, overlays, lower thirds
-- Animación de texto en cada hook (1A, 1B, 1C)
-- Tratamientos especiales en CTA (zoom punch, freeze frame, flash)
+- Animación de texto en hooks (1A/1B/1C)
+- Tratamiento del CTA (zoom punch, freeze frame, flash)
 
 <h3>🎬 USO DE B-ROLL</h3>
-- Cuándo intercalar B-Roll (referencia al bloque B-Roll)
+- Cuándo intercalar B-Roll (referencia al bloque B-Roll, no listar tomas)
 - Duración promedio de cada inserto (1-3 seg)
 - Ratio A-Roll vs B-Roll por escena
 
 <h3>📦 ENTREGABLES</h3>
-- Resolución y aspect ratio (9:16 vertical, 1:1 cuadrado, 16:9 horizontal)
+- Resolución y aspect ratio (9:16, 1:1, 16:9)
 - FPS, codec, bitrate
-- Versiones requeridas (Reels, TikTok, YouTube Shorts, feed)
+- Versiones por plataforma (Reels, TikTok, YouTube Shorts, feed)
 
-REGLAS:
-- NO copies ni resumas el guion verbal
-- NO incluyas indicaciones de actuación o vestuario
-- Foco 100% en post-producción/edición
-- Cada decisión debe ser ejecutable por un editor de video`,
+🚫 RESTRICCIONES:
+- ❌ NO copies ni resumas el guion verbal (está en el bloque Guion).
+- ❌ NO listes vestuario, props ni locación (está en las notas del creador del Guion).
+- ❌ NO escribas captions ni copies (eso va en Captions).
+- ❌ NO incluyas estrategia de pauta, audiencias ni KPIs (eso va en Marketing).
+- ❌ NO listes B-Rolls específicos (eso va en B-Roll).
+- ❌ NO menciones "Método ESFERA" ni términos legacy.
+
+Tu única responsabilidad: tips creativos del director EN SET + guía de EDICIÓN post-producción.`,
 
   marketing: `📊 ESTRATEGIA DE MARKETING Y PAUTA
 
 ⚠️ IMPORTANTE:
-- NO incluyas el guion del video, ni los diálogos, ni las escenas. Esa información YA ESTÁ en el bloque Guion. Si lo repites, estás duplicando contenido.
-- Concéntrate ÚNICAMENTE en estrategia de pauta, audiencias, distribución, métricas y presupuesto.
-- Genera TODAS las secciones COMPLETAS. NO te detengas hasta terminar presupuesto y próximos contenidos.
+- Tu output debe estar 100% alineado a la CAPA CAST ACTIVA del item (ver bloque "CAPA CAST ACTIVA" en el contexto). Audiencias, KPIs, distribución, presupuesto y próximos contenidos deben coincidir con esa capa.
+- NO incluyas el guion del video, ni los diálogos, ni las escenas. Eso ya está en el bloque Guion.
+- NO escribas copies de ad (Hook + Copy + CTA). Eso es responsabilidad del bloque Captions.
+- NO menciones "Método ESFERA", "Enganchar", "Solución", "Remarketing" o "Fidelizar". Solo Método CAST.
+- Genera TODAS las secciones COMPLETAS hasta presupuesto y próximos contenidos.
 
 ESTRUCTURA HTML REQUERIDA:
-<h2>📊 BLOQUE MARKETING</h2>
+<h2>📊 ESTRATEGIA DE MARKETING</h2>
+<p>Capa CAST activa: [Capa C/A/S/T — nombre] | Funnel: [TOFU/MOFU/BOFU/retention] | Objetivo: [resumen]</p>
 
-<h3>🎯 ESTRATEGIA</h3>
-Fase ESFERA | Objetivo | KPI Principal
+<h3>🎯 ESTRATEGIA GENERAL</h3>
+- Resumen estratégico alineado a la capa CAST activa (3-5 frases)
+- Por qué este contenido sirve para esta capa específica del avatar
+- Mensaje principal (sin escribir el copy del ad)
 
 <h3>👥 AUDIENCIAS</h3>
-🔵 COLD: Intereses, comportamientos, lookalike
-🟡 WARM: Retargeting (video viewers, engagement, web)
-🔴 HOT: Cart abandonados, visitantes producto
+Lista las 3 temperaturas, pero MARCA cuál es la PRIMARIA según la capa activa:
+🔵 FRÍA: intereses, comportamientos, lookalike (descripción)
+🟡 TIBIA: retargeting de video viewers, engagement, web visitors (descripción)
+🔴 CALIENTE: cart abandoners, product page viewers, lista activa (descripción)
+👑 CLIENTES: compradores recientes, comunidad, referidos (descripción)
+[Indicar cuál de las 4 es la audiencia primaria de esta capa]
 
-<h3>📱 DISTRIBUCIÓN</h3>
-<table><tr><th>Plataforma</th><th>Formato</th><th>Budget %</th><th>Objetivo</th></tr>
-[Meta 60%, TikTok 30%, YouTube 10%]</table>
+<h3>📱 DISTRIBUCIÓN POR PLATAFORMA</h3>
+<table>
+<tr><th>Plataforma</th><th>Formato</th><th>Budget %</th><th>Objetivo del placement</th></tr>
+[Asignación coherente con la capa: capa C prioriza Reels/TikTok orgánico+pauta de awareness; capa S prioriza retargeting en Meta y YouTube; capa T prioriza email + comunidad + lista activa]
+</table>
 
-<h3>🔥 3 VARIACIONES DE AD</h3>
-Variación A (Cold): Hook + Copy + CTA
-Variación B (Warm): Hook + Copy + CTA
-Variación C (Hot): Hook + Copy + CTA
-
-<h3>📈 MÉTRICAS OBJETIVO</h3>
-Hook Rate, CTR, CPC, ROAS (mínimo/objetivo/excelente)
+<h3>📈 KPIs OBJETIVO</h3>
+<table>
+<tr><th>KPI</th><th>Mínimo</th><th>Objetivo</th><th>Excelente</th></tr>
+[Solo los KPIs que aplican a esta capa CAST. Ej: capa C → CPM, Hook Rate, View Rate; capa A → CTR, ATC, lead gen; capa S → CPA, ROAS, Conversion Rate; capa T → LTV, Repeat Rate, NPS]
+</table>
 
 <h3>💵 PRESUPUESTO</h3>
-Testing: $X/día x X días | Escala: $X/día
+- Testing: $X/día x X días (lógica del split)
+- Escala: $X/día (criterio para escalar)
+- Reparto por audiencia/plataforma según la capa
 
 <h3>📅 PRÓXIMOS CONTENIDOS</h3>
-3 videos sugeridos para el embudo
+3 ideas de videos sugeridos para mover al avatar a la SIGUIENTE capa CAST. (Ej: si capa activa es C, sugerir contenidos que lleven a A. Si es T, sugerir contenidos para reactivar y pedir referidos).
 
-Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo} | CTA: {cta}
+Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo}
+
+🚫 RESTRICCIONES:
+- ❌ NO escribas copies completos de ads (eso lo hace Captions).
+- ❌ NO incluyas escenas del guion ni diálogos.
+- ❌ NO listes B-Rolls.
+- ❌ NO menciones ESFERA / Enganchar / Solución / Remarketing / Fidelizar.
+
+Tu única responsabilidad: ESTRATEGIA DE PAUTA — audiencias, distribución, KPIs, presupuesto.
 
 COMPLETA TODAS las secciones.`,
 
   captions: `📱 CAPTIONS PARA REDES SOCIALES
 
-⚠️ IMPORTANTE: Genera los 4 captions COMPLETOS. Cada uno con su texto íntegro, hashtags (orgánicos) y especificaciones.
+⚠️ IMPORTANTE:
+- Tu output debe estar alineado a la CAPA CAST ACTIVA y al output del bloque Marketing (ver "CAPA CAST ACTIVA" y "ESTRATEGIA DE MARKETING" en el contexto, si están disponibles).
+- Si la ESTRATEGIA DE MARKETING fue provista, los 4 captions deben referenciar las audiencias y CTAs definidos ahí. Los ADS deben hablarle a la audiencia primaria que Marketing marcó.
+- Si NO hay estrategia de Marketing en el contexto, calibra el tono solo según la capa CAST.
+- Genera los 4 captions COMPLETOS, sin truncar.
+- NO menciones "Método ESFERA" ni términos legacy.
 
 ESTRUCTURA HTML REQUERIDA:
 <h2>📱 CAPTIONS GENERADOS</h2>
+<p>Capa CAST activa: [letra — nombre] | Alineados a la estrategia de Marketing del item.</p>
 
-<h3>📱 ORGÁNICO #1: Hook + Storytelling</h3>
+<h3>📱 ORGÁNICO #1 — Hook + Storytelling</h3>
 [Caption COMPLETO 150-200 caracteres con emojis + 8-10 hashtags relevantes]
-Objetivo: Engagement | Plataforma: Feed IG/FB
+Tono ajustado a la capa: capa C educativo/disruptivo, capa A persuasivo/demo, capa S urgente/social proof, capa T exclusivo/comunidad.
+Objetivo: engagement | Plataforma: Feed IG/FB
 
-<h3>📱 ORGÁNICO #2: Trend/Humor</h3>
+<h3>📱 ORGÁNICO #2 — Trend / Humor / Comunidad</h3>
 [Caption COMPLETO con referencia cultural/trend + hashtags trending]
-Objetivo: Viralidad | Plataforma: Reels/TikTok
+Para capa T: tono insider/comunidad. Para capa C: viralidad.
+Objetivo: alcance orgánico | Plataforma: Reels/TikTok
 
-<h3>💰 ADS #1: Problema-Solución</h3>
-[Caption COMPLETO 80-125 caracteres, beneficio + CTA directo, SIN hashtags]
-Objetivo: Conversión | Cumple políticas: ✅
+<h3>💰 ADS #1 — Audiencia primaria de Marketing</h3>
+[Caption COMPLETO 80-125 caracteres, sin hashtags]
+- Hook: orientado al pain/desire correcto para la capa CAST
+- Body: beneficio claro alineado al objetivo de la capa
+- CTA: estilo de la capa (suave en C, directo en A, urgente en S, comunitario en T)
+- Audiencia: la PRIMARIA marcada por Marketing
+Cumple políticas: ✅
 
-<h3>💰 ADS #2: FOMO/Urgencia</h3>
-[Caption COMPLETO con escasez/urgencia + CTA, SIN hashtags]
-Objetivo: Ventas | Cumple políticas: ✅
+<h3>💰 ADS #2 — Audiencia secundaria o ángulo alternativo</h3>
+[Caption COMPLETO con ángulo distinto al ADS #1, sin hashtags]
+- Variación con otra técnica del set de la capa (ej: si capa S → social proof masivo en lugar de escasez)
+- Distinto pain/desire/objection del primero
+Cumple políticas: ✅
 
-Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo} | CTA: {cta}
+Producto: {producto_nombre} | Avatar: {producto_avatar} | País: {pais_objetivo}
 
-REGLAS: No claims médicos, no "milagro", beneficios verificables.
+🚫 RESTRICCIONES:
+- ❌ NO copies escenas del guion (puedes inspirarte en el ángulo, no transcribir).
+- ❌ NO escribas estrategia de pauta, audiencias detalladas, KPIs ni presupuesto (eso vive en Marketing).
+- ❌ NO listes B-Rolls.
+- ❌ NO uses claims médicos ni "milagro". Beneficios verificables.
+
+REGLAS:
+- 2 orgánicos (con hashtags) + 2 ads (sin hashtags).
+- Cada caption debe poder publicarse tal cual, sin edición posterior.
+
+Tu única responsabilidad: COPIES finales (orgánicos + ads).
 COMPLETA los 4 captions sin truncar.`,
 
   broll: `🎬 IDEAS DE B-ROLL
@@ -1019,8 +1131,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     
-    // Determine sphere phase info
-    const sphereInfo = spherePhase ? getSpherePhaseInfo(spherePhase) : null;
+    // Determine CAST layer info from sphere_phase column (legacy column name)
+    const castInfo = spherePhase ? getCastLayerInfo(spherePhase) : null;
     
     // Get business type
     const businessType = (product?.business_type as 'product_service' | 'personal_brand') || 'product_service';
@@ -1090,22 +1202,25 @@ AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 `;
     }
 
-    // Add detailed sphere phase context
-    if (sphereInfo) {
-      context += `=== FASE DEL MÉTODO ESFERA: ${sphereInfo.label} ===
-🎯 OBJETIVO DE FASE: ${sphereInfo.objective}
-👥 TIPO DE AUDIENCIA: ${sphereInfo.audience}
-🎨 TONO RECOMENDADO: ${sphereInfo.tone}
+    // Add detailed CAST layer context (Método CAST de Alexander Cast)
+    if (castInfo) {
+      context += `=== ${castInfo.label} (${castInfo.funnel}) ===
+🎯 OBJETIVO: ${castInfo.objective}
+🧠 ESTADO DEL AVATAR: ${castInfo.nivelConciencia}
+👥 AUDIENCIA: ${castInfo.audience}
+🎨 TONO RECOMENDADO: ${castInfo.tone}
 
 📋 TÉCNICAS OBLIGATORIAS (usar al menos 2):
-${sphereInfo.techniques.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+${castInfo.techniques.map((t, i) => `${i + 1}. ${t}`).join('\n')}
 
 💬 FRASES/KEYWORDS SUGERIDAS:
-${sphereInfo.keywords.map(k => `• "${k}"`).join('\n')}
+${castInfo.keywords.map(k => `• "${k}"`).join('\n')}
 
-📢 ESTILO DE CTA: ${sphereInfo.ctaStyle}
+📢 ESTILO DE CTA: ${castInfo.ctaStyle}
 
-⚠️ IMPORTANTE: El guión DEBE estar 100% alineado con los objetivos de ${sphereInfo.label}.
+📈 KPIs PRIORITARIOS DE ESTA CAPA: ${castInfo.kpis.join(', ')}
+
+⚠️ TERMINOLOGÍA OBLIGATORIA: Usar SIEMPRE "${castInfo.label}" del Método CAST de Alexander Cast. PROHIBIDO mencionar "Método ESFERA", "Enganchar", "Solución", "Remarketing" o "Fidelizar" en el output.
 
 `;
     }
@@ -1152,14 +1267,23 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   const generateContent = async (
     type: "script" | "director" | "marketing" | "captions" | "broll" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
     customPrompt: string,
-    previousScript?: string
+    previousScript?: string,
+    extraContext?: { label: string; content: string }[]
   ): Promise<string> => {
     const baseContext = buildBaseContext();
-    
+
     let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
-    
+
     if (previousScript && type !== "script") {
       fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    }
+
+    if (extraContext && extraContext.length > 0) {
+      for (const ctx of extraContext) {
+        if (ctx.content && ctx.content.trim()) {
+          fullPrompt += `\n\n---\n${ctx.label}:\n${ctx.content}`;
+        }
+      }
     }
 
     const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
@@ -1307,13 +1431,26 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         { key: "broll", field: "broll_output", prompt: formData.broll_prompt || "" },
       ];
 
+      // Capture marketing_output so captions can be aligned with the same strategy.
+      let marketingContextForCaptions: string | null = null;
+
       for (const block of otherBlocks) {
         if (!selectedBlocks[block.key]) continue;
 
         updateStepStatus(block.key, "generating");
         try {
-          const result = await generateContent(block.key, block.prompt, scriptContext);
+          // Pass marketing strategy to captions when both are generated in the same run.
+          const extraContext = (block.key === "captions" && marketingContextForCaptions)
+            ? [{ label: "ESTRATEGIA DE MARKETING", content: marketingContextForCaptions }]
+            : undefined;
+
+          const result = await generateContent(block.key, block.prompt, scriptContext, extraContext);
           (generatedContent as any)[block.field] = result;
+
+          if (block.key === "marketing") {
+            marketingContextForCaptions = result;
+          }
+
           updateStepStatus(block.key, "done");
           emitProgress({ [block.field]: result });
         } catch (error: any) {
