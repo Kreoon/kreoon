@@ -312,8 +312,19 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const isInternalCall = token === serviceRoleKey;
+
+    // Detectar llamada interna: service_role JWT o clave exacta
+    function isServiceRole(t: string): boolean {
+      try {
+        const parts = t.split(".");
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(atob(parts[1]));
+        return payload.role === "service_role";
+      } catch {
+        return t === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      }
+    }
+    const isInternalCall = isServiceRole(token);
 
     const input: OrchestratorInput = await req.json();
     const { action = "start", organization_id } = input;
