@@ -86,6 +86,47 @@ export const orgToolDefinitions = [
       required: ["name"],
     },
   },
+  {
+    name: "create_product",
+    description:
+      "Crea un nuevo producto o servicio dentro de un cliente/marca. " +
+      "El product_id devuelto es necesario para iniciar el ADN (start_adn_research) " +
+      "y para asignarlo a items de contenido.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        client_id:     { type: "string", description: "UUID del cliente/marca al que pertenece el producto (usa list_clients para obtenerlo)" },
+        name:          { type: "string", description: "Nombre del producto o servicio" },
+        description:   { type: "string", description: "Qué es, qué problema resuelve y su propuesta de valor" },
+        business_type: {
+          type: "string",
+          enum: ["ecommerce", "servicio", "infoproducto", "saas", "agencia", "marca_personal", "otro"],
+          description: "Tipo de negocio",
+        },
+        ideal_avatar:  { type: "string", description: "Descripción del cliente ideal: edad, dolores, deseos, nivel de consciencia" },
+        strategy:      { type: "string", description: "Posicionamiento, diferenciación y estrategia de marketing del producto" },
+        sales_angles:  {
+          type: "array",
+          items: { type: "string" },
+          description: "Lista de ángulos de venta o USPs del producto (ej: ['Precio accesible', 'Sin experiencia previa', 'Resultados en 30 días'])",
+        },
+      },
+      required: ["client_id", "name"],
+    },
+  },
+  {
+    name: "list_products",
+    description: "Lista los productos registrados para un cliente específico o todos los de la organización.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        client_id: { type: "string", description: "UUID del cliente para filtrar (opcional)" },
+        search:    { type: "string", description: "Buscar por nombre del producto" },
+        limit:     { type: "number", description: "Cantidad de resultados (default: 20, max: 50)", minimum: 1, maximum: 50 },
+      },
+      required: [],
+    },
+  },
 ];
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -100,6 +141,8 @@ export async function handleOrgTool(
     case "list_org_members":  return listOrgMembers(args, auth);
     case "list_clients":      return listClients(args, auth);
     case "create_client":     return createClient_(args, auth);
+    case "create_product":    return createProduct(args, auth);
+    case "list_products":     return listProducts(args, auth);
     default: return { success: false, error: `Tool desconocida: ${toolName}` };
   }
 }
@@ -287,4 +330,72 @@ async function createClient_(args: Record<string, unknown>, auth: AuthContext): 
 
   if (error) return { success: false, error: `create_client: ${error.message}` };
   return { success: true, data };
+}
+
+async function createProduct(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  // Verificar que el cliente pertenece a la organización
+  const { data: client, error: clientErr } = await supabase
+    .from("clients")
+    .select("id, name")
+    .eq("id", args.client_id)
+    .eq("organization_id", auth.org_id)
+    .single();
+
+  if (clientErr || !client) {
+    return { success: false, error: "Cliente no encontrado o sin acceso a esta organización" };
+  }
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("products")
+    .insert({
+      client_id:     args.client_id,
+      name:          args.name,
+      description:   args.description   ?? null,
+      business_type: args.business_type ?? null,
+      ideal_avatar:  args.ideal_avatar  ?? null,
+      strategy:      args.strategy      ?? null,
+      sales_angles:  args.sales_angles  ?? [],
+      created_at:    now,
+      updated_at:    now,
+    })
+    .select("id, name, description, business_type, ideal_avatar, sales_angles, created_at")
+    .single();
+
+  if (error) return { success: false, error: `create_product: ${error.message}` };
+  return {
+    success: true,
+    data: { ...data, client_name: client.name },
+  };
+}
+
+async function listProducts(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  // Productos accesibles via clients de la organización
+  let query = supabase
+    .from("products")
+    .select("id, name, description, business_type, ideal_avatar, sales_angles, created_at, clients!inner(id, name, organization_id)")
+    .eq("clients.organization_id", auth.org_id)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit((args.limit as number) ?? 20);
+
+  if (args.client_id) query = query.eq("client_id", args.client_id as string);
+  if (args.search)    query = query.ilike("name", `%${args.search}%`);
+
+  const { data, error } = await query;
+  if (error) return { success: false, error: `list_products: ${error.message}` };
+
+  const products = (data ?? []).map(p => ({
+    id:            p.id,
+    name:          p.name,
+    description:   p.description,
+    business_type: p.business_type,
+    ideal_avatar:  p.ideal_avatar,
+    sales_angles:  p.sales_angles,
+    created_at:    p.created_at,
+    client_name:   (p.clients as unknown as { name: string }).name,
+    client_id:     (p.clients as unknown as { id: string }).id,
+  }));
+
+  return { success: true, data: { products, count: products.length } };
 }

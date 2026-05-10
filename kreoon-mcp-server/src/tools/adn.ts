@@ -92,12 +92,12 @@ async function startADNResearch(
 ): Promise<ToolResult<{ research_id: string; estimated_seconds: number }>> {
   const { product_id, config = {} } = input;
 
-  // Verificar que el producto pertenece a la organización
+  // Verificar que el producto pertenece a la organización (via client_id → clients.organization_id)
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, name")
+    .select("id, name, clients!inner(organization_id)")
     .eq("id", product_id)
-    .eq("organization_id", auth.org_id)
+    .eq("clients.organization_id", auth.org_id)
     .single();
 
   if (productError || !product) {
