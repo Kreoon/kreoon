@@ -370,31 +370,38 @@ async function createProduct(args: Record<string, unknown>, auth: AuthContext): 
 }
 
 async function listProducts(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
-  // Productos accesibles via clients de la organización
+  // Obtener clients de la org primero
+  let clientsQuery = supabase
+    .from("clients")
+    .select("id, name")
+    .eq("organization_id", auth.org_id)
+    .is("deleted_at", null);
+
+  if (args.client_id) clientsQuery = clientsQuery.eq("id", args.client_id as string);
+
+  const { data: clients, error: clientsErr } = await clientsQuery;
+  if (clientsErr) return { success: false, error: `list_products: ${clientsErr.message}` };
+  if (!clients?.length) return { success: true, data: { products: [], count: 0 } };
+
+  const clientIds = clients.map(c => c.id);
+  const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name]));
+
   let query = supabase
     .from("products")
-    .select("id, name, description, business_type, ideal_avatar, sales_angles, created_at, clients!inner(id, name, organization_id)")
-    .eq("clients.organization_id", auth.org_id)
+    .select("id, name, description, business_type, ideal_avatar, sales_angles, client_id, created_at")
+    .in("client_id", clientIds)
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit((args.limit as number) ?? 20);
 
-  if (args.client_id) query = query.eq("client_id", args.client_id as string);
-  if (args.search)    query = query.ilike("name", `%${args.search}%`);
+  if (args.search) query = query.ilike("name", `%${args.search}%`);
 
   const { data, error } = await query;
   if (error) return { success: false, error: `list_products: ${error.message}` };
 
   const products = (data ?? []).map(p => ({
-    id:            p.id,
-    name:          p.name,
-    description:   p.description,
-    business_type: p.business_type,
-    ideal_avatar:  p.ideal_avatar,
-    sales_angles:  p.sales_angles,
-    created_at:    p.created_at,
-    client_name:   (p.clients as unknown as { name: string }).name,
-    client_id:     (p.clients as unknown as { id: string }).id,
+    ...p,
+    client_name: clientMap[p.client_id] ?? p.client_id,
   }));
 
   return { success: true, data: { products, count: products.length } };

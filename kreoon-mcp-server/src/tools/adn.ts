@@ -92,16 +92,27 @@ async function startADNResearch(
 ): Promise<ToolResult<{ research_id: string; estimated_seconds: number }>> {
   const { product_id, config = {} } = input;
 
-  // Verificar que el producto pertenece a la organización (via client_id → clients.organization_id)
+  // Verificar que el producto existe y su client pertenece a la organización
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("id, name, clients!inner(organization_id)")
+    .select("id, name, client_id")
     .eq("id", product_id)
-    .eq("clients.organization_id", auth.org_id)
     .single();
 
   if (productError || !product) {
-    return { success: false, error: "Producto no encontrado o sin acceso" };
+    return { success: false, error: "Producto no encontrado" };
+  }
+
+  // Verificar que el cliente pertenece a esta organización
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("id", product.client_id)
+    .eq("organization_id", auth.org_id)
+    .single();
+
+  if (clientError || !client) {
+    return { success: false, error: "Sin acceso a este producto" };
   }
 
   // Verificar que no hay una investigación activa para este producto
