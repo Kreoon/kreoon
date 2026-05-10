@@ -100,8 +100,8 @@ export const orgToolDefinitions = [
         description:   { type: "string", description: "Qué es, qué problema resuelve y su propuesta de valor" },
         business_type: {
           type: "string",
-          enum: ["ecommerce", "servicio", "infoproducto", "saas", "agencia", "marca_personal", "otro"],
-          description: "Tipo de negocio",
+          enum: ["product_service", "personal_brand"],
+          description: "Tipo de negocio: 'product_service' (producto o servicio) o 'personal_brand' (marca personal)",
         },
         ideal_avatar:  { type: "string", description: "Descripción del cliente ideal: edad, dolores, deseos, nivel de consciencia" },
         strategy:      { type: "string", description: "Posicionamiento, diferenciación y estrategia de marketing del producto" },
