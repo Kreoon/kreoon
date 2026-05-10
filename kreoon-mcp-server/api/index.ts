@@ -11,6 +11,7 @@ import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/op
 import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
 import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
 import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
+import { handleContentGenerationTool, contentGenerationToolDefinitions } from '../src/tools/content-generation.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
 // ─── OAuth authorize page HTML ───────────────────────────────────────────────
@@ -151,6 +152,8 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   list_content_items: 'campaigns:read',
   assign_content_team: 'campaigns:write',
   update_content_status: 'campaigns:write',
+  // Content generation with KREOON Skills
+  generate_content_block: 'campaigns:write',
   // Org management
   get_org_dashboard: 'campaigns:read',
   list_org_members: 'campaigns:read',
@@ -175,6 +178,7 @@ const ALL_TOOL_DEFS = [
   ...walletToolDefinitions,
   ...socialToolDefinitions,
   ...operationsToolDefinitions,
+  ...contentGenerationToolDefinitions,
   ...campaignsToolDefinitions,
   ...projectsToolDefinitions,
   ...orgToolDefinitions,
@@ -200,8 +204,9 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
   if (walletToolDefinitions.some(t => t.name === name))     return handleWalletTool(name, args, auth);
   if (socialToolDefinitions.some(t => t.name === name))     return handleSocialTool(name, args, auth);
-  if (operationsToolDefinitions.some(t => t.name === name)) return handleOperationsTool(name, args, auth);
-  if (campaignsToolDefinitions.some(t => t.name === name))  return handleCampaignsTool(name, args, auth);
+  if (operationsToolDefinitions.some(t => t.name === name))          return handleOperationsTool(name, args, auth);
+  if (contentGenerationToolDefinitions.some(t => t.name === name))   return handleContentGenerationTool(name, args, auth);
+  if (campaignsToolDefinitions.some(t => t.name === name))           return handleCampaignsTool(name, args, auth);
   if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
   if (orgToolDefinitions.some(t => t.name === name))         return handleOrgTool(name, args, auth);
   throw Object.assign(new Error(`Tool no manejada: ${name}`), { status: 500 });
