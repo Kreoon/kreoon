@@ -134,24 +134,91 @@ Basa tu análisis en datos reales y recientes.`;
     return searchWithPerplexity(supabase, orgId, query, { recencyFilter: "month" });
   },
 
-  /** Mejores prácticas para hooks */
+  /** Hooks virales específicos para UGC/guiones — primeras frases exactas por plataforma y país */
   hookResearch: async (
     supabase: any,
     orgId: string,
-    params: { productType: string; platform: string; targetAudience?: string }
+    params: {
+      productType: string;
+      platform: string;
+      targetAudience?: string;
+      salesAngle?: string;
+      targetCountry?: string;
+    }
   ): Promise<PerplexityResult> => {
-    const query = `¿Cuáles son los hooks/ganchos más efectivos para videos de ${params.productType} en ${params.platform}${params.targetAudience ? ` dirigidos a ${params.targetAudience}` : ""}?
+    const query = `Eres un experto en UGC y hooks virales. Dame los 8 mejores hooks de apertura para un video de ${params.productType} en ${params.platform} en ${params.targetCountry || "Latinoamérica"}.
 
-Dame:
-1. 10 ejemplos de hooks que han funcionado recientemente (con métricas si están disponibles)
-2. Patrones comunes en hooks exitosos
-3. Hooks a evitar (sobreutilizados o penalizados)
-4. Técnicas de storytelling efectivas
-5. Primeras 3 palabras más impactantes
+Para cada hook incluye:
+- Las PRIMERAS 3 FRASES exactas del guión (cómo empezaría el video)
+- El disparador psicológico que usa (curiosidad, dolor, sorpresa, escasez, etc.)
+- Por qué funciona para este tipo de producto
+${params.salesAngle ? `\nEl ángulo de venta principal es: ${params.salesAngle}` : ""}${params.targetAudience ? `\nAudiencia objetivo: ${params.targetAudience}` : ""}
 
-Incluye ejemplos reales de contenido viral.`;
+Solo incluye hooks que hayan funcionado en contenido real de las últimas 2 semanas. Formatea como lista numerada.`;
 
-    return searchWithPerplexity(supabase, orgId, query, { recencyFilter: "week" });
+    return searchWithPerplexity(supabase, orgId, query, {
+      recencyFilter: "week",
+      searchDomains: ["tiktok.com", "youtube.com", "instagram.com"],
+    });
+  },
+
+  /** Estructuras narrativas con mejor conversión para videos cortos por plataforma */
+  scriptNarratives: async (
+    supabase: any,
+    orgId: string,
+    params: {
+      productType: string;
+      platform: string;
+      narrativeStructure?: string;
+      targetCountry?: string;
+    }
+  ): Promise<PerplexityResult> => {
+    const query = `Dame datos reales sobre qué estructuras narrativas están generando más conversiones para videos de ${params.productType} en ${params.platform} en ${params.targetCountry || "Latinoamérica"} este mes.
+
+Analiza:
+1. ¿PAS (Problema-Agitación-Solución), AIDA, testimonio o "antes/después" convierte mejor para este nicho ahora?
+2. ¿Qué duración de video (15s, 30s, 60s) tiene mejor retención en ${params.platform}?
+3. ¿Cómo terminar el video para maximizar el CTA? (ejemplos de frases de cierre que funcionan)
+4. ¿Qué errores narrativos están penalizando el algoritmo de ${params.platform} esta semana?
+${params.narrativeStructure ? `\nEstructura planeada: ${params.narrativeStructure} — valida si sigue siendo efectiva.` : ""}
+
+Basa la respuesta en datos de creators y marcas reales, no teoría general.`;
+
+    return searchWithPerplexity(supabase, orgId, query, {
+      recencyFilter: "week",
+      searchDomains: ["tiktok.com", "youtube.com", "instagram.com", "socialinsider.io", "later.com"],
+      maxTokens: 2000,
+    });
+  },
+
+  /** Objeciones reales de audiencia extraídas de comentarios y reseñas */
+  audienceObjections: async (
+    supabase: any,
+    orgId: string,
+    params: {
+      productType: string;
+      productName: string;
+      targetCountry?: string;
+      selectedPain?: string;
+    }
+  ): Promise<PerplexityResult> => {
+    const query = `Analiza los comentarios y reseñas reales de productos como "${params.productName}" (${params.productType}) en ${params.targetCountry || "Latinoamérica"}.
+
+Necesito:
+1. Las 5 objeciones más frecuentes antes de comprar (frases textuales si las hay)
+2. Las dudas más comunes en comentarios de TikTok/Instagram/YouTube sobre este tipo de producto
+3. Las frases que más usa la audiencia para describir su problema/frustración
+4. Qué argumento destruye cada objeción de forma efectiva en videos cortos
+5. Qué prueba social (número, testimonio, garantía) convence más a esta audiencia
+${params.selectedPain ? `\nDolor principal del avatar: ${params.selectedPain}` : ""}
+
+Usa comentarios de redes sociales, Amazon, Mercado Libre y foros de los últimos 30 días.`;
+
+    return searchWithPerplexity(supabase, orgId, query, {
+      recencyFilter: "month",
+      searchDomains: ["amazon.com", "mercadolibre.com", "reddit.com", "tiktok.com", "instagram.com"],
+      maxTokens: 2000,
+    });
   },
 
   /** Investigación de avatar/audiencia */

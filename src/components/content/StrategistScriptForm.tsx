@@ -95,6 +95,8 @@ interface ScriptFormData {
 interface PerplexityQueriesState {
   trends: boolean;
   hooks: boolean;
+  narratives: boolean;
+  objections: boolean;
   competitors: boolean;
   audience: boolean;
 }
@@ -582,6 +584,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const [perplexityQueries, setPerplexityQueries] = useState<PerplexityQueriesState>({
     trends: true,
     hooks: true,
+    narratives: true,
+    objections: false,
     competitors: false,
     audience: false,
   });
@@ -1619,11 +1623,61 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               <span className="hidden sm:inline">Aleatorizar</span>
             </Button>
           )}
+          {/* Investigación en tiempo real — toggle compacto */}
+          <div
+            className={`flex items-center gap-1 rounded-sm border px-1.5 py-1 transition-colors cursor-pointer ${
+              formData.use_perplexity
+                ? 'border-purple-500/50 bg-purple-500/15'
+                : 'border-border bg-muted/20 hover:bg-muted/40'
+            }`}
+            onClick={() => setFormData(prev => ({ ...prev, use_perplexity: !prev.use_perplexity }))}
+            title="Investigación en tiempo real con Perplexity"
+          >
+            <Search className={`h-3 w-3 shrink-0 ${formData.use_perplexity ? 'text-purple-400' : 'text-muted-foreground'}`} />
+            <span className={`text-[10px] hidden sm:inline ${formData.use_perplexity ? 'text-purple-300' : 'text-muted-foreground'}`}>
+              Investigar
+            </span>
+            <Switch
+              checked={formData.use_perplexity}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, use_perplexity: checked }))}
+              className="scale-75 pointer-events-none"
+            />
+          </div>
           <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[100px] sm:max-w-none">
             {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
           </Badge>
         </div>
       </div>
+
+      {/* Chips de tipo de investigación — solo cuando está activo */}
+      {formData.use_perplexity && (
+        <div className="flex items-center gap-1.5 flex-wrap animate-in slide-in-from-top-1 duration-150">
+          <span className="text-[10px] text-purple-400 shrink-0">Investigar:</span>
+          {([
+            { key: 'hooks',      label: '🎣 Hooks virales' },
+            { key: 'narratives', label: '🧠 Narrativas' },
+            { key: 'trends',     label: '📈 Tendencias' },
+            { key: 'objections', label: '💬 Objeciones' },
+            { key: 'competitors',label: '🏢 Competencia' },
+          ] as { key: keyof PerplexityQueriesState; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPerplexityQueries(q => ({ ...q, [key]: !q[key] }))}
+              className={`text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                perplexityQueries[key]
+                  ? 'bg-purple-500/25 border-purple-500/50 text-purple-200'
+                  : 'bg-muted/20 border-border text-muted-foreground hover:border-purple-500/30'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          {customPerplexityQuery.trim() && (
+            <span className="text-[10px] text-purple-300 italic truncate max-w-[150px]">+ "{customPerplexityQuery.trim()}"</span>
+          )}
+        </div>
+      )}
 
       {/* ——————————————————————————————————————————————————
           Fila de 4 columnas: Pre-llenado · CAST · Intel ADN · Bloques
@@ -2068,78 +2122,6 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* ── Campos de ancho completo ── */}
-
-        {/* Toggle Perplexity Research */}
-        <div className="space-y-4 col-span-2 sm:col-span-3">
-          <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20 gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm shrink-0">
-                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <Label className="text-xs sm:text-sm font-medium">Investigación en tiempo real</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
-                  Usa Perplexity para buscar tendencias y hooks actuales
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={formData.use_perplexity}
-              onCheckedChange={(checked) => setFormData({ ...formData, use_perplexity: checked })}
-            />
-          </div>
-
-          {formData.use_perplexity && (
-            <div className="ml-4 space-y-2 animate-in slide-in-from-top-2">
-              <p className="text-sm font-medium text-muted-foreground">¿Qué investigar?</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={perplexityQueries.trends ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, trends: !q.trends }))}
-                >
-                  📈 Tendencias actuales
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.hooks ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, hooks: !q.hooks }))}
-                >
-                  🎣 Hooks efectivos
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.competitors ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, competitors: !q.competitors }))}
-                >
-                  🏢 Competencia
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.audience ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, audience: !q.audience }))}
-                >
-                  👥 Audiencia
-                </Badge>
-              </div>
-
-              <Collapsible>
-                <CollapsibleTrigger className="text-sm text-purple-400 hover:text-purple-300">
-                  + Agregar búsqueda personalizada
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <Textarea
-                    placeholder="Ej: ¿Cuáles son los challenges virales de TikTok esta semana relacionados con skincare?"
-                    value={customPerplexityQuery}
-                    onChange={(e) => setCustomPerplexityQuery(e.target.value)}
-                    className="mt-2"
-                    rows={2}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          )}
-        </div>
 
         {/* Estructura Narrativa */}
         <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
