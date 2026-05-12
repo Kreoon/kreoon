@@ -869,44 +869,77 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     return [];
   }, [researchProduct, parsedIdealAvatar]);
 
-  // ADN V2 — datos de ai_analysis
+  // Helper: parse ai_analysis JSONB safely
+  const parsedAiAnalysis = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return null;
+    return typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+  }, [researchProduct]);
+
+  // hasV2Data: true ONLY when ai_analysis real existe con datos (no afectado por fallbacks V1)
+  const hasV2Data = useMemo(() => {
+    return !!(parsedAiAnalysis?.creative_brief || parsedAiAnalysis?.target_audience || parsedAiAnalysis?.market_analysis);
+  }, [parsedAiAnalysis]);
+
+  // Hooks sugeridos — V2 primero, luego fallbacks V1
   const researchHookSuggestions = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
-    if (!raw) return [];
-    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-    const cb = parsed?.creative_brief;
-    const arr = cb?.hooks_suggestions ?? cb?.hooksSuggestions ?? [];
-    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
-  }, [researchProduct]);
+    // 1. V2: ai_analysis.creative_brief.hooks_suggestions
+    const v2arr = parsedAiAnalysis?.creative_brief?.hooks_suggestions ?? parsedAiAnalysis?.creative_brief?.hooksSuggestions ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
 
+    // 2. V1: market_research.hooks
+    const mrHooks = researchProduct?.market_research?.hooks;
+    if (Array.isArray(mrHooks) && mrHooks.length) return mrHooks.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 3. V1: ideal_avatar.messaging.hooks
+    const avatarHooks = parsedIdealAvatar?.messaging?.hooks ?? parsedIdealAvatar?.hooks;
+    if (Array.isArray(avatarHooks) && avatarHooks.length) return avatarHooks.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 4. V1: keywords de los ángulos de venta como starters de hook
+    const angles = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(angles)) {
+      const keywords = angles.flatMap((a: any) => a?.keywords ?? []).filter((k: unknown) => typeof k === 'string' && (k as string).trim());
+      if (keywords.length) return keywords as string[];
+    }
+
+    return [];
+  }, [parsedAiAnalysis, researchProduct, parsedIdealAvatar]);
+
+  // Mensajes clave — solo V2 (no hay equivalente directo en V1)
   const researchKeyMessages = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
-    if (!raw) return [];
-    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-    const cb = parsed?.creative_brief;
-    const arr = cb?.key_messages ?? cb?.keyMessages ?? [];
-    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
-  }, [researchProduct]);
+    const arr = parsedAiAnalysis?.creative_brief?.key_messages ?? parsedAiAnalysis?.creative_brief?.keyMessages ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[] : [];
+  }, [parsedAiAnalysis]);
 
+  // CTAs sugeridos — V2 primero, luego fallbacks V1
   const researchCtaSuggestions = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
-    if (!raw) return [];
-    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-    const cb = parsed?.creative_brief;
-    const arr = cb?.cta_recommendations ?? cb?.ctaRecommendations ?? [];
-    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
-  }, [researchProduct]);
+    // 1. V2: ai_analysis.creative_brief.cta_recommendations
+    const v2arr = parsedAiAnalysis?.creative_brief?.cta_recommendations ?? parsedAiAnalysis?.creative_brief?.ctaRecommendations ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
 
+    // 2. V1: market_research.ctas / ctaExamples
+    const mrCtas = researchProduct?.market_research?.ctas ?? researchProduct?.market_research?.ctaExamples;
+    if (Array.isArray(mrCtas) && mrCtas.length) return mrCtas.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 3. V1: PUV callToAction
+    const puv = researchProduct?.sales_angles_data?.puv;
+    const ctaFromPuv = puv?.callToAction ?? puv?.cta;
+    if (typeof ctaFromPuv === 'string' && ctaFromPuv.trim()) return [ctaFromPuv];
+
+    return [];
+  }, [parsedAiAnalysis, researchProduct]);
+
+  // Disparadores de compra — V2 primero, luego V1 objeciones invertidas como proxy
   const researchBuyingTriggers = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
-    if (!raw) return [];
-    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-    const ta = parsed?.target_audience;
-    const arr = ta?.buying_triggers ?? ta?.buyingTriggers ?? [];
-    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
-  }, [researchProduct]);
+    const v2arr = parsedAiAnalysis?.target_audience?.buying_triggers ?? parsedAiAnalysis?.target_audience?.buyingTriggers ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
 
-  const hasV2Data = researchHookSuggestions.length > 0 || researchKeyMessages.length > 0;
+    // V1 fallback: motivadores desde market_research
+    const motivators = researchProduct?.market_research?.motivators ?? researchProduct?.market_research?.buyingMotivators;
+    if (Array.isArray(motivators) && motivators.length) return motivators.filter((s: unknown) => typeof s === 'string') as string[];
+
+    return [];
+  }, [parsedAiAnalysis, researchProduct]);
 
   // Auto-fill sales_angle and narrative_structure from research when available
   useEffect(() => {
@@ -1744,7 +1777,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
 
               {/* Botones de acción */}
               <div className="flex gap-2">
-                {hasV2Data && (
+                {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
                   <button
                     type="button"
                     className="flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs sm:text-sm font-medium text-violet-200"
@@ -1772,7 +1805,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                     }}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Auto-aplicar mejores sugerencias ADN
+                    {hasV2Data ? 'Auto-aplicar sugerencias ADN' : 'Aplicar sugerencias de investigación'}
                   </button>
                 )}
                 {/* Botón Aleatorizar — siempre visible si hay datos */}
