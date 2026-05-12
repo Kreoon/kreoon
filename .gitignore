@@ -40,6 +40,11 @@ test_audio.webm
 funcs_temp.json
 _fix_*.py
 
+# Build/lint dumps
+build-output.txt
+lint_results*.txt
+*.patch
+
 # Local scripts
 install-kreoon-skills.sh
 scripts/*.sql
