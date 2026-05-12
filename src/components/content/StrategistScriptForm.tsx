@@ -1938,94 +1938,19 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* CTA */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> CTA *
-          </Label>
-          <Input
-            value={formData.cta}
-            onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
-            placeholder="Ej: Haz clic en el link de la bio"
-            className="text-sm"
-          />
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
 
-        {/* Ángulo de Venta */}
-        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
-          </Label>
-
-          {/* Input de texto libre (para ángulo personalizado) */}
-          <Input
-            value={formData.sales_angle}
-            onChange={(e) => setFormData(prev => ({ ...prev, sales_angle: e.target.value }))}
-            placeholder="Escribe o selecciona un ángulo de venta..."
-            className="text-sm"
-          />
-
-          {/* Tarjetas de ángulos de la investigación */}
-          {researchAngles.length > 0 && (
-            <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
-              <p className="text-[10px] text-muted-foreground mb-2 px-1">
-                {researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''} de la investigación — haz click para seleccionar:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {researchAngles.map((a: any, idx: number) => {
-                  const angleText = a?.angle || a?.salesAngle || a?.name || "";
-                  if (!angleText) return null;
-                  const angleType = a?.type || a?.category || a?.funnelPhase || "";
-                  const description = a?.description || a?.explicacion || "";
-                  const isSelected = formData.sales_angle === angleText;
-                  const isV2 = !!(a?._source === 'v2' || (!a?.type && !a?.category && idx >= (product?.sales_angles?.length ?? 0)));
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`text-left p-2.5 rounded-sm border transition-all ${
-                        isSelected
-                          ? 'ring-2 ring-primary border-primary bg-primary/10'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                    >
-                      <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
-                      {description && (
-                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{description}</p>
-                      )}
-                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                        {angleType && (
-                          <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
-                            {angleType}
-                          </Badge>
-                        )}
-                        {isV2 && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
-                            V2 ADN
-                          </Badge>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
+        {/* ── Fila 1: Hooks | País | Duración ── */}
         {/* Número de Hooks */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <ListOrdered className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <ListOrdered className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Hooks
           </Label>
-          <Select 
-            value={formData.hooks_count} 
+          <Select
+            value={formData.hooks_count}
             onValueChange={(v) => setFormData({ ...formData, hooks_count: v })}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {[1, 2, 3, 4, 5].map(n => (
                 <SelectItem key={n} value={String(n)}>{n} Hook{n > 1 ? 's' : ''}</SelectItem>
@@ -2035,15 +1960,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* País Objetivo */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> País
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> País
           </Label>
-          <Select 
-            value={formData.target_country} 
+          <Select
+            value={formData.target_country}
             onValueChange={(v) => setFormData({ ...formData, target_country: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar país..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="País..." /></SelectTrigger>
             <SelectContent>
               {COUNTRIES.map((country) => (
                 <SelectItem key={country} value={country}>{country}</SelectItem>
@@ -2053,15 +1978,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Duración del Video */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Duración
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Duración
           </Label>
-          <Select 
-            value={formData.video_duration} 
+          <Select
+            value={formData.video_duration}
             onValueChange={(v) => setFormData({ ...formData, video_duration: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar duración..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Duración..." /></SelectTrigger>
             <SelectContent>
               {VIDEO_DURATIONS.map((duration) => (
                 <SelectItem key={duration.value} value={duration.value}>{duration.label}</SelectItem>
@@ -2070,16 +1995,30 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
-        {/* Plataforma Destino */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Plataforma
+        {/* ── Fila 2: CTA (2 cols) | Plataforma ── */}
+        {/* CTA */}
+        <div className="space-y-1.5 col-span-2">
+          <Label className="flex items-center gap-1 text-xs">
+            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> CTA *
           </Label>
-          <Select 
-            value={formData.target_platform} 
+          <Input
+            value={formData.cta}
+            onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+            placeholder="Ej: Haz clic en el link de la bio"
+            className="h-8 text-xs sm:text-sm"
+          />
+        </div>
+
+        {/* Plataforma Destino */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Plataforma
+          </Label>
+          <Select
+            value={formData.target_platform}
             onValueChange={(v) => setFormData({ ...formData, target_platform: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar plataforma..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Red..." /></SelectTrigger>
             <SelectContent>
               {TARGET_PLATFORMS.map((platform) => (
                 <SelectItem key={platform.value} value={platform.value}>{platform.label}</SelectItem>
@@ -2088,8 +2027,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
+        {/* ── Campos de ancho completo ── */}
+
         {/* Toggle Perplexity Research */}
-        <div className="space-y-4 sm:col-span-2">
+        <div className="space-y-4 col-span-2 sm:col-span-3">
           <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20 gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm shrink-0">
@@ -2161,7 +2102,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Estructura Narrativa */}
-        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estructura Narrativa *
           </Label>
@@ -2178,8 +2119,63 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
+        {/* Ángulo de Venta */}
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
+          </Label>
+          <Input
+            value={formData.sales_angle}
+            onChange={(e) => setFormData(prev => ({ ...prev, sales_angle: e.target.value }))}
+            placeholder="Escribe o selecciona un ángulo de venta..."
+            className="text-sm"
+          />
+          {researchAngles.length > 0 && (
+            <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+              <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                {researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''} de la investigación — haz click para seleccionar:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {researchAngles.map((a: any, idx: number) => {
+                  const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                  if (!angleText) return null;
+                  const angleType = a?.type || a?.category || a?.funnelPhase || "";
+                  const description = a?.description || a?.explicacion || "";
+                  const isSelected = formData.sales_angle === angleText;
+                  const isV2 = !!(a?._source === 'v2' || (!a?.type && !a?.category && idx >= (product?.sales_angles?.length ?? 0)));
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`text-left p-2.5 rounded-sm border transition-all ${
+                        isSelected
+                          ? 'ring-2 ring-primary border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
+                      }`}
+                      onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                    >
+                      <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
+                      {description && (
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{description}</p>
+                      )}
+                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                        {angleType && (
+                          <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
+                        )}
+                        {isV2 && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">V2 ADN</Badge>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Avatar Ideal */}
-        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Avatar / Cliente Ideal
           </Label>
@@ -2241,7 +2237,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Dolores */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
@@ -2263,7 +2259,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Deseos */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
@@ -2285,7 +2281,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Objeciones */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             🚫 Objeción Seleccionada
           </Label>
