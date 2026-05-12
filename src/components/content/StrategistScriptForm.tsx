@@ -728,7 +728,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis")
+          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis, brief_data")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -989,6 +989,15 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         }
       }
       
+      // Auto-fill country from product brief_data if form is empty
+      if (!prev.target_country) {
+        const bd = researchProduct?.brief_data as any;
+        const country = bd?.target_country
+          || (Array.isArray(bd?.target_locations) && bd.target_locations[0])
+          || '';
+        if (country) updates.target_country = country;
+      }
+
       // Auto-suggest CTA from sales_angles_data.puv if empty
       if (!prev.cta) {
         const puv = researchProduct?.sales_angles_data?.puv;
