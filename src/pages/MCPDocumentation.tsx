@@ -16,8 +16,57 @@ la plataforma Kreoon: crear campañas, gestionar creadores, aprobar guiones, man
 y administrar el marketplace.
 
 **Endpoint principal:** https://mcp.kreoon.com
-**Versión:** v3.0.0
+**Versión:** v3.1.0
 **Herramientas disponibles:** 35
+
+---
+
+## 🗣️ Cómo hablarle al MCP en lenguaje natural
+
+Este servidor está optimizado para que el usuario escriba en lenguaje natural y el LLM elija la tool correcta. Los descriptions de cada tool incluyen frases típicas que disparan su uso. Además, en cada \`initialize\` el servidor envía instrucciones globales que el cliente LLM lee antes de operar.
+
+### Casos de uso típicos
+
+| Lo que dice el usuario | Tools que se invocan |
+|---|---|
+| "Muéstrame las marcas / clientes" | \`list_clients\` |
+| "Busca el cliente Digitalex / Ñam Ñam" | \`list_clients\` con \`search\` |
+| "Dame los productos de esta marca" | \`list_products\` con \`client_id\` |
+| "Trae el ADN de la marca X" | \`get_brand_dna\` |
+| "Genera el ADN de la marca / del producto" | \`generate_brand_dna\` / \`generate_product_dna_v1\` |
+| "Muéstrame los guiones del producto Y" | \`list_content_items\` con \`product_id\` |
+| "Enséñame este ítem / guion v3" | \`get_content_item\` |
+| "Crea un anuncio UGC para venta directa" | \`create_content_item\` + \`generate_content_block\` (×5 bloques) |
+| "Hazme un guion para Reels" | \`generate_content_block\` con \`block_type=script\` |
+| "Genera director / B-roll / captions / marketing" | \`generate_content_block\` con el \`block_type\` correspondiente |
+| "Cambia esta frase del guion" | \`get_content_item\` + \`update_content_item\` (edición quirúrgica) |
+| "Quita la mención a X / corrige el componente Y" | \`update_content_item\` con \`replace_all=false\` |
+| "Asígnale un creador / editor" | \`assign_content_team\` |
+| "Aprueba el guion / Pide cambios" | \`approve_content_script\` |
+| "Registra la entrega" | \`record_content_delivery\` |
+| "Marca el pago al creador" | \`mark_content_payment\` |
+
+### ⚠️ Regla de oro — el MCP nunca inventa
+
+Si el usuario no especifica algo importante, el LLM cliente DEBE preguntar antes de actuar. Cosas que SIEMPRE deben quedar claras:
+
+- **Qué marca / cliente exacto** (si hay varios candidatos)
+- **Qué producto** (si la marca tiene más de uno)
+- **Qué item específico** de contenido
+- **Qué tipo de bloque** (\`script\` / \`director\` / \`broll\` / \`captions\` / \`marketing\`)
+- **Qué plataforma** (\`instagram_reels\` / \`tiktok\` / \`youtube_shorts\` / \`instagram_post\`)
+- **Qué etapa de funnel** (\`tofu\` / \`mofu\` / \`bofu\`)
+- **Datos del producto** que no estén en el ADN (componentes, ingredientes, precios, garantías)
+- **Posicionamiento o ángulos** específicos del cliente
+
+El \`initialize\` del servidor envía estas reglas como \`instructions\` al cliente MCP. Cualquier LLM bien implementado las respetará automáticamente.
+
+### Reglas de edición de guiones
+
+- **"Ajusta esta frase"** → edición quirúrgica con \`update_content_item\`. NO regenerar.
+- **"Rediseña / haz uno nuevo"** → \`generate_content_block\` (reemplaza el campo completo aplicando las skills).
+- **Modificás un bloque** (script, director_output, broll_output, captions, marketing_output) → conservá los demás bloques intactos.
+- **Guiones realistas**: hablar humano = ~150 palabras/minuto = ~2.5 palabras/segundo. Un Reel de 30s = MAX ~75 palabras de diálogo.
 
 ---
 
@@ -482,7 +531,7 @@ export default function MCPDocumentation() {
           <span className="text-purple-400 font-bold">MCP</span>
         </div>
         <Badge variant="outline" className="text-xs border-purple-500/40 text-purple-300 bg-purple-500/10">
-          v3.0.0
+          v3.1.0
         </Badge>
       </div>
 
@@ -506,6 +555,68 @@ export default function MCPDocumentation() {
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">REST API</span>
+          </div>
+        </section>
+
+        {/* Lenguaje natural — Casos de uso */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Zap className="w-6 h-6 text-purple-400" />
+            Hablale en lenguaje natural
+          </h2>
+          <p className="text-gray-400 leading-relaxed">
+            Este MCP está optimizado para que escribas como hablás. El LLM cliente lee las instrucciones del servidor en cada <code className="bg-[#1e1e2e] px-1 py-0.5 rounded text-purple-300">initialize</code> y elige las tools correctas. Algunos ejemplos:
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[#2a2a3a]">
+                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Lo que dice el usuario</th>
+                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Tools que se invocan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { say: '"Muéstrame las marcas / clientes"', tools: 'list_clients' },
+                  { say: '"Busca el cliente Digitalex / Ñam Ñam"', tools: 'list_clients(search)' },
+                  { say: '"Dame los productos de esta marca"', tools: 'list_products(client_id)' },
+                  { say: '"Trae el ADN de la marca"', tools: 'get_brand_dna' },
+                  { say: '"Genera el ADN de la marca"', tools: 'generate_brand_dna' },
+                  { say: '"Muéstrame los guiones del producto"', tools: 'list_content_items(product_id)' },
+                  { say: '"Enséñame este ítem / guion"', tools: 'get_content_item' },
+                  { say: '"Crea un anuncio UGC para venta directa"', tools: 'create_content_item + generate_content_block ×5' },
+                  { say: '"Hazme un guion para Reels"', tools: 'generate_content_block(block_type=script)' },
+                  { say: '"Genera director / B-roll / captions / marketing"', tools: 'generate_content_block(block_type=...)' },
+                  { say: '"Cambia esta frase del guion"', tools: 'get_content_item + update_content_item' },
+                  { say: '"Quita la mención a X / corrige el componente Y"', tools: 'update_content_item (quirúrgico)' },
+                  { say: '"Asígnale un creador / editor"', tools: 'assign_content_team' },
+                  { say: '"Aprueba el guion / Pide cambios"', tools: 'approve_content_script' },
+                ].map((row, i) => (
+                  <tr key={i} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-[#13131a]" : "bg-[#0f0f1a]"}`}>
+                    <td className="px-4 py-3 text-gray-300 text-xs">{row.say}</td>
+                    <td className="px-4 py-3 font-mono text-purple-300 text-xs">{row.tools}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Regla "no inventar" */}
+          <div className="bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-500/30 rounded-xl p-5 mt-4">
+            <div className="flex items-start gap-3">
+              <div className="bg-amber-500/20 p-2 rounded-lg mt-0.5">
+                <Shield className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-white font-semibold text-base">⚠️ El MCP nunca inventa</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  Si algo no está claro (qué marca, qué producto, qué plataforma, qué etapa de funnel, qué componentes del producto…) el LLM cliente <strong className="text-white">debe preguntar antes de actuar</strong>. Nunca asume datos. Nunca inventa UUIDs ni ingredientes. Esta regla viaja en el <code className="bg-[#1e1e2e] px-1 py-0.5 rounded text-purple-300">initialize</code> del servidor.
+                </p>
+                <p className="text-gray-400 text-xs leading-relaxed pt-1">
+                  Reglas de edición de guiones: <strong className="text-white">"ajusta esta frase"</strong> → edición quirúrgica con <code className="text-purple-300">update_content_item</code>. <strong className="text-white">"Rediseña"</strong> → <code className="text-purple-300">generate_content_block</code> (reemplaza el bloque con las skills internas).
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -698,7 +809,7 @@ curl -X POST \\
 
         {/* Footer */}
         <footer className="text-center text-gray-600 text-xs pt-8 pb-4 border-t border-[#1e1e2e]">
-          <p>Kreoon MCP Server v3.0.0 — <a href="https://mcp.kreoon.com/health" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">mcp.kreoon.com</a></p>
+          <p>Kreoon MCP Server v3.1.0 — <a href="https://mcp.kreoon.com/health" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">mcp.kreoon.com</a></p>
           <p className="mt-1">Genera tu API key en <a href="https://app.kreoon.com/settings" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">app.kreoon.com/settings</a></p>
         </footer>
 

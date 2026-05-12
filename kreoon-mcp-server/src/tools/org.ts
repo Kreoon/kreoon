@@ -48,12 +48,13 @@ export const orgToolDefinitions = [
   {
     name: "list_clients",
     description:
-      "Lista los clientes/marcas registradas en la organización. " +
-      "Retorna el UUID de cada cliente para usarlo en create_content_item.",
+      "🏷️ BUSCAR MARCAS Y CLIENTES de la organización. " +
+      "Cuándo usarla: el usuario menciona una marca por nombre ('Digitalex', 'Mordisquitos', 'Ñam Ñam'…) y necesitás su UUID antes de cualquier otra acción. " +
+      "Tip: usá el parámetro `search` para filtrar por nombre. Devuelve los UUIDs necesarios para list_products, create_content_item, get_brand_dna y otras tools.",
     inputSchema: {
       type: "object",
       properties: {
-        search: { type: "string", description: "Buscar por nombre del cliente" },
+        search: { type: "string", description: "Buscar por nombre del cliente (ej: 'digitalex', 'ñam')" },
         is_vip: { type: "boolean", description: "Solo clientes VIP (opcional)" },
         limit: { type: "number", description: "Cantidad de resultados (default: 30, max: 100)", minimum: 1, maximum: 100 },
       },
@@ -116,12 +117,15 @@ export const orgToolDefinitions = [
   },
   {
     name: "list_products",
-    description: "Lista los productos registrados para un cliente específico o todos los de la organización.",
+    description:
+      "📦 BUSCAR PRODUCTOS de un cliente o de toda la organización. " +
+      "Cuándo usarla: el usuario menciona un producto ('Mordisquitos', 'Chispita', 'Kit Integral'…) y necesitás su UUID + descripción + avatar + sales_angles. " +
+      "Devuelve campos clave (description, ideal_avatar, sales_angles) que generate_content_block usa para enriquecer el brief automáticamente.",
     inputSchema: {
       type: "object",
       properties: {
-        client_id: { type: "string", description: "UUID del cliente para filtrar (opcional)" },
-        search:    { type: "string", description: "Buscar por nombre del producto" },
+        client_id: { type: "string", description: "UUID del cliente para filtrar (recomendado si ya sabés la marca)" },
+        search:    { type: "string", description: "Buscar por nombre del producto (ej: 'mordisq', 'kit')" },
         limit:     { type: "number", description: "Cantidad de resultados (default: 20, max: 50)", minimum: 1, maximum: 50 },
       },
       required: [],

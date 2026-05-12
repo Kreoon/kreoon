@@ -27,10 +27,12 @@ export const contentGenerationToolDefinitions = [
   {
     name: "generate_content_block",
     description:
-      "Genera un bloque de producción UGC usando las Skills de IA de KREOON: " +
-      "guión, director, B-roll, captions o marketing. " +
-      "El output es HTML estructurado listo para renderizar en la app — no texto plano. " +
-      "Si se provee content_id, guarda automáticamente en el campo correcto del ítem.",
+      "🎬 GENERAR CONTENIDO UGC con las Skills de IA de KREOON. " +
+      "Cuándo usarla: el usuario dice 'hazme un guion', 'genera el director', 'dame el B-roll', 'crea los captions' o 'arma la estrategia de marketing'. " +
+      "Bloques disponibles: script (guion UGC) · director (tabla de producción) · broll (tomas de apoyo) · captions (textos para publicar) · marketing (estrategia de pauta). " +
+      "Si pasás content_id, extrae automáticamente cliente/producto/plataforma del ítem y guarda el resultado en su columna. " +
+      "⚠️ NO INVENTAR: si el usuario no especifica plataforma (instagram_reels/tiktok/youtube_shorts), funnel_stage (tofu/mofu/bofu) o block_type, PREGUNTÁ antes de llamar. " +
+      "Output: HTML estructurado listo para renderizar en KREOON.",
     inputSchema: {
       type: "object",
       properties: {

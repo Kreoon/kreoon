@@ -12,8 +12,10 @@ export const operationsToolDefinitions = [
   {
     name: "get_content_item",
     description:
-      "Obtiene el detalle completo de un ítem de contenido: brief, guión, equipo asignado, " +
-      "pagos, fechas, estado de entrega y URLs de video.",
+      "📄 VER UN GUION/ITEM completo. " +
+      "Cuándo usarla: el usuario dice 'muéstrame el guion v3', 'enséñame este ítem', 'qué tiene este contenido'. " +
+      "Devuelve todos los bloques (script, director_output, broll_output, captions, marketing_output) + brief + equipo + pagos + fechas. " +
+      "Úsalo SIEMPRE antes de update_content_item para editar quirúrgicamente: necesitás el HTML actual para reemplazar solo lo que cambia.",
     inputSchema: {
       type: "object",
       properties: {
@@ -77,8 +79,10 @@ export const operationsToolDefinitions = [
   {
     name: "create_content_item",
     description:
-      "Crea un nuevo ítem de contenido en el tablero de la organización. " +
-      "Puede incluir asignación de creador, editor y fecha límite desde el inicio.",
+      "➕ CREAR UN NUEVO ITEM DE CONTENIDO en el tablero. " +
+      "Cuándo usarla: el usuario dice 'crea un guion para…', 'arma un nuevo ítem de…', 'necesito un anuncio para…'. " +
+      "Después de crearlo, llamá generate_content_block con el content_id devuelto para producir los bloques. " +
+      "⚠️ NO INVENTAR: si el usuario no especifica plataforma, funnel_stage o tipo de contenido, PREGUNTÁ antes de crear.",
     inputSchema: {
       type: "object",
       properties: {
@@ -114,9 +118,11 @@ export const operationsToolDefinitions = [
   {
     name: "update_content_item",
     description:
-      "Actualiza los campos de metadata de un ítem de contenido existente: cliente, producto, " +
-      "plataforma, tipo, funnel, notas, deadline, guión, director, B-roll y captions. " +
-      "Úsalo para asignar cliente a un ítem ya creado o guardar outputs de producción.",
+      "✏️ EDITAR UN ITEM EXISTENTE (edición quirúrgica). " +
+      "Cuándo usarla: el usuario dice 'cambia esta frase', 'ajusta solo X', 'quita la mención a Y', 'corrige el componente Z'. " +
+      "Permite reemplazar campos individuales: script, director_output, broll_output, captions, marketing_output, además del brief y la metadata. " +
+      "⚠️ REGLA QUIRÚRGICA: leé el contenido actual con get_content_item, aplicá SOLO los cambios pedidos, conservá lo demás idéntico. " +
+      "NO REGENERAR cuando el usuario solo pide ajustar. Si el usuario quiere algo nuevo desde cero, usá generate_content_block.",
     inputSchema: {
       type: "object",
       properties: {
@@ -141,8 +147,10 @@ export const operationsToolDefinitions = [
   {
     name: "list_content_items",
     description:
-      "Lista los ítems de contenido del tablero de la organización con filtros. " +
-      "Ideal para obtener el pipeline actual antes de asignar nuevas tareas.",
+      "📋 LISTAR ITEMS DEL TABLERO con filtros. " +
+      "Cuándo usarla: el usuario dice 'muéstrame los guiones de X', 'qué hay en el pipeline', 'busca los items pendientes'. " +
+      "Tip: si el usuario menciona una marca/producto específico, filtrá con product_id (obtenelo de list_products primero). " +
+      "Estados típicos: draft → script_pending → script_approved → assigned → recording → editing → review → approved → published → paid.",
     inputSchema: {
       type: "object",
       properties: {

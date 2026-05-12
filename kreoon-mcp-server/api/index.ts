@@ -14,6 +14,60 @@ import { handleContentGenerationTool, contentGenerationToolDefinitions } from '.
 import { handleProductDnaTool, productDnaToolDefinitions } from '../src/tools/product-dna.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
 
+// ─── Instrucciones globales del MCP para el LLM cliente ──────────────────────
+// Estas instrucciones se envían en el initialize del protocolo MCP.
+// El LLM cliente DEBE seguirlas siempre que opere contra este servidor.
+
+const MCP_INSTRUCTIONS = `Este es el MCP de KREOON: la plataforma para gestionar contenido UGC, marcas, productos, creadores y campañas.
+
+🎯 CÓMO USARME EN LENGUAJE NATURAL
+
+Cuando el usuario te diga cosas como…
+- "Hazme un guion para X marca" → usa generate_content_block con block_type=script
+- "Genera la dirección/B-roll/captions/marketing del item Y" → generate_content_block con block_type=director|broll|captions|marketing
+- "Crea un item de contenido para venta directa" → create_content_item primero, luego generate_content_block
+- "Muéstrame los guiones de la marca X" → list_clients (para el id) + list_content_items (filtra por product_id si lo tienen)
+- "Cambia esta frase del guion" → get_content_item + update_content_item (edición quirúrgica del campo script)
+- "Genera el ADN de la marca" → generate_brand_dna · "Consúltame el ADN" → get_brand_dna
+- "Genera el ADN del producto" → generate_product_dna_v1 · "Consúltame el estado" → get_product_dna_status
+- "Lista las marcas/productos/clientes" → list_clients · list_products
+- "Asígnale un creador/editor a este contenido" → assign_content_team
+- "Aprueba el guion / Pídele cambios" → approve_content_script
+
+⚠️ REGLA DE ORO — NUNCA INVENTAR
+
+Si el usuario pide algo y NO está claro:
+- Qué cliente/marca específico (cuando hay varios)
+- Qué producto (si el cliente tiene más de uno)
+- Qué item específico de contenido
+- Qué tipo de bloque generar (script / director / broll / captions / marketing)
+- Qué plataforma de destino (instagram_reels / tiktok / youtube_shorts)
+- Qué etapa del funnel (tofu / mofu / bofu)
+- Datos del producto (componentes, ingredientes, precios, garantías)
+- Posicionamiento o ángulos específicos
+
+→ PREGUNTAR PRIMERO. No deducir. No asumir. No inventar datos del producto.
+→ Si necesitas un UUID, llama list_clients / list_products / list_content_items para obtenerlo. NO inventes IDs.
+
+📝 REGLAS DE EDICIÓN DE GUIONES
+
+- Si el usuario dice "ajusta esta frase" o "cambia X por Y" → edición quirúrgica con update_content_item, NO regenerar.
+- Si el usuario dice "rediseña" o "regenera con otro estilo" → generate_content_block (reemplaza el campo completo).
+- Si modificás contenido (script, director_output, broll_output, captions, marketing_output), conservá lo demás idéntico.
+- Para guiones realistas: hablar humano = ~150 palabras/minuto = ~2.5 palabras/segundo. Un Reel de 30s tiene MAX ~75 palabras de diálogo.
+
+🔒 SCOPES Y AUTORIZACIÓN
+
+Cada API key tiene scopes específicos (campaigns:read, campaigns:write, scripts:write, etc.). Si recibes un error 403 "scope insuficiente", explícalo al usuario, no intentes otra tool.
+
+🧠 SKILLS INTERNAS DE KREOON
+
+Las tools generate_script, generate_content_block, generate_brand_dna y generate_product_dna_v1 disparan las skills de IA internas de KREOON (Edge Functions con prompts blindados, método CAST, formato HTML estructurado). El parámetro additional_instructions del LLM cliente se AÑADE al prompt base, no lo reemplaza.
+
+📦 OUTPUT TÍPICO
+
+Los outputs de generate_content_block son HTML estructurado (no markdown) listo para renderizar en la app KREOON. Si content_id está presente, el bloque se guarda automáticamente en la columna correcta (script, director_output, broll_output, captions, marketing_output).`;
+
 // ─── OAuth authorize page HTML ───────────────────────────────────────────────
 
 function authorizeHtml(redirectUri: string, state: string, error?: string) {
@@ -270,7 +324,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   // GET /health (también acepta /api/index.ts como ruta raíz de Vercel)
   const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
   if (req.method === 'GET' && isHealthPath) {
-    return json(response, 200, { status: 'ok', version: '3.0.0', tools: ALL_TOOL_DEFS.length });
+    return json(response, 200, { status: 'ok', version: '3.1.0', tools: ALL_TOOL_DEFS.length });
   }
 
   // ── OAuth 2.0 — para Claude.ai web connector ─────────────────────────────
@@ -403,7 +457,12 @@ export default async function handler(req: IncomingMessage, response: ServerResp
 
     // initialize
     if (method === 'initialize') {
-      return rpc({ protocolVersion: '2024-11-05', capabilities: { tools: {} }, serverInfo: { name: 'kreoon', version: '3.0.0' } });
+      return rpc({
+        protocolVersion: '2024-11-05',
+        capabilities: { tools: {} },
+        serverInfo: { name: 'kreoon', version: '3.1.0' },
+        instructions: MCP_INSTRUCTIONS,
+      });
     }
     // notifications/initialized (no respuesta requerida)
     if (method === 'notifications/initialized') {
