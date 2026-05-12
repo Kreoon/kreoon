@@ -147,6 +147,149 @@ const NARRATIVE_STRUCTURES = [
   { value: "storytime", label: "Storytime", description: "Historia larga y envolvente" },
 ];
 
+// Estrategias detalladas por estructura narrativa — se inyectan en el contexto de la IA
+const NARRATIVE_STRATEGIES: Record<string, string> = {
+  "problema-solucion": `ESTRATEGIA PAS (Problema → Agitación → Solución):
+- HOOK (Escena 1): Abre nombrando el dolor exacto del avatar — sin rodeos, primera oración impactante
+- AGITACIÓN (Escena 2): Amplifica el problema, muestra las consecuencias de no resolverlo, genera urgencia emocional
+- SOLUCIÓN (Escena 3): Presenta el producto como la salida lógica y probada al problema
+- PRUEBA (Escena 4): Dato, resultado o demostración rápida que respalda la solución
+- CTA (Escena 5): Llamada a la acción directa y clara, aprovechando el estado emocional creado`,
+
+  "historia-personal": `ESTRATEGIA STORYBRAND (Historia de Transformación Personal):
+- HOOK (Escena 1): Revela el momento más bajo o el antes — frase de vulnerabilidad genuina
+- CONTEXTO (Escena 2): Describe quién eras antes, qué intentaste sin éxito, por qué no funcionaba
+- PUNTO DE QUIEBRE (Escena 3): El momento en que descubriste o decidiste cambiar (introduce el producto naturalmente)
+- TRANSFORMACIÓN (Escena 4): Resultados concretos y cómo cambió tu vida/negocio/salud con números si es posible
+- INVITACIÓN (Escena 5): Invita al espectador a vivir su propia transformación — CTA empático`,
+
+  "antes-despues": `ESTRATEGIA BEFORE/AFTER/BRIDGE:
+- HOOK (Escena 1): Muestra el DESPUÉS de forma impactante primero (el resultado) — genera curiosidad inmediata
+- ANTES (Escena 2): Contrasta con el punto de partida — describe la situación anterior con detalles visuales
+- PUENTE (Escena 3): Revela qué cambió exactamente, cómo y por qué este producto fue el puente
+- PRUEBA VISUAL (Escena 4): Refuerza con comparación tangible — medidas, fotos, métricas, tiempo transcurrido
+- CTA (Escena 5): Invita a comenzar el propio "antes" para llegar al "después" deseado`,
+
+  "tutorial": `ESTRATEGIA PASO A PASO (How-To Hook):
+- HOOK (Escena 1): Promete el resultado final — "En 3 pasos vas a lograr [beneficio específico]"
+- CONTEXTO (Escena 2): Explica brevemente por qué este método/producto funciona (credibilidad)
+- PASO 1 (Escena 3): Primer paso claro y accionable — con demostración visual si es posible
+- PASO 2-3 (Escena 4): Continuación fluida, mostrando el proceso real con el producto
+- RESULTADO + CTA (Escena 5): Muestra el resultado al aplicar los pasos + dónde conseguirlo`,
+
+  "testimonio": `ESTRATEGIA SOCIAL PROOF (Testimonio Estructura):
+- HOOK (Escena 1): Abre con la transformación del cliente en primera persona — resultado concreto con número
+- ESCEPTICISMO (Escena 2): Confiesa que al inicio no creía o dudaba — genera identificación
+- DESCUBRIMIENTO (Escena 3): Cómo llegó al producto y por qué decidió probarlo
+- EXPERIENCIA (Escena 4): Cómo fue el proceso de uso — detalles sensoriales y emocionales reales
+- RECOMENDACIÓN (Escena 5): Por qué lo recomendaría, a quién va dirigido + CTA natural`,
+
+  "urgencia": `ESTRATEGIA FOMO + ESCASEZ:
+- HOOK (Escena 1): Abre con la limitación — "Solo quedan X unidades" / "Solo hasta [fecha]" — genera presión inmediata
+- VALOR (Escena 2): Justifica rápidamente por qué vale la pena actuar ahora — beneficio principal
+- PRUEBA (Escena 3): Muestra por qué otros ya están aprovechando (social proof rápido)
+- CONSECUENCIA (Escena 4): Qué pierden si no actúan ahora — costo de la inacción
+- CTA URGENTE (Escena 5): Llamada directísima con el mecanismo de compra claro y la urgencia reforzada`,
+
+  "educativo": `ESTRATEGIA EDUTAINMENT (Enseña + Engancha):
+- HOOK (Escena 1): Dato sorprendente, estadística o pregunta retórica que desafía lo que el avatar cree
+- ENSEÑANZA (Escena 2): Revela la información valiosa de forma clara y memorable — el "por qué" detrás
+- EJEMPLO (Escena 3): Caso real, analogía o demostración que hace tangible el concepto
+- CONEXIÓN (Escena 4): Vincula el conocimiento aprendido con el producto — transición natural, no forzada
+- CTA EDUCADO (Escena 5): Invita a aprender más, profundizar o conseguir la herramienta — tono consultivo`,
+
+  "entretenimiento": `ESTRATEGIA HOOK EMOCIONAL (Humor/Drama/Sorpresa):
+- HOOK (Escena 1): Situación absurda, inesperada o graciosa relacionada con el nicho — retención máxima
+- DESARROLLO (Escena 2): Amplía la situación con ritmo rápido — mantiene la energía del hook
+- GIRO (Escena 3): El twist o remate que justifica el gancho — el producto aparece de forma orgánica
+- REMATE (Escena 4): Cierra el arco humorístico/dramático con el beneficio del producto integrado
+- CTA LIGERO (Escena 5): CTA con el mismo tono del video — no rompe la energía creada`,
+
+  "mitos-realidades": `ESTRATEGIA MITO-BUSTING:
+- HOOK (Escena 1): Nombra el mito más grande del nicho — algo que casi todo el mundo cree erróneamente
+- MITO 1 (Escena 2): Presenta el primer error común + desmiente con dato o prueba
+- MITO 2 (Escena 3): Segundo mito frecuente + la verdad detrás
+- REALIDAD (Escena 4): Presenta la solución real (el producto) como el camino correcto basado en evidencia
+- CTA EDUCADO (Escena 5): Invita a dejar de cometer el error y comenzar el camino correcto`,
+
+  "comparativa": `ESTRATEGIA VS/DIFERENCIACIÓN:
+- HOOK (Escena 1): Promete mostrar una diferencia que nadie está viendo — genera curiosidad comparativa
+- ALTERNATIVA COMÚN (Escena 2): Describe lo que el avatar usa ahora — con sus limitaciones reales
+- COMPARACIÓN (Escena 3): Muestra el producto lado a lado con la alternativa — criterios específicos
+- VENTAJA CLARA (Escena 4): Resultado diferencial en términos concretos — velocidad, precio, eficacia, simplicidad
+- CTA DE DECISIÓN (Escena 5): Invita a tomar la decisión correcta ahora que ya sabe la diferencia`,
+
+  "detras-camaras": `ESTRATEGIA TRANSPARENCIA/AUTENTICIDAD:
+- HOOK (Escena 1): "Lo que nadie te muestra sobre [producto/proceso]" — promesa de exclusividad
+- PROCESO (Escena 2): Revela cómo se hace, fabrica o funciona el producto — con detalles reales
+- ESTÁNDAR (Escena 3): Muestra el nivel de cuidado, calidad o esfuerzo detrás — construye confianza
+- PERSONAS (Escena 4): Humaniza la marca — equipo, historia, valores que respaldan el producto
+- CTA DE CONFIANZA (Escena 5): Invita a ser parte de algo auténtico — CTA con tono de comunidad`,
+
+  "unboxing": `ESTRATEGIA REVEAL/DESCUBRIMIENTO:
+- HOOK (Escena 1): Genera anticipación máxima — "Finalmente llegó" / muestra el paquete sin abrir
+- PRIMER CONTACTO (Escena 2): Reacción genuina al abrir — texturas, presentación, detalles del packaging
+- EXPLORACIÓN (Escena 3): Descubre cada componente con comentarios espontáneos — muestra beneficios visualmente
+- PRIMERA PRUEBA (Escena 4): Usa el producto por primera vez en cámara — reacción auténtica
+- VEREDICTO (Escena 5): Conclusión honesta + CTA para quienes quieran la misma experiencia`,
+
+  "reaccion": `ESTRATEGIA AUTENTICIDAD ESPONTÁNEA:
+- HOOK (Escena 1): Abre en medio de la reacción — captura el momento de sorpresa o emoción sin filtro
+- CONTEXTO (Escena 2): Explica brevemente qué estás probando y por qué tenías expectativas (altas o bajas)
+- REACCIÓN (Escena 3): La respuesta genuina al usar el producto — emociones en tiempo real
+- ANÁLISIS (Escena 4): Reflexión inmediata — qué funciona, qué sorprendió, qué no esperabas
+- RECOMENDACIÓN (Escena 5): Veredicto honesto + a quién se lo recomendaría + CTA`,
+
+  "lista": `ESTRATEGIA TOP LIST / LISTICLE:
+- HOOK (Escena 1): Promete la lista con número exacto — "X razones por las que..." / "X errores que..."
+- ÍTEM 1-2 (Escena 2): Primeros dos puntos con ritmo rápido — cada uno en 5-8 segundos máximo
+- ÍTEM 3-4 (Escena 3): Siguientes puntos — el punto más poderoso va en posición 3 o penúltima
+- ÍTEM FINAL (Escena 4): El último ítem es el más sorprendente o emocional — máximo impacto de cierre
+- CTA (Escena 5): Remata con el siguiente paso lógico después de la lista`,
+
+  "pov": `ESTRATEGIA POV INMERSIVO:
+- HOOK (Escena 1): "POV: [situación exacta del avatar]" — el espectador se ve reflejado desde la primera línea
+- SITUACIÓN (Escena 2): Desarrolla el escenario con detalles que el avatar reconoce como propios
+- DESCUBRIMIENTO (Escena 3): El momento en que el avatar del video encuentra/usa el producto — naturalidad
+- TRANSFORMACIÓN (Escena 4): Cómo cambia la situación del avatar al usar el producto — resultado inmediato
+- CIERRE POV (Escena 5): "Ahora entiendes por qué..." — CTA en el mismo tono inmersivo`,
+
+  "controversia": `ESTRATEGIA OPINIÓN CONTROVERSIAL (Pattern Interrupt):
+- HOOK (Escena 1): Declaración polémica o contraintuitiva — algo que la mayoría del nicho NO dice
+- DEFENSA (Escena 2): Argumenta por qué tienes esa opinión — con datos o experiencia real
+- CONTEXTO (Escena 3): Reconoce el otro punto de vista antes de derrumbarlo — muestra madurez
+- PRUEBA (Escena 4): Evidencia que respalda tu posición — el producto como parte de la solución
+- CTA DESAFIANTE (Escena 5): Invita a quien esté de acuerdo a actuar — filtra audiencia calificada`,
+
+  "trend": `ESTRATEGIA TREND-JACKING:
+- HOOK (Escena 1): Usa exactamente el formato/audio/texto del trend viral — reconocimiento inmediato
+- ADAPTACIÓN (Escena 2): Lleva el trend al nicho del producto de forma creativa — mantiene el formato
+- GIRO DE MARCA (Escena 3): Integra el producto en el trend de forma que se sienta natural, no forzado
+- REMATE (Escena 4): El punch line o momento payoff del trend — adaptado al mensaje de la marca
+- CTA TREND (Escena 5): CTA que mantiene la energía del trend — lenguaje acorde al formato viral`,
+
+  "dia-en-vida": `ESTRATEGIA DAY IN THE LIFE:
+- HOOK (Escena 1): "Mi rutina cambia desde que uso [producto]" — promete transformación cotidiana
+- MAÑANA (Escena 2): Muestra el producto integrado en la rutina de inicio del día — naturaleza auténtica
+- DURANTE EL DÍA (Escena 3): Momento clave donde el producto resuelve o mejora algo concreto
+- RESULTADO DEL DÍA (Escena 4): Cómo se siente al final del día — beneficio acumulado y tangible
+- CTA DE ESTILO DE VIDA (Escena 5): Invita a vivir una rutina similar — aspiracional y alcanzable`,
+
+  "pregunta-respuesta": `ESTRATEGIA Q&A DIRECTO:
+- HOOK (Escena 1): La pregunta más frecuente o picante del nicho — responde directamente en el primer segundo
+- PREGUNTA 1 (Escena 2): Primera duda común + respuesta clara y directa con el producto como parte de la respuesta
+- PREGUNTA 2 (Escena 3): Segunda pregunta más técnica o de objeción + respuesta que desarma el miedo
+- PREGUNTA BONUS (Escena 4): La pregunta que nadie hace pero todos quieren saber — diferenciador
+- CTA (Escena 5): "¿Tienes más dudas? Aquí te lo explico todo" — lleva al siguiente nivel`,
+
+  "storytime": `ESTRATEGIA NARRATIVE ARC COMPLETO:
+- HOOK (Escena 1): Empieza por el final o el momento más tenso — "Lo que pasó ese día cambió todo"
+- CONTEXTO (Escena 2): Regresa al inicio — quién eras, cuál era la situación, qué estaba en juego
+- CONFLICTO (Escena 3): El problema o crisis que se desarrolla — tensión narrativa máxima
+- CLÍMAX (Escena 4): El punto de quiebre + cómo el producto o decisión cambió el resultado
+- RESOLUCIÓN (Escena 5): El estado actual después de la historia — lección + CTA desde la emoción generada`,
+};
+
 const COUNTRIES = [
   "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
 ];
@@ -1244,6 +1387,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
+    const narrativeStrategy = NARRATIVE_STRATEGIES[formData.narrative_structure] || null;
     
     // Determine sphere phase info
     const sphereInfo = spherePhase ? getSpherePhaseInfo(spherePhase) : null;
@@ -1277,7 +1421,7 @@ DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
 ESTRUCTURA NARRATIVA: ${narrativeLabel}
-PAÍS OBJETIVO: ${formData.target_country}
+${narrativeStrategy ? `\n${narrativeStrategy}\n` : ''}PAÍS OBJETIVO: ${formData.target_country}
 ${formData.video_duration ? `DURACIÓN DEL VIDEO: ${durationLabel}` : ''}
 ${formData.target_platform ? `PLATAFORMA DESTINO: ${platformLabel}` : ''}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
