@@ -943,17 +943,54 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   }, [researchProduct]);
 
   const researchAngles = useMemo(() => {
-    const angles = researchProduct?.sales_angles_data?.angles;
-    if (Array.isArray(angles) && angles.length) return angles;
+    const collected: any[] = [];
 
-    const salesAngles = researchProduct?.market_research?.salesAngles;
-    if (Array.isArray(salesAngles) && salesAngles.length) return salesAngles;
+    // ── V1: sales_angles_data.angles (estructurado) ──
+    const v1Structured = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(v1Structured) && v1Structured.length) {
+      collected.push(...v1Structured.map((a: any) => ({ ...a, _source: 'v1' })));
+    } else {
+      // V1 fallback: market_research.salesAngles
+      const v1MR = researchProduct?.market_research?.salesAngles;
+      if (Array.isArray(v1MR) && v1MR.length) {
+        collected.push(...v1MR.map((a: any) => ({ ...a, _source: 'v1' })));
+      } else {
+        // V1 legacy: sales_angles simple array
+        const legacy = (researchProduct?.sales_angles ?? product?.sales_angles) as any;
+        if (Array.isArray(legacy) && legacy.length) {
+          collected.push(...legacy.map((a: any) => ({ angle: typeof a === 'string' ? a : (a?.angle || a?.name || ''), _source: 'v1' })));
+        }
+      }
+    }
 
-    const fallback = (researchProduct?.sales_angles ?? product?.sales_angles) as any;
-    if (Array.isArray(fallback) && fallback.length) return fallback.map((a: any) => ({ angle: a }));
+    // ── V2: ai_analysis.creative_brief.content_pillars ──
+    const pillars = parsedAiAnalysis?.creative_brief?.content_pillars;
+    if (Array.isArray(pillars) && pillars.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      pillars.forEach((p: unknown) => {
+        const text = typeof p === 'string' ? p : (p as any)?.name || (p as any)?.pillar || '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({ angle: text, type: 'contenido', _source: 'v2', _v2type: 'pillar' });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
 
-    return [];
-  }, [researchProduct, product?.sales_angles]);
+    // ── V2: ai_analysis.market_analysis.opportunities ──
+    const opportunities = parsedAiAnalysis?.market_analysis?.opportunities;
+    if (Array.isArray(opportunities) && opportunities.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      opportunities.forEach((op: unknown) => {
+        const text = typeof op === 'string' ? op : '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({ angle: text, type: 'oportunidad', _source: 'v2', _v2type: 'opportunity' });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
+
+    return collected;
+  }, [researchProduct, product?.sales_angles, parsedAiAnalysis]);
 
   // Parsear ideal_avatar si es un JSON string para extraer JTBD
   const parsedIdealAvatar = useMemo(() => {
@@ -2296,48 +2333,61 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             placeholder="Escribe o selecciona un ángulo de venta..."
             className="text-sm"
           />
-          {researchAngles.length > 0 && (
-            <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
-              <p className="text-[10px] text-muted-foreground mb-2 px-1">
-                {researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''} de la investigación — haz click para seleccionar:
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {researchAngles.map((a: any, idx: number) => {
-                  const angleText = a?.angle || a?.salesAngle || a?.name || "";
-                  if (!angleText) return null;
-                  const angleType = a?.type || a?.category || a?.funnelPhase || "";
-                  const description = a?.description || a?.explicacion || "";
-                  const isSelected = formData.sales_angle === angleText;
-                  const isV2 = !!(a?._source === 'v2' || (!a?.type && !a?.category && idx >= (product?.sales_angles?.length ?? 0)));
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`text-left p-2.5 rounded-sm border transition-all ${
-                        isSelected
-                          ? 'ring-2 ring-primary border-primary bg-primary/10'
-                          : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
-                      }`}
-                      onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                    >
-                      <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
-                      {description && (
-                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{description}</p>
-                      )}
-                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-                        {angleType && (
-                          <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
+          {researchAngles.length > 0 && (() => {
+            const v1Count = researchAngles.filter((a: any) => a._source === 'v1').length;
+            const v2Count = researchAngles.filter((a: any) => a._source === 'v2').length;
+            return (
+              <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2">
+                  <span>{researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''}</span>
+                  {v1Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v1Count} V1</span>}
+                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400">{v2Count} V2 ADN</span>}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {researchAngles.map((a: any, idx: number) => {
+                    const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                    if (!angleText) return null;
+                    const angleType = a?.type || a?.category || a?.funnelPhase || "";
+                    const hookExample = a?.hookExample || "";
+                    const isSelected = formData.sales_angle === angleText;
+                    const isV2 = a?._source === 'v2';
+                    const v2TypeLabel = a?._v2type === 'pillar' ? 'Pilar' : a?._v2type === 'opportunity' ? 'Oportunidad' : null;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`text-left p-2.5 rounded-sm border transition-all ${
+                          isSelected
+                            ? 'ring-2 ring-primary border-primary bg-primary/10'
+                            : isV2
+                              ? 'border-green-500/20 hover:border-green-500/40 hover:bg-green-500/5 bg-background'
+                              : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
+                        }`}
+                        onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                      >
+                        <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
+                        {hookExample && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1 italic">"{hookExample}"</p>
                         )}
-                        {isV2 && (
-                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">V2 ADN</Badge>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
+                        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                          {angleType && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
+                          )}
+                          {isV2 ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
+                              {v2TypeLabel ? `V2 · ${v2TypeLabel}` : 'V2 ADN'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/30 text-muted-foreground">V1</Badge>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Avatar Ideal */}
