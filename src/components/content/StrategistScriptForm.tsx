@@ -862,6 +862,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   // Cargar la investigación COMPLETA del producto (avatar_profiles + sales_angles_data + market_research)
   const [researchProduct, setResearchProduct] = useState<any | null>(null);
+  // ADN de Producto (V1): datos de la tabla product_dna
+  const [productDnaRecord, setProductDnaRecord] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -869,6 +871,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     const fetchResearchProduct = async () => {
       if (!product?.id) {
         setResearchProduct(null);
+        setProductDnaRecord(null);
         return;
       }
 
@@ -884,44 +887,46 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         const normalized = (() => {
           if (!data) return null;
           const result = { ...(data as any) };
-          
-          // Parse market_research if it's a string
+
           const mr = result.market_research;
           if (typeof mr === "string") {
-            try {
-              result.market_research = JSON.parse(mr);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.market_research = JSON.parse(mr); } catch { /* keep as string */ }
           }
-          
-          // Parse sales_angles_data if it's a string
           const sad = result.sales_angles_data;
           if (typeof sad === "string") {
-            try {
-              result.sales_angles_data = JSON.parse(sad);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.sales_angles_data = JSON.parse(sad); } catch { /* keep as string */ }
           }
-          
-          // Parse avatar_profiles if it's a string
           const ap = result.avatar_profiles;
           if (typeof ap === "string") {
-            try {
-              result.avatar_profiles = JSON.parse(ap);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.avatar_profiles = JSON.parse(ap); } catch { /* keep as string */ }
           }
-          
+
           return result;
         })();
 
         if (!cancelled) setResearchProduct(normalized);
+
+        // También cargar ADN de Producto (product_dna) si existe el ID en brief_data
+        const dnaId = (normalized?.brief_data as any)?.product_dna_id;
+        if (dnaId) {
+          const { data: dnaData, error: dnaError } = await supabase
+            .from("product_dna")
+            .select("id, strategy_recommendations, ai_analysis, market_research, content_brief")
+            .eq("id", dnaId)
+            .maybeSingle();
+
+          if (!dnaError && dnaData && !cancelled) {
+            setProductDnaRecord(dnaData);
+          }
+        } else if (!cancelled) {
+          setProductDnaRecord(null);
+        }
       } catch (e) {
         console.error("[StrategistScriptForm] Error fetching product research", e);
-        if (!cancelled) setResearchProduct(null);
+        if (!cancelled) {
+          setResearchProduct(null);
+          setProductDnaRecord(null);
+        }
       }
     };
 
@@ -975,7 +980,26 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       }
     }
 
-    // ── V2: ai_analysis.creative_brief.content_pillars ──
+    // ── ADN de Producto (product_dna.strategy_recommendations.sales_angles) ──
+    const dnaAngles = productDnaRecord?.strategy_recommendations?.sales_angles;
+    if (Array.isArray(dnaAngles) && dnaAngles.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      dnaAngles.forEach((a: any) => {
+        const text = a?.angle_name || a?.angle || a?.headline || '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({
+            angle: text,
+            hookExample: a?.hook || a?.headline || '',
+            type: a?.target_emotion || '',
+            _source: 'dna',
+            _v2type: 'dna',
+          });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
+
+    // ── products.ai_analysis.creative_brief.content_pillars ──
     const pillars = parsedAiAnalysis?.creative_brief?.content_pillars;
     if (Array.isArray(pillars) && pillars.length) {
       const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
@@ -988,12 +1012,12 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       });
     }
 
-    // ── V2: ai_analysis.market_analysis.opportunities ──
+    // ── products.ai_analysis.market_analysis.opportunities ──
     const opportunities = parsedAiAnalysis?.market_analysis?.opportunities;
     if (Array.isArray(opportunities) && opportunities.length) {
       const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
       opportunities.forEach((op: unknown) => {
-        const text = typeof op === 'string' ? op : '';
+        const text = typeof op === 'string' ? op : (op as any)?.opportunity || '';
         if (text && !existingTexts.has(text.trim().toLowerCase())) {
           collected.push({ angle: text, type: 'oportunidad', _source: 'v2', _v2type: 'opportunity' });
           existingTexts.add(text.trim().toLowerCase());
@@ -1002,7 +1026,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
 
     return collected;
-  }, [researchProduct, product?.sales_angles, parsedAiAnalysis]);
+  }, [researchProduct, product?.sales_angles, parsedAiAnalysis, productDnaRecord]);
 
   // Parsear ideal_avatar si es un JSON string para extraer JTBD
   const parsedIdealAvatar = useMemo(() => {
@@ -2343,14 +2367,16 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
             className="text-sm"
           />
           {researchAngles.length > 0 && (() => {
-            const v1Count = researchAngles.filter((a: any) => a._source === 'v1').length;
+            const recargadoCount = researchAngles.filter((a: any) => a._source === 'v1').length;
+            const dnaCount = researchAngles.filter((a: any) => a._source === 'dna').length;
             const v2Count = researchAngles.filter((a: any) => a._source === 'v2').length;
             return (
               <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
-                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2">
+                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
                   <span>{researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''}</span>
-                  {v1Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v1Count} V1</span>}
-                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-400">{v2Count} V2 ADN</span>}
+                  {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+                  {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
+                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v2Count} ai_analysis</span>}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {researchAngles.map((a: any, idx: number) => {
@@ -2359,7 +2385,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                     const angleType = a?.type || a?.category || a?.funnelPhase || "";
                     const hookExample = a?.hookExample || "";
                     const isSelected = formData.sales_angle === angleText;
-                    const isV2 = a?._source === 'v2';
+                    const src = a?._source;
+                    const isDna = src === 'dna';
+                    const isV2 = src === 'v2';
                     const v2TypeLabel = a?._v2type === 'pillar' ? 'Pilar' : a?._v2type === 'opportunity' ? 'Oportunidad' : null;
                     return (
                       <button
@@ -2368,9 +2396,11 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                         className={`text-left p-2.5 rounded-sm border transition-all ${
                           isSelected
                             ? 'ring-2 ring-primary border-primary bg-primary/10'
-                            : isV2
-                              ? 'border-green-500/20 hover:border-green-500/40 hover:bg-green-500/5 bg-background'
-                              : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
+                            : isDna
+                              ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5 bg-background'
+                              : isV2
+                                ? 'border-green-500/20 hover:border-green-500/40 hover:bg-green-500/5 bg-background'
+                                : 'border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 bg-background'
                         }`}
                         onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
                       >
@@ -2382,12 +2412,14 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                           {angleType && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
                           )}
-                          {isV2 ? (
+                          {isDna ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                          ) : isV2 ? (
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
-                              {v2TypeLabel ? `V2 · ${v2TypeLabel}` : 'V2 ADN'}
+                              {v2TypeLabel || 'ai_analysis'}
                             </Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-muted-foreground/30 text-muted-foreground">V1</Badge>
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
                           )}
                         </div>
                       </button>
