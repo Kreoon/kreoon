@@ -77,14 +77,14 @@ Organizations (isolated tenants)
 
 **7 Roles** (defined in `src/lib/roles.ts`):
 1. `admin` - Full system access
-2. `team_leader` - Team management
-3. `strategist` - Strategy and planning
-4. `trafficker` - Paid advertising
-5. `creator` - Content creation
-6. `editor` - Audio-visual production
-7. `client` - Client/customer access
+2. `content_creator` - Audiovisual and written content creation
+3. `editor` - Video/audio editing and post-production
+4. `digital_strategist` - Digital marketing strategy and analytics
+5. `creative_strategist` - Creative direction and brand concept
+6. `community_manager` - Community and social media management
+7. `client` - Client/customer access (review and approval)
 
-**Role Priority**: admin > team_leader > strategist > trafficker > creator > editor > client
+**Role Priority**: admin > content_creator > editor > digital_strategist > creative_strategist > community_manager > client
 
 **Ambassador Badge System** (separate from roles):
 - Bronze, Silver, Gold levels
@@ -116,7 +116,7 @@ src/
 
 supabase/
 ├── migrations/     # Database schema migrations (~16k lines total)
-├── functions/      # 50+ Edge Functions
+├── functions/      # 150+ Edge Functions
 └── config.toml     # Function JWT settings
 ```
 
@@ -203,10 +203,10 @@ supabase/
 
 ## Migration Management
 
-Database migrations in `supabase/migrations/` (~16k lines total):
-- Main migration: `20251226225342_a5e1ca5d-8216-41f9-8498-2db90d429716.sql`
-- Multiple part files (`parte_1.sql` through `parte_10.sql`)
-- `migracion_completa.sql`, `fix_migration.sql`
+Database migrations in `supabase/migrations/`:
+- Baseline: `00000000000000_baseline.sql` (esquema inicial)
+- 40+ migraciones secuenciales con timestamp `YYYYMMDDHHMMSS_descripcion.sql`
+- Áreas activas recientes: gamification (part1–part6), security RLS fixes, trust score, ADN/script flow, MCP infrastructure
 
 When modifying database schema:
 1. Always consider multi-tenant isolation
