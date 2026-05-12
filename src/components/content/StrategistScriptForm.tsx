@@ -980,17 +980,19 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       }
     }
 
-    // ── ADN de Producto (product_dna.strategy_recommendations.sales_angles) ──
-    const dnaAngles = productDnaRecord?.strategy_recommendations?.sales_angles;
+    // ── ADN de Producto (product_dna.strategy_recommendations.seccion_4_angulos) ──
+    const dnaAngles = productDnaRecord?.strategy_recommendations?.seccion_4_angulos;
     if (Array.isArray(dnaAngles) && dnaAngles.length) {
       const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
       dnaAngles.forEach((a: any) => {
-        const text = a?.angle_name || a?.angle || a?.headline || '';
+        const text = a?.desarrollo || a?.angle_name || a?.angle || '';
         if (text && !existingTexts.has(text.trim().toLowerCase())) {
           collected.push({
             angle: text,
-            hookExample: a?.hook || a?.headline || '',
-            type: a?.target_emotion || '',
+            hookExample: a?.hook_apertura || a?.hook || '',
+            type: a?.tipo || a?.target_emotion || '',
+            funnelPhase: a?.fase_esfera || '',
+            avatar: a?.avatar_objetivo || '',
             _source: 'dna',
             _v2type: 'dna',
           });
@@ -2411,6 +2413,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                         <div className="flex items-center gap-1 mt-1.5 flex-wrap">
                           {angleType && (
                             <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
+                          )}
+                          {isDna && a?.funnelPhase && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 opacity-70">{a.funnelPhase}</Badge>
                           )}
                           {isDna ? (
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
