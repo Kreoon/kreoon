@@ -13,7 +13,6 @@ import { scriptToolDefinitions, handleScriptTool } from "./tools/scripts.js";
 import { adnToolDefinitions, handleADNTool } from "./tools/adn.js";
 import { creatorToolDefinitions, handleCreatorTool } from "./tools/creators.js";
 import { profileToolDefinitions, handleProfileTool } from "./tools/profiles.js";
-import { walletToolDefinitions, handleWalletTool } from "./tools/wallet.js";
 import { socialToolDefinitions, handleSocialTool } from "./tools/social.js";
 import { AuthScope, AuthContext } from "./types.js";
 
@@ -37,8 +36,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   search_creators: "creators:read",
   score_creator_for_campaign: "creators:read",
   optimize_creator_profile: "profiles:write",
-  get_wallet_overview: "wallet:read",
-  request_withdrawal: "wallet:write",
   publish_to_social: "social:write",
 };
 
@@ -49,7 +46,6 @@ const ALL_TOOLS = [
   ...adnToolDefinitions,
   ...creatorToolDefinitions,
   ...profileToolDefinitions,
-  ...walletToolDefinitions,
   ...socialToolDefinitions,
 ];
 
@@ -63,8 +59,6 @@ const TOOL_RATE_LIMITS: Record<string, number> = {
   search_creators: 200,
   score_creator_for_campaign: 100,
   optimize_creator_profile: 30,
-  get_wallet_overview: 200,
-  request_withdrawal: 10,
   publish_to_social: 20,
 };
 
@@ -86,9 +80,6 @@ async function dispatchTool(
   }
   if (profileToolDefinitions.some((t) => t.name === toolName)) {
     return handleProfileTool(toolName, args, auth);
-  }
-  if (walletToolDefinitions.some((t) => t.name === toolName)) {
-    return handleWalletTool(toolName, args, auth);
   }
   if (socialToolDefinitions.some((t) => t.name === toolName)) {
     return handleSocialTool(toolName, args, auth);

@@ -5,7 +5,6 @@ export type AuthScope =
   | "creators:read" | "creators:write"
   | "campaigns:read" | "campaigns:write"
   | "social:read" | "social:write"
-  | "wallet:read" | "wallet:write"
   | "analytics:read";
 
 export interface MCPAPIKey {
@@ -157,37 +156,6 @@ export interface OptimizeProfileOutput {
   current_score: number;
   projected_score: number;
   improvements: ProfileImprovement[];
-}
-
-// ─── Wallet ─────────────────────────────────────────────────────────────────
-
-export interface WalletOverviewOutput {
-  user_id: string;
-  currency: string;
-  balance_available: number;
-  balance_pending: number;
-  balance_reserved: number;
-  recent_transactions: {
-    id: string;
-    type: string;
-    amount: number;
-    description: string;
-    created_at: string;
-  }[];
-}
-
-export interface RequestWithdrawalInput {
-  amount: number;
-  method: "stripe_connect" | "mercury" | "paypal" | "manual";
-  notes?: string;
-}
-
-export interface WithdrawalOutput {
-  withdrawal_id: string;
-  status: "pending" | "processing" | "completed" | "failed";
-  amount: number;
-  method: string;
-  estimated_arrival?: string;
 }
 
 // ─── Social ──────────────────────────────────────────────────────────────────

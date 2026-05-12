@@ -4,7 +4,6 @@ import crypto from 'crypto';
 import { handleScriptTool, scriptToolDefinitions } from '../src/tools/scripts.js';
 import { handleCreatorTool, creatorToolDefinitions } from '../src/tools/creators.js';
 import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles.js';
-import { handleWalletTool, walletToolDefinitions } from '../src/tools/wallet.js';
 import { handleSocialTool, socialToolDefinitions } from '../src/tools/social.js';
 import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/operations.js';
 import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
@@ -188,9 +187,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   score_creator_for_campaign: 'creators:read',
   // Profiles
   optimize_creator_profile: 'profiles:write',
-  // Wallet
-  get_wallet_overview: 'wallet:read',
-  request_withdrawal: 'wallet:write',
   // Social
   publish_to_social: 'social:write',
   // Operations (content board)
@@ -233,7 +229,6 @@ const ALL_TOOL_DEFS = [
   ...scriptToolDefinitions,
   ...creatorToolDefinitions,
   ...profileToolDefinitions,
-  ...walletToolDefinitions,
   ...socialToolDefinitions,
   ...operationsToolDefinitions,
   ...contentGenerationToolDefinitions,
@@ -260,7 +255,6 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (scriptToolDefinitions.some(t => t.name === name))     return handleScriptTool(name, args, auth);
   if (creatorToolDefinitions.some(t => t.name === name))    return handleCreatorTool(name, args, auth);
   if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
-  if (walletToolDefinitions.some(t => t.name === name))     return handleWalletTool(name, args, auth);
   if (socialToolDefinitions.some(t => t.name === name))     return handleSocialTool(name, args, auth);
   if (operationsToolDefinitions.some(t => t.name === name))          return handleOperationsTool(name, args, auth);
   if (contentGenerationToolDefinitions.some(t => t.name === name))   return handleContentGenerationTool(name, args, auth);
@@ -324,7 +318,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
   // GET /health (también acepta /api/index.ts como ruta raíz de Vercel)
   const isHealthPath = path === '/health' || path === '' || path === '/api/index.ts' || path === '/api';
   if (req.method === 'GET' && isHealthPath) {
-    return json(response, 200, { status: 'ok', version: '3.1.0', tools: ALL_TOOL_DEFS.length });
+    return json(response, 200, { status: 'ok', version: '3.2.0', tools: ALL_TOOL_DEFS.length });
   }
 
   // ── OAuth 2.0 — para Claude.ai web connector ─────────────────────────────
@@ -460,7 +454,7 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       return rpc({
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
-        serverInfo: { name: 'kreoon', version: '3.1.0' },
+        serverInfo: { name: 'kreoon', version: '3.2.0' },
         instructions: MCP_INSTRUCTIONS,
       });
     }

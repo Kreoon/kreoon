@@ -16,8 +16,8 @@ la plataforma Kreoon: crear campañas, gestionar creadores, aprobar guiones, man
 y administrar el marketplace.
 
 **Endpoint principal:** https://mcp.kreoon.com
-**Versión:** v3.1.0
-**Herramientas disponibles:** 35
+**Versión:** v3.2.0
+**Herramientas disponibles:** 33
 
 ---
 
@@ -133,8 +133,6 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 | \`scripts:write\` | Generar y mejorar guiones con IA |
 | \`creators:read\` | Buscar y calificar creadores |
 | \`profiles:write\` | Optimizar perfil del creador con IA |
-| \`wallet:read\` | Ver saldo y transacciones |
-| \`wallet:write\` | Solicitar retiros |
 | \`social:write\` | Publicar en redes sociales |
 | \`campaigns:read\` | Ver campañas, proyectos, contenido, clientes, productos, miembros, ADN |
 | \`campaigns:write\` | Crear/modificar campañas, proyectos, contenido, productos, ADN, asignar equipo |
@@ -214,18 +212,6 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 
 **optimize_creator_profile** — Optimiza bio, especialidades y engagement del perfil con IA.
 - \`focus_area\` (enum): "bio" | "specialties" | "engagement" | "all"
-
----
-
-### Wallet (scope: wallet:read / wallet:write)
-
-**get_wallet_overview** — Saldo disponible, pendiente, en reserva y últimas transacciones.
-- \`include_history\` (boolean): incluir historial
-- \`history_limit\` (number): máx 50
-
-**request_withdrawal** — Solicita retiro de fondos (mínimo $10 USD).
-- \`amount\` (number, required): monto en USD
-- \`method\` (enum, required): "stripe_connect" | "mercury" | "paypal" | "manual"
 
 ---
 
@@ -436,14 +422,6 @@ const TOOL_GROUPS = [
     ],
   },
   {
-    name: "Wallet",
-    count: 2,
-    tools: [
-      { name: "get_wallet_overview", desc: "Saldo disponible, pendiente, en reserva y últimas transacciones", scope: "wallet:read" },
-      { name: "request_withdrawal", desc: "Solicita retiro de fondos (mínimo $10 USD)", scope: "wallet:write" },
-    ],
-  },
-  {
     name: "Social Media",
     count: 1,
     tools: [
@@ -502,8 +480,6 @@ const SCOPES = [
   { scope: "scripts:write", desc: "Generar y mejorar guiones UGC con IA" },
   { scope: "creators:read", desc: "Buscar y calificar creadores" },
   { scope: "profiles:write", desc: "Optimizar perfil del creador con IA" },
-  { scope: "wallet:read", desc: "Ver saldo y transacciones" },
-  { scope: "wallet:write", desc: "Solicitar retiros de fondos" },
   { scope: "social:write", desc: "Publicar en redes sociales" },
   { scope: "campaigns:read", desc: "Ver campañas, proyectos, contenido, clientes, productos, miembros y ADN" },
   { scope: "campaigns:write", desc: "Crear y modificar campañas, proyectos, contenido, productos, ADN y asignaciones" },
@@ -531,7 +507,7 @@ export default function MCPDocumentation() {
           <span className="text-purple-400 font-bold">MCP</span>
         </div>
         <Badge variant="outline" className="text-xs border-purple-500/40 text-purple-300 bg-purple-500/10">
-          v3.1.0
+          v3.2.0
         </Badge>
       </div>
 
@@ -550,7 +526,7 @@ export default function MCPDocumentation() {
             Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, campañas, content board y marketplace.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">35 herramientas</span>
+            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">33 herramientas</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
@@ -631,7 +607,7 @@ export default function MCPDocumentation() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "29 herramientas que cubren todo el flujo operativo de una agencia UGC" },
+              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "33 herramientas que cubren todo el flujo operativo de una agencia UGC" },
               { icon: <Shield className="w-4 h-4" />, title: "Multi-tenant seguro", desc: "Cada API key está vinculada a una organización. RLS en toda la base de datos." },
               { icon: <Code2 className="w-4 h-4" />, title: "Estándar abierto", desc: "Compatible con Claude, ChatGPT, Gemini y cualquier agente que soporte MCP o REST." },
             ].map((item) => (
@@ -708,7 +684,7 @@ curl -X POST \\
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Herramientas disponibles
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">35 tools</Badge>
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">33 tools</Badge>
           </h2>
 
           {TOOL_GROUPS.map((group) => (
@@ -809,7 +785,7 @@ curl -X POST \\
 
         {/* Footer */}
         <footer className="text-center text-gray-600 text-xs pt-8 pb-4 border-t border-[#1e1e2e]">
-          <p>Kreoon MCP Server v3.1.0 — <a href="https://mcp.kreoon.com/health" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">mcp.kreoon.com</a></p>
+          <p>Kreoon MCP Server v3.2.0 — <a href="https://mcp.kreoon.com/health" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">mcp.kreoon.com</a></p>
           <p className="mt-1">Genera tu API key en <a href="https://app.kreoon.com/settings" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">app.kreoon.com/settings</a></p>
         </footer>
 
