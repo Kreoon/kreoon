@@ -18,7 +18,7 @@ import {
   Sparkles, Loader2, Target, Users, Globe, FileText,
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
   Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
-  Brain, Zap, ChevronRight, Hash
+  Brain, Zap, ChevronRight, Hash, Shuffle
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { SkillsLoadingState } from "./SkillsLoadingState";
@@ -1103,6 +1103,98 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     ]);
   };
 
+  const handleRandomize = () => {
+    // Pick a random item from arr that's different from current when possible
+    function pickRandom<T>(arr: T[], current?: T): T | undefined {
+      if (!arr.length) return undefined;
+      const others = arr.filter(x => x !== current);
+      const pool = others.length > 0 ? others : arr;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function getAngleText(a: unknown): string {
+      if (typeof a === 'string') return a;
+      const o = a as Record<string, string>;
+      return o?.angle || o?.salesAngle || o?.name || '';
+    }
+
+    function getPainText(p: unknown): string {
+      if (typeof p === 'string') return p;
+      const o = p as Record<string, string>;
+      return o?.pain || o?.description || o?.text || '';
+    }
+
+    function getDesireText(d: unknown): string {
+      if (typeof d === 'string') return d;
+      const o = d as Record<string, string>;
+      return o?.desire || o?.description || o?.text || '';
+    }
+
+    function getObjectionText(o: unknown): string {
+      if (typeof o === 'string') return o;
+      const obj = o as Record<string, string>;
+      return obj?.objection || obj?.description || obj?.text || '';
+    }
+
+    const updates: Partial<typeof formData> = {};
+
+    // Ángulo de venta — aleatorio entre todos los ángulos disponibles
+    if (researchAngles.length > 0) {
+      const currentAngleText = formData.sales_angle;
+      const angleTexts = researchAngles.map(getAngleText).filter(Boolean);
+      const picked = pickRandom(angleTexts, currentAngleText);
+      if (picked) updates.sales_angle = picked;
+    }
+
+    // Estructura narrativa — aleatoria entre todas las disponibles
+    const structures = NARRATIVE_STRUCTURES.map(s => s.value);
+    const pickedStructure = pickRandom(structures, formData.narrative_structure);
+    if (pickedStructure) updates.narrative_structure = pickedStructure;
+
+    // Dolor — aleatorio entre los disponibles
+    if (researchPains.length > 0) {
+      const painTexts = researchPains.map(getPainText).filter(Boolean);
+      const picked = pickRandom(painTexts, formData.selected_pain);
+      if (picked) updates.selected_pain = picked;
+    }
+
+    // Deseo — aleatorio entre los disponibles
+    if (researchDesires.length > 0) {
+      const desireTexts = researchDesires.map(getDesireText).filter(Boolean);
+      const picked = pickRandom(desireTexts, formData.selected_desire);
+      if (picked) updates.selected_desire = picked;
+    }
+
+    // Objeción — aleatoria si hay
+    if (researchObjections.length > 0) {
+      const objTexts = researchObjections.map(getObjectionText).filter(Boolean);
+      const picked = pickRandom(objTexts, formData.selected_objection);
+      if (picked) updates.selected_objection = picked;
+    }
+
+    // CTA — aleatorio desde V2 si hay, si no del CTA genérico
+    const ctaPool = [
+      ...researchCtaSuggestions,
+      'Consíguelo ahora',
+      'Link en bio',
+      'Escríbenos hoy',
+      'Agenda tu cita',
+      'Pruébalo gratis',
+    ];
+    const pickedCta = pickRandom(ctaPool, formData.cta);
+    if (pickedCta) updates.cta = pickedCta;
+
+    // Hooks — barajar y tomar N aleatorios de las sugerencias
+    const hookPool = researchHookSuggestions.length > 0 ? researchHookSuggestions : [];
+    if (hookPool.length > 0) {
+      const count = parseInt(formData.hooks_count) || 3;
+      const shuffled = [...hookPool].sort(() => Math.random() - 0.5);
+      updates.hooks = shuffled.slice(0, count);
+    }
+
+    if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+  };
+
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
     
@@ -1470,9 +1562,24 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Formulario de Guión
         </h4>
-        <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[140px] sm:max-w-none">
-          {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRandomize}
+              className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+              title="Aleatorizar combinación de ángulo, dolor, deseo, estructura y CTA"
+            >
+              <Shuffle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Aleatorizar</span>
+            </Button>
+          )}
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[100px] sm:max-w-none">
+            {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
+          </Badge>
+        </div>
       </div>
 
       {/* AI Prefill Banner */}
@@ -1635,38 +1742,52 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 </div>
               )}
 
-              {/* Botón Auto-aplicar */}
-              {hasV2Data && (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs sm:text-sm font-medium text-violet-200"
-                  onClick={() => {
-                    const updates: Partial<typeof formData> = {};
-                    if (!formData.sales_angle && researchAngles.length > 0) {
-                      const a = researchAngles[0] as any;
-                      updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
-                    }
-                    if (!formData.selected_pain && researchPains.length > 0) {
-                      const p = researchPains[0] as any;
-                      updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
-                    }
-                    if (!formData.selected_desire && researchDesires.length > 0) {
-                      const d = researchDesires[0] as any;
-                      updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
-                    }
-                    if (!formData.cta && researchCtaSuggestions.length > 0) {
-                      updates.cta = researchCtaSuggestions[0];
-                    }
-                    if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
-                      updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
-                    }
-                    if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
-                  }}
-                >
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Auto-aplicar mejores sugerencias ADN
-                </button>
-              )}
+              {/* Botones de acción */}
+              <div className="flex gap-2">
+                {hasV2Data && (
+                  <button
+                    type="button"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs sm:text-sm font-medium text-violet-200"
+                    onClick={() => {
+                      const updates: Partial<typeof formData> = {};
+                      if (!formData.sales_angle && researchAngles.length > 0) {
+                        const a = researchAngles[0] as any;
+                        updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
+                      }
+                      if (!formData.selected_pain && researchPains.length > 0) {
+                        const p = researchPains[0] as any;
+                        updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
+                      }
+                      if (!formData.selected_desire && researchDesires.length > 0) {
+                        const d = researchDesires[0] as any;
+                        updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
+                      }
+                      if (!formData.cta && researchCtaSuggestions.length > 0) {
+                        updates.cta = researchCtaSuggestions[0];
+                      }
+                      if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
+                        updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
+                      }
+                      if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+                    }}
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Auto-aplicar mejores sugerencias ADN
+                  </button>
+                )}
+                {/* Botón Aleatorizar — siempre visible si hay datos */}
+                {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+                  <button
+                    type="button"
+                    className={`${hasV2Data ? 'w-auto px-3' : 'flex-1'} flex items-center justify-center gap-2 py-2 rounded-sm border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-xs sm:text-sm font-medium text-amber-200`}
+                    onClick={handleRandomize}
+                    title="Aleatorizar combinación"
+                  >
+                    <Shuffle className="h-3.5 w-3.5" />
+                    {!hasV2Data && 'Combinación aleatoria'}
+                  </button>
+                )}
+              </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
