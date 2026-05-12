@@ -23,7 +23,7 @@ import { BlockKey } from './Config/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2, Zap, Lightbulb, RefreshCw, Heart } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2, Zap, Lightbulb, RefreshCw, Heart, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
 import { useInternalBrandClient } from '@/hooks/useInternalBrandClient';
@@ -85,6 +85,7 @@ export function ContentDetailDialog({
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
+  const [headerCollapsed, setHeaderCollapsed] = useState(false);
   const [clients, setClients] = useState<SelectOption[]>([]);
   
   const isCreateMode = mode === 'create';
@@ -258,20 +259,22 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-5xl max-h-[90vh] overflow-hidden p-0 flex flex-col bg-[var(--nova-bg-surface)] border-[var(--nova-accent-primary)]/10" aria-describedby="content-detail-description">
+      <DialogContent className="w-[calc(100%-0.5rem)] sm:w-full max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-[var(--nova-bg-surface)] border-[var(--nova-accent-primary)]/10" aria-describedby="content-detail-description">
         <DialogDescription id="content-detail-description" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
-        {/* Hero Header - Nova Style */}
-        <div className="relative bg-gradient-to-br from-[var(--nova-accent-primary)]/10 via-[var(--nova-accent-secondary)]/5 to-[var(--nova-bg-surface)] p-4 sm:p-6 border-b border-[var(--nova-border-subtle)] shrink-0">
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute inset-0" style={{
-              backgroundImage: 'radial-gradient(circle at 1px 1px, var(--nova-accent-primary) 1px, transparent 0)',
-              backgroundSize: '24px 24px'
-            }} />
-          </div>
-          
-          <div className="relative">
-            {/* Top Row: Status & Actions */}
-            <div className="flex items-center justify-between mb-4">
+        {/* Hero Header - Nova Style (colapsable) */}
+        <div className="relative bg-gradient-to-br from-[var(--nova-accent-primary)]/10 via-[var(--nova-accent-secondary)]/5 to-[var(--nova-bg-surface)] border-b border-[var(--nova-border-subtle)] shrink-0">
+          {!headerCollapsed && (
+            <div className="absolute inset-0 opacity-5 pointer-events-none">
+              <div className="absolute inset-0" style={{
+                backgroundImage: 'radial-gradient(circle at 1px 1px, var(--nova-accent-primary) 1px, transparent 0)',
+                backgroundSize: '24px 24px'
+              }} />
+            </div>
+          )}
+
+          <div className="relative p-3 sm:p-4">
+            {/* Top Row: Status & Actions + collapse toggle */}
+            <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 {isCreateMode ? (
                   <Badge className="text-sm px-3 py-1 bg-primary/10 text-primary border-primary/20">
@@ -311,14 +314,14 @@ export function ContentDetailDialog({
                     <Settings className="h-4 w-4" />
                   </Button>
                 )}
-                
+
                 {!isCreateMode && editMode && (
-                  <AutoSaveIndicator 
-                    status={viewHooks.autoSaveStatus} 
-                    lastSaved={viewHooks.lastSaved} 
+                  <AutoSaveIndicator
+                    status={viewHooks.autoSaveStatus}
+                    lastSaved={viewHooks.lastSaved}
                   />
                 )}
-                
+
                 {!isCreateMode && effectivePermissions.canEnterEditMode && (
                   <NovaButton
                     variant={editMode ? 'secondary' : 'outline'}
@@ -339,12 +342,36 @@ export function ContentDetailDialog({
                     {isCreateMode ? 'Crear' : 'Guardar'}
                   </NovaButton>
                 )}
+
+                {/* Collapse toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setHeaderCollapsed(c => !c)}
+                  className="text-muted-foreground hover:text-foreground shrink-0"
+                  title={headerCollapsed ? 'Expandir encabezado' : 'Colapsar encabezado'}
+                >
+                  {headerCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
 
+            {/* Compact title strip — visible only when header is collapsed */}
+            {headerCollapsed && (
+              <p className="mt-1 text-sm font-medium text-[var(--nova-text-secondary)] truncate pr-2">
+                {!isCreateMode && displayContent.sequence_number && (
+                  <span className="font-mono text-primary mr-1.5">{displayContent.sequence_number}</span>
+                )}
+                {displayContent.title}
+              </p>
+            )}
+
+            {/* Expandable section */}
+            {!headerCollapsed && (
+              <>
             {/* Title with Sequence Number */}
-            <DialogHeader className="space-y-2">
-              <DialogTitle className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
+            <DialogHeader className="space-y-2 mt-2">
+              <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-3">
                 {/* Sequence Number Badge */}
                 {!isCreateMode && displayContent.sequence_number && (
                   <Badge variant="outline" className="text-sm font-mono shrink-0 bg-primary/5 border-primary/20 text-primary">
@@ -531,11 +558,13 @@ export function ContentDetailDialog({
                 </div>
               )}
             </div>
+            </>
+            )}
           </div>
         </div>
 
         {/* Content Area with Tabs */}
-        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6">
+        <div className="flex-1 overflow-y-auto min-h-0 p-3 sm:p-4">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full h-auto gap-1 mb-6 flex flex-wrap justify-start bg-[var(--nova-bg-elevated)]/50 p-1 rounded-sm border border-[var(--nova-border-subtle)]">
               {effectiveVisibleTabs.map(tabKey => {
