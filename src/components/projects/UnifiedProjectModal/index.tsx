@@ -9,7 +9,7 @@ import { AutoSaveIndicator } from '@/components/ui/autosave-indicator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { ContentConfigDialog } from '@/components/content/ContentDetailDialog/Config';
-import { Save, Trash2, Eye, Plus, Loader2, Settings, Zap, Lightbulb, RefreshCw, Heart, Building2, Target, ChevronLeft } from 'lucide-react';
+import { Save, Trash2, Eye, Plus, Loader2, Settings, Zap, Lightbulb, RefreshCw, Heart, Building2, Target, ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useOrganizations } from '@/hooks/useOrganizations';
@@ -186,7 +186,9 @@ export function UnifiedProjectModal({
   const [activeTab, setActiveTab] = useState<string>('workspace');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
+  const [scrollCollapsed, setScrollCollapsed] = useState(false);
+  const [manualCollapsed, setManualCollapsed] = useState(false);
+  const isHeaderCollapsed = scrollCollapsed || manualCollapsed;
   const [creationMode, setCreationMode] = useState<CreationMode | null>(null);
   const [availableClients, setAvailableClients] = useState<{ id: string; name: string }[]>([]);
 
@@ -244,7 +246,7 @@ export function UnifiedProjectModal({
     const el = scrollContainerRef.current;
     if (!el) return;
     const onScroll = () => {
-      setIsHeaderCollapsed(el.scrollTop > 60);
+      setScrollCollapsed(el.scrollTop > 60);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
@@ -324,14 +326,14 @@ export function UnifiedProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full sm:w-full max-w-5xl max-sm:!h-[100dvh] max-h-[100dvh] sm:max-h-[90vh] max-sm:!left-0 max-sm:!top-0 max-sm:!translate-x-0 max-sm:!translate-y-0 max-sm:!rounded-none max-sm:!border-0 overflow-hidden p-0 flex flex-col" aria-describedby="unified-project-description">
+      <DialogContent className="w-full sm:w-full max-w-6xl max-sm:!h-[100dvh] max-h-[100dvh] sm:max-h-[95vh] max-sm:!left-0 max-sm:!top-0 max-sm:!translate-x-0 max-sm:!translate-y-0 max-sm:!rounded-none max-sm:!border-0 overflow-hidden p-0 flex flex-col" aria-describedby="unified-project-description">
         <DialogDescription id="unified-project-description" className="sr-only">
           Detalle del proyecto
         </DialogDescription>
 
-        {/* ============ COMPACT HEADER (mobile collapsed) ============ */}
+        {/* ============ COMPACT HEADER (collapsed) ============ */}
         {isHeaderCollapsed && (
-          <div className="sm:hidden shrink-0 z-20 bg-white dark:bg-[#14141f] border-b border-zinc-200 dark:border-zinc-800 px-3 py-1.5 flex items-center gap-1.5 pr-10">
+          <div className="shrink-0 z-20 bg-white dark:bg-[#14141f] border-b border-zinc-200 dark:border-zinc-800 px-3 py-1.5 flex items-center gap-1.5 pr-10">
             {/* Sequence number */}
             {source === 'content' && !isCreateMode && project?.contentData?.sequence_number && (
               <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 shrink-0 bg-primary/5 border-primary/20 text-primary">
@@ -359,13 +361,23 @@ export function UnifiedProjectModal({
                 {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
               </Button>
             )}
+            {/* Expand button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground shrink-0"
+              onClick={() => setManualCollapsed(false)}
+              title="Expandir encabezado"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
           </div>
         )}
 
         {/* ============ HERO HEADER ============ */}
         <div className={cn(
-          "relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-3 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 shrink-0 transition-colors duration-150",
-          isHeaderCollapsed && "max-sm:hidden"
+          "relative bg-gradient-to-br from-primary/10 via-primary/5 to-background p-3 sm:p-4 border-b border-zinc-200 dark:border-zinc-800 shrink-0 transition-colors duration-150",
+          isHeaderCollapsed && "hidden"
         )}>
           <div className="absolute inset-0 opacity-5 hidden sm:block">
             <div className="absolute inset-0" style={{
@@ -446,6 +458,17 @@ export function UnifiedProjectModal({
                     <span className="hidden sm:inline">{isCreateMode ? 'Crear' : 'Guardar'}</span>
                   </Button>
                 )}
+
+                {/* Collapse toggle */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setManualCollapsed(true)}
+                  className="h-7 w-7 sm:h-8 sm:w-8 p-0 text-muted-foreground hover:text-foreground shrink-0"
+                  title="Colapsar encabezado"
+                >
+                  <ChevronUp className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </Button>
               </div>
             </div>
 
@@ -539,7 +562,7 @@ export function UnifiedProjectModal({
 
         {/* ============ WORKFLOW PROGRESS BAR ============ */}
         {!isCreateMode && project?.status && (
-          <div className={cn("px-4 sm:px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/10 shrink-0", isHeaderCollapsed && "max-sm:hidden")}>
+          <div className={cn("px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/10 shrink-0", isHeaderCollapsed && "hidden")}>
             <WorkflowProgressBar workflow={workflow} currentStatus={project.status} />
           </div>
         )}
@@ -553,7 +576,7 @@ export function UnifiedProjectModal({
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* Sticky tab bar */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-[#14141f] px-2 sm:px-6 pt-3 sm:pt-6 pb-2">
+              <div className="sticky top-0 z-10 bg-white dark:bg-[#14141f] px-2 sm:px-4 pt-2 sm:pt-3 pb-1.5">
                 <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-start bg-zinc-100 dark:bg-zinc-800/50 p-0.5 sm:p-1 rounded-lg">
                   {displaySections.map(sectionKey => {
                     const config = SECTION_TAB_CONFIG[sectionKey];
@@ -577,13 +600,13 @@ export function UnifiedProjectModal({
                 </TabsList>
               </div>
 
-              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+              <div className="px-2 sm:px-4 pb-3 sm:pb-4">
                 {displaySections.map(sectionKey => {
                   const TabComponent = TAB_COMPONENTS[sectionKey];
                   const readOnly = permissions.isReadOnly(`project.${sectionKey}` as any);
 
                   return (
-                    <TabsContent key={sectionKey} value={sectionKey} className="mt-4 relative">
+                    <TabsContent key={sectionKey} value={sectionKey} className="mt-2 sm:mt-3 relative">
                       {readOnly && (
                         <div className="absolute top-0 right-0 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded-bl-lg bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500 dark:text-zinc-400">
                           <Eye className="h-3 w-3" />
