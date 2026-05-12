@@ -878,7 +878,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis, brief_data")
+          .select("id, client_id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis, brief_data")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -906,21 +906,36 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
         if (!cancelled) setResearchProduct(normalized);
 
-        // También cargar ADN de Producto (product_dna) si existe el ID en brief_data
+        // Cargar ADN de Producto (product_dna): primero por ID exacto, fallback por client_id
         const dnaId = (normalized?.brief_data as any)?.product_dna_id;
+        const clientId = normalized?.client_id;
+
+        let dnaRecord: any = null;
+
+        // Intento 1: por product_dna_id exacto
         if (dnaId) {
-          const { data: dnaData, error: dnaError } = await supabase
+          const { data: d1 } = await supabase
             .from("product_dna")
             .select("id, strategy_recommendations, ai_analysis, market_research, content_brief")
             .eq("id", dnaId)
             .maybeSingle();
-
-          if (!dnaError && dnaData && !cancelled) {
-            setProductDnaRecord(dnaData);
-          }
-        } else if (!cancelled) {
-          setProductDnaRecord(null);
+          if (d1) dnaRecord = d1;
         }
+
+        // Intento 2: por client_id (el más reciente con ángulos)
+        if (!dnaRecord && clientId) {
+          const { data: d2 } = await supabase
+            .from("product_dna")
+            .select("id, strategy_recommendations, ai_analysis, market_research, content_brief")
+            .eq("client_id", clientId)
+            .not("strategy_recommendations", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (d2) dnaRecord = d2;
+        }
+
+        if (!cancelled) setProductDnaRecord(dnaRecord);
       } catch (e) {
         console.error("[StrategistScriptForm] Error fetching product research", e);
         if (!cancelled) {
