@@ -1527,8 +1527,17 @@ ${formattedResearch}
 ` : `INVESTIGACIÓN DE MERCADO:
 ${product?.market_research || 'No disponible'}
 
-`}ÁNGULOS DE VENTA DISPONIBLES:
-${product?.sales_angles?.join(', ') || 'No definidos'}
+`}ÁNGULOS DE VENTA DISPONIBLES (${researchAngles.length > 0 ? `${researchAngles.filter((a: any) => a._source === 'v1').length} V1 + ${researchAngles.filter((a: any) => a._source === 'v2').length} V2` : 'ninguno'}):
+${researchAngles.length > 0
+  ? researchAngles.map((a: any, i: number) => {
+      const text = a?.angle || a?.salesAngle || a?.name || '';
+      if (!text) return null;
+      const type = a?.type || a?.category || '';
+      const hook = a?.hookExample || '';
+      const src = a?._source === 'v2' ? `[V2${a?._v2type ? ' · ' + a._v2type : ''}]` : '[V1]';
+      return `${i + 1}. ${src}${type ? ` [${type}]` : ''} ${text}${hook ? ` | Hook: "${hook}"` : ''}`;
+    }).filter(Boolean).join('\n')
+  : product?.sales_angles?.join(', ') || 'No definidos'}
 
 HOOKS SUGERIDOS:
 ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}`;
