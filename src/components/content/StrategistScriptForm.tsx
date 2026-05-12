@@ -17,7 +17,7 @@ import { AI_TOKEN_COSTS } from "@/lib/finance/constants";
 import {
   Sparkles, Loader2, Target, Users, Globe, FileText,
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
+  Video, ChevronDown, ChevronUp, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
   Brain, Zap, ChevronRight, Hash, Shuffle
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -519,6 +519,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const totalAvailable = balance?.total_available ?? Infinity;
   const insufficientTokens = totalAvailable < totalCost && totalAvailable !== Infinity;
   const [promptsOpen, setPromptsOpen] = useState(false);
+  const [intelOpen, setIntelOpen] = useState(false);
   
   // Load custom prompts from organization settings
   const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
@@ -1615,273 +1616,303 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       </div>
 
-      {/* AI Prefill Banner */}
-      {prefillStatus.isPrefilled && (
-        <div className="p-2 sm:p-3 rounded-sm bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-          <div className="flex items-start sm:items-center gap-2">
-            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5 sm:mt-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-green-800 dark:text-green-200">
-                Pre-llenado con IA
-              </p>
-              <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-400">
-                Campos sugeridos desde la investigación.
-                {prefillStatus.fieldsLoaded.length > 0 && (
-                  <span className="hidden sm:inline"> Campos: {prefillStatus.fieldsLoaded.join(', ')}.</span>
-                )}
-              </p>
-            </div>
-            {prefillStatus.prefilledAt && (
-              <Badge variant="outline" className="text-[10px] sm:text-xs text-green-600 border-green-600 shrink-0">
-                {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
-              </Badge>
-            )}
+      {/* ——————————————————————————————————————————————————
+          Fila de 4 columnas: Pre-llenado · CAST · Intel ADN · Bloques
+          —————————————————————————————————————————————————— */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+
+        {/* Col 1 — Pre-llenado IA */}
+        <div className="rounded-sm border bg-green-500/5 border-green-500/20 p-2 flex flex-col gap-1.5 min-h-[90px]">
+          <div className="flex items-center gap-1 text-[10px] font-semibold text-green-300 uppercase tracking-wide">
+            <Bot className="h-3 w-3 shrink-0" /> Pre-llenado IA
           </div>
-        </div>
-      )}
-
-      {/* CAST Layer Banner */}
-      {spherePhase && (() => {
-        const castInfo = getCastLayerInfo(spherePhase);
-        if (!castInfo) return null;
-        const bgMap: Record<string, string> = {
-          C: 'from-blue-500/10 to-cyan-500/10 border-blue-500/30 text-blue-400',
-          A: 'from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-400',
-          S: 'from-red-500/10 to-rose-500/10 border-red-500/30 text-red-400',
-          T: 'from-green-500/10 to-emerald-500/10 border-green-500/30 text-green-400',
-        };
-        const colors = bgMap[castInfo.letter] || bgMap['C'];
-        return (
-          <div className={`p-2.5 sm:p-3 rounded-sm bg-gradient-to-r ${colors} border flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3`}>
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-lg font-bold shrink-0">{castInfo.letter}</span>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-semibold leading-tight">{castInfo.label} · {castInfo.funnel}</p>
-                <p className="text-[10px] sm:text-xs opacity-80 line-clamp-1">{castInfo.objective}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1 ml-auto shrink-0">
-              {castInfo.kpis.slice(0, 3).map(kpi => (
-                <span key={kpi} className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-background/40 font-mono">{kpi}</span>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Panel Intel de Investigación ADN */}
-      {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0) && (
-        <Accordion type="single" collapsible defaultValue={hasV2Data ? "intel" : undefined}>
-          <AccordionItem value="intel" className="border rounded-sm bg-gradient-to-br from-violet-500/5 to-purple-500/10 border-violet-500/20">
-            <AccordionTrigger className="px-3 sm:px-4 py-2.5 sm:py-3 hover:no-underline [&>svg]:shrink-0">
-              <div className="flex items-center gap-2 text-left min-w-0">
-                <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400 shrink-0" />
-                <span className="text-xs sm:text-sm font-semibold text-violet-300">Inteligencia de Investigación ADN</span>
-                <div className="flex flex-wrap gap-1 ml-1">
-                  {researchAngles.length > 0 && (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">{researchAngles.length} ángulos</span>
-                  )}
-                  {researchPains.length > 0 && (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">{researchPains.length} dolores</span>
-                  )}
-                  {researchHookSuggestions.length > 0 && (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{researchHookSuggestions.length} hooks</span>
-                  )}
-                  {hasV2Data && (
-                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-300 font-semibold">V2 ADN</span>
-                  )}
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-3 sm:space-y-4">
-
-              {/* Hooks sugeridos ADN V2 */}
-              {researchHookSuggestions.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] sm:text-xs font-semibold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <Zap className="h-3 w-3" /> Hooks sugeridos (ADN V2)
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {researchHookSuggestions.slice(0, 6).map((hook, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/25 transition-colors text-left max-w-[200px] truncate"
-                        onClick={() => setFormData(prev => ({
-                          ...prev,
-                          hooks: prev.hooks.includes(hook) ? prev.hooks : [...prev.hooks, hook].slice(0, parseInt(prev.hooks_count)),
-                        }))}
-                        title={hook}
-                      >
-                        + {hook}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Mensajes clave */}
-              {researchKeyMessages.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] sm:text-xs font-semibold text-violet-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <MessageSquare className="h-3 w-3" /> Mensajes clave (ADN V2)
-                  </p>
-                  <ul className="space-y-1">
-                    {researchKeyMessages.slice(0, 5).map((msg, idx) => (
-                      <li key={idx} className="flex items-start gap-1.5">
-                        <ChevronRight className="h-3 w-3 text-violet-400 shrink-0 mt-0.5" />
-                        <span className="text-[10px] sm:text-xs text-muted-foreground">{msg}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {/* CTAs recomendados */}
-              {researchCtaSuggestions.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] sm:text-xs font-semibold text-green-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <Hash className="h-3 w-3" /> CTAs recomendados
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {researchCtaSuggestions.slice(0, 4).map((cta, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-200 hover:bg-green-500/25 transition-colors"
-                        onClick={() => setFormData(prev => ({ ...prev, cta }))}
-                        title={`Aplicar CTA: ${cta}`}
-                      >
-                        {cta}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Disparadores de compra */}
-              {researchBuyingTriggers.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-[10px] sm:text-xs font-semibold text-orange-400 uppercase tracking-wide flex items-center gap-1.5">
-                    <Zap className="h-3 w-3" /> Disparadores de compra
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {researchBuyingTriggers.slice(0, 5).map((trigger, idx) => (
-                      <span key={idx} className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-orange-500/20 bg-orange-500/10 text-orange-200">
-                        {trigger}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Botones de acción */}
-              <div className="flex gap-2">
-                {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
-                  <button
-                    type="button"
-                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs sm:text-sm font-medium text-violet-200"
-                    onClick={() => {
-                      const updates: Partial<typeof formData> = {};
-                      if (!formData.sales_angle && researchAngles.length > 0) {
-                        const a = researchAngles[0] as any;
-                        updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
-                      }
-                      if (!formData.selected_pain && researchPains.length > 0) {
-                        const p = researchPains[0] as any;
-                        updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
-                      }
-                      if (!formData.selected_desire && researchDesires.length > 0) {
-                        const d = researchDesires[0] as any;
-                        updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
-                      }
-                      if (!formData.cta && researchCtaSuggestions.length > 0) {
-                        updates.cta = researchCtaSuggestions[0];
-                      }
-                      if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
-                        updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
-                      }
-                      if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
-                    }}
-                  >
-                    <Sparkles className="h-3.5 w-3.5" />
-                    {hasV2Data ? 'Auto-aplicar sugerencias ADN' : 'Aplicar sugerencias de investigación'}
-                  </button>
-                )}
-                {/* Botón Aleatorizar — siempre visible si hay datos */}
-                {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
-                  <button
-                    type="button"
-                    className={`${hasV2Data ? 'w-auto px-3' : 'flex-1'} flex items-center justify-center gap-2 py-2 rounded-sm border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-xs sm:text-sm font-medium text-amber-200`}
-                    onClick={handleRandomize}
-                    title="Aleatorizar combinación"
-                  >
-                    <Shuffle className="h-3.5 w-3.5" />
-                    {!hasV2Data && 'Combinación aleatoria'}
-                  </button>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      )}
-
-      {/* Block Selection */}
-      <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-          <Label className="text-xs sm:text-sm font-medium">Bloques a generar</Label>
-        </div>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {Object.entries(BLOCK_LABELS).map(([key, { emoji, short }]) => {
-            const cost = getTokenCost(BLOCK_ACTION_KEYS[key]);
-            const isSelected = selectedBlocks[key];
-            return (
-              <Badge
-                key={key}
-                variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer select-none transition-all text-[10px] sm:text-xs px-2 py-1 ${
-                  isSelected ? "" : "opacity-50"
-                }`}
-                onClick={() =>
-                  setSelectedBlocks((prev) => ({ ...prev, [key]: !prev[key] }))
-                }
-              >
-                {emoji} {short} <span className="ml-1 font-mono">{cost}</span>
-              </Badge>
-            );
-          })}
-        </div>
-        <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-          <span>
-            Total: <span className="font-semibold text-foreground">{totalCost} tokens</span>
-            {balance && (
-              <span className="ml-2">
-                Saldo: <span className={`font-semibold ${insufficientTokens ? "text-destructive" : "text-foreground"}`}>
-                  {totalAvailable.toLocaleString()}
+          {prefillStatus.isPrefilled ? (
+            <div className="flex items-center gap-1 text-[10px] text-green-400">
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
+              <span>Aplicado</span>
+              {prefillStatus.prefilledAt && (
+                <span className="ml-auto text-[9px] opacity-60 shrink-0">
+                  {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
                 </span>
-              </span>
-            )}
-          </span>
-          {selectedCount < 6 && (
+              )}
+            </div>
+          ) : (
+            <div className="text-[10px] text-muted-foreground">Sin sugerencias</div>
+          )}
+          {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
             <button
               type="button"
-              className="text-primary hover:underline"
-              onClick={() =>
-                setSelectedBlocks({ script: true, editor: true, trafficker: true, strategist: true, designer: true, admin: true })
-              }
+              onClick={handleRandomize}
+              className="mt-auto flex items-center justify-center gap-1 py-1.5 rounded-sm border border-amber-500/30 bg-amber-500/10 text-amber-300 text-[10px] hover:bg-amber-500/20 transition-colors"
             >
-              Seleccionar todos
+              <Shuffle className="h-3 w-3 shrink-0" /> Aleatorizar
             </button>
           )}
         </div>
-        {insufficientTokens && (
-          <p className="text-[10px] sm:text-xs text-destructive flex items-center gap-1">
-            <AlertCircle className="h-3 w-3 shrink-0" />
-            Tokens insuficientes. Selecciona menos bloques o compra mas tokens.
-          </p>
-        )}
+
+        {/* Col 2 — Estrategia CAST */}
+        {(() => {
+          const castInfo = spherePhase ? getCastLayerInfo(spherePhase) : null;
+          const colorMap: Record<string, string> = {
+            C: 'from-blue-500/10 to-cyan-500/10 border-blue-500/30',
+            A: 'from-yellow-500/10 to-orange-500/10 border-yellow-500/30',
+            S: 'from-red-500/10 to-rose-500/10 border-red-500/30',
+            T: 'from-green-500/10 to-emerald-500/10 border-green-500/30',
+          };
+          const textMap: Record<string, string> = {
+            C: 'text-blue-400', A: 'text-yellow-400', S: 'text-red-400', T: 'text-green-400',
+          };
+          const bg = castInfo ? (colorMap[castInfo.letter] || colorMap['C']) : '';
+          const tc = castInfo ? (textMap[castInfo.letter] || textMap['C']) : '';
+          return (
+            <div className={`rounded-sm border p-2 flex flex-col gap-1.5 min-h-[90px] ${castInfo ? `bg-gradient-to-br ${bg}` : 'bg-muted/10 border-border opacity-40'}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wide ${castInfo ? tc : 'text-muted-foreground'}`}>
+                Estrategia CAST
+              </div>
+              {castInfo ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xl font-bold leading-none ${tc}`}>{castInfo.letter}</span>
+                    <div>
+                      <p className="text-[10px] font-semibold leading-tight">{castInfo.layerName}</p>
+                      <p className="text-[9px] opacity-70">{castInfo.funnel}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-0.5 mt-auto">
+                    {castInfo.kpis.slice(0, 3).map(kpi => (
+                      <span key={kpi} className="text-[9px] px-1 py-0.5 rounded bg-background/30 font-mono">{kpi}</span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[10px] text-muted-foreground">Sin fase asignada</div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Col 3 — Intel ADN (expandible abajo) */}
+        <button
+          type="button"
+          onClick={() => setIntelOpen(o => !o)}
+          className="rounded-sm border bg-violet-500/5 border-violet-500/20 p-2 flex flex-col gap-1.5 text-left hover:bg-violet-500/10 transition-colors min-h-[90px]"
+        >
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-violet-300 uppercase tracking-wide">
+              <Brain className="h-3 w-3 shrink-0" /> Intel ADN
+            </div>
+            {intelOpen
+              ? <ChevronUp className="h-3 w-3 text-violet-400 shrink-0" />
+              : <ChevronDown className="h-3 w-3 text-violet-400 shrink-0" />
+            }
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {researchAngles.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">{researchAngles.length} ángulos</span>
+            )}
+            {researchPains.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">{researchPains.length} dolores</span>
+            )}
+            {researchHookSuggestions.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{researchHookSuggestions.length} hooks</span>
+            )}
+            {hasV2Data && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-300 font-semibold">V2</span>
+            )}
+          </div>
+          <div className="text-[9px] text-muted-foreground mt-auto">
+            {intelOpen ? 'Clic para cerrar ↑' : 'Clic para ver datos ↓'}
+          </div>
+        </button>
+
+        {/* Col 4 — Bloques a generar */}
+        <div className="rounded-sm border bg-muted/30 p-2 flex flex-col gap-1.5 min-h-[90px]">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" /> Bloques
+            </div>
+            <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+              {totalCost > 0 && <span className="font-mono">{totalCost} tkn</span>}
+              {selectedCount < 6 && (
+                <button
+                  type="button"
+                  className="text-primary hover:underline text-[9px]"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setSelectedBlocks({ script: true, director: true, marketing: true, captions: true, broll: true });
+                  }}
+                >
+                  Todos
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-0.5 flex-1">
+            {Object.entries(BLOCK_LABELS).map(([key, { emoji, short }]) => {
+              const isSelected = selectedBlocks[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setSelectedBlocks(prev => ({ ...prev, [key]: !prev[key] })); }}
+                  className={`flex flex-col items-center justify-center gap-0.5 rounded-sm border py-1 text-center transition-all select-none ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/30 text-muted-foreground border-border opacity-60 hover:opacity-90 hover:border-primary/50'
+                  }`}
+                >
+                  <span className="text-xs leading-none">{emoji}</span>
+                  <span className="text-[8px] font-medium leading-tight truncate w-full text-center">{short}</span>
+                </button>
+              );
+            })}
+          </div>
+          {balance && (
+            <div className="text-[9px] text-muted-foreground">
+              Saldo: <span className={insufficientTokens ? 'text-destructive font-semibold' : 'text-foreground'}>
+                {totalAvailable === Infinity ? '∞' : totalAvailable.toLocaleString()}
+              </span>
+            </div>
+          )}
+          {insufficientTokens && (
+            <p className="text-[9px] text-destructive flex items-center gap-0.5">
+              <AlertCircle className="h-3 w-3 shrink-0" /> Tokens insuficientes
+            </p>
+          )}
+        </div>
+
       </div>
+
+      {/* Intel ADN — contenido expandido (ancho completo, debajo de la fila) */}
+      {intelOpen && (hasV2Data || researchAngles.length > 0 || researchPains.length > 0) && (
+        <div className="rounded-sm border bg-violet-500/5 border-violet-500/20 p-3 space-y-3">
+
+          {/* Hooks sugeridos */}
+          {researchHookSuggestions.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Zap className="h-3 w-3" /> Hooks sugeridos {hasV2Data && <span className="text-green-400">(ADN V2)</span>}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchHookSuggestions.slice(0, 6).map((hook, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="text-[10px] px-2 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/25 transition-colors text-left max-w-[200px] truncate"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      hooks: prev.hooks.includes(hook) ? prev.hooks : [...prev.hooks, hook].slice(0, parseInt(prev.hooks_count)),
+                    }))}
+                    title={hook}
+                  >
+                    + {hook}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mensajes clave */}
+          {researchKeyMessages.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wide flex items-center gap-1.5">
+                <MessageSquare className="h-3 w-3" /> Mensajes clave (ADN V2)
+              </p>
+              <ul className="space-y-1">
+                {researchKeyMessages.slice(0, 5).map((msg, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <ChevronRight className="h-3 w-3 text-violet-400 shrink-0 mt-0.5" />
+                    <span className="text-[10px] text-muted-foreground">{msg}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* CTAs recomendados */}
+          {researchCtaSuggestions.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Hash className="h-3 w-3" /> CTAs recomendados
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchCtaSuggestions.slice(0, 4).map((cta, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="text-[10px] px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-200 hover:bg-green-500/25 transition-colors"
+                    onClick={() => setFormData(prev => ({ ...prev, cta }))}
+                    title={`Aplicar CTA: ${cta}`}
+                  >
+                    {cta}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Disparadores de compra */}
+          {researchBuyingTriggers.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Zap className="h-3 w-3" /> Disparadores de compra
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchBuyingTriggers.slice(0, 5).map((trigger, idx) => (
+                  <span key={idx} className="text-[10px] px-2 py-1 rounded-full border border-orange-500/20 bg-orange-500/10 text-orange-200">
+                    {trigger}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Acciones rápidas */}
+          <div className="flex gap-2 pt-1">
+            {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs font-medium text-violet-200"
+                onClick={() => {
+                  const updates: Partial<typeof formData> = {};
+                  if (!formData.sales_angle && researchAngles.length > 0) {
+                    const a = researchAngles[0] as any;
+                    updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
+                  }
+                  if (!formData.selected_pain && researchPains.length > 0) {
+                    const p = researchPains[0] as any;
+                    updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
+                  }
+                  if (!formData.selected_desire && researchDesires.length > 0) {
+                    const d = researchDesires[0] as any;
+                    updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
+                  }
+                  if (!formData.cta && researchCtaSuggestions.length > 0) {
+                    updates.cta = researchCtaSuggestions[0];
+                  }
+                  if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
+                    updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
+                  }
+                  if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {hasV2Data ? 'Auto-aplicar sugerencias ADN' : 'Aplicar sugerencias de investigación'}
+              </button>
+            )}
+            {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+              <button
+                type="button"
+                className="w-auto px-3 flex items-center justify-center gap-2 py-2 rounded-sm border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-xs font-medium text-amber-200"
+                onClick={handleRandomize}
+                title="Aleatorizar combinación"
+              >
+                <Shuffle className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Document Loading Section */}
       {hasDocumentUrls && (
