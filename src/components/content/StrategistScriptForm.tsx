@@ -249,6 +249,82 @@ function getSpherePhaseInfo(phase: string) {
   return SPHERE_PHASE_INFO[phase] || null;
 }
 
+const CAST_LAYER_INFO: Record<string, {
+  letter: string;
+  layerName: string;
+  label: string;
+  funnel: string;
+  objective: string;
+  audience: string;
+  tone: string;
+  techniques: string[];
+  keywords: string[];
+  ctaStyle: string;
+  kpis: string[];
+  creativeFocus: string;
+}> = {
+  engage: {
+    letter: 'C',
+    layerName: 'Conocer',
+    label: 'C — Conocer',
+    funnel: 'TOFU',
+    objective: 'Viralidad, enganche, disrupción. Que el avatar descubra que tiene el problema.',
+    audience: 'Audiencia FRÍA — no conocen la marca ni el producto',
+    tone: 'Disruptivo, viral, sorprendente. Rompe patrones, genera curiosidad extrema.',
+    techniques: ['Hooks ultra potentes 1-3s', 'Pattern interrupts', 'Declaraciones contraintuitivas', 'Mostrar el problema dramatizado'],
+    keywords: ['¿Sabías que...?', 'Esto es lo que nadie te cuenta', 'Error #1', 'La verdad sobre'],
+    ctaStyle: 'Suave — seguir, comentar, guardar. No vender directamente.',
+    kpis: ['Alcance', 'Reproducciones', 'Guardados'],
+    creativeFocus: 'Impacto visual + hook verbal. Primeros 2s son todo.',
+  },
+  solution: {
+    letter: 'A',
+    layerName: 'Atraer',
+    label: 'A — Atraer',
+    funnel: 'MOFU',
+    objective: 'Mostrar que el producto ES la solución perfecta. Persuadir para explorar.',
+    audience: 'Audiencia TIBIA — saben que tienen el problema, buscan solución',
+    tone: 'Persuasivo, confiado, enfocado en beneficios y transformación.',
+    techniques: ['Demostración en acción', 'Antes y después', 'Testimonios reales', 'Beneficios cuantificables'],
+    keywords: ['La solución es', 'Esto cambió todo', 'Finalmente', 'Resultados garantizados'],
+    ctaStyle: 'Directo — link en bio, probar, registrarse.',
+    kpis: ['Clics', 'Visitas web', 'Leads'],
+    creativeFocus: 'Demostración clara del producto + transformación del avatar.',
+  },
+  remarketing: {
+    letter: 'S',
+    layerName: 'Seducir',
+    label: 'S — Seducir',
+    funnel: 'BOFU',
+    objective: 'Crear urgencia, superar objeciones finales. Cerrar la venta.',
+    audience: 'Audiencia CALIENTE — vieron el producto pero no compraron',
+    tone: 'Urgente, resolutivo, FOMO. Atacar objeciones directamente.',
+    techniques: ['Escasez real', 'Social proof masivo', 'Responder objeciones', 'Garantías'],
+    keywords: ['Últimas unidades', 'No te pierdas', 'Mientras lees esto', 'Si no ahora cuándo'],
+    ctaStyle: 'Urgente — comprar ahora, última oportunidad.',
+    kpis: ['Conversiones', 'ROAS', 'CPA'],
+    creativeFocus: 'Objeción principal resuelta + CTA de urgencia.',
+  },
+  fidelize: {
+    letter: 'T',
+    layerName: 'Transformar',
+    label: 'T — Transformar',
+    funnel: 'Retención',
+    objective: 'Entregar valor, buscar recompra y referidos. Crear comunidad y lealtad.',
+    audience: 'CLIENTES existentes — ya compraron, queremos que vuelvan y recomienden',
+    tone: 'Cercano, exclusivo, valora al cliente. Contenido de alto valor.',
+    techniques: ['Contenido exclusivo', 'Tips avanzados', 'Historias de éxito', 'Programas de referidos'],
+    keywords: ['Para ti que ya eres cliente', 'Tip exclusivo', 'Gracias por confiar', 'Familia [marca]'],
+    ctaStyle: 'Comunitario — compartir, etiquetar amigos, dejar reseña, referir.',
+    kpis: ['LTV', 'Retención', 'NPS'],
+    creativeFocus: 'Comunidad + exclusividad + gratitud hacia el cliente.',
+  },
+};
+
+function getCastLayerInfo(phase: string) {
+  return CAST_LAYER_INFO[phase] || null;
+}
+
 const BLOCK_ACTION_KEYS: Record<string, string> = {
   script: "scripts.block.script",
   director: "scripts.block.director",
