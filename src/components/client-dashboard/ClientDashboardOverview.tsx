@@ -5,6 +5,8 @@ import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Content } from "@/types/database";
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+
 function getThumbnailUrl(content: Content): string | null {
   if (content.thumbnail_url && !content.thumbnail_url.includes('iframe.mediadelivery.net')) {
     return content.thumbnail_url;
@@ -13,9 +15,13 @@ function getThumbnailUrl(content: Content): string | null {
     || content.video_url
     || content.bunny_embed_url
     || '';
-  const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
   if (embedMatch) {
-    return `https://vz-${embedMatch[1]}.b-cdn.net/${embedMatch[2]}/thumbnail.jpg`;
+    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(embedMatch[1])}`;
+  }
+  const cdnMatch = videoUrl.match(/b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) {
+    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(cdnMatch[1])}`;
   }
   return null;
 }

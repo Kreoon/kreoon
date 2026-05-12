@@ -22,21 +22,29 @@ const statusConfig: Record<string, { icon: React.ElementType; color: string; bg:
   draft: { icon: Clock, color: "text-zinc-500", bg: "bg-zinc-500/10" },
 };
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+
 function getThumbnailUrl(content: Content): string | null {
-  // Prefer explicit thumbnail
+  // Prefer explicit thumbnail stored in DB
   if (content.thumbnail_url && !content.thumbnail_url.includes('iframe.mediadelivery.net')) {
     return content.thumbnail_url;
   }
 
-  // Extract from Bunny embed URL
   const videoUrl = (content.video_urls as string[] | undefined)?.find(u => u?.trim())
     || content.video_url
     || content.bunny_embed_url
     || '';
 
-  const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/(\d+)\/([a-f0-9-]+)/i);
+  // Extract video ID from embed URL and proxy through edge function
+  // (avoids constructing wrong CDN hostname from library ID)
+  const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
   if (embedMatch) {
-    return `https://vz-${embedMatch[1]}.b-cdn.net/${embedMatch[2]}/thumbnail.jpg`;
+    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(embedMatch[1])}`;
+  }
+
+  const cdnMatch = videoUrl.match(/b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdnMatch) {
+    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(cdnMatch[1])}`;
   }
 
   return null;
