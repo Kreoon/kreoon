@@ -942,6 +942,18 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     return [];
   }, [researchProduct]);
 
+  // Helper: parse ai_analysis JSONB safely — debe ir ANTES de researchAngles
+  const parsedAiAnalysis = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return null;
+    return typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+  }, [researchProduct]);
+
+  // hasV2Data: true ONLY when ai_analysis real existe con datos
+  const hasV2Data = useMemo(() => {
+    return !!(parsedAiAnalysis?.creative_brief || parsedAiAnalysis?.target_audience || parsedAiAnalysis?.market_analysis);
+  }, [parsedAiAnalysis]);
+
   const researchAngles = useMemo(() => {
     const collected: any[] = [];
 
@@ -1053,18 +1065,6 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
     return [];
   }, [researchProduct, parsedIdealAvatar]);
-
-  // Helper: parse ai_analysis JSONB safely
-  const parsedAiAnalysis = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
-    if (!raw) return null;
-    return typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-  }, [researchProduct]);
-
-  // hasV2Data: true ONLY when ai_analysis real existe con datos (no afectado por fallbacks V1)
-  const hasV2Data = useMemo(() => {
-    return !!(parsedAiAnalysis?.creative_brief || parsedAiAnalysis?.target_audience || parsedAiAnalysis?.market_analysis);
-  }, [parsedAiAnalysis]);
 
   // Hooks sugeridos — V2 primero, luego fallbacks V1
   const researchHookSuggestions = useMemo(() => {
