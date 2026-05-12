@@ -4,12 +4,12 @@
  */
 
 export interface ParsedResearchData {
-  // Market Research
+  // Market Research (V1)
   pains: string[];
   desires: string[];
   objections: string[];
 
-  // Avatar Profiles
+  // Avatar Profiles (V1)
   avatars: Array<{
     name: string;
     description: string;
@@ -17,17 +17,17 @@ export interface ParsedResearchData {
     psychographics?: string;
   }>;
 
-  // Sales Angles
+  // Sales Angles (V1)
   salesAngles: Array<{
     name: string;
     description: string;
     angle_type?: string;
   }>;
 
-  // Hooks (extracted from sales angles hookExamples)
+  // Hooks — V1 (from sales angles) + V2 (from creative_brief)
   hooks: string[];
 
-  // Competitors
+  // Competitors (V1)
   competitors: Array<{
     name: string;
     description?: string;
@@ -35,15 +35,23 @@ export interface ParsedResearchData {
     weaknesses?: string;
   }>;
 
-  // Executive Summary
+  // Executive Summary (V1)
   executiveSummary: string;
 
-  // JTBD (Jobs To Be Done)
+  // JTBD (V1)
   jtbd: {
     functional?: string[];
     emotional?: string[];
     social?: string[];
   };
+
+  // ADN V2 — ai_analysis fields
+  buyingTriggers: string[];      // ai_analysis.target_audience.buying_triggers
+  hookSuggestions: string[];     // ai_analysis.creative_brief.hooks_suggestions
+  keyMessages: string[];         // ai_analysis.creative_brief.key_messages
+  ctaRecommendations: string[];  // ai_analysis.creative_brief.cta_recommendations
+  trends: string[];              // ai_analysis.market_analysis.trends
+  hasV2Data: boolean;            // true when ai_analysis data is present
 }
 
 /**
@@ -257,7 +265,40 @@ function extractJTBD(marketResearch: unknown): ParsedResearchData['jtbd'] {
 }
 
 /**
- * Main parser function to extract all research data from a product
+ * Extract a flat string array from a nested ai_analysis path.
+ * Handles strings, objects with common text fields, or nested arrays.
+ */
+function extractV2Array(data: Record<string, unknown> | null, ...path: string[]): string[] {
+  if (!data) return [];
+  let current: unknown = data;
+  for (const key of path) {
+    if (!current || typeof current !== 'object') return [];
+    current = (current as Record<string, unknown>)[key];
+  }
+  if (!Array.isArray(current)) return [];
+  return current.map(stringifyItem).filter(Boolean);
+}
+
+/**
+ * Deduplicate two string arrays (case-insensitive on first 40 chars).
+ */
+function mergeUnique(base: string[], extra: string[]): string[] {
+  const seen = new Set(base.map(s => s.slice(0, 40).toLowerCase()));
+  const result = [...base];
+  for (const item of extra) {
+    const key = item.slice(0, 40).toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(item);
+    }
+  }
+  return result;
+}
+
+/**
+ * Main parser function to extract all research data from a product.
+ * Merges V1 fields (market_research, avatar_profiles, sales_angles_data)
+ * with V2 fields (ai_analysis) when available.
  */
 export function parseProductResearch(product: {
   market_research?: unknown;
@@ -266,34 +307,61 @@ export function parseProductResearch(product: {
   sales_angles_data?: unknown;
   competitor_analysis?: unknown;
   brief_data?: unknown;
+  ai_analysis?: unknown;
 }): ParsedResearchData {
-  const marketResearch = safeParseJson(product.market_research);
-  
   const salesAngles = extractSalesAngles(product.sales_angles_data, product.sales_angles);
 
-  // Extract hooks from sales_angles_data
-  const hooks: string[] = [];
+  // Extract hooks from sales_angles_data (V1)
+  const hooksV1: string[] = [];
   const sadParsed = safeParseJson(product.sales_angles_data);
   if (sadParsed) {
     const anglesArr = sadParsed.angles || sadParsed.sales_angles || sadParsed.angulos;
     if (Array.isArray(anglesArr)) {
       anglesArr.forEach((a: Record<string, unknown>) => {
         const hook = String(a.hookExample || a.hook_example || a.hook || '');
-        if (hook && hook !== 'undefined') hooks.push(hook);
+        if (hook && hook !== 'undefined') hooksV1.push(hook);
       });
     }
   }
 
+  // V2 — parse ai_analysis
+  const aiAnalysis = safeParseJson(product.ai_analysis);
+  const targetAudience = aiAnalysis ? safeParseJson(aiAnalysis.target_audience ?? null) : null;
+  const creativeBrief = aiAnalysis ? safeParseJson(aiAnalysis.creative_brief ?? null) : null;
+  const marketAnalysis = aiAnalysis ? safeParseJson(aiAnalysis.market_analysis ?? null) : null;
+
+  const painsV2 = extractV2Array(targetAudience, 'pain_points');
+  const desiresV2 = extractV2Array(targetAudience, 'desires');
+  const buyingTriggers = extractV2Array(targetAudience, 'buying_triggers');
+  const hookSuggestions = extractV2Array(creativeBrief, 'hooks_suggestions');
+  const keyMessages = extractV2Array(creativeBrief, 'key_messages');
+  const ctaRecommendations = extractV2Array(creativeBrief, 'cta_recommendations');
+  const trends = extractV2Array(marketAnalysis, 'trends');
+
+  const hasV2Data = painsV2.length > 0 || hookSuggestions.length > 0 || keyMessages.length > 0;
+
   return {
-    pains: extractArray(product.market_research, 'pains', 'dolores', 'problems', 'pain_points'),
-    desires: extractArray(product.market_research, 'desires', 'deseos', 'wants', 'aspirations'),
+    pains: mergeUnique(
+      extractArray(product.market_research, 'pains', 'dolores', 'problems', 'pain_points'),
+      painsV2
+    ),
+    desires: mergeUnique(
+      extractArray(product.market_research, 'desires', 'deseos', 'wants', 'aspirations'),
+      desiresV2
+    ),
     objections: extractArray(product.market_research, 'objections', 'objeciones', 'barriers', 'blockers'),
     avatars: extractAvatars(product.avatar_profiles),
     salesAngles,
-    hooks,
+    hooks: mergeUnique(hooksV1, hookSuggestions),
     competitors: extractCompetitors(product.competitor_analysis),
     executiveSummary: extractExecutiveSummary(product.market_research),
     jtbd: extractJTBD(product.market_research),
+    buyingTriggers,
+    hookSuggestions,
+    keyMessages,
+    ctaRecommendations,
+    trends,
+    hasV2Data,
   };
 }
 
@@ -369,6 +437,23 @@ No usar lenguaje de "creador externo" sino de "yo soy la marca".`);
     }
     sections.push(jtbdText);
   }
-  
+
+  // ADN V2 exclusive data
+  if (research.buyingTriggers.length > 0) {
+    sections.push(`⚡ DISPARADORES DE COMPRA (ADN V2):\n${research.buyingTriggers.map((t, i) => `${i + 1}. ${t}`).join('\n')}`);
+  }
+
+  if (research.keyMessages.length > 0) {
+    sections.push(`💬 MENSAJES CLAVE (ADN V2):\n${research.keyMessages.map((m, i) => `${i + 1}. ${m}`).join('\n')}`);
+  }
+
+  if (research.ctaRecommendations.length > 0) {
+    sections.push(`📢 CTAs RECOMENDADOS (ADN V2):\n${research.ctaRecommendations.map((c, i) => `${i + 1}. ${c}`).join('\n')}`);
+  }
+
+  if (research.trends.length > 0) {
+    sections.push(`📈 TENDENCIAS DE MERCADO (ADN V2):\n${research.trends.map((t, i) => `${i + 1}. ${t}`).join('\n')}`);
+  }
+
   return sections.join('\n\n');
 }

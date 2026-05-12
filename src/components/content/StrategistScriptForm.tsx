@@ -14,10 +14,11 @@ import { useScriptPrompts } from "@/hooks/useScriptPrompts";
 import { useOrganizationAI } from "@/hooks/useOrganizationAI";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { AI_TOKEN_COSTS } from "@/lib/finance/constants";
-import { 
-  Sparkles, Loader2, Target, Users, Globe, FileText, 
+import {
+  Sparkles, Loader2, Target, Users, Globe, FileText,
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search
+  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
+  Brain, Zap, ChevronRight, Hash
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { SkillsLoadingState } from "./SkillsLoadingState";
@@ -41,6 +42,7 @@ interface Product {
   competitor_analysis?: unknown;
   brief_data?: unknown;
   business_type?: 'product_service' | 'personal_brand' | null;
+  ai_analysis?: unknown; // ADN V2
 }
 
 interface GeneratedContent {
@@ -649,7 +651,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar")
+          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -790,6 +792,45 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
     return [];
   }, [researchProduct, parsedIdealAvatar]);
+
+  // ADN V2 — datos de ai_analysis
+  const researchHookSuggestions = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return [];
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    const cb = parsed?.creative_brief;
+    const arr = cb?.hooks_suggestions ?? cb?.hooksSuggestions ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
+  }, [researchProduct]);
+
+  const researchKeyMessages = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return [];
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    const cb = parsed?.creative_brief;
+    const arr = cb?.key_messages ?? cb?.keyMessages ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
+  }, [researchProduct]);
+
+  const researchCtaSuggestions = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return [];
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    const cb = parsed?.creative_brief;
+    const arr = cb?.cta_recommendations ?? cb?.ctaRecommendations ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
+  }, [researchProduct]);
+
+  const researchBuyingTriggers = useMemo(() => {
+    const raw = (researchProduct as any)?.ai_analysis;
+    if (!raw) return [];
+    const parsed = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+    const ta = parsed?.target_audience;
+    const arr = ta?.buying_triggers ?? ta?.buyingTriggers ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && s.trim()) as string[] : [];
+  }, [researchProduct]);
+
+  const hasV2Data = researchHookSuggestions.length > 0 || researchKeyMessages.length > 0;
 
   // Auto-fill sales_angle and narrative_structure from research when available
   useEffect(() => {
@@ -996,7 +1037,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     const businessType = (product?.business_type as 'product_service' | 'personal_brand') || 'product_service';
     const isPersonalBrand = businessType === 'personal_brand';
     
-    // Parse structured research data
+    // Parse structured research data (V1 + V2)
     const researchData = product ? parseProductResearch({
       market_research: product.market_research,
       avatar_profiles: product.avatar_profiles,
@@ -1004,6 +1045,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       sales_angles_data: product.sales_angles_data,
       competitor_analysis: product.competitor_analysis,
       brief_data: product.brief_data,
+      ai_analysis: (researchProduct as any)?.ai_analysis ?? product.ai_analysis,
     }) : null;
     
     // Format research for prompt
@@ -1094,6 +1136,20 @@ ${product?.sales_angles?.join(', ') || 'No definidos'}
 
 HOOKS SUGERIDOS:
 ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}`;
+
+    // Agregar datos exclusivos del ADN V2 si están disponibles
+    if (researchData?.keyMessages?.length) {
+      context += `\n\nMENSAJES CLAVE (ADN V2):\n${researchData.keyMessages.map((m, i) => `${i + 1}. ${m}`).join('\n')}`;
+    }
+    if (researchData?.ctaRecommendations?.length) {
+      context += `\n\nCTAs RECOMENDADOS (ADN V2):\n${researchData.ctaRecommendations.slice(0, 4).map((c, i) => `${i + 1}. ${c}`).join('\n')}`;
+    }
+    if (researchData?.trends?.length) {
+      context += `\n\nTENDENCIAS DE MERCADO (ADN V2):\n${researchData.trends.slice(0, 5).map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
+    }
+    if (researchData?.buyingTriggers?.length) {
+      context += `\n\nDISPARADORES DE COMPRA (ADN V2):\n${researchData.buyingTriggers.slice(0, 5).map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
+    }
 
     // Add document content if loaded
     if (documentContent.brief) {
@@ -1368,6 +1424,178 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
+      {/* CAST Layer Banner */}
+      {spherePhase && (() => {
+        const castInfo = getCastLayerInfo(spherePhase);
+        if (!castInfo) return null;
+        const bgMap: Record<string, string> = {
+          C: 'from-blue-500/10 to-cyan-500/10 border-blue-500/30 text-blue-400',
+          A: 'from-yellow-500/10 to-orange-500/10 border-yellow-500/30 text-yellow-400',
+          S: 'from-red-500/10 to-rose-500/10 border-red-500/30 text-red-400',
+          T: 'from-green-500/10 to-emerald-500/10 border-green-500/30 text-green-400',
+        };
+        const colors = bgMap[castInfo.letter] || bgMap['C'];
+        return (
+          <div className={`p-2.5 sm:p-3 rounded-sm bg-gradient-to-r ${colors} border flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3`}>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="text-lg font-bold shrink-0">{castInfo.letter}</span>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-semibold leading-tight">{castInfo.label} · {castInfo.funnel}</p>
+                <p className="text-[10px] sm:text-xs opacity-80 line-clamp-1">{castInfo.objective}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1 ml-auto shrink-0">
+              {castInfo.kpis.slice(0, 3).map(kpi => (
+                <span key={kpi} className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded bg-background/40 font-mono">{kpi}</span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Panel Intel de Investigación ADN */}
+      {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0) && (
+        <Accordion type="single" collapsible defaultValue={hasV2Data ? "intel" : undefined}>
+          <AccordionItem value="intel" className="border rounded-sm bg-gradient-to-br from-violet-500/5 to-purple-500/10 border-violet-500/20">
+            <AccordionTrigger className="px-3 sm:px-4 py-2.5 sm:py-3 hover:no-underline [&>svg]:shrink-0">
+              <div className="flex items-center gap-2 text-left min-w-0">
+                <Brain className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400 shrink-0" />
+                <span className="text-xs sm:text-sm font-semibold text-violet-300">Inteligencia de Investigación ADN</span>
+                <div className="flex flex-wrap gap-1 ml-1">
+                  {researchAngles.length > 0 && (
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">{researchAngles.length} ángulos</span>
+                  )}
+                  {researchPains.length > 0 && (
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">{researchPains.length} dolores</span>
+                  )}
+                  {researchHookSuggestions.length > 0 && (
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{researchHookSuggestions.length} hooks</span>
+                  )}
+                  {hasV2Data && (
+                    <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-300 font-semibold">V2 ADN</span>
+                  )}
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-3 sm:space-y-4">
+
+              {/* Hooks sugeridos ADN V2 */}
+              {researchHookSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] sm:text-xs font-semibold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <Zap className="h-3 w-3" /> Hooks sugeridos (ADN V2)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {researchHookSuggestions.slice(0, 6).map((hook, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/25 transition-colors text-left max-w-[200px] truncate"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          hooks: prev.hooks.includes(hook) ? prev.hooks : [...prev.hooks, hook].slice(0, parseInt(prev.hooks_count)),
+                        }))}
+                        title={hook}
+                      >
+                        + {hook}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Mensajes clave */}
+              {researchKeyMessages.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] sm:text-xs font-semibold text-violet-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <MessageSquare className="h-3 w-3" /> Mensajes clave (ADN V2)
+                  </p>
+                  <ul className="space-y-1">
+                    {researchKeyMessages.slice(0, 5).map((msg, idx) => (
+                      <li key={idx} className="flex items-start gap-1.5">
+                        <ChevronRight className="h-3 w-3 text-violet-400 shrink-0 mt-0.5" />
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">{msg}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* CTAs recomendados */}
+              {researchCtaSuggestions.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] sm:text-xs font-semibold text-green-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <Hash className="h-3 w-3" /> CTAs recomendados
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {researchCtaSuggestions.slice(0, 4).map((cta, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-200 hover:bg-green-500/25 transition-colors"
+                        onClick={() => setFormData(prev => ({ ...prev, cta }))}
+                        title={`Aplicar CTA: ${cta}`}
+                      >
+                        {cta}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Disparadores de compra */}
+              {researchBuyingTriggers.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] sm:text-xs font-semibold text-orange-400 uppercase tracking-wide flex items-center gap-1.5">
+                    <Zap className="h-3 w-3" /> Disparadores de compra
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {researchBuyingTriggers.slice(0, 5).map((trigger, idx) => (
+                      <span key={idx} className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-orange-500/20 bg-orange-500/10 text-orange-200">
+                        {trigger}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Botón Auto-aplicar */}
+              {hasV2Data && (
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs sm:text-sm font-medium text-violet-200"
+                  onClick={() => {
+                    const updates: Partial<typeof formData> = {};
+                    if (!formData.sales_angle && researchAngles.length > 0) {
+                      const a = researchAngles[0] as any;
+                      updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
+                    }
+                    if (!formData.selected_pain && researchPains.length > 0) {
+                      const p = researchPains[0] as any;
+                      updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
+                    }
+                    if (!formData.selected_desire && researchDesires.length > 0) {
+                      const d = researchDesires[0] as any;
+                      updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
+                    }
+                    if (!formData.cta && researchCtaSuggestions.length > 0) {
+                      updates.cta = researchCtaSuggestions[0];
+                    }
+                    if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
+                      updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
+                    }
+                    if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Auto-aplicar mejores sugerencias ADN
+                </button>
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+
       {/* Block Selection */}
       <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -1495,51 +1723,67 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Ángulo de Venta */}
-        <div className="space-y-1.5 sm:space-y-2">
+        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
           </Label>
 
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-between">
-                <span className="truncate">
-                  {formData.sales_angle || "Seleccionar ángulo..."}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 ml-2" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchAngles.map((a: any, idx: number) => {
-                const angleText = a?.angle || a?.salesAngle || a?.name || "";
-                if (!angleText) return null;
+          {/* Input de texto libre (para ángulo personalizado) */}
+          <Input
+            value={formData.sales_angle}
+            onChange={(e) => setFormData(prev => ({ ...prev, sales_angle: e.target.value }))}
+            placeholder="Escribe o selecciona un ángulo de venta..."
+            className="text-sm"
+          />
 
-                const type = a?.type || a?.category;
+          {/* Tarjetas de ángulos de la investigación */}
+          {researchAngles.length > 0 && (
+            <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+              <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                {researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''} de la investigación — haz click para seleccionar:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                {researchAngles.map((a: any, idx: number) => {
+                  const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                  if (!angleText) return null;
+                  const angleType = a?.type || a?.category || a?.funnelPhase || "";
+                  const description = a?.description || a?.explicacion || "";
+                  const isSelected = formData.sales_angle === angleText;
+                  const isV2 = !!(a?._source === 'v2' || (!a?.type && !a?.category && idx >= (product?.sales_angles?.length ?? 0)));
 
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                    onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                  >
-                    <span className="text-sm truncate">{angleText}</span>
-                    {type ? (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {type}
-                      </Badge>
-                    ) : null}
-                  </button>
-                );
-              })}
-
-              {researchAngles.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los ángulos.
-                </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`text-left p-2.5 rounded-sm border transition-all ${
+                        isSelected
+                          ? 'ring-2 ring-primary border-primary bg-primary/10'
+                          : 'border-border hover:border-primary/50 hover:bg-muted/50 bg-background'
+                      }`}
+                      onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                    >
+                      <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
+                      {description && (
+                        <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{description}</p>
+                      )}
+                      <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                        {angleType && (
+                          <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">
+                            {angleType}
+                          </Badge>
+                        )}
+                        {isV2 && (
+                          <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
+                            V2 ADN
+                          </Badge>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Número de Hooks */}
@@ -1771,53 +2015,21 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_pain}
-              onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
-              placeholder="Selecciona un dolor..."
-              className="flex-1 text-sm"
+          <Input
+            value={formData.selected_pain}
+            onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
+            placeholder="Escribe o selecciona un dolor de la investigación..."
+            className="text-sm"
+          />
+          {researchPains.length > 0 && (
+            <PainDesireChips
+              items={researchPains}
+              selected={formData.selected_pain}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
+              colorClass="border-rose-500/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/25 data-[selected=true]:bg-rose-500/30 data-[selected=true]:border-rose-500"
+              textExtractor={(p: any) => typeof p === 'string' ? p : (p?.pain || p?.description || p?.text || '')}
             />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Dolores</span> ({researchPains.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchPains.map((pain: any, idx: number) => {
-                  const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
-                  if (!painText || (typeof painText === 'string' && !painText.trim())) return null;
-                  const category = typeof pain === 'object' && pain ? (pain?.category || pain?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_pain: painText }))}
-                    >
-                      <span className="text-sm">{painText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchPains.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver los dolores.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          )}
         </div>
 
         {/* Deseos */}
@@ -1825,53 +2037,21 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_desire}
-              onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
-              placeholder="Selecciona un deseo..."
-              className="flex-1 text-sm"
+          <Input
+            value={formData.selected_desire}
+            onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
+            placeholder="Escribe o selecciona un deseo de la investigación..."
+            className="text-sm"
+          />
+          {researchDesires.length > 0 && (
+            <PainDesireChips
+              items={researchDesires}
+              selected={formData.selected_desire}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
+              colorClass="border-primary/30 bg-primary/10 text-primary-foreground/80 hover:bg-primary/25 data-[selected=true]:bg-primary/30 data-[selected=true]:border-primary"
+              textExtractor={(d: any) => typeof d === 'string' ? d : (d?.desire || d?.description || d?.text || '')}
             />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Deseos</span> ({researchDesires.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchDesires.map((desire: any, idx: number) => {
-                  const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
-                  if (!desireText || (typeof desireText === 'string' && !desireText.trim())) return null;
-                  const category = typeof desire === 'object' && desire ? (desire?.category || desire?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_desire: desireText }))}
-                    >
-                      <span className="text-sm">{desireText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchDesires.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver los deseos.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          )}
         </div>
 
         {/* Objeciones */}
@@ -1879,53 +2059,21 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             🚫 Objeción Seleccionada
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_objection}
-              onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
-              placeholder="Selecciona una objeción..."
-              className="flex-1 text-sm"
+          <Input
+            value={formData.selected_objection}
+            onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
+            placeholder="Escribe o selecciona una objeción de la investigación..."
+            className="text-sm"
+          />
+          {researchObjections.length > 0 && (
+            <PainDesireChips
+              items={researchObjections}
+              selected={formData.selected_objection}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
+              colorClass="border-orange-500/30 bg-orange-500/10 text-orange-200 hover:bg-orange-500/25 data-[selected=true]:bg-orange-500/30 data-[selected=true]:border-orange-500"
+              textExtractor={(o: any) => typeof o === 'string' ? o : (o?.objection || o?.description || o?.text || '')}
             />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Objeciones</span> ({researchObjections.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchObjections.map((objection: any, idx: number) => {
-                  const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
-                  if (!objectionText || (typeof objectionText === 'string' && !objectionText.trim())) return null;
-                  const category = typeof objection === 'object' && objection ? (objection?.category || objection?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_objection: objectionText }))}
-                    >
-                      <span className="text-sm">{objectionText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchObjections.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver las objeciones.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          )}
         </div>
       </div>
 
@@ -2114,6 +2262,54 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </>
         )}
       </Button>
+    </div>
+  );
+}
+
+// ─── Componente auxiliar: chips de selección para dolor/deseo/objeción ────────
+
+interface PainDesireChipsProps {
+  items: unknown[];
+  selected: string;
+  onSelect: (text: string) => void;
+  colorClass: string;
+  textExtractor: (item: unknown) => string;
+}
+
+function PainDesireChips({ items, selected, onSelect, colorClass, textExtractor }: PainDesireChipsProps) {
+  const [showAll, setShowAll] = useState(false);
+  const MAX_VISIBLE = 8;
+  const texts = items.map(textExtractor).filter(Boolean);
+  const visible = showAll ? texts : texts.slice(0, MAX_VISIBLE);
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {visible.map((text, idx) => {
+        const isSelected = selected === text;
+        return (
+          <button
+            key={idx}
+            type="button"
+            data-selected={isSelected}
+            className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full border transition-all ${colorClass} ${
+              isSelected ? 'ring-1 ring-offset-1 ring-offset-background font-semibold' : ''
+            }`}
+            onClick={() => onSelect(isSelected ? '' : text)}
+            title={text}
+          >
+            <span className="line-clamp-1 max-w-[200px]">{text}</span>
+          </button>
+        );
+      })}
+      {texts.length > MAX_VISIBLE && (
+        <button
+          type="button"
+          className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-muted text-muted-foreground hover:border-foreground/30 transition-colors"
+          onClick={() => setShowAll(v => !v)}
+        >
+          {showAll ? 'Ver menos' : `+${texts.length - MAX_VISIBLE} más`}
+        </button>
+      )}
     </div>
   );
 }
