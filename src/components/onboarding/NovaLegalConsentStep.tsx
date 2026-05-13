@@ -23,7 +23,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useOnboardingGate, PendingDocument } from '@/hooks/useOnboardingGate';
 import { useLegalConsent } from '@/hooks/useLegalConsent';
@@ -81,6 +80,19 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
   const [signatureModalContent, setSignatureModalContent] = useState<string>('');
   const [showReceipt, setShowReceipt] = useState<string | null>(null);
   const [signedDocuments, setSignedDocuments] = useState<Set<string>>(new Set());
+
+  const docScrollRef = useRef<HTMLDivElement>(null);
+
+  // Si el contenido cabe sin scroll, marcar como leído automáticamente
+  useEffect(() => {
+    if (!documentContent || loadingContent) return;
+    requestAnimationFrame(() => {
+      const el = docScrollRef.current;
+      if (el && el.scrollHeight <= el.clientHeight + 10) {
+        setHasReadToBottom(true);
+      }
+    });
+  }, [documentContent, loadingContent]);
 
   // Filtrar documentos de registro que corresponden al rol y tipo de cuenta del usuario
   // user_role puede ser: 'all', 'talent', 'client', o un rol específico
@@ -599,7 +611,16 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
             </SheetDescription>
           </SheetHeader>
 
-          <ScrollArea className="flex-1 min-h-0">
+          <div
+            ref={docScrollRef}
+            className="flex-1 min-h-0 overflow-y-auto"
+            onScroll={(e) => {
+              const el = e.currentTarget;
+              if (!hasReadToBottom && el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
+                setHasReadToBottom(true);
+              }
+            }}
+          >
             <div className="p-4 sm:p-6">
               {loadingContent ? (
                 <div className="flex items-center justify-center py-12">
@@ -612,7 +633,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
                 />
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="p-4 sm:p-6 border-t border-border flex-shrink-0 bg-background">
             {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
