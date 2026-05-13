@@ -480,6 +480,27 @@ async function registerCreator(
     console.error("[public-registration] Resend error:", e);
   }
 
+  // 10. Send welcome WhatsApp
+  if (data.phone) {
+    try {
+      await fetch(`${SUPABASE_URL}/functions/v1/whatsapp-notify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${SUPABASE_SERVICE_KEY}`,
+        },
+        body: JSON.stringify({
+          phone: data.phone,
+          event_type: "welcome_creator",
+          variables: [data.full_name],
+          user_id: userId,
+        }),
+      });
+    } catch (e) {
+      console.error("[public-registration] WhatsApp welcome error:", e);
+    }
+  }
+
   console.log("[public-registration] Creator registered successfully:", userId, "Pending approval for:", community?.name);
 
   return new Response(

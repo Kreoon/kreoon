@@ -90,6 +90,32 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Error in token reset job:", err);
     }
 
+    // ─── Auto-approve delivered content after 2 days ────────
+    let autoApprovedCount = 0;
+    try {
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: expiredDeliveries } = await supabase
+        .from("content")
+        .select("id")
+        .eq("status", "delivered")
+        .lt("delivered_at", twoDaysAgo);
+
+      if (expiredDeliveries && expiredDeliveries.length > 0) {
+        const ids = expiredDeliveries.map((c: any) => c.id);
+        const { error: updateErr } = await supabase
+          .from("content")
+          .update({ status: "approved" })
+          .in("id", ids);
+
+        if (!updateErr) {
+          autoApprovedCount = ids.length;
+          console.log(`Auto-approved ${ids.length} content item(s) after 2-day delivery window`);
+        }
+      }
+    } catch (err) {
+      console.error("Error in auto-approve job:", err);
+    }
+
     // ─── Fetch all relevant content ──────────────────────
     const { data: allContent, error: contentErr } = await supabase
       .from("content")
@@ -226,19 +252,24 @@ const handler = async (req: Request): Promise<Response> => {
     for (const d of creatorDigestMap.values()) allUserIds.add(d.userId);
     for (const d of editorDigestMap.values()) allUserIds.add(d.userId);
 
-    const profileMap = new Map<string, { email: string; full_name: string }>();
+    const profileMap = new Map<string, { email: string; full_name: string; whatsapp_phone: string | null; whatsapp_enabled: boolean }>();
     const userIdArray = Array.from(allUserIds);
 
     for (let i = 0; i < userIdArray.length; i += 80) {
       const chunk = userIdArray.slice(i, i + 80);
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, email, full_name")
+        .select("id, email, full_name, phone, whatsapp_phone, whatsapp_enabled")
         .in("id", chunk);
 
       if (profiles) {
         for (const p of profiles) {
-          if (p.email) profileMap.set(p.id, { email: p.email, full_name: p.full_name || "" });
+          if (p.email) profileMap.set(p.id, {
+            email: p.email,
+            full_name: p.full_name || "",
+            whatsapp_phone: p.whatsapp_phone || p.phone || null,
+            whatsapp_enabled: p.whatsapp_enabled !== false,
+          });
         }
       }
     }
@@ -318,13 +349,83 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    // ─── WhatsApp — client_reminder ──────────────────────
+    let waSent = 0;
+    for (const [, digest] of clientDigestMap) {
+      const profile = profileMap.get(digest.userId);
+      if (!profile?.whatsapp_phone || !profile.whatsapp_enabled) continue;
+
+      const branding = orgBrandingMap.get(digest.orgId) || defaultBranding();
+      const totalItems =
+        digest.scriptsToReview.length +
+        digest.contentToApprove.length +
+        digest.contentCorrected.length;
+
+      try {
+        await fetch(`${supabaseUrl}/functions/v1/whatsapp-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            phone: profile.whatsapp_phone,
+            event_type: "client_reminder",
+            variables: [branding.name, String(totalItems)],
+            user_id: digest.userId,
+          }),
+        });
+        waSent++;
+      } catch (err) {
+        console.error(`[daily-reminders] WhatsApp client_reminder error for ${digest.userId}:`, err);
+      }
+    }
+
+    // ─── WhatsApp — profile_reminder (solo lunes) ────────
+    if (new Date().getDay() === 1) {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: incompleteProfiles } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone, whatsapp_phone, whatsapp_enabled")
+        .or("bio.is.null,avatar_url.is.null")
+        .lt("created_at", threeDaysAgo)
+        .eq("whatsapp_enabled", true)
+        .not("phone", "is", null)
+        .limit(50);
+
+      for (const p of (incompleteProfiles || [])) {
+        const waPhone = p.whatsapp_phone || p.phone;
+        if (!waPhone) continue;
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/whatsapp-notify`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              phone: waPhone,
+              event_type: "profile_reminder",
+              variables: [p.full_name || "Creador"],
+              user_id: p.id,
+            }),
+          });
+          waSent++;
+        } catch (err) {
+          console.error(`[daily-reminders] WhatsApp profile_reminder error for ${p.id}:`, err);
+        }
+      }
+    }
+
     const successCount = results.filter((r) => r.success).length;
-    console.log(`Daily reminders completed: ${successCount}/${results.length} emails sent`);
+    console.log(`Daily reminders completed: ${successCount}/${results.length} emails, ${waSent} WhatsApp, ${autoApprovedCount} auto-approved`);
 
     return jsonResponse({
       success: true,
       sent: successCount,
       total: results.length,
+      whatsapp_sent: waSent,
+      auto_approved: autoApprovedCount,
       breakdown: {
         clients: results.filter((r) => r.type === "client").length,
         creators: results.filter((r) => r.type === "creator").length,

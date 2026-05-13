@@ -335,15 +335,66 @@ serve(async (req) => {
         .in("id", idBatch);
     }
 
-    // TODO: Integrate with push notification service (FCM, OneSignal)
-    // TODO: Integrate with email service (SendGrid, Resend)
-    // For now, notifications are stored in DB and visible in-app.
+    // -----------------------------------------------------------------------
+    // 11. WhatsApp: notificar a creadores con whatsapp_phone configurado
+    // -----------------------------------------------------------------------
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const creatorProfileIds = creatorsToNotify.map((c) => c.creator_profile_id);
+    let waCount = 0;
+
+    for (const profileIdBatch of chunk(creatorProfileIds, 50)) {
+      const { data: cpRows } = await supabase
+        .from("creator_profiles")
+        .select("id, whatsapp_phone, whatsapp_enabled, user_id")
+        .in("id", profileIdBatch)
+        .eq("whatsapp_enabled", true);
+
+      for (const cp of (cpRows || [])) {
+        if (!cp.whatsapp_phone) continue;
+
+        const creatorData = creatorsToNotify.find((c) => c.creator_profile_id === cp.id);
+        const score = creatorData ? Math.round(creatorData.match_score) : 0;
+
+        // Plantilla new_campaign: {{1}}=creator_name {{2}}=campaign_title {{3}}=brand_name {{4}}=budget {{5}}=match_score
+        const creatorName = creatorData?.display_name || "Creador";
+        const waVariables = [
+          creatorName,
+          campaign.title,
+          getBrandName(campaign),
+          formatBudget(campaign),
+          String(score),
+        ];
+
+        fetch(`${supabaseUrl}/functions/v1/whatsapp-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+          },
+          body: JSON.stringify({
+            phone: cp.whatsapp_phone,
+            variables: waVariables,
+            event_type: "new_campaign",
+            entity_id: campaign_id,
+            user_id: cp.user_id,
+          }),
+        }).catch((err) => console.error("[campaign-notifications] WhatsApp error:", err));
+
+        waCount++;
+      }
+    }
+
+    console.log(`[campaign-notifications] WhatsApp enviados: ${waCount}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: `Notifications sent to ${allInsertedIds.length} creators`,
         notifications_sent: allInsertedIds.length,
+        whatsapp_sent: waCount,
         total_eligible: creators.length,
         total_with_notif_enabled: creatorsToNotify.length,
         batch_errors: insertErrors,

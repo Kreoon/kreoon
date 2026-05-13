@@ -18,8 +18,7 @@ import { getOrgEmailConfig } from "../_shared/resend-client.ts";
  *   Creator: content assigned, content approved, application approved, project created
  *   Editor:  content recorded (ready for editing)
  *   Issues:  notify responsible party
- *
- * Clients get a DAILY DIGEST (via daily-reminders cron), NOT real-time.
+ *   Client:  script_pending, content_delivered, content_corrected (WhatsApp real-time)
  */
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -44,7 +43,10 @@ interface NotificationPayload {
     | "content_approved"
     | "content_issue"
     | "application_approved"
-    | "project_created";
+    | "project_created"
+    | "script_pending"
+    | "content_delivered"
+    | "content_corrected";
   record: Record<string, any>;
   old_record?: Record<string, any>;
 }
@@ -94,8 +96,14 @@ async function handleNotification(
       return notifyApplicationApproved(supabase, payload.record);
     case "project_created":
       return notifyProjectCreated(supabase, payload.record);
+    case "script_pending":
+      return notifyScriptPending(supabase, payload.record);
+    case "content_delivered":
+      return notifyContentDelivered(supabase, payload.record);
+    case "content_corrected":
+      return notifyContentCorrected(supabase, payload.record);
     default:
-      console.log(`[workflow-notifications] Unknown type: ${payload.type}`);
+      console.log(`[workflow-notifications] Unknown type: ${(payload as any).type}`);
       return { sent: false };
   }
 }
@@ -105,10 +113,15 @@ async function handleNotification(
 async function getProfile(supabase: any, userId: string) {
   const { data } = await supabase
     .from("profiles")
-    .select("email, full_name")
+    .select("email, full_name, phone, whatsapp_phone, whatsapp_enabled")
     .eq("id", userId)
     .single();
-  return data;
+  if (!data) return null;
+  // phone es el WhatsApp del usuario (campo unificado); whatsapp_phone puede sobreescribir
+  return {
+    ...data,
+    whatsapp_phone: data.whatsapp_phone || data.phone,
+  };
 }
 
 async function getOrgBranding(supabase: any, orgId: string): Promise<OrgBranding> {
@@ -132,6 +145,72 @@ async function getClientName(supabase: any, clientId: string) {
     .eq("id", clientId)
     .single();
   return data?.name || "Cliente";
+}
+
+/** Obtiene el WhatsApp del cliente: primero en clients, luego en el primer usuario del cliente */
+async function getClientWhatsApp(
+  supabase: any,
+  clientId: string
+): Promise<string | null> {
+  // 1. Verificar si el cliente tiene whatsapp_phone o phone directamente
+  const { data: client } = await supabase
+    .from("clients")
+    .select("phone, whatsapp_phone, whatsapp_enabled, user_id")
+    .eq("id", clientId)
+    .single();
+
+  const clientPhone = client?.whatsapp_phone || client?.phone;
+  if (clientPhone && client?.whatsapp_enabled !== false) {
+    return clientPhone;
+  }
+
+  // 2. Buscar en client_users → profiles
+  const { data: clientUsers } = await supabase
+    .from("client_users")
+    .select("user_id")
+    .eq("client_id", clientId)
+    .limit(1);
+
+  const firstUserId = clientUsers?.[0]?.user_id || client?.user_id;
+  if (!firstUserId) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("whatsapp_phone, whatsapp_enabled")
+    .eq("id", firstUserId)
+    .single();
+
+  if (profile?.whatsapp_phone && profile?.whatsapp_enabled) {
+    return profile.whatsapp_phone;
+  }
+
+  return null;
+}
+
+/** Envía un mensaje WhatsApp usando plantilla Meta aprobada */
+async function sendWhatsApp(
+  phone: string | null | undefined,
+  variables: string[],
+  event_type: string,
+  entity_id?: string
+): Promise<void> {
+  if (!phone) return;
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  try {
+    await fetch(`${supabaseUrl}/functions/v1/whatsapp-notify`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ phone, variables, event_type, entity_id }),
+    });
+  } catch (err) {
+    console.error(`[workflow-notifications] WhatsApp send error (${event_type}):`, err);
+  }
 }
 
 async function insertNotification(
@@ -163,14 +242,12 @@ async function sendAndNotify(
   link?: string,
   senderFrom?: string
 ): Promise<{ sent: boolean; to: string }> {
-  // Send email
   try {
     await resend.emails.send({ from: senderFrom || FROM, to: [email], subject, html: htmlBody });
   } catch (err) {
     console.error(`[workflow-notifications] Email to ${email} failed:`, err);
   }
 
-  // In-app notification
   await insertNotification(supabase, userId, notifType, notifTitle, notifMessage, link);
 
   return { sent: true, to: email };
@@ -178,38 +255,31 @@ async function sendAndNotify(
 
 // ─── Email Template Builders ─────────────────────────────
 
-/** Build logo HTML: org logo if available, else fallback to org initial */
 function buildLogoHtml(branding: OrgBranding): string {
   if (branding.logo_url) {
     return `<img src="${branding.logo_url}" alt="${branding.name}" width="48" height="48" style="display:block;margin:0 auto 16px;border-radius:12px;object-fit:cover" />`;
   }
-  // Fallback: colored circle with initial
   const initial = branding.name.charAt(0).toUpperCase();
   const color = branding.primary_color || "#8b5cf6";
   return `<div style="width:48px;height:48px;border-radius:12px;background:${color};display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:#fff;font-size:24px;font-weight:700;line-height:48px;text-align:center">${initial}</div>`;
 }
 
-/** Wrap email body with org branding (for internal workflow) */
 function wrapOrgEmail(title: string, body: string, branding: OrgBranding): string {
   const color = branding.primary_color || "#8b5cf6";
-  const gradientEnd = adjustColor(color, -20); // Slightly darker for gradient
+  const gradientEnd = adjustColor(color, -20);
   const logo = buildLogoHtml(branding);
-
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:system-ui,-apple-system,sans-serif"><div style="max-width:600px;margin:0 auto;padding:40px 20px"><div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;padding:40px;border:1px solid rgba(255,255,255,0.1)"><div style="text-align:center;margin-bottom:32px">${logo}<h1 style="color:#fff;font-size:22px;margin:0">${title}</h1></div>${body}<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:32px;padding-top:20px;text-align:center"><p style="color:#64748b;font-size:12px;margin:0">${branding.name}</p><p style="color:#475569;font-size:11px;margin:8px 0 0">Este es un mensaje automático. No respondas a este correo.</p></div></div></div></body></html>`;
 }
 
-/** Wrap email body with KREOON branding (for marketplace/platform) */
 function wrapKreoonEmail(title: string, body: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#0a0a0a;font-family:system-ui,-apple-system,sans-serif"><div style="max-width:600px;margin:0 auto;padding:40px 20px"><div style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-radius:16px;padding:40px;border:1px solid rgba(255,255,255,0.1)"><div style="text-align:center;margin-bottom:32px">${KREOON_LOGO}<h1 style="color:#fff;font-size:22px;margin:0">${title}</h1></div>${body}<div style="border-top:1px solid rgba(255,255,255,0.1);margin-top:32px;padding-top:20px;text-align:center"><p style="color:#64748b;font-size:12px;margin:0">KREOON - Tu sistema operativo para creadores</p><p style="color:#475569;font-size:11px;margin:8px 0 0">Este es un mensaje automático. No respondas a este correo.</p></div></div></div></body></html>`;
 }
 
-/** CTA button using org or kreoon color */
 function ctaButton(text: string, href: string, color?: string): string {
   const bg = color || "#8b5cf6";
   return `<div style="text-align:center;margin:28px 0"><a href="${href}" style="background:${bg};color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block">${text}</a></div>`;
 }
 
-/** Simple color adjustment (darken) for gradient fallback */
 function adjustColor(hex: string, amount: number): string {
   const num = parseInt(hex.replace("#", ""), 16);
   const r = Math.max(0, Math.min(255, ((num >> 16) & 0xff) + amount));
@@ -220,10 +290,6 @@ function adjustColor(hex: string, amount: number): string {
 
 // ─── INTERNAL WORKFLOW — Org Branding ────────────────────
 
-/**
- * Creator gets notified when content is assigned to them
- * → ORG BRANDING
- */
 async function notifyContentAssigned(
   supabase: any,
   record: Record<string, any>
@@ -245,11 +311,17 @@ async function notifyContentAssigned(
 
   const color = orgBranding.primary_color || "#8b5cf6";
 
+  // WhatsApp — plantilla content_assigned: {{1}}=creator_name {{2}}=title {{3}}=org {{4}}=client
+  await sendWhatsApp(
+    profile.whatsapp_enabled ? profile.whatsapp_phone : null,
+    [profile.full_name || "Creador", title, orgBranding.name, clientName],
+    "content_assigned",
+    record.id
+  );
+
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || "Creador"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Se te ha asignado un nuevo contenido para grabar:</p><div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:16px;margin:16px 0;border-left:4px solid ${color}"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${title}</p><p style="color:#94a3b8;font-size:13px;margin:0">Cliente: ${clientName}</p></div>${ctaButton("Ver en Tablero", "https://kreoon.com/board", color)}`;
 
   const html = wrapOrgEmail("Nuevo contenido asignado", body, orgBranding);
-
-  // Get org email config for dynamic sender
   const emailConfig = await getOrgEmailConfig(supabase, record.organization_id);
 
   return sendAndNotify(
@@ -264,10 +336,6 @@ async function notifyContentAssigned(
   );
 }
 
-/**
- * Editor gets notified when content is recorded and ready for editing
- * → ORG BRANDING
- */
 async function notifyContentRecorded(
   supabase: any,
   record: Record<string, any>
@@ -285,17 +353,23 @@ async function notifyContentRecorded(
   const title = record.title || "Sin título";
   const color = orgBranding.primary_color || "#8b5cf6";
 
-  // Get creator name for context
   let creatorName = "el creador";
   if (record.creator_id) {
     const creatorProfile = await getProfile(supabase, record.creator_id);
     if (creatorProfile?.full_name) creatorName = creatorProfile.full_name;
   }
 
+  // WhatsApp — plantilla content_recorded: {{1}}=editor_name {{2}}=title {{3}}=org {{4}}=creator_name
+  await sendWhatsApp(
+    profile.whatsapp_enabled ? profile.whatsapp_phone : null,
+    [profile.full_name || "Editor", title, orgBranding.name, creatorName],
+    "content_recorded",
+    record.id
+  );
+
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || "Editor"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Hay contenido grabado listo para que inicies el proceso de edición:</p><div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:16px;margin:16px 0;border-left:4px solid ${color}"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${title}</p><p style="color:#94a3b8;font-size:13px;margin:0">Grabado por: ${creatorName}</p></div>${ctaButton("Iniciar Edición", "https://kreoon.com/board", color)}`;
 
   const html = wrapOrgEmail("Contenido listo para editar", body, orgBranding);
-
   const emailConfig = await getOrgEmailConfig(supabase, record.organization_id);
 
   return sendAndNotify(
@@ -310,10 +384,6 @@ async function notifyContentRecorded(
   );
 }
 
-/**
- * Creator gets notified when their content is approved
- * → ORG BRANDING
- */
 async function notifyContentApproved(
   supabase: any,
   record: Record<string, any>
@@ -330,10 +400,17 @@ async function notifyContentApproved(
 
   const title = record.title || "Sin título";
 
+  // WhatsApp — plantilla content_approved: {{1}}=creator_name {{2}}=title
+  await sendWhatsApp(
+    profile.whatsapp_enabled ? profile.whatsapp_phone : null,
+    [profile.full_name || "Creador", title],
+    "content_approved",
+    record.id
+  );
+
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || "Creador"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Tu contenido ha sido aprobado por el cliente:</p><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:16px;margin:16px 0"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${title}</p><p style="color:#22c55e;font-size:14px;margin:0;font-weight:500">Aprobado</p></div>${ctaButton("Ver Detalles", "https://kreoon.com/board", orgBranding.primary_color || "#8b5cf6")}`;
 
   const html = wrapOrgEmail("Contenido aprobado", body, orgBranding);
-
   const emailConfig = await getOrgEmailConfig(supabase, record.organization_id);
 
   return sendAndNotify(
@@ -348,10 +425,6 @@ async function notifyContentApproved(
   );
 }
 
-/**
- * When content has an issue, notify the person responsible
- * → ORG BRANDING
- */
 async function notifyContentIssue(
   supabase: any,
   record: Record<string, any>,
@@ -384,10 +457,17 @@ async function notifyContentIssue(
 
   const title = record.title || "Sin título";
 
+  // WhatsApp — plantilla content_issue: {{1}}=user_name {{2}}=title {{3}}=org
+  await sendWhatsApp(
+    profile.whatsapp_enabled ? profile.whatsapp_phone : null,
+    [profile.full_name || role, title, orgBranding.name],
+    "content_issue",
+    record.id
+  );
+
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || role}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Se ha reportado una novedad en el siguiente contenido que requiere tu atención:</p><div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:8px;padding:16px;margin:16px 0"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${title}</p><p style="color:#f59e0b;font-size:14px;margin:0;font-weight:500">Novedad reportada</p></div>${ctaButton("Ver Novedad", "https://kreoon.com/board", orgBranding.primary_color || "#8b5cf6")}`;
 
   const html = wrapOrgEmail("Novedad en contenido", body, orgBranding);
-
   const emailConfig = await getOrgEmailConfig(supabase, record.organization_id);
 
   return sendAndNotify(
@@ -402,29 +482,146 @@ async function notifyContentIssue(
   );
 }
 
-// ─── MARKETPLACE — KREOON Branding ──────────────────────
+// ─── EVENTOS CLIENTE — WhatsApp real-time ────────────────
 
 /**
- * Creator gets notified when their campaign application is approved
- * → KREOON BRANDING (marketplace)
+ * Cliente recibe WhatsApp cuando el guión está listo para revisar (script_pending)
  */
+async function notifyScriptPending(
+  supabase: any,
+  record: Record<string, any>
+): Promise<{ sent: boolean; to?: string }> {
+  const clientId = record.client_id;
+  if (!clientId) return { sent: false };
+
+  const orgBranding = record.organization_id
+    ? await getOrgBranding(supabase, record.organization_id)
+    : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
+
+  const title = record.title || "Sin título";
+  const waPhone = await getClientWhatsApp(supabase, clientId);
+
+  // WhatsApp — plantilla script_pending: {{1}}=content_title {{2}}=org_name
+  await sendWhatsApp(waPhone, [title, orgBranding.name], "script_pending", record.id);
+
+  // In-app notification para el cliente
+  const { data: clientUsers } = await supabase
+    .from("client_users")
+    .select("user_id")
+    .eq("client_id", clientId);
+
+  for (const cu of (clientUsers || [])) {
+    await insertNotification(
+      supabase,
+      cu.user_id,
+      "script_ready",
+      "Guión listo para revisar",
+      `El guión de "${title}" está listo para tu aprobación.`,
+      "/dashboard"
+    );
+  }
+
+  return { sent: true };
+}
+
+/**
+ * Cliente recibe WhatsApp cuando el contenido es entregado (delivered)
+ */
+async function notifyContentDelivered(
+  supabase: any,
+  record: Record<string, any>
+): Promise<{ sent: boolean; to?: string }> {
+  const clientId = record.client_id;
+  if (!clientId) return { sent: false };
+
+  const orgBranding = record.organization_id
+    ? await getOrgBranding(supabase, record.organization_id)
+    : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
+
+  const title = record.title || "Sin título";
+  const waPhone = await getClientWhatsApp(supabase, clientId);
+
+  // WhatsApp — plantilla content_delivered: {{1}}=content_title {{2}}=org_name
+  await sendWhatsApp(waPhone, [title, orgBranding.name], "content_delivered", record.id);
+
+  const { data: clientUsers } = await supabase
+    .from("client_users")
+    .select("user_id")
+    .eq("client_id", clientId);
+
+  for (const cu of (clientUsers || [])) {
+    await insertNotification(
+      supabase,
+      cu.user_id,
+      "content_delivered",
+      "Contenido entregado",
+      `"${title}" fue entregado y está listo para tu revisión.`,
+      "/dashboard"
+    );
+  }
+
+  return { sent: true };
+}
+
+/**
+ * Cliente recibe WhatsApp cuando el contenido es corregido (corrected)
+ */
+async function notifyContentCorrected(
+  supabase: any,
+  record: Record<string, any>
+): Promise<{ sent: boolean; to?: string }> {
+  const clientId = record.client_id;
+  if (!clientId) return { sent: false };
+
+  const orgBranding = record.organization_id
+    ? await getOrgBranding(supabase, record.organization_id)
+    : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
+
+  const title = record.title || "Sin título";
+  const waPhone = await getClientWhatsApp(supabase, clientId);
+
+  // WhatsApp — plantilla content_corrected: {{1}}=content_title {{2}}=org_name
+  await sendWhatsApp(waPhone, [title, orgBranding.name], "content_corrected", record.id);
+
+  const { data: clientUsers } = await supabase
+    .from("client_users")
+    .select("user_id")
+    .eq("client_id", clientId);
+
+  for (const cu of (clientUsers || [])) {
+    await insertNotification(
+      supabase,
+      cu.user_id,
+      "content_corrected",
+      "Contenido corregido",
+      `"${title}" fue corregido y tiene una nueva versión disponible.`,
+      "/dashboard"
+    );
+  }
+
+  return { sent: true };
+}
+
+// ─── MARKETPLACE — KREOON Branding ──────────────────────
+
 async function notifyApplicationApproved(
   supabase: any,
   record: Record<string, any>
 ): Promise<{ sent: boolean; to?: string }> {
-  // campaign_applications.creator_id → creator_profiles.id
   const { data: creatorProfile } = await supabase
     .from("creator_profiles")
-    .select("user_id, display_name")
+    .select("user_id, display_name, phone, whatsapp_phone, whatsapp_enabled")
     .eq("id", record.creator_id)
     .single();
+  if (creatorProfile) {
+    creatorProfile.whatsapp_phone = creatorProfile.whatsapp_phone || creatorProfile.phone;
+  }
 
   if (!creatorProfile?.user_id) return { sent: false };
 
   const profile = await getProfile(supabase, creatorProfile.user_id);
   if (!profile?.email) return { sent: false };
 
-  // Get campaign info
   const { data: campaign } = await supabase
     .from("marketplace_campaigns")
     .select("title, brand_id")
@@ -442,6 +639,10 @@ async function notifyApplicationApproved(
     if (brand?.name) brandName = brand.name;
   }
 
+  // Sin plantilla Meta para application_approved — omitido por ahora
+  const waPhone = creatorProfile.whatsapp_enabled ? creatorProfile.whatsapp_phone : null;
+  void waPhone; // declarado para uso futuro cuando exista template
+
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || creatorProfile.display_name || "Creador"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Tu aplicación a una campaña del marketplace ha sido aprobada:</p><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:16px;margin:16px 0"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${campaignTitle}</p><p style="color:#94a3b8;font-size:13px;margin:0">Marca: ${brandName}</p><p style="color:#22c55e;font-size:14px;margin:8px 0 0;font-weight:500">Aplicación aprobada</p></div>${ctaButton("Ver en Marketplace", "https://kreoon.com/marketplace")}`;
 
   const html = wrapKreoonEmail("Aprobado en campaña", body);
@@ -457,10 +658,6 @@ async function notifyApplicationApproved(
   );
 }
 
-/**
- * Creator gets notified when a marketplace project is created (hired)
- * → KREOON BRANDING (marketplace)
- */
 async function notifyProjectCreated(
   supabase: any,
   record: Record<string, any>
@@ -482,6 +679,8 @@ async function notifyProjectCreated(
   }
 
   const projectTitle = record.title || "Nuevo proyecto";
+
+  // Sin plantilla Meta para project_created — omitido por ahora
 
   const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || "Creador"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Una empresa te ha contratado para un proyecto en el marketplace:</p><div style="background:rgba(139,92,246,0.08);border:1px solid rgba(139,92,246,0.25);border-radius:8px;padding:16px;margin:16px 0"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${projectTitle}</p><p style="color:#94a3b8;font-size:13px;margin:0">Empresa: ${brandName}</p></div>${ctaButton("Ver Proyecto", "https://kreoon.com/marketplace")}`;
 
