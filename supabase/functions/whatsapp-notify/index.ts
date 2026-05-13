@@ -161,15 +161,20 @@ Deno.serve(async (req) => {
   // Construir payload de plantilla para Botcake
   const endpoint = `${botcakeApiUrl}/pages/${botcakePageId}/flows/send_content`;
 
-  const templateParams = variables.map((value, i) => ({
-    key: `{{${i + 1}}}`,
-    parameter_name: `${i + 1}`,
-    value,
-  }));
+  const sanitizedVars = variables.map((value) =>
+    String(value ?? "").replace(/[\n\r\t]/g, " ").replace(/ {5,}/g, "    ").trim()
+  );
 
-  // Solo incluir BODY si hay variables — templates sin variables no deben enviar components
-  const components = templateParams.length > 0
-    ? [{ type: "BODY", params: templateParams }]
+  // Botcake usa params con key/parameter_name/value (formato interno de su API)
+  const components = sanitizedVars.length > 0
+    ? [{
+        type: "BODY",
+        params: sanitizedVars.map((v, i) => ({
+          key: `{{${i + 1}}}`,
+          parameter_name: `${i + 1}`,
+          value: v,
+        })),
+      }]
     : [];
 
   const botcakeBody = {
@@ -204,9 +209,11 @@ Deno.serve(async (req) => {
     });
 
     providerResponse = await botcakeRes.json().catch(() => null);
-    status = botcakeRes.ok ? "sent" : "failed";
+    // Botcake retorna HTTP 200 incluso en fallo — verificar campo success en el body
+    const bodySuccess = (providerResponse as Record<string, unknown>)?.success !== false;
+    status = (botcakeRes.ok && bodySuccess) ? "sent" : "failed";
 
-    if (!botcakeRes.ok) {
+    if (status === "failed") {
       console.error(`[whatsapp-notify] Botcake error ${botcakeRes.status}:`, providerResponse);
     } else {
       console.log(`[whatsapp-notify] Template "${event_type}" enviado a ${psid}`);
