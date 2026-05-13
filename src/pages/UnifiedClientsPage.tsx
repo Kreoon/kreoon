@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin, Loader2, Link2,
+  Phone, MapPin, Loader2, Link2, Activity, TrendingDown,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useUnifiedClients, useOrgClientUsers, useUnassignedClientMembers } from '@/hooks/useUnifiedClients';
+import { useClientActivityMetrics } from '@/hooks/useClientActivityMetrics';
 import { UnifiedClientCard } from '@/components/clients/UnifiedClientCard';
 import { ClientUserCard } from '@/components/clients/ClientUserCard';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
@@ -35,16 +36,18 @@ import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
 
-type FilterTab = 'todos' | 'empresas' | 'contactos' | 'usuarios';
+type FilterTab = 'todos' | 'empresas' | 'contactos' | 'usuarios' | 'activos' | 'inactivos';
 
-const FILTER_TABS: { key: FilterTab; label: string }[] = [
+const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'todos', label: 'Todos' },
   { key: 'empresas', label: 'Empresas' },
   { key: 'contactos', label: 'Contactos' },
   { key: 'usuarios', label: 'Usuarios' },
+  { key: 'activos', label: 'Activos', adminOnly: true },
+  { key: 'inactivos', label: 'Inactivos', adminOnly: true },
 ];
 
-const VALID_TABS: FilterTab[] = ['todos', 'empresas', 'contactos', 'usuarios'];
+const VALID_TABS: FilterTab[] = ['todos', 'empresas', 'contactos', 'usuarios', 'activos', 'inactivos'];
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -88,6 +91,7 @@ const UnifiedClientsPage = () => {
   const { data: entities = [], isLoading, refetch } = useUnifiedClients(currentOrgId);
   const { data: clientUsers = [], isLoading: clientUsersLoading, refetch: refetchClientUsers } = useOrgClientUsers(currentOrgId);
   const { data: unassignedMembers = [], refetch: refetchUnassigned } = useUnassignedClientMembers(currentOrgId);
+  const { data: activityMetrics = [] } = useClientActivityMetrics(currentOrgId);
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
@@ -128,14 +132,25 @@ const UnifiedClientsPage = () => {
     const contactos = entities.filter(e => e.entity_type === 'contacto');
     const vip = empresas.filter(e => e.is_vip);
     const pipelineValue = contactos.reduce((sum, e) => sum + (e.deal_value || 0), 0);
+    const activos = activityMetrics.filter(m => m.activity_status === 'active').length;
+    const inactivos = activityMetrics.filter(m => m.activity_status === 'inactive').length;
     return {
       empresas: empresas.length,
       contactos: contactos.length,
       vip: vip.length,
       pipelineValue,
       usuarios: clientUsers.length,
+      activos,
+      inactivos,
     };
-  }, [entities, clientUsers]);
+  }, [entities, clientUsers, activityMetrics]);
+
+  // Mapa rápido de activity_status por client_id
+  const activityMap = useMemo(() => {
+    const map = new Map<string, string>();
+    activityMetrics.forEach(m => map.set(m.client_id, m.activity_status));
+    return map;
+  }, [activityMetrics]);
 
   // Filtered entities (empresas + contactos)
   const filtered = useMemo(() => {
@@ -148,6 +163,14 @@ const UnifiedClientsPage = () => {
     if (filter === 'empresas') list = list.filter(e => e.entity_type === 'empresa');
     if (filter === 'contactos') list = list.filter(e => e.entity_type === 'contacto');
 
+    // Filtros de actividad (solo empresas)
+    if (filter === 'activos') {
+      list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'active');
+    }
+    if (filter === 'inactivos') {
+      list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'inactive');
+    }
+
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(e =>
@@ -159,7 +182,7 @@ const UnifiedClientsPage = () => {
     }
 
     return list;
-  }, [entities, filter, search, canSeeInternal]);
+  }, [entities, filter, search, canSeeInternal, activityMap]);
 
   // Filtered client users
   const filteredClientUsers = useMemo(() => {
@@ -236,7 +259,7 @@ const UnifiedClientsPage = () => {
 
   const availableTabs = canSeeInternal
     ? FILTER_TABS
-    : FILTER_TABS.filter(t => t.key === 'todos' || t.key === 'contactos' || t.key === 'usuarios');
+    : FILTER_TABS.filter(t => !t.adminOnly && (t.key === 'todos' || t.key === 'contactos' || t.key === 'usuarios'));
 
   // Companies list for linking in the detail panel
   const allCompanies = useMemo(() => {
@@ -306,6 +329,45 @@ const UnifiedClientsPage = () => {
             <p className="text-xl font-bold text-card-foreground">{formatCurrency(stats.pipelineValue)}</p>
           </div>
         </div>
+
+        {/* Seguimiento de actividad — solo admins */}
+        {canSeeInternal && activityMetrics.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleFilterChange('activos')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'activos'
+                  ? 'border-green-500/50 bg-green-500/10'
+                  : 'border-border bg-card hover:border-green-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <Activity className="h-3.5 w-3.5 text-green-400" />
+                Clientes activos
+              </div>
+              <p className="text-xl font-bold text-green-400">{stats.activos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Con contenido pendiente</p>
+            </button>
+            <button
+              onClick={() => handleFilterChange('inactivos')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'inactivos'
+                  ? 'border-red-500/50 bg-red-500/10'
+                  : 'border-border bg-card hover:border-red-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+                Sin actividad
+              </div>
+              <p className="text-xl font-bold text-red-400">{stats.inactivos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Todo entregado o sin paquetes</p>
+            </button>
+          </div>
+        )}
+
 
         {/* Filter tabs + search + actions */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -513,6 +575,7 @@ const UnifiedClientsPage = () => {
                         onUpdate={() => refetch()}
                         orgId={currentOrgId}
                         onLinkBrand={e.entity_type === 'empresa' ? handleLinkBrandFromCard : undefined}
+                        activityMetrics={e.entity_type === 'empresa' ? activityMetrics.find(m => m.client_id === e.id) : undefined}
                       />
                     ))}
                   </div>
