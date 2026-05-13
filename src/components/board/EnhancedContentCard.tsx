@@ -289,15 +289,15 @@ export function EnhancedContentCard({
     <>
       <div
         className={cn(
-          "group cursor-pointer relative rounded-lg overflow-visible cursor-grab active:cursor-grabbing",
-          "w-full flex flex-col shrink-0 transition-colors duration-150",
+          "group cursor-pointer relative rounded-xl overflow-visible cursor-grab active:cursor-grabbing",
+          "w-full flex flex-col shrink-0 transition-all duration-150",
           BOARD_CLASSES.card,
           "border",
-          hasVideoArea ? "min-h-[420px]" : "min-h-[280px]",
+          hasVideoArea ? "min-h-[380px]" : "min-h-[140px]",
           BOARD_CLASSES.cardHover,
-          isDragging && "opacity-70 ring-2 ring-purple-500/30",
-          isOverdue && "border-l-4 border-l-red-500",
-          isStale && !isOverdue && "border-l-4 border-l-amber-500",
+          isDragging && "opacity-60 ring-2 ring-purple-500/40 scale-[0.98]",
+          isOverdue && "border-l-[3px] border-l-red-500",
+          isStale && !isOverdue && "border-l-[3px] border-l-amber-400",
           cardSize === "compact" && "rounded-lg min-h-0"
         )}
         draggable
@@ -441,15 +441,15 @@ export function EnhancedContentCard({
         {/* 2. Separator + BODY - layout fluido, pt/mt solo cuando hay video arriba */}
         <div
           className={cn(
-            "flex-1 flex flex-col p-4 bg-zinc-50/50 dark:bg-white/[0.02]",
-            cardSize !== "compact" && hasVideoArea && "pt-3 mt-3"
+            "flex-1 flex flex-col px-3.5 py-3",
+            cardSize !== "compact" && hasVideoArea && "pt-2.5 mt-2"
           )}
         >
           {/* Title - 2 lines max with ellipsis */}
           {showField("title") && (
             <h4
               className={cn(
-                "font-medium line-clamp-2 break-words bg-gradient-to-br from-purple-600 to-pink-600 dark:from-purple-400 dark:to-pink-400 bg-clip-text text-transparent",
+                "font-semibold line-clamp-2 break-words text-zinc-900 dark:text-zinc-50 leading-snug",
                 sizeConfig.titleSize
               )}
             >
@@ -683,7 +683,7 @@ export function EnhancedContentCard({
         </div>
 
         {/* 3. FOOTER */}
-        <div className="flex flex-wrap items-center px-3 py-2 border-t border-zinc-200 dark:border-white/5 bg-zinc-50/50 dark:bg-white/[0.02]">
+        <div className="flex flex-wrap items-center px-3.5 py-2 border-t border-zinc-100 dark:border-white/[0.06]">
           {showField("deadline") && content.deadline && (
             <div
               className={cn(
@@ -742,10 +742,10 @@ export function EnhancedContentCard({
         </div>
 
         {showField("progress") && (
-          <div className="px-4 pb-3">
+          <div className="px-3.5 pb-3 pt-1">
             <Progress
               value={getProgress()}
-              className="h-1.5 bg-zinc-200 dark:bg-white/5 [&>div]:bg-gradient-to-r [&>div]:from-purple-600 [&>div]:to-pink-600 dark:[&>div]:from-purple-500 dark:[&>div]:to-pink-500"
+              className="h-1.5 bg-zinc-100 dark:bg-white/[0.08] rounded-full [&>div]:rounded-full [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 dark:[&>div]:from-purple-400 dark:[&>div]:to-pink-400"
             />
           </div>
         )}

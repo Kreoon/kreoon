@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_ANON_KEY, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,13 +14,14 @@ import { useScriptPrompts } from "@/hooks/useScriptPrompts";
 import { useOrganizationAI } from "@/hooks/useOrganizationAI";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { AI_TOKEN_COSTS } from "@/lib/finance/constants";
-import { 
-  Sparkles, Loader2, Target, Users, Globe, FileText, 
+import {
+  Sparkles, Loader2, Target, Users, Globe, FileText,
   MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search
+  Video, ChevronDown, ChevronUp, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
+  Brain, Zap, ChevronRight, Hash, Shuffle
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { SkillsLoadingState } from "./SkillsLoadingState";
+import { SkillsLoadingState, type SkillsRealProgress } from "./SkillsLoadingState";
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 
@@ -41,6 +42,7 @@ interface Product {
   competitor_analysis?: unknown;
   brief_data?: unknown;
   business_type?: 'product_service' | 'personal_brand' | null;
+  ai_analysis?: unknown; // ADN V2
 }
 
 interface GeneratedContent {
@@ -93,6 +95,8 @@ interface ScriptFormData {
 interface PerplexityQueriesState {
   trends: boolean;
   hooks: boolean;
+  narratives: boolean;
+  objections: boolean;
   competitors: boolean;
   audience: boolean;
 }
@@ -142,6 +146,149 @@ const NARRATIVE_STRUCTURES = [
   { value: "pregunta-respuesta", label: "Q&A", description: "Responde preguntas frecuentes" },
   { value: "storytime", label: "Storytime", description: "Historia larga y envolvente" },
 ];
+
+// Estrategias detalladas por estructura narrativa — se inyectan en el contexto de la IA
+const NARRATIVE_STRATEGIES: Record<string, string> = {
+  "problema-solucion": `ESTRATEGIA PAS (Problema → Agitación → Solución):
+- HOOK (Escena 1): Abre nombrando el dolor exacto del avatar — sin rodeos, primera oración impactante
+- AGITACIÓN (Escena 2): Amplifica el problema, muestra las consecuencias de no resolverlo, genera urgencia emocional
+- SOLUCIÓN (Escena 3): Presenta el producto como la salida lógica y probada al problema
+- PRUEBA (Escena 4): Dato, resultado o demostración rápida que respalda la solución
+- CTA (Escena 5): Llamada a la acción directa y clara, aprovechando el estado emocional creado`,
+
+  "historia-personal": `ESTRATEGIA STORYBRAND (Historia de Transformación Personal):
+- HOOK (Escena 1): Revela el momento más bajo o el antes — frase de vulnerabilidad genuina
+- CONTEXTO (Escena 2): Describe quién eras antes, qué intentaste sin éxito, por qué no funcionaba
+- PUNTO DE QUIEBRE (Escena 3): El momento en que descubriste o decidiste cambiar (introduce el producto naturalmente)
+- TRANSFORMACIÓN (Escena 4): Resultados concretos y cómo cambió tu vida/negocio/salud con números si es posible
+- INVITACIÓN (Escena 5): Invita al espectador a vivir su propia transformación — CTA empático`,
+
+  "antes-despues": `ESTRATEGIA BEFORE/AFTER/BRIDGE:
+- HOOK (Escena 1): Muestra el DESPUÉS de forma impactante primero (el resultado) — genera curiosidad inmediata
+- ANTES (Escena 2): Contrasta con el punto de partida — describe la situación anterior con detalles visuales
+- PUENTE (Escena 3): Revela qué cambió exactamente, cómo y por qué este producto fue el puente
+- PRUEBA VISUAL (Escena 4): Refuerza con comparación tangible — medidas, fotos, métricas, tiempo transcurrido
+- CTA (Escena 5): Invita a comenzar el propio "antes" para llegar al "después" deseado`,
+
+  "tutorial": `ESTRATEGIA PASO A PASO (How-To Hook):
+- HOOK (Escena 1): Promete el resultado final — "En 3 pasos vas a lograr [beneficio específico]"
+- CONTEXTO (Escena 2): Explica brevemente por qué este método/producto funciona (credibilidad)
+- PASO 1 (Escena 3): Primer paso claro y accionable — con demostración visual si es posible
+- PASO 2-3 (Escena 4): Continuación fluida, mostrando el proceso real con el producto
+- RESULTADO + CTA (Escena 5): Muestra el resultado al aplicar los pasos + dónde conseguirlo`,
+
+  "testimonio": `ESTRATEGIA SOCIAL PROOF (Testimonio Estructura):
+- HOOK (Escena 1): Abre con la transformación del cliente en primera persona — resultado concreto con número
+- ESCEPTICISMO (Escena 2): Confiesa que al inicio no creía o dudaba — genera identificación
+- DESCUBRIMIENTO (Escena 3): Cómo llegó al producto y por qué decidió probarlo
+- EXPERIENCIA (Escena 4): Cómo fue el proceso de uso — detalles sensoriales y emocionales reales
+- RECOMENDACIÓN (Escena 5): Por qué lo recomendaría, a quién va dirigido + CTA natural`,
+
+  "urgencia": `ESTRATEGIA FOMO + ESCASEZ:
+- HOOK (Escena 1): Abre con la limitación — "Solo quedan X unidades" / "Solo hasta [fecha]" — genera presión inmediata
+- VALOR (Escena 2): Justifica rápidamente por qué vale la pena actuar ahora — beneficio principal
+- PRUEBA (Escena 3): Muestra por qué otros ya están aprovechando (social proof rápido)
+- CONSECUENCIA (Escena 4): Qué pierden si no actúan ahora — costo de la inacción
+- CTA URGENTE (Escena 5): Llamada directísima con el mecanismo de compra claro y la urgencia reforzada`,
+
+  "educativo": `ESTRATEGIA EDUTAINMENT (Enseña + Engancha):
+- HOOK (Escena 1): Dato sorprendente, estadística o pregunta retórica que desafía lo que el avatar cree
+- ENSEÑANZA (Escena 2): Revela la información valiosa de forma clara y memorable — el "por qué" detrás
+- EJEMPLO (Escena 3): Caso real, analogía o demostración que hace tangible el concepto
+- CONEXIÓN (Escena 4): Vincula el conocimiento aprendido con el producto — transición natural, no forzada
+- CTA EDUCADO (Escena 5): Invita a aprender más, profundizar o conseguir la herramienta — tono consultivo`,
+
+  "entretenimiento": `ESTRATEGIA HOOK EMOCIONAL (Humor/Drama/Sorpresa):
+- HOOK (Escena 1): Situación absurda, inesperada o graciosa relacionada con el nicho — retención máxima
+- DESARROLLO (Escena 2): Amplía la situación con ritmo rápido — mantiene la energía del hook
+- GIRO (Escena 3): El twist o remate que justifica el gancho — el producto aparece de forma orgánica
+- REMATE (Escena 4): Cierra el arco humorístico/dramático con el beneficio del producto integrado
+- CTA LIGERO (Escena 5): CTA con el mismo tono del video — no rompe la energía creada`,
+
+  "mitos-realidades": `ESTRATEGIA MITO-BUSTING:
+- HOOK (Escena 1): Nombra el mito más grande del nicho — algo que casi todo el mundo cree erróneamente
+- MITO 1 (Escena 2): Presenta el primer error común + desmiente con dato o prueba
+- MITO 2 (Escena 3): Segundo mito frecuente + la verdad detrás
+- REALIDAD (Escena 4): Presenta la solución real (el producto) como el camino correcto basado en evidencia
+- CTA EDUCADO (Escena 5): Invita a dejar de cometer el error y comenzar el camino correcto`,
+
+  "comparativa": `ESTRATEGIA VS/DIFERENCIACIÓN:
+- HOOK (Escena 1): Promete mostrar una diferencia que nadie está viendo — genera curiosidad comparativa
+- ALTERNATIVA COMÚN (Escena 2): Describe lo que el avatar usa ahora — con sus limitaciones reales
+- COMPARACIÓN (Escena 3): Muestra el producto lado a lado con la alternativa — criterios específicos
+- VENTAJA CLARA (Escena 4): Resultado diferencial en términos concretos — velocidad, precio, eficacia, simplicidad
+- CTA DE DECISIÓN (Escena 5): Invita a tomar la decisión correcta ahora que ya sabe la diferencia`,
+
+  "detras-camaras": `ESTRATEGIA TRANSPARENCIA/AUTENTICIDAD:
+- HOOK (Escena 1): "Lo que nadie te muestra sobre [producto/proceso]" — promesa de exclusividad
+- PROCESO (Escena 2): Revela cómo se hace, fabrica o funciona el producto — con detalles reales
+- ESTÁNDAR (Escena 3): Muestra el nivel de cuidado, calidad o esfuerzo detrás — construye confianza
+- PERSONAS (Escena 4): Humaniza la marca — equipo, historia, valores que respaldan el producto
+- CTA DE CONFIANZA (Escena 5): Invita a ser parte de algo auténtico — CTA con tono de comunidad`,
+
+  "unboxing": `ESTRATEGIA REVEAL/DESCUBRIMIENTO:
+- HOOK (Escena 1): Genera anticipación máxima — "Finalmente llegó" / muestra el paquete sin abrir
+- PRIMER CONTACTO (Escena 2): Reacción genuina al abrir — texturas, presentación, detalles del packaging
+- EXPLORACIÓN (Escena 3): Descubre cada componente con comentarios espontáneos — muestra beneficios visualmente
+- PRIMERA PRUEBA (Escena 4): Usa el producto por primera vez en cámara — reacción auténtica
+- VEREDICTO (Escena 5): Conclusión honesta + CTA para quienes quieran la misma experiencia`,
+
+  "reaccion": `ESTRATEGIA AUTENTICIDAD ESPONTÁNEA:
+- HOOK (Escena 1): Abre en medio de la reacción — captura el momento de sorpresa o emoción sin filtro
+- CONTEXTO (Escena 2): Explica brevemente qué estás probando y por qué tenías expectativas (altas o bajas)
+- REACCIÓN (Escena 3): La respuesta genuina al usar el producto — emociones en tiempo real
+- ANÁLISIS (Escena 4): Reflexión inmediata — qué funciona, qué sorprendió, qué no esperabas
+- RECOMENDACIÓN (Escena 5): Veredicto honesto + a quién se lo recomendaría + CTA`,
+
+  "lista": `ESTRATEGIA TOP LIST / LISTICLE:
+- HOOK (Escena 1): Promete la lista con número exacto — "X razones por las que..." / "X errores que..."
+- ÍTEM 1-2 (Escena 2): Primeros dos puntos con ritmo rápido — cada uno en 5-8 segundos máximo
+- ÍTEM 3-4 (Escena 3): Siguientes puntos — el punto más poderoso va en posición 3 o penúltima
+- ÍTEM FINAL (Escena 4): El último ítem es el más sorprendente o emocional — máximo impacto de cierre
+- CTA (Escena 5): Remata con el siguiente paso lógico después de la lista`,
+
+  "pov": `ESTRATEGIA POV INMERSIVO:
+- HOOK (Escena 1): "POV: [situación exacta del avatar]" — el espectador se ve reflejado desde la primera línea
+- SITUACIÓN (Escena 2): Desarrolla el escenario con detalles que el avatar reconoce como propios
+- DESCUBRIMIENTO (Escena 3): El momento en que el avatar del video encuentra/usa el producto — naturalidad
+- TRANSFORMACIÓN (Escena 4): Cómo cambia la situación del avatar al usar el producto — resultado inmediato
+- CIERRE POV (Escena 5): "Ahora entiendes por qué..." — CTA en el mismo tono inmersivo`,
+
+  "controversia": `ESTRATEGIA OPINIÓN CONTROVERSIAL (Pattern Interrupt):
+- HOOK (Escena 1): Declaración polémica o contraintuitiva — algo que la mayoría del nicho NO dice
+- DEFENSA (Escena 2): Argumenta por qué tienes esa opinión — con datos o experiencia real
+- CONTEXTO (Escena 3): Reconoce el otro punto de vista antes de derrumbarlo — muestra madurez
+- PRUEBA (Escena 4): Evidencia que respalda tu posición — el producto como parte de la solución
+- CTA DESAFIANTE (Escena 5): Invita a quien esté de acuerdo a actuar — filtra audiencia calificada`,
+
+  "trend": `ESTRATEGIA TREND-JACKING:
+- HOOK (Escena 1): Usa exactamente el formato/audio/texto del trend viral — reconocimiento inmediato
+- ADAPTACIÓN (Escena 2): Lleva el trend al nicho del producto de forma creativa — mantiene el formato
+- GIRO DE MARCA (Escena 3): Integra el producto en el trend de forma que se sienta natural, no forzado
+- REMATE (Escena 4): El punch line o momento payoff del trend — adaptado al mensaje de la marca
+- CTA TREND (Escena 5): CTA que mantiene la energía del trend — lenguaje acorde al formato viral`,
+
+  "dia-en-vida": `ESTRATEGIA DAY IN THE LIFE:
+- HOOK (Escena 1): "Mi rutina cambia desde que uso [producto]" — promete transformación cotidiana
+- MAÑANA (Escena 2): Muestra el producto integrado en la rutina de inicio del día — naturaleza auténtica
+- DURANTE EL DÍA (Escena 3): Momento clave donde el producto resuelve o mejora algo concreto
+- RESULTADO DEL DÍA (Escena 4): Cómo se siente al final del día — beneficio acumulado y tangible
+- CTA DE ESTILO DE VIDA (Escena 5): Invita a vivir una rutina similar — aspiracional y alcanzable`,
+
+  "pregunta-respuesta": `ESTRATEGIA Q&A DIRECTO:
+- HOOK (Escena 1): La pregunta más frecuente o picante del nicho — responde directamente en el primer segundo
+- PREGUNTA 1 (Escena 2): Primera duda común + respuesta clara y directa con el producto como parte de la respuesta
+- PREGUNTA 2 (Escena 3): Segunda pregunta más técnica o de objeción + respuesta que desarma el miedo
+- PREGUNTA BONUS (Escena 4): La pregunta que nadie hace pero todos quieren saber — diferenciador
+- CTA (Escena 5): "¿Tienes más dudas? Aquí te lo explico todo" — lleva al siguiente nivel`,
+
+  "storytime": `ESTRATEGIA NARRATIVE ARC COMPLETO:
+- HOOK (Escena 1): Empieza por el final o el momento más tenso — "Lo que pasó ese día cambió todo"
+- CONTEXTO (Escena 2): Regresa al inicio — quién eras, cuál era la situación, qué estaba en juego
+- CONFLICTO (Escena 3): El problema o crisis que se desarrolla — tensión narrativa máxima
+- CLÍMAX (Escena 4): El punto de quiebre + cómo el producto o decisión cambió el resultado
+- RESOLUCIÓN (Escena 5): El estado actual después de la historia — lección + CTA desde la emoción generada`,
+};
 
 const COUNTRIES = [
   "México", "Colombia", "Argentina", "España", "Chile", "Perú", "Estados Unidos (Latino)", "Otro",
@@ -271,6 +418,82 @@ const CAST_LAYER_INFO: Record<string, {
     funnel: 'retention',
     kpis: ['LTV', 'Repeat Purchase Rate', 'NPS', 'Referrals', 'Comunidad activa'],
     creativeFocus: 'exclusividad, comunidad, upsell/cross-sell, contenido insider',
+  },
+};
+
+function getCastLayerInfo(phase: string) {
+  return CAST_LAYER_INFO[phase] || null;
+}
+
+const CAST_LAYER_INFO: Record<string, {
+  letter: string;
+  layerName: string;
+  label: string;
+  funnel: string;
+  objective: string;
+  audience: string;
+  tone: string;
+  techniques: string[];
+  keywords: string[];
+  ctaStyle: string;
+  kpis: string[];
+  creativeFocus: string;
+}> = {
+  engage: {
+    letter: 'C',
+    layerName: 'Conocer',
+    label: 'C — Conocer',
+    funnel: 'TOFU',
+    objective: 'Viralidad, enganche, disrupción. Que el avatar descubra que tiene el problema.',
+    audience: 'Audiencia FRÍA — no conocen la marca ni el producto',
+    tone: 'Disruptivo, viral, sorprendente. Rompe patrones, genera curiosidad extrema.',
+    techniques: ['Hooks ultra potentes 1-3s', 'Pattern interrupts', 'Declaraciones contraintuitivas', 'Mostrar el problema dramatizado'],
+    keywords: ['¿Sabías que...?', 'Esto es lo que nadie te cuenta', 'Error #1', 'La verdad sobre'],
+    ctaStyle: 'Suave — seguir, comentar, guardar. No vender directamente.',
+    kpis: ['Alcance', 'Reproducciones', 'Guardados'],
+    creativeFocus: 'Impacto visual + hook verbal. Primeros 2s son todo.',
+  },
+  solution: {
+    letter: 'A',
+    layerName: 'Atraer',
+    label: 'A — Atraer',
+    funnel: 'MOFU',
+    objective: 'Mostrar que el producto ES la solución perfecta. Persuadir para explorar.',
+    audience: 'Audiencia TIBIA — saben que tienen el problema, buscan solución',
+    tone: 'Persuasivo, confiado, enfocado en beneficios y transformación.',
+    techniques: ['Demostración en acción', 'Antes y después', 'Testimonios reales', 'Beneficios cuantificables'],
+    keywords: ['La solución es', 'Esto cambió todo', 'Finalmente', 'Resultados garantizados'],
+    ctaStyle: 'Directo — link en bio, probar, registrarse.',
+    kpis: ['Clics', 'Visitas web', 'Leads'],
+    creativeFocus: 'Demostración clara del producto + transformación del avatar.',
+  },
+  remarketing: {
+    letter: 'S',
+    layerName: 'Seducir',
+    label: 'S — Seducir',
+    funnel: 'BOFU',
+    objective: 'Crear urgencia, superar objeciones finales. Cerrar la venta.',
+    audience: 'Audiencia CALIENTE — vieron el producto pero no compraron',
+    tone: 'Urgente, resolutivo, FOMO. Atacar objeciones directamente.',
+    techniques: ['Escasez real', 'Social proof masivo', 'Responder objeciones', 'Garantías'],
+    keywords: ['Últimas unidades', 'No te pierdas', 'Mientras lees esto', 'Si no ahora cuándo'],
+    ctaStyle: 'Urgente — comprar ahora, última oportunidad.',
+    kpis: ['Conversiones', 'ROAS', 'CPA'],
+    creativeFocus: 'Objeción principal resuelta + CTA de urgencia.',
+  },
+  fidelize: {
+    letter: 'T',
+    layerName: 'Transformar',
+    label: 'T — Transformar',
+    funnel: 'Retención',
+    objective: 'Entregar valor, buscar recompra y referidos. Crear comunidad y lealtad.',
+    audience: 'CLIENTES existentes — ya compraron, queremos que vuelvan y recomienden',
+    tone: 'Cercano, exclusivo, valora al cliente. Contenido de alto valor.',
+    techniques: ['Contenido exclusivo', 'Tips avanzados', 'Historias de éxito', 'Programas de referidos'],
+    keywords: ['Para ti que ya eres cliente', 'Tip exclusivo', 'Gracias por confiar', 'Familia [marca]'],
+    ctaStyle: 'Comunitario — compartir, etiquetar amigos, dejar reseña, referir.',
+    kpis: ['LTV', 'Retención', 'NPS'],
+    creativeFocus: 'Comunidad + exclusividad + gratitud hacia el cliente.',
   },
 };
 
@@ -557,6 +780,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const { profile } = useAuth();
   const organizationId = propOrgId || profile?.current_organization_id;
   const [loading, setLoading] = useState(false);
+  const [skillsProgress, setSkillsProgress] = useState<SkillsRealProgress | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [newHook, setNewHook] = useState("");
 
@@ -583,6 +807,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const totalAvailable = balance?.total_available ?? Infinity;
   const insufficientTokens = totalAvailable < totalCost && totalAvailable !== Infinity;
   const [promptsOpen, setPromptsOpen] = useState(false);
+  const [intelOpen, setIntelOpen] = useState(false);
+  const [selectedIdeaIdx, setSelectedIdeaIdx] = useState<number | null>(null);
+  const [selectedInsightIdx, setSelectedInsightIdx] = useState<number | null>(null);
   
   // Load custom prompts from organization settings
   const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
@@ -645,6 +872,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const [perplexityQueries, setPerplexityQueries] = useState<PerplexityQueriesState>({
     trends: true,
     hooks: true,
+    narratives: true,
+    objections: false,
     competitors: false,
     audience: false,
   });
@@ -778,6 +1007,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
 
   // Cargar la investigación COMPLETA del producto (avatar_profiles + sales_angles_data + market_research)
   const [researchProduct, setResearchProduct] = useState<any | null>(null);
+  // ADN de Producto (V1): datos de la tabla product_dna
+  const [productDnaRecord, setProductDnaRecord] = useState<any | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -785,13 +1016,14 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     const fetchResearchProduct = async () => {
       if (!product?.id) {
         setResearchProduct(null);
+        setProductDnaRecord(null);
         return;
       }
 
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar")
+          .select("id, client_id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, brief_data")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -800,44 +1032,65 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         const normalized = (() => {
           if (!data) return null;
           const result = { ...(data as any) };
-          
-          // Parse market_research if it's a string
+
           const mr = result.market_research;
           if (typeof mr === "string") {
-            try {
-              result.market_research = JSON.parse(mr);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.market_research = JSON.parse(mr); } catch { /* keep as string */ }
           }
-          
-          // Parse sales_angles_data if it's a string
           const sad = result.sales_angles_data;
           if (typeof sad === "string") {
-            try {
-              result.sales_angles_data = JSON.parse(sad);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.sales_angles_data = JSON.parse(sad); } catch { /* keep as string */ }
           }
-          
-          // Parse avatar_profiles if it's a string
           const ap = result.avatar_profiles;
           if (typeof ap === "string") {
-            try {
-              result.avatar_profiles = JSON.parse(ap);
-            } catch {
-              // Keep as string if parse fails
-            }
+            try { result.avatar_profiles = JSON.parse(ap); } catch { /* keep as string */ }
           }
-          
+          const bd = result.brief_data;
+          if (typeof bd === "string") {
+            try { result.brief_data = JSON.parse(bd); } catch { /* keep as string */ }
+          }
+
           return result;
         })();
 
         if (!cancelled) setResearchProduct(normalized);
+
+        // Cargar ADN de Producto (product_dna): primero por ID exacto, fallback por client_id
+        const dnaId = (normalized?.brief_data as any)?.product_dna_id;
+        const clientId = normalized?.client_id;
+
+        let dnaRecord: any = null;
+
+        // Intento 1: por product_dna_id exacto
+        if (dnaId) {
+          const { data: d1 } = await supabase
+            .from("product_dna")
+            .select("id, strategy_recommendations, market_research, content_brief, emotional_analysis")
+            .eq("id", dnaId)
+            .maybeSingle();
+          if (d1) dnaRecord = d1;
+        }
+
+        // Intento 2: por client_id (el más reciente con ángulos)
+        if (!dnaRecord && clientId) {
+          const { data: d2 } = await supabase
+            .from("product_dna")
+            .select("id, strategy_recommendations, market_research, content_brief, emotional_analysis")
+            .eq("client_id", clientId)
+            .not("strategy_recommendations", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (d2) dnaRecord = d2;
+        }
+
+        if (!cancelled) setProductDnaRecord(dnaRecord);
       } catch (e) {
         console.error("[StrategistScriptForm] Error fetching product research", e);
-        if (!cancelled) setResearchProduct(null);
+        if (!cancelled) {
+          setResearchProduct(null);
+          setProductDnaRecord(null);
+        }
       }
     };
 
@@ -849,27 +1102,118 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   }, [product?.id]);
 
   const researchAvatars = useMemo(() => {
+    const collected: any[] = [];
+
+    // ADN Recargado: avatar_profiles.profiles
     const profiles = researchProduct?.avatar_profiles?.profiles;
-    if (Array.isArray(profiles) && profiles.length) return profiles;
+    if (Array.isArray(profiles) && profiles.length) {
+      collected.push(...profiles.map((a: any) => ({ ...a, _source: 'recargado' })));
+    } else {
+      // Fallback: market_research.strategicAvatars
+      const strategicAvatars = researchProduct?.market_research?.strategicAvatars;
+      if (Array.isArray(strategicAvatars) && strategicAvatars.length) {
+        collected.push(...strategicAvatars.map((a: any) => ({ ...a, _source: 'recargado' })));
+      }
+    }
 
-    const strategicAvatars = researchProduct?.market_research?.strategicAvatars;
-    if (Array.isArray(strategicAvatars) && strategicAvatars.length) return strategicAvatars;
+    // ADN Producto: product_dna.strategy_recommendations.seccion_3_avatares
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars) && dnaAvatars.length) {
+      const existingNames = new Set(collected.map((a: any) => (a?.name || a?.nombre_edad || '').toLowerCase()));
+      dnaAvatars.forEach((a: any) => {
+        const name = a?.nombre_edad || a?.nombre || '';
+        if (name && !existingNames.has(name.toLowerCase())) {
+          collected.push({ ...a, _source: 'dna' });
+          existingNames.add(name.toLowerCase());
+        }
+      });
+    }
 
-    return [];
-  }, [researchProduct]);
+    return collected;
+  }, [researchProduct, productDnaRecord]);
+
+  // Helper: parse emotional_analysis JSONB desde product_dna
+  const parsedAiAnalysis = useMemo(() => {
+    const raw = (productDnaRecord as any)?.emotional_analysis;
+    if (!raw) return null;
+    return typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
+  }, [productDnaRecord]);
+
+  // hasV2Data: true ONLY when ai_analysis real existe con datos
+  const hasV2Data = useMemo(() => {
+    return !!(parsedAiAnalysis?.creative_brief || parsedAiAnalysis?.target_audience || parsedAiAnalysis?.market_analysis);
+  }, [parsedAiAnalysis]);
 
   const researchAngles = useMemo(() => {
-    const angles = researchProduct?.sales_angles_data?.angles;
-    if (Array.isArray(angles) && angles.length) return angles;
+    const collected: any[] = [];
 
-    const salesAngles = researchProduct?.market_research?.salesAngles;
-    if (Array.isArray(salesAngles) && salesAngles.length) return salesAngles;
+    // ── V1: sales_angles_data.angles (estructurado) ──
+    const v1Structured = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(v1Structured) && v1Structured.length) {
+      collected.push(...v1Structured.map((a: any) => ({ ...a, _source: 'v1' })));
+    } else {
+      // V1 fallback: market_research.salesAngles
+      const v1MR = researchProduct?.market_research?.salesAngles;
+      if (Array.isArray(v1MR) && v1MR.length) {
+        collected.push(...v1MR.map((a: any) => ({ ...a, _source: 'v1' })));
+      } else {
+        // V1 legacy: sales_angles simple array
+        const legacy = (researchProduct?.sales_angles ?? product?.sales_angles) as any;
+        if (Array.isArray(legacy) && legacy.length) {
+          collected.push(...legacy.map((a: any) => ({ angle: typeof a === 'string' ? a : (a?.angle || a?.name || ''), _source: 'v1' })));
+        }
+      }
+    }
 
-    const fallback = (researchProduct?.sales_angles ?? product?.sales_angles) as any;
-    if (Array.isArray(fallback) && fallback.length) return fallback.map((a: any) => ({ angle: a }));
+    // ── ADN de Producto (product_dna.strategy_recommendations.seccion_4_angulos) ──
+    const dnaAngles = productDnaRecord?.strategy_recommendations?.seccion_4_angulos;
+    if (Array.isArray(dnaAngles) && dnaAngles.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      dnaAngles.forEach((a: any) => {
+        const text = a?.desarrollo || a?.angle_name || a?.angle || '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({
+            angle: text,
+            hookExample: a?.hook_apertura || a?.hook || '',
+            type: a?.tipo || a?.target_emotion || '',
+            funnelPhase: a?.fase_esfera || '',
+            avatar: a?.avatar_objetivo || '',
+            _source: 'dna',
+            _v2type: 'dna',
+          });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
 
-    return [];
-  }, [researchProduct, product?.sales_angles]);
+    // ── products.ai_analysis.creative_brief.content_pillars ──
+    const pillars = parsedAiAnalysis?.creative_brief?.content_pillars;
+    if (Array.isArray(pillars) && pillars.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      pillars.forEach((p: unknown) => {
+        const text = typeof p === 'string' ? p : (p as any)?.name || (p as any)?.pillar || '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({ angle: text, type: 'contenido', _source: 'v2', _v2type: 'pillar' });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
+
+    // ── products.ai_analysis.market_analysis.opportunities ──
+    const opportunities = parsedAiAnalysis?.market_analysis?.opportunities;
+    if (Array.isArray(opportunities) && opportunities.length) {
+      const existingTexts = new Set(collected.map((a: any) => (a?.angle || a?.name || '').trim().toLowerCase()));
+      opportunities.forEach((op: unknown) => {
+        const text = typeof op === 'string' ? op : (op as any)?.opportunity || '';
+        if (text && !existingTexts.has(text.trim().toLowerCase())) {
+          collected.push({ angle: text, type: 'oportunidad', _source: 'v2', _v2type: 'opportunity' });
+          existingTexts.add(text.trim().toLowerCase());
+        }
+      });
+    }
+
+    return collected;
+  }, [researchProduct, product?.sales_angles, parsedAiAnalysis, productDnaRecord]);
 
   // Parsear ideal_avatar si es un JSON string para extraer JTBD
   const parsedIdealAvatar = useMemo(() => {
@@ -882,56 +1226,161 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [researchProduct, product]);
 
-  // Extraer dolores desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer dolores — ADN Recargado + ADN Producto (seccion_3_avatares.dolor_principal)
   const researchPains = useMemo(() => {
-    // 1. Buscar en market_research.pains
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const pains = researchProduct?.market_research?.pains;
-    if (Array.isArray(pains) && pains.length) return pains;
-
-    // 2. Buscar en market_research.jtbd.pains
+    if (Array.isArray(pains)) pains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || p?.description || p?.text || ''), 'recargado'));
     const jtbdPains = researchProduct?.market_research?.jtbd?.pains;
-    if (Array.isArray(jtbdPains) && jtbdPains.length) return jtbdPains;
-
-    // 3. Buscar en ideal_avatar.jtbd.pains (JSON parseado)
+    if (Array.isArray(jtbdPains)) jtbdPains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || ''), 'recargado'));
     const avatarJtbdPains = parsedIdealAvatar?.jtbd?.pains;
-    if (Array.isArray(avatarJtbdPains) && avatarJtbdPains.length) return avatarJtbdPains;
+    if (Array.isArray(avatarJtbdPains)) avatarJtbdPains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.dolor_principal) add(a.dolor_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
 
-    return [];
-  }, [researchProduct, parsedIdealAvatar]);
-
-  // Extraer deseos desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer deseos — ADN Recargado + ADN Producto (seccion_3_avatares.deseo_principal)
   const researchDesires = useMemo(() => {
-    // 1. Buscar en market_research.desires
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const desires = researchProduct?.market_research?.desires;
-    if (Array.isArray(desires) && desires.length) return desires;
-
-    // 2. Buscar en market_research.jtbd.desires
+    if (Array.isArray(desires)) desires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || d?.description || d?.text || ''), 'recargado'));
     const jtbdDesires = researchProduct?.market_research?.jtbd?.desires;
-    if (Array.isArray(jtbdDesires) && jtbdDesires.length) return jtbdDesires;
-
-    // 3. Buscar en ideal_avatar.jtbd.desires (JSON parseado)
+    if (Array.isArray(jtbdDesires)) jtbdDesires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || ''), 'recargado'));
     const avatarJtbdDesires = parsedIdealAvatar?.jtbd?.desires;
-    if (Array.isArray(avatarJtbdDesires) && avatarJtbdDesires.length) return avatarJtbdDesires;
+    if (Array.isArray(avatarJtbdDesires)) avatarJtbdDesires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.deseo_principal) add(a.deseo_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
 
-    return [];
-  }, [researchProduct, parsedIdealAvatar]);
-
-  // Extraer objeciones desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer objeciones — ADN Recargado + ADN Producto (seccion_3_avatares.objecion_principal)
   const researchObjections = useMemo(() => {
-    // 1. Buscar en market_research.objections
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const objections = researchProduct?.market_research?.objections;
-    if (Array.isArray(objections) && objections.length) return objections;
-
-    // 2. Buscar en market_research.jtbd.objections
+    if (Array.isArray(objections)) objections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || o?.description || o?.text || ''), 'recargado'));
     const jtbdObjections = researchProduct?.market_research?.jtbd?.objections;
-    if (Array.isArray(jtbdObjections) && jtbdObjections.length) return jtbdObjections;
-
-    // 3. Buscar en ideal_avatar.jtbd.objections (JSON parseado)
+    if (Array.isArray(jtbdObjections)) jtbdObjections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || ''), 'recargado'));
     const avatarJtbdObjections = parsedIdealAvatar?.jtbd?.objections;
-    if (Array.isArray(avatarJtbdObjections) && avatarJtbdObjections.length) return avatarJtbdObjections;
+    if (Array.isArray(avatarJtbdObjections)) avatarJtbdObjections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.objecion_principal) add(a.objecion_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
+
+  // ── Intel ADN: datos enriquecidos de ambas fuentes ──────────────────────────
+
+  // PUV (Propuesta de Valor Única) — ADN Recargado
+  const researchPuv = useMemo(() => {
+    return researchProduct?.sales_angles_data?.puv ?? null;
+  }, [researchProduct]);
+
+  // Transformación antes/después — ADN Recargado
+  const researchTransformation = useMemo(() => {
+    return researchProduct?.sales_angles_data?.transformation ?? null;
+  }, [researchProduct]);
+
+  // Ideas de video listas — ADN Recargado
+  const researchVideoCreatives = useMemo(() => {
+    const vc = researchProduct?.sales_angles_data?.videoCreatives;
+    return Array.isArray(vc) ? vc : [];
+  }, [researchProduct]);
+
+  // Insights de comportamiento — ADN Recargado (jtbd.insights)
+  const researchInsights = useMemo(() => {
+    const ins = researchProduct?.market_research?.jtbd?.insights;
+    return Array.isArray(ins) ? ins : [];
+  }, [researchProduct]);
+
+  // Contexto de marca — ADN Producto (seccion_1_contexto)
+  const researchContexto = useMemo(() => {
+    return productDnaRecord?.market_research?.seccion_1_contexto ?? null;
+  }, [productDnaRecord]);
+
+  // Inteligencia de mercado — ADN Producto (seccion_2_mercado)
+  const researchMercado = useMemo(() => {
+    return productDnaRecord?.market_research?.seccion_2_mercado ?? null;
+  }, [productDnaRecord]);
+
+  // Estructura del video — ADN Producto (seccion_7_ads)
+  const researchVideoStructure = useMemo(() => {
+    return productDnaRecord?.strategy_recommendations?.seccion_7_ads ?? null;
+  }, [productDnaRecord]);
+
+  // Hooks sugeridos — V2 primero, luego fallbacks V1
+  const researchHookSuggestions = useMemo(() => {
+    // 1. V2: ai_analysis.creative_brief.hooks_suggestions
+    const v2arr = parsedAiAnalysis?.creative_brief?.hooks_suggestions ?? parsedAiAnalysis?.creative_brief?.hooksSuggestions ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
+
+    // 2. V1: market_research.hooks
+    const mrHooks = researchProduct?.market_research?.hooks;
+    if (Array.isArray(mrHooks) && mrHooks.length) return mrHooks.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 3. V1: ideal_avatar.messaging.hooks
+    const avatarHooks = parsedIdealAvatar?.messaging?.hooks ?? parsedIdealAvatar?.hooks;
+    if (Array.isArray(avatarHooks) && avatarHooks.length) return avatarHooks.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 4. V1: keywords de los ángulos de venta como starters de hook
+    const angles = researchProduct?.sales_angles_data?.angles;
+    if (Array.isArray(angles)) {
+      const keywords = angles.flatMap((a: any) => a?.keywords ?? []).filter((k: unknown) => typeof k === 'string' && (k as string).trim());
+      if (keywords.length) return keywords as string[];
+    }
 
     return [];
-  }, [researchProduct, parsedIdealAvatar]);
+  }, [parsedAiAnalysis, researchProduct, parsedIdealAvatar]);
+
+  // Mensajes clave — solo V2 (no hay equivalente directo en V1)
+  const researchKeyMessages = useMemo(() => {
+    const arr = parsedAiAnalysis?.creative_brief?.key_messages ?? parsedAiAnalysis?.creative_brief?.keyMessages ?? [];
+    return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[] : [];
+  }, [parsedAiAnalysis]);
+
+  // CTAs sugeridos — V2 primero, luego fallbacks V1
+  const researchCtaSuggestions = useMemo(() => {
+    // 1. V2: ai_analysis.creative_brief.cta_recommendations
+    const v2arr = parsedAiAnalysis?.creative_brief?.cta_recommendations ?? parsedAiAnalysis?.creative_brief?.ctaRecommendations ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
+
+    // 2. V1: market_research.ctas / ctaExamples
+    const mrCtas = researchProduct?.market_research?.ctas ?? researchProduct?.market_research?.ctaExamples;
+    if (Array.isArray(mrCtas) && mrCtas.length) return mrCtas.filter((s: unknown) => typeof s === 'string') as string[];
+
+    // 3. V1: PUV callToAction
+    const puv = researchProduct?.sales_angles_data?.puv;
+    const ctaFromPuv = puv?.callToAction ?? puv?.cta;
+    if (typeof ctaFromPuv === 'string' && ctaFromPuv.trim()) return [ctaFromPuv];
+
+    return [];
+  }, [parsedAiAnalysis, researchProduct]);
+
+  // Disparadores de compra — V2 primero, luego V1 objeciones invertidas como proxy
+  const researchBuyingTriggers = useMemo(() => {
+    const v2arr = parsedAiAnalysis?.target_audience?.buying_triggers ?? parsedAiAnalysis?.target_audience?.buyingTriggers ?? [];
+    if (Array.isArray(v2arr) && v2arr.length) return v2arr.filter((s: unknown) => typeof s === 'string' && (s as string).trim()) as string[];
+
+    // V1 fallback: motivadores desde market_research
+    const motivators = researchProduct?.market_research?.motivators ?? researchProduct?.market_research?.buyingMotivators;
+    if (Array.isArray(motivators) && motivators.length) return motivators.filter((s: unknown) => typeof s === 'string') as string[];
+
+    return [];
+  }, [parsedAiAnalysis, researchProduct]);
 
   // Auto-fill sales_angle and narrative_structure from research when available
   useEffect(() => {
@@ -980,6 +1429,15 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         }
       }
       
+      // Auto-fill country from product brief_data if form is empty
+      if (!prev.target_country) {
+        const bd = researchProduct?.brief_data as any;
+        const country = bd?.target_country
+          || (Array.isArray(bd?.target_locations) && bd.target_locations[0])
+          || '';
+        if (country) updates.target_country = country;
+      }
+
       // Auto-suggest CTA from sales_angles_data.puv if empty
       if (!prev.cta) {
         const puv = researchProduct?.sales_angles_data?.puv;
@@ -1128,8 +1586,153 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     ]);
   };
 
+  const handleRandomize = () => {
+    // Pick a random item from arr that's different from current when possible
+    function pickRandom<T>(arr: T[], current?: T): T | undefined {
+      if (!arr.length) return undefined;
+      const others = arr.filter(x => x !== current);
+      const pool = others.length > 0 ? others : arr;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function getAngleText(a: unknown): string {
+      if (typeof a === 'string') return a;
+      const o = a as Record<string, string>;
+      return o?.angle || o?.salesAngle || o?.name || '';
+    }
+
+    function getPainText(p: unknown): string {
+      if (typeof p === 'string') return p;
+      const o = p as Record<string, string>;
+      return o?.pain || o?.description || o?.text || '';
+    }
+
+    function getDesireText(d: unknown): string {
+      if (typeof d === 'string') return d;
+      const o = d as Record<string, string>;
+      return o?.desire || o?.description || o?.text || '';
+    }
+
+    function getObjectionText(o: unknown): string {
+      if (typeof o === 'string') return o;
+      const obj = o as Record<string, string>;
+      return obj?.objection || obj?.description || obj?.text || '';
+    }
+
+    const updates: Partial<typeof formData> = {};
+
+    // Ángulo de venta — aleatorio entre todos los ángulos disponibles
+    if (researchAngles.length > 0) {
+      const currentAngleText = formData.sales_angle;
+      const angleTexts = researchAngles.map(getAngleText).filter(Boolean);
+      const picked = pickRandom(angleTexts, currentAngleText);
+      if (picked) updates.sales_angle = picked;
+    }
+
+    // Estructura narrativa — aleatoria entre todas las disponibles
+    const structures = NARRATIVE_STRUCTURES.map(s => s.value);
+    const pickedStructure = pickRandom(structures, formData.narrative_structure);
+    if (pickedStructure) updates.narrative_structure = pickedStructure;
+
+    // Dolor — aleatorio entre los disponibles
+    if (researchPains.length > 0) {
+      const painTexts = researchPains.map(getPainText).filter(Boolean);
+      const picked = pickRandom(painTexts, formData.selected_pain);
+      if (picked) updates.selected_pain = picked;
+    }
+
+    // Deseo — aleatorio entre los disponibles
+    if (researchDesires.length > 0) {
+      const desireTexts = researchDesires.map(getDesireText).filter(Boolean);
+      const picked = pickRandom(desireTexts, formData.selected_desire);
+      if (picked) updates.selected_desire = picked;
+    }
+
+    // Objeción — aleatoria si hay
+    if (researchObjections.length > 0) {
+      const objTexts = researchObjections.map(getObjectionText).filter(Boolean);
+      const picked = pickRandom(objTexts, formData.selected_objection);
+      if (picked) updates.selected_objection = picked;
+    }
+
+    // Avatar ideal — aleatorio desde researchAvatars (mismo formato que el selector)
+    if (researchAvatars.length > 0) {
+      const avatarFormatted = (researchAvatars as any[]).map((a, idx) => {
+        const isDna = a._source === 'dna';
+        const name = isDna
+          ? (a?.nombre_edad || a?.nombre || `Avatar ${idx + 1}`)
+          : (a?.name || a?.avatarName || `Avatar ${idx + 1}`);
+        const rawSituation = isDna ? a?.situacion_actual : (a?.situation || a?.currentSituation);
+        const situation = typeof rawSituation === 'string' ? rawSituation : (rawSituation?.dayToDay || '');
+        const dolor = isDna ? a?.dolor_principal : '';
+        return [
+          `AVATAR: ${name}`,
+          situation ? `SITUACIÓN: ${situation}` : '',
+          dolor ? `DOLOR: ${dolor}` : '',
+        ].filter(Boolean).join('\n');
+      }).filter(Boolean);
+      const picked = pickRandom(avatarFormatted, formData.ideal_avatar);
+      if (picked) updates.ideal_avatar = picked;
+    }
+
+    // CTA — aleatorio desde V2 si hay, si no del CTA genérico
+    const ctaPool = [
+      ...researchCtaSuggestions,
+      'Consíguelo ahora',
+      'Link en bio',
+      'Escríbenos hoy',
+      'Agenda tu cita',
+      'Pruébalo gratis',
+    ];
+    const pickedCta = pickRandom(ctaPool, formData.cta);
+    if (pickedCta) updates.cta = pickedCta;
+
+    // Hooks — barajar y tomar N aleatorios de las sugerencias
+    const hookPool = researchHookSuggestions.length > 0 ? researchHookSuggestions : [];
+    if (hookPool.length > 0) {
+      const count = parseInt(formData.hooks_count) || 3;
+      const shuffled = [...hookPool].sort(() => Math.random() - 0.5);
+      updates.hooks = shuffled.slice(0, count);
+    }
+
+    // Idea de video — seleccionar aleatoriamente una diferente
+    if (researchVideoCreatives.length > 0) {
+      const indices = researchVideoCreatives.map((_: any, idx: number) => idx);
+      const others = indices.filter((idx: number) => idx !== selectedIdeaIdx);
+      const pool = others.length > 0 ? others : indices;
+      const pickedIdx: number = pool[Math.floor(Math.random() * pool.length)];
+      setSelectedIdeaIdx(pickedIdx);
+      const hook = (researchVideoCreatives[pickedIdx] as any)?.structure?.hook;
+      if (hook) {
+        const existingHooks = updates.hooks ?? formData.hooks;
+        if (!existingHooks.includes(hook)) {
+          updates.hooks = [...existingHooks, hook];
+        }
+      }
+    }
+
+    // Insight — seleccionar aleatoriamente uno diferente y aplicar su accionable
+    if (researchInsights.length > 0) {
+      const indices = researchInsights.map((_: any, idx: number) => idx);
+      const others = indices.filter((idx: number) => idx !== selectedInsightIdx);
+      const pool = others.length > 0 ? others : indices;
+      const pickedIdx: number = pool[Math.floor(Math.random() * pool.length)];
+      setSelectedInsightIdx(pickedIdx);
+      const actionable = (researchInsights[pickedIdx] as any)?.actionable;
+      if (actionable) {
+        const base = updates.additional_instructions ?? formData.additional_instructions;
+        if (!base.includes(actionable)) {
+          updates.additional_instructions = base ? `${base}\n${actionable}` : actionable;
+        }
+      }
+    }
+
+    if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+  };
+
   const buildBaseContext = () => {
     const narrativeLabel = NARRATIVE_STRUCTURES.find(s => s.value === formData.narrative_structure)?.label || formData.narrative_structure;
+    const narrativeStrategy = NARRATIVE_STRATEGIES[formData.narrative_structure] || null;
     
     // Determine CAST layer info from sphere_phase column (legacy column name)
     const castInfo = spherePhase ? getCastLayerInfo(spherePhase) : null;
@@ -1138,7 +1741,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     const businessType = (product?.business_type as 'product_service' | 'personal_brand') || 'product_service';
     const isPersonalBrand = businessType === 'personal_brand';
     
-    // Parse structured research data
+    // Parse structured research data (V1 + V2)
     const researchData = product ? parseProductResearch({
       market_research: product.market_research,
       avatar_profiles: product.avatar_profiles,
@@ -1146,6 +1749,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       sales_angles_data: product.sales_angles_data,
       competitor_analysis: product.competitor_analysis,
       brief_data: product.brief_data,
+      ai_analysis: (productDnaRecord as any)?.emotional_analysis ?? null,
     }) : null;
     
     // Format research for prompt
@@ -1162,7 +1766,7 @@ DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
 ÁNGULO DE VENTA: ${formData.sales_angle}
 ESTRUCTURA NARRATIVA: ${narrativeLabel}
-PAÍS OBJETIVO: ${formData.target_country}
+${narrativeStrategy ? `\n${narrativeStrategy}\n` : ''}PAÍS OBJETIVO: ${formData.target_country}
 ${formData.video_duration ? `DURACIÓN DEL VIDEO: ${durationLabel}` : ''}
 ${formData.target_platform ? `PLATAFORMA DESTINO: ${platformLabel}` : ''}
 AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
@@ -1234,11 +1838,103 @@ ${formattedResearch}
 ` : `INVESTIGACIÓN DE MERCADO:
 ${product?.market_research || 'No disponible'}
 
-`}ÁNGULOS DE VENTA DISPONIBLES:
-${product?.sales_angles?.join(', ') || 'No definidos'}
+`}ÁNGULOS DE VENTA DISPONIBLES (${researchAngles.length > 0 ? `${researchAngles.filter((a: any) => a._source === 'v1').length} V1 + ${researchAngles.filter((a: any) => a._source === 'v2').length} V2` : 'ninguno'}):
+${researchAngles.length > 0
+  ? researchAngles.map((a: any, i: number) => {
+      const text = a?.angle || a?.salesAngle || a?.name || '';
+      if (!text) return null;
+      const type = a?.type || a?.category || '';
+      const hook = a?.hookExample || '';
+      const src = a?._source === 'v2' ? `[V2${a?._v2type ? ' · ' + a._v2type : ''}]` : '[V1]';
+      return `${i + 1}. ${src}${type ? ` [${type}]` : ''} ${text}${hook ? ` | Hook: "${hook}"` : ''}`;
+    }).filter(Boolean).join('\n')
+  : product?.sales_angles?.join(', ') || 'No definidos'}
 
 HOOKS SUGERIDOS:
 ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).join('\n') : 'Generar automáticamente'}`;
+
+    // Agregar datos exclusivos del ADN V2 si están disponibles
+    if (researchData?.keyMessages?.length) {
+      context += `\n\nMENSAJES CLAVE (ADN V2):\n${researchData.keyMessages.map((m, i) => `${i + 1}. ${m}`).join('\n')}`;
+    }
+    if (researchData?.ctaRecommendations?.length) {
+      context += `\n\nCTAs RECOMENDADOS (ADN V2):\n${researchData.ctaRecommendations.slice(0, 4).map((c, i) => `${i + 1}. ${c}`).join('\n')}`;
+    }
+    if (researchData?.trends?.length) {
+      context += `\n\nTENDENCIAS DE MERCADO (ADN V2):\n${researchData.trends.slice(0, 5).map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
+    }
+    if (researchData?.buyingTriggers?.length) {
+      context += `\n\nDISPARADORES DE COMPRA (ADN V2):\n${researchData.buyingTriggers.slice(0, 5).map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
+    }
+
+    // ── Datos enriquecidos de ADN Recargado + ADN Producto ──
+    if (researchPuv) {
+      context += `\n\n=== PROPUESTA DE VALOR ÚNICA ===\n${researchPuv.statement}`;
+      if (researchPuv.tangibleResult) context += `\nResultado tangible: ${researchPuv.tangibleResult}`;
+      if (researchPuv.marketDifference) context += `\nDiferencia de mercado: ${researchPuv.marketDifference}`;
+      if (researchPuv.credibility) context += `\nCredibilidad: ${researchPuv.credibility}`;
+    }
+
+    if (researchTransformation) {
+      const dims = [
+        { key: 'emotional', label: 'Emocional' },
+        { key: 'functional', label: 'Funcional' },
+        { key: 'identity', label: 'Identidad' },
+      ] as const;
+      const parts = dims.map(({ key, label }) => {
+        const d = (researchTransformation as any)[key];
+        return d?.before && d?.after ? `${label}: "${d.before}" → "${d.after}"` : null;
+      }).filter(Boolean);
+      if (parts.length) context += `\n\n=== TRANSFORMACIÓN DEL CLIENTE ===\n${parts.join('\n')}`;
+    }
+
+    if (researchContexto) {
+      const lines = [];
+      if (researchContexto.tono_emocional_audio) lines.push(`Tono: ${researchContexto.tono_emocional_audio}`);
+      if (Array.isArray(researchContexto.palabras_clave_cliente) && researchContexto.palabras_clave_cliente.length)
+        lines.push(`Palabras clave: ${researchContexto.palabras_clave_cliente.join(', ')}`);
+      if (researchContexto.restricciones_creativas) lines.push(`⚠️ Restricciones: ${researchContexto.restricciones_creativas}`);
+      if (researchContexto.referentes_estilo) lines.push(`Referentes UGC: ${researchContexto.referentes_estilo}`);
+      if (lines.length) context += `\n\n=== CONTEXTO DE MARCA ===\n${lines.join('\n')}`;
+    }
+
+    if (researchMercado) {
+      const lines = [];
+      if (researchMercado.tendencias_actuales) lines.push(`Tendencias: ${researchMercado.tendencias_actuales}`);
+      if (researchMercado.gap_competitivo) lines.push(`Gap competitivo: ${researchMercado.gap_competitivo}`);
+      if (researchMercado.posicionamiento_sugerido) lines.push(`Posicionamiento: ${researchMercado.posicionamiento_sugerido}`);
+      if (lines.length) context += `\n\n=== INTELIGENCIA DE MERCADO ===\n${lines.join('\n')}`;
+    }
+
+    if (researchVideoStructure?.estructura_creativo_ad) {
+      const e = researchVideoStructure.estructura_creativo_ad;
+      context += `\n\n=== ESTRUCTURA DEL VIDEO ===\nHook (0-3s): ${e.hook || ''}\nProblema (3-10s): ${e.problema || ''}\nSolución (10-25s): ${e.solucion || ''}\nCTA (25-30s): ${e.cta || ''}`;
+      if (researchVideoStructure.variaciones_recomendadas) context += `\nVariaciones: ${researchVideoStructure.variaciones_recomendadas}`;
+    }
+
+    if (researchInsights.length > 0) {
+      context += `\n\n=== INSIGHTS DE COMPORTAMIENTO (top ${Math.min(4, researchInsights.length)}) ===\n${researchInsights.slice(0, 4).map((ins: any, i: number) => `${i + 1}. ${ins.insight}${ins.actionable ? ` → ${ins.actionable}` : ''}`).join('\n')}`;
+    }
+
+    // Idea de video seleccionada — inyectar estructura completa al prompt
+    if (selectedIdeaIdx !== null && researchVideoCreatives[selectedIdeaIdx]) {
+      const idea = researchVideoCreatives[selectedIdeaIdx] as any;
+      const parts = [
+        idea.title && `Título: ${idea.title}`,
+        idea.angle && `Ángulo: ${idea.angle}`,
+        idea.structure?.hook && `Hook: ${idea.structure.hook}`,
+        idea.structure?.body && `Desarrollo: ${idea.structure.body}`,
+        idea.structure?.cta && `CTA: ${idea.structure.cta}`,
+        idea.duration && `Duración sugerida: ${idea.duration}`,
+      ].filter(Boolean).join('\n');
+      if (parts) context += `\n\n=== IDEA DE VIDEO SELECCIONADA (seguir esta estructura) ===\n${parts}`;
+    }
+
+    // Insight seleccionado — enfatizar al modelo
+    if (selectedInsightIdx !== null && researchInsights[selectedInsightIdx]) {
+      const ins = researchInsights[selectedInsightIdx] as any;
+      context += `\n\n=== INSIGHT CLAVE SELECCIONADO (incorporar en el guión) ===\n${ins.insight}${ins.actionable ? `\nAplicación: ${ins.actionable}` : ''}`;
+    }
 
     // Add document content if loaded
     if (documentContent.brief) {
@@ -1264,69 +1960,132 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     return context;
   };
 
+  const buildRequestBody = (type: string, customPrompt: string, previousScript?: string) => {
+    const baseContext = buildBaseContext();
+    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
+    if (previousScript && type !== "script") {
+      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    }
+    return {
+      action: formData.use_perplexity ? "research_and_generate" : "generate_script",
+      organizationId,
+      prompt: fullPrompt,
+      product: {
+        id: product?.id,
+        name: product?.name,
+        description: product?.description,
+        strategy: product?.strategy,
+        market_research: product?.market_research,
+        ideal_avatar: product?.ideal_avatar,
+        sales_angles: product?.sales_angles,
+      },
+      generation_type: type,
+      use_skills: type === "script",
+      ai_provider: "gemini",
+      ai_model: formData.ai_model,
+      use_perplexity: formData.use_perplexity,
+      perplexity_queries: formData.use_perplexity ? perplexityQueries : undefined,
+      custom_perplexity_query: formData.use_perplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
+      script_params: {
+        cta: formData.cta,
+        sales_angle: formData.sales_angle,
+        hooks_count: formData.hooks_count,
+        target_country: formData.target_country,
+        narrative_structure: formData.narrative_structure,
+        video_duration: formData.video_duration,
+        target_platform: formData.target_platform,
+        ideal_avatar: formData.ideal_avatar,
+        platform: formData.target_platform || "TikTok",
+        product_category: product?.name,
+        video_strategies: formData.video_strategies,
+        reference_transcription: formData.reference_transcription,
+        hooks: formData.hooks,
+        additional_instructions: formData.additional_instructions,
+        document_brief: documentContent.brief,
+        document_onboarding: documentContent.onboarding,
+        document_research: documentContent.research,
+      },
+    };
+  };
+
+  // SSE streaming para el guion (skills en fases paralelas)
+  const generateContentWithSkills = async (body: object): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? SUPABASE_ANON_KEY;
+
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/${CONTENT_AI_FUNCTION}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error ${response.status}: ${text}`);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finalScript = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      let currentEvent = "";
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith("data: ")) {
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (currentEvent === "phase_start") {
+              setSkillsProgress({
+                phase: payload.phase,
+                totalPhases: payload.total,
+                currentSkillNames: payload.skills ?? [],
+                pct: payload.pct ?? 0,
+              });
+            } else if (currentEvent === "phase_complete") {
+              setSkillsProgress(prev => prev ? { ...prev, pct: payload.pct ?? prev.pct } : prev);
+            } else if (currentEvent === "complete") {
+              finalScript = payload.script ?? payload.result ?? "";
+              if (payload.error) throw new Error(payload.error);
+            } else if (currentEvent === "error") {
+              throw new Error(payload.message ?? "Error en la generación");
+            }
+          } catch (parseErr) {
+            // línea malformada, ignorar
+          }
+          currentEvent = "";
+        }
+      }
+    }
+
+    return finalScript;
+  };
+
   const generateContent = async (
     type: "script" | "director" | "marketing" | "captions" | "broll" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
     customPrompt: string,
     previousScript?: string,
     extraContext?: { label: string; content: string }[]
   ): Promise<string> => {
-    const baseContext = buildBaseContext();
+    const body = buildRequestBody(type, customPrompt, previousScript);
 
-    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
-
-    if (previousScript && type !== "script") {
-      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    if (type === "script") {
+      return generateContentWithSkills(body);
     }
 
-    if (extraContext && extraContext.length > 0) {
-      for (const ctx of extraContext) {
-        if (ctx.content && ctx.content.trim()) {
-          fullPrompt += `\n\n---\n${ctx.label}:\n${ctx.content}`;
-        }
-      }
-    }
-
-    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
-      body: {
-        action: formData.use_perplexity ? "research_and_generate" : "generate_script",
-        organizationId,
-        prompt: fullPrompt,
-        product: {
-          id: product?.id,
-          name: product?.name,
-          description: product?.description,
-          strategy: product?.strategy,
-          market_research: product?.market_research,
-          ideal_avatar: product?.ideal_avatar,
-          sales_angles: product?.sales_angles,
-        },
-        generation_type: type,
-        ai_provider: "gemini",
-        ai_model: formData.ai_model,
-        use_perplexity: formData.use_perplexity,
-        perplexity_queries: formData.use_perplexity ? perplexityQueries : undefined,
-        custom_perplexity_query: formData.use_perplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
-        script_params: {
-          cta: formData.cta,
-          sales_angle: formData.sales_angle,
-          hooks_count: formData.hooks_count,
-          target_country: formData.target_country,
-          narrative_structure: formData.narrative_structure,
-          video_duration: formData.video_duration,
-          target_platform: formData.target_platform,
-          ideal_avatar: formData.ideal_avatar,
-          platform: formData.target_platform || "TikTok",
-          product_category: product?.name,
-          video_strategies: formData.video_strategies,
-          reference_transcription: formData.reference_transcription,
-          hooks: formData.hooks,
-          additional_instructions: formData.additional_instructions,
-          document_brief: documentContent.brief,
-          document_onboarding: documentContent.onboarding,
-          document_research: documentContent.research,
-        },
-      },
-    });
+    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, { body });
 
     if (error) throw new Error(error.message);
     if (!data) throw new Error("Respuesta vacía de la IA");
@@ -1481,6 +2240,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       });
     } finally {
       setLoading(false);
+      setSkillsProgress(null);
       refetchBalance();
     }
   };
@@ -1505,92 +2265,495 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Formulario de Guión
         </h4>
-        <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[140px] sm:max-w-none">
-          {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
-        </Badge>
+        <div className="flex items-center gap-1.5">
+          {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleRandomize}
+              className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+              title="Aleatorizar combinación de ángulo, dolor, deseo, estructura y CTA"
+            >
+              <Shuffle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+              <span className="hidden sm:inline">Aleatorizar</span>
+            </Button>
+          )}
+          {/* Investigación en tiempo real — toggle compacto */}
+          <div
+            className={`flex items-center gap-1 rounded-sm border px-1.5 py-1 transition-colors cursor-pointer ${
+              formData.use_perplexity
+                ? 'border-purple-500/50 bg-purple-500/15'
+                : 'border-border bg-muted/20 hover:bg-muted/40'
+            }`}
+            onClick={() => setFormData(prev => ({ ...prev, use_perplexity: !prev.use_perplexity }))}
+            title="Investigación en tiempo real con Perplexity"
+          >
+            <Search className={`h-3 w-3 shrink-0 ${formData.use_perplexity ? 'text-purple-400' : 'text-muted-foreground'}`} />
+            <span className={`text-[10px] hidden sm:inline ${formData.use_perplexity ? 'text-purple-300' : 'text-muted-foreground'}`}>
+              Investigar
+            </span>
+            <Switch
+              checked={formData.use_perplexity}
+              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, use_perplexity: checked }))}
+              className="scale-75 pointer-events-none"
+            />
+          </div>
+          <Badge variant="secondary" className="text-[10px] sm:text-xs bg-primary/10 text-primary border-primary/20 truncate max-w-[100px] sm:max-w-none">
+            {AI_MODELS.find(m => m.value === formData.ai_model)?.label || "IA"}
+          </Badge>
+        </div>
       </div>
 
-      {/* AI Prefill Banner */}
-      {prefillStatus.isPrefilled && (
-        <div className="p-2 sm:p-3 rounded-sm bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-          <div className="flex items-start sm:items-center gap-2">
-            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5 sm:mt-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-medium text-green-800 dark:text-green-200">
-                Pre-llenado con IA
-              </p>
-              <p className="text-[10px] sm:text-xs text-green-600 dark:text-green-400">
-                Campos sugeridos desde la investigación.
-                {prefillStatus.fieldsLoaded.length > 0 && (
-                  <span className="hidden sm:inline"> Campos: {prefillStatus.fieldsLoaded.join(', ')}.</span>
-                )}
-              </p>
+      {/* Chips de tipo de investigación — solo cuando está activo */}
+      {formData.use_perplexity && (
+        <div className="flex items-center gap-1.5 flex-wrap animate-in slide-in-from-top-1 duration-150">
+          <span className="text-[10px] text-purple-400 shrink-0">Investigar:</span>
+          {([
+            { key: 'hooks',      label: '🎣 Hooks virales' },
+            { key: 'narratives', label: '🧠 Narrativas' },
+            { key: 'trends',     label: '📈 Tendencias' },
+            { key: 'objections', label: '💬 Objeciones' },
+            { key: 'competitors',label: '🏢 Competencia' },
+          ] as { key: keyof PerplexityQueriesState; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setPerplexityQueries(q => ({ ...q, [key]: !q[key] }))}
+              className={`text-[10px] px-1.5 py-0.5 rounded-full border transition-colors ${
+                perplexityQueries[key]
+                  ? 'bg-purple-500/25 border-purple-500/50 text-purple-200'
+                  : 'bg-muted/20 border-border text-muted-foreground hover:border-purple-500/30'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          {customPerplexityQuery.trim() && (
+            <span className="text-[10px] text-purple-300 italic truncate max-w-[150px]">+ "{customPerplexityQuery.trim()}"</span>
+          )}
+        </div>
+      )}
+
+      {/* ——————————————————————————————————————————————————
+          Fila de 4 columnas: Pre-llenado · CAST · Intel ADN · Bloques
+          —————————————————————————————————————————————————— */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+
+        {/* Col 1 — Pre-llenado IA */}
+        <div className="rounded-sm border bg-green-500/5 border-green-500/20 p-2 flex flex-col gap-1.5 min-h-[90px]">
+          <div className="flex items-center gap-1 text-[10px] font-semibold text-green-300 uppercase tracking-wide">
+            <Bot className="h-3 w-3 shrink-0" /> Pre-llenado IA
+          </div>
+          {prefillStatus.isPrefilled ? (
+            <div className="flex items-center gap-1 text-[10px] text-green-400">
+              <CheckCircle2 className="h-3 w-3 shrink-0" />
+              <span>Aplicado</span>
+              {prefillStatus.prefilledAt && (
+                <span className="ml-auto text-[9px] opacity-60 shrink-0">
+                  {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
+                </span>
+              )}
             </div>
-            {prefillStatus.prefilledAt && (
-              <Badge variant="outline" className="text-[10px] sm:text-xs text-green-600 border-green-600 shrink-0">
-                {new Date(prefillStatus.prefilledAt).toLocaleDateString()}
-              </Badge>
+          ) : (
+            <div className="text-[10px] text-muted-foreground">Sin sugerencias</div>
+          )}
+          {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+            <button
+              type="button"
+              onClick={handleRandomize}
+              className="mt-auto flex items-center justify-center gap-1 py-1.5 rounded-sm border border-amber-500/30 bg-amber-500/10 text-amber-300 text-[10px] hover:bg-amber-500/20 transition-colors"
+            >
+              <Shuffle className="h-3 w-3 shrink-0" /> Aleatorizar
+            </button>
+          )}
+        </div>
+
+        {/* Col 2 — Estrategia CAST */}
+        {(() => {
+          const castInfo = spherePhase ? getCastLayerInfo(spherePhase) : null;
+          const colorMap: Record<string, string> = {
+            C: 'from-blue-500/10 to-cyan-500/10 border-blue-500/30',
+            A: 'from-yellow-500/10 to-orange-500/10 border-yellow-500/30',
+            S: 'from-red-500/10 to-rose-500/10 border-red-500/30',
+            T: 'from-green-500/10 to-emerald-500/10 border-green-500/30',
+          };
+          const textMap: Record<string, string> = {
+            C: 'text-blue-400', A: 'text-yellow-400', S: 'text-red-400', T: 'text-green-400',
+          };
+          const bg = castInfo ? (colorMap[castInfo.letter] || colorMap['C']) : '';
+          const tc = castInfo ? (textMap[castInfo.letter] || textMap['C']) : '';
+          return (
+            <div className={`rounded-sm border p-2 flex flex-col gap-1.5 min-h-[90px] ${castInfo ? `bg-gradient-to-br ${bg}` : 'bg-muted/10 border-border opacity-40'}`}>
+              <div className={`text-[10px] font-semibold uppercase tracking-wide ${castInfo ? tc : 'text-muted-foreground'}`}>
+                Estrategia CAST
+              </div>
+              {castInfo ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-xl font-bold leading-none ${tc}`}>{castInfo.letter}</span>
+                    <div>
+                      <p className="text-[10px] font-semibold leading-tight">{castInfo.layerName}</p>
+                      <p className="text-[9px] opacity-70">{castInfo.funnel}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-0.5 mt-auto">
+                    {castInfo.kpis.slice(0, 3).map(kpi => (
+                      <span key={kpi} className="text-[9px] px-1 py-0.5 rounded bg-background/30 font-mono">{kpi}</span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="text-[10px] text-muted-foreground">Sin fase asignada</div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Col 3 — Intel ADN (expandible abajo) */}
+        <button
+          type="button"
+          onClick={() => setIntelOpen(o => !o)}
+          className="rounded-sm border bg-violet-500/5 border-violet-500/20 p-2 flex flex-col gap-1.5 text-left hover:bg-violet-500/10 transition-colors min-h-[90px]"
+        >
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-violet-300 uppercase tracking-wide">
+              <Brain className="h-3 w-3 shrink-0" /> Intel ADN
+            </div>
+            {intelOpen
+              ? <ChevronUp className="h-3 w-3 text-violet-400 shrink-0" />
+              : <ChevronDown className="h-3 w-3 text-violet-400 shrink-0" />
+            }
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {researchAngles.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300">{researchAngles.length} ángulos</span>
+            )}
+            {researchPains.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300">{researchPains.length} dolores</span>
+            )}
+            {researchHookSuggestions.length > 0 && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300">{researchHookSuggestions.length} hooks</span>
+            )}
+            {hasV2Data && (
+              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-green-500/20 text-green-300 font-semibold">V2</span>
+            )}
+          </div>
+          <div className="text-[9px] text-muted-foreground mt-auto">
+            {intelOpen ? 'Clic para cerrar ↑' : 'Clic para ver datos ↓'}
+          </div>
+        </button>
+
+        {/* Col 4 — Bloques a generar */}
+        <div className="rounded-sm border bg-muted/30 p-2 flex flex-col gap-1.5 min-h-[90px]">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" /> Bloques
+            </div>
+            <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+              {totalCost > 0 && <span className="font-mono">{totalCost} tkn</span>}
+              {selectedCount < 6 && (
+                <button
+                  type="button"
+                  className="text-primary hover:underline text-[9px]"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setSelectedBlocks({ script: true, director: true, marketing: true, captions: true, broll: true });
+                  }}
+                >
+                  Todos
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-0.5 flex-1">
+            {Object.entries(BLOCK_LABELS).map(([key, { emoji, short }]) => {
+              const isSelected = selectedBlocks[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setSelectedBlocks(prev => ({ ...prev, [key]: !prev[key] })); }}
+                  className={`flex flex-col items-center justify-center gap-0.5 rounded-sm border py-1 text-center transition-all select-none ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/30 text-muted-foreground border-border opacity-60 hover:opacity-90 hover:border-primary/50'
+                  }`}
+                >
+                  <span className="text-xs leading-none">{emoji}</span>
+                  <span className="text-[8px] font-medium leading-tight truncate w-full text-center">{short}</span>
+                </button>
+              );
+            })}
+          </div>
+          {balance && (
+            <div className="text-[9px] text-muted-foreground">
+              Saldo: <span className={insufficientTokens ? 'text-destructive font-semibold' : 'text-foreground'}>
+                {totalAvailable === Infinity ? '∞' : totalAvailable.toLocaleString()}
+              </span>
+            </div>
+          )}
+          {insufficientTokens && (
+            <p className="text-[9px] text-destructive flex items-center gap-0.5">
+              <AlertCircle className="h-3 w-3 shrink-0" /> Tokens insuficientes
+            </p>
+          )}
+        </div>
+
+      </div>
+
+      {/* Intel ADN — contenido expandido (ancho completo, debajo de la fila) */}
+      {intelOpen && (hasV2Data || researchAngles.length > 0 || researchPains.length > 0) && (
+        <div className="rounded-sm border bg-violet-500/5 border-violet-500/20 p-3 space-y-3">
+
+          {/* Hooks sugeridos */}
+          {researchHookSuggestions.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Zap className="h-3 w-3" /> Hooks sugeridos {hasV2Data && <span className="text-green-400">(ADN V2)</span>}
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchHookSuggestions.slice(0, 6).map((hook, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="text-[10px] px-2 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-200 hover:bg-amber-500/25 transition-colors text-left max-w-[200px] truncate"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      hooks: prev.hooks.includes(hook) ? prev.hooks : [...prev.hooks, hook].slice(0, parseInt(prev.hooks_count)),
+                    }))}
+                    title={hook}
+                  >
+                    + {hook}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mensajes clave */}
+          {researchKeyMessages.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wide flex items-center gap-1.5">
+                <MessageSquare className="h-3 w-3" /> Mensajes clave (ADN V2)
+              </p>
+              <ul className="space-y-1">
+                {researchKeyMessages.slice(0, 5).map((msg, idx) => (
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <ChevronRight className="h-3 w-3 text-violet-400 shrink-0 mt-0.5" />
+                    <span className="text-[10px] text-muted-foreground">{msg}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* CTAs recomendados */}
+          {researchCtaSuggestions.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-green-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Hash className="h-3 w-3" /> CTAs recomendados
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchCtaSuggestions.slice(0, 4).map((cta, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="text-[10px] px-2 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-200 hover:bg-green-500/25 transition-colors"
+                    onClick={() => setFormData(prev => ({ ...prev, cta }))}
+                    title={`Aplicar CTA: ${cta}`}
+                  >
+                    {cta}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Disparadores de compra */}
+          {researchBuyingTriggers.length > 0 && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-semibold text-orange-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Zap className="h-3 w-3" /> Disparadores de compra
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {researchBuyingTriggers.slice(0, 5).map((trigger, idx) => (
+                  <span key={idx} className="text-[10px] px-2 py-1 rounded-full border border-orange-500/20 bg-orange-500/10 text-orange-200">
+                    {trigger}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Acciones rápidas */}
+          <div className="flex gap-2 pt-1">
+            {(hasV2Data || researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-sm border border-violet-500/30 bg-violet-500/15 hover:bg-violet-500/25 transition-colors text-xs font-medium text-violet-200"
+                onClick={() => {
+                  const updates: Partial<typeof formData> = {};
+                  if (!formData.sales_angle && researchAngles.length > 0) {
+                    const a = researchAngles[0] as any;
+                    updates.sales_angle = a?.angle || a?.salesAngle || a?.name || '';
+                  }
+                  if (!formData.selected_pain && researchPains.length > 0) {
+                    const p = researchPains[0] as any;
+                    updates.selected_pain = typeof p === 'string' ? p : (p?.pain || p?.description || '');
+                  }
+                  if (!formData.selected_desire && researchDesires.length > 0) {
+                    const d = researchDesires[0] as any;
+                    updates.selected_desire = typeof d === 'string' ? d : (d?.desire || d?.description || '');
+                  }
+                  if (!formData.cta && researchCtaSuggestions.length > 0) {
+                    updates.cta = researchCtaSuggestions[0];
+                  }
+                  if (formData.hooks.length === 0 && researchHookSuggestions.length > 0) {
+                    updates.hooks = researchHookSuggestions.slice(0, parseInt(formData.hooks_count));
+                  }
+                  if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
+                }}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {hasV2Data ? 'Auto-aplicar sugerencias ADN' : 'Aplicar sugerencias de investigación'}
+              </button>
+            )}
+            {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+              <button
+                type="button"
+                className="w-auto px-3 flex items-center justify-center gap-2 py-2 rounded-sm border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 transition-colors text-xs font-medium text-amber-200"
+                onClick={handleRandomize}
+                title="Aleatorizar combinación"
+              >
+                <Shuffle className="h-3.5 w-3.5" />
+              </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Block Selection */}
-      <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-          <Label className="text-xs sm:text-sm font-medium">Bloques a generar</Label>
-        </div>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {Object.entries(BLOCK_LABELS).map(([key, { emoji, short }]) => {
-            const cost = getTokenCost(BLOCK_ACTION_KEYS[key]);
-            const isSelected = selectedBlocks[key];
-            return (
-              <Badge
-                key={key}
-                variant={isSelected ? "default" : "outline"}
-                className={`cursor-pointer select-none transition-all text-[10px] sm:text-xs px-2 py-1 ${
-                  isSelected ? "" : "opacity-50"
-                }`}
-                onClick={() =>
-                  setSelectedBlocks((prev) => ({ ...prev, [key]: !prev[key] }))
-                }
-              >
-                {emoji} {short} <span className="ml-1 font-mono">{cost}</span>
-              </Badge>
-            );
-          })}
-        </div>
-        <div className="flex items-center justify-between text-[10px] sm:text-xs text-muted-foreground">
-          <span>
-            Total: <span className="font-semibold text-foreground">{totalCost} tokens</span>
-            {balance && (
-              <span className="ml-2">
-                Saldo: <span className={`font-semibold ${insufficientTokens ? "text-destructive" : "text-foreground"}`}>
-                  {totalAvailable.toLocaleString()}
-                </span>
-              </span>
-            )}
-          </span>
-          {selectedCount < 6 && (
-            <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={() =>
-                setSelectedBlocks({ script: true, editor: true, trafficker: true, strategist: true, designer: true, admin: true })
-              }
-            >
-              Seleccionar todos
-            </button>
+      {/* ── Intel ADN — Grid de tarjetas compactas ── */}
+      {(researchPuv || researchTransformation || researchContexto || researchMercado || researchVideoStructure || researchVideoCreatives.length > 0 || researchInsights.length > 0) && (
+        <div className="space-y-2">
+
+          {/* ── Ideas + Insights lado a lado ── */}
+          {(researchVideoCreatives.length > 0 || researchInsights.length > 0) && (
+            <div className="grid grid-cols-2 gap-2">
+
+              {/* 🎬 Ideas de Video */}
+              {researchVideoCreatives.length > 0 && (
+                <div className="rounded-sm border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                    🎬 {researchVideoCreatives.length} ideas de video
+                  </p>
+                  <div className="max-h-56 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {researchVideoCreatives.map((vc: any, i: number) => {
+                        const isSelected = selectedIdeaIdx === i;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                              isSelected
+                                ? 'ring-2 ring-pink-500 border-pink-500 bg-pink-500/10'
+                                : 'border-border/50 hover:border-pink-500/40 hover:bg-pink-500/5'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedIdeaIdx(null);
+                                setFormData(prev => ({ ...prev, hooks: prev.hooks.filter(h => h !== vc.structure?.hook) }));
+                              } else {
+                                setSelectedIdeaIdx(i);
+                                const hookText = vc.structure?.hook;
+                                if (hookText) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    hooks: prev.hooks.includes(hookText) ? prev.hooks : [...prev.hooks, hookText],
+                                  }));
+                                }
+                              }
+                            }}
+                          >
+                            <p className="text-xs font-medium leading-snug line-clamp-2">{vc.title || vc.idea}</p>
+                            {vc.structure?.hook && (
+                              <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">
+                                <span className="text-yellow-400">🎣 </span>{vc.structure.hook}
+                              </p>
+                            )}
+                            {vc.angle && (
+                              <div className="mt-1.5">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-pink-500/50 text-pink-400">{vc.angle}</Badge>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 💡 Insights */}
+              {researchInsights.length > 0 && (
+                <div className="rounded-sm border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                    💡 {researchInsights.length} insights de comportamiento
+                  </p>
+                  <div className="max-h-56 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {researchInsights.map((ins: any, i: number) => {
+                        const isSelected = selectedInsightIdx === i;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                              isSelected
+                                ? 'ring-2 ring-amber-500 border-amber-500 bg-amber-500/10'
+                                : 'border-border/50 hover:border-amber-500/40 hover:bg-amber-500/5'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedInsightIdx(null);
+                              } else {
+                                setSelectedInsightIdx(i);
+                                if (ins.actionable) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    additional_instructions: prev.additional_instructions
+                                      ? `${prev.additional_instructions}\n${ins.actionable}`
+                                      : ins.actionable,
+                                  }));
+                                }
+                              }
+                            }}
+                          >
+                            <p className="text-xs leading-snug line-clamp-3">{ins.insight}</p>
+                            {ins.actionable && (
+                              <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">
+                                <span className="text-green-400">→ </span>{ins.actionable}
+                              </p>
+                            )}
+                            {ins.category && (
+                              <div className="mt-1.5">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">{ins.category}</Badge>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
           )}
+
         </div>
-        {insufficientTokens && (
-          <p className="text-[10px] sm:text-xs text-destructive flex items-center gap-1">
-            <AlertCircle className="h-3 w-3 shrink-0" />
-            Tokens insuficientes. Selecciona menos bloques o compra mas tokens.
-          </p>
-        )}
-      </div>
+      )}
 
       {/* Document Loading Section */}
       {hasDocumentUrls && (
@@ -1647,78 +2810,19 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        {/* CTA */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> CTA *
-          </Label>
-          <Input
-            value={formData.cta}
-            onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
-            placeholder="Ej: Haz clic en el link de la bio"
-            className="text-sm"
-          />
-        </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
 
-        {/* Ángulo de Venta */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
-          </Label>
-
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-between">
-                <span className="truncate">
-                  {formData.sales_angle || "Seleccionar ángulo..."}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 ml-2" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchAngles.map((a: any, idx: number) => {
-                const angleText = a?.angle || a?.salesAngle || a?.name || "";
-                if (!angleText) return null;
-
-                const type = a?.type || a?.category;
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                    onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
-                  >
-                    <span className="text-sm truncate">{angleText}</span>
-                    {type ? (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {type}
-                      </Badge>
-                    ) : null}
-                  </button>
-                );
-              })}
-
-              {researchAngles.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los ángulos.
-                </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
-
+        {/* ── Fila 1: Hooks | País | Duración ── */}
         {/* Número de Hooks */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <ListOrdered className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <ListOrdered className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Hooks
           </Label>
-          <Select 
-            value={formData.hooks_count} 
+          <Select
+            value={formData.hooks_count}
             onValueChange={(v) => setFormData({ ...formData, hooks_count: v })}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
               {[1, 2, 3, 4, 5].map(n => (
                 <SelectItem key={n} value={String(n)}>{n} Hook{n > 1 ? 's' : ''}</SelectItem>
@@ -1728,15 +2832,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* País Objetivo */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> País
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> País
           </Label>
-          <Select 
-            value={formData.target_country} 
+          <Select
+            value={formData.target_country}
             onValueChange={(v) => setFormData({ ...formData, target_country: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar país..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="País..." /></SelectTrigger>
             <SelectContent>
               {COUNTRIES.map((country) => (
                 <SelectItem key={country} value={country}>{country}</SelectItem>
@@ -1746,15 +2850,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
         {/* Duración del Video */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Duración
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Duración
           </Label>
-          <Select 
-            value={formData.video_duration} 
+          <Select
+            value={formData.video_duration}
             onValueChange={(v) => setFormData({ ...formData, video_duration: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar duración..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Duración..." /></SelectTrigger>
             <SelectContent>
               {VIDEO_DURATIONS.map((duration) => (
                 <SelectItem key={duration.value} value={duration.value}>{duration.label}</SelectItem>
@@ -1763,16 +2867,30 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
-        {/* Plataforma Destino */}
-        <div className="space-y-1.5 sm:space-y-2">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Plataforma
+        {/* ── Fila 2: CTA (2 cols) | Plataforma ── */}
+        {/* CTA */}
+        <div className="space-y-1.5 col-span-2">
+          <Label className="flex items-center gap-1 text-xs">
+            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> CTA *
           </Label>
-          <Select 
-            value={formData.target_platform} 
+          <Input
+            value={formData.cta}
+            onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
+            placeholder="Ej: Haz clic en el link de la bio"
+            className="h-8 text-xs sm:text-sm"
+          />
+        </div>
+
+        {/* Plataforma Destino */}
+        <div className="space-y-1.5">
+          <Label className="flex items-center gap-1 text-xs">
+            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Plataforma
+          </Label>
+          <Select
+            value={formData.target_platform}
             onValueChange={(v) => setFormData({ ...formData, target_platform: v })}
           >
-            <SelectTrigger><SelectValue placeholder="Seleccionar plataforma..." /></SelectTrigger>
+            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Red..." /></SelectTrigger>
             <SelectContent>
               {TARGET_PLATFORMS.map((platform) => (
                 <SelectItem key={platform.value} value={platform.value}>{platform.label}</SelectItem>
@@ -1781,80 +2899,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
-        {/* Toggle Perplexity Research */}
-        <div className="space-y-4 sm:col-span-2">
-          <div className="flex items-center justify-between p-2.5 sm:p-4 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-sm border border-purple-500/20 gap-2">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm shrink-0">
-                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <Label className="text-xs sm:text-sm font-medium">Investigación en tiempo real</Label>
-                <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">
-                  Usa Perplexity para buscar tendencias y hooks actuales
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={formData.use_perplexity}
-              onCheckedChange={(checked) => setFormData({ ...formData, use_perplexity: checked })}
-            />
-          </div>
-
-          {formData.use_perplexity && (
-            <div className="ml-4 space-y-2 animate-in slide-in-from-top-2">
-              <p className="text-sm font-medium text-muted-foreground">¿Qué investigar?</p>
-              <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant={perplexityQueries.trends ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, trends: !q.trends }))}
-                >
-                  📈 Tendencias actuales
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.hooks ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, hooks: !q.hooks }))}
-                >
-                  🎣 Hooks efectivos
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.competitors ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, competitors: !q.competitors }))}
-                >
-                  🏢 Competencia
-                </Badge>
-                <Badge
-                  variant={perplexityQueries.audience ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => setPerplexityQueries((q) => ({ ...q, audience: !q.audience }))}
-                >
-                  👥 Audiencia
-                </Badge>
-              </div>
-
-              <Collapsible>
-                <CollapsibleTrigger className="text-sm text-purple-400 hover:text-purple-300">
-                  + Agregar búsqueda personalizada
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <Textarea
-                    placeholder="Ej: ¿Cuáles son los challenges virales de TikTok esta semana relacionados con skincare?"
-                    value={customPerplexityQuery}
-                    onChange={(e) => setCustomPerplexityQuery(e.target.value)}
-                    className="mt-2"
-                    rows={2}
-                  />
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
-          )}
-        </div>
+        {/* ── Campos de ancho completo ── */}
 
         {/* Estructura Narrativa */}
-        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estructura Narrativa *
           </Label>
@@ -1871,242 +2919,207 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </Select>
         </div>
 
+        {/* Ángulo de Venta */}
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
+          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
+          </Label>
+          {researchAngles.length > 0 ? (() => {
+            const recargadoCount = researchAngles.filter((a: any) => a._source === 'v1').length;
+            const dnaCount = researchAngles.filter((a: any) => a._source === 'dna').length;
+            const v2Count = researchAngles.filter((a: any) => a._source === 'v2').length;
+            return (
+              <div className="max-h-64 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
+                  <span>{researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''}</span>
+                  {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+                  {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
+                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v2Count} Pilares</span>}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {researchAngles.map((a: any, idx: number) => {
+                    const angleText = a?.angle || a?.salesAngle || a?.name || "";
+                    if (!angleText) return null;
+                    const angleType = a?.type || a?.category || a?.funnelPhase || "";
+                    const hookExample = a?.hookExample || "";
+                    const isSelected = formData.sales_angle === angleText;
+                    const src = a?._source;
+                    const isDna = src === 'dna';
+                    const isV2 = src === 'v2';
+                    const v2TypeLabel = a?._v2type === 'pillar' ? 'Pilar' : a?._v2type === 'opportunity' ? 'Oportunidad' : null;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`text-left p-2.5 rounded-sm border transition-all ${
+                          isSelected
+                            ? 'ring-2 ring-primary border-primary bg-primary/10'
+                            : isDna
+                              ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5 bg-background'
+                              : isV2
+                                ? 'border-green-500/20 hover:border-green-500/40 hover:bg-green-500/5 bg-background'
+                                : 'border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 bg-background'
+                        }`}
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          sales_angle: isSelected ? '' : angleText,
+                        }))}
+                      >
+                        <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
+                        {hookExample && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1 italic">"{hookExample}"</p>
+                        )}
+                        <div className="flex items-center gap-1 mt-1.5 flex-wrap">
+                          {angleType && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{angleType}</Badge>
+                          )}
+                          {isDna && a?.funnelPhase && (
+                            <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 opacity-70">{a.funnelPhase}</Badge>
+                          )}
+                          {isDna ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                          ) : isV2 ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
+                              {v2TypeLabel || 'Pilar'}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })() : (
+            <p className="text-xs text-muted-foreground py-2">
+              {formData.sales_angle || 'Sin ángulo seleccionado'}
+            </p>
+          )}
+        </div>
+
         {/* Avatar Ideal */}
-        <div className="space-y-1.5 sm:space-y-2 sm:col-span-2">
+        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Avatar / Cliente Ideal
           </Label>
-          <Textarea
-            value={formData.ideal_avatar}
-            onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
-            placeholder="Describe al cliente ideal..."
-            rows={2}
-          />
-
-          {/* Selector desplegable para avatares */}
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Seleccionar avatar ({researchAvatars.length})
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
-                const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                const rawSituation = a?.situation || a?.currentSituation;
-                const situation = typeof rawSituation === 'string'
-                  ? rawSituation
-                  : (rawSituation?.dayToDay || '');
-
-                const formatted = [
-                  `AVATAR: ${name}`,
-                  situation ? `SITUACIÓN: ${situation}` : "",
-                ]
-                  .filter(Boolean)
-                  .join("\n");
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors"
-                    onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
-                  >
-                    <p className="text-sm font-medium">{name}</p>
-                    {situation ? (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{situation}</p>
-                    ) : null}
-                  </button>
-                );
-              })}
-
-              {researchAvatars.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los avatares.
+          {researchAvatars.length > 0 ? (() => {
+            const recargadoCount = researchAvatars.filter((a: any) => a._source === 'recargado').length;
+            const dnaCount = researchAvatars.filter((a: any) => a._source === 'dna').length;
+            return (
+              <div className="max-h-64 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
+                  <span>{researchAvatars.length} avatar{researchAvatars.length !== 1 ? 'es' : ''}</span>
+                  {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+                  {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
                 </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {researchAvatars.map((a: any, idx: number) => {
+                    const isDna = a._source === 'dna';
+                    // ADN Producto usa nombre_edad; ADN Recargado usa name
+                    const name = isDna
+                      ? (a?.nombre_edad || a?.nombre || `Avatar ${idx + 1}`)
+                      : (a?.name || a?.avatarName || `Avatar ${idx + 1}`);
+                    // Situación actual
+                    const rawSituation = isDna
+                      ? a?.situacion_actual
+                      : (a?.situation || a?.currentSituation);
+                    const situation = typeof rawSituation === 'string'
+                      ? rawSituation
+                      : (rawSituation?.dayToDay || '');
+                    // Sub-info extra para DNA
+                    const dolor = isDna ? a?.dolor_principal : '';
+                    const formatted = [
+                      `AVATAR: ${name}`,
+                      situation ? `SITUACIÓN: ${situation}` : '',
+                      dolor ? `DOLOR: ${dolor}` : '',
+                    ].filter(Boolean).join('\n');
+                    const isSelected = formData.ideal_avatar === formatted;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`text-left p-2.5 rounded-sm border transition-all ${
+                          isSelected
+                            ? 'ring-2 ring-primary border-primary bg-primary/10'
+                            : isDna
+                              ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5 bg-background'
+                              : 'border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 bg-background'
+                        }`}
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          ideal_avatar: isSelected ? '' : formatted,
+                        }))}
+                      >
+                        <p className="text-xs font-medium leading-snug line-clamp-1">{name}</p>
+                        {situation && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{situation}</p>
+                        )}
+                        <div className="mt-1.5">
+                          {isDna ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })() : (
+            <p className="text-xs text-muted-foreground py-2">
+              {formData.ideal_avatar || 'Selecciona un producto con investigación para ver los avatares'}
+            </p>
+          )}
         </div>
 
         {/* Dolores */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_pain}
-              onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
-              placeholder="Selecciona un dolor..."
-              className="flex-1 text-sm"
-            />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Dolores</span> ({researchPains.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchPains.map((pain: any, idx: number) => {
-                  const painText = typeof pain === 'string' ? pain : (pain?.pain || pain?.description || pain?.text || `Dolor ${idx + 1}`);
-                  if (!painText || (typeof painText === 'string' && !painText.trim())) return null;
-                  const category = typeof pain === 'object' && pain ? (pain?.category || pain?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_pain: painText }))}
-                    >
-                      <span className="text-sm">{painText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchPains.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver los dolores.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          <ResearchItemCards
+            items={researchPains}
+            selected={formData.selected_pain}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
+            selectedBorderClass="ring-2 ring-rose-500 border-rose-500 bg-rose-500/10"
+            hoverClass="border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
+            emptyText={formData.selected_pain || 'Selecciona un producto con investigación para ver dolores'}
+          />
         </div>
 
         {/* Deseos */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_desire}
-              onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
-              placeholder="Selecciona un deseo..."
-              className="flex-1 text-sm"
-            />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Deseos</span> ({researchDesires.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchDesires.map((desire: any, idx: number) => {
-                  const desireText = typeof desire === 'string' ? desire : (desire?.desire || desire?.description || desire?.text || `Deseo ${idx + 1}`);
-                  if (!desireText || (typeof desireText === 'string' && !desireText.trim())) return null;
-                  const category = typeof desire === 'object' && desire ? (desire?.category || desire?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_desire: desireText }))}
-                    >
-                      <span className="text-sm">{desireText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchDesires.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver los deseos.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          <ResearchItemCards
+            items={researchDesires}
+            selected={formData.selected_desire}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
+            selectedBorderClass="ring-2 ring-primary border-primary bg-primary/10"
+            hoverClass="border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+            emptyText={formData.selected_desire || 'Selecciona un producto con investigación para ver deseos'}
+          />
         </div>
 
         {/* Objeciones */}
-        <div className="space-y-2 sm:col-span-2">
+        <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             🚫 Objeción Seleccionada
           </Label>
-          <div className="flex gap-2">
-            <Input
-              value={formData.selected_objection}
-              onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
-              placeholder="Selecciona una objeción..."
-              className="flex-1 text-sm"
-            />
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="shrink-0 text-xs sm:text-sm h-9">
-                  <span className="flex items-center gap-1">
-                    <span className="hidden sm:inline">Objeciones</span> ({researchObjections.length})
-                  </span>
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="absolute right-0 mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto z-50 w-[calc(100vw-3rem)] sm:w-80 shadow-lg">
-                {researchObjections.map((objection: any, idx: number) => {
-                  const objectionText = typeof objection === 'string' ? objection : (objection?.objection || objection?.description || objection?.text || `Objeción ${idx + 1}`);
-                  if (!objectionText || (typeof objectionText === 'string' && !objectionText.trim())) return null;
-                  const category = typeof objection === 'object' && objection ? (objection?.category || objection?.type) : null;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors flex items-center justify-between gap-2"
-                      onClick={() => setFormData(prev => ({ ...prev, selected_objection: objectionText }))}
-                    >
-                      <span className="text-sm">{objectionText}</span>
-                      {category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {category}
-                        </Badge>
-                      )}
-                    </button>
-                  );
-                })}
-
-                {researchObjections.length === 0 && (
-                  <p className="text-sm text-muted-foreground p-2">
-                    Selecciona un producto con investigación para ver las objeciones.
-                  </p>
-                )}
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
+          <ResearchItemCards
+            items={researchObjections}
+            selected={formData.selected_objection}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
+            selectedBorderClass="ring-2 ring-orange-500 border-orange-500 bg-orange-500/10"
+            hoverClass="border-orange-500/20 hover:border-orange-500/40 hover:bg-orange-500/5"
+            emptyText={formData.selected_objection || 'Selecciona un producto con investigación para ver objeciones'}
+          />
         </div>
-      </div>
-
-      {/* Video Strategies */}
-      <div className="space-y-1.5 sm:space-y-2 pt-3 sm:pt-4 border-t">
-        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estrategias de Video
-        </Label>
-        <Textarea
-          value={formData.video_strategies}
-          onChange={(e) => setFormData({ ...formData, video_strategies: e.target.value })}
-          placeholder="Ej: POV, Storytime, ASMR, Unboxing, Tutorial rápido..."
-          rows={2}
-        />
       </div>
 
       {/* Reference Transcription */}
@@ -2239,7 +3252,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       {loading && (
         <div className="space-y-4">
           {/* Skills Loading State */}
-          <SkillsLoadingState isGenerating={loading} />
+          <SkillsLoadingState isGenerating={loading} realProgress={skillsProgress} />
 
           {/* Blocks Progress */}
           <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-sm">
@@ -2281,6 +3294,67 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           </>
         )}
       </Button>
+    </div>
+  );
+}
+
+// ─── Componente auxiliar: tarjetas de selección para dolor/deseo/objeción ──────
+
+interface ResearchItemCardsProps {
+  items: { text: string; _source: string }[];
+  selected: string;
+  onSelect: (text: string) => void;
+  selectedBorderClass: string;
+  hoverClass: string;
+  emptyText: string;
+}
+
+function ResearchItemCards({ items, selected, onSelect, selectedBorderClass, hoverClass, emptyText }: ResearchItemCardsProps) {
+  if (items.length === 0) {
+    return <p className="text-xs text-muted-foreground py-1">{emptyText}</p>;
+  }
+
+  const recargadoCount = items.filter(i => i._source === 'recargado').length;
+  const dnaCount = items.filter(i => i._source === 'dna').length;
+
+  return (
+    <div className="rounded-sm border bg-muted/20 p-2">
+      <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
+        <span>{items.length} ítem{items.length !== 1 ? 's' : ''}</span>
+        {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+        {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
+      </p>
+      <div className="max-h-56 overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {items.map((item, idx) => {
+            const isSelected = selected === item.text;
+            const isDna = item._source === 'dna';
+            return (
+              <button
+                key={idx}
+                type="button"
+                className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                  isSelected
+                    ? selectedBorderClass
+                    : isDna
+                      ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5'
+                      : hoverClass
+                }`}
+                onClick={() => onSelect(isSelected ? '' : item.text)}
+              >
+                <p className="text-xs leading-snug line-clamp-3">{item.text}</p>
+                <div className="mt-1.5">
+                  {isDna ? (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

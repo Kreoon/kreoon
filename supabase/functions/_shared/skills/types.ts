@@ -38,7 +38,8 @@ export type SkillType =
   | 'landing_page_architect'    // Capa V+E — Landing pages que convierten
   | 'whatsapp_closer'           // Capa E — Funnel WhatsApp LATAM
   | 'paid_ads_architect'        // Capa E+T — Estructura de campanas Meta+TikTok
-  | 'email_sequence_builder';   // Capa R+V — Secuencias de email LATAM
+  | 'email_sequence_builder'
+  | 'duration_adjuster';   // Capa R+V — Secuencias de email LATAM
 
 export interface SkillTriggers {
   sphere_phase?: string[];
@@ -83,6 +84,8 @@ export interface SkillContext {
     sphere_phase?: string;
     consciousness_level?: string;
     additional_context?: string;
+    generation_type?: string;
+    video_duration?: string;
   };
   previousSkillsOutput?: SkillExecution[];
   perplexityResearch?: string;

@@ -34,6 +34,7 @@ import { landingPageArchitect } from './landing-page-architect.ts';
 import { whatsappCloser } from './whatsapp-closer.ts';
 import { paidAdsArchitect } from './paid-ads-architect.ts';
 import { emailSequenceBuilder } from './email-sequence-builder.ts';
+import { durationAdjuster } from './duration-adjuster.ts';
 
 /**
  * Registro de Skills disponibles (20 skills)
@@ -95,6 +96,40 @@ export const skillsRegistry: Partial<Record<SkillType, Skill>> = {
   whatsapp_closer: whatsappCloser,
   paid_ads_architect: paidAdsArchitect,
   email_sequence_builder: emailSequenceBuilder,
+  duration_adjuster: durationAdjuster,
+};
+
+// Fases por tipo de bloque. Dentro de cada fase los skills corren en PARALELO;
+// las fases corren en SECUENCIA pasando el output acumulado a la siguiente.
+// Tiempo estimado = nFases × latencia_max_skill ≈ 5 × 8s = 40s para "script".
+const SKILL_PHASES_BY_GENERATION_TYPE: Partial<Record<string, SkillType[][]>> = {
+  script: [
+    // Fase 1 — Análisis de contexto
+    ['consciousness_mapper', 'trend_injector', 'avatar_mirrorer'],
+    // Fase 2 — Generación de contenido base
+    ['hooks_specialist', 'emotion_architect', 'storytelling_specialist', 'neuro_persuader'],
+    // Fase 3 — Enriquecimiento y persuasión
+    ['cultural_adapter', 'retention_engineer', 'social_proof_weaver', 'objection_crusher'],
+    // Fase 4 — Refinamiento y estructura
+    ['cta_specialist', 'storybrand_architect', 'copy_sharpener', 'virality_optimizer'],
+    // Fase 5 — Humanización final
+    ['ai_humanizer'],
+    // Fase 6 — Ajuste al tiempo del video
+    ['duration_adjuster'],
+  ],
+  director: [
+    ['scene_director', 'production_director'],
+  ],
+  broll: [
+    ['broll_generator'],
+  ],
+  captions: [
+    ['caption_generator'],
+  ],
+  marketing: [
+    ['paid_ads_architect', 'social_funnel_builder'],
+    ['offer_engineer'],
+  ],
 };
 
 /**
@@ -114,14 +149,44 @@ export function getSkillById(id: SkillType): Skill | null {
 }
 
 /**
- * Obtiene skills activos según contexto
+ * Devuelve las fases de skills para un tipo de generación.
+ * Cada fase es un array de Skills que se ejecutan en paralelo.
+ * Las fases son secuenciales entre sí.
+ */
+export function getSkillPhases(generation_type?: string): Skill[][] | null {
+  if (!generation_type) return null;
+  const phaseIds = SKILL_PHASES_BY_GENERATION_TYPE[generation_type];
+  if (!phaseIds) return null;
+
+  return phaseIds
+    .map((phase) =>
+      phase
+        .map((id) => skillsRegistry[id])
+        .filter((s): s is Skill => s !== null && s !== undefined)
+    )
+    .filter((phase) => phase.length > 0);
+}
+
+/**
+ * Obtiene skills activos según contexto (lista plana, para uso sin fases).
+ * Si se provee generation_type, deriva la lista de SKILL_PHASES_BY_GENERATION_TYPE.
+ * Fallback: usa los triggers originales (always / sphere_phase / etc.).
  */
 export function getActiveSkills(context: {
   sphere_phase?: string;
   consciousness_level?: string;
   narrative_structure?: string;
+  generation_type?: string;
 }): Skill[] {
   const implementedSkills = getImplementedSkills();
+
+  if (context.generation_type && SKILL_PHASES_BY_GENERATION_TYPE[context.generation_type]) {
+    const phaseIds = SKILL_PHASES_BY_GENERATION_TYPE[context.generation_type]!.flat();
+    const allowedIds = new Set<string>(phaseIds);
+    return implementedSkills
+      .filter((skill) => allowedIds.has(skill.id))
+      .sort((a, b) => b.priority - a.priority);
+  }
 
   return implementedSkills
     .filter((skill) => {
@@ -159,13 +224,14 @@ export function getActiveSkills(context: {
 }
 
 /**
- * Obtiene skills para generación
+ * Obtiene skills para generación según el contexto completo (incluyendo generation_type)
  */
 export function getSkillsForGeneration(context: SkillContext): Skill[] {
   return getActiveSkills({
     sphere_phase: context.formData.sphere_phase,
     consciousness_level: context.formData.consciousness_level,
     narrative_structure: context.formData.narrative_structure,
+    generation_type: context.formData.generation_type,
   });
 }
 
