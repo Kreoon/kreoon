@@ -52,11 +52,13 @@ BEGIN
   ),
 
   -- Métricas de contenido por cliente
+  -- "Completado" = aprobado, pagado, O en campaña (marketing_campaign_id asignado)
   content_stats AS (
     SELECT
       ct.client_id,
       COUNT(*) FILTER (
         WHERE ct.status IN ('approved', 'paid')
+           OR ct.marketing_campaign_id IS NOT NULL
       )::bigint                                   AS total_approved,
       MIN(ct.created_at)                          AS first_content_created_at,
       MAX(ct.created_at)                          AS last_content_created_at,
