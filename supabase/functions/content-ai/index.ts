@@ -17,8 +17,13 @@ import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } fr
 import {
   executeSkillChain,
   getActiveSkills,
+  getSkillPhases,
+  buildSkillInput,
+  callAIWithSkill,
   type SkillContext,
   type SkillChainResult,
+  type Skill,
+  type SkillExecution,
 } from "../_shared/skills/index.ts";
 
 interface ContentAIRequest {
@@ -28,6 +33,7 @@ interface ContentAIRequest {
   ai_model?: string;
   use_perplexity?: boolean; // Enable pre-research with Perplexity
   use_skills?: boolean; // Enable Skills system (agents)
+  stream?: boolean;    // false = JSON response (MCP/n8n); true/undefined = SSE streaming (UI)
   perplexity_queries?: {
     trends?: boolean;
     hooks?: boolean;
@@ -856,7 +862,12 @@ serve(async (req) => {
             }
           }
 
-          // Construir contexto para Skills
+          // Construir contexto para Skills — incluye buildBaseContext() completo via `prompt`
+          const skillAdditionalContext = [
+            prompt, // fullPrompt = customPrompt + buildBaseContext() con TODO el ADN
+            body.script_params?.additional_instructions,
+          ].filter(Boolean).join('\n\n');
+
           const skillContext: SkillContext = {
             product: {
               name: product?.name || "",
@@ -874,53 +885,200 @@ serve(async (req) => {
               narrative_structure: body.script_params?.narrative_structure || "problema-solución",
               sphere_phase: body.script_params?.sphere_phase || "solution",
               consciousness_level: body.script_params?.consciousness_level || "problem_aware",
-              additional_context: body.script_params?.additional_instructions || "",
+              generation_type: generation_type || "script",
+              video_duration: body.script_params?.video_duration || "60",
+              additional_context: skillAdditionalContext,
             },
             perplexityResearch: perplexityResearch || undefined,
           };
 
-          // Ejecutar cadena de skills
-          const skillsResult: SkillChainResult = await executeSkillChain(skillContext, {
-            provider: aiConfig.provider,
-            apiKey: aiConfig.apiKey,
-            model: aiConfig.model,
-          });
+          // ═══════════════════════════════════════════════════════════════
+          // EJECUTAR FASES EN PARALELO — función reutilizable
+          // ═══════════════════════════════════════════════════════════════
+          const phases = getSkillPhases(skillContext.formData.generation_type);
 
-          console.log("[content-ai] Skills result:", {
-            success: skillsResult.success,
-            skills: skillsResult.executions.map(e => e.skillId),
-          });
+          async function runSkillPhases() {
+            if (!phases || phases.length === 0) {
+              throw new Error('No hay fases definidas para este tipo de generación');
+            }
+            const allExecutions: SkillExecution[] = [];
+            const allErrors: string[] = [];
+            let phaseOutput = '';
+            const skillsStartTime = Date.now();
 
-          // Log de uso
-          await logAIUsage(supabase, {
-            organizationId,
-            userId: "system",
-            provider: aiConfig.provider,
-            model: aiConfig.model,
-            action: "generate_script_with_skills",
-            success: skillsResult.success,
-            response_time_ms: skillsResult.totalDurationMs,
-          });
+            for (const phase of phases) {
+              const phaseResults = await Promise.allSettled(
+                phase.map(async (skill: Skill) => {
+                  const t0 = Date.now();
+                  const input = buildSkillInput(skill, skillContext, phaseOutput, allExecutions);
+                  const response = await callAIWithSkill(skill, input, {
+                    provider: aiConfig.provider,
+                    apiKey: aiConfig.apiKey,
+                    model: aiConfig.model,
+                  });
+                  return { skill, content: response.content, confidence: response.confidence, durationMs: Date.now() - t0 };
+                })
+              );
 
-          return new Response(
-            JSON.stringify({
-              success: skillsResult.success,
-              script: skillsResult.finalOutput,
-              ai_provider: aiConfig.provider,
-              ai_model: aiConfig.model,
-              used_perplexity: body.use_perplexity && perplexityResearch.length > 0,
-              used_skills: true,
-              skills_metadata: {
-                skills_executed: skillsResult.executions.map((e) => ({
-                  skill: e.skillId,
-                  confidence: e.confidence,
-                  duration_ms: e.durationMs,
-                })),
-                total_duration_ms: skillsResult.totalDurationMs,
-              },
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+              const phaseParts: string[] = [];
+              for (const result of phaseResults) {
+                if (result.status === 'fulfilled') {
+                  const { skill, content, confidence, durationMs } = result.value;
+                  allExecutions.push({ skillId: skill.id, input: '...', output: content, confidence, executedAt: new Date(), durationMs });
+                  phaseParts.push(`### ${skill.name}\n${content}`);
+                } else {
+                  allErrors.push(String(result.reason));
+                }
+              }
+              phaseOutput = phaseParts.join('\n\n---\n\n');
+            }
+
+            const totalDurationMs = Date.now() - skillsStartTime;
+            await logAIUsage(supabase, {
+              organizationId,
+              userId: "system",
+              provider: aiConfig.provider,
+              model: aiConfig.model,
+              action: "generate_script_with_skills",
+              success: allExecutions.length > 0,
+              response_time_ms: totalDurationMs,
+            });
+
+            return { phaseOutput, allExecutions, totalDurationMs };
+          }
+
+          // ═══════════════════════════════════════════════════════════════
+          // MODO JSON (stream: false) — para MCP y clientes sin SSE
+          // ═══════════════════════════════════════════════════════════════
+          if (body.stream === false) {
+            const { phaseOutput, allExecutions, totalDurationMs } = await runSkillPhases();
+            return new Response(
+              JSON.stringify({
+                success: true,
+                script: phaseOutput,
+                ai_provider: aiConfig.provider,
+                ai_model: aiConfig.model,
+                used_skills: true,
+                used_perplexity: body.use_perplexity && perplexityResearch.length > 0,
+                skills_metadata: {
+                  skills_executed: allExecutions.map((e: SkillExecution) => ({ skill: e.skillId, confidence: e.confidence, duration_ms: e.durationMs })),
+                  total_duration_ms: totalDurationMs,
+                },
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+
+          // ═══════════════════════════════════════════════════════════════
+          // MODO SSE — fases en background, progreso en tiempo real
+          // ═══════════════════════════════════════════════════════════════
+          const sseEncoder = new TextEncoder();
+          const { readable: sseReadable, writable: sseWritable } = new TransformStream<Uint8Array, Uint8Array>();
+          const sseWriter = sseWritable.getWriter();
+
+          const sendSSE = async (event: string, data: unknown) => {
+            try {
+              await sseWriter.write(sseEncoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+            } catch (_) { /* client may have disconnected */ }
+          };
+
+          ;(async () => {
+            try {
+              if (!phases || phases.length === 0) {
+                await sendSSE('error', { message: 'No hay fases definidas para este tipo de generación' });
+                return;
+              }
+
+              const allExecutions: SkillExecution[] = [];
+              const allErrors: string[] = [];
+              let phaseOutput = '';
+              const skillsStartTime = Date.now();
+
+              await sendSSE('start', {
+                total_phases: phases.length,
+                total_skills: phases.reduce((s: number, p: Skill[]) => s + p.length, 0),
+              });
+
+              for (let phaseIdx = 0; phaseIdx < phases.length; phaseIdx++) {
+                const phase = phases[phaseIdx];
+
+                await sendSSE('phase_start', {
+                  phase: phaseIdx + 1,
+                  total: phases.length,
+                  skills: phase.map((s: Skill) => s.id),
+                  pct: Math.round((phaseIdx / phases.length) * 100),
+                });
+
+                const phaseResults = await Promise.allSettled(
+                  phase.map(async (skill: Skill) => {
+                    const t0 = Date.now();
+                    const input = buildSkillInput(skill, skillContext, phaseOutput, allExecutions);
+                    const response = await callAIWithSkill(skill, input, {
+                      provider: aiConfig.provider,
+                      apiKey: aiConfig.apiKey,
+                      model: aiConfig.model,
+                    });
+                    return { skill, content: response.content, confidence: response.confidence, durationMs: Date.now() - t0 };
+                  })
+                );
+
+                const phaseParts: string[] = [];
+                for (const result of phaseResults) {
+                  if (result.status === 'fulfilled') {
+                    const { skill, content, confidence, durationMs } = result.value;
+                    allExecutions.push({ skillId: skill.id, input: '...', output: content, confidence, executedAt: new Date(), durationMs });
+                    phaseParts.push(`### ${skill.name}\n${content}`);
+                  } else {
+                    allErrors.push(String(result.reason));
+                  }
+                }
+                phaseOutput = phaseParts.join('\n\n---\n\n');
+
+                await sendSSE('phase_complete', {
+                  phase: phaseIdx + 1,
+                  pct: Math.round(((phaseIdx + 1) / phases.length) * 100),
+                });
+              }
+
+              const totalDurationMs = Date.now() - skillsStartTime;
+
+              await logAIUsage(supabase, {
+                organizationId,
+                userId: "system",
+                provider: aiConfig.provider,
+                model: aiConfig.model,
+                action: "generate_script_with_skills",
+                success: allExecutions.length > 0,
+                response_time_ms: totalDurationMs,
+              });
+
+              await sendSSE('complete', {
+                success: allExecutions.length > 0,
+                script: phaseOutput,
+                ai_provider: aiConfig.provider,
+                ai_model: aiConfig.model,
+                used_perplexity: body.use_perplexity && perplexityResearch.length > 0,
+                used_skills: true,
+                skills_metadata: {
+                  skills_executed: allExecutions.map((e: SkillExecution) => ({ skill: e.skillId, confidence: e.confidence, duration_ms: e.durationMs })),
+                  total_duration_ms: totalDurationMs,
+                },
+              });
+            } catch (err) {
+              await sendSSE('error', { message: (err as Error).message });
+            } finally {
+              try { await sseWriter.close(); } catch (_) { /* already closed */ }
+            }
+          })();
+
+          return new Response(sseReadable, {
+            headers: {
+              ...corsHeaders,
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'X-Accel-Buffering': 'no',
+            },
+          });
         }
 
         // ═══════════════════════════════════════════════════════════════

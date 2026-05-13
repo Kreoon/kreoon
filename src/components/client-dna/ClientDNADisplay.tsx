@@ -349,9 +349,9 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
         <div className="flex items-center gap-2 flex-wrap">
           <MapPin className="w-4 h-4 text-purple-500 shrink-0" />
           <span className="text-xs text-zinc-500">Audiencia:</span>
-          {(dna.audience_locations as Array<{ name: string; code: string; flag?: string }>).map((loc) => (
+          {(dna.audience_locations as Array<{ name: string; code: string; flag?: string }>).map((loc, i) => (
             <span
-              key={loc.code}
+              key={loc.code || loc.name || i}
               className="px-2 py-0.5 rounded-full text-[11px] bg-purple-100 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20"
             >
               {loc.flag && <span className="mr-0.5">{loc.flag}</span>}

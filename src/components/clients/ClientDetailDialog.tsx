@@ -323,7 +323,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full sm:max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full sm:max-w-4xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
         <DialogHeader>
           <div className="flex items-center gap-4">
             {client.logo_url ? (

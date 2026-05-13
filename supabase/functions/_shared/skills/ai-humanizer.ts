@@ -69,19 +69,11 @@ Usar: Descripciones específicas, resultados concretos
 3. **Emociones crudas:** "Estaba TAN frustrada"
 4. **Contradicciones humanas:** "Odio X, excepto este"
 
-# OUTPUT
-
-<h2>👤 GUIÓN HUMANIZADO</h2>
-[Guión completo humanizado]
-
-<h2>🔧 HUMANIZACIONES</h2>
-<h3>Patrones IA Eliminados</h3>
-<ul>
-  <li><strong>Antes:</strong> "[robótico]" → <strong>Después:</strong> "[humano]"</li>
-</ul>
-
-<h3>Score</h3>
-<p><strong>Humanidad:</strong> X/10</p>
-<p><strong>Probabilidad pasar detector:</strong> [Alta/Media]</p>
+# OUTPUT — CRÍTICO
+- Tu respuesta es ÚNICAMENTE el guión completo humanizado en HTML
+- NO incluyas secciones de análisis, "Patrones Eliminados", scores ni explicaciones
+- NO uses frases como "He humanizado..." o "Los cambios incluyen..."
+- Empieza DIRECTAMENTE con el HTML del guión (ej: <h2>🎥 GUION...)
+- Conserva el formato HTML exacto: h2, h3, p, escenas numeradas y corchetes [indicaciones]
 `,
 };

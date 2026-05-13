@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_ANON_KEY, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,7 +21,7 @@ import {
   Brain, Zap, ChevronRight, Hash, Shuffle
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { SkillsLoadingState } from "./SkillsLoadingState";
+import { SkillsLoadingState, type SkillsRealProgress } from "./SkillsLoadingState";
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 
@@ -638,6 +638,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const { profile } = useAuth();
   const organizationId = propOrgId || profile?.current_organization_id;
   const [loading, setLoading] = useState(false);
+  const [skillsProgress, setSkillsProgress] = useState<SkillsRealProgress | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
   const [newHook, setNewHook] = useState("");
 
@@ -665,6 +666,8 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const insufficientTokens = totalAvailable < totalCost && totalAvailable !== Infinity;
   const [promptsOpen, setPromptsOpen] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
+  const [selectedIdeaIdx, setSelectedIdeaIdx] = useState<number | null>(null);
+  const [selectedInsightIdx, setSelectedInsightIdx] = useState<number | null>(null);
   
   // Load custom prompts from organization settings
   const { prompts: customPrompts, loading: loadingPrompts } = useScriptPrompts(organizationId);
@@ -878,7 +881,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       try {
         const { data, error } = await supabase
           .from("products")
-          .select("id, client_id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, ai_analysis, brief_data")
+          .select("id, client_id, avatar_profiles, sales_angles_data, market_research, sales_angles, ideal_avatar, brief_data")
           .eq("id", product.id)
           .maybeSingle();
 
@@ -900,6 +903,10 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
           if (typeof ap === "string") {
             try { result.avatar_profiles = JSON.parse(ap); } catch { /* keep as string */ }
           }
+          const bd = result.brief_data;
+          if (typeof bd === "string") {
+            try { result.brief_data = JSON.parse(bd); } catch { /* keep as string */ }
+          }
 
           return result;
         })();
@@ -916,7 +923,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         if (dnaId) {
           const { data: d1 } = await supabase
             .from("product_dna")
-            .select("id, strategy_recommendations, ai_analysis, market_research, content_brief")
+            .select("id, strategy_recommendations, market_research, content_brief, emotional_analysis")
             .eq("id", dnaId)
             .maybeSingle();
           if (d1) dnaRecord = d1;
@@ -926,7 +933,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
         if (!dnaRecord && clientId) {
           const { data: d2 } = await supabase
             .from("product_dna")
-            .select("id, strategy_recommendations, ai_analysis, market_research, content_brief")
+            .select("id, strategy_recommendations, market_research, content_brief, emotional_analysis")
             .eq("client_id", clientId)
             .not("strategy_recommendations", "is", null)
             .order("created_at", { ascending: false })
@@ -953,21 +960,42 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   }, [product?.id]);
 
   const researchAvatars = useMemo(() => {
+    const collected: any[] = [];
+
+    // ADN Recargado: avatar_profiles.profiles
     const profiles = researchProduct?.avatar_profiles?.profiles;
-    if (Array.isArray(profiles) && profiles.length) return profiles;
+    if (Array.isArray(profiles) && profiles.length) {
+      collected.push(...profiles.map((a: any) => ({ ...a, _source: 'recargado' })));
+    } else {
+      // Fallback: market_research.strategicAvatars
+      const strategicAvatars = researchProduct?.market_research?.strategicAvatars;
+      if (Array.isArray(strategicAvatars) && strategicAvatars.length) {
+        collected.push(...strategicAvatars.map((a: any) => ({ ...a, _source: 'recargado' })));
+      }
+    }
 
-    const strategicAvatars = researchProduct?.market_research?.strategicAvatars;
-    if (Array.isArray(strategicAvatars) && strategicAvatars.length) return strategicAvatars;
+    // ADN Producto: product_dna.strategy_recommendations.seccion_3_avatares
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars) && dnaAvatars.length) {
+      const existingNames = new Set(collected.map((a: any) => (a?.name || a?.nombre_edad || '').toLowerCase()));
+      dnaAvatars.forEach((a: any) => {
+        const name = a?.nombre_edad || a?.nombre || '';
+        if (name && !existingNames.has(name.toLowerCase())) {
+          collected.push({ ...a, _source: 'dna' });
+          existingNames.add(name.toLowerCase());
+        }
+      });
+    }
 
-    return [];
-  }, [researchProduct]);
+    return collected;
+  }, [researchProduct, productDnaRecord]);
 
-  // Helper: parse ai_analysis JSONB safely — debe ir ANTES de researchAngles
+  // Helper: parse emotional_analysis JSONB desde product_dna
   const parsedAiAnalysis = useMemo(() => {
-    const raw = (researchProduct as any)?.ai_analysis;
+    const raw = (productDnaRecord as any)?.emotional_analysis;
     if (!raw) return null;
     return typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return null; } })() : raw;
-  }, [researchProduct]);
+  }, [productDnaRecord]);
 
   // hasV2Data: true ONLY when ai_analysis real existe con datos
   const hasV2Data = useMemo(() => {
@@ -1056,56 +1084,101 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     }
   }, [researchProduct, product]);
 
-  // Extraer dolores desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer dolores — ADN Recargado + ADN Producto (seccion_3_avatares.dolor_principal)
   const researchPains = useMemo(() => {
-    // 1. Buscar en market_research.pains
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const pains = researchProduct?.market_research?.pains;
-    if (Array.isArray(pains) && pains.length) return pains;
-
-    // 2. Buscar en market_research.jtbd.pains
+    if (Array.isArray(pains)) pains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || p?.description || p?.text || ''), 'recargado'));
     const jtbdPains = researchProduct?.market_research?.jtbd?.pains;
-    if (Array.isArray(jtbdPains) && jtbdPains.length) return jtbdPains;
-
-    // 3. Buscar en ideal_avatar.jtbd.pains (JSON parseado)
+    if (Array.isArray(jtbdPains)) jtbdPains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || ''), 'recargado'));
     const avatarJtbdPains = parsedIdealAvatar?.jtbd?.pains;
-    if (Array.isArray(avatarJtbdPains) && avatarJtbdPains.length) return avatarJtbdPains;
+    if (Array.isArray(avatarJtbdPains)) avatarJtbdPains.forEach((p: any) => add(typeof p === 'string' ? p : (p?.pain || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.dolor_principal) add(a.dolor_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
 
-    return [];
-  }, [researchProduct, parsedIdealAvatar]);
-
-  // Extraer deseos desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer deseos — ADN Recargado + ADN Producto (seccion_3_avatares.deseo_principal)
   const researchDesires = useMemo(() => {
-    // 1. Buscar en market_research.desires
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const desires = researchProduct?.market_research?.desires;
-    if (Array.isArray(desires) && desires.length) return desires;
-
-    // 2. Buscar en market_research.jtbd.desires
+    if (Array.isArray(desires)) desires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || d?.description || d?.text || ''), 'recargado'));
     const jtbdDesires = researchProduct?.market_research?.jtbd?.desires;
-    if (Array.isArray(jtbdDesires) && jtbdDesires.length) return jtbdDesires;
-
-    // 3. Buscar en ideal_avatar.jtbd.desires (JSON parseado)
+    if (Array.isArray(jtbdDesires)) jtbdDesires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || ''), 'recargado'));
     const avatarJtbdDesires = parsedIdealAvatar?.jtbd?.desires;
-    if (Array.isArray(avatarJtbdDesires) && avatarJtbdDesires.length) return avatarJtbdDesires;
+    if (Array.isArray(avatarJtbdDesires)) avatarJtbdDesires.forEach((d: any) => add(typeof d === 'string' ? d : (d?.desire || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.deseo_principal) add(a.deseo_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
 
-    return [];
-  }, [researchProduct, parsedIdealAvatar]);
-
-  // Extraer objeciones desde la investigación de mercado o ideal_avatar.jtbd
+  // Extraer objeciones — ADN Recargado + ADN Producto (seccion_3_avatares.objecion_principal)
   const researchObjections = useMemo(() => {
-    // 1. Buscar en market_research.objections
+    const collected: { text: string; _source: string }[] = [];
+    const seen = new Set<string>();
+    const add = (text: string, source: string) => {
+      const t = text.trim();
+      if (t && !seen.has(t.toLowerCase())) { seen.add(t.toLowerCase()); collected.push({ text: t, _source: source }); }
+    };
     const objections = researchProduct?.market_research?.objections;
-    if (Array.isArray(objections) && objections.length) return objections;
-
-    // 2. Buscar en market_research.jtbd.objections
+    if (Array.isArray(objections)) objections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || o?.description || o?.text || ''), 'recargado'));
     const jtbdObjections = researchProduct?.market_research?.jtbd?.objections;
-    if (Array.isArray(jtbdObjections) && jtbdObjections.length) return jtbdObjections;
-
-    // 3. Buscar en ideal_avatar.jtbd.objections (JSON parseado)
+    if (Array.isArray(jtbdObjections)) jtbdObjections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || ''), 'recargado'));
     const avatarJtbdObjections = parsedIdealAvatar?.jtbd?.objections;
-    if (Array.isArray(avatarJtbdObjections) && avatarJtbdObjections.length) return avatarJtbdObjections;
+    if (Array.isArray(avatarJtbdObjections)) avatarJtbdObjections.forEach((o: any) => add(typeof o === 'string' ? o : (o?.objection || ''), 'recargado'));
+    const dnaAvatars = productDnaRecord?.strategy_recommendations?.seccion_3_avatares;
+    if (Array.isArray(dnaAvatars)) dnaAvatars.forEach((a: any) => { if (a?.objecion_principal) add(a.objecion_principal, 'dna'); });
+    return collected;
+  }, [researchProduct, parsedIdealAvatar, productDnaRecord]);
 
-    return [];
-  }, [researchProduct, parsedIdealAvatar]);
+  // ── Intel ADN: datos enriquecidos de ambas fuentes ──────────────────────────
+
+  // PUV (Propuesta de Valor Única) — ADN Recargado
+  const researchPuv = useMemo(() => {
+    return researchProduct?.sales_angles_data?.puv ?? null;
+  }, [researchProduct]);
+
+  // Transformación antes/después — ADN Recargado
+  const researchTransformation = useMemo(() => {
+    return researchProduct?.sales_angles_data?.transformation ?? null;
+  }, [researchProduct]);
+
+  // Ideas de video listas — ADN Recargado
+  const researchVideoCreatives = useMemo(() => {
+    const vc = researchProduct?.sales_angles_data?.videoCreatives;
+    return Array.isArray(vc) ? vc : [];
+  }, [researchProduct]);
+
+  // Insights de comportamiento — ADN Recargado (jtbd.insights)
+  const researchInsights = useMemo(() => {
+    const ins = researchProduct?.market_research?.jtbd?.insights;
+    return Array.isArray(ins) ? ins : [];
+  }, [researchProduct]);
+
+  // Contexto de marca — ADN Producto (seccion_1_contexto)
+  const researchContexto = useMemo(() => {
+    return productDnaRecord?.market_research?.seccion_1_contexto ?? null;
+  }, [productDnaRecord]);
+
+  // Inteligencia de mercado — ADN Producto (seccion_2_mercado)
+  const researchMercado = useMemo(() => {
+    return productDnaRecord?.market_research?.seccion_2_mercado ?? null;
+  }, [productDnaRecord]);
+
+  // Estructura del video — ADN Producto (seccion_7_ads)
+  const researchVideoStructure = useMemo(() => {
+    return productDnaRecord?.strategy_recommendations?.seccion_7_ads ?? null;
+  }, [productDnaRecord]);
 
   // Hooks sugeridos — V2 primero, luego fallbacks V1
   const researchHookSuggestions = useMemo(() => {
@@ -1440,6 +1513,26 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       if (picked) updates.selected_objection = picked;
     }
 
+    // Avatar ideal — aleatorio desde researchAvatars (mismo formato que el selector)
+    if (researchAvatars.length > 0) {
+      const avatarFormatted = (researchAvatars as any[]).map((a, idx) => {
+        const isDna = a._source === 'dna';
+        const name = isDna
+          ? (a?.nombre_edad || a?.nombre || `Avatar ${idx + 1}`)
+          : (a?.name || a?.avatarName || `Avatar ${idx + 1}`);
+        const rawSituation = isDna ? a?.situacion_actual : (a?.situation || a?.currentSituation);
+        const situation = typeof rawSituation === 'string' ? rawSituation : (rawSituation?.dayToDay || '');
+        const dolor = isDna ? a?.dolor_principal : '';
+        return [
+          `AVATAR: ${name}`,
+          situation ? `SITUACIÓN: ${situation}` : '',
+          dolor ? `DOLOR: ${dolor}` : '',
+        ].filter(Boolean).join('\n');
+      }).filter(Boolean);
+      const picked = pickRandom(avatarFormatted, formData.ideal_avatar);
+      if (picked) updates.ideal_avatar = picked;
+    }
+
     // CTA — aleatorio desde V2 si hay, si no del CTA genérico
     const ctaPool = [
       ...researchCtaSuggestions,
@@ -1458,6 +1551,38 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       const count = parseInt(formData.hooks_count) || 3;
       const shuffled = [...hookPool].sort(() => Math.random() - 0.5);
       updates.hooks = shuffled.slice(0, count);
+    }
+
+    // Idea de video — seleccionar aleatoriamente una diferente
+    if (researchVideoCreatives.length > 0) {
+      const indices = researchVideoCreatives.map((_: any, idx: number) => idx);
+      const others = indices.filter((idx: number) => idx !== selectedIdeaIdx);
+      const pool = others.length > 0 ? others : indices;
+      const pickedIdx: number = pool[Math.floor(Math.random() * pool.length)];
+      setSelectedIdeaIdx(pickedIdx);
+      const hook = (researchVideoCreatives[pickedIdx] as any)?.structure?.hook;
+      if (hook) {
+        const existingHooks = updates.hooks ?? formData.hooks;
+        if (!existingHooks.includes(hook)) {
+          updates.hooks = [...existingHooks, hook];
+        }
+      }
+    }
+
+    // Insight — seleccionar aleatoriamente uno diferente y aplicar su accionable
+    if (researchInsights.length > 0) {
+      const indices = researchInsights.map((_: any, idx: number) => idx);
+      const others = indices.filter((idx: number) => idx !== selectedInsightIdx);
+      const pool = others.length > 0 ? others : indices;
+      const pickedIdx: number = pool[Math.floor(Math.random() * pool.length)];
+      setSelectedInsightIdx(pickedIdx);
+      const actionable = (researchInsights[pickedIdx] as any)?.actionable;
+      if (actionable) {
+        const base = updates.additional_instructions ?? formData.additional_instructions;
+        if (!base.includes(actionable)) {
+          updates.additional_instructions = base ? `${base}\n${actionable}` : actionable;
+        }
+      }
     }
 
     if (Object.keys(updates).length > 0) setFormData(prev => ({ ...prev, ...updates }));
@@ -1482,7 +1607,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       sales_angles_data: product.sales_angles_data,
       competitor_analysis: product.competitor_analysis,
       brief_data: product.brief_data,
-      ai_analysis: (researchProduct as any)?.ai_analysis ?? product.ai_analysis,
+      ai_analysis: (productDnaRecord as any)?.emotional_analysis ?? null,
     }) : null;
     
     // Format research for prompt
@@ -1597,6 +1722,75 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       context += `\n\nDISPARADORES DE COMPRA (ADN V2):\n${researchData.buyingTriggers.slice(0, 5).map((t, i) => `${i + 1}. ${t}`).join('\n')}`;
     }
 
+    // ── Datos enriquecidos de ADN Recargado + ADN Producto ──
+    if (researchPuv) {
+      context += `\n\n=== PROPUESTA DE VALOR ÚNICA ===\n${researchPuv.statement}`;
+      if (researchPuv.tangibleResult) context += `\nResultado tangible: ${researchPuv.tangibleResult}`;
+      if (researchPuv.marketDifference) context += `\nDiferencia de mercado: ${researchPuv.marketDifference}`;
+      if (researchPuv.credibility) context += `\nCredibilidad: ${researchPuv.credibility}`;
+    }
+
+    if (researchTransformation) {
+      const dims = [
+        { key: 'emotional', label: 'Emocional' },
+        { key: 'functional', label: 'Funcional' },
+        { key: 'identity', label: 'Identidad' },
+      ] as const;
+      const parts = dims.map(({ key, label }) => {
+        const d = (researchTransformation as any)[key];
+        return d?.before && d?.after ? `${label}: "${d.before}" → "${d.after}"` : null;
+      }).filter(Boolean);
+      if (parts.length) context += `\n\n=== TRANSFORMACIÓN DEL CLIENTE ===\n${parts.join('\n')}`;
+    }
+
+    if (researchContexto) {
+      const lines = [];
+      if (researchContexto.tono_emocional_audio) lines.push(`Tono: ${researchContexto.tono_emocional_audio}`);
+      if (Array.isArray(researchContexto.palabras_clave_cliente) && researchContexto.palabras_clave_cliente.length)
+        lines.push(`Palabras clave: ${researchContexto.palabras_clave_cliente.join(', ')}`);
+      if (researchContexto.restricciones_creativas) lines.push(`⚠️ Restricciones: ${researchContexto.restricciones_creativas}`);
+      if (researchContexto.referentes_estilo) lines.push(`Referentes UGC: ${researchContexto.referentes_estilo}`);
+      if (lines.length) context += `\n\n=== CONTEXTO DE MARCA ===\n${lines.join('\n')}`;
+    }
+
+    if (researchMercado) {
+      const lines = [];
+      if (researchMercado.tendencias_actuales) lines.push(`Tendencias: ${researchMercado.tendencias_actuales}`);
+      if (researchMercado.gap_competitivo) lines.push(`Gap competitivo: ${researchMercado.gap_competitivo}`);
+      if (researchMercado.posicionamiento_sugerido) lines.push(`Posicionamiento: ${researchMercado.posicionamiento_sugerido}`);
+      if (lines.length) context += `\n\n=== INTELIGENCIA DE MERCADO ===\n${lines.join('\n')}`;
+    }
+
+    if (researchVideoStructure?.estructura_creativo_ad) {
+      const e = researchVideoStructure.estructura_creativo_ad;
+      context += `\n\n=== ESTRUCTURA DEL VIDEO ===\nHook (0-3s): ${e.hook || ''}\nProblema (3-10s): ${e.problema || ''}\nSolución (10-25s): ${e.solucion || ''}\nCTA (25-30s): ${e.cta || ''}`;
+      if (researchVideoStructure.variaciones_recomendadas) context += `\nVariaciones: ${researchVideoStructure.variaciones_recomendadas}`;
+    }
+
+    if (researchInsights.length > 0) {
+      context += `\n\n=== INSIGHTS DE COMPORTAMIENTO (top ${Math.min(4, researchInsights.length)}) ===\n${researchInsights.slice(0, 4).map((ins: any, i: number) => `${i + 1}. ${ins.insight}${ins.actionable ? ` → ${ins.actionable}` : ''}`).join('\n')}`;
+    }
+
+    // Idea de video seleccionada — inyectar estructura completa al prompt
+    if (selectedIdeaIdx !== null && researchVideoCreatives[selectedIdeaIdx]) {
+      const idea = researchVideoCreatives[selectedIdeaIdx] as any;
+      const parts = [
+        idea.title && `Título: ${idea.title}`,
+        idea.angle && `Ángulo: ${idea.angle}`,
+        idea.structure?.hook && `Hook: ${idea.structure.hook}`,
+        idea.structure?.body && `Desarrollo: ${idea.structure.body}`,
+        idea.structure?.cta && `CTA: ${idea.structure.cta}`,
+        idea.duration && `Duración sugerida: ${idea.duration}`,
+      ].filter(Boolean).join('\n');
+      if (parts) context += `\n\n=== IDEA DE VIDEO SELECCIONADA (seguir esta estructura) ===\n${parts}`;
+    }
+
+    // Insight seleccionado — enfatizar al modelo
+    if (selectedInsightIdx !== null && researchInsights[selectedInsightIdx]) {
+      const ins = researchInsights[selectedInsightIdx] as any;
+      context += `\n\n=== INSIGHT CLAVE SELECCIONADO (incorporar en el guión) ===\n${ins.insight}${ins.actionable ? `\nAplicación: ${ins.actionable}` : ''}`;
+    }
+
     // Add document content if loaded
     if (documentContent.brief) {
       context += `\n\n--- BRIEF DEL CLIENTE ---\n${documentContent.brief.substring(0, 3000)}`;
@@ -1621,60 +1815,131 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
     return context;
   };
 
+  const buildRequestBody = (type: string, customPrompt: string, previousScript?: string) => {
+    const baseContext = buildBaseContext();
+    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
+    if (previousScript && type !== "script") {
+      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    }
+    return {
+      action: formData.use_perplexity ? "research_and_generate" : "generate_script",
+      organizationId,
+      prompt: fullPrompt,
+      product: {
+        id: product?.id,
+        name: product?.name,
+        description: product?.description,
+        strategy: product?.strategy,
+        market_research: product?.market_research,
+        ideal_avatar: product?.ideal_avatar,
+        sales_angles: product?.sales_angles,
+      },
+      generation_type: type,
+      use_skills: type === "script",
+      ai_provider: "gemini",
+      ai_model: formData.ai_model,
+      use_perplexity: formData.use_perplexity,
+      perplexity_queries: formData.use_perplexity ? perplexityQueries : undefined,
+      custom_perplexity_query: formData.use_perplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
+      script_params: {
+        cta: formData.cta,
+        sales_angle: formData.sales_angle,
+        hooks_count: formData.hooks_count,
+        target_country: formData.target_country,
+        narrative_structure: formData.narrative_structure,
+        video_duration: formData.video_duration,
+        target_platform: formData.target_platform,
+        ideal_avatar: formData.ideal_avatar,
+        platform: formData.target_platform || "TikTok",
+        product_category: product?.name,
+        video_strategies: formData.video_strategies,
+        reference_transcription: formData.reference_transcription,
+        hooks: formData.hooks,
+        additional_instructions: formData.additional_instructions,
+        document_brief: documentContent.brief,
+        document_onboarding: documentContent.onboarding,
+        document_research: documentContent.research,
+      },
+    };
+  };
+
+  // SSE streaming para el guion (skills en fases paralelas)
+  const generateContentWithSkills = async (body: object): Promise<string> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token ?? SUPABASE_ANON_KEY;
+
+    const response = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/${CONTENT_AI_FUNCTION}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Error ${response.status}: ${text}`);
+    }
+
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let finalScript = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      let currentEvent = "";
+      for (const line of lines) {
+        if (line.startsWith("event: ")) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith("data: ")) {
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (currentEvent === "phase_start") {
+              setSkillsProgress({
+                phase: payload.phase,
+                totalPhases: payload.total,
+                currentSkillNames: payload.skills ?? [],
+                pct: payload.pct ?? 0,
+              });
+            } else if (currentEvent === "phase_complete") {
+              setSkillsProgress(prev => prev ? { ...prev, pct: payload.pct ?? prev.pct } : prev);
+            } else if (currentEvent === "complete") {
+              finalScript = payload.script ?? payload.result ?? "";
+              if (payload.error) throw new Error(payload.error);
+            } else if (currentEvent === "error") {
+              throw new Error(payload.message ?? "Error en la generación");
+            }
+          } catch (parseErr) {
+            // línea malformada, ignorar
+          }
+          currentEvent = "";
+        }
+      }
+    }
+
+    return finalScript;
+  };
+
   const generateContent = async (
     type: "script" | "director" | "marketing" | "captions" | "broll" | "editor" | "strategist" | "trafficker" | "designer" | "admin",
     customPrompt: string,
     previousScript?: string
   ): Promise<string> => {
-    const baseContext = buildBaseContext();
-    
-    let fullPrompt = `${customPrompt}\n\n---\nCONTEXTO:\n${baseContext}`;
-    
-    if (previousScript && type !== "script") {
-      fullPrompt += `\n\n---\nGUIÓN GENERADO:\n${previousScript}`;
+    const body = buildRequestBody(type, customPrompt, previousScript);
+
+    if (type === "script") {
+      return generateContentWithSkills(body);
     }
 
-    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, {
-      body: {
-        action: formData.use_perplexity ? "research_and_generate" : "generate_script",
-        organizationId,
-        prompt: fullPrompt,
-        product: {
-          id: product?.id,
-          name: product?.name,
-          description: product?.description,
-          strategy: product?.strategy,
-          market_research: product?.market_research,
-          ideal_avatar: product?.ideal_avatar,
-          sales_angles: product?.sales_angles,
-        },
-        generation_type: type,
-        ai_provider: "gemini",
-        ai_model: formData.ai_model,
-        use_perplexity: formData.use_perplexity,
-        perplexity_queries: formData.use_perplexity ? perplexityQueries : undefined,
-        custom_perplexity_query: formData.use_perplexity && customPerplexityQuery.trim() ? customPerplexityQuery.trim() : undefined,
-        script_params: {
-          cta: formData.cta,
-          sales_angle: formData.sales_angle,
-          hooks_count: formData.hooks_count,
-          target_country: formData.target_country,
-          narrative_structure: formData.narrative_structure,
-          video_duration: formData.video_duration,
-          target_platform: formData.target_platform,
-          ideal_avatar: formData.ideal_avatar,
-          platform: formData.target_platform || "TikTok",
-          product_category: product?.name,
-          video_strategies: formData.video_strategies,
-          reference_transcription: formData.reference_transcription,
-          hooks: formData.hooks,
-          additional_instructions: formData.additional_instructions,
-          document_brief: documentContent.brief,
-          document_onboarding: documentContent.onboarding,
-          document_research: documentContent.research,
-        },
-      },
-    });
+    const { data, error } = await supabase.functions.invoke(CONTENT_AI_FUNCTION, { body });
 
     if (error) throw new Error(error.message);
     if (!data) throw new Error("Respuesta vacía de la IA");
@@ -1816,6 +2081,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       });
     } finally {
       setLoading(false);
+      setSkillsProgress(null);
       refetchBalance();
     }
   };
@@ -2208,6 +2474,128 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
+      {/* ── Intel ADN — Grid de tarjetas compactas ── */}
+      {(researchPuv || researchTransformation || researchContexto || researchMercado || researchVideoStructure || researchVideoCreatives.length > 0 || researchInsights.length > 0) && (
+        <div className="space-y-2">
+
+          {/* ── Ideas + Insights lado a lado ── */}
+          {(researchVideoCreatives.length > 0 || researchInsights.length > 0) && (
+            <div className="grid grid-cols-2 gap-2">
+
+              {/* 🎬 Ideas de Video */}
+              {researchVideoCreatives.length > 0 && (
+                <div className="rounded-sm border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                    🎬 {researchVideoCreatives.length} ideas de video
+                  </p>
+                  <div className="max-h-56 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {researchVideoCreatives.map((vc: any, i: number) => {
+                        const isSelected = selectedIdeaIdx === i;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                              isSelected
+                                ? 'ring-2 ring-pink-500 border-pink-500 bg-pink-500/10'
+                                : 'border-border/50 hover:border-pink-500/40 hover:bg-pink-500/5'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedIdeaIdx(null);
+                                setFormData(prev => ({ ...prev, hooks: prev.hooks.filter(h => h !== vc.structure?.hook) }));
+                              } else {
+                                setSelectedIdeaIdx(i);
+                                const hookText = vc.structure?.hook;
+                                if (hookText) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    hooks: prev.hooks.includes(hookText) ? prev.hooks : [...prev.hooks, hookText],
+                                  }));
+                                }
+                              }
+                            }}
+                          >
+                            <p className="text-xs font-medium leading-snug line-clamp-2">{vc.title || vc.idea}</p>
+                            {vc.structure?.hook && (
+                              <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">
+                                <span className="text-yellow-400">🎣 </span>{vc.structure.hook}
+                              </p>
+                            )}
+                            {vc.angle && (
+                              <div className="mt-1.5">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-pink-500/50 text-pink-400">{vc.angle}</Badge>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 💡 Insights */}
+              {researchInsights.length > 0 && (
+                <div className="rounded-sm border bg-muted/20 p-2">
+                  <p className="text-[10px] text-muted-foreground mb-2 px-1">
+                    💡 {researchInsights.length} insights de comportamiento
+                  </p>
+                  <div className="max-h-56 overflow-y-auto">
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {researchInsights.map((ins: any, i: number) => {
+                        const isSelected = selectedInsightIdx === i;
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                              isSelected
+                                ? 'ring-2 ring-amber-500 border-amber-500 bg-amber-500/10'
+                                : 'border-border/50 hover:border-amber-500/40 hover:bg-amber-500/5'
+                            }`}
+                            onClick={() => {
+                              if (isSelected) {
+                                setSelectedInsightIdx(null);
+                              } else {
+                                setSelectedInsightIdx(i);
+                                if (ins.actionable) {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    additional_instructions: prev.additional_instructions
+                                      ? `${prev.additional_instructions}\n${ins.actionable}`
+                                      : ins.actionable,
+                                  }));
+                                }
+                              }
+                            }}
+                          >
+                            <p className="text-xs leading-snug line-clamp-3">{ins.insight}</p>
+                            {ins.actionable && (
+                              <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">
+                                <span className="text-green-400">→ </span>{ins.actionable}
+                              </p>
+                            )}
+                            {ins.category && (
+                              <div className="mt-1.5">
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">{ins.category}</Badge>
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+      )}
+
       {/* Document Loading Section */}
       {hasDocumentUrls && (
         <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
@@ -2377,23 +2765,17 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Ángulo de Venta *
           </Label>
-          <Input
-            value={formData.sales_angle}
-            onChange={(e) => setFormData(prev => ({ ...prev, sales_angle: e.target.value }))}
-            placeholder="Escribe o selecciona un ángulo de venta..."
-            className="text-sm"
-          />
-          {researchAngles.length > 0 && (() => {
+          {researchAngles.length > 0 ? (() => {
             const recargadoCount = researchAngles.filter((a: any) => a._source === 'v1').length;
             const dnaCount = researchAngles.filter((a: any) => a._source === 'dna').length;
             const v2Count = researchAngles.filter((a: any) => a._source === 'v2').length;
             return (
-              <div className="max-h-52 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+              <div className="max-h-64 overflow-y-auto rounded-sm border bg-muted/20 p-2">
                 <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
                   <span>{researchAngles.length} ángulo{researchAngles.length !== 1 ? 's' : ''}</span>
                   {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
                   {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
-                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v2Count} ai_analysis</span>}
+                  {v2Count > 0 && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">{v2Count} Pilares</span>}
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                   {researchAngles.map((a: any, idx: number) => {
@@ -2419,7 +2801,10 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                                 ? 'border-green-500/20 hover:border-green-500/40 hover:bg-green-500/5 bg-background'
                                 : 'border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 bg-background'
                         }`}
-                        onClick={() => setFormData(prev => ({ ...prev, sales_angle: angleText }))}
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          sales_angle: isSelected ? '' : angleText,
+                        }))}
                       >
                         <p className="text-xs font-medium leading-snug line-clamp-2">{angleText}</p>
                         {hookExample && (
@@ -2436,7 +2821,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
                           ) : isV2 ? (
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-green-500/50 text-green-400">
-                              {v2TypeLabel || 'ai_analysis'}
+                              {v2TypeLabel || 'Pilar'}
                             </Badge>
                           ) : (
                             <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
@@ -2448,7 +2833,11 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
                 </div>
               </div>
             );
-          })()}
+          })() : (
+            <p className="text-xs text-muted-foreground py-2">
+              {formData.sales_angle || 'Sin ángulo seleccionado'}
+            </p>
+          )}
         </div>
 
         {/* Avatar Ideal */}
@@ -2456,61 +2845,76 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Avatar / Cliente Ideal
           </Label>
-          <Textarea
-            value={formData.ideal_avatar}
-            onChange={(e) => setFormData({ ...formData, ideal_avatar: e.target.value })}
-            placeholder="Describe al cliente ideal..."
-            rows={2}
-          />
-
-          {/* Selector desplegable para avatares */}
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Seleccionar avatar ({researchAvatars.length})
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0" />
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2 border rounded-sm bg-background p-2 space-y-1 max-h-60 overflow-y-auto">
-              {researchAvatars.slice(0, 5).map((a: any, idx: number) => {
-                const name = a?.name || a?.avatarName || `Avatar ${idx + 1}`;
-                const rawSituation = a?.situation || a?.currentSituation;
-                const situation = typeof rawSituation === 'string'
-                  ? rawSituation
-                  : (rawSituation?.dayToDay || '');
-
-                const formatted = [
-                  `AVATAR: ${name}`,
-                  situation ? `SITUACIÓN: ${situation}` : "",
-                ]
-                  .filter(Boolean)
-                  .join("\n");
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="w-full text-left p-2 rounded hover:bg-muted/50 transition-colors"
-                    onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: formatted }))}
-                  >
-                    <p className="text-sm font-medium">{name}</p>
-                    {situation ? (
-                      <p className="text-xs text-muted-foreground line-clamp-1">{situation}</p>
-                    ) : null}
-                  </button>
-                );
-              })}
-
-              {researchAvatars.length === 0 && (
-                <p className="text-sm text-muted-foreground p-2">
-                  Selecciona un producto con investigación para ver los avatares.
+          {researchAvatars.length > 0 ? (() => {
+            const recargadoCount = researchAvatars.filter((a: any) => a._source === 'recargado').length;
+            const dnaCount = researchAvatars.filter((a: any) => a._source === 'dna').length;
+            return (
+              <div className="max-h-64 overflow-y-auto rounded-sm border bg-muted/20 p-2">
+                <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
+                  <span>{researchAvatars.length} avatar{researchAvatars.length !== 1 ? 'es' : ''}</span>
+                  {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+                  {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
                 </p>
-              )}
-            </CollapsibleContent>
-          </Collapsible>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  {researchAvatars.map((a: any, idx: number) => {
+                    const isDna = a._source === 'dna';
+                    // ADN Producto usa nombre_edad; ADN Recargado usa name
+                    const name = isDna
+                      ? (a?.nombre_edad || a?.nombre || `Avatar ${idx + 1}`)
+                      : (a?.name || a?.avatarName || `Avatar ${idx + 1}`);
+                    // Situación actual
+                    const rawSituation = isDna
+                      ? a?.situacion_actual
+                      : (a?.situation || a?.currentSituation);
+                    const situation = typeof rawSituation === 'string'
+                      ? rawSituation
+                      : (rawSituation?.dayToDay || '');
+                    // Sub-info extra para DNA
+                    const dolor = isDna ? a?.dolor_principal : '';
+                    const formatted = [
+                      `AVATAR: ${name}`,
+                      situation ? `SITUACIÓN: ${situation}` : '',
+                      dolor ? `DOLOR: ${dolor}` : '',
+                    ].filter(Boolean).join('\n');
+                    const isSelected = formData.ideal_avatar === formatted;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`text-left p-2.5 rounded-sm border transition-all ${
+                          isSelected
+                            ? 'ring-2 ring-primary border-primary bg-primary/10'
+                            : isDna
+                              ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5 bg-background'
+                              : 'border-blue-500/20 hover:border-blue-500/40 hover:bg-blue-500/5 bg-background'
+                        }`}
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          ideal_avatar: isSelected ? '' : formatted,
+                        }))}
+                      >
+                        <p className="text-xs font-medium leading-snug line-clamp-1">{name}</p>
+                        {situation && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{situation}</p>
+                        )}
+                        <div className="mt-1.5">
+                          {isDna ? (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })() : (
+            <p className="text-xs text-muted-foreground py-2">
+              {formData.ideal_avatar || 'Selecciona un producto con investigación para ver los avatares'}
+            </p>
+          )}
         </div>
 
         {/* Dolores */}
@@ -2518,21 +2922,14 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
-          <Input
-            value={formData.selected_pain}
-            onChange={(e) => setFormData({ ...formData, selected_pain: e.target.value })}
-            placeholder="Escribe o selecciona un dolor de la investigación..."
-            className="text-sm"
+          <ResearchItemCards
+            items={researchPains}
+            selected={formData.selected_pain}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
+            selectedBorderClass="ring-2 ring-rose-500 border-rose-500 bg-rose-500/10"
+            hoverClass="border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
+            emptyText={formData.selected_pain || 'Selecciona un producto con investigación para ver dolores'}
           />
-          {researchPains.length > 0 && (
-            <PainDesireChips
-              items={researchPains}
-              selected={formData.selected_pain}
-              onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
-              colorClass="border-rose-500/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/25 data-[selected=true]:bg-rose-500/30 data-[selected=true]:border-rose-500"
-              textExtractor={(p: any) => typeof p === 'string' ? p : (p?.pain || p?.description || p?.text || '')}
-            />
-          )}
         </div>
 
         {/* Deseos */}
@@ -2540,21 +2937,14 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
-          <Input
-            value={formData.selected_desire}
-            onChange={(e) => setFormData({ ...formData, selected_desire: e.target.value })}
-            placeholder="Escribe o selecciona un deseo de la investigación..."
-            className="text-sm"
+          <ResearchItemCards
+            items={researchDesires}
+            selected={formData.selected_desire}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
+            selectedBorderClass="ring-2 ring-primary border-primary bg-primary/10"
+            hoverClass="border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+            emptyText={formData.selected_desire || 'Selecciona un producto con investigación para ver deseos'}
           />
-          {researchDesires.length > 0 && (
-            <PainDesireChips
-              items={researchDesires}
-              selected={formData.selected_desire}
-              onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
-              colorClass="border-primary/30 bg-primary/10 text-primary-foreground/80 hover:bg-primary/25 data-[selected=true]:bg-primary/30 data-[selected=true]:border-primary"
-              textExtractor={(d: any) => typeof d === 'string' ? d : (d?.desire || d?.description || d?.text || '')}
-            />
-          )}
         </div>
 
         {/* Objeciones */}
@@ -2562,35 +2952,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             🚫 Objeción Seleccionada
           </Label>
-          <Input
-            value={formData.selected_objection}
-            onChange={(e) => setFormData({ ...formData, selected_objection: e.target.value })}
-            placeholder="Escribe o selecciona una objeción de la investigación..."
-            className="text-sm"
+          <ResearchItemCards
+            items={researchObjections}
+            selected={formData.selected_objection}
+            onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
+            selectedBorderClass="ring-2 ring-orange-500 border-orange-500 bg-orange-500/10"
+            hoverClass="border-orange-500/20 hover:border-orange-500/40 hover:bg-orange-500/5"
+            emptyText={formData.selected_objection || 'Selecciona un producto con investigación para ver objeciones'}
           />
-          {researchObjections.length > 0 && (
-            <PainDesireChips
-              items={researchObjections}
-              selected={formData.selected_objection}
-              onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
-              colorClass="border-orange-500/30 bg-orange-500/10 text-orange-200 hover:bg-orange-500/25 data-[selected=true]:bg-orange-500/30 data-[selected=true]:border-orange-500"
-              textExtractor={(o: any) => typeof o === 'string' ? o : (o?.objection || o?.description || o?.text || '')}
-            />
-          )}
         </div>
-      </div>
-
-      {/* Video Strategies */}
-      <div className="space-y-1.5 sm:space-y-2 pt-3 sm:pt-4 border-t">
-        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <Video className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estrategias de Video
-        </Label>
-        <Textarea
-          value={formData.video_strategies}
-          onChange={(e) => setFormData({ ...formData, video_strategies: e.target.value })}
-          placeholder="Ej: POV, Storytime, ASMR, Unboxing, Tutorial rápido..."
-          rows={2}
-        />
       </div>
 
       {/* Reference Transcription */}
@@ -2723,7 +3093,7 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       {loading && (
         <div className="space-y-4">
           {/* Skills Loading State */}
-          <SkillsLoadingState isGenerating={loading} />
+          <SkillsLoadingState isGenerating={loading} realProgress={skillsProgress} />
 
           {/* Blocks Progress */}
           <div className="space-y-1.5 sm:space-y-2 p-2.5 sm:p-4 bg-muted/50 rounded-sm">
@@ -2769,50 +3139,63 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
   );
 }
 
-// ─── Componente auxiliar: chips de selección para dolor/deseo/objeción ────────
+// ─── Componente auxiliar: tarjetas de selección para dolor/deseo/objeción ──────
 
-interface PainDesireChipsProps {
-  items: unknown[];
+interface ResearchItemCardsProps {
+  items: { text: string; _source: string }[];
   selected: string;
   onSelect: (text: string) => void;
-  colorClass: string;
-  textExtractor: (item: unknown) => string;
+  selectedBorderClass: string;
+  hoverClass: string;
+  emptyText: string;
 }
 
-function PainDesireChips({ items, selected, onSelect, colorClass, textExtractor }: PainDesireChipsProps) {
-  const [showAll, setShowAll] = useState(false);
-  const MAX_VISIBLE = 8;
-  const texts = items.map(textExtractor).filter(Boolean);
-  const visible = showAll ? texts : texts.slice(0, MAX_VISIBLE);
+function ResearchItemCards({ items, selected, onSelect, selectedBorderClass, hoverClass, emptyText }: ResearchItemCardsProps) {
+  if (items.length === 0) {
+    return <p className="text-xs text-muted-foreground py-1">{emptyText}</p>;
+  }
+
+  const recargadoCount = items.filter(i => i._source === 'recargado').length;
+  const dnaCount = items.filter(i => i._source === 'dna').length;
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {visible.map((text, idx) => {
-        const isSelected = selected === text;
-        return (
-          <button
-            key={idx}
-            type="button"
-            data-selected={isSelected}
-            className={`text-[10px] sm:text-xs px-2.5 py-1 rounded-full border transition-all ${colorClass} ${
-              isSelected ? 'ring-1 ring-offset-1 ring-offset-background font-semibold' : ''
-            }`}
-            onClick={() => onSelect(isSelected ? '' : text)}
-            title={text}
-          >
-            <span className="line-clamp-1 max-w-[200px]">{text}</span>
-          </button>
-        );
-      })}
-      {texts.length > MAX_VISIBLE && (
-        <button
-          type="button"
-          className="text-[10px] sm:text-xs px-2 py-1 rounded-full border border-muted text-muted-foreground hover:border-foreground/30 transition-colors"
-          onClick={() => setShowAll(v => !v)}
-        >
-          {showAll ? 'Ver menos' : `+${texts.length - MAX_VISIBLE} más`}
-        </button>
-      )}
+    <div className="rounded-sm border bg-muted/20 p-2">
+      <p className="text-[10px] text-muted-foreground mb-2 px-1 flex items-center gap-2 flex-wrap">
+        <span>{items.length} ítem{items.length !== 1 ? 's' : ''}</span>
+        {recargadoCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400">{recargadoCount} ADN Recargado</span>}
+        {dnaCount > 0 && <span className="px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400">{dnaCount} ADN Producto</span>}
+      </p>
+      <div className="max-h-56 overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {items.map((item, idx) => {
+            const isSelected = selected === item.text;
+            const isDna = item._source === 'dna';
+            return (
+              <button
+                key={idx}
+                type="button"
+                className={`text-left p-2.5 rounded-sm border transition-all bg-background ${
+                  isSelected
+                    ? selectedBorderClass
+                    : isDna
+                      ? 'border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/5'
+                      : hoverClass
+                }`}
+                onClick={() => onSelect(isSelected ? '' : item.text)}
+              >
+                <p className="text-xs leading-snug line-clamp-3">{item.text}</p>
+                <div className="mt-1.5">
+                  {isDna ? (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-amber-500/50 text-amber-400">ADN Producto</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 border-blue-500/50 text-blue-400">ADN Recargado</Badge>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

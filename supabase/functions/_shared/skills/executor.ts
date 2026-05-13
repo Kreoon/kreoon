@@ -8,7 +8,7 @@ import {
   SkillExecution,
   SkillChainResult,
 } from './types.ts';
-import { getActiveSkills, interpolateSkillPrompt } from './registry.ts';
+import { getActiveSkills, getSkillPhases, interpolateSkillPrompt } from './registry.ts';
 
 interface AIConfig {
   provider: string;
@@ -38,11 +38,12 @@ Avatar Ideal: ${product.ideal_avatar || 'N/A'}
 # PARÁMETROS DEL GUIÓN
 País Objetivo: ${formData.target_country || 'Colombia'}
 Ángulo de Venta: ${formData.sales_angle || 'N/A'}
-Fase ESFERA: ${formData.sphere_phase || 'solution'}
+Fase CAST: ${formData.sphere_phase || 'solution'}
 Nivel de Consciencia: ${formData.consciousness_level || 'problem_aware'}
 Estructura Narrativa: ${formData.narrative_structure || 'problema-solución'}
 Cantidad de Hooks: ${formData.hooks_count || 3}
 CTA: ${formData.cta || 'N/A'}
+Duración del Video: ${formData.video_duration || '60'} segundos
 `;
 
   // Agregar investigación de Perplexity si existe
@@ -118,7 +119,8 @@ export async function callAIWithSkill(
             temperature: 0.9,
             topP: 0.95,
             topK: 40,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 16384,
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       }
@@ -150,7 +152,7 @@ export async function callAIWithSkill(
           { role: 'user', content: input },
         ],
         temperature: 0.9,
-        max_tokens: 2048,
+        max_tokens: 8192,
       }),
     });
 
@@ -176,7 +178,7 @@ export async function callAIWithSkill(
       },
       body: JSON.stringify({
         model,
-        max_tokens: 2048,
+        max_tokens: 8192,
         system: systemPrompt,
         messages: [{ role: 'user', content: input }],
       }),
@@ -198,7 +200,10 @@ export async function callAIWithSkill(
 }
 
 /**
- * Ejecuta la cadena completa de skills
+ * Ejecuta la cadena completa de skills.
+ * Si hay fases definidas para el generation_type, las fases corren SECUENCIALMENTE
+ * pero los skills DENTRO de cada fase corren en PARALELO (Promise.allSettled).
+ * Fallback: ejecución secuencial skill por skill (comportamiento original).
  */
 export async function executeSkillChain(
   context: SkillContext,
@@ -206,15 +211,25 @@ export async function executeSkillChain(
 ): Promise<SkillChainResult> {
   const startTime = Date.now();
 
-  // Obtener skills activos según el contexto
+  const phases = getSkillPhases(context.formData.generation_type);
+
+  if (phases && phases.length > 0) {
+    console.log(
+      `[Skills] Modo fases (${phases.length} fases, ${phases.reduce((s, p) => s + p.length, 0)} skills total)`
+    );
+    return executeSkillChainByPhases(phases, context, aiConfig, startTime);
+  }
+
+  // ── Fallback: ejecución secuencial original ──────────────────────────────
   const activeSkills = getActiveSkills({
     sphere_phase: context.formData.sphere_phase,
     consciousness_level: context.formData.consciousness_level,
     narrative_structure: context.formData.narrative_structure,
+    generation_type: context.formData.generation_type,
   });
 
   console.log(
-    `[Skills] Activados: ${activeSkills.map((s) => `${s.id}(p${s.priority})`).join(', ')}`
+    `[Skills] Modo secuencial: ${activeSkills.map((s) => `${s.id}(p${s.priority})`).join(', ')}`
   );
 
   if (activeSkills.length === 0) {
@@ -231,10 +246,9 @@ export async function executeSkillChain(
   const errors: string[] = [];
   let currentOutput = '';
 
-  // Ejecutar skills en secuencia (ordenados por prioridad)
   for (const skill of activeSkills) {
     const skillStartTime = Date.now();
-    console.log(`[Skill] ▶ Ejecutando: ${skill.name} (prioridad: ${skill.priority})`);
+    console.log(`[Skill] ▶ ${skill.name} (p${skill.priority})`);
 
     try {
       const skillInput = buildSkillInput(skill, context, currentOutput, executions);
@@ -242,7 +256,7 @@ export async function executeSkillChain(
 
       const execution: SkillExecution = {
         skillId: skill.id,
-        input: skillInput.substring(0, 500) + '...', // Truncar para logging
+        input: skillInput.substring(0, 500) + '...',
         output: response.content,
         confidence: response.confidence,
         executedAt: new Date(),
@@ -252,21 +266,16 @@ export async function executeSkillChain(
       executions.push(execution);
       currentOutput = response.content;
 
-      console.log(
-        `[Skill] ✓ ${skill.name} completado en ${execution.durationMs}ms (${response.content.length} chars)`
-      );
+      console.log(`[Skill] ✓ ${skill.name} en ${execution.durationMs}ms`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`[Skill] ✗ Error en ${skill.name}:`, errorMessage);
       errors.push(`${skill.id}: ${errorMessage}`);
-      // Continuar con el siguiente skill
     }
   }
 
   const totalDurationMs = Date.now() - startTime;
-  console.log(
-    `[Skills] Cadena completada en ${totalDurationMs}ms. Ejecutados: ${executions.length}/${activeSkills.length}`
-  );
+  console.log(`[Skills] Completado en ${totalDurationMs}ms. ${executions.length}/${activeSkills.length} skills ok`);
 
   return {
     success: executions.length > 0,
@@ -274,6 +283,82 @@ export async function executeSkillChain(
     executions,
     totalDurationMs,
     errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+/**
+ * Ejecuta la cadena en fases: paralelo dentro de cada fase, secuencial entre fases.
+ * El output de cada fase se concatena y se pasa como input a la siguiente.
+ */
+async function executeSkillChainByPhases(
+  phases: Skill[][],
+  context: SkillContext,
+  aiConfig: AIConfig,
+  startTime: number
+): Promise<SkillChainResult> {
+  const allExecutions: SkillExecution[] = [];
+  const allErrors: string[] = [];
+  let phaseOutput = ''; // Output acumulado que pasa de fase a fase
+
+  for (let phaseIdx = 0; phaseIdx < phases.length; phaseIdx++) {
+    const phase = phases[phaseIdx];
+    const phaseStart = Date.now();
+
+    console.log(
+      `[Skills] Fase ${phaseIdx + 1}/${phases.length}: [${phase.map((s) => s.name).join(', ')}]`
+    );
+
+    // Ejecutar todos los skills de la fase en paralelo
+    const phaseResults = await Promise.allSettled(
+      phase.map(async (skill) => {
+        const skillStart = Date.now();
+        const input = buildSkillInput(skill, context, phaseOutput, allExecutions);
+        const response = await callAIWithSkill(skill, input, aiConfig);
+        return {
+          skill,
+          content: response.content,
+          confidence: response.confidence,
+          durationMs: Date.now() - skillStart,
+        };
+      })
+    );
+
+    // Recolectar resultados y armar el output fusionado de la fase
+    const phaseParts: string[] = [];
+    for (const result of phaseResults) {
+      if (result.status === 'fulfilled') {
+        const { skill, content, confidence, durationMs } = result.value;
+        allExecutions.push({
+          skillId: skill.id,
+          input: '...',
+          output: content,
+          confidence,
+          executedAt: new Date(),
+          durationMs,
+        });
+        phaseParts.push(`### ${skill.name}\n${content}`);
+        console.log(`[Skill] ✓ ${skill.name} en ${durationMs}ms`);
+      } else {
+        const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+        console.error(`[Skill] ✗ Error en fase ${phaseIdx + 1}:`, msg);
+        allErrors.push(msg);
+      }
+    }
+
+    // El output fusionado de esta fase = input para la siguiente
+    phaseOutput = phaseParts.join('\n\n---\n\n');
+    console.log(`[Skills] Fase ${phaseIdx + 1} completada en ${Date.now() - phaseStart}ms`);
+  }
+
+  const totalDurationMs = Date.now() - startTime;
+  console.log(`[Skills] Cadena por fases completada en ${totalDurationMs}ms. ${allExecutions.length} skills ok`);
+
+  return {
+    success: allExecutions.length > 0,
+    finalOutput: phaseOutput,
+    executions: allExecutions,
+    totalDurationMs,
+    errors: allErrors.length > 0 ? allErrors : undefined,
   };
 }
 

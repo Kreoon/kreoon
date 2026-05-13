@@ -344,13 +344,13 @@ export function getSpherePhaseStyle(phase: string, isDark: boolean = true) {
 // Utility CSS classes for Tailwind - Nova v2 design system
 export const BOARD_CLASSES = {
   // Card styles - Nova integrated
-  card: "bg-white dark:bg-[#0f0f22] border-zinc-200/80 dark:border-purple-500/15",
-  cardHover: "hover:border-zinc-300 dark:hover:border-purple-500/30 hover:shadow-sm dark:hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]",
+  card: "bg-white dark:bg-[#11112a] border-zinc-200/70 dark:border-white/[0.07] shadow-sm dark:shadow-[0_1px_3px_rgba(0,0,0,0.4)]",
+  cardHover: "hover:border-zinc-300/80 dark:hover:border-purple-500/35 hover:shadow-md dark:hover:shadow-[0_0_16px_rgba(139,92,246,0.18)] hover:-translate-y-px",
   cardSelected: "ring-2 ring-purple-500/50 dark:ring-purple-500/40 dark:shadow-[0_0_20px_rgba(139,92,246,0.25)]",
 
   // Column styles - Nova integrated
-  column: "bg-zinc-50/80 dark:bg-[#0f0f22]/60",
-  columnHeader: "bg-white dark:bg-[#0f0f22]",
+  column: "bg-zinc-50/70 dark:bg-[#0c0c1e]/70",
+  columnHeader: "bg-white/80 dark:bg-[#0f0f22]/80",
 
   // Text hierarchy - Nova
   text: "text-zinc-900 dark:text-[#e4e4e7]",

@@ -104,17 +104,29 @@ async function generateScript(
     return { success: false, error: "Producto no encontrado o sin acceso" };
   }
 
-  // Llamar a la Edge Function generate-script existente
+  // Llamar a content-ai con Skills activadas (stream: false = JSON, no SSE)
   const { data: fnData, error: fnError } = await supabase.functions.invoke(
-    "generate-script",
+    "content-ai",
     {
       body: {
-        product_id,
-        organization_id: auth.org_id,
-        platform,
-        style,
-        hooks_count,
-        user_id: auth.user_id,
+        action: "generate_script",
+        generation_type: "script",
+        organizationId: auth.org_id,
+        use_skills: true,
+        stream: false,
+        product: {
+          id: product.id,
+          name: product.name,
+          description: product.description ?? "",
+          ideal_avatar: (product as any).target_audience ?? "",
+          sales_angles: (product as any).key_benefits ? [(product as any).key_benefits] : [],
+        },
+        script_params: {
+          hooks_count,
+          platform: platform === "instagram_reels" ? "Instagram Reels" : platform === "youtube_shorts" ? "YouTube Shorts" : "TikTok",
+          target_country: "Colombia",
+          narrative_structure: style === "educational" ? "tutorial" : "problema-solución",
+        },
       },
     }
   );

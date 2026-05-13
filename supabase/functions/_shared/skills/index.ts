@@ -21,6 +21,7 @@ export {
   getSkillById,
   getActiveSkills,
   getSkillsForGeneration,
+  getSkillPhases,
   interpolateSkillPrompt,
   buildCombinedSystemPrompt,
 } from './registry.ts';
@@ -58,3 +59,4 @@ export { adComplianceChecker } from './ad-compliance-checker.ts';
 export { sceneDirector } from './scene-director.ts';
 export { brollGenerator } from './broll-generator.ts';
 export { captionGenerator } from './caption-generator.ts';
+export { durationAdjuster } from './duration-adjuster.ts';
