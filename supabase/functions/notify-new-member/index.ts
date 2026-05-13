@@ -119,7 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
     const adminUserIdsArray = adminMembers.map(m => m.user_id);
     const { data: adminProfiles, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, email, full_name")
+      .select("id, email, full_name, whatsapp_phone, whatsapp_enabled")
       .in("id", adminUserIdsArray);
 
     if (profilesError) {
@@ -269,11 +269,59 @@ const handler = async (req: Request): Promise<Response> => {
         failCount++;
       }
 
+      // WhatsApp al admin si tiene número configurado
+      // Plantilla new_member: {{1}}=org_name {{2}}=member_name {{3}}=role_label
+      if (adminProfile.whatsapp_phone && adminProfile.whatsapp_enabled) {
+        const waUrl = Deno.env.get("KREOON_SUPABASE_URL") || "https://wjkbqcrxwsmvtxmqgiqc.supabase.co";
+        const waKey = Deno.env.get("KREOON_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        fetch(`${waUrl}/functions/v1/whatsapp-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${waKey}`,
+          },
+          body: JSON.stringify({
+            phone: adminProfile.whatsapp_phone,
+            variables: [org.name, displayName, roleLabel],
+            event_type: "new_member",
+            user_id: adminProfile.id,
+          }),
+        }).catch((err) => console.error("WhatsApp notify error:", err));
+      }
+
       // Wait 600ms between emails to stay under 2 req/sec rate limit
       await delay(600);
     }
 
     console.log(`Email notifications complete. Success: ${successCount}, Failed: ${failCount}`);
+
+    // WhatsApp welcome al nuevo cliente (solo si role === 'client')
+    if (role === 'client') {
+      const { data: clientProfile } = await supabase
+        .from("profiles")
+        .select("whatsapp_phone, phone, whatsapp_enabled")
+        .eq("id", user_id)
+        .single();
+
+      const clientPhone = clientProfile?.whatsapp_phone || clientProfile?.phone;
+      if (clientPhone && clientProfile?.whatsapp_enabled !== false) {
+        const waUrl = Deno.env.get("KREOON_SUPABASE_URL") || "https://wjkbqcrxwsmvtxmqgiqc.supabase.co";
+        const waKey = Deno.env.get("KREOON_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        fetch(`${waUrl}/functions/v1/whatsapp-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${waKey}`,
+          },
+          body: JSON.stringify({
+            phone: clientPhone,
+            event_type: "welcome_client",
+            variables: [displayName, org.name],
+            user_id,
+          }),
+        }).catch((err) => console.error("[notify-new-member] WhatsApp welcome_client error:", err));
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

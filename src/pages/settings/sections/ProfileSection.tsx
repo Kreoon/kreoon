@@ -383,13 +383,16 @@ function PersonalInfoTab() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">WhatsApp</Label>
               <Input
                 id="phone"
                 value={profile.phone || ''}
                 onChange={(e) => updateField('phone', e.target.value)}
                 placeholder="+57 300 000 0000"
               />
+              <p className="text-xs text-muted-foreground">
+                Tu número de WhatsApp con código de país (ej: +57 310 000 0000)
+              </p>
             </div>
 
             <div className="space-y-2">

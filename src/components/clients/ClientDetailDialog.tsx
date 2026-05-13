@@ -24,6 +24,7 @@ import {
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
+import { ClientActivityPanel } from "@/components/clients/ClientActivityPanel";
 import { VipBadge } from "@/components/ui/vip-badge";
 
 // Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
@@ -940,6 +941,12 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           </TabsContent>
 
           <TabsContent value="stats" className="space-y-6 mt-4">
+            {/* Actividad del cliente */}
+            <div>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Actividad</h4>
+              <ClientActivityPanel clientId={client.id} />
+            </div>
+
             {/* Content Stats */}
             <div>
               <h4 className="font-medium text-sm text-muted-foreground mb-3">Contenido</h4>

@@ -18,6 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useUnlinkBrand } from '@/hooks/useBrandOrgLinks';
 import type { UnifiedClientEntity } from '@/types/unifiedClient.types';
 import { CONTACT_TYPE_LABELS, RELATIONSHIP_STRENGTH_LABELS, RELATIONSHIP_STRENGTH_COLORS } from '@/types/crm.types';
+import { ClientActivityStatusBadge } from '@/components/clients/ClientActivityStatusBadge';
+import type { ClientActivityMetrics } from '@/types/clientActivity.types';
 
 interface UnifiedClientCardProps {
   entity: UnifiedClientEntity;
@@ -27,6 +29,7 @@ interface UnifiedClientCardProps {
   onUpdate?: () => void;
   orgId?: string;
   onLinkBrand?: (clientId: string) => void;
+  activityMetrics?: ClientActivityMetrics;
 }
 
 function formatCurrency(n: number): string {
@@ -37,7 +40,7 @@ function formatCurrency(n: number): string {
   }).format(n);
 }
 
-export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpdate, orgId, onLinkBrand }: UnifiedClientCardProps) {
+export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpdate, orgId, onLinkBrand, activityMetrics }: UnifiedClientCardProps) {
   const isEmpresa = entity.entity_type === 'empresa';
   const [toggling, setToggling] = useState(false);
   const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState(false);
@@ -199,6 +202,11 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
               <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-400 border-amber-500/20">
                 Marca interna
               </Badge>
+            )}
+
+            {/* Estado de actividad — solo empresas reales (no marcas internas) */}
+            {isEmpresa && !entity.is_internal_brand && activityMetrics && (
+              <ClientActivityStatusBadge metrics={activityMetrics} size="sm" showDetail />
             )}
           </div>
         </div>
