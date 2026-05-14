@@ -2,17 +2,30 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PANCAKE_API_BASE = "https://crm.pancake.vn/api/workspaces";
 
+// Los campos de ubicación (País, Provincia, Distrito) están en extra_infor.full_address.
+// province_id y district_id son IDs internos de Pancake (solo para Vietnam) → null para LATAM.
+// country_code, province_name, district_name son texto libre y sí son seteables por API.
+
+interface PancakeExtraAddress {
+  address?: string;
+  country_code?: string;
+  province_name?: string;
+  district_name?: string;
+  full_address?: string;
+}
+
 interface PancakeContact {
   id?: string;
   name: string;
   phone_number?: string;
   secondary_phone_number?: string;
   email?: string;
-  birthday?: string;               // ISO 8601 full: "YYYY-MM-DDTHH:MM:SS.sssZ"
-  full_address?: string;
-  source?: string[];               // IDs como strings: "-3"=Instagram, "-1"=Facebook, "-5"=TikTok, "-6"=WhatsApp, "-9"=Google, "-12"=Form
+  birthday?: string;
+  full_address?: string | string[]; // Array ["texto", "cod_tel_pais"] fija País; string plano activa geocoder
+  extra_infor?: { full_address?: PancakeExtraAddress };
+  source?: string[];
   note?: string;
-  pancake_tag?: string[];          // IDs de tags (singular): waba_105352325912296_0=Creador, waba_105352325912296_1=Marca o Empresa
+  pancake_tag?: string[];
 }
 
 const SOURCE_MAP: Record<string, string> = {
@@ -42,11 +55,94 @@ function normalizePhone(raw: string): string {
   return digits;
 }
 
-function buildAddress(profile: Record<string, unknown>): string | undefined {
-  const parts = [profile.address, profile.city, profile.country]
-    .map((p) => (typeof p === "string" ? p.trim() : ""))
-    .filter(Boolean);
-  return parts.length > 0 ? parts.join(", ") : undefined;
+const COUNTRY_NAMES: Record<string, string> = {
+  CO: "Colombia", MX: "México", AR: "Argentina", BR: "Brasil",
+  PE: "Perú", CL: "Chile", EC: "Ecuador", VE: "Venezuela",
+  UY: "Uruguay", PY: "Paraguay", BO: "Bolivia", CR: "Costa Rica",
+  PA: "Panamá", DO: "República Dominicana", GT: "Guatemala",
+  HN: "Honduras", SV: "El Salvador", NI: "Nicaragua", CU: "Cuba",
+  PR: "Puerto Rico", US: "Estados Unidos", ES: "España",
+  CA: "Canadá", GB: "Reino Unido", DE: "Alemania", FR: "Francia",
+};
+
+// Códigos de teléfono por país — usados en el array full_address para fijar País en Pancake
+// sin activar el geocoder (que puede asignar países incorrectos por coincidencia de texto).
+const COUNTRY_PHONE_CODES: Record<string, string> = {
+  CO: "57",  MX: "52",  AR: "54",  BR: "55",
+  PE: "51",  CL: "56",  EC: "593", VE: "58",
+  UY: "598", PY: "595", BO: "591", CR: "506",
+  PA: "507", DO: "1",   GT: "502", HN: "504",
+  SV: "503", NI: "505", CU: "53",  PR: "1",
+  US: "1",   ES: "34",  CA: "1",   GB: "44",
+  DE: "49",  FR: "33",
+};
+
+const CO_CITY_TO_DEPT: Record<string, string> = {
+  "bogotá": "Bogotá D.C.", "bogota": "Bogotá D.C.", "bogotá d.c.": "Bogotá D.C.",
+  "medellín": "Antioquia", "medellin": "Antioquia",
+  "cali": "Valle del Cauca",
+  "barranquilla": "Atlántico",
+  "cartagena": "Bolívar",
+  "bucaramanga": "Santander",
+  "pereira": "Risaralda",
+  "manizales": "Caldas",
+  "ibagué": "Tolima", "ibague": "Tolima",
+  "cúcuta": "Norte de Santander", "cucuta": "Norte de Santander",
+  "santa marta": "Magdalena",
+  "villavicencio": "Meta",
+  "armenia": "Quindío",
+  "neiva": "Huila",
+  "montería": "Córdoba", "monteria": "Córdoba",
+  "pasto": "Nariño",
+  "sincelejo": "Sucre",
+  "popayán": "Cauca", "popayan": "Cauca",
+  "valledupar": "Cesar",
+  "tunja": "Boyacá",
+  "florencia": "Caquetá",
+  "riohacha": "La Guajira",
+  "bello": "Antioquia",
+  "itagüí": "Antioquia", "itagui": "Antioquia",
+  "envigado": "Antioquia",
+  "sabaneta": "Antioquia",
+  "soledad": "Atlántico",
+  "soacha": "Cundinamarca",
+  "palmira": "Valle del Cauca",
+  "buenaventura": "Valle del Cauca",
+  "barrancabermeja": "Santander",
+};
+
+interface AddressResult {
+  fullText: string;
+  phoneCode?: string;  // código tel. del país → enviado en el array full_address para fijar País
+  extraAddr: PancakeExtraAddress;
+}
+
+function buildAddress(profile: Record<string, unknown>): AddressResult | undefined {
+  const rawCountry = profile.country as string | undefined;
+  const countryCode = rawCountry?.toUpperCase() ?? undefined;
+  const countryName = countryCode ? (COUNTRY_NAMES[countryCode] ?? rawCountry) : undefined;
+  const phoneCode = countryCode ? COUNTRY_PHONE_CODES[countryCode] : undefined;
+
+  const street = (profile.address as string | undefined)?.trim() || undefined;
+  const city   = (profile.city as string | undefined)?.trim() || undefined;
+
+  if (!street && !city && !countryCode) return undefined;
+
+  const province = city && countryCode === "CO"
+    ? CO_CITY_TO_DEPT[city.toLowerCase().trim()]
+    : undefined;
+
+  const fullText = [street, city, countryName].filter(Boolean).join(", ");
+
+  const extraAddr: PancakeExtraAddress = {
+    ...(street      ? { address: street }          : {}),
+    ...(countryCode ? { country_code: countryCode }: {}),
+    ...(province    ? { province_name: province }  : {}),
+    ...(city        ? { district_name: city }      : {}),
+    full_address: fullText,
+  };
+
+  return { fullText, phoneCode, extraAddr };
 }
 
 function buildNote(p: Record<string, unknown>, roles: string[]): string | undefined {
@@ -153,23 +249,8 @@ function buildSource(registrationSource: string | null | undefined): string[] {
   return mapped ? [mapped] : ["-12"];
 }
 
-async function findContactByPhone(
-  workspaceId: string,
-  apiKey: string,
-  phone: string
-): Promise<string | null> {
-  const filter = { fields: [{ field_name: "phone_number", type: "$eq", value: phone }] };
-  const url = `${PANCAKE_API_BASE}/${workspaceId}/contact/records?api_key=${apiKey}&filter=${encodeURIComponent(JSON.stringify(filter))}`;
-
-  const res = await fetch(url, { headers: { "Content-Type": "application/json" } });
-  if (!res.ok) return null;
-
-  const data = await res.json();
-  const entries: Array<{ id?: string }> = data?.data?.entries ?? data?.entries ?? data?.data ?? data?.records ?? [];
-  return Array.isArray(entries) && entries.length > 0 && entries[0].id
-    ? entries[0].id
-    : null;
-}
+// Nota: La búsqueda por teléfono de Pancake no filtra correctamente — siempre devuelve
+// el primer contacto del workspace. Se eliminó para evitar asignaciones incorrectas.
 
 async function upsertContact(
   workspaceId: string,
@@ -245,6 +326,7 @@ Deno.serve(async (req: Request) => {
     .from("profiles")
     .select(`
       id, full_name, email, phone, whatsapp_phone,
+      pancake_contact_id,
       date_of_birth, address, city, country,
       bio, tagline, gender, nationality,
       instagram, facebook, tiktok,
@@ -309,6 +391,15 @@ Deno.serve(async (req: Request) => {
   const tagsValue = buildTags(p, roles);
   const sourceValue = buildSource(p.registration_source as string | null);
 
+  // Sin teléfono → no se crea ni actualiza en Pancake CRM
+  if (!phoneValue) {
+    console.log(`[pancake-sync] user=${userId} sin teléfono — omitido`);
+    return new Response(
+      JSON.stringify({ success: false, action: "skipped", reason: "no_phone", user_id: userId }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   console.log(`[pancake-sync] Sincronizando user=${userId} | nombre="${nameValue}" | roles=${roles.join(",")}`);
 
   const result: SyncResult = { success: false, action: "skipped", user_id: userId };
@@ -320,7 +411,13 @@ Deno.serve(async (req: Request) => {
       ...(secondaryPhone ? { secondary_phone_number: secondaryPhone } : {}),
       ...(emailValue ? { email: emailValue } : {}),
       ...(birthdayValue ? { birthday: birthdayValue } : {}),
-      ...(addressValue ? { full_address: addressValue } : {}),
+      // Si tenemos código de país, enviamos array ["texto", "cod"] para fijar País sin geocoding.
+      // Si no hay código, mandamos texto plano (Pancake lo geocodificará pero no hay país que fijar).
+      ...(addressValue ? {
+        full_address: addressValue.phoneCode
+          ? [addressValue.fullText, addressValue.phoneCode]
+          : addressValue.fullText,
+      } : {}),
       source: sourceValue,
       ...(noteValue ? { note: noteValue } : {}),
       ...(tagsValue ? { pancake_tag: tagsValue } : {}),
@@ -342,28 +439,7 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  // ── RUTA 2: Buscar por teléfono en Pancake ───────────────────────────────
-  if (phoneValue) {
-    const existingId = await findContactByPhone(PANCAKE_WORKSPACE_ID, PANCAKE_API_KEY, phoneValue);
-    if (existingId) {
-      console.log(`[pancake-sync] Contacto encontrado en Pancake por teléfono: ${existingId}`);
-      await supabase.from("profiles")
-        .update({ pancake_contact_id: existingId } as Record<string, unknown>)
-        .eq("id", userId)
-        .then(() => {}).catch(() => {});
-
-      const { ok, pancakeId } = await upsertContact(PANCAKE_WORKSPACE_ID, PANCAKE_API_KEY, buildContact(existingId));
-      result.success = ok;
-      result.action = ok ? "updated" : "failed";
-      result.pancake_id = pancakeId ?? existingId;
-      return new Response(JSON.stringify(result), {
-        status: ok ? 200 : 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-  }
-
-  // ── RUTA 3: Crear nuevo contacto ─────────────────────────────────────────
+  // ── RUTA 2: Crear nuevo contacto ─────────────────────────────────────────
   console.log(`[pancake-sync] Creando nuevo contacto en Pancake para user=${userId}`);
   const { ok, pancakeId } = await upsertContact(PANCAKE_WORKSPACE_ID, PANCAKE_API_KEY, buildContact());
 
