@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import {
   User, Video, Star, Zap, Clock, TrendingUp, AlertTriangle,
   Crown, Shield, Sparkles, Heart, Ban, Users, MessageCircle, Handshake,
-  DollarSign,
+  DollarSign, Activity, AlertCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import type { UnifiedTalentMember, TalentSource } from '@/types/unifiedTalent.types';
 import type { CreatorRelationshipType } from '@/types/crm.types';
 import { CREATOR_RELATIONSHIP_TYPE_LABELS } from '@/types/crm.types';
+import type { TalentActivityMetrics } from '@/types/talentActivity.types';
 
 interface UnifiedTalentCardProps {
   member: UnifiedTalentMember;
@@ -18,6 +19,7 @@ interface UnifiedTalentCardProps {
   onAmbassadorToggle?: (e: MouseEvent) => void;
   isAdmin?: boolean;
   isSelected?: boolean;
+  activityMetrics?: TalentActivityMetrics;
 }
 
 const ROLE_STYLES: Record<string, { label: string; className: string }> = {
@@ -62,7 +64,7 @@ function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin, isSelected }: UnifiedTalentCardProps) {
+export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin, isSelected, activityMetrics }: UnifiedTalentCardProps) {
   const hasInternal = member.source !== 'external';
   const hasExternal = member.source !== 'internal';
 
@@ -207,6 +209,42 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin
                 <Star className="h-3 w-3 fill-current" />
                 <span>{member.average_rating_given.toFixed(1)}</span>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Activity metrics */}
+        {activityMetrics && member.source !== 'external' && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {/* Estado activo/inactivo */}
+            <span className={cn(
+              'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border',
+              activityMetrics.activity_status === 'active'
+                ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                : 'bg-muted text-muted-foreground border-border',
+            )}>
+              <Activity className="h-2.5 w-2.5" />
+              {activityMetrics.activity_status === 'active'
+                ? `Activo · ${activityMetrics.active_content_count} en proceso`
+                : 'Inactivo'}
+            </span>
+
+            {/* Pendiente de pago */}
+            {activityMetrics.pending_payment_count > 0 && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-warning/15 text-warning border-warning/30">
+                <AlertCircle className="h-2.5 w-2.5" />
+                {activityMetrics.pending_payment_count} sin pagar
+              </span>
+            )}
+
+            {/* Última entrega */}
+            {activityMetrics.days_since_last_delivery !== null && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] border bg-muted text-muted-foreground border-border">
+                <Clock className="h-2.5 w-2.5" />
+                {activityMetrics.days_since_last_delivery === 0
+                  ? 'Entregó hoy'
+                  : `Últ. entrega hace ${activityMetrics.days_since_last_delivery}d`}
+              </span>
             )}
           </div>
         )}

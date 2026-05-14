@@ -3,7 +3,7 @@ import { Input } from '@/components/ui/input';
 import { FieldRow } from '../components/SectionCard';
 import { EditableField } from '../components/PermissionsGate';
 import { TabProps } from '../types';
-import { Calendar, Clock, CheckCircle, AlertCircle, Play, Edit3, Eye, Send, CreditCard, Sparkles, User } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, AlertCircle, Play, Edit3, Eye, Send, CreditCard, Sparkles, User, Bot } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +43,7 @@ interface HistoryRecord {
   old_status: string | null;
   new_status: string;
   user_id: string | null;
+  notes: string | null;
   created_at: string;
   userName?: string;
 }
@@ -66,7 +67,7 @@ export function DatesTab({
     const fetchHistory = async () => {
       const { data: history } = await supabase
         .from('content_history')
-        .select('id, old_status, new_status, user_id, created_at')
+        .select('id, old_status, new_status, user_id, notes, created_at')
         .eq('content_id', content.id)
         .order('created_at', { ascending: true });
 
@@ -129,6 +130,7 @@ export function DatesTab({
           color: config?.color || 'text-gray-500',
           timestamp: record.created_at,
           userName: record.userName,
+          notes: record.notes,
           oldStatus: record.old_status,
         };
       });
@@ -143,6 +145,7 @@ export function DatesTab({
         color: st.color,
         timestamp: (content as any)?.[st.field] || null,
         userName: undefined as string | undefined,
+        notes: undefined as string | null | undefined,
         oldStatus: null as string | null,
       }))
       .filter(st => st.timestamp);
@@ -245,14 +248,21 @@ export function DatesTab({
                         </span>
                       </div>
                       {/* User who made the change */}
-                      {entry.userName && (
+                      {entry.userName ? (
                         <div className="flex items-center gap-1.5 mt-1">
                           <User className="h-3 w-3 text-muted-foreground/70" />
                           <span className="text-xs text-muted-foreground">
                             {entry.userName}
                           </span>
                         </div>
-                      )}
+                      ) : entry.notes ? (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Bot className="h-3 w-3 text-blue-400/70" />
+                          <span className="text-xs text-blue-400/80">
+                            {entry.notes}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 );

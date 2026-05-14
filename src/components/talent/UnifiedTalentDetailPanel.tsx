@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Star, Heart, Ban, Briefcase, DollarSign, Calendar,
   Plus, X, Settings, Video, TrendingUp, Zap, Brain, Shield,
-  UserMinus, Trash2,
+  UserMinus, Trash2, UserX,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -46,6 +46,7 @@ import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
 import { supabase } from '@/integrations/supabase/client';
 import { usePurgeMember, useRemoveMember } from '@/hooks/useOrgMemberActions';
 import type { Content, AppRole } from '@/types/database';
+import { STATUS_LABELS } from '@/types/database';
 
 const SOURCE_LABELS = { internal: 'Equipo', external: 'Externo', both: 'Equipo + CRM' };
 
@@ -203,30 +204,74 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
   // Content for internal members
   const [assignedContent, setAssignedContent] = useState<Content[]>([]);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [contentFilter, setContentFilter] = useState<'all' | 'active' | 'completed'>('active');
+  const [unassigningId, setUnassigningId] = useState<string | null>(null);
 
   // Reset on member change
   useEffect(() => {
     setTags(member.internal_tags || []);
     setNotes(member.internal_notes || '');
+    setContentFilter('active');
   }, [member.id]);
 
-  // Fetch assigned content for internal members
+  // Fetch assigned content for internal members (creator, editor, or strategist role)
   useEffect(() => {
-    if (!hasInternal || !member.org_role) return;
+    if (!hasInternal) return;
     setLoadingContent(true);
-    const field = member.org_role === 'creator' ? 'creator_id' : member.org_role === 'editor' ? 'editor_id' : 'strategist_id';
-    supabase
-      .from('content')
-      .select('*, client:clients(name)')
-      .eq(field, member.id)
-      .eq('organization_id', organizationId)
-      .order('created_at', { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        setAssignedContent((data || []) as Content[]);
-        setLoadingContent(false);
+    const base = { organization_id: organizationId };
+    Promise.all([
+      supabase.from('content').select('*, client:clients(name)').match({ ...base, creator_id: member.id }).order('created_at', { ascending: false }).limit(30),
+      supabase.from('content').select('*, client:clients(name)').match({ ...base, editor_id: member.id }).order('created_at', { ascending: false }).limit(30),
+      supabase.from('content').select('*, client:clients(name)').match({ ...base, strategist_id: member.id }).order('created_at', { ascending: false }).limit(30),
+    ]).then(([r1, r2, r3]) => {
+      const seen = new Set<string>();
+      const merged = [...(r1.data || []), ...(r2.data || []), ...(r3.data || [])].filter(c => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
       });
-  }, [member.id, member.org_role, hasInternal, organizationId]);
+      merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setAssignedContent(merged as Content[]);
+      setLoadingContent(false);
+    });
+  }, [member.id, hasInternal, organizationId]);
+
+  const handleUnassign = async (content: Content) => {
+    if (!confirm(`¿Desasignar a ${member.full_name} de "${content.title || 'este contenido'}"?`)) return;
+    setUnassigningId(content.id);
+    try {
+      const updates: Record<string, null> = {};
+      if (content.creator_id === member.id)    updates.creator_id    = null;
+      if (content.editor_id === member.id)     updates.editor_id     = null;
+      if (content.strategist_id === member.id) updates.strategist_id = null;
+
+      if (Object.keys(updates).length === 0) {
+        toast({ description: 'No se encontró asignación de este talento en el contenido' });
+        setUnassigningId(null);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('content')
+        .update(updates)
+        .eq('id', content.id)
+        .eq('organization_id', organizationId);
+
+      if (error) {
+        console.error('[handleUnassign] Supabase error:', error);
+        throw error;
+      }
+
+      setAssignedContent(prev => prev.filter(c => c.id !== content.id));
+      toast({ description: `${member.full_name} desasignado del contenido` });
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error desconocido';
+      console.error('[handleUnassign] caught:', e);
+      toast({ title: 'Error al desasignar', description: msg, variant: 'destructive' });
+    } finally {
+      setUnassigningId(null);
+    }
+  };
 
   // Handlers
   const handleCustomFieldChange = useCallback((key: string, value: unknown) => {
@@ -288,9 +333,11 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
     blockCreator.mutate({ creatorId: member.id }, { onSuccess: onUpdate });
   };
 
-  // Content stats
-  const completedContent = assignedContent.filter(c => c.status === 'approved' || c.status === 'paid');
-  const activeContent = assignedContent.filter(c => !['approved', 'paid'].includes(c.status));
+  // Content stats — "en campaña" (marketing_campaign_id != null) también es completado
+  const isCompleted = (c: Content) =>
+    c.status === 'approved' || c.status === 'paid' || c.marketing_campaign_id != null;
+  const completedContent = assignedContent.filter(isCompleted);
+  const activeContent = assignedContent.filter(c => !isCompleted(c));
 
   const avatar = member.avatar_url ? (
     <img src={member.avatar_url} alt={member.full_name} className="w-11 h-11 rounded-full object-cover" />
@@ -763,28 +810,105 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
           ) : assignedContent.length === 0 ? (
             <p className="text-xs text-white/30">Sin contenido asignado</p>
           ) : (
-            <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
-              {assignedContent.slice(0, 15).map(c => (
-                <div key={c.id} className="flex items-center justify-between text-xs p-1.5 rounded bg-white/5">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-white/70 truncate">{c.title || 'Sin título'}</p>
-                    <p className="text-[10px] text-white/30">{(c as any).client?.name}</p>
+            <>
+              {/* Filter tabs */}
+              <div className="flex gap-1 mb-2">
+                {([
+                  { key: 'active', label: `Activos (${activeContent.length})` },
+                  { key: 'completed', label: `Completados (${completedContent.length})` },
+                  { key: 'all', label: `Todos (${assignedContent.length})` },
+                ] as const).map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setContentFilter(tab.key)}
+                    className={cn(
+                      'px-2 py-0.5 rounded text-[10px] font-medium transition-all',
+                      contentFilter === tab.key
+                        ? 'bg-primary text-white'
+                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60',
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content list */}
+              {(() => {
+                const list = contentFilter === 'active'
+                  ? activeContent
+                  : contentFilter === 'completed'
+                  ? completedContent
+                  : assignedContent;
+                const visible = list.slice(0, 20);
+                return list.length === 0 ? (
+                  <p className="text-xs text-white/30">Sin contenido en este filtro</p>
+                ) : (
+                  <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
+                    {visible.map(c => {
+                      const assignedAt = c.creator_assigned_at ? new Date(c.creator_assigned_at) : null;
+                      const daysAgo = assignedAt
+                        ? Math.floor((Date.now() - assignedAt.getTime()) / 86400000)
+                        : null;
+                      return (
+                        <div key={c.id} className="flex items-start justify-between text-xs p-1.5 rounded bg-white/5 gap-2 group">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-white/70 truncate">{c.title || 'Sin título'}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-[10px] text-white/30">{(c as any).client?.name}</p>
+                              {assignedAt && (
+                                <p className="text-[10px] text-white/25">
+                                  {format(assignedAt, "d MMM yyyy", { locale: es })}
+                                  {daysAgo !== null && (
+                                    <span className={cn(
+                                      'ml-1',
+                                      daysAgo > 14 ? 'text-warning/70' : 'text-white/25',
+                                    )}>
+                                      · {daysAgo === 0 ? 'hoy' : `hace ${daysAgo}d`}
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[9px] h-4',
+                                isCompleted(c)
+                                  ? 'border-success/30 text-success bg-success/10'
+                                  : ['assigned', 'recording', 'recorded', 'editing', 'delivered'].includes(c.status)
+                                  ? 'border-info/30 text-info bg-info/10'
+                                  : '',
+                              )}
+                            >
+                              {c.marketing_campaign_id ? 'En campaña' : (STATUS_LABELS[c.status as keyof typeof STATUS_LABELS] ?? c.status)}
+                            </Badge>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleUnassign(c)}
+                                disabled={unassigningId === c.id}
+                                title="Desasignar"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 flex items-center justify-center rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 disabled:opacity-50"
+                              >
+                                {unassigningId === c.id
+                                  ? <span className="h-2.5 w-2.5 border border-current border-t-transparent rounded-full animate-spin block" />
+                                  : <UserX className="h-2.5 w-2.5" />
+                                }
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {list.length > 20 && (
+                      <p className="text-[10px] text-white/30 text-center pt-1">+{list.length - 20} más</p>
+                    )}
                   </div>
-                  <Badge variant="outline" className="text-[9px] h-4 ml-2 flex-shrink-0">{c.status}</Badge>
-                </div>
-              ))}
-              {assignedContent.length > 15 && (
-                <p className="text-[10px] text-white/30 text-center">+{assignedContent.length - 15} más</p>
-              )}
-            </div>
-          )}
-          {assignedContent.length > 0 && (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-xs">
-              <span className="text-white/40">Completados</span>
-              <span className="text-white/70">{completedContent.length}</span>
-              <span className="text-white/40">Activos</span>
-              <span className="text-white/70">{activeContent.length}</span>
-            </div>
+                );
+              })()}
+            </>
           )}
         </DetailSection>
       )}

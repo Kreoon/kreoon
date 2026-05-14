@@ -19,7 +19,7 @@ import { es } from "date-fns/locale";
 import {
   Building2, Video, Mail, Phone, Calendar, DollarSign,
   Package, Plus, Trash2, Edit2, ShoppingBag, CheckCircle,
-  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2
+  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2, Handshake
 } from "lucide-react";
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -571,12 +571,19 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <ShoppingBag className="h-4 w-4 text-primary shrink-0" />
                             <h4 className="font-semibold truncate">{pkg.name}</h4>
-                            <Badge className={PAYMENT_STATUS_COLORS[pkg.payment_status as PaymentStatus]}>
-                              {PAYMENT_STATUS_LABELS[pkg.payment_status as PaymentStatus]}
-                            </Badge>
+                            {(pkg as any).is_barter ? (
+                              <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 flex items-center gap-1">
+                                <Handshake className="h-3 w-3" />
+                                Canje
+                              </Badge>
+                            ) : (
+                              <Badge className={PAYMENT_STATUS_COLORS[pkg.payment_status as PaymentStatus]}>
+                                {PAYMENT_STATUS_LABELS[pkg.payment_status as PaymentStatus]}
+                              </Badge>
+                            )}
                           </div>
                           
                           {pkg.description && (
@@ -603,26 +610,35 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                           </div>
 
                           <div className="flex flex-wrap gap-4 text-sm">
-                            <div className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4 text-primary" />
-                              <span className="font-medium">${pkg.total_value.toLocaleString()}</span>
-                              <span className="text-muted-foreground">valor</span>
-                            </div>
-                            {pkg.payment_status === 'paid' ? (
-                              <div className="flex items-center gap-1 text-success">
-                                <CheckCircle className="h-4 w-4" />
-                                <span>Pagado completo</span>
+                            {(pkg as any).is_barter ? (
+                              <div className="flex items-center gap-1 text-amber-400">
+                                <Handshake className="h-4 w-4" />
+                                <span>Sin cobro — paquete por canje</span>
                               </div>
                             ) : (
                               <>
-                                <div className="flex items-center gap-1 text-success">
-                                  <span className="font-medium">${pkg.paid_amount.toLocaleString()}</span>
-                                  <span className="text-muted-foreground">recaudado</span>
+                                <div className="flex items-center gap-1">
+                                  <DollarSign className="h-4 w-4 text-primary" />
+                                  <span className="font-medium">${pkg.total_value.toLocaleString()}</span>
+                                  <span className="text-muted-foreground">valor</span>
                                 </div>
-                                <div className="flex items-center gap-1 text-warning">
-                                  <span className="font-medium">${pendingAmount.toLocaleString()}</span>
-                                  <span className="text-muted-foreground">pendiente</span>
-                                </div>
+                                {pkg.payment_status === 'paid' ? (
+                                  <div className="flex items-center gap-1 text-success">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>Pagado completo</span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className="flex items-center gap-1 text-success">
+                                      <span className="font-medium">${pkg.paid_amount.toLocaleString()}</span>
+                                      <span className="text-muted-foreground">recaudado</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-warning">
+                                      <span className="font-medium">${pendingAmount.toLocaleString()}</span>
+                                      <span className="text-muted-foreground">pendiente</span>
+                                    </div>
+                                  </>
+                                )}
                               </>
                             )}
                             {contentOwed > 0 && pkg.payment_status === 'paid' && (

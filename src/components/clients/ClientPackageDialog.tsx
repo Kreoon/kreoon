@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ClientPackage, Product, PaymentStatus } from "@/types/database";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Handshake } from "lucide-react";
 import { CurrencyInput, CurrencyDisplay, CurrencyBadge, type CurrencyType } from "@/components/ui/currency-input";
 
 interface ClientPackageDialogProps {
@@ -43,6 +43,7 @@ export function ClientPackageDialog({
     product_ids: [] as string[],
     payment_status: "pending" as PaymentStatus,
     paid_amount: 0,
+    is_barter: false,
     notes: ""
   });
 
@@ -60,6 +61,7 @@ export function ClientPackageDialog({
         product_ids: package_.product_ids || [],
         payment_status: package_.payment_status || "pending",
         paid_amount: package_.paid_amount || 0,
+        is_barter: package_.is_barter || false,
         notes: package_.notes || ""
       });
     } else {
@@ -75,6 +77,7 @@ export function ClientPackageDialog({
         product_ids: [],
         payment_status: "pending",
         paid_amount: 0,
+        is_barter: false,
         notes: ""
       });
     }
@@ -104,20 +107,23 @@ export function ClientPackageDialog({
 
     setLoading(true);
     try {
+      // Canje: sin cobro — se fuerza total_value=0, payment_status='paid'
+      const isBarter = formData.is_barter;
       const data = {
         client_id: clientId,
         name: formData.name,
         description: formData.description || null,
-        total_value: formData.total_value,
+        total_value: isBarter ? 0 : formData.total_value,
         currency: formData.currency,
         content_quantity: formData.content_quantity,
         hooks_per_video: formData.hooks_per_video,
         creators_count: formData.creators_count,
         products_count: formData.product_ids.length || formData.products_count,
         product_ids: formData.product_ids,
-        payment_status: formData.payment_status,
-        paid_amount: formData.paid_amount,
-        paid_at: formData.payment_status === 'paid' ? new Date().toISOString() : null,
+        payment_status: isBarter ? 'paid' : formData.payment_status,
+        paid_amount: isBarter ? 0 : formData.paid_amount,
+        paid_at: (isBarter || formData.payment_status === 'paid') ? new Date().toISOString() : null,
+        is_barter: isBarter,
         notes: formData.notes || null
       };
 
@@ -175,16 +181,45 @@ export function ClientPackageDialog({
                 placeholder="Ej: Paquete Premium Q1 2024"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Valor Total</Label>
-              <CurrencyInput
-                value={formData.total_value}
-                currency={formData.currency}
-                onValueChange={(value) => setFormData({ ...formData, total_value: value })}
-                onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
-                placeholder="0"
+
+            {/* Toggle Canje */}
+            <div
+              onClick={() => setFormData(prev => ({ ...prev, is_barter: !prev.is_barter }))}
+              className={`flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-all select-none ${
+                formData.is_barter
+                  ? 'border-amber-500/50 bg-amber-500/10'
+                  : 'border-border bg-muted/30 hover:border-amber-500/30'
+              }`}
+            >
+              <Handshake className={`h-4 w-4 shrink-0 ${formData.is_barter ? 'text-amber-400' : 'text-muted-foreground'}`} />
+              <div className="flex-1">
+                <p className={`text-sm font-medium ${formData.is_barter ? 'text-amber-300' : 'text-foreground'}`}>
+                  Paquete por Canje
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  No genera cobro — el cliente paga con productos, servicios o contraprestación
+                </p>
+              </div>
+              <Checkbox
+                checked={formData.is_barter}
+                onCheckedChange={(v) => setFormData(prev => ({ ...prev, is_barter: !!v }))}
+                onClick={e => e.stopPropagation()}
+                className={formData.is_barter ? 'border-amber-400 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500' : ''}
               />
             </div>
+
+            {!formData.is_barter && (
+              <div className="space-y-2">
+                <Label>Valor Total</Label>
+                <CurrencyInput
+                  value={formData.total_value}
+                  currency={formData.currency}
+                  onValueChange={(value) => setFormData({ ...formData, total_value: value })}
+                  onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
+                  placeholder="0"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -265,52 +300,59 @@ export function ClientPackageDialog({
           )}
 
           {/* Payment Section */}
-          <div className="p-4 rounded-sm border border-primary/20 bg-primary/5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="font-medium">Estado de Pago</h4>
-              <CurrencyBadge currency={formData.currency} />
+          {formData.is_barter ? (
+            <div className="p-4 rounded-sm border border-amber-500/20 bg-amber-500/10 flex items-center gap-3">
+              <Handshake className="h-4 w-4 text-amber-400 shrink-0" />
+              <p className="text-sm text-amber-300">Paquete por canje — no genera cobro</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Estado</Label>
-                <Select 
-                  value={formData.payment_status} 
-                  onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pending">Pendiente</SelectItem>
-                    <SelectItem value="partial">Pago Parcial</SelectItem>
-                    <SelectItem value="paid">Pagado Completo</SelectItem>
-                  </SelectContent>
-                </Select>
+          ) : (
+            <div className="p-4 rounded-sm border border-primary/20 bg-primary/5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Estado de Pago</h4>
+                <CurrencyBadge currency={formData.currency} />
               </div>
-              <div className="space-y-2">
-                <Label>Monto Pagado</Label>
-                <Input
-                  type="number"
-                  value={formData.paid_amount}
-                  onChange={(e) => {
-                    const paid = Number(e.target.value);
-                    setFormData({ 
-                      ...formData, 
-                      paid_amount: paid,
-                      payment_status: paid >= formData.total_value ? 'paid' : paid > 0 ? 'partial' : 'pending'
-                    });
-                  }}
-                  max={formData.total_value}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Pendiente</Label>
-                <div className={`h-10 px-3 flex items-center rounded-sm border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
-                  <CurrencyDisplay value={pendingAmount} currency={formData.currency} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Estado</Label>
+                  <Select
+                    value={formData.payment_status}
+                    onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendiente</SelectItem>
+                      <SelectItem value="partial">Pago Parcial</SelectItem>
+                      <SelectItem value="paid">Pagado Completo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Monto Pagado</Label>
+                  <Input
+                    type="number"
+                    value={formData.paid_amount}
+                    onChange={(e) => {
+                      const paid = Number(e.target.value);
+                      setFormData({
+                        ...formData,
+                        paid_amount: paid,
+                        payment_status: paid >= formData.total_value ? 'paid' : paid > 0 ? 'partial' : 'pending'
+                      });
+                    }}
+                    max={formData.total_value}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pendiente</Label>
+                  <div className={`h-10 px-3 flex items-center rounded-sm border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
+                    <CurrencyDisplay value={pendingAmount} currency={formData.currency} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Notes */}
           <div className="space-y-2">

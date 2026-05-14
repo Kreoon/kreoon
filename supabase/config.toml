@@ -531,6 +531,16 @@ verify_jwt = false
 # Solo debe ejecutarse por admin
 verify_jwt = false
 
+[functions.pancake-sync]
+# Sincroniza profiles de Kreoon hacia contactos en Pancake CRM (contact/records)
+# Llamado por trigger pg_net en profiles — usa anon key como header, sin JWT gate
+verify_jwt = false
+
+[functions.pancake-cleanup]
+# Elimina contactos huérfanos de Pancake CRM que no tienen pancake_contact_id en Kreoon
+# Soporta dry_run=true para previsualizar sin borrar
+verify_jwt = false
+
 [functions.send-support-email]
 verify_jwt = false
 

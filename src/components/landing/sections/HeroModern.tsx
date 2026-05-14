@@ -92,8 +92,8 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            <motion.h1 
-              className="text-5xl font-bold leading-[1.1] tracking-tight text-white md:text-7xl lg:text-8xl"
+            <motion.h1
+              className="text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl md:text-7xl lg:text-8xl"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}
@@ -118,13 +118,13 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
-              className="mt-10 flex flex-wrap gap-4"
+              className="mt-6 md:mt-10 flex flex-wrap gap-4"
             >
               <KreoonButton
                 variant="primary"
                 size="lg"
                 onClick={onGetStarted}
-                className="group relative overflow-hidden px-8 py-6 text-lg shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
+                className="group relative overflow-hidden px-6 py-4 text-base md:px-8 md:py-6 md:text-lg shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
               >
                 <span className="relative z-10 flex items-center gap-2">
                   Comenzar Gratis
@@ -138,7 +138,7 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
                   variant="outline"
                   size="lg"
                   onClick={onWatchDemo}
-                  className="px-8 py-6 text-lg backdrop-blur-sm"
+                  className="px-6 py-4 text-base md:px-8 md:py-6 md:text-lg backdrop-blur-sm"
                 >
                   <Play className="mr-2 h-5 w-5" />
                   Ver Demo
@@ -193,7 +193,7 @@ export function HeroModern({ onGetStarted, onWatchDemo }: HeroModernProps) {
             </motion.div>
             )}
 
-            <div className="relative h-[400px] w-[400px] md:h-[600px] md:w-[600px]">
+            <div className="relative h-[280px] w-[280px] sm:h-[360px] sm:w-[360px] md:h-[600px] md:w-[600px]">
               {/* Floating UI Cards */}
               <motion.div
                 animate={{ y: [0, -20, 0], rotate: [0, 2, 0] }}

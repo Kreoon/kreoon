@@ -165,7 +165,7 @@ export function VideoShowcase() {
 
   if (isLoading) {
     return (
-      <section className="relative py-20 sm:py-28 overflow-hidden bg-kreoon-bg-primary">
+      <section className="relative py-12 sm:py-20 overflow-hidden bg-kreoon-bg-primary">
         <div className="max-w-7xl mx-auto px-4 flex justify-center">
           <Loader2 className="h-10 w-10 animate-spin text-kreoon-purple-500" />
         </div>
@@ -178,7 +178,7 @@ export function VideoShowcase() {
   return (
     <section
       id="portafolio"
-      className="relative py-20 sm:py-28 overflow-hidden"
+      className="relative py-12 sm:py-20 lg:py-28 overflow-hidden"
       style={{
         background: "linear-gradient(180deg, #0a0a0f 0%, #060508 50%, #0a0a0f 100%)",
       }}
