@@ -270,7 +270,6 @@ export function HeroOrbCanvas() {
         className="absolute inset-0 opacity-30"
         style={{
           transform: `translateY(${scrollProgress * -100}px) scale(${1 + scrollProgress * 0.3})`,
-          transition: 'transform 0.5s ease-out'
         }}
       >
         <div
@@ -291,7 +290,6 @@ export function HeroOrbCanvas() {
         className="absolute inset-0 opacity-20"
         style={{
           transform: `translateX(${scrollProgress * 50}px) rotate(${scrollProgress * 10}deg)`,
-          transition: 'transform 0.8s ease-out'
         }}
       >
         <div

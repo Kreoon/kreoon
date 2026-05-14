@@ -10,7 +10,11 @@ export interface LandingLayoutProps {
 
 export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
   useEffect(() => {
-    document.documentElement.style.scrollBehavior = "smooth";
+    // Solo aplicar scroll-behavior: smooth en desktop.
+    // En móvil interfiere con el momentum nativo de iOS/Android.
+    if (window.innerWidth >= 1024) {
+      document.documentElement.style.scrollBehavior = "smooth";
+    }
     return () => {
       document.documentElement.style.scrollBehavior = "";
     };

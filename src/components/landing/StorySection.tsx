@@ -1,5 +1,16 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isMobile;
+}
 
 interface StorySectionProps {
   children: React.ReactNode;
@@ -23,52 +34,56 @@ export function StorySection({
   blurOnExit = true,
 }: StorySectionProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start end", "end start"],
   });
 
-  // Spring config para movimientos suaves
-  const springConfig = { stiffness: 100, damping: 30, mass: 0.5 };
+  // En móvil: spring muy rígido para no crear lag/rebote
+  // En desktop: spring suave para efecto cinematográfico
+  const springConfig = isMobile
+    ? { stiffness: 400, damping: 50, mass: 0.3 }
+    : { stiffness: 100, damping: 30, mass: 0.5 };
 
-  // El contenido "sube" hacia el usuario (translateY negativo cuando entra)
+  // En móvil: sin translateY para no generar sensación de rebote
   const rawY = useTransform(
     scrollYProgress,
     [0, 0.3, 0.7, 1],
-    [150 * intensity, 0, 0, -100 * intensity]
+    isMobile ? [0, 0, 0, 0] : [150 * intensity, 0, 0, -100 * intensity]
   );
   const y = useSpring(rawY, springConfig);
 
-  // Opacidad: fade in cuando entra, fade out cuando sale
+  // Opacidad: fade in suave (en móvil más rápido)
   const rawOpacity = useTransform(
     scrollYProgress,
     [0, 0.15, 0.85, 1],
-    [0, 1, 1, 0]
+    isMobile ? [0, 1, 1, 1] : [0, 1, 1, 0]
   );
   const opacity = useSpring(rawOpacity, springConfig);
 
-  // Escala: crece ligeramente al entrar, se mantiene, decrece al salir
+  // Escala: solo en desktop
   const rawScale = useTransform(
     scrollYProgress,
     [0, 0.2, 0.8, 1],
-    scaleEffect ? [0.9, 1, 1, 0.95] : [1, 1, 1, 1]
+    scaleEffect && !isMobile ? [0.9, 1, 1, 0.95] : [1, 1, 1, 1]
   );
   const scale = useSpring(rawScale, springConfig);
 
-  // Rotación 3D sutil
+  // Rotación 3D: solo en desktop
   const rawRotateX = useTransform(
     scrollYProgress,
     [0, 0.3, 0.7, 1],
-    tiltEffect ? [8, 0, 0, -5] : [0, 0, 0, 0]
+    tiltEffect && !isMobile ? [8, 0, 0, -5] : [0, 0, 0, 0]
   );
   const rotateX = useSpring(rawRotateX, springConfig);
 
-  // Blur al salir
+  // Blur: solo en desktop
   const rawBlur = useTransform(
     scrollYProgress,
     [0, 0.1, 0.9, 1],
-    blurOnExit ? [8, 0, 0, 4] : [0, 0, 0, 0]
+    blurOnExit && !isMobile ? [8, 0, 0, 4] : [0, 0, 0, 0]
   );
 
   return (
@@ -101,33 +116,35 @@ export function StoryHeroSection({
   className?: string;
 }) {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
   });
 
-  const springConfig = { stiffness: 80, damping: 25, mass: 0.8 };
+  // En móvil: sin parallax en Y para scroll nativo fluido
+  const springConfig = isMobile
+    ? { stiffness: 400, damping: 50, mass: 0.3 }
+    : { stiffness: 80, damping: 25, mass: 0.8 };
 
-  // El hero se "aleja" hacia arriba mientras scrolleas
   const y = useSpring(
-    useTransform(scrollYProgress, [0, 1], [0, -200]),
+    useTransform(scrollYProgress, [0, 1], isMobile ? [0, 0] : [0, -200]),
     springConfig
   );
 
   const scale = useSpring(
-    useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.05, 0.9]),
+    useTransform(scrollYProgress, [0, 0.5, 1], isMobile ? [1, 1, 1] : [1, 1.05, 0.9]),
     springConfig
   );
 
   const opacity = useSpring(
-    useTransform(scrollYProgress, [0, 0.6, 1], [1, 1, 0]),
+    useTransform(scrollYProgress, [0, 0.6, 1], [1, 1, isMobile ? 1 : 0]),
     springConfig
   );
 
-  // El contenido se dispersa ligeramente
   const rotateX = useSpring(
-    useTransform(scrollYProgress, [0, 1], [0, -15]),
+    useTransform(scrollYProgress, [0, 1], isMobile ? [0, 0] : [0, -15]),
     springConfig
   );
 
