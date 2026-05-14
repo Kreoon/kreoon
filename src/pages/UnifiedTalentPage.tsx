@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import {
   Sword, Users, Heart, DollarSign, Search, Trophy,
-  UserPlus, Send, Loader2,
+  UserPlus, Send, Loader2, Activity, TrendingDown, AlertCircle,
+  ChevronDown, Filter,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,8 @@ import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useToast } from '@/hooks/use-toast';
 import { useTrialGuard } from '@/hooks/useTrialGuard';
 import { useUnifiedTalent, useToggleAmbassador } from '@/hooks/useUnifiedTalent';
+import { useTalentActivityMetrics } from '@/hooks/useTalentActivityMetrics';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
 import { UnifiedTalentDetailPanel } from '@/components/talent/UnifiedTalentDetailPanel';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
@@ -28,19 +31,26 @@ import { supabase } from '@/integrations/supabase/client';
 import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
 
-type FilterTab = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'leads' | 'externos' | 'ranking';
+type FilterTab = 'activos' | 'inactivos' | 'todos' | 'ranking';
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
+  { key: 'activos', label: 'Activos' },
+  { key: 'inactivos', label: 'Inactivos' },
   { key: 'todos', label: 'Todos' },
-  { key: 'admins', label: 'Admins' },
-  { key: 'estrategas', label: 'Estrategas' },
+  { key: 'ranking', label: 'Ranking' },
+];
+
+type RoleFilter = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos';
+
+const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
+  { key: 'todos', label: 'Todos los roles' },
   { key: 'creadores', label: 'Creadores' },
   { key: 'editores', label: 'Editores' },
+  { key: 'estrategas', label: 'Estrategas' },
   { key: 'traffickers', label: 'Traffickers' },
+  { key: 'admins', label: 'Admins' },
   { key: 'embajadores', label: 'Embajadores' },
-  { key: 'leads', label: 'Leads' },
   { key: 'externos', label: 'Externos' },
-  { key: 'ranking', label: 'Ranking' },
 ];
 
 function formatCurrency(n: number): string {
@@ -58,13 +68,22 @@ const UnifiedTalentPage = () => {
   const { guardAction, isReadOnly } = useTrialGuard();
   const { data: members = [], isLoading, refetch } = useUnifiedTalent(currentOrgId);
   const toggleAmbassador = useToggleAmbassador(currentOrgId);
+  const { data: activityMetrics } = useTalentActivityMetrics(currentOrgId);
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
-  const [filter, setFilter] = useState<FilterTab>(canSeeInternal ? 'todos' : 'externos');
+  const [filter, setFilter] = useState<FilterTab>(canSeeInternal ? 'activos' : 'todos');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('todos');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [selectedMember, setSelectedMember] = useState<UnifiedTalentMember | null>(null);
+
+  // Map talent_id → metrics for O(1) lookup
+  const activityMap = useMemo(() => {
+    const map = new Map<string, typeof activityMetrics[0]>();
+    activityMetrics?.forEach(m => map.set(m.talent_id, m));
+    return map;
+  }, [activityMetrics]);
 
   // Invite dialog state
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -76,51 +95,56 @@ const UnifiedTalentPage = () => {
     const internal = members.filter(m => m.source !== 'external');
     const external = members.filter(m => m.source !== 'internal');
     const favorites = members.filter(m => m.relationship_type === 'favorite');
-    const leads = members.filter(m => m.source !== 'external' && (!m.all_roles || m.all_roles.length === 0) && !m.is_owner);
     const totalInvested = members.reduce((sum, m) => sum + (m.total_paid || 0), 0);
-    return { internal: internal.length, external: external.length, favorites: favorites.length, leads: leads.length, totalInvested };
-  }, [members]);
+    const activos = activityMetrics?.filter(m => m.activity_status === 'active').length ?? 0;
+    const inactivos = activityMetrics?.filter(m => m.activity_status === 'inactive').length ?? 0;
+    const pendingPayment = activityMetrics?.reduce((sum, m) => sum + (m.pending_payment_amount || 0), 0) ?? 0;
+    return { internal: internal.length, external: external.length, favorites: favorites.length, totalInvested, activos, inactivos, pendingPayment };
+  }, [members, activityMetrics]);
 
   // Filtered list
   const filtered = useMemo(() => {
     let list = members;
 
-    // Role-based filter for non-admin
     if (!canSeeInternal) {
       list = list.filter(m => m.source !== 'internal');
     }
 
-    // Tab filter
-    switch (filter) {
-      case 'todos':
-        // Exclude leads (no roles, not owner) from "Todos" — they have their own tab
-        list = list.filter(m => m.source === 'external' || (m.all_roles && m.all_roles.length > 0) || m.is_owner);
-        break;
-      case 'admins':
-        list = list.filter(m => m.source !== 'external' && (m.org_role === 'admin' || m.org_role === 'team_leader' || m.is_owner));
-        break;
-      case 'estrategas':
-        list = list.filter(m => m.source !== 'external' && m.all_roles?.includes('strategist'));
-        break;
-      case 'creadores':
-        list = list.filter(m => m.source !== 'external' && m.all_roles?.includes('creator'));
-        break;
-      case 'editores':
-        list = list.filter(m => m.source !== 'external' && m.all_roles?.includes('editor'));
-        break;
-      case 'traffickers':
-        list = list.filter(m => m.source !== 'external' && m.all_roles?.includes('trafficker'));
-        break;
-      case 'embajadores':
-        list = list.filter(m => m.is_ambassador);
-        break;
-      case 'leads':
-        list = list.filter(m => m.source !== 'external' && (!m.all_roles || m.all_roles.length === 0) && !m.is_owner);
-        break;
-      case 'externos':
-        list = list.filter(m => m.source !== 'internal');
-        break;
-      // 'ranking' shows all
+    // Activity tab filter (uses activity metrics)
+    if (filter === 'activos') {
+      list = list.filter(m => m.source !== 'external' && activityMap.get(m.id)?.activity_status === 'active');
+    } else if (filter === 'inactivos') {
+      list = list.filter(m => m.source !== 'external' && activityMap.get(m.id)?.activity_status === 'inactive');
+    } else if (filter === 'todos') {
+      list = list.filter(m => m.source === 'external' || (m.all_roles && m.all_roles.length > 0) || m.is_owner);
+    }
+    // 'ranking' shows all
+
+    // Role dropdown filter
+    if (roleFilter !== 'todos') {
+      switch (roleFilter) {
+        case 'admins':
+          list = list.filter(m => m.org_role === 'admin' || m.org_role === 'team_leader' || m.is_owner);
+          break;
+        case 'estrategas':
+          list = list.filter(m => m.all_roles?.includes('strategist'));
+          break;
+        case 'creadores':
+          list = list.filter(m => m.all_roles?.includes('creator'));
+          break;
+        case 'editores':
+          list = list.filter(m => m.all_roles?.includes('editor'));
+          break;
+        case 'traffickers':
+          list = list.filter(m => m.all_roles?.includes('trafficker'));
+          break;
+        case 'embajadores':
+          list = list.filter(m => m.is_ambassador);
+          break;
+        case 'externos':
+          list = list.filter(m => m.source !== 'internal');
+          break;
+      }
     }
 
     // Search
@@ -135,7 +159,7 @@ const UnifiedTalentPage = () => {
     }
 
     return list;
-  }, [members, filter, search, canSeeInternal]);
+  }, [members, filter, roleFilter, search, canSeeInternal, activityMap]);
 
   // Keep selected member in sync with refreshed data
   const activeMember = selectedMember
@@ -144,7 +168,7 @@ const UnifiedTalentPage = () => {
 
   const availableTabs = canSeeInternal
     ? FILTER_TABS
-    : FILTER_TABS.filter(t => t.key === 'todos' || t.key === 'externos');
+    : FILTER_TABS.filter(t => t.key === 'todos' || t.key === 'ranking');
 
   // Invite handler
   const handleSendInvitation = async () => {
@@ -245,31 +269,13 @@ const UnifiedTalentPage = () => {
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {canSeeInternal && (
-            <div className="rounded-sm border border-border bg-card p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Users className="h-3.5 w-3.5" />
-                Equipo
-              </div>
-              <p className="text-xl font-bold text-card-foreground">{stats.internal}</p>
-            </div>
-          )}
           <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Sword className="h-3.5 w-3.5" />
-              Externos
+              <Users className="h-3.5 w-3.5" />
+              Equipo
             </div>
-            <p className="text-xl font-bold text-card-foreground">{stats.external}</p>
+            <p className="text-xl font-bold text-card-foreground">{stats.internal}</p>
           </div>
-          {canSeeInternal && stats.leads > 0 && (
-            <div className="rounded-sm border border-border bg-card p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <UserPlus className="h-3.5 w-3.5" />
-                Leads
-              </div>
-              <p className="text-xl font-bold text-card-foreground">{stats.leads}</p>
-            </div>
-          )}
           <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Heart className="h-3.5 w-3.5" />
@@ -284,9 +290,56 @@ const UnifiedTalentPage = () => {
             </div>
             <p className="text-xl font-bold text-card-foreground">{formatCurrency(stats.totalInvested)}</p>
           </div>
+          {canSeeInternal && stats.pendingPayment > 0 && (
+            <div className="rounded-sm border border-warning/30 bg-warning/5 p-3">
+              <div className="flex items-center gap-2 text-xs text-warning mb-1">
+                <AlertCircle className="h-3.5 w-3.5" />
+                Por pagar
+              </div>
+              <p className="text-xl font-bold text-warning">{formatCurrency(stats.pendingPayment)}</p>
+            </div>
+          )}
         </div>
 
-        {/* Filter tabs + search */}
+        {/* Actividad — solo admins */}
+        {canSeeInternal && (activityMetrics?.length ?? 0) > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setFilter('activos')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'activos'
+                  ? 'border-green-500/50 bg-green-500/10'
+                  : 'border-border bg-card hover:border-green-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <Activity className="h-3.5 w-3.5 text-green-400" />
+                Talento activo
+              </div>
+              <p className="text-xl font-bold text-green-400">{stats.activos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Con contenido en proceso</p>
+            </button>
+            <button
+              onClick={() => setFilter('inactivos')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'inactivos'
+                  ? 'border-red-500/50 bg-red-500/10'
+                  : 'border-border bg-card hover:border-red-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
+                Sin actividad
+              </div>
+              <p className="text-xl font-bold text-red-400">{stats.inactivos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Sin piezas en progreso</p>
+            </button>
+          </div>
+        )}
+
+        {/* Filter tabs + rol + search */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <div className="flex flex-wrap gap-1">
             {availableTabs.map(tab => (
@@ -309,6 +362,32 @@ const UnifiedTalentPage = () => {
           <div className="flex items-center gap-2 ml-auto">
             {filter !== 'ranking' && (
               <>
+                {/* Role dropdown filter */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className={cn(
+                      'h-8 gap-1.5 text-xs',
+                      roleFilter !== 'todos' && 'border-primary/50 bg-primary/10 text-primary',
+                    )}>
+                      <Filter className="h-3 w-3" />
+                      {ROLE_FILTERS.find(r => r.key === roleFilter)?.label ?? 'Rol'}
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {ROLE_FILTERS.map(r => (
+                      <DropdownMenuCheckboxItem
+                        key={r.key}
+                        checked={roleFilter === r.key}
+                        onCheckedChange={() => setRoleFilter(r.key)}
+                        className="text-xs"
+                      >
+                        {r.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
                   <Input
@@ -354,6 +433,7 @@ const UnifiedTalentPage = () => {
                       key={m.id}
                       member={m}
                       onClick={() => setSelectedMember(m)}
+                      activityMetrics={activityMap.get(m.id)}
                       onAmbassadorToggle={() =>
                         toggleAmbassador.mutate({
                           userId: m.id,
@@ -372,11 +452,12 @@ const UnifiedTalentPage = () => {
                     <thead>
                       <tr className="bg-muted border-b border-border">
                         <th className="text-left p-3 text-muted-foreground font-medium">Nombre</th>
-                        <th className="text-left p-3 text-muted-foreground font-medium">Origen</th>
                         <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Rol</th>
-                        <th className="text-center p-3 text-muted-foreground font-medium hidden sm:table-cell">Contenido</th>
-                        <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">Rating</th>
-                        <th className="text-right p-3 text-muted-foreground font-medium">Pagado</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium">Estado</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">En proceso</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">Sin pagar</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden lg:table-cell">Últ. entrega</th>
+                        <th className="text-right p-3 text-muted-foreground font-medium">Invertido</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -401,22 +482,42 @@ const UnifiedTalentPage = () => {
                               <span className="text-foreground font-medium truncate max-w-[150px]">{m.full_name}</span>
                             </div>
                           </td>
-                          <td className="p-3">
-                            <span className={cn(
-                              'px-2 py-0.5 rounded-full text-[10px] font-medium',
-                              m.source === 'internal' ? 'bg-blue-500/15 text-blue-400' :
-                              m.source === 'external' ? 'bg-pink-500/15 text-pink-400' :
-                              'bg-purple-500/15 text-purple-400',
-                            )}>
-                              {m.source === 'internal' ? 'Equipo' : m.source === 'external' ? 'Externo' : 'Ambos'}
-                            </span>
-                          </td>
                           <td className="p-3 text-muted-foreground hidden sm:table-cell">
                             {m.org_role ? getRoleLabel(m.org_role) : '\u2014'}
                           </td>
-                          <td className="p-3 text-center text-muted-foreground hidden sm:table-cell">{m.content_count || '\u2014'}</td>
+                          <td className="p-3 text-center">
+                            {(() => {
+                              const am = activityMap.get(m.id);
+                              if (!am) return <span className="text-muted-foreground">\u2014</span>;
+                              return (
+                                <span className={cn(
+                                  'px-2 py-0.5 rounded-full text-[10px] font-medium border',
+                                  am.activity_status === 'active'
+                                    ? 'bg-green-500/15 text-green-400 border-green-500/30'
+                                    : 'bg-muted text-muted-foreground border-border',
+                                )}>
+                                  {am.activity_status === 'active' ? 'Activo' : 'Inactivo'}
+                                </span>
+                              );
+                            })()}
+                          </td>
                           <td className="p-3 text-center text-muted-foreground hidden md:table-cell">
-                            {m.avg_star_rating ? m.avg_star_rating.toFixed(1) : m.average_rating_given ? m.average_rating_given.toFixed(1) : '\u2014'}
+                            {activityMap.get(m.id)?.active_content_count || '\u2014'}
+                          </td>
+                          <td className="p-3 text-center hidden md:table-cell">
+                            {(() => {
+                              const pending = activityMap.get(m.id)?.pending_payment_count ?? 0;
+                              return pending > 0
+                                ? <span className="text-warning font-medium">{pending}</span>
+                                : <span className="text-muted-foreground">\u2014</span>;
+                            })()}
+                          </td>
+                          <td className="p-3 text-center text-muted-foreground hidden lg:table-cell">
+                            {(() => {
+                              const days = activityMap.get(m.id)?.days_since_last_delivery;
+                              if (days === null || days === undefined) return '\u2014';
+                              return days === 0 ? 'Hoy' : `Hace ${days}d`;
+                            })()}
                           </td>
                           <td className="p-3 text-right text-muted-foreground">
                             {m.total_paid > 0 ? formatCurrency(m.total_paid) : '\u2014'}

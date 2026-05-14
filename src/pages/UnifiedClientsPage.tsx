@@ -36,18 +36,16 @@ import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
 
-type FilterTab = 'todos' | 'empresas' | 'contactos' | 'usuarios' | 'activos' | 'inactivos';
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
-  { key: 'todos', label: 'Todos' },
-  { key: 'empresas', label: 'Empresas' },
-  { key: 'contactos', label: 'Contactos' },
-  { key: 'usuarios', label: 'Usuarios' },
   { key: 'activos', label: 'Activos', adminOnly: true },
   { key: 'inactivos', label: 'Inactivos', adminOnly: true },
+  { key: 'todos', label: 'Todos' },
+  { key: 'usuarios', label: 'Usuarios' },
 ];
 
-const VALID_TABS: FilterTab[] = ['todos', 'empresas', 'contactos', 'usuarios', 'activos', 'inactivos'];
+const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos'];
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -97,7 +95,7 @@ const UnifiedClientsPage = () => {
 
   // Read tab from URL, fallback to default
   const tabFromUrl = searchParams.get('tab') as FilterTab | null;
-  const defaultTab = canSeeInternal ? 'todos' : 'contactos';
+  const defaultTab = canSeeInternal ? 'activos' : 'todos';
   const initialTab = tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : defaultTab;
 
   const [filter, setFilter] = useState<FilterTab>(initialTab);
@@ -119,7 +117,7 @@ const UnifiedClientsPage = () => {
   // Handle tab change with URL sync
   const handleFilterChange = (tab: FilterTab) => {
     setFilter(tab);
-    setSearchParams(tab === 'todos' ? {} : { tab }, { replace: true });
+    setSearchParams(tab === 'activos' ? {} : { tab }, { replace: true });
     // Clear selections when switching tabs
     setSelectedEntity(null);
     setSelectedClientUser(null);
@@ -159,9 +157,6 @@ const UnifiedClientsPage = () => {
     if (!canSeeInternal) {
       list = list.filter(e => e.entity_type === 'contacto');
     }
-
-    if (filter === 'empresas') list = list.filter(e => e.entity_type === 'empresa');
-    if (filter === 'contactos') list = list.filter(e => e.entity_type === 'contacto');
 
     // Filtros de actividad (solo empresas)
     if (filter === 'activos') {
@@ -259,7 +254,7 @@ const UnifiedClientsPage = () => {
 
   const availableTabs = canSeeInternal
     ? FILTER_TABS
-    : FILTER_TABS.filter(t => !t.adminOnly && (t.key === 'todos' || t.key === 'contactos' || t.key === 'usuarios'));
+    : FILTER_TABS.filter(t => !t.adminOnly);
 
   // Companies list for linking in the detail panel
   const allCompanies = useMemo(() => {
@@ -288,27 +283,18 @@ const UnifiedClientsPage = () => {
         <PageHeader icon={Castle} title="Clientes" subtitle="Gestión de empresas, contactos y usuarios" />
 
         {/* Stats Row */}
-        <div className={cn('grid gap-3', canSeeInternal ? 'grid-cols-2 md:grid-cols-5' : 'grid-cols-2 md:grid-cols-3')}>
-          {canSeeInternal && (
-            <div className="rounded-sm border border-border bg-card p-3">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <Building2 className="h-3.5 w-3.5" />
-                Empresas
-              </div>
-              <p className="text-xl font-bold text-card-foreground">{stats.empresas}</p>
-            </div>
-          )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Contact className="h-3.5 w-3.5" />
-              Contactos
+              <Building2 className="h-3.5 w-3.5" />
+              Clientes
             </div>
-            <p className="text-xl font-bold text-card-foreground">{stats.contactos}</p>
+            <p className="text-xl font-bold text-card-foreground">{stats.empresas}</p>
           </div>
           <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <UsersIcon className="h-3.5 w-3.5" />
-              Usuarios
+              Con acceso
             </div>
             <p className="text-xl font-bold text-card-foreground">{stats.usuarios}</p>
           </div>

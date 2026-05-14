@@ -155,11 +155,11 @@ async function getClientWhatsApp(
   // 1. Verificar si el cliente tiene whatsapp_phone o phone directamente
   const { data: client } = await supabase
     .from("clients")
-    .select("phone, whatsapp_phone, whatsapp_enabled, user_id")
+    .select("contact_phone, whatsapp_phone, whatsapp_enabled, user_id")
     .eq("id", clientId)
     .single();
 
-  const clientPhone = client?.whatsapp_phone || client?.phone;
+  const clientPhone = client?.whatsapp_phone || client?.contact_phone;
   if (clientPhone && client?.whatsapp_enabled !== false) {
     return clientPhone;
   }

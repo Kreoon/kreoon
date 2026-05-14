@@ -22,29 +22,29 @@ export function FactorySection() {
   const cardOpacity = useTransform(scrollYProgress, [0.1, 0.2, 0.8, 0.9], [0, 1, 1, 0]);
 
   return (
-    <section ref={containerRef} className="relative min-h-[150vh] bg-kreoon-bg-primary py-32 overflow-hidden">
+    <section ref={containerRef} className="relative min-h-[150vh] bg-kreoon-bg-primary py-16 md:py-32 overflow-hidden">
       <div className="container px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          className="text-center mb-24"
+          className="text-center mb-10 md:mb-24"
         >
           <h2 className="text-4xl font-bold text-white md:text-6xl">La Fábrica de Contenido</h2>
-          <p className="mt-6 text-xl text-kreoon-text-secondary max-w-2xl mx-auto">
-            Nuestro sistema unificado organiza cada pieza en el ecosistema de ventas. 
+          <p className="mt-6 text-lg text-kreoon-text-secondary max-w-2xl mx-auto md:text-xl">
+            Nuestro sistema unificado organiza cada pieza en el ecosistema de ventas.
             Del brief a la conversión sin fricción.
           </p>
         </motion.div>
 
         {/* Sphere System Visualization */}
-        <div className="relative mt-20 flex justify-between items-center max-w-5xl mx-auto min-h-[400px]">
-          {/* Connection Line Background */}
-          <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-kreoon-purple-500/20 to-transparent -translate-y-1/2" />
+        <div className="relative mt-10 md:mt-20 flex flex-wrap justify-center gap-8 md:flex-nowrap md:justify-between items-center max-w-5xl mx-auto min-h-[200px] md:min-h-[400px]">
+          {/* Connection Line Background - desktop only */}
+          <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-kreoon-purple-500/20 to-transparent -translate-y-1/2 hidden md:block" />
 
-          {/* Traveling Content Card */}
+          {/* Traveling Content Card - desktop only */}
           <motion.div
             style={{ x: cardX, y: cardY, opacity: cardOpacity }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 hidden md:block"
           >
             <div className="h-40 w-28 rounded-sm border border-white/20 bg-white/5 backdrop-blur-xl shadow-2xl flex flex-col p-3">
               <div className="h-1.5 w-10 rounded-full bg-white/40 mb-2" />
@@ -65,21 +65,20 @@ export function FactorySection() {
               <motion.div
                 whileHover={{ scale: 1.15 }}
                 whileTap={{ scale: 0.95 }}
-                className={`relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br ${sphere.color} p-[1px] shadow-lg transition-shadow duration-300 hover:shadow-xl`}
+                className={`relative flex h-16 w-16 md:h-24 md:w-24 items-center justify-center rounded-full bg-gradient-to-br ${sphere.color} p-[1px] shadow-lg transition-shadow duration-300 hover:shadow-xl`}
               >
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-kreoon-bg-primary/90 backdrop-blur-sm">
-                  <sphere.icon className="h-8 w-8 text-white" />
+                  <sphere.icon className="h-6 w-6 md:h-8 md:w-8 text-white" />
                 </div>
-                {/* Glow effect */}
                 <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${sphere.color} opacity-20 blur-xl`} />
               </motion.div>
-              <span className="mt-4 font-bold text-kreoon-text-secondary uppercase tracking-widest text-xs">{sphere.name}</span>
+              <span className="mt-3 font-bold text-kreoon-text-secondary uppercase tracking-widest text-[10px] md:text-xs">{sphere.name}</span>
             </div>
           ))}
         </div>
 
         {/* Feature Cards Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-40">
+        <div className="grid md:grid-cols-3 gap-6 md:gap-8 mt-16 md:mt-40">
           {[
             { title: "Gestión Kanban", desc: "Control total del flujo creativo." },
             { title: "Aprobaciones Pro", client: "Feedback directo y centralizado." },
@@ -90,7 +89,7 @@ export function FactorySection() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.2 }}
-              className="group p-8 rounded-sm border border-kreoon-border bg-kreoon-bg-card/40 backdrop-blur-md hover:bg-kreoon-purple-500/5 hover:border-kreoon-purple-500/30 transition-all duration-300"
+              className="group p-6 md:p-8 rounded-sm border border-kreoon-border bg-kreoon-bg-card/40 backdrop-blur-md hover:bg-kreoon-purple-500/5 hover:border-kreoon-purple-500/30 transition-all duration-300"
             >
               <h3 className="text-xl font-bold text-white group-hover:text-kreoon-purple-400 transition-colors">{item.title}</h3>
               <p className="mt-4 text-kreoon-text-secondary">{item.desc || item.client}</p>

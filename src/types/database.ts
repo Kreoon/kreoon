@@ -244,6 +244,7 @@ export interface ClientPackage {
   payment_due_date: string | null;
   notes: string | null;
   is_active: boolean;
+  is_barter: boolean;
   created_at: string;
   updated_at: string;
   // Relations

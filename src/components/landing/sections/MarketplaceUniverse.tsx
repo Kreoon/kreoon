@@ -99,7 +99,7 @@ export function MarketplaceUniverse() {
       ref={containerRef} 
       initial={{ opacity: 0 }}
       whileInView={{ opacity: 1 }}
-      className="story-section min-h-screen py-32 overflow-hidden"
+      className="story-section min-h-screen py-16 md:py-32 overflow-hidden"
     >
       {/* Background Glow */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -107,7 +107,7 @@ export function MarketplaceUniverse() {
       </div>
 
       <div className="container relative z-10 px-4">
-        <div className="text-center mb-32">
+        <div className="text-center mb-12 md:mb-32">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -123,10 +123,41 @@ export function MarketplaceUniverse() {
           </p>
         </div>
 
-        {/* Connections Galaxy Visualization */}
+        {/* Mobile: Grid simple de creadores */}
+        <div className="lg:hidden grid grid-cols-2 gap-3 mb-12">
+          {displayCreators.slice(0, 6).map((creator) => (
+            <div
+              key={creator.id}
+              className="px-3 py-3 rounded-sm border border-white/10 bg-kreoon-bg-card/60 backdrop-blur-xl"
+            >
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full border border-kreoon-purple-500/30 overflow-hidden bg-kreoon-bg-primary shrink-0">
+                  {creator.avatar_url ? (
+                    <img src={creator.avatar_url} alt={creator.display_name} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-white font-bold text-sm bg-gradient-to-br from-kreoon-purple-600 to-purple-900">
+                      {creator.display_name[0]}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-white truncate">{creator.display_name}</p>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400 shrink-0" />
+                    <span className="text-[10px] text-kreoon-text-muted truncate">
+                      {creator.calculated_rating} • {creator.categories[0] || 'Creator'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: Connections Galaxy Visualization */}
         <motion.div
           style={{ rotate }}
-          className="relative h-[650px] w-full max-w-5xl mx-auto border border-white/5 rounded-full bg-white/[0.01] will-change-transform"
+          className="hidden lg:block relative h-[650px] w-full max-w-5xl mx-auto border border-white/5 rounded-full bg-white/[0.01] will-change-transform"
         >
           {/* Central Logo / Core */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -154,17 +185,14 @@ export function MarketplaceUniverse() {
                 transition={{ duration: 4 + i, repeat: Infinity, ease: "easeInOut" }}
                 className="group relative flex flex-col items-center"
               >
-                {/* Profile Card with Thumbnail Hint - Enhanced Glassmorphism */}
                 <div className="px-4 py-3 rounded-sm border border-white/10 bg-kreoon-bg-card/60 backdrop-blur-xl shadow-2xl group-hover:border-kreoon-purple-500/50 group-hover:shadow-kreoon-glow-sm transition-all overflow-hidden">
-                  {/* Thumbnail Preview on Hover */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity">
-                    <img 
-                      src={creator.portfolio_media[0]?.thumbnail_url || creator.portfolio_media[0]?.url} 
-                      alt="" 
+                    <img
+                      src={creator.portfolio_media[0]?.thumbnail_url || creator.portfolio_media[0]?.url}
+                      alt=""
                       className="h-full w-full object-cover"
                     />
                   </div>
-                  
                   <div className="relative flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full border border-kreoon-purple-500/30 overflow-hidden bg-kreoon-bg-primary">
                       {creator.avatar_url ? (
@@ -186,8 +214,6 @@ export function MarketplaceUniverse() {
                     </div>
                   </div>
                 </div>
-
-                {/* Connection Line to Center */}
                 <div className="absolute top-1/2 left-1/2 h-[120px] w-[1px] bg-gradient-to-t from-kreoon-purple-500/40 to-transparent origin-top -translate-x-1/2 group-hover:h-[180px] transition-all" />
               </motion.div>
             </motion.div>
@@ -195,7 +221,7 @@ export function MarketplaceUniverse() {
         </motion.div>
 
         {/* Stats Grid - Real Data + histórico pre-plataforma */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-40">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12 md:gap-8 md:mt-40">
           {[
             { label: "Creadores", value: stats ? formatNumber(stats.creators_count) : "...", icon: Users },
             { label: "Marcas", value: stats ? formatNumber(stats.brands_count) : "...", icon: Heart },

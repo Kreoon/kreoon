@@ -59,15 +59,15 @@ export function SolutionRolesSection() {
       className="story-section"
     >
       <div className="container relative z-10 px-4">
-        <div className="max-w-3xl mb-20">
-          <h2 className="text-4xl font-bold text-white md:text-6xl mb-6">Un Ecosistema, <br/>Tres Soluciones.</h2>
-          <p className="text-kreoon-text-secondary text-xl">
-            Kreoon adapta su infraestructura para cada actor de la economía creativa. 
+        <div className="max-w-3xl mb-10 md:mb-20">
+          <h2 className="text-3xl font-bold text-white md:text-6xl mb-4 md:mb-6">Un Ecosistema, <br/>Tres Soluciones.</h2>
+          <p className="text-kreoon-text-secondary text-lg md:text-xl">
+            Kreoon adapta su infraestructura para cada actor de la economía creativa.
             Elige tu perfil y descubre tu nuevo sistema operativo.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
           {/* Tab Selection */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             {ROLES.map((role) => (
@@ -112,10 +112,10 @@ export function SolutionRolesSection() {
                 transition={{ duration: 0.4 }}
                 className="glass-card p-8 md:p-12"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                   <div>
-                    <h3 className="text-3xl font-bold text-white mb-8">Soluciones para {activeTab.title}</h3>
-                    <div className="space-y-8">
+                    <h3 className="text-2xl font-bold text-white mb-5 md:text-3xl md:mb-8">Soluciones para {activeTab.title}</h3>
+                    <div className="space-y-5 md:space-y-8">
                       {activeTab.features.map((feature, i) => (
                         <div key={i} className="flex gap-4">
                           <div className="mt-1">
@@ -128,7 +128,7 @@ export function SolutionRolesSection() {
                         </div>
                       ))}
                     </div>
-                    <button className="mt-12 flex items-center gap-2 px-8 py-4 bg-kreoon-purple-500 text-white font-bold rounded-sm hover:bg-kreoon-purple-600 transition-all shadow-kreoon-glow-sm">
+                    <button className="mt-8 md:mt-12 flex items-center gap-2 px-6 py-3 md:px-8 md:py-4 bg-kreoon-purple-500 text-white font-bold rounded-sm hover:bg-kreoon-purple-600 transition-all shadow-kreoon-glow-sm">
                       {activeTab.cta}
                       <ChevronRight className="h-4 w-4" />
                     </button>

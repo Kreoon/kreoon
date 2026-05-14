@@ -10,22 +10,53 @@ const DNA_STEPS = [
   { id: 5, title: "Research Completo", icon: Brain, desc: "12 pasos de inteligencia pura." },
 ];
 
-export function AIEngineSection() {
+function AIEngineMobile() {
+  return (
+    <div className="flex flex-col gap-6 py-12 px-4">
+      <div className="flex justify-center mb-4">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-kreoon-purple-500/10 border border-kreoon-purple-500/30 shadow-kreoon-glow-sm">
+          <Brain className="h-10 w-10 text-kreoon-purple-400" />
+        </div>
+      </div>
+      {DNA_STEPS.map((step) => (
+        <motion.div
+          key={step.id}
+          initial={{ opacity: 0, x: -16 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-40px" }}
+          transition={{ duration: 0.4 }}
+          className="flex gap-4"
+        >
+          <div className="shrink-0 mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-kreoon-purple-500/10 border border-kreoon-purple-500/30">
+            <step.icon className="h-4 w-4 text-kreoon-purple-400" />
+          </div>
+          <div>
+            <p className="text-[10px] font-mono text-kreoon-purple-400 tracking-widest mb-1">
+              DNA_MODULE_0{step.id}
+            </p>
+            <h3 className="text-xl font-bold text-white">{step.title}</h3>
+            <p className="mt-1 text-sm text-kreoon-text-secondary">{step.desc}</p>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function AIEngineDesktop() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  // Animaciones de fondo
   const gridOpacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 0.1, 0.1, 0]);
   const brainScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.2, 0.8]);
 
   return (
     <div ref={containerRef} className="relative h-[300vh] bg-transparent">
       <div className="sticky top-0 flex h-screen w-full items-center justify-center overflow-hidden">
-        {/* Tech Grid Background */}
-        <motion.div 
+        <motion.div
           style={{ opacity: gridOpacity }}
           className="absolute inset-0 pointer-events-none"
         >
@@ -35,25 +66,19 @@ export function AIEngineSection() {
 
         <div className="container relative z-10 px-4">
           <div className="grid items-center gap-16 lg:grid-cols-2">
-            {/* Visual AI Core */}
             <div className="relative flex justify-center">
-              <motion.div 
+              <motion.div
                 style={{ scale: brainScale }}
                 className="relative h-[300px] w-[300px] md:h-[450px] md:w-[450px]"
               >
-                {/* AI Core Glow */}
                 <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/20 blur-[100px]" />
-                
-                {/* Interactive Layers */}
                 {DNA_STEPS.map((step, index) => {
-                  // Cada paso aparece en un punto diferente del scroll
                   const start = index * 0.15;
                   const end = start + 0.2;
                   // eslint-disable-next-line react-hooks/rules-of-hooks
                   const layerOpacity = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [0, 1, 1, 0]);
                   // eslint-disable-next-line react-hooks/rules-of-hooks
                   const layerRotate = useTransform(scrollYProgress, [start, end], [index * 30, index * 30 + 90]);
-
                   return (
                     <motion.div
                       key={step.id}
@@ -66,8 +91,6 @@ export function AIEngineSection() {
                     </motion.div>
                   );
                 })}
-
-                {/* Central Brain Icon */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <motion.div
                     animate={{ scale: [1, 1.1, 1] }}
@@ -80,7 +103,6 @@ export function AIEngineSection() {
               </motion.div>
             </div>
 
-            {/* Narrative Content */}
             <div className="flex flex-col justify-center">
               <div className="space-y-12">
                 {DNA_STEPS.map((step, index) => {
@@ -90,7 +112,6 @@ export function AIEngineSection() {
                   const textY = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [50, 0, 0, -50]);
                   // eslint-disable-next-line react-hooks/rules-of-hooks
                   const textOpacity = useTransform(scrollYProgress, [start, start + 0.1, end - 0.1, end], [0, 1, 1, 0]);
-
                   return (
                     <motion.div
                       key={step.id}
@@ -112,5 +133,18 @@ export function AIEngineSection() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function AIEngineSection() {
+  return (
+    <>
+      <div className="lg:hidden">
+        <AIEngineMobile />
+      </div>
+      <div className="hidden lg:block">
+        <AIEngineDesktop />
+      </div>
+    </>
   );
 }

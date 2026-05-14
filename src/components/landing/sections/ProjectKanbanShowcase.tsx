@@ -33,9 +33,9 @@ export function ProjectKanbanShowcase() {
   }, []);
 
   return (
-    <section className="relative bg-kreoon-bg-primary py-32 overflow-hidden">
+    <section className="relative bg-kreoon-bg-primary py-16 md:py-32 overflow-hidden">
       <div className="container relative z-10 px-4">
-        <div className="text-center mb-20">
+        <div className="text-center mb-10 md:mb-20">
           <h2 className="text-4xl font-bold text-white md:text-5xl mb-6">Gestión de Proyectos en Tiempo Real</h2>
           <p className="text-kreoon-text-secondary max-w-2xl mx-auto text-lg">
             Simulamos el flujo de trabajo de nuestra plataforma. Desde la idea hasta el contenido aprobado, 
