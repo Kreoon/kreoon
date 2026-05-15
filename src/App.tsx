@@ -440,11 +440,11 @@ function AppRoutes() {
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
         <Route path="/talent" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist', 'creative_strategist']}><MainLayout><UnifiedTalentPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/clients-hub" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist', 'creative_strategist']}><MainLayout><UnifiedClientsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/clients-hub" element={<Navigate to="/talent?tab=clientes" replace />} />
         <Route path="/creators" element={<Navigate to="/talent" replace />} />
-        <Route path="/clients" element={<Navigate to="/clients-hub" replace />} />
+        <Route path="/clients" element={<Navigate to="/talent?tab=clientes" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'digital_strategist', 'creative_strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
-        <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
+        <Route path="/team" element={<Navigate to="/talent?tab=sin-asignar" replace />} />
         {/* Streaming V2 - Unified Module */}
         <Route path="/streaming" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminOnlyFeature featureName="Streaming" description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."><StreamingHubPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
         <Route path="/streaming/studio/:sessionId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminOnlyFeature featureName="Estudio de Streaming"><StreamingStudioPage /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
@@ -472,7 +472,7 @@ function AppRoutes() {
         <Route path="/crm/email-marketing" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Organización */}
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
-        <Route path="/org-crm/contactos" element={<Navigate to="/clients-hub?tab=contactos" replace />} />
+        <Route path="/org-crm/contactos" element={<Navigate to="/talent?tab=clientes" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
         <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
         <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />

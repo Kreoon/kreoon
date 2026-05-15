@@ -51,6 +51,357 @@ function HealthBar({ score }: { score: number }) {
   );
 }
 
+/**
+ * Sección "Sin Asignar" extraída de Team.tsx para ser embebida en UnifiedTalentPage.
+ *
+ * Contiene:
+ * - Fetching de org members con roles = []
+ * - Health bar via useUsersWithHealth
+ * - Dialog de asignación de rol (add/replace) vía UnifiedRolePicker
+ * - UserCard simple: avatar + nombre + email + última actividad + health bar + botón Rol
+ *
+ * Toda la lógica de handlers está DENTRO de la función (no como props).
+ */
+export function SinAsignarSection() {
+  const { user, profile: authProfile } = useAuth();
+  const { toast } = useToast();
+  const { currentOrg } = useOrganizations();
+  const { data: healthData = [] } = useUsersWithHealth();
+
+  const [profiles, setProfiles] = useState<MemberProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('cards');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const [addRoleDialog, setAddRoleDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<MemberProfile | null>(null);
+  const [newRole, setNewRole] = useState<AppRole>('content_creator');
+  const [roleAction, setRoleAction] = useState<'add' | 'replace'>('replace');
+
+  const currentOrgId = authProfile?.current_organization_id || currentOrg?.id;
+
+  // Health map para O(1) lookup
+  const healthMap = useMemo(() => {
+    const m = new Map<string, UserWithHealth>();
+    healthData.forEach(u => m.set(u.id, u));
+    return m;
+  }, [healthData]);
+
+  useEffect(() => {
+    if (currentOrgId) fetchData();
+  }, [currentOrgId]);
+
+  const fetchData = async () => {
+    if (!currentOrgId) { setLoading(false); return; }
+    try {
+      const { data: membersData } = await supabase
+        .from('organization_members')
+        .select('user_id, is_owner, role')
+        .eq('organization_id', currentOrgId);
+
+      const memberUserIds = membersData?.map(m => m.user_id) || [];
+      if (memberUserIds.length === 0) { setProfiles([]); setLoading(false); return; }
+
+      const { data: memberRolesData } = await supabase
+        .from('organization_member_roles')
+        .select('user_id, role')
+        .eq('organization_id', currentOrgId);
+
+      const rolesByUser = new Map<string, AppRole[]>();
+      (memberRolesData || []).forEach(mr => {
+        const existing = rolesByUser.get(mr.user_id) || [];
+        existing.push(mr.role as AppRole);
+        rolesByUser.set(mr.user_id, existing);
+      });
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', memberUserIds)
+        .order('full_name', { ascending: true });
+
+      const combined = (profilesData || []).map(profile => {
+        const member = membersData?.find(m => m.user_id === profile.id);
+        return {
+          ...profile,
+          roles: rolesByUser.get(profile.id) || [],
+          isOrgMember: true,
+          isOwner: member?.is_owner || false,
+        };
+      });
+      setProfiles(combined as MemberProfile[]);
+    } catch (error) {
+      console.error('Error fetching team data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddRole = async () => {
+    if (!selectedUser || !currentOrgId) return;
+    try {
+      if (roleAction === 'replace') {
+        await supabase.from('organization_member_roles').delete()
+          .eq('user_id', selectedUser.id).eq('organization_id', currentOrgId);
+      }
+      const { error } = await supabase.from('organization_member_roles').upsert({
+        organization_id: currentOrgId, user_id: selectedUser.id,
+        role: newRole, assigned_by: user?.id,
+      }, { onConflict: 'organization_id,user_id,role' });
+      if (error) throw error;
+      await supabase.from('organization_members').update({ role: newRole })
+        .eq('user_id', selectedUser.id).eq('organization_id', currentOrgId);
+      toast({ description: `Rol ${roleAction === 'replace' ? 'actualizado' : 'agregado'} a ${selectedUser.full_name}` });
+      setAddRoleDialog(false);
+      fetchData();
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo gestionar el rol', variant: 'destructive' });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!currentOrgId) {
+    return (
+      <div className="p-4 md:p-6">
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+            <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Sin organización seleccionada</h3>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Filtro de búsqueda
+  const filtered = searchTerm
+    ? profiles.filter(p =>
+        p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : profiles;
+
+  // Solo los que no tienen roles
+  const noRole = filtered.filter(p => p.roles.length === 0);
+
+  // Stats de la vista
+  const activeCount = noRole.filter(p => {
+    const h = healthMap.get(p.id);
+    return h && h.health_score >= 70;
+  }).length;
+  const atRisk = noRole.filter(p => {
+    const h = healthMap.get(p.id);
+    return h && h.health_score < 40;
+  }).length;
+
+  // ---- Componente UserCard (vista cards) ----
+  const UserCard = ({ profile }: { profile: MemberProfile }) => {
+    const health = healthMap.get(profile.id);
+    const lastLogin = health?.last_login_at
+      ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
+      : null;
+    return (
+      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarImage src={profile.avatar_url || ''} />
+            <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-medium truncate">{profile.full_name || '(sin nombre)'}</p>
+              {profile.is_ambassador && <AmbassadorBadge size="sm" variant="default" />}
+            </div>
+            <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+            {lastLogin && (
+              <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 mt-0.5">
+                <Clock className="w-3 h-3" /> {lastLogin}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+          {health && <HealthBar score={health.health_score} />}
+          <Badge variant="outline" className="text-muted-foreground text-xs">Sin rol</Badge>
+          <Button variant="outline" size="sm" className="gap-1 h-7 text-xs"
+            onClick={() => { setSelectedUser(profile); setAddRoleDialog(true); }}>
+            <Plus className="w-3 h-3" /> Rol
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // ---- Componente UserRow (vista tabla) ----
+  const UserRow = ({ profile }: { profile: MemberProfile }) => {
+    const health = healthMap.get(profile.id);
+    const lastLogin = health?.last_login_at
+      ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
+      : '—';
+    return (
+      <TableRow>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-7 w-7">
+              <AvatarImage src={profile.avatar_url || ''} />
+              <AvatarFallback><User className="w-3 h-3" /></AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium leading-none">{profile.full_name || '(sin nombre)'}</p>
+              <p className="text-xs text-muted-foreground">{profile.email}</p>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <Badge variant="outline" className="text-xs">Sin rol</Badge>
+        </TableCell>
+        <TableCell>
+          {health ? <HealthBar score={health.health_score} /> : <span className="text-xs text-muted-foreground">—</span>}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{lastLogin}</TableCell>
+        <TableCell className="text-xs text-muted-foreground text-right">
+          {health?.total_actions ?? '—'}
+        </TableCell>
+        <TableCell>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1"
+            onClick={() => { setSelectedUser(profile); setAddRoleDialog(true); }}>
+            <Plus className="w-3 h-3" /> Rol
+          </Button>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  return (
+    <div className="p-4 md:p-6 space-y-6">
+      <PageHeader
+        icon={Swords}
+        title="Gestión de Equipo"
+        subtitle={`${noRole.length} sin asignar · ${activeCount} activos · ${atRisk} en riesgo`}
+        action={<ViewModeToggle value={viewMode} onChange={setViewMode} />}
+      />
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-yellow-500/20 flex items-center justify-center">
+              <Activity className="h-4 w-4 text-yellow-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{noRole.length}</p>
+              <p className="text-xs text-muted-foreground">Sin asignar</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-green-500/20 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{activeCount}</p>
+              <p className="text-xs text-muted-foreground">Activos (salud &ge;70)</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-red-500/20 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+            </div>
+            <div>
+              <p className="text-xl font-bold">{atRisk}</p>
+              <p className="text-xs text-muted-foreground">En riesgo (salud &lt;40)</p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar por nombre o email..." value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+      </div>
+
+      {/* Lista de miembros sin rol */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="w-4 h-4 text-muted-foreground" />
+            Sin Asignar ({noRole.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {noRole.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8 text-sm">
+              {searchTerm ? 'No se encontraron miembros sin rol' : 'Todos los miembros tienen rol asignado'}
+            </p>
+          ) : viewMode === 'table' ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Usuario</TableHead>
+                  <TableHead>Rol</TableHead>
+                  <TableHead>Salud</TableHead>
+                  <TableHead>Última actividad</TableHead>
+                  <TableHead className="text-right">Acciones totales</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {noRole.map(p => <UserRow key={p.id} profile={p} />)}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="space-y-2">
+              {noRole.map(p => <UserCard key={p.id} profile={p} />)}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Role Management Dialog */}
+      <Dialog open={addRoleDialog} onOpenChange={setAddRoleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Asignar rol a {selectedUser?.full_name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button size="sm" variant={roleAction === 'replace' ? 'default' : 'outline'}
+                onClick={() => setRoleAction('replace')}>Reemplazar</Button>
+              <Button size="sm" variant={roleAction === 'add' ? 'default' : 'outline'}
+                onClick={() => setRoleAction('add')}>Agregar</Button>
+            </div>
+            <UnifiedRolePicker value={newRole}
+              onChange={v => setNewRole((Array.isArray(v) ? v[0] : v) as AppRole)} />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddRoleDialog(false)}>Cancelar</Button>
+            <Button onClick={handleAddRole}>Guardar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/**
+ * Default export de Team.tsx — versión completa de gestión de equipo.
+ * La ruta /team en App.tsx redirige a /talent?tab=sin-asignar,
+ * por lo que este componente solo se activa si se navega directamente.
+ */
 export default function Team() {
   const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
@@ -213,7 +564,6 @@ export default function Team() {
   const clients    = filtered.filter(p => p.roles.some(r => getPermissionGroup(r) === 'client'));
 
   // Stats
-  const totalTalent = admins.length + creators.length + editors.length + digital.length + creative.length + community.length;
   const activeCount = filtered.filter(p => {
     const h = healthMap.get(p.id);
     return h && h.health_score >= 70;
@@ -422,7 +772,7 @@ export default function Team() {
             <div className="w-9 h-9 rounded-sm bg-green-500/20 flex items-center justify-center">
               <CheckCircle2 className="h-4 w-4 text-green-400" />
             </div>
-            <div><p className="text-xl font-bold">{activeCount}</p><p className="text-xs text-muted-foreground">Activos (salud ≥70)</p></div>
+            <div><p className="text-xl font-bold">{activeCount}</p><p className="text-xs text-muted-foreground">Activos (salud &ge;70)</p></div>
           </div>
         </Card>
         <Card className="p-4">
@@ -480,14 +830,14 @@ export default function Team() {
         </TabsList>
 
         {[
-          { key: 'no-role',   label: 'Sin Asignar',          list: noRole,   icon: User,       color: 'text-muted-foreground' },
-          { key: 'admins',    label: 'Administradores',       list: admins,   icon: Shield,     color: 'text-purple-500' },
-          { key: 'creators',  label: 'Creadores de Contenido', list: creators, icon: Camera,    color: 'text-pink-500' },
-          { key: 'editors',   label: 'Editores',              list: editors,  icon: Film,       color: 'text-blue-500' },
-          { key: 'digital',   label: 'Estrategas Digitales',  list: digital,  icon: TrendingUp, color: 'text-green-500' },
-          { key: 'creative',  label: 'Estrategas Creativos',  list: creative, icon: Palette,    color: 'text-orange-500' },
-          { key: 'community', label: 'Community Managers',    list: community,icon: Users,      color: 'text-teal-500' },
-          { key: 'clients',   label: 'Clientes / Marcas',     list: clients,  icon: Building2,  color: 'text-amber-500' },
+          { key: 'no-role',   label: 'Sin Asignar',            list: noRole,   icon: User,       color: 'text-muted-foreground' },
+          { key: 'admins',    label: 'Administradores',         list: admins,   icon: Shield,     color: 'text-purple-500' },
+          { key: 'creators',  label: 'Creadores de Contenido',  list: creators, icon: Camera,     color: 'text-pink-500' },
+          { key: 'editors',   label: 'Editores',                list: editors,  icon: Film,       color: 'text-blue-500' },
+          { key: 'digital',   label: 'Estrategas Digitales',    list: digital,  icon: TrendingUp, color: 'text-green-500' },
+          { key: 'creative',  label: 'Estrategas Creativos',    list: creative, icon: Palette,    color: 'text-orange-500' },
+          { key: 'community', label: 'Community Managers',      list: community,icon: Users,      color: 'text-teal-500' },
+          { key: 'clients',   label: 'Clientes / Marcas',       list: clients,  icon: Building2,  color: 'text-amber-500' },
         ].map(({ key, label, list, icon: Icon, color }) => (
           <TabsContent key={key} value={key} className="mt-4">
             <Card>

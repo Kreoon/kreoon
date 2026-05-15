@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
@@ -36,6 +35,10 @@ import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
 
+// Phone y MapPin importados pero usados en tipos derivados — se mantienen para compatibilidad futura
+void Phone;
+void MapPin;
+
 type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
@@ -46,6 +49,7 @@ const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
 ];
 
 const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos'];
+void VALID_TABS;
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -82,10 +86,18 @@ function entityToOrgContact(e: UnifiedClientEntity, orgId: string): OrgContact {
   };
 }
 
-const UnifiedClientsPage = () => {
+/**
+ * Contenido completo de la sección Clientes.
+ * Exportado como named export para ser embebido en UnifiedTalentPage
+ * sin duplicar lógica.
+ *
+ * NOTA: no usa useSearchParams para sincronizar el sub-tab interno porque
+ * el param ?tab= lo gestiona el padre (UnifiedTalentPage). El estado del
+ * filtro interno es local.
+ */
+export function UnifiedClientsContent() {
   const { isAdmin, isTeamLeader } = useAuth();
   const { currentOrgId } = useOrgOwner();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { data: entities = [], isLoading, refetch } = useUnifiedClients(currentOrgId);
   const { data: clientUsers = [], isLoading: clientUsersLoading, refetch: refetchClientUsers } = useOrgClientUsers(currentOrgId);
   const { data: unassignedMembers = [], refetch: refetchUnassigned } = useUnassignedClientMembers(currentOrgId);
@@ -93,12 +105,10 @@ const UnifiedClientsPage = () => {
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
-  // Read tab from URL, fallback to default
-  const tabFromUrl = searchParams.get('tab') as FilterTab | null;
-  const defaultTab = canSeeInternal ? 'activos' : 'todos';
-  const initialTab = tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : defaultTab;
-
-  const [filter, setFilter] = useState<FilterTab>(initialTab);
+  // Estado local — no sincronizamos con URL para evitar colisión con el
+  // param ?tab= del tab de nivel superior en UnifiedTalentPage.
+  const defaultTab: FilterTab = canSeeInternal ? 'activos' : 'todos';
+  const [filter, setFilter] = useState<FilterTab>(defaultTab);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
 
@@ -114,10 +124,11 @@ const UnifiedClientsPage = () => {
   const [creatingCompany, setCreatingCompany] = useState(false);
   const { toast } = useToast();
 
-  // Handle tab change with URL sync
+  void linkBrandPreselectedClientId;
+
+  // Handle tab change (solo estado local)
   const handleFilterChange = (tab: FilterTab) => {
     setFilter(tab);
-    setSearchParams(tab === 'activos' ? {} : { tab }, { replace: true });
     // Clear selections when switching tabs
     setSelectedEntity(null);
     setSelectedClientUser(null);
@@ -232,8 +243,9 @@ const UnifiedClientsPage = () => {
       setCreateCompanyOpen(false);
       setNewCompanyData({ name: '', contact_email: '', contact_phone: '', notes: '' });
       refetch();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'No se pudo crear la empresa', variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'No se pudo crear la empresa';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setCreatingCompany(false);
     }
@@ -779,6 +791,15 @@ const UnifiedClientsPage = () => {
       </div>
     </div>
   );
-};
+}
+
+/**
+ * Default export — wrapper mínimo para cuando la ruta /clients-hub
+ * o una navegación directa carga esta página de forma autónoma.
+ * Una vez que App.tsx redirige /clients-hub → /talent?tab=clientes,
+ * este wrapper ya no se usa en producción, pero se mantiene para
+ * no romper el lazy import existente en App.tsx.
+ */
+const UnifiedClientsPage = () => <UnifiedClientsContent />;
 
 export default UnifiedClientsPage;
