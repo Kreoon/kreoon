@@ -15,12 +15,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Profile, UserRole, AppRole } from '@/types/database';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
-import { 
-  Plus, 
-  User, 
-  Users, 
-  Shield, 
-  Star,
+import {
+  Plus,
+  User,
+  Users,
+  Shield,
+  Camera,
+  Film,
+  TrendingUp,
+  Palette,
   Loader2,
   Send,
   UserPlus,
@@ -278,17 +281,27 @@ export default function Team() {
     );
   }
 
-  // Excluir usuarios cuyo grupo sea 'client' del equipo (se gestionan en /clients)
+  // Excluir clientes del equipo (se gestionan en /clients-hub)
   const teamProfiles = profiles.filter(p =>
     !p.roles.some(r => getPermissionGroup(r) === 'client')
   );
 
-  const noRole = teamProfiles.filter(p => p.roles.length === 0);
-  const admins = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'admin'));
-  const teamLeaders = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'team_leader'));
-  const strategists = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'strategist'));
-  const creators = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'creator'));
-  const editors = teamProfiles.filter(p => p.roles.some(r => getPermissionGroup(r) === 'editor'));
+  // Filtro de búsqueda aplicado
+  const filteredTeam = searchTerm
+    ? teamProfiles.filter(p =>
+        p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : teamProfiles;
+
+  // Agrupaciones por los 7 roles base
+  const noRole = filteredTeam.filter(p => p.roles.length === 0);
+  const admins = filteredTeam.filter(p => p.roles.some(r => getPermissionGroup(r) === 'admin'));
+  const creators = filteredTeam.filter(p => p.roles.some(r => ['content_creator', 'creator'].includes(r)));
+  const editors = filteredTeam.filter(p => p.roles.some(r => r === 'editor' || r === 'video_editor'));
+  const digitalStrategists = filteredTeam.filter(p => p.roles.some(r => ['digital_strategist', 'strategist', 'trafficker'].includes(r)));
+  const creativeStrategists = filteredTeam.filter(p => p.roles.some(r => r === 'creative_strategist'));
+  const communityManagers = filteredTeam.filter(p => p.roles.some(r => r === 'community_manager'));
 
   // Reusable user card component
   const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
@@ -365,7 +378,7 @@ export default function Team() {
       <PageHeader
         icon={Swords}
         title={currentOrg?.name ? `Kreoon Team • ${currentOrg.name}` : "Kreoon Team"}
-        subtitle={`Gestión inteligente de equipo (${teamProfiles.length} miembros)`}
+        subtitle={`Gestión inteligente de equipo (${teamProfiles.length} miembros · ${noRole.length} sin asignar)`}
         action={
           <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
             <DialogTrigger asChild>
@@ -439,15 +452,11 @@ export default function Team() {
         <TabsList className="flex flex-wrap h-auto gap-1">
           <TabsTrigger value="no-role" className="gap-2">
             <User className="w-4 h-4" />
-            Sin Rol ({noRole.length})
+            Sin Asignar ({noRole.length})
           </TabsTrigger>
           <TabsTrigger value="admins" className="gap-2">
             <Shield className="w-4 h-4" />
             Admins ({admins.length})
-          </TabsTrigger>
-          <TabsTrigger value="strategists" className="gap-2">
-            <Users className="w-4 h-4" />
-            Estrategas ({strategists.length})
           </TabsTrigger>
           <TabsTrigger value="creators" className="gap-2">
             <User className="w-4 h-4" />
@@ -457,19 +466,27 @@ export default function Team() {
             <User className="w-4 h-4" />
             Editores ({editors.length})
           </TabsTrigger>
-          <TabsTrigger value="team_leaders" className="gap-2">
-            <Star className="w-4 h-4" />
-            Líderes ({teamLeaders.length})
+          <TabsTrigger value="digital" className="gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Estrategas ({digitalStrategists.length})
+          </TabsTrigger>
+          <TabsTrigger value="creative" className="gap-2">
+            <Palette className="w-4 h-4" />
+            Creativos ({creativeStrategists.length})
+          </TabsTrigger>
+          <TabsTrigger value="community" className="gap-2">
+            <Users className="w-4 h-4" />
+            Community ({communityManagers.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* Sin Rol Tab */}
+        {/* Sin Asignar Tab */}
         <TabsContent value="no-role" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5 text-muted-foreground" />
-                Usuarios Sin Rol ({noRole.length})
+                Sin Asignar ({noRole.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -499,114 +516,115 @@ export default function Team() {
             </CardHeader>
             <CardContent>
               {admins.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay administradores registrados
-                </p>
+                <p className="text-muted-foreground text-center py-8">No hay administradores registrados</p>
               ) : (
                 <div className="space-y-3">
-                  {admins.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
+                  {admins.map(profile => <UserCard key={profile.id} profile={profile} />)}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Strategists Tab */}
-        <TabsContent value="strategists" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-orange-500" />
-                Estrategas ({strategists.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {strategists.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay estrategas registrados
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {strategists.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Creators Tab */}
+        {/* Creadores Tab */}
         <TabsContent value="creators" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-primary" />
-                Creadores ({creators.length})
+                <Camera className="w-5 h-5 text-pink-500" />
+                Creadores de Contenido ({creators.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {creators.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay creadores registrados
-                </p>
+                <p className="text-muted-foreground text-center py-8">No hay creadores registrados</p>
               ) : (
                 <div className="space-y-3">
-                  {creators.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
+                  {creators.map(profile => <UserCard key={profile.id} profile={profile} />)}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Editors Tab */}
+        {/* Editores Tab */}
         <TabsContent value="editors" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-purple-500" />
+                <Film className="w-5 h-5 text-blue-500" />
                 Editores ({editors.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {editors.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay editores registrados
-                </p>
+                <p className="text-muted-foreground text-center py-8">No hay editores registrados</p>
               ) : (
                 <div className="space-y-3">
-                  {editors.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
+                  {editors.map(profile => <UserCard key={profile.id} profile={profile} />)}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Team Leaders Tab */}
-        <TabsContent value="team_leaders" className="mt-6">
+        {/* Estrategas Digitales Tab */}
+        <TabsContent value="digital" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-indigo-500" />
-                Líderes de Equipo ({teamLeaders.length})
+                <TrendingUp className="w-5 h-5 text-green-500" />
+                Estrategas Digitales ({digitalStrategists.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {teamLeaders.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No hay líderes de equipo registrados
-                </p>
+              {digitalStrategists.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No hay estrategas digitales registrados</p>
               ) : (
                 <div className="space-y-3">
-                  {teamLeaders.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
+                  {digitalStrategists.map(profile => <UserCard key={profile.id} profile={profile} />)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Estrategas Creativos Tab */}
+        <TabsContent value="creative" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5 text-orange-500" />
+                Estrategas Creativos ({creativeStrategists.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {creativeStrategists.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No hay estrategas creativos registrados</p>
+              ) : (
+                <div className="space-y-3">
+                  {creativeStrategists.map(profile => <UserCard key={profile.id} profile={profile} />)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Community Managers Tab */}
+        <TabsContent value="community" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-teal-500" />
+                Community Managers ({communityManagers.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {communityManagers.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No hay community managers registrados</p>
+              ) : (
+                <div className="space-y-3">
+                  {communityManagers.map(profile => <UserCard key={profile.id} profile={profile} />)}
                 </div>
               )}
             </CardContent>
