@@ -444,7 +444,7 @@ function AppRoutes() {
         <Route path="/creators" element={<Navigate to="/talent" replace />} />
         <Route path="/clients" element={<Navigate to="/clients-hub" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
-        <Route path="/team" element={<Navigate to="/talent" replace />} />
+        <Route path="/team" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><Team /></MainLayout></ProtectedRoute>} />
         {/* Streaming V2 - Unified Module (Admin Only - En Construcción para otros) */}
         <Route path="/streaming" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Streaming" description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."><StreamingHubPage /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         <Route path="/streaming/studio/:sessionId" element={<RootOnlyRoute><ProtectedRoute allowNoRoles><MainLayout><AdminOnlyFeature featureName="Estudio de Streaming"><StreamingStudioPage /></AdminOnlyFeature></MainLayout></ProtectedRoute></RootOnlyRoute>} />

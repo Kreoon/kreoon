@@ -1,102 +1,106 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { useTrialGuard } from '@/hooks/useTrialGuard';
+import { useUsersWithHealth } from '@/hooks/useCrm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { Profile, UserRole, AppRole } from '@/types/database';
-import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import {
-  Plus,
-  User,
-  Users,
-  Shield,
-  Camera,
-  Film,
-  TrendingUp,
-  Palette,
-  Loader2,
-  Send,
-  UserPlus,
-  Search,
-  Swords,
-  Building2
-} from 'lucide-react';
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogTrigger, DialogFooter,
+} from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import { Profile, AppRole } from '@/types/database';
+import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { PageHeader } from '@/components/layout/PageHeader';
-
+import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { getRoleLabel, getRoleBadgeColor } from '@/lib/roles';
 import { getPermissionGroup } from '@/lib/permissionGroups';
 import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import {
+  Plus, User, Users, Shield, Camera, Film, TrendingUp, Palette,
+  Loader2, Send, UserPlus, Search, Swords, Building2, Activity,
+  Clock, AlertTriangle, CheckCircle2,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { UserWithHealth } from '@/services/crm/platformCrmService';
+
+type MemberProfile = Profile & { roles: AppRole[]; isOrgMember: boolean; isOwner?: boolean };
+
+function HealthBar({ score }: { score: number }) {
+  const color = score >= 70 ? 'bg-green-500' : score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
+  const text = score >= 70 ? 'text-green-400' : score >= 40 ? 'text-yellow-400' : 'text-red-400';
+  return (
+    <div className="flex items-center gap-2 min-w-[80px]">
+      <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+        <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(score, 100)}%` }} />
+      </div>
+      <span className={cn('text-xs font-medium tabular-nums', text)}>{score}</span>
+    </div>
+  );
+}
 
 export default function Team() {
   const { user, profile: authProfile } = useAuth();
   const { toast } = useToast();
   const { currentOrg } = useOrganizations();
   const { guardAction, isReadOnly } = useTrialGuard();
-  
-  const [profiles, setProfiles] = useState<(Profile & { roles: AppRole[]; isOrgMember: boolean })[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  const [addRoleDialog, setAddRoleDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<(Profile & { roles: AppRole[] }) | null>(null);
-  const [newRole, setNewRole] = useState<AppRole>('creator');
-  const [roleAction, setRoleAction] = useState<'add' | 'replace'>('replace'); // Default to replace
+  const { data: healthData = [] } = useUsersWithHealth();
 
-  // Invitation state
-  const [inviteDialog, setInviteDialog] = useState(false);
-  const [inviteData, setInviteData] = useState({
-    email: '',
-    role: 'creator' as AppRole
-  });
-  const [sendingInvite, setSendingInvite] = useState(false);
+  const [profiles, setProfiles] = useState<MemberProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Get current organization from profile or localStorage
+  const [addRoleDialog, setAddRoleDialog] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<MemberProfile | null>(null);
+  const [newRole, setNewRole] = useState<AppRole>('content_creator');
+  const [roleAction, setRoleAction] = useState<'add' | 'replace'>('replace');
+
+  const [inviteDialog, setInviteDialog] = useState(false);
+  const [inviteData, setInviteData] = useState({ email: '', role: 'content_creator' as AppRole });
+  const [sendingInvite, setSendingInvite] = useState(false);
+
   const currentOrgId = authProfile?.current_organization_id || currentOrg?.id;
 
+  // Health map for O(1) lookup
+  const healthMap = useMemo(() => {
+    const m = new Map<string, UserWithHealth>();
+    healthData.forEach(u => m.set(u.id, u));
+    return m;
+  }, [healthData]);
+
   useEffect(() => {
-    if (currentOrgId) {
-      fetchData();
-    }
+    if (currentOrgId) fetchData();
   }, [currentOrgId]);
 
   const fetchData = async () => {
-    if (!currentOrgId) {
-      setLoading(false);
-      return;
-    }
-
+    if (!currentOrgId) { setLoading(false); return; }
     try {
-      // Fetch organization members
       const { data: membersData } = await supabase
         .from('organization_members')
-        .select('user_id, is_owner')
+        .select('user_id, is_owner, role')
         .eq('organization_id', currentOrgId);
 
       const memberUserIds = membersData?.map(m => m.user_id) || [];
+      if (memberUserIds.length === 0) { setProfiles([]); setLoading(false); return; }
 
-      if (memberUserIds.length === 0) {
-        setProfiles([]);
-        setLoading(false);
-        return;
-      }
-
-      // Fetch multiple roles from the new organization_member_roles table
       const { data: memberRolesData } = await supabase
         .from('organization_member_roles')
         .select('user_id, role')
         .eq('organization_id', currentOrgId);
 
-      // Group roles by user_id
       const rolesByUser = new Map<string, AppRole[]>();
       (memberRolesData || []).forEach(mr => {
         const existing = rolesByUser.get(mr.user_id) || [];
@@ -104,29 +108,24 @@ export default function Team() {
         rolesByUser.set(mr.user_id, existing);
       });
 
-      // Fetch profiles only for organization members
       const { data: profilesData } = await supabase
         .from('profiles')
         .select('*')
         .in('id', memberUserIds)
-        .order('created_at', { ascending: false });
+        .order('full_name', { ascending: true });
 
-      // Combine profiles with roles from organization_member_roles
-      const profilesWithRoles = (profilesData || []).map(profile => {
+      const combined = (profilesData || []).map(profile => {
         const member = membersData?.find(m => m.user_id === profile.id);
-        const userRoles = rolesByUser.get(profile.id) || [];
         return {
           ...profile,
-          roles: userRoles,
+          roles: rolesByUser.get(profile.id) || [],
           isOrgMember: true,
-          isOwner: member?.is_owner || false
+          isOwner: member?.is_owner || false,
         };
       });
-
-      setProfiles(profilesWithRoles as (Profile & { roles: AppRole[]; isOrgMember: boolean })[]); 
-
+      setProfiles(combined as MemberProfile[]);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching team data:', error);
     } finally {
       setLoading(false);
     }
@@ -134,140 +133,54 @@ export default function Team() {
 
   const handleAddRole = async () => {
     if (!selectedUser || !currentOrgId) return;
-
     try {
       if (roleAction === 'replace') {
-        // Delete all existing roles for this user in this org
-        await supabase
-          .from('organization_member_roles')
-          .delete()
-          .eq('user_id', selectedUser.id)
-          .eq('organization_id', currentOrgId);
+        await supabase.from('organization_member_roles').delete()
+          .eq('user_id', selectedUser.id).eq('organization_id', currentOrgId);
       }
-
-      // Insert the new role (upsert to handle duplicates)
-      const { error } = await supabase
-        .from('organization_member_roles')
-        .upsert({
-          organization_id: currentOrgId,
-          user_id: selectedUser.id,
-          role: newRole,
-          assigned_by: user?.id
-        }, { onConflict: 'organization_id,user_id,role' });
-
+      const { error } = await supabase.from('organization_member_roles').upsert({
+        organization_id: currentOrgId, user_id: selectedUser.id,
+        role: newRole, assigned_by: user?.id,
+      }, { onConflict: 'organization_id,user_id,role' });
       if (error) throw error;
-
-      // Also update the main role in organization_members for backward compatibility
-      await supabase
-        .from('organization_members')
-        .update({ role: newRole })
-        .eq('user_id', selectedUser.id)
-        .eq('organization_id', currentOrgId);
-
-      toast({
-        title: roleAction === 'replace' ? 'Rol actualizado' : 'Rol agregado',
-        description: roleAction === 'replace' 
-          ? `Se cambió el rol de ${selectedUser.full_name} a ${getRoleLabel(newRole)}`
-          : `Se agregó el rol ${getRoleLabel(newRole)} a ${selectedUser.full_name}`
-      });
+      await supabase.from('organization_members').update({ role: newRole })
+        .eq('user_id', selectedUser.id).eq('organization_id', currentOrgId);
+      toast({ description: `Rol ${roleAction === 'replace' ? 'actualizado' : 'agregado'} a ${selectedUser.full_name}` });
       setAddRoleDialog(false);
       fetchData();
-    } catch (error) {
-      console.error('Error managing role:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo gestionar el rol',
-        variant: 'destructive'
-      });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo gestionar el rol', variant: 'destructive' });
     }
   };
 
   const handleRemoveRole = async (userId: string, role: AppRole) => {
     if (!currentOrgId) return;
-    
     try {
-      // Remove the specific role from organization_member_roles
-      const { error } = await supabase
-        .from('organization_member_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('organization_id', currentOrgId)
-        .eq('role', role);
-
-      if (error) throw error;
-
-      // Check if user has any remaining roles
-      const { data: remainingRoles } = await supabase
-        .from('organization_member_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('organization_id', currentOrgId)
-        .limit(1);
-
-      // Update the main role in organization_members for backward compatibility
-      if (remainingRoles && remainingRoles.length > 0) {
-        await supabase
-          .from('organization_members')
-          .update({ role: remainingRoles[0].role })
-          .eq('user_id', userId)
-          .eq('organization_id', currentOrgId);
-      }
-
-      toast({
-        title: 'Rol eliminado',
-        description: `Se eliminó el rol ${getRoleLabel(role)}`
-      });
+      await supabase.from('organization_member_roles').delete()
+        .eq('user_id', userId).eq('organization_id', currentOrgId).eq('role', role);
+      toast({ description: `Rol ${getRoleLabel(role)} eliminado` });
       fetchData();
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo eliminar el rol',
-        variant: 'destructive'
-      });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo eliminar el rol', variant: 'destructive' });
     }
   };
 
-
   const handleSendInvitation = async () => {
-    // Check trial status before inviting
-    if (isReadOnly) {
-      guardAction(() => {});
-      return;
-    }
-    
+    if (isReadOnly) { guardAction(() => {}); return; }
     if (!inviteData.email) {
-      toast({
-        title: 'Error',
-        description: 'El email es requerido',
-        variant: 'destructive'
-      });
-      return;
+      toast({ title: 'Error', description: 'El email es requerido', variant: 'destructive' }); return;
     }
-
     setSendingInvite(true);
     try {
       const response = await supabase.functions.invoke('send-invitation', {
-        body: {
-          email: inviteData.email,
-          role: inviteData.role,
-          inviter_name: user?.email || 'Admin'
-        }
+        body: { email: inviteData.email, role: inviteData.role, inviter_name: user?.email || 'Admin' },
       });
-
       if (response.error) throw response.error;
-
-      toast({
-        title: 'Invitación enviada',
-        description: `Se envió la invitación a ${inviteData.email}`
-      });
+      toast({ description: `Invitación enviada a ${inviteData.email}` });
       setInviteDialog(false);
-      setInviteData({ email: '', role: 'creator' });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo enviar la invitación. Verifica la configuración de email.',
-        variant: 'destructive'
-      });
+      setInviteData({ email: '', role: 'content_creator' });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo enviar la invitación', variant: 'destructive' });
     } finally {
       setSendingInvite(false);
     }
@@ -281,91 +194,168 @@ export default function Team() {
     );
   }
 
-  // Excluir clientes del equipo (se gestionan en /clients-hub)
-  const teamProfiles = profiles.filter(p =>
-    !p.roles.some(r => getPermissionGroup(r) === 'client')
-  );
-
-  // Filtro de búsqueda aplicado
-  const filteredTeam = searchTerm
-    ? teamProfiles.filter(p =>
+  // Filtro de búsqueda
+  const filtered = searchTerm
+    ? profiles.filter(p =>
         p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.email?.toLowerCase().includes(searchTerm.toLowerCase())
       )
-    : teamProfiles;
+    : profiles;
 
   // Agrupaciones por los 7 roles base
-  const noRole = filteredTeam.filter(p => p.roles.length === 0);
-  const admins = filteredTeam.filter(p => p.roles.some(r => getPermissionGroup(r) === 'admin'));
-  const creators = filteredTeam.filter(p => p.roles.some(r => ['content_creator', 'creator'].includes(r)));
-  const editors = filteredTeam.filter(p => p.roles.some(r => r === 'editor' || r === 'video_editor'));
-  const digitalStrategists = filteredTeam.filter(p => p.roles.some(r => ['digital_strategist', 'strategist', 'trafficker'].includes(r)));
-  const creativeStrategists = filteredTeam.filter(p => p.roles.some(r => r === 'creative_strategist'));
-  const communityManagers = filteredTeam.filter(p => p.roles.some(r => r === 'community_manager'));
+  const noRole     = filtered.filter(p => p.roles.length === 0);
+  const admins     = filtered.filter(p => p.roles.some(r => getPermissionGroup(r) === 'admin'));
+  const creators   = filtered.filter(p => p.roles.some(r => ['content_creator', 'creator'].includes(r)));
+  const editors    = filtered.filter(p => p.roles.some(r => ['editor', 'video_editor'].includes(r)));
+  const digital    = filtered.filter(p => p.roles.some(r => ['digital_strategist', 'strategist', 'trafficker'].includes(r)));
+  const creative   = filtered.filter(p => p.roles.some(r => r === 'creative_strategist'));
+  const community  = filtered.filter(p => p.roles.some(r => r === 'community_manager'));
+  const clients    = filtered.filter(p => p.roles.some(r => getPermissionGroup(r) === 'client'));
 
-  // Reusable user card component
-  const UserCard = ({ profile, showAddRole = true }: { profile: Profile & { roles: AppRole[] }, showAddRole?: boolean }) => (
-    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50">
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={profile.avatar_url || ''} />
-          <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-medium">{profile.full_name}</p>
-            {profile.is_ambassador && (
-              <AmbassadorBadge size="sm" variant="default" />
+  // Stats
+  const totalTalent = admins.length + creators.length + editors.length + digital.length + creative.length + community.length;
+  const activeCount = filtered.filter(p => {
+    const h = healthMap.get(p.id);
+    return h && h.health_score >= 70;
+  }).length;
+  const atRisk = filtered.filter(p => {
+    const h = healthMap.get(p.id);
+    return h && h.health_score < 40;
+  }).length;
+
+  // ---- Componente UserCard (vista cards) ----
+  const UserCard = ({ profile }: { profile: MemberProfile }) => {
+    const health = healthMap.get(profile.id);
+    const lastLogin = health?.last_login_at
+      ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
+      : null;
+    return (
+      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className="h-10 w-10 shrink-0">
+            <AvatarImage src={profile.avatar_url || ''} />
+            <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-medium truncate">{profile.full_name || '(sin nombre)'}</p>
+              {profile.is_ambassador && <AmbassadorBadge size="sm" variant="default" />}
+            </div>
+            <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+            {lastLogin && (
+              <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1 mt-0.5">
+                <Clock className="w-3 h-3" /> {lastLogin}
+              </p>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{profile.email}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
+          {health && <HealthBar score={health.health_score} />}
+          {profile.roles.length === 0 ? (
+            <Badge variant="outline" className="text-muted-foreground text-xs">Sin rol</Badge>
+          ) : (
+            profile.roles.map(role => (
+              <Badge key={role} className={cn(getRoleBadgeColor(role), 'cursor-pointer text-xs hover:opacity-75')}
+                onClick={() => handleRemoveRole(profile.id, role)} title="Clic para eliminar rol">
+                {getRoleLabel(role)} ×
+              </Badge>
+            ))
+          )}
+          <Button variant="outline" size="sm" className="gap-1 h-7 text-xs"
+            onClick={() => { setSelectedUser(profile); setAddRoleDialog(true); }}>
+            <Plus className="w-3 h-3" /> Rol
+          </Button>
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-wrap justify-end">
-        {profile.roles.length === 0 ? (
-          <Badge variant="outline" className="text-muted-foreground">
-            Sin rol
-          </Badge>
-        ) : (
-          profile.roles.map(role => (
-            <Badge
-              key={role}
-              className={`${getRoleBadgeColor(role)} cursor-pointer hover:opacity-75`}
-              onClick={() => handleRemoveRole(profile.id, role)}
-              title="Clic para eliminar rol"
-            >
-              {getRoleLabel(role)} ×
-            </Badge>
-          ))
-        )}
-        {showAddRole && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-1"
-            onClick={() => {
-              setSelectedUser(profile);
-              setAddRoleDialog(true);
-            }}
-          >
-            <Plus className="w-3 h-3" />
-            Rol
+    );
+  };
+
+  // ---- Componente UserRow (vista tabla) ----
+  const UserRow = ({ profile }: { profile: MemberProfile }) => {
+    const health = healthMap.get(profile.id);
+    const lastLogin = health?.last_login_at
+      ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
+      : '—';
+    return (
+      <TableRow>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <Avatar className="h-7 w-7">
+              <AvatarImage src={profile.avatar_url || ''} />
+              <AvatarFallback><User className="w-3 h-3" /></AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm font-medium leading-none">{profile.full_name || '(sin nombre)'}</p>
+              <p className="text-xs text-muted-foreground">{profile.email}</p>
+            </div>
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="flex flex-wrap gap-1">
+            {profile.roles.length === 0 ? (
+              <Badge variant="outline" className="text-xs">Sin rol</Badge>
+            ) : profile.roles.map(role => (
+              <Badge key={role} className={cn(getRoleBadgeColor(role), 'text-xs cursor-pointer hover:opacity-75')}
+                onClick={() => handleRemoveRole(profile.id, role)} title="Clic para eliminar">
+                {getRoleLabel(role)} ×
+              </Badge>
+            ))}
+          </div>
+        </TableCell>
+        <TableCell>
+          {health ? <HealthBar score={health.health_score} /> : <span className="text-xs text-muted-foreground">—</span>}
+        </TableCell>
+        <TableCell className="text-xs text-muted-foreground">{lastLogin}</TableCell>
+        <TableCell className="text-xs text-muted-foreground text-right">
+          {health?.total_actions ?? '—'}
+        </TableCell>
+        <TableCell>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1"
+            onClick={() => { setSelectedUser(profile); setAddRoleDialog(true); }}>
+            <Plus className="w-3 h-3" /> Rol
           </Button>
-        )}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
+  const MemberList = ({ list }: { list: MemberProfile[] }) => {
+    if (list.length === 0) {
+      return <p className="text-muted-foreground text-center py-8 text-sm">Sin miembros en esta categoría</p>;
+    }
+    if (viewMode === 'table') {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Usuario</TableHead>
+              <TableHead>Roles</TableHead>
+              <TableHead>Salud</TableHead>
+              <TableHead>Última actividad</TableHead>
+              <TableHead className="text-right">Acciones totales</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {list.map(p => <UserRow key={p.id} profile={p} />)}
+          </TableBody>
+        </Table>
+      );
+    }
+    return (
+      <div className="space-y-2">
+        {list.map(p => <UserCard key={p.id} profile={p} />)}
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!currentOrgId) {
     return (
-      <div className="p-4 md:p-6 space-y-6">
+      <div className="p-4 md:p-6">
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Sin organización seleccionada</h3>
-            <p className="text-muted-foreground">
-              Selecciona una organización para ver sus miembros
-            </p>
           </CardContent>
         </Card>
       </div>
@@ -374,271 +364,153 @@ export default function Team() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Page Header - Kreoon Tech */}
       <PageHeader
         icon={Swords}
-        title={currentOrg?.name ? `Kreoon Team • ${currentOrg.name}` : "Kreoon Team"}
-        subtitle={`Gestión inteligente de equipo (${teamProfiles.length} miembros · ${noRole.length} sin asignar)`}
+        title="Gestión de Equipo"
+        subtitle={`${filtered.length} miembros · ${noRole.length} sin asignar · ${atRisk} en riesgo`}
         action={
-          <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
-            <DialogTrigger asChild>
-              <Button
-                className="gap-2"
-                onClick={(e) => {
-                  if (isReadOnly) {
-                    e.preventDefault();
-                    guardAction(() => {});
-                  }
-                }}
-                disabled={isReadOnly}
-              >
-                <UserPlus className="w-4 h-4" />
-                Invitar Miembro
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invitar nuevo talento a {currentOrg?.name}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="invite-email">Email *</Label>
-                  <Input
-                    id="invite-email"
-                    type="email"
-                    value={inviteData.email}
-                    onChange={(e) => setInviteData({ ...inviteData, email: e.target.value })}
-                    placeholder="usuario@ejemplo.com"
-                  />
-                </div>
-                <div>
-                  <Label>Rol</Label>
-                  <UnifiedRolePicker
-                    value={inviteData.role}
-                    onChange={(v) => setInviteData({ ...inviteData, role: (Array.isArray(v) ? v[0] : v) as AppRole })}
-                    showClientRoles={false}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Para agregar clientes, usa la sección Clientes
-                  </p>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setInviteDialog(false)}>
-                  Cancelar
+          <div className="flex items-center gap-2">
+            <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            <Dialog open={inviteDialog} onOpenChange={setInviteDialog}>
+              <DialogTrigger asChild>
+                <Button className="gap-2" disabled={isReadOnly}
+                  onClick={(e) => { if (isReadOnly) { e.preventDefault(); guardAction(() => {}); } }}>
+                  <UserPlus className="w-4 h-4" /> Invitar
                 </Button>
-                <Button onClick={handleSendInvitation} disabled={sendingInvite} className="gap-2">
-                  {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  Enviar Invitación
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Invitar nuevo miembro</DialogTitle></DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="invite-email">Email *</Label>
+                    <Input id="invite-email" type="email" value={inviteData.email}
+                      onChange={e => setInviteData({ ...inviteData, email: e.target.value })}
+                      placeholder="usuario@ejemplo.com" />
+                  </div>
+                  <div>
+                    <Label>Rol</Label>
+                    <UnifiedRolePicker value={inviteData.role}
+                      onChange={v => setInviteData({ ...inviteData, role: (Array.isArray(v) ? v[0] : v) as AppRole })}
+                      showClientRoles={false} />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setInviteDialog(false)}>Cancelar</Button>
+                  <Button onClick={handleSendInvitation} disabled={sendingInvite} className="gap-2">
+                    {sendingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    Enviar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         }
       />
 
-      {/* Search bar */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar usuarios..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-purple-500/20 flex items-center justify-center">
+              <Users className="h-4 w-4 text-purple-400" />
+            </div>
+            <div><p className="text-xl font-bold">{filtered.length}</p><p className="text-xs text-muted-foreground">Total</p></div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-green-500/20 flex items-center justify-center">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+            </div>
+            <div><p className="text-xl font-bold">{activeCount}</p><p className="text-xs text-muted-foreground">Activos (salud ≥70)</p></div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-red-500/20 flex items-center justify-center">
+              <AlertTriangle className="h-4 w-4 text-red-400" />
+            </div>
+            <div><p className="text-xl font-bold">{atRisk}</p><p className="text-xs text-muted-foreground">En riesgo (salud &lt;40)</p></div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-sm bg-yellow-500/20 flex items-center justify-center">
+              <Activity className="h-4 w-4 text-yellow-400" />
+            </div>
+            <div><p className="text-xl font-bold">{noRole.length}</p><p className="text-xs text-muted-foreground">Sin asignar</p></div>
+          </div>
+        </Card>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar por nombre o email..." value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+      </div>
+
+      {/* Tabs */}
       <Tabs defaultValue="no-role" className="w-full">
         <TabsList className="flex flex-wrap h-auto gap-1">
-          <TabsTrigger value="no-role" className="gap-2">
-            <User className="w-4 h-4" />
-            Sin Asignar ({noRole.length})
+          <TabsTrigger value="no-role" className="gap-1.5">
+            <User className="w-3.5 h-3.5" /> Sin Asignar ({noRole.length})
           </TabsTrigger>
-          <TabsTrigger value="admins" className="gap-2">
-            <Shield className="w-4 h-4" />
-            Admins ({admins.length})
+          <TabsTrigger value="admins" className="gap-1.5">
+            <Shield className="w-3.5 h-3.5" /> Admins ({admins.length})
           </TabsTrigger>
-          <TabsTrigger value="creators" className="gap-2">
-            <User className="w-4 h-4" />
-            Creadores ({creators.length})
+          <TabsTrigger value="creators" className="gap-1.5">
+            <Camera className="w-3.5 h-3.5" /> Creadores ({creators.length})
           </TabsTrigger>
-          <TabsTrigger value="editors" className="gap-2">
-            <User className="w-4 h-4" />
-            Editores ({editors.length})
+          <TabsTrigger value="editors" className="gap-1.5">
+            <Film className="w-3.5 h-3.5" /> Editores ({editors.length})
           </TabsTrigger>
-          <TabsTrigger value="digital" className="gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Estrategas ({digitalStrategists.length})
+          <TabsTrigger value="digital" className="gap-1.5">
+            <TrendingUp className="w-3.5 h-3.5" /> Estrategas ({digital.length})
           </TabsTrigger>
-          <TabsTrigger value="creative" className="gap-2">
-            <Palette className="w-4 h-4" />
-            Creativos ({creativeStrategists.length})
+          <TabsTrigger value="creative" className="gap-1.5">
+            <Palette className="w-3.5 h-3.5" /> Creativos ({creative.length})
           </TabsTrigger>
-          <TabsTrigger value="community" className="gap-2">
-            <Users className="w-4 h-4" />
-            Community ({communityManagers.length})
+          <TabsTrigger value="community" className="gap-1.5">
+            <Users className="w-3.5 h-3.5" /> Community ({community.length})
+          </TabsTrigger>
+          <TabsTrigger value="clients" className="gap-1.5">
+            <Building2 className="w-3.5 h-3.5" /> Clientes ({clients.length})
           </TabsTrigger>
         </TabsList>
 
-        {/* Sin Asignar Tab */}
-        <TabsContent value="no-role" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-muted-foreground" />
-                Sin Asignar ({noRole.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {noRole.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  Todos los usuarios tienen al menos un rol asignado
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {noRole.map(profile => (
-                    <UserCard key={profile.id} profile={profile} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Admins Tab */}
-        <TabsContent value="admins" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-destructive" />
-                Administradores ({admins.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {admins.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay administradores registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {admins.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Creadores Tab */}
-        <TabsContent value="creators" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Camera className="w-5 h-5 text-pink-500" />
-                Creadores de Contenido ({creators.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {creators.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay creadores registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {creators.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Editores Tab */}
-        <TabsContent value="editors" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Film className="w-5 h-5 text-blue-500" />
-                Editores ({editors.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {editors.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay editores registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {editors.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Estrategas Digitales Tab */}
-        <TabsContent value="digital" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                Estrategas Digitales ({digitalStrategists.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {digitalStrategists.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay estrategas digitales registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {digitalStrategists.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Estrategas Creativos Tab */}
-        <TabsContent value="creative" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-orange-500" />
-                Estrategas Creativos ({creativeStrategists.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {creativeStrategists.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay estrategas creativos registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {creativeStrategists.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Community Managers Tab */}
-        <TabsContent value="community" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-teal-500" />
-                Community Managers ({communityManagers.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {communityManagers.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No hay community managers registrados</p>
-              ) : (
-                <div className="space-y-3">
-                  {communityManagers.map(profile => <UserCard key={profile.id} profile={profile} />)}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
+        {[
+          { key: 'no-role',   label: 'Sin Asignar',          list: noRole,   icon: User,       color: 'text-muted-foreground' },
+          { key: 'admins',    label: 'Administradores',       list: admins,   icon: Shield,     color: 'text-purple-500' },
+          { key: 'creators',  label: 'Creadores de Contenido', list: creators, icon: Camera,    color: 'text-pink-500' },
+          { key: 'editors',   label: 'Editores',              list: editors,  icon: Film,       color: 'text-blue-500' },
+          { key: 'digital',   label: 'Estrategas Digitales',  list: digital,  icon: TrendingUp, color: 'text-green-500' },
+          { key: 'creative',  label: 'Estrategas Creativos',  list: creative, icon: Palette,    color: 'text-orange-500' },
+          { key: 'community', label: 'Community Managers',    list: community,icon: Users,      color: 'text-teal-500' },
+          { key: 'clients',   label: 'Clientes / Marcas',     list: clients,  icon: Building2,  color: 'text-amber-500' },
+        ].map(({ key, label, list, icon: Icon, color }) => (
+          <TabsContent key={key} value={key} className="mt-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Icon className={cn('w-4 h-4', color)} />
+                  {label} ({list.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <MemberList list={list} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
       </Tabs>
 
-      {/* Add/Change Role Dialog */}
+      {/* Role Management Dialog */}
       <Dialog open={addRoleDialog} onOpenChange={setAddRoleDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {selectedUser?.roles.length ? 'Cambiar rol de' : 'Agregar rol a'} {selectedUser?.full_name}
+              {selectedUser?.roles.length ? 'Cambiar rol de' : 'Asignar rol a'} {selectedUser?.full_name}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -647,53 +519,23 @@ export default function Team() {
                 <p className="text-sm text-muted-foreground mb-2">Roles actuales:</p>
                 <div className="flex gap-2 flex-wrap">
                   {selectedUser.roles.map(role => (
-                    <Badge key={role} className={getRoleBadgeColor(role)}>
-                      {getRoleLabel(role)}
-                    </Badge>
+                    <Badge key={role} className={getRoleBadgeColor(role)}>{getRoleLabel(role)}</Badge>
                   ))}
                 </div>
               </div>
             ) : null}
-
-            <div>
-              <Label>Nuevo rol</Label>
-              <UnifiedRolePicker
-                value={newRole}
-                onChange={(v) => setNewRole((Array.isArray(v) ? v[0] : v) as AppRole)}
-                showClientRoles={false}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Para gestionar clientes, usa la sección Clientes
-              </p>
+            <div className="flex gap-2">
+              <Button size="sm" variant={roleAction === 'replace' ? 'default' : 'outline'}
+                onClick={() => setRoleAction('replace')}>Reemplazar</Button>
+              <Button size="sm" variant={roleAction === 'add' ? 'default' : 'outline'}
+                onClick={() => setRoleAction('add')}>Agregar</Button>
             </div>
-
-            {selectedUser?.roles.length ? (
-              <div>
-                <Label>Acción</Label>
-                <Select value={roleAction} onValueChange={(v) => setRoleAction(v as 'add' | 'replace')}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="replace">Reemplazar roles existentes</SelectItem>
-                    <SelectItem value="add">Agregar rol adicional</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {roleAction === 'replace' 
-                    ? 'Se eliminarán los roles actuales y se asignará solo el nuevo rol.'
-                    : 'El usuario tendrá múltiples roles simultáneamente.'}
-                </p>
-              </div>
-            ) : null}
+            <UnifiedRolePicker value={newRole}
+              onChange={v => setNewRole((Array.isArray(v) ? v[0] : v) as AppRole)} />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAddRoleDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleAddRole}>
-              {selectedUser?.roles.length && roleAction === 'replace' ? 'Cambiar Rol' : 'Agregar Rol'}
-            </Button>
+            <Button variant="outline" onClick={() => setAddRoleDialog(false)}>Cancelar</Button>
+            <Button onClick={handleAddRole}>Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
