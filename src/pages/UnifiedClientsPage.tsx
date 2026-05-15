@@ -31,6 +31,7 @@ import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
 import { LinkBrandDialog } from '@/components/clients/LinkBrandDialog';
+import { BrandsCRMContent } from './crm/BrandsCRM';
 import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
@@ -39,16 +40,17 @@ import type { OrgContact } from '@/types/crm.types';
 void Phone;
 void MapPin;
 
-type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos';
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'marcas';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'activos', label: 'Activos', adminOnly: true },
   { key: 'inactivos', label: 'Inactivos', adminOnly: true },
   { key: 'todos', label: 'Todos' },
   { key: 'usuarios', label: 'Usuarios' },
+  { key: 'marcas', label: 'Marcas' },
 ];
 
-const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos'];
+const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos', 'marcas'];
 void VALID_TABS;
 
 function formatCurrency(n: number): string {
@@ -429,7 +431,9 @@ export function UnifiedClientsContent() {
         {/* Content */}
         <div className="flex gap-4">
           <div className={cn('flex-1 min-w-0', hasSidePanel && 'md:mr-[440px]')}>
-            {showUsuarios ? (
+            {filter === 'marcas' ? (
+              <BrandsCRMContent />
+            ) : showUsuarios ? (
               /* ===== USUARIOS CLIENTE TAB ===== */
               <>
                 {/* Unassigned alert */}

@@ -33,15 +33,12 @@ import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
 import { UnifiedClientsContent } from './UnifiedClientsPage';
 import { SinAsignarSection } from './Team';
-import { BrandsCRMContent } from './crm/BrandsCRM';
-
 // ── Tipos de tab de nivel superior ────────────────────────────────────────────
-type TopTab = 'talento' | 'clientes' | 'marcas' | 'sin-asignar';
+type TopTab = 'talento' | 'clientes' | 'sin-asignar';
 
 const TOP_TABS: { key: TopTab; label: string }[] = [
   { key: 'talento',     label: 'Talento' },
   { key: 'clientes',    label: 'Clientes' },
-  { key: 'marcas',      label: 'Marcas' },
   { key: 'sin-asignar', label: 'Sin Asignar' },
 ];
 
@@ -580,7 +577,7 @@ const UnifiedTalentPage = () => {
   // Los valores válidos son: talento | clientes | marcas | sin-asignar
   const rawTab = searchParams.get('tab');
   const activeTab: TopTab =
-    rawTab === 'clientes' || rawTab === 'marcas' || rawTab === 'sin-asignar' ? rawTab : 'talento';
+    rawTab === 'clientes' || rawTab === 'sin-asignar' ? rawTab : 'talento';
 
   const handleTabChange = (key: TopTab) => {
     if (key === 'talento') {
@@ -615,7 +612,6 @@ const UnifiedTalentPage = () => {
 
       {/* ── Contenido condicional por tab ─────────────────────────────────── */}
       {activeTab === 'clientes'    && <UnifiedClientsContent />}
-      {activeTab === 'marcas'      && <BrandsCRMContent />}
       {activeTab === 'sin-asignar' && <SinAsignarSection />}
       {activeTab === 'talento'     && <TalentoSection />}
     </div>
