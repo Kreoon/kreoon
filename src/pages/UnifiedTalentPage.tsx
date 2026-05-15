@@ -124,19 +124,19 @@ const UnifiedTalentPage = () => {
     if (roleFilter !== 'todos') {
       switch (roleFilter) {
         case 'admins':
-          list = list.filter(m => m.org_role === 'admin' || m.org_role === 'team_leader' || m.is_owner);
+          list = list.filter(m => ['admin', 'team_leader'].includes(m.org_role || '') || m.is_owner);
           break;
         case 'estrategas':
-          list = list.filter(m => m.all_roles?.includes('strategist'));
+          list = list.filter(m => m.all_roles?.some(r => ['digital_strategist', 'creative_strategist', 'community_manager', 'strategist'].includes(r)));
           break;
         case 'creadores':
-          list = list.filter(m => m.all_roles?.includes('creator'));
+          list = list.filter(m => m.all_roles?.some(r => ['content_creator', 'creator'].includes(r)));
           break;
         case 'editores':
-          list = list.filter(m => m.all_roles?.includes('editor'));
+          list = list.filter(m => m.all_roles?.some(r => ['editor', 'video_editor'].includes(r)));
           break;
         case 'traffickers':
-          list = list.filter(m => m.all_roles?.includes('trafficker'));
+          list = list.filter(m => m.all_roles?.some(r => ['digital_strategist', 'trafficker'].includes(r)));
           break;
         case 'embajadores':
           list = list.filter(m => m.is_ambassador);
