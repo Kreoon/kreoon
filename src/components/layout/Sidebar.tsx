@@ -131,7 +131,6 @@ const adminSections: NavSection[] = [
       { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
       { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
-      { name: "Equipo", href: "/talent?tab=sin-asignar", icon: Users, tourId: "sidebar-crm-people" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
       { name: "Módulos Dev", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
