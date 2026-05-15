@@ -461,7 +461,7 @@ function AppRoutes() {
         <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/overview" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/marcas" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/marcas" element={<Navigate to="/talent?tab=marcas" replace />} />
         <Route path="/crm/marcas/:brandId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/comunidades" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/personas" element={<Navigate to="/team" replace />} />
