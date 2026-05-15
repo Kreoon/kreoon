@@ -178,8 +178,10 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <>{children}</>;
   }
 
-  // Platform-admin-only routes (e.g., /crm/*) — only platform admins can access
-  if (requirePlatformAdmin && !isPlatformAdmin) {
+  // Rutas de admin: accesibles para platform root O para usuarios con rol admin en la org
+  // Admin de org = plena confianza, mismo nivel que platform admin
+  const isOrgAdmin = rolesToCheck.some(r => getPermissionGroup(r) === 'admin');
+  if (requirePlatformAdmin && !isPlatformAdmin && !isOrgAdmin) {
     const correctDashboard = getDashboardPath(rolesToCheck, activeRole);
     return <Navigate to={correctDashboard} replace />;
   }
