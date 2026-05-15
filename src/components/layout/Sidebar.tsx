@@ -119,8 +119,7 @@ const adminSections: NavSection[] = [
   {
     label: "GESTIÓN",
     items: [
-      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
@@ -130,10 +129,9 @@ const adminSections: NavSection[] = [
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
       { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
-      { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
       { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
-      { name: "Personas", href: "/crm/personas", icon: Users, tourId: "sidebar-crm-people" },
+      { name: "Equipo", href: "/talent?tab=sin-asignar", icon: Users, tourId: "sidebar-crm-people" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
       { name: "Módulos Dev", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
@@ -161,8 +159,7 @@ const strategistSections: NavSection[] = [
   {
     label: "GESTIÓN",
     items: [
-      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
+      { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
@@ -309,10 +306,7 @@ function combineNavSections(sectionArrays: NavSection[][]): NavSection[] {
 function getSectionsForGroup(group: PermissionGroup): NavSection[] {
   switch (group) {
     case 'admin': return adminSections;
-    case 'team_leader': return adminSections; // Team leaders have admin-like nav
-    case 'strategist': return strategistSections;
-    case 'editor': return editorSections;
-    case 'creator': return creatorSections;
+    case 'talent': return creatorSections;
     case 'client': return clientSections;
     default: return creatorSections;
   }
@@ -328,14 +322,14 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
   }
-  // "Mis Campañas" for admin/strategist/client (clients create offers here)
-  if (activeGroup === 'admin' || activeGroup === 'strategist' || activeGroup === 'client') {
+  // "Mis Campañas" for admin/talent/client
+  if (activeGroup === 'admin' || activeGroup === 'talent' || activeGroup === 'client') {
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
   items.push({ name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
-  // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
+  // Talent management — only for org roles (admin/talent), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
     return [{ label: "KREOON MARKETPLACE", items }];
   }
@@ -346,8 +340,8 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus, tourId: "sidebar-mkt-invitations" },
   ];
 
-  // Inquiries only for admin/strategist
-  if (activeGroup === 'admin' || activeGroup === 'strategist') {
+  // Inquiries only for admin/talent with permissions
+  if (activeGroup === 'admin' || activeGroup === 'talent') {
     savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare, tourId: "sidebar-mkt-inquiries" });
   }
 
@@ -410,7 +404,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // For multi-role: get the "highest" role for certain checks
   // Use activeRole directly since PermissionGroup only has 3 values
   const highestRole = useMemo(() => {
-    const priority = ['admin', 'team_leader', 'digital_strategist', 'creative_strategist', 'strategist', 'content_creator', 'creator', 'editor', 'client'];
+    const priority = ['admin', 'digital_strategist', 'creative_strategist', 'community_manager', 'content_creator', 'editor', 'client'];
     for (const r of priority) {
       if (realRoles.includes(r as any)) return r;
     }
@@ -420,8 +414,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // IMPORTANT: Use ONLY activeRole to determine which panel to show
   // DO NOT use realRoles.includes() as fallback - it causes multi-role users to see wrong panel
   // Example: user with ['creator', 'editor'] and activeRole='creator' should see creator panel, not editor
-  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader';
-  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist';
+  const activeIsAdmin = activeRole === 'admin';
+  const activeIsStrategist = activeRole === 'digital_strategist' || activeRole === 'creative_strategist' || activeRole === 'community_manager';
   const activeIsEditor = activeRole === 'editor';
   // Client detection: only if activeRole is client or activeGroup is client
   const activeIsClient = activeRole === 'client' || activeGroup === 'client';
@@ -553,8 +547,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     // Filter items within sections and apply white-label labels
     const filtered = baseSections
       .filter(section => {
-        // Only platform admins see CRM PLATAFORMA (not org-level admins)
-        if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
+        // Solo admins (org o plataforma) ven CRM PLATAFORMA
+        if (section.label === 'CRM PLATAFORMA' && !activeIsAdmin && !isPlatformAdmin) return false;
         return true;
       })
       .map(section => {
