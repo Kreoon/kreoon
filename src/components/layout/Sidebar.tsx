@@ -255,39 +255,6 @@ const basicTalentInOrgSections: NavSection[] = [
   }
 ];
 
-// Freelance users (no org) - Plan Básico Gratis
-// Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
-const freelanceSections: NavSection[] = [
-  {
-    label: "MI NEGOCIO",
-    items: [
-      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
-      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
-    ]
-  },
-  {
-    label: "MARKETPLACE",
-    items: [
-      { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
-      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
-    ]
-  },
-  {
-    label: "SOCIAL",
-    items: [
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-    ]
-  },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
-];
 
 // Locked users (haven't completed referral gate) - only unlock access + profile
 const lockedUserSections: NavSection[] = [
@@ -545,38 +512,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Detect freelance user: has no org and is not a platform admin
-  const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
-
-  // Filter navigation sections based on platform root vs org owner and org selection
+  // Filter navigation sections based on role
   const filteredSections = useMemo(() => {
-    // Users who haven't unlocked via referral gate only see unlock page + profile
-    // Skip this check while loading gate status or for users who bypass the gate
-    // Clients/brands bypass the gate (they don't need referral keys)
-    if (!isGateLoading && !isUnlocked && isFreelanceUser && !activeIsClient) {
-      return lockedUserSections;
-    }
-
     // Talent in org with basic/free personal plan - limited menu
-    // This takes priority over role-based sections for these users
     // BUT clients always get their own sections regardless of plan
     if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot && !activeIsClient) {
       return basicTalentInOrgSections;
-    }
-
-    // Independent users (no org) - differentiate between clients and freelancers
-    if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      // Brand members/clients get marketplace + client sections
-      if (activeIsClient) {
-        const mktSections = getMarketplaceSections(activeGroup, false);
-        return [
-          ...mktSections,
-          ...clientSections,
-        ];
-      }
-
-      // Freelance talents - menu already includes marketplace section
-      return freelanceSections;
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
@@ -644,7 +585,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
     // Use permission group for marketplace sections (apply label map)
     const mktSections = effectiveMktEnabled
-      ? getMarketplaceSections(activeGroup, isFreelanceUser).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      ? getMarketplaceSections(activeGroup, false).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
     // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled (not for clients)
@@ -684,7 +625,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(devModulesSection ? [devModulesSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -858,8 +799,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* Tokens IA - siempre tokens personales, admins pueden alternar a tokens de org */}
-        {profile?.current_organization_id && !isFreelanceUser && (
+        {/* Tokens IA */}
+        {profile && (
           <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
             <AITokensPanelTrigger
               organizationId={null}
@@ -867,15 +808,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               readonly={activeIsClient}
               canSwitchContext={activeIsAdmin && !activeIsClient}
               userOrganizationId={profile.current_organization_id}
-            />
-          </div>
-        )}
-
-        {/* Freelancer Stats Widget - show for unlocked freelancers */}
-        {isFreelanceUser && isUnlocked && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
-            <AITokensPanelTrigger
-              variant={collapsed ? "compact" : "header"}
             />
           </div>
         )}
@@ -890,8 +822,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher - hide for freelancers, multi-role users, and clients */}
-          {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && !activeIsClient && (
+          {/* Role Switcher - hide for multi-role users and clients */}
+          {!isImpersonating && !isMultiRoleUser && !activeIsClient && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 

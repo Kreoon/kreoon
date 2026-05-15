@@ -180,56 +180,8 @@ export default function ContentBoard() {
     ? impersonationTarget.role
     : realActiveRole;
 
-  // Detect freelancer: no org roles, not platform root, not a client/brand member
-  // Freelancers don't need platform_access_unlocked when gate is disabled
-  const isBrandMember = isClient || !!(profile as any)?.active_brand_id || (profile as any)?.active_role === 'client';
-  const isFreelancer = roles.length === 0 && !isPlatformRoot && !isBrandMember;
-
-  // Detect user without any valid association (no org, no client_users, not freelancer)
-  // This user should NOT see internal content, only marketplace
-  const [hasNoContentAccess, setHasNoContentAccess] = useState(false);
-  useEffect(() => {
-    // If user has org or is platform root or is freelancer, they have access
-    if (currentOrgId || isPlatformRoot || isFreelancer) {
-      setHasNoContentAccess(false);
-      return;
-    }
-    // If still loading org info, wait
-    if (orgLoading) return;
-    // If user is a client role, check if they're in client_users
-    if (isClient && user?.id) {
-      const checkClientUser = async () => {
-        const { data } = await supabase
-          .from('client_users')
-          .select('client_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-        // If they have a client_id, they have access via client_users
-        setHasNoContentAccess(!data?.client_id);
-      };
-      checkClientUser();
-    } else {
-      // No org, not platform root, not freelancer, not a client_user → no content access
-      setHasNoContentAccess(true);
-    }
-  }, [currentOrgId, isPlatformRoot, isFreelancer, orgLoading, isClient, user?.id]);
-
-  // Board mode: content (internal) vs marketplace (external projects)
-  // Freelancers and users without content access are forced to marketplace view only
-  const shouldForceMarketplace = isFreelancer || hasNoContentAccess;
-  const [boardMode, setBoardMode] = useState<'content' | 'marketplace'>(() => {
-    if (shouldForceMarketplace) return 'marketplace';
-    const params = new URLSearchParams(window.location.search);
-    return params.get('view') === 'marketplace' ? 'marketplace' : 'content';
-  });
-
-  // Force marketplace mode for freelancers or users without content access
-  useEffect(() => {
-    if (shouldForceMarketplace && boardMode !== 'marketplace') {
-      setBoardMode('marketplace');
-    }
-  }, [shouldForceMarketplace, boardMode]);
+  // Single-org mode: always show internal content board
+  const boardMode = 'content' as const;
 
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
@@ -301,10 +253,12 @@ export default function ContentBoard() {
   // Memoized options for SearchableSelect
   const creatorOptions = useMemo<SearchableSelectOption[]>(() => [
     { value: 'all', label: 'Todos los creadores' },
+    { value: '__unassigned__', label: 'Sin creador asignado' },
     ...creators.map(c => ({ value: c.id, label: c.name })),
   ], [creators]);
   const editorOptions = useMemo<SearchableSelectOption[]>(() => [
     { value: 'all', label: 'Todos los editores' },
+    { value: '__unassigned__', label: 'Sin editor asignado' },
     ...editors.map(e => ({ value: e.id, label: e.name })),
   ], [editors]);
   const clientOptions = useMemo<SearchableSelectOption[]>(() => [
@@ -475,8 +429,8 @@ export default function ContentBoard() {
   const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
     userId: targetUserId,
     role: primaryRole as any,
-    creatorId: filterCreatorId !== 'all' ? filterCreatorId : undefined,
-    editorId: filterEditorId !== 'all' ? filterEditorId : undefined,
+    creatorId: filterCreatorId !== 'all' && filterCreatorId !== '__unassigned__' ? filterCreatorId : undefined,
+    editorId: filterEditorId !== 'all' && filterEditorId !== '__unassigned__' ? filterEditorId : undefined,
     clientId: effectiveClientId
   });
 
@@ -551,13 +505,19 @@ export default function ContentBoard() {
       );
       if (!matchesSearch) return false;
     }
-    
+
     if (startDateFilter || deadlineFilter) {
       const contentDate = c.created_at ? new Date(c.created_at) : null;
       if (!contentDate) return false;
       if (startDateFilter && contentDate < startDateFilter) return false;
       if (deadlineFilter && contentDate > deadlineFilter) return false;
     }
+
+    // Filtro especial: sin creador asignado
+    if (filterCreatorId === '__unassigned__' && c.creator_id) return false;
+
+    // Filtro especial: sin editor asignado
+    if (filterEditorId === '__unassigned__' && c.editor_id) return false;
 
     // Filtro por producto
     if (filterProductId !== 'all') {
@@ -568,9 +528,9 @@ export default function ContentBoard() {
     if (filterCampaignWeek) {
       if (c.campaign_week !== filterCampaignWeek) return false;
     }
-    
+
     return true;
-  }), [content, searchTerm, dateRangeFilter, filterProductId, filterCampaignWeek]);
+  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, filterCampaignWeek]);
 
   // Agrupar contenido por estado (soporta status personalizados)
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -778,40 +738,6 @@ export default function ContentBoard() {
           </div>
         </div>
 
-        {/* Board Mode Toggle: Contenido | Marketplace (hidden for freelancers and users without content access) */}
-        {!shouldForceMarketplace && (
-          <div className="flex items-center gap-1 bg-muted rounded-sm p-1 w-fit border border-white/5">
-            <button
-              onClick={() => setBoardMode('content')}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
-                boardMode === 'content'
-                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-foreground"
-              )}
-            >
-              <Scroll className="h-4 w-4" />
-              Contenido
-            </button>
-            <button
-              onClick={() => setBoardMode('marketplace')}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
-                boardMode === 'marketplace'
-                  ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-foreground"
-              )}
-            >
-              <ShoppingBag className="h-4 w-4" />
-              Marketplace
-            </button>
-          </div>
-        )}
-
-        {/* Marketplace Board View */}
-        {boardMode === 'marketplace' ? (
-          <MarketplaceBoardView />
-        ) : (
         <>
         {/* Filtros para admin */}
         {showAdminControls && (
@@ -1201,7 +1127,6 @@ export default function ContentBoard() {
           )}
         </div>
       </>
-        )}
       </div>
 
       {/* Config Dialog */}
