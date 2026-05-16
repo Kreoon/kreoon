@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Store } from 'lucide-react';
 import { MarketplaceDashboardTab } from '@/components/marketplace/dashboard/MarketplaceDashboardTab';
+import { TalentWalletView } from '@/components/talent/TalentWalletView';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
@@ -59,7 +60,7 @@ export default function EditorDashboard() {
   const { toast } = useToast();
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace'>('studio');
+  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace' | 'wallet'>('studio');
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
@@ -187,9 +188,25 @@ export default function EditorDashboard() {
             <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
             Marketplace
           </button>
+          <button
+            onClick={() => setDashboardTab('wallet')}
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
+              dashboardTab === 'wallet' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <DollarSign className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+            Mis cobros
+          </button>
         </div>
 
-        {dashboardTab === 'marketplace' ? (
+        {dashboardTab === 'wallet' && profile?.organization_id && user?.id ? (
+          <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+            <TalentWalletView
+              userId={targetUserId ?? user.id}
+              organizationId={profile.organization_id}
+            />
+          </div>
+        ) : dashboardTab === 'marketplace' ? (
           <MarketplaceDashboardTab role="editor" />
         ) : (
         <>
