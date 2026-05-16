@@ -557,6 +557,42 @@ export function usePendingContentForUser(organizationId: string, userId: string)
   });
 }
 
+// ─── Detalles de contenido dentro de una liquidación ─────────────────────────
+
+export interface ClosureContentDetail {
+  id: string;
+  title: string;
+  sequence_number: string | null;
+  client_name: string | null;
+  approved_at: string | null;
+  creator_payment: number | null;
+  editor_payment: number | null;
+}
+
+export function useClosureContentDetails(contentIds: string[], enabled: boolean) {
+  return useQuery({
+    queryKey: ['closure-content-details', ...contentIds],
+    staleTime: 0,
+    enabled: enabled && contentIds.length > 0,
+    queryFn: async (): Promise<ClosureContentDetail[]> => {
+      const { data, error } = await supabase
+        .from('content')
+        .select('id, title, sequence_number, approved_at, creator_payment, editor_payment, clients(name)')
+        .in('id', contentIds);
+      if (error) throw error;
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        title: row.title ?? 'Sin título',
+        sequence_number: (row as any).sequence_number ?? null,
+        client_name: (row as any).clients?.name ?? null,
+        approved_at: (row as any).approved_at ?? null,
+        creator_payment: row.creator_payment != null ? Number(row.creator_payment) : null,
+        editor_payment: row.editor_payment != null ? Number(row.editor_payment) : null,
+      }));
+    },
+  });
+}
+
 // ─── Pagos vencidos (payment_date < hoy y no pagados) ────────────────────────
 
 export interface OverduePayment {

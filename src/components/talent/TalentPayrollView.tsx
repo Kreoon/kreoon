@@ -24,9 +24,9 @@ import { supabase } from '@/integrations/supabase/client';
 import {
   usePaymentAccounts, useCreatePayment, usePayrollSummary, useUpdatePayment,
   useUploadReceipt, useOverduePayments, usePaidClosuresByMonth,
-  useTalentFinanceRealtime,
+  useTalentFinanceRealtime, useClosureContentDetails,
 } from '@/hooks/useTalentPayments';
-import type { PayrollEntry, OverduePayment, MonthlyClosureGroup } from '@/hooks/useTalentPayments';
+import type { PayrollEntry, OverduePayment, MonthlyClosureGroup, ClosureContentDetail } from '@/hooks/useTalentPayments';
 import type { TalentPayment, PaymentStatus } from '@/types/talentPayments.types';
 import { PAYMENT_ACCOUNT_LABELS, PAYMENT_STATUS_LABELS } from '@/types/talentPayments.types';
 import { useToast } from '@/hooks/use-toast';
@@ -599,17 +599,68 @@ function ClosureRow({
         </div>
       )}
 
-      {/* Proyectos del cierre */}
+      {/* Proyectos del cierre — tabla con cliente y fecha de aprobación */}
       {expanded && contentCount > 0 && (
-        <div className="border-t border-border px-4 py-2 bg-muted/10">
-          <p className="text-[10px] text-muted-foreground uppercase font-medium mb-1.5">
-            {contentCount} proyecto{contentCount > 1 ? 's' : ''} incluido{contentCount > 1 ? 's' : ''}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {(p.content_ids ?? []).slice(0, 3).join(', ').slice(0, 60)}…
-          </p>
-        </div>
+        <ClosureContentTable contentIds={p.content_ids ?? []} />
       )}
+    </div>
+  );
+}
+
+function ClosureContentTable({ contentIds }: { contentIds: string[] }) {
+  const { data: items = [], isLoading } = useClosureContentDetails(contentIds, true);
+
+  if (isLoading) {
+    return (
+      <div className="border-t border-border px-4 py-3 bg-muted/10 flex items-center gap-2 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Cargando proyectos…
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-border bg-muted/10">
+      {/* Cabecera */}
+      <div className="grid grid-cols-[1fr_1.5fr_1fr_auto] gap-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+        <span>Proyecto</span>
+        <span>Cliente</span>
+        <span>Aprobado</span>
+        <span className="text-right">Monto</span>
+      </div>
+      {items.map((item: ClosureContentDetail) => (
+        <div
+          key={item.id}
+          className="grid grid-cols-[1fr_1.5fr_1fr_auto] gap-2 px-4 py-2 text-xs border-b border-border/30 last:border-0 items-center"
+        >
+          {/* Proyecto */}
+          <div className="min-w-0">
+            {item.sequence_number && (
+              <span className="font-mono text-[10px] text-muted-foreground mr-1.5">{item.sequence_number}</span>
+            )}
+            <span className="truncate">{item.title}</span>
+          </div>
+
+          {/* Cliente */}
+          <span className="truncate text-muted-foreground">
+            {item.client_name ?? <span className="italic opacity-50">Sin cliente</span>}
+          </span>
+
+          {/* Fecha aprobado */}
+          <span className="text-muted-foreground whitespace-nowrap">
+            {item.approved_at
+              ? format(new Date(item.approved_at), "d MMM yyyy", { locale: es })
+              : <span className="italic opacity-50">—</span>}
+          </span>
+
+          {/* Monto */}
+          <span className="font-semibold text-right whitespace-nowrap">
+            {formatCurrency(
+              (item.creator_payment ?? 0) + (item.editor_payment ?? 0)
+            )}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
