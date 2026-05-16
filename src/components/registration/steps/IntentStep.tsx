@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Building2, Users, Link2 } from 'lucide-react';
+import { Sparkles, Building2, Link2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { RegistrationIntent, WizardMode } from '../types';
 
@@ -34,15 +34,6 @@ const INTENTS: Array<{
     gradient: 'from-emerald-500/20 to-teal-500/20',
     border: 'border-emerald-500/30 hover:border-emerald-400/60',
     glow: 'group-hover:shadow-emerald-500/20',
-  },
-  {
-    id: 'organization',
-    label: 'Gestiono una Organización',
-    description: 'Agencia o comunidad con equipo de trabajo',
-    icon: Users,
-    gradient: 'from-amber-500/20 to-orange-500/20',
-    border: 'border-amber-500/30 hover:border-amber-400/60',
-    glow: 'group-hover:shadow-amber-500/20',
   },
   {
     id: 'join',

@@ -18,24 +18,18 @@ const ClientCompanySection = lazy(() => import('./sections/ClientCompanySection'
 // MarketplaceSection merged into ProfileSection (unified profile)
 
 // Organization level - CONSOLIDATED
-const OrganizationSection = lazy(() => import('./sections/OrganizationSection'));
 const OrganizationPlansSection = lazy(() => import('./sections/OrganizationPlansSection'));
 const AISettingsSection = lazy(() => import('./sections/AISettingsSection'));
 const PermissionsUnifiedSection = lazy(() => import('./sections/PermissionsUnifiedSection'));
 const AuditLogSection = lazy(() => import('./sections/AuditLogSection'));
 const TrackingSection = lazy(() => import('./sections/TrackingSection'));
 const OrgMarketplaceSection = lazy(() => import('./sections/OrgMarketplaceSection'));
-const OrgAgencyProfileSection = lazy(() => import('./sections/OrgAgencyProfileSection'));
-
 // Platform level - CONSOLIDATED
-const OrganizationRegistrationsSection = lazy(() => import('./sections/OrganizationRegistrationsSection'));
 const ReferralSection = lazy(() => import('./sections/ReferralSection'));
 const BillingUnifiedSection = lazy(() => import('./sections/BillingUnifiedSection'));
 const PlatformConfigSection = lazy(() => import('./sections/PlatformConfigSection'));
 const PlatformAdminSection = lazy(() => import('./sections/PlatformAdminSection'));
 const AITokenizationSection = lazy(() => import('@/pages/admin/AITokenizationPage'));
-const WhiteLabelSection = lazy(() => import('./sections/WhiteLabelSection'));
-const OrgReferralsSection = lazy(() => import('./sections/OrgReferralsSection'));
 const PromptsSection = lazy(() => import('./sections/PromptsSection'));
 const MCPIntegrationsSection = lazy(() => import('./sections/MCPIntegrationsSection'));
 
@@ -58,20 +52,14 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   marketplace: ProfileSection, // Redirect: marketplace merged into profile
   client_company: ClientCompanySection, // Client company info
   // Organization level
-  organization: OrganizationSection,
-  org_registration_settings: OrganizationSection, // Redirect: merged into organization
   organization_plans: OrganizationPlansSection,
   ai_settings: AISettingsSection,
   permissions: PermissionsUnifiedSection,
   audit_log: AuditLogSection,
   tracking: TrackingSection,
   org_marketplace: OrgMarketplaceSection,
-  org_agency_profile: OrgAgencyProfileSection,
-  white_label: WhiteLabelSection,
-  org_referrals: OrgReferralsSection,
   // Platform level
-  organization_registrations: OrganizationRegistrationsSection,
-referrals: ReferralSection,
+  referrals: ReferralSection,
   billing: BillingUnifiedSection,
   platform_config: PlatformConfigSection,
   platform_admin: PlatformAdminSection,
@@ -81,7 +69,7 @@ referrals: ReferralSection,
 };
 
 // Wide sections that need more space
-const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'organization_registrations', 'marketplace', 'profile'];
+const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'marketplace', 'profile'];
 
 const SettingsPage = memo(() => {
   const [searchParams, setSearchParams] = useSearchParams();

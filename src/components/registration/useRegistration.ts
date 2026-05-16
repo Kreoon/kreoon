@@ -8,8 +8,6 @@ function getStepsForIntent(intent: RegistrationIntent | null): RegistrationStep[
       return ['intent', 'credentials', 'talent-profile', 'terms'];
     case 'brand':
       return ['intent', 'credentials', 'brand-profile', 'terms'];
-    case 'organization':
-      return ['intent', 'credentials', 'org-details', 'terms'];
     case 'join':
       return ['intent', 'join-org', 'credentials', 'terms'];
     default:
@@ -116,14 +114,6 @@ export function useRegistration(options?: UseRegistrationOptions) {
     return null;
   }, [data]);
 
-  const validateOrgDetails = useCallback((): string | null => {
-    if (!data.orgSubType) return 'Selecciona el tipo de organización';
-    if (!data.orgName.trim()) return 'Nombre de organización es requerido';
-    if (!data.orgSlug.trim()) return 'URL de organización es requerida';
-    if (!data.selectedPlan) return 'Selecciona un plan';
-    return null;
-  }, [data]);
-
   const validateJoinOrg = useCallback((): string | null => {
     if (!data.foundOrg) return 'Busca y selecciona una organización';
     return null;
@@ -140,12 +130,11 @@ export function useRegistration(options?: UseRegistrationOptions) {
       case 'credentials': return validateCredentials();
       case 'talent-profile': return validateTalentProfile();
       case 'brand-profile': return validateBrandProfile();
-      case 'org-details': return validateOrgDetails();
       case 'join-org': return validateJoinOrg();
       case 'terms': return validateTerms();
       default: return null;
     }
-  }, [currentStep, validateCredentials, validateTalentProfile, validateBrandProfile, validateOrgDetails, validateJoinOrg, validateTerms]);
+  }, [currentStep, validateCredentials, validateTalentProfile, validateBrandProfile, validateJoinOrg, validateTerms]);
 
   return {
     data,

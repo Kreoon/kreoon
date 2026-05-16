@@ -27,15 +27,132 @@ import type {
 // ============================================
 
 export async function getPlatformFinanceStats(days: number = 30): Promise<PlatformFinanceStats> {
-  const { data, error } = await (supabase as any).rpc('get_platform_finance_stats', { p_days: days });
-  if (error) throw error;
-  return data as PlatformFinanceStats;
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const sinceISO = since.toISOString();
+
+  const [subsRes, txRes, invoicesRes, payoutsRes] = await Promise.all([
+    (supabase as any).from('platform_subscriptions').select('plan, amount_monthly, status'),
+    (supabase as any)
+      .from('platform_transactions')
+      .select('amount, fee_amount, status, created_at')
+      .gte('created_at', sinceISO),
+    (supabase as any)
+      .from('platform_invoices')
+      .select('total, status, due_date'),
+    (supabase as any)
+      .from('platform_payouts')
+      .select('net_amount, status, created_at')
+      .gte('created_at', sinceISO),
+  ]);
+
+  const subs: any[] = subsRes.data ?? [];
+  const txs: any[] = txRes.data ?? [];
+  const invoices: any[] = invoicesRes.data ?? [];
+  const payouts: any[] = payoutsRes.data ?? [];
+
+  // MRR / ARR desde suscripciones activas
+  const activeSubs = subs.filter(s => s.status === 'active');
+  const mrr = activeSubs.reduce((s: number, sub: any) => s + (Number(sub.amount_monthly) || 0), 0);
+
+  // Revenue del período (transacciones completadas)
+  const revenue_period = txs
+    .filter(t => t.status === 'completed' && t.amount > 0)
+    .reduce((s: number, t: any) => s + Number(t.amount), 0);
+
+  // Payouts
+  const payouts_period = payouts
+    .filter(p => p.status === 'completed')
+    .reduce((s: number, p: any) => s + Number(p.net_amount), 0);
+  const payouts_pending = payouts
+    .filter(p => ['pending', 'approved', 'processing'].includes(p.status))
+    .reduce((s: number, p: any) => s + Number(p.net_amount), 0);
+
+  // Facturas
+  const today = new Date().toISOString().split('T')[0];
+  const pendingInvoices = invoices.filter(i => i.status === 'sent');
+  const overdueInvoices = invoices.filter(i => i.status === 'sent' && i.due_date < today);
+
+  // Subscriptions by plan (para el PieChart)
+  const planMap = new Map<string, { count: number; mrr: number }>();
+  for (const sub of activeSubs) {
+    const plan = sub.plan ?? 'free';
+    const entry = planMap.get(plan) ?? { count: 0, mrr: 0 };
+    entry.count++;
+    entry.mrr += Number(sub.amount_monthly) || 0;
+    planMap.set(plan, entry);
+  }
+  const subscriptions_by_plan = [...planMap.entries()].map(([plan, v]) => ({
+    plan: plan as any,
+    count: v.count,
+    mrr: v.mrr,
+  }));
+
+  const fees_earned = txs
+    .filter(t => t.status === 'completed')
+    .reduce((s: number, t: any) => s + (Number(t.fee_amount) || 0), 0);
+
+  return {
+    mrr,
+    arr: mrr * 12,
+    revenue_period,
+    revenue_previous: 0,
+    payouts_period,
+    payouts_pending,
+    invoices_pending_amount: pendingInvoices.reduce((s: number, i: any) => s + Number(i.total), 0),
+    invoices_pending_count: pendingInvoices.length,
+    invoices_overdue_amount: overdueInvoices.reduce((s: number, i: any) => s + Number(i.total), 0),
+    invoices_overdue_count: overdueInvoices.length,
+    subscriptions_by_plan,
+    transactions_count: txs.length,
+    fees_earned,
+  };
 }
 
 export async function getRevenueByMonth(months: number = 12): Promise<RevenueByMonth[]> {
-  const { data, error } = await (supabase as any).rpc('get_revenue_by_month', { p_months: months });
-  if (error) throw error;
-  return (data || []) as RevenueByMonth[];
+  const since = new Date();
+  since.setMonth(since.getMonth() - months);
+
+  const [txRes, payoutRes] = await Promise.all([
+    (supabase as any)
+      .from('platform_transactions')
+      .select('amount, created_at, status')
+      .gte('created_at', since.toISOString())
+      .eq('status', 'completed')
+      .gt('amount', 0),
+    (supabase as any)
+      .from('platform_payouts')
+      .select('net_amount, created_at, status')
+      .gte('created_at', since.toISOString())
+      .eq('status', 'completed'),
+  ]);
+
+  const txs: any[] = txRes.data ?? [];
+  const payoutData: any[] = payoutRes.data ?? [];
+
+  const monthMap = new Map<string, { revenue: number; payouts: number }>();
+
+  for (const tx of txs) {
+    const key = tx.created_at.substring(0, 7); // 'YYYY-MM'
+    const entry = monthMap.get(key) ?? { revenue: 0, payouts: 0 };
+    entry.revenue += Number(tx.amount);
+    monthMap.set(key, entry);
+  }
+
+  for (const p of payoutData) {
+    const key = p.created_at.substring(0, 7);
+    const entry = monthMap.get(key) ?? { revenue: 0, payouts: 0 };
+    entry.payouts += Number(p.net_amount);
+    monthMap.set(key, entry);
+  }
+
+  return [...monthMap.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([month, v]) => ({
+      month: month.substring(5), // 'MM'
+      revenue: v.revenue,
+      payouts: v.payouts,
+    })) as RevenueByMonth[];
 }
 
 export async function getAllSubscriptions(): Promise<PlatformSubscription[]> {

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { makeAIRequest, getAPIKey, corsHeaders } from "../_shared/ai-providers.ts";
+import { callAI, corsHeaders } from "../_shared/ai-providers.ts";
 import { logAIUsage } from "../_shared/ai-usage-logger.ts";
 // Fallback legacy
 import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
@@ -14,6 +14,7 @@ interface AIRequest {
   payload: Record<string, unknown>;
   organizationId?: string;
   userId?: string;
+  model?: string;
   prompts?: {
     system: string;
     user: string;
@@ -64,14 +65,7 @@ serve(async (req) => {
   }
 
   try {
-    const googleKey = getAPIKey("gemini");
-    const openaiKey = getAPIKey("openai");
-
-    if (!googleKey && !openaiKey) {
-      throw new Error("No AI API keys configured. Set GOOGLE_AI_API_KEY or OPENAI_API_KEY");
-    }
-
-    // Crear cliente Supabase para leer prompts desde DB
+    // Crear cliente Supabase para leer prompts desde DB y rate limit
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -85,9 +79,9 @@ serve(async (req) => {
     }
     // ─────────────────────────────────────────────────────────
 
-    const { action, payload, organizationId, userId, prompts } = (await req.json()) as AIRequest;
+    const { action, payload, organizationId, userId, model: requestedModel, prompts } = (await req.json()) as AIRequest;
 
-    console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, promptsFromFrontend: ${!!prompts}`);
+    console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, model: ${requestedModel ?? 'default'}`);
 
     let systemPrompt: string;
     let userPrompt: string;
@@ -96,86 +90,31 @@ serve(async (req) => {
       systemPrompt = prompts.system;
       userPrompt = prompts.user;
     } else {
-      // Intentar obtener prompts desde DB primero
       const dbPrompts = await getPromptsFromDB(supabase, action, payload ?? {});
       systemPrompt = dbPrompts.system;
       userPrompt = dbPrompts.user;
     }
 
     let result: any;
-    let usedProvider = "";
-    let usedModel = "";
-
-    const config = { systemPrompt, userPrompt, temperature: 0.7 };
-
     const startTime = Date.now();
 
-    let aiResult = googleKey
-      ? await makeAIRequest({ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey, ...config })
-      : { success: false as const, error: "No Gemini key" };
-
-    if (!aiResult.success && openaiKey) {
-      console.log("[portfolio-ai] Falling back to OpenAI");
-      aiResult = await makeAIRequest({
-        provider: "openai",
-        model: "gpt-4o-mini",
-        apiKey: openaiKey,
-        ...config,
-      });
-      usedProvider = "openai";
-      usedModel = "gpt-4o-mini";
-    } else if (aiResult.success) {
-      usedProvider = "gemini";
-      usedModel = "gemini-2.5-flash";
-    }
+    // Use callAI with Mistral as primary (falls back to Gemini → OpenAI automatically)
+    const { content: aiContent, provider: usedProvider, model: usedModel } = await callAI(
+      systemPrompt,
+      userPrompt,
+      { model: requestedModel || "mistral-small-latest" }
+    );
 
     const response_time_ms = Date.now() - startTime;
 
-    if (!aiResult.success) {
-      const err = aiResult.error ?? "AI error";
-
-      // Log failed AI call
-      logAIUsage(supabase, {
-        organization_id: organizationId || "00000000-0000-0000-0000-000000000000",
-        user_id: userId || "00000000-0000-0000-0000-000000000000",
-        module: "portfolio-ai",
-        action,
-        provider: usedProvider || "unknown",
-        model: usedModel || "unknown",
-        tokens_input: 0,
-        tokens_output: 0,
-        success: false,
-        error_message: err,
-        edge_function: "portfolio-ai",
-        response_time_ms,
-      }).catch(console.error);
-
-      if (err.includes("429")) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (err.includes("402")) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      console.error("[portfolio-ai] AI error:", err);
-      throw new Error(err);
-    }
-
-    const content = aiResult.content ?? "";
-
     try {
-      result = JSON.parse(content);
+      result = JSON.parse(aiContent);
     } catch {
-      console.error("[portfolio-ai] Failed to parse AI response:", content);
-      result = { raw: content };
+      console.error("[portfolio-ai] Failed to parse AI response:", aiContent);
+      result = { raw: aiContent };
     }
 
-    console.log(`[portfolio-ai] Success for action: ${action} using ${usedProvider}`);
+    console.log(`[portfolio-ai] Success for action: ${action} using ${usedProvider}/${usedModel}`);
 
     // Log successful AI call
     logAIUsage(supabase, {

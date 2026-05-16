@@ -18,7 +18,6 @@ import { cn } from "@/lib/utils";
 import {
   AdminKPIGrid,
   AdminUsersSection,
-  AdminOrgsSection,
   AdminAISection,
   AdminHealthWidget,
 } from "@/components/admin/dashboard";
@@ -213,9 +212,6 @@ export default function PlatformAdminDashboard() {
           <TabsTrigger value="users" className="data-[state=active]:bg-purple-500/20">
             Usuarios
           </TabsTrigger>
-          <TabsTrigger value="organizations" className="data-[state=active]:bg-purple-500/20">
-            Organizaciones
-          </TabsTrigger>
           <TabsTrigger value="ai" className="data-[state=active]:bg-purple-500/20">
             IA & Costos
           </TabsTrigger>
@@ -270,11 +266,6 @@ export default function PlatformAdminDashboard() {
               </div>
             </Card>
           )}
-        </TabsContent>
-
-        {/* Organizations Tab */}
-        <TabsContent value="organizations" className="space-y-6">
-          <AdminOrgsSection stats={stats.data} isLoading={stats.isLoading} />
         </TabsContent>
 
         {/* AI Tab */}

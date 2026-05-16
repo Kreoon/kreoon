@@ -14,18 +14,12 @@ export type SettingsSectionKey =
   | 'marketplace'        // Marketplace profile, roles, services, availability
   | 'client_company'     // Client company info (for client role)
   // Organization level
-  | 'organization'
-  | 'org_registration_settings' // Registration & invite settings
   | 'organization_plans'
   | 'ai_settings'        // Merged: portfolio_ai + organization_ai + assistant
   | 'permissions'        // Merged: organization_permissions + global_permissions
   | 'audit_log'
   | 'org_marketplace'    // Marketplace access control & public portfolio
-  | 'org_agency_profile' // Public agency profile for marketplace
-  | 'white_label'        // White-label branding, domain, email config
-  | 'org_referrals'      // Organization-level referral codes
   // Platform level (Root only)
-  | 'organization_registrations'
   | 'referrals'
   | 'billing'            // Merged: subscription_management + user_plans + currency + billing_control
   | 'platform_config'    // Merged: app_settings + appearance + integrations
@@ -68,17 +62,12 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   marketplace: 'user',
   client_company: 'user', // Client company info
   // Organization level - org admin/owner only
-  organization: 'organization',
-  org_registration_settings: 'organization',
   organization_plans: 'organization',
   ai_settings: 'organization',
   permissions: 'organization',
   audit_log: 'organization',
   org_marketplace: 'organization', // Marketplace control & portfolio
-  org_agency_profile: 'organization', // Agency profile for marketplace
-  white_label: 'organization',       // White-label settings
   // Platform level - root only
-  organization_registrations: 'platform',
   referrals: 'user', // Accessible to all users (perpetual referral program)
   billing: 'platform',
   platform_config: 'platform',

@@ -51,8 +51,6 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
-import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
-import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -127,7 +125,7 @@ const adminSections: NavSection[] = [
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
-      { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
+      { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
@@ -675,20 +673,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
         </div>
-
-        {/* Root Admin Organization Switcher - show for superadmins or platform root */}
-        {(isSuperadmin || isPlatformRoot) && !collapsed && (
-          <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
-            <RootOrgSwitcher />
-          </div>
-        )}
-
-        {/* Regular User Organization Switcher - for users with multiple orgs (not root, not clients) */}
-        {!isSuperadmin && !isPlatformRoot && !collapsed && !activeIsClient && (
-          <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
-            <UserOrgSwitcher />
-          </div>
-        )}
 
         {/* Navigation - scrollable area */}
         <nav className="flex-1 overflow-y-auto p-3">

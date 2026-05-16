@@ -222,10 +222,10 @@ export const MODEL_MAP: Record<string, { provider: string; model: string }> = {
   "google/gemini-3-flash-preview": { provider: "gemini", model: "gemini-2.5-flash" },
   "google/gemini-3-pro-preview": { provider: "gemini", model: "gemini-2.5-pro" },
   // OpenAI models
-  "openai/gpt-5": { provider: "openai", model: "gpt-4o" },
-  "openai/gpt-5-mini": { provider: "openai", model: "gpt-4o-mini" },
-  "openai/gpt-5-nano": { provider: "openai", model: "gpt-4o-mini" },
-  "openai/gpt-5.2": { provider: "openai", model: "gpt-4o" },
+  "openai/gpt-4o": { provider: "openai", model: "gpt-4o" },
+  "openai/gpt-4o-mini": { provider: "openai", model: "gpt-4o-mini" },
+  "openai/gpt-4.1": { provider: "openai", model: "gpt-4.1" },
+  "openai/gpt-4.1-mini": { provider: "openai", model: "gpt-4.1-mini" },
   // Groq models (ultra rápidos y económicos)
   "groq/llama-3.1-8b": { provider: "groq", model: "llama-3.1-8b-instant" },
   "groq/llama-3.3-70b": { provider: "groq", model: "llama-3.3-70b-versatile" },

@@ -3,7 +3,8 @@ import { format, differenceInDays, isPast, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   DollarSign, TrendingUp, Clock, Package, AlertTriangle, CalendarClock, Gift,
-  ShieldCheck, BarChart3, PlusCircle, Activity,
+  ShieldCheck, BarChart3, PlusCircle, Activity, Users, ChevronDown, ChevronRight,
+  CheckCircle2, Loader2,
 } from 'lucide-react';
 import {
   LazyComposedChart,
@@ -34,11 +35,21 @@ import {
   useBarterPackages,
 } from '@/hooks/useFinance';
 import type { PackageCurrency, CurrencyStats } from '@/hooks/useFinance';
+import {
+  usePayrollSummary,
+  useCreatePayment,
+  usePaidClosuresByMonth,
+  useOverduePayments,
+  useTalentFinanceRealtime,
+} from '@/hooks/useTalentPayments';
+import type { PayrollEntry } from '@/hooks/useTalentPayments';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useRealtimeFinanceSync } from '@/hooks/realtime/useRealtimeFinanceSync';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // ============================================
 // TIPOS INLINE — Aging & Profitability
@@ -1023,6 +1034,379 @@ function AbonoDialog({
 }
 
 // ============================================
+// DIALOG: REGISTRAR PAGO A TALENTO
+// ============================================
+
+interface TalentPaymentDialogProps {
+  orgId: string;
+  entry: PayrollEntry;
+  open: boolean;
+  onClose: () => void;
+}
+
+const TALENT_PAYMENT_METHODS = ['Nequi', 'Daviplata', 'Transferencia', 'Efectivo', 'PayPal', 'Otro'] as const;
+
+function TalentPaymentDialog({ orgId, entry, open, onClose }: TalentPaymentDialogProps) {
+  const [selectedIds, setSelectedIds] = useState<string[]>(entry.items.map(i => i.id));
+  const [method, setMethod] = useState<string>('Nequi');
+  const [payDate, setPayDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [notes, setNotes] = useState('');
+  const createPayment = useCreatePayment(orgId);
+  const qc = useQueryClient();
+
+  const selectedAmount = useMemo(
+    () => entry.items.filter(i => selectedIds.includes(i.id)).reduce((s, i) => s + i.amount, 0),
+    [entry.items, selectedIds],
+  );
+
+  function toggleItem(id: string) {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  }
+
+  async function handleSubmit() {
+    if (selectedIds.length === 0) {
+      toast({ title: 'Selecciona al menos un proyecto', variant: 'destructive' });
+      return;
+    }
+    const description = [
+      `Via ${method}`,
+      notes || null,
+    ].filter(Boolean).join(' — ');
+
+    await createPayment.mutateAsync({
+      user_id: entry.user_id,
+      amount: selectedAmount,
+      currency: 'COP',
+      status: 'paid',
+      payment_account_id: null,
+      payment_date: payDate,
+      content_ids: selectedIds,
+      description: description || null,
+      notes: null,
+      receipt_url: null,
+      created_by: null,
+    });
+    qc.invalidateQueries({ queryKey: ['payroll-summary', orgId] });
+    onClose();
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={open ? onClose : undefined}>
+      <DialogContent className="bg-[#111] border-white/10 text-white max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-white flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-400" />
+            Registrar pago a {entry.full_name}
+          </DialogTitle>
+          <p className="text-white/50 text-sm pt-1">
+            Selecciona los proyectos incluidos en este pago
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-3 py-2 max-h-60 overflow-y-auto pr-1">
+          {entry.items.map(item => {
+            const checked = selectedIds.includes(item.id);
+            return (
+              <label
+                key={item.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  checked
+                    ? 'bg-green-500/10 border-green-500/30'
+                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => toggleItem(item.id)}
+                  className="accent-green-500"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm truncate">
+                    {item.sequence_number && (
+                      <span className="text-white/40 mr-1">#{item.sequence_number}</span>
+                    )}
+                    {item.title}
+                  </p>
+                  <p className="text-white/40 text-xs capitalize">{item.role}</p>
+                </div>
+                <span className="text-green-400 text-sm font-medium shrink-0">
+                  {formatCurrency(item.amount, 'COP')}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="text-white/70 text-xs font-medium block mb-1">Método</label>
+            <select
+              value={method}
+              onChange={e => setMethod(e.target.value)}
+              className="w-full bg-white/5 border border-white/15 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-white/30"
+            >
+              {TALENT_PAYMENT_METHODS.map(m => (
+                <option key={m} value={m} className="bg-[#111]">{m}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-white/70 text-xs font-medium block mb-1">Fecha de pago</label>
+            <Input
+              type="date"
+              value={payDate}
+              onChange={e => setPayDate(e.target.value)}
+              className="bg-white/5 border-white/15 text-white focus:border-white/30"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-white/70 text-xs font-medium block mb-1">Notas (opcional)</label>
+          <Textarea
+            placeholder="Referencia, comprobante, etc."
+            rows={2}
+            value={notes}
+            onChange={e => setNotes(e.target.value)}
+            className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-white/30 resize-none"
+          />
+        </div>
+
+        <div className="flex items-center justify-between pt-1">
+          <div>
+            <p className="text-white/40 text-xs">{selectedIds.length} proyecto{selectedIds.length !== 1 ? 's' : ''} seleccionado{selectedIds.length !== 1 ? 's' : ''}</p>
+            <p className="text-green-400 font-bold text-base">{formatCurrency(selectedAmount, 'COP')}</p>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              disabled={createPayment.isPending}
+              className="text-white/60 hover:text-white hover:bg-white/10"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={createPayment.isPending || selectedIds.length === 0}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {createPayment.isPending
+                ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Registrando...</>
+                : 'Confirmar pago'
+              }
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============================================
+// SECCIÓN PAGOS A CREADORES
+// ============================================
+
+function PayrollSection({ orgId }: { orgId: string }) {
+  const { data: payroll = [], isLoading } = usePayrollSummary(orgId);
+  const { data: overdue = [] } = useOverduePayments(orgId);
+  const { data: paidByMonth = [] } = usePaidClosuresByMonth(orgId);
+  useTalentFinanceRealtime(orgId);
+
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [payTarget, setPayTarget] = useState<PayrollEntry | null>(null);
+
+  function toggleExpanded(userId: string) {
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      next.has(userId) ? next.delete(userId) : next.add(userId);
+      return next;
+    });
+  }
+
+  const totalPending = useMemo(
+    () => payroll.reduce((s, e) => s + e.total_pending, 0),
+    [payroll],
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-white/40 text-sm p-8">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Calculando nómina pendiente...
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs nómina */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 border-purple-500/20 p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Users className="w-4 h-4 text-purple-400" />
+            <span className="text-white/60 text-sm">Creadores con pago pendiente</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{payroll.length}</p>
+        </Card>
+        <Card className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 border-orange-500/20 p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Clock className="w-4 h-4 text-orange-400" />
+            <span className="text-white/60 text-sm">Total nómina pendiente</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{formatCurrency(totalPending, 'COP')}</p>
+        </Card>
+        <Card className="bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/20 p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="w-4 h-4 text-red-400" />
+            <span className="text-white/60 text-sm">Pagos vencidos</span>
+          </div>
+          <p className="text-2xl font-bold text-white">{overdue.length}</p>
+        </Card>
+      </div>
+
+      {/* Lista de nómina pendiente */}
+      <Card className="bg-white/5 border-white/10">
+        <div className="p-6 pb-4 flex items-center gap-3">
+          <Users className="w-5 h-5 text-purple-400 shrink-0" />
+          <div>
+            <h3 className="text-lg font-semibold text-white">Nómina Pendiente</h3>
+            <p className="text-white/40 text-sm">Contenidos en status "approved" sin pago registrado</p>
+          </div>
+        </div>
+
+        {payroll.length === 0 ? (
+          <div className="px-6 pb-6">
+            <div className="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-3">
+              <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+              <p className="text-green-300 text-sm font-medium">
+                Nómina al día — no hay pagos pendientes
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/10">
+            {payroll.map(entry => {
+              const expanded = expandedIds.has(entry.user_id);
+              return (
+                <div key={entry.user_id}>
+                  <div className="px-6 py-4 flex items-center gap-4">
+                    {/* Avatar + nombre */}
+                    <button
+                      onClick={() => toggleExpanded(entry.user_id)}
+                      className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    >
+                      {expanded
+                        ? <ChevronDown className="w-4 h-4 text-white/40 shrink-0" />
+                        : <ChevronRight className="w-4 h-4 text-white/40 shrink-0" />
+                      }
+                      <Avatar className="w-8 h-8 shrink-0">
+                        <AvatarImage src={entry.avatar_url ?? undefined} />
+                        <AvatarFallback className="bg-purple-500/20 text-purple-300 text-xs">
+                          {entry.full_name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-white font-medium text-sm truncate">{entry.full_name}</p>
+                        <p className="text-white/40 text-xs">{entry.project_count} proyecto{entry.project_count !== 1 ? 's' : ''}</p>
+                      </div>
+                    </button>
+
+                    {/* Monto + botón pagar */}
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-orange-400 font-bold">
+                        {formatCurrency(entry.total_pending, 'COP')}
+                      </span>
+                      <button
+                        onClick={() => setPayTarget(entry)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-green-500/20 text-green-300 hover:bg-green-500/30 border border-green-500/20 transition-colors"
+                      >
+                        <PlusCircle className="w-3 h-3" />
+                        Pagar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Detalle de proyectos */}
+                  {expanded && (
+                    <div className="px-6 pb-4 pl-16">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-white/10">
+                            <TableHead className="text-white/50 text-xs">Proyecto</TableHead>
+                            <TableHead className="text-white/50 text-xs">Rol</TableHead>
+                            <TableHead className="text-white/50 text-xs text-right">Monto</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {entry.items.map(item => (
+                            <TableRow key={item.id} className="border-white/10">
+                              <TableCell className="text-white/70 text-sm py-2">
+                                {item.sequence_number && (
+                                  <span className="text-white/30 mr-1">#{item.sequence_number}</span>
+                                )}
+                                {item.title}
+                              </TableCell>
+                              <TableCell className="py-2">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 capitalize">
+                                  {item.role}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-green-400 text-sm text-right py-2 font-medium">
+                                {formatCurrency(item.amount, 'COP')}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Historial de pagos cerrados por mes */}
+      {paidByMonth.length > 0 && (
+        <Card className="bg-white/5 border-white/10">
+          <div className="p-6 pb-4 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+            <div>
+              <h3 className="text-lg font-semibold text-white">Historial de Pagos</h3>
+              <p className="text-white/40 text-sm">Pagos completados agrupados por mes</p>
+            </div>
+          </div>
+          <div className="divide-y divide-white/10">
+            {paidByMonth.map(group => (
+              <div key={group.month} className="px-6 py-4 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-medium text-sm">{group.label}</p>
+                  <p className="text-white/40 text-xs">{group.payment_count} pago{group.payment_count !== 1 ? 's' : ''}</p>
+                </div>
+                <span className="text-green-400 font-bold">{formatCurrency(group.total_paid, 'COP')}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Dialog pago a talento */}
+      {payTarget && (
+        <TalentPaymentDialog
+          orgId={orgId}
+          entry={payTarget}
+          open={!!payTarget}
+          onClose={() => setPayTarget(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ============================================
 // FINANCES CONTENT
 // ============================================
 
@@ -1032,6 +1416,8 @@ function FinancesContent({ orgId }: { orgId: string }) {
   const { data: activePackages = [], refetch: refetchPackages } = useActiveClientPackages(orgId);
   const { data: barterPackages = [] } = useBarterPackages(orgId);
   const { connected, lastUpdated } = useRealtimeFinanceSync({ orgId });
+
+  const [activeTab, setActiveTab] = useState<'finanzas' | 'pagos'>('finanzas');
 
   const [abonoTarget, setAbonoTarget] = useState<{
     packageId: string;
@@ -1087,7 +1473,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
     <div className="min-h-screen">
       <div className="p-4 md:p-6 space-y-6">
         {/* Header */}
-        <div className="flex items-start justify-between mb-8">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
               <h1 className="text-3xl font-bold text-white">Finanzas Agencia</h1>
@@ -1110,8 +1496,8 @@ function FinancesContent({ orgId }: { orgId: string }) {
             </p>
           </div>
 
-          {/* Currency selector */}
-          {availableCurrencies.length > 0 && (
+          {/* Currency selector — solo en tab finanzas */}
+          {activeTab === 'finanzas' && availableCurrencies.length > 0 && (
             <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-sm p-1">
               {availableCurrencies.map(cur => (
                 <button
@@ -1129,6 +1515,22 @@ function FinancesContent({ orgId }: { orgId: string }) {
             </div>
           )}
         </div>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={v => setActiveTab(v as 'finanzas' | 'pagos')}>
+          <TabsList className="bg-white/5 border border-white/10 mb-4">
+            <TabsTrigger value="finanzas">Finanzas</TabsTrigger>
+            <TabsTrigger value="pagos">Pagos a Creadores</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {/* Tab: Pagos a Creadores */}
+        {activeTab === 'pagos' && (
+          <PayrollSection orgId={orgId} />
+        )}
+
+        {/* Tab: Finanzas */}
+        {activeTab === 'finanzas' && (<>
 
         {/* KPIs — scoped to selected currency */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -1419,6 +1821,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
                   <TableHead className="text-white/70">Estado Pago</TableHead>
                   <TableHead className="text-white/70">Fecha Límite</TableHead>
                   <TableHead className="text-white/70">Inicio</TableHead>
+                  <TableHead className="text-white/70"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1452,6 +1855,23 @@ function FinancesContent({ orgId }: { orgId: string }) {
                       <TableCell className="text-white/50 text-sm">
                         {format(new Date(pkg.created_at), 'dd MMM yyyy', { locale: es })}
                       </TableCell>
+                      <TableCell>
+                        {!isPaid && pkg.total_value > 0 && (
+                          <button
+                            onClick={() => setAbonoTarget({
+                              packageId: pkg.id,
+                              packageName: pkg.name,
+                              clientName: pkg.client_name,
+                              currency: pkg.currency,
+                              pendingAmount: pkg.total_value - pkg.paid_amount,
+                            })}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-500/20 text-green-300 hover:bg-green-500/30 transition-colors border border-green-500/20"
+                          >
+                            <PlusCircle className="w-3 h-3" />
+                            Abono
+                          </button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -1459,6 +1879,7 @@ function FinancesContent({ orgId }: { orgId: string }) {
             </Table>
           </Card>
         )}
+        </>)}
       </div>
 
       {/* Dialog Abono — fuera del scroll para evitar z-index issues */}
