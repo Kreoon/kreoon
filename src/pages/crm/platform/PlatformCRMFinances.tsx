@@ -3,7 +3,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   DollarSign, TrendingUp, Wallet, FileText, Download,
-  MoreHorizontal, Check, Send,
+  MoreHorizontal, Check, Send, Building2,
 } from 'lucide-react';
 import {
   LazyBarChart,
@@ -82,6 +82,7 @@ const PlatformCRMFinances = () => {
   const [period, setPeriod] = useState('30');
   const [activeTab, setActiveTab] = useState('overview');
   const [payoutFilter, setPayoutFilter] = useState('all');
+  const [payoutMonth, setPayoutMonth] = useState('all');
   const [invoiceFilter, setInvoiceFilter] = useState('all');
   const [txFilter, setTxFilter] = useState('all');
 
@@ -105,12 +106,31 @@ const PlatformCRMFinances = () => {
     return ((stats.revenue_period - stats.revenue_previous) / stats.revenue_previous) * 100;
   }, [stats]);
 
+  const activeOrgsCount = useMemo(() =>
+    subscriptions.filter(s => s.status === 'active').length,
+  [subscriptions]);
+
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
 
+  const payoutMonths = useMemo(() => {
+    const seen = new Set<string>();
+    payouts.forEach(p => seen.add(format(new Date(p.requested_at), 'yyyy-MM')));
+    return Array.from(seen).sort().reverse();
+  }, [payouts]);
+
   const filteredPayouts = useMemo(() => {
-    if (payoutFilter === 'all') return payouts;
-    return payouts.filter(p => p.status === payoutFilter);
-  }, [payouts, payoutFilter]);
+    let result = payouts;
+    if (payoutFilter !== 'all') result = result.filter(p => p.status === payoutFilter);
+    if (payoutMonth !== 'all') result = result.filter(p =>
+      format(new Date(p.requested_at), 'yyyy-MM') === payoutMonth
+    );
+    return result;
+  }, [payouts, payoutFilter, payoutMonth]);
+
+  const filteredPayoutsTotal = useMemo(
+    () => filteredPayouts.reduce((s, p) => s + p.net_amount, 0),
+    [filteredPayouts],
+  );
 
   const filteredInvoices = useMemo(() => {
     if (invoiceFilter === 'all') return invoices;
@@ -174,7 +194,7 @@ const PlatformCRMFinances = () => {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-green-500/20 to-green-600/10 border-green-500/20 p-6">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-green-500/20 rounded-sm">
@@ -224,6 +244,19 @@ const PlatformCRMFinances = () => {
             <p className="text-3xl font-bold text-white">{formatCurrency(stats?.invoices_pending_amount || 0)}</p>
             <p className="text-orange-400 text-sm mt-1">
               {stats?.invoices_pending_count || 0} facturas · {stats?.invoices_overdue_count || 0} vencidas
+            </p>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-teal-500/20 to-teal-600/10 border-teal-500/20 p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-teal-500/20 rounded-sm">
+                <Building2 className="w-5 h-5 text-teal-400" />
+              </div>
+              <span className="text-white/60 text-sm">Orgs Activas</span>
+            </div>
+            <p className="text-3xl font-bold text-white">{activeOrgsCount}</p>
+            <p className="text-teal-400 text-sm mt-1">
+              {subscriptions.length} total suscripciones
             </p>
           </Card>
         </div>
@@ -373,6 +406,7 @@ const PlatformCRMFinances = () => {
                   <TableHead className="text-white/70">Ciclo</TableHead>
                   <TableHead className="text-white/70">Monto/mes</TableHead>
                   <TableHead className="text-white/70">Estado</TableHead>
+                  <TableHead className="text-white/70">Último pago</TableHead>
                   <TableHead className="text-white/70">Próximo cobro</TableHead>
                   <TableHead className="text-white/70"></TableHead>
                 </TableRow>
@@ -380,14 +414,18 @@ const PlatformCRMFinances = () => {
               <TableBody>
                 {subscriptions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-white/30 py-8">
+                    <TableCell colSpan={8} className="text-center text-white/30 py-8">
                       Sin suscripciones registradas
                     </TableCell>
                   </TableRow>
                 )}
                 {subscriptions.map(sub => (
                   <TableRow key={sub.id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="text-white">{sub.organization_id}</TableCell>
+                    <TableCell className="text-white">
+                      <span className="font-medium">
+                        {sub.organization_name || sub.organization_id.substring(0, 8) + '…'}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs ${SUBSCRIPTION_PLAN_COLORS[sub.plan]}`}>
                         {SUBSCRIPTION_PLAN_LABELS[sub.plan]}
@@ -406,10 +444,18 @@ const PlatformCRMFinances = () => {
                         {SUBSCRIPTION_STATUS_LABELS[sub.status]}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/50">
+                    <TableCell className="text-white/50 text-sm">
+                      {sub.current_period_start
+                        ? format(new Date(sub.current_period_start), 'dd MMM yyyy', { locale: es })
+                        : sub.started_at
+                          ? format(new Date(sub.started_at), 'dd MMM yyyy', { locale: es })
+                          : '—'
+                      }
+                    </TableCell>
+                    <TableCell className="text-white/50 text-sm">
                       {sub.current_period_end
                         ? format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: es })
-                        : '-'
+                        : '—'
                       }
                     </TableCell>
                     <TableCell>
@@ -600,20 +646,41 @@ const PlatformCRMFinances = () => {
               </Card>
             </div>
 
-            {/* Filter */}
-            <div className="flex gap-3 mb-4">
+            {/* Filtros + total visible */}
+            <div className="flex flex-wrap items-center gap-3 mb-4">
               <Select value={payoutFilter} onValueChange={setPayoutFilter}>
                 <SelectTrigger className="w-40 bg-white/5 border-white/10">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="pending">Pendientes</SelectItem>
                   <SelectItem value="approved">Aprobados</SelectItem>
                   <SelectItem value="processing">En proceso</SelectItem>
                   <SelectItem value="completed">Completados</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={payoutMonth} onValueChange={setPayoutMonth}>
+                <SelectTrigger className="w-44 bg-white/5 border-white/10">
+                  <SelectValue placeholder="Mes" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los meses</SelectItem>
+                  {payoutMonths.map(m => (
+                    <SelectItem key={m} value={m}>
+                      {format(new Date(m + '-01'), 'MMMM yyyy', { locale: es })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {filteredPayouts.length > 0 && (
+                <div className="ml-auto flex items-center gap-2 text-sm">
+                  <span className="text-white/40">{filteredPayouts.length} pagos</span>
+                  <span className="text-white/20">·</span>
+                  <span className="text-white/70">Total neto:</span>
+                  <span className="text-green-400 font-semibold">{formatCurrency(filteredPayoutsTotal)}</span>
+                </div>
+              )}
             </div>
 
             {/* Payouts table */}

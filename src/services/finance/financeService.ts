@@ -41,10 +41,13 @@ export async function getRevenueByMonth(months: number = 12): Promise<RevenueByM
 export async function getAllSubscriptions(): Promise<PlatformSubscription[]> {
   const { data, error } = await (supabase as any)
     .from('platform_subscriptions')
-    .select('*')
+    .select('*, organizations!organization_id(name)')
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data || []) as PlatformSubscription[];
+  return ((data || []) as any[]).map(row => ({
+    ...row,
+    organization_name: row.organizations?.name ?? null,
+  })) as PlatformSubscription[];
 }
 
 export async function getAllTransactions(filters?: {

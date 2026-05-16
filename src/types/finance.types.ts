@@ -136,6 +136,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 export interface PlatformSubscription {
   id: string;
   organization_id: string;
+  organization_name?: string | null;
   plan: SubscriptionPlan;
   billing_cycle: BillingCycle;
   amount_monthly: number;
