@@ -865,10 +865,10 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
               {/* Package selector */}
               <div className="space-y-2">
-                <Label htmlFor="package">Paquete de Contenido</Label>
+                <Label htmlFor="package">Campaña de Contenido</Label>
                 <Select value={packageId} onValueChange={setPackageId} disabled={!clientId || clientPackages.length === 0}>
                   <SelectTrigger>
-                    <SelectValue placeholder={clientId ? (clientPackages.length > 0 ? "Seleccionar paquete" : "Sin paquetes") : "Primero selecciona un cliente"} />
+                    <SelectValue placeholder={clientId ? (clientPackages.length > 0 ? "Seleccionar campaña" : "Sin campañas") : "Primero selecciona un cliente"} />
                   </SelectTrigger>
                   <SelectContent>
                     {clientPackages.map(pkg => (
@@ -958,7 +958,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
               </Select>
               <p className="text-sm text-muted-foreground">
                 {packageId && clientPackages.find(p => p.id === packageId)?.hooks_per_video 
-                  ? `Predefinido por paquete "${clientPackages.find(p => p.id === packageId)?.name}"`
+                  ? `Predefinido por campaña "${clientPackages.find(p => p.id === packageId)?.name}"`
                   : "Define cuántos videos finales se entregarán"
                 }
               </p>

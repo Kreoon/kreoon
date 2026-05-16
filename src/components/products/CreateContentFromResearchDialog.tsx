@@ -315,7 +315,7 @@ export function CreateContentFromResearchDialog({
           {loadingPackages ? (
             <div className="flex items-center gap-2 text-muted-foreground text-sm">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Cargando paquetes...
+              Cargando campañas...
             </div>
           ) : videosAvailable > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -331,7 +331,7 @@ export function CreateContentFromResearchDialog({
             </div>
           ) : (
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              No hay videos disponibles en los paquetes activos. Puedes crear contenidos de todas formas escribiendo la cantidad manualmente.
+              No hay videos disponibles en las campañas activas. Puedes crear contenidos de todas formas escribiendo la cantidad manualmente.
             </p>
           )}
         </div>

@@ -633,7 +633,7 @@ export function CreateProductBriefWizard({
         setVideosUsed(used);
       } catch (error) {
         console.error('Error fetching client packages:', error);
-        toast.error('Error al cargar los paquetes del cliente');
+        toast.error('Error al cargar las campañas del cliente');
       } finally {
         setLoadingPackages(false);
       }
@@ -1938,13 +1938,13 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
             <div className="bg-primary/5 border border-primary/20 rounded-sm p-4 space-y-4">
               <div>
                 <Label className="text-base font-semibold flex items-center gap-2">
-                  📦 Videos Disponibles de tus Paquetes
+                  📦 Videos Disponibles de tus Campañas
                 </Label>
                 
                 {loadingPackages ? (
                   <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Cargando paquetes...</span>
+                    <span>Cargando campañas...</span>
                   </div>
                 ) : videosAvailable > 0 ? (
                   <div className="mt-3 space-y-3">
@@ -1966,7 +1966,7 @@ REGLAS: Entrega versión final lista para pegar. Máximo 2-3 oraciones. Español
                       ⚠️ No tienes videos disponibles
                     </p>
                     <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                      Todos los videos de tus paquetes activos ya fueron creados.
+                      Todos los videos de tus campañas activas ya fueron creados.
                     </p>
                     <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
                       Contratados: {videosOwed} | Usados: {videosUsed}
