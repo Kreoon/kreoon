@@ -36,6 +36,7 @@ import {
   useUploadReceipt,
   usePendingContentForUser,
   useSignedReceiptUrl,
+  useTalentFinanceRealtime,
 } from '@/hooks/useTalentPayments';
 import type {
   TalentPaymentAccount,
@@ -538,6 +539,8 @@ function exportPaymentsToCSV(
 
 export function TalentPaymentsTab({ userId, organizationId, memberName }: Props) {
   const { isAdmin } = useAuth();
+
+  useTalentFinanceRealtime(organizationId, userId);
 
   // Data
   const { data: accounts = [], isLoading: loadingAccounts } = usePaymentAccounts(organizationId, userId);

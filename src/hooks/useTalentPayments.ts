@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type {
@@ -14,6 +15,7 @@ import type {
 export function usePaymentAccounts(organizationId: string, userId: string) {
   return useQuery({
     queryKey: ['talent-payment-accounts', organizationId, userId],
+    staleTime: 0,
     queryFn: async (): Promise<TalentPaymentAccount[]> => {
       const { data, error } = await supabase
         .from('talent_payment_accounts')
@@ -130,6 +132,7 @@ export function useSetPrimaryAccount(organizationId: string) {
 export function useTalentPayments(organizationId: string, userId: string) {
   return useQuery({
     queryKey: ['talent-payments', organizationId, userId],
+    staleTime: 0,
     queryFn: async (): Promise<TalentPayment[]> => {
       const { data, error } = await supabase
         .from('talent_payments')
@@ -474,6 +477,7 @@ export interface PendingContentItem {
 export function usePendingContentForUser(organizationId: string, userId: string) {
   return useQuery({
     queryKey: ['pending-content-payment', organizationId, userId],
+    staleTime: 0,
     queryFn: async (): Promise<PendingContentItem[]> => {
       // Fetch content aprobado/entregado y payments existentes en paralelo
       const [creatorRes, editorRes, paymentsRes] = await Promise.all([
@@ -668,3 +672,68 @@ export function usePaidClosuresByMonth(organizationId: string) {
   });
 }
 
+// ─── Realtime centralizado para el módulo financiero ─────────────────────────
+// Úsalo en cualquier vista financiera (nómina, wallet, tab pagos).
+// Escucha cambios en content, talent_payments y talent_payment_accounts
+// e invalida las queries relevantes para que la UI se actualice al instante.
+
+export function useTalentFinanceRealtime(organizationId: string, userId?: string) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!organizationId) return;
+
+    const channelId = userId
+      ? `talent-finance-${organizationId}-${userId}`
+      : `talent-finance-${organizationId}`;
+
+    const channel = supabase
+      .channel(channelId)
+      // Cambios en contenido (precios, estado, paid flags)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'content',
+        filter: `organization_id=eq.${organizationId}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: ['payroll-summary',            organizationId] });
+        qc.invalidateQueries({ queryKey: ['content-financial-summary',  organizationId] });
+        qc.invalidateQueries({ queryKey: ['pending-content-payment',    organizationId] });
+        if (userId) {
+          qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId, userId] });
+          qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId, userId] });
+        }
+      })
+      // Cambios en pagos (nuevo, status, comprobante)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'talent_payments',
+        filter: `organization_id=eq.${organizationId}`,
+      }, () => {
+        qc.invalidateQueries({ queryKey: ['monthly-closures',         organizationId] });
+        qc.invalidateQueries({ queryKey: ['overdue-payments',         organizationId] });
+        qc.invalidateQueries({ queryKey: ['paid-closures-by-month',   organizationId] });
+        qc.invalidateQueries({ queryKey: ['talent-payments',          organizationId] });
+        if (userId) {
+          qc.invalidateQueries({ queryKey: ['talent-payments', organizationId, userId] });
+        }
+      })
+      // Cambios en cuentas de cobro
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'talent_payment_accounts',
+        filter: `organization_id=eq.${organizationId}`,
+      }, () => {
+        if (userId) {
+          qc.invalidateQueries({ queryKey: ['talent-payment-accounts', organizationId, userId] });
+        } else {
+          qc.invalidateQueries({ queryKey: ['talent-payment-accounts', organizationId] });
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [organizationId, userId, qc]);
+}

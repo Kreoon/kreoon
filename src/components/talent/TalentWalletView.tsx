@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -7,12 +7,11 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import {
   useContentFinancialSummary,
   useTalentPayments,
   useSignedReceiptUrl,
+  useTalentFinanceRealtime,
 } from '@/hooks/useTalentPayments';
 import type { ContentFinancialItem } from '@/hooks/useTalentPayments';
 import type { TalentPayment } from '@/types/talentPayments.types';
@@ -164,33 +163,10 @@ interface TalentWalletViewProps {
 }
 
 export function TalentWalletView({ userId, organizationId }: TalentWalletViewProps) {
-  const qc = useQueryClient();
   const { data: summary, isLoading: loadingSummary } = useContentFinancialSummary(organizationId, userId);
   const { data: payments = [], isLoading: loadingPayments } = useTalentPayments(organizationId, userId);
 
-  useEffect(() => {
-    if (!organizationId || !userId) return;
-    const channel = supabase
-      .channel(`wallet-realtime-${organizationId}-${userId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'content', filter: `organization_id=eq.${organizationId}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId, userId] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'talent_payments', filter: `organization_id=eq.${organizationId}` },
-        () => {
-          qc.invalidateQueries({ queryKey: ['talent-payments', organizationId, userId] });
-          qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId, userId] });
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [organizationId, userId, qc]);
+  useTalentFinanceRealtime(organizationId, userId);
 
   const isLoading = loadingSummary || loadingPayments;
 
