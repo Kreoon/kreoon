@@ -22,7 +22,7 @@ import { useUnifiedTalent, useToggleAmbassador } from '@/hooks/useUnifiedTalent'
 import { useTalentActivityMetrics } from '@/hooks/useTalentActivityMetrics';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
-import { UnifiedTalentDetailPanel } from '@/components/talent/UnifiedTalentDetailPanel';
+import { TalentProfileModal } from '@/components/talent/TalentProfileModal';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { TalentRanking } from '@/components/team/TalentRanking';
 import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
@@ -33,13 +33,15 @@ import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
 import { UnifiedClientsContent } from './UnifiedClientsPage';
 import { SinAsignarSection } from './Team';
+import { TalentPayrollView } from '@/components/talent/TalentPayrollView';
 // ── Tipos de tab de nivel superior ────────────────────────────────────────────
-type TopTab = 'talento' | 'clientes' | 'sin-asignar';
+type TopTab = 'talento' | 'clientes' | 'sin-asignar' | 'nomina';
 
 const TOP_TABS: { key: TopTab; label: string }[] = [
   { key: 'talento',     label: 'Talento' },
   { key: 'clientes',    label: 'Clientes' },
   { key: 'sin-asignar', label: 'Sin Asignar' },
+  { key: 'nomina',      label: 'Nómina' },
 ];
 
 // ── Tipos de filtro internos de Talento ───────────────────────────────────────
@@ -543,25 +545,13 @@ function TalentoSection() {
               )}
             </div>
 
-            {/* Mobile backdrop */}
-            {activeMember && (
-              <div
-                className="fixed inset-0 bg-black/50 z-30 md:hidden"
-                onClick={() => setSelectedMember(null)}
-              />
-            )}
-
-            {/* Detail Side Panel */}
-            {activeMember && currentOrgId && (
-              <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-                <UnifiedTalentDetailPanel
-                  member={activeMember}
-                  organizationId={currentOrgId}
-                  onClose={() => setSelectedMember(null)}
-                  onUpdate={() => refetch()}
-                />
-              </div>
-            )}
+            <TalentProfileModal
+              member={activeMember}
+              organizationId={currentOrgId ?? ''}
+              open={!!activeMember && !!currentOrgId}
+              onClose={() => setSelectedMember(null)}
+              onUpdate={() => refetch()}
+            />
           </div>
         )}
       </div>
@@ -577,7 +567,7 @@ const UnifiedTalentPage = () => {
   // Los valores válidos son: talento | clientes | marcas | sin-asignar
   const rawTab = searchParams.get('tab');
   const activeTab: TopTab =
-    rawTab === 'clientes' || rawTab === 'sin-asignar' ? rawTab : 'talento';
+    rawTab === 'clientes' || rawTab === 'sin-asignar' || rawTab === 'nomina' ? rawTab : 'talento';
 
   const handleTabChange = (key: TopTab) => {
     if (key === 'talento') {
@@ -614,6 +604,7 @@ const UnifiedTalentPage = () => {
       {activeTab === 'clientes'    && <UnifiedClientsContent />}
       {activeTab === 'sin-asignar' && <SinAsignarSection />}
       {activeTab === 'talento'     && <TalentoSection />}
+      {activeTab === 'nomina'      && <TalentPayrollView />}
     </div>
   );
 };
