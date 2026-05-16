@@ -162,7 +162,6 @@ const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaci
 // CRM Platform
 const PlatformAdminDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformAdminDashboard"));
 const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
-const PlatformCRMLeads = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMLeads"));
 const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
 const PlatformCRMPeople = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMPeople"));
 const PlatformCRMFinances = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMFinances"));
@@ -172,7 +171,6 @@ const BrandDetail = lazyWithRetry(() => import("./pages/crm/BrandDetail"));
 const PlatformCRMCommunities = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMCommunities"));
 // CRM Org
 const OrgCRMDashboard = lazyWithRetry(() => import("./pages/crm/org/OrgCRMDashboard"));
-const OrgCRMPipelines = lazyWithRetry(() => import("./pages/crm/org/OrgCRMPipelines"));
 const OrgCRMFinances = lazyWithRetry(() => import("./pages/crm/org/OrgCRMFinances"));
 // Unified pages (Talent + Clients)
 const UnifiedTalentPage = lazyWithRetry(() => import("./pages/UnifiedTalentPage"));
@@ -460,7 +458,7 @@ function AppRoutes() {
         {/* CRM Plataforma */}
         <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/overview" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/leads" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<Navigate to="/crm" replace />} />
         <Route path="/crm/marcas" element={<Navigate to="/talent?tab=clientes" replace />} />
         <Route path="/crm/marcas/:brandId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/comunidades" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
@@ -474,7 +472,7 @@ function AppRoutes() {
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/talent?tab=clientes" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
-        <Route path="/org-crm/pipelines" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><OrgCRMPipelines /></MainLayout></ProtectedRoute>} />
+        <Route path="/org-crm/pipelines" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
         {/* Social Hub Module */}
         <Route path="/social-hub" element={<ProtectedRoute allowNoRoles><MainLayout><SocialHubPage /></MainLayout></ProtectedRoute>} />
