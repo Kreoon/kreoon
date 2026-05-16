@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { format, addMonths, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -772,6 +772,34 @@ export function TalentPayrollView() {
   const [runningClose, setRunningClose] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
+
+  // Realtime: invalida nómina cuando cambian precios o pagos en la org
+  useEffect(() => {
+    if (!orgId) return;
+    const channel = supabase
+      .channel(`payroll-realtime-${orgId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'content', filter: `organization_id=eq.${orgId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ['payroll-summary', orgId] });
+          qc.invalidateQueries({ queryKey: ['content-financial-summary', orgId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'talent_payments', filter: `organization_id=eq.${orgId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ['monthly-closures', orgId] });
+          qc.invalidateQueries({ queryKey: ['overdue-payments', orgId] });
+          qc.invalidateQueries({ queryKey: ['paid-closures-by-month', orgId] });
+          qc.invalidateQueries({ queryKey: ['talent-payments', orgId] });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [orgId, qc]);
 
   const totalClosures = useMemo(() => closures.reduce((s, e) => s + e.payment.amount, 0), [closures]);
   const totalUnpaid = useMemo(() => unpaid.reduce((s, e) => s + e.total_pending, 0), [unpaid]);

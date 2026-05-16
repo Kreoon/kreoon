@@ -301,6 +301,7 @@ const PAID_STATUSES = ['paid'];
 export function useContentFinancialSummary(organizationId: string, userId: string) {
   return useQuery({
     queryKey: ['content-financial-summary', organizationId, userId],
+    staleTime: 0,
     queryFn: async (): Promise<ContentFinancialSummary> => {
       const { data, error } = await supabase
         .from('content')
@@ -387,6 +388,7 @@ export interface PayrollEntry {
 export function usePayrollSummary(organizationId: string) {
   return useQuery({
     queryKey: ['payroll-summary', organizationId],
+    staleTime: 0, // siempre refetch — los precios cambian en tiempo real
     queryFn: async (): Promise<PayrollEntry[]> => {
       const { data: rows, error } = await supabase
         .from('content')
@@ -569,6 +571,7 @@ export interface OverduePayment {
 export function useOverduePayments(organizationId: string) {
   return useQuery({
     queryKey: ['overdue-payments', organizationId],
+    staleTime: 0,
     queryFn: async (): Promise<OverduePayment[]> => {
       const today = new Date().toISOString().split('T')[0];
       const { data: payments, error } = await supabase
@@ -626,6 +629,7 @@ export interface MonthlyClosureGroup {
 export function usePaidClosuresByMonth(organizationId: string) {
   return useQuery({
     queryKey: ['paid-closures-by-month', organizationId],
+    staleTime: 0,
     queryFn: async (): Promise<MonthlyClosureGroup[]> => {
       const { data, error } = await supabase
         .from('talent_payments')
