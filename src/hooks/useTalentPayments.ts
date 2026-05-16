@@ -179,7 +179,15 @@ export function useCreatePayment(organizationId: string) {
       return data;
     },
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['talent-payments', organizationId, data.user_id] });
+      // Invalida el pago específico del usuario
+      qc.invalidateQueries({ queryKey: ['talent-payments',           organizationId, data.user_id] });
+      // Invalida vistas de nómina — el trigger SQL ya actualizó creator_paid/editor_paid en content
+      qc.invalidateQueries({ queryKey: ['payroll-summary',           organizationId] });
+      qc.invalidateQueries({ queryKey: ['monthly-closures',          organizationId] });
+      qc.invalidateQueries({ queryKey: ['overdue-payments',          organizationId] });
+      qc.invalidateQueries({ queryKey: ['paid-closures-by-month',    organizationId] });
+      qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId] });
+      qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId] });
       toast({ title: 'Pago registrado' });
     },
     onError: () => toast({ title: 'Error al registrar pago', variant: 'destructive' }),
@@ -205,7 +213,13 @@ export function useUpdatePayment(organizationId: string) {
       return { ...data, userId };
     },
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: ['talent-payments', organizationId, data.userId] });
+      qc.invalidateQueries({ queryKey: ['talent-payments',           organizationId, data.userId] });
+      qc.invalidateQueries({ queryKey: ['payroll-summary',           organizationId] });
+      qc.invalidateQueries({ queryKey: ['monthly-closures',          organizationId] });
+      qc.invalidateQueries({ queryKey: ['overdue-payments',          organizationId] });
+      qc.invalidateQueries({ queryKey: ['paid-closures-by-month',    organizationId] });
+      qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId] });
+      qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId] });
     },
     onError: () => toast({ title: 'Error al actualizar pago', variant: 'destructive' }),
   });
@@ -741,18 +755,25 @@ export function useTalentFinanceRealtime(organizationId: string, userId?: string
         }
       })
       // Cambios en pagos (nuevo, status, comprobante)
+      // También invalida payroll-summary y content porque el trigger SQL
+      // actualiza creator_paid/editor_paid sincrónicamente al guardar el pago
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'talent_payments',
         filter: `organization_id=eq.${organizationId}`,
       }, () => {
-        qc.invalidateQueries({ queryKey: ['monthly-closures',         organizationId] });
-        qc.invalidateQueries({ queryKey: ['overdue-payments',         organizationId] });
-        qc.invalidateQueries({ queryKey: ['paid-closures-by-month',   organizationId] });
-        qc.invalidateQueries({ queryKey: ['talent-payments',          organizationId] });
+        qc.invalidateQueries({ queryKey: ['monthly-closures',          organizationId] });
+        qc.invalidateQueries({ queryKey: ['overdue-payments',          organizationId] });
+        qc.invalidateQueries({ queryKey: ['paid-closures-by-month',    organizationId] });
+        qc.invalidateQueries({ queryKey: ['talent-payments',           organizationId] });
+        qc.invalidateQueries({ queryKey: ['payroll-summary',           organizationId] });
+        qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId] });
+        qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId] });
         if (userId) {
-          qc.invalidateQueries({ queryKey: ['talent-payments', organizationId, userId] });
+          qc.invalidateQueries({ queryKey: ['talent-payments',          organizationId, userId] });
+          qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId, userId] });
+          qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId, userId] });
         }
       })
       // Cambios en cuentas de cobro
