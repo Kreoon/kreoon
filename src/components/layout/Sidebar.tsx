@@ -29,7 +29,6 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
-  GitBranch,
   DollarSign,
   Crown,
   Share2,
@@ -42,7 +41,7 @@ import {
   CircleUser,
   Blocks,
 } from "lucide-react";
-import { filterDevModuleItems, DEVELOPMENT_MODULES, canAccessDevModule } from '@/lib/developmentModules';
+import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -120,7 +119,6 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
@@ -128,11 +126,9 @@ const adminSections: NavSection[] = [
     label: "CRM PLATAFORMA",
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
-      { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
-      { name: "Módulos Dev", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
   },
@@ -158,7 +154,6 @@ const strategistSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
@@ -597,24 +592,10 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     const configSection = filtered.find(s => s.label === 'CONFIG');
     const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
 
-    // Build "EN DESARROLLO" section for root users from DEVELOPMENT_MODULES
-    const devModulesSection: NavSection | null = canAccessDevModule(user?.email) ? {
-      label: "EN DESARROLLO",
-      items: DEVELOPMENT_MODULES.map(mod => ({
-        name: mod.name,
-        href: mod.sidebarItems[0]?.path || mod.routes[0],
-        icon: mod.icon,
-        tourId: `sidebar-dev-${mod.id}`,
-      })),
-    } : null;
-
     return [
       ...nonConfigSections,
       ...mktSections,
-      // Only add recruit section when marketplace is disabled (when enabled, /marketplace is already in mktSections)
       ...(!effectiveMktEnabled ? [recruitSection] : []),
-      // "EN DESARROLLO" section only for root users - separated from working features
-      ...(devModulesSection ? [devModulesSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
   }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);

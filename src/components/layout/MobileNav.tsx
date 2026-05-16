@@ -25,7 +25,6 @@ import {
   Video,
   TrendingUp,
   BarChart3,
-  GitBranch,
   DollarSign,
   Crown,
   Share2,
@@ -111,7 +110,6 @@ const adminSections: NavSection[] = [
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
@@ -119,7 +117,6 @@ const adminSections: NavSection[] = [
     label: "CRM PLATAFORMA",
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard },
-      { name: "Leads", href: "/crm/leads", icon: UserPlus },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
       { name: "Personas", href: "/crm/personas", icon: Users },
       { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
@@ -149,7 +146,6 @@ const strategistSections: NavSection[] = [
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },

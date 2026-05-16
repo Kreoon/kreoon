@@ -159,7 +159,7 @@ export function ModulesSection() {
       name: 'Clients',
       status: 'live',
       description: 'CRM para marcas y clientes',
-      features: ['Paquetes y contratos', 'Productos por cliente', 'Portal de cliente', 'Facturación']
+      features: ['Campañas y contratos', 'Productos por cliente', 'Portal de cliente', 'Facturación']
     },
     {
       icon: Globe,
