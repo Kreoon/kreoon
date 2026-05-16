@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Store } from 'lucide-react';
 import { MarketplaceDashboardTab } from '@/components/marketplace/dashboard/MarketplaceDashboardTab';
+import { TalentWalletView } from '@/components/talent/TalentWalletView';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
@@ -76,7 +77,7 @@ export default function CreatorDashboard() {
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
   // Tab por defecto: marketplace para freelancers, studio para creators en org
-  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace'>(isFreelancer ? 'marketplace' : 'studio');
+  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace' | 'wallet'>(isFreelancer ? 'marketplace' : 'studio');
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean;
     title: string;
@@ -196,9 +197,25 @@ export default function CreatorDashboard() {
             <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
             Marketplace
           </button>
+          <button
+            onClick={() => setDashboardTab('wallet')}
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
+              dashboardTab === 'wallet' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <DollarSign className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
+            Mis cobros
+          </button>
         </div>
 
-        {dashboardTab === 'marketplace' ? (
+        {dashboardTab === 'wallet' && profile?.organization_id && user?.id ? (
+          <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+            <TalentWalletView
+              userId={targetUserId ?? user.id}
+              organizationId={profile.organization_id}
+            />
+          </div>
+        ) : dashboardTab === 'marketplace' ? (
           <MarketplaceDashboardTab role="creator" />
         ) : (
         <>

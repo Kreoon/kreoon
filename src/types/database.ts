@@ -185,6 +185,9 @@ export interface Profile {
   onboarding_completed?: boolean;
   onboarding_completed_at?: string | null;
   profile_data_completed?: boolean;
+  lead_source?: string | null;
+  community_name?: string | null;
+  referred_by?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -205,6 +208,9 @@ export interface Client {
   notes: string | null;
   user_id: string | null;
   created_by: string | null;
+  lead_source: string | null;
+  community_name: string | null;
+  referred_by: string | null;
   created_at: string;
   updated_at: string;
 }

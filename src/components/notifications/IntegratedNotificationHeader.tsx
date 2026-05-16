@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Briefcase, Eye, Building2, Shield, User, Sparkles, Zap, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
 import {
   Popover,
   PopoverContent,
@@ -287,11 +286,6 @@ export function IntegratedNotificationHeader({
           </span>
         </div>
       </button>
-
-      {/* Root Org Switcher - only for root admin */}
-      {isRootAdmin && (
-        <RootOrgSwitcher />
-      )}
 
       {/* Root Mode Button - only for root admin when inside an org */}
       {isRootAdmin && !isImpersonating && (

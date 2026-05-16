@@ -279,6 +279,19 @@ export async function getSyncStatus(
 }
 
 /**
+ * Obtiene estadísticas unificadas para el dashboard CRM
+ */
+export async function getPancakeDashboardStats() {
+  const { data, error } = await supabase.functions.invoke('pancake-dashboard-stats');
+
+  if (error) {
+    throw new Error(`Error obteniendo stats del dashboard: ${error.message}`);
+  }
+
+  return data;
+}
+
+/**
  * Trigger de sincronización silencioso (fire-and-forget)
  * Usado internamente después de crear/actualizar entidades
  */

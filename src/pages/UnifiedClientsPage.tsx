@@ -1,9 +1,8 @@
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin, Loader2, Link2, Activity, TrendingDown,
+  Phone, MapPin, Loader2, Activity, TrendingDown,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -31,21 +30,23 @@ import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
-import { LinkBrandDialog } from '@/components/clients/LinkBrandDialog';
 import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
 
-type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos';
+// Phone y MapPin importados pero usados en tipos derivados — se mantienen para compatibilidad futura
+void Phone;
+void MapPin;
+
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'activos', label: 'Activos', adminOnly: true },
-  { key: 'inactivos', label: 'Inactivos', adminOnly: true },
+  { key: 'inactivos', label: 'Entregados', adminOnly: true },
+  { key: 'prospects', label: 'Sin paquetes', adminOnly: true },
   { key: 'todos', label: 'Todos' },
   { key: 'usuarios', label: 'Usuarios' },
 ];
-
-const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos'];
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -82,10 +83,18 @@ function entityToOrgContact(e: UnifiedClientEntity, orgId: string): OrgContact {
   };
 }
 
-const UnifiedClientsPage = () => {
+/**
+ * Contenido completo de la sección Clientes.
+ * Exportado como named export para ser embebido en UnifiedTalentPage
+ * sin duplicar lógica.
+ *
+ * NOTA: no usa useSearchParams para sincronizar el sub-tab interno porque
+ * el param ?tab= lo gestiona el padre (UnifiedTalentPage). El estado del
+ * filtro interno es local.
+ */
+export function UnifiedClientsContent() {
   const { isAdmin, isTeamLeader } = useAuth();
   const { currentOrgId } = useOrgOwner();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { data: entities = [], isLoading, refetch } = useUnifiedClients(currentOrgId);
   const { data: clientUsers = [], isLoading: clientUsersLoading, refetch: refetchClientUsers } = useOrgClientUsers(currentOrgId);
   const { data: unassignedMembers = [], refetch: refetchUnassigned } = useUnassignedClientMembers(currentOrgId);
@@ -93,12 +102,10 @@ const UnifiedClientsPage = () => {
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
-  // Read tab from URL, fallback to default
-  const tabFromUrl = searchParams.get('tab') as FilterTab | null;
-  const defaultTab = canSeeInternal ? 'activos' : 'todos';
-  const initialTab = tabFromUrl && VALID_TABS.includes(tabFromUrl) ? tabFromUrl : defaultTab;
-
-  const [filter, setFilter] = useState<FilterTab>(initialTab);
+  // Estado local — no sincronizamos con URL para evitar colisión con el
+  // param ?tab= del tab de nivel superior en UnifiedTalentPage.
+  const defaultTab: FilterTab = canSeeInternal ? 'activos' : 'todos';
+  const [filter, setFilter] = useState<FilterTab>(defaultTab);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
 
@@ -108,16 +115,13 @@ const UnifiedClientsPage = () => {
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
-  const [linkBrandOpen, setLinkBrandOpen] = useState(false);
-  const [linkBrandPreselectedClientId, setLinkBrandPreselectedClientId] = useState<string | undefined>(undefined);
   const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
   const [creatingCompany, setCreatingCompany] = useState(false);
   const { toast } = useToast();
 
-  // Handle tab change with URL sync
+  // Handle tab change (solo estado local)
   const handleFilterChange = (tab: FilterTab) => {
     setFilter(tab);
-    setSearchParams(tab === 'activos' ? {} : { tab }, { replace: true });
     // Clear selections when switching tabs
     setSelectedEntity(null);
     setSelectedClientUser(null);
@@ -132,6 +136,7 @@ const UnifiedClientsPage = () => {
     const pipelineValue = contactos.reduce((sum, e) => sum + (e.deal_value || 0), 0);
     const activos = activityMetrics.filter(m => m.activity_status === 'active').length;
     const inactivos = activityMetrics.filter(m => m.activity_status === 'inactive').length;
+    const prospects = activityMetrics.filter(m => m.activity_status === 'prospect').length;
     return {
       empresas: empresas.length,
       contactos: contactos.length,
@@ -140,6 +145,7 @@ const UnifiedClientsPage = () => {
       usuarios: clientUsers.length,
       activos,
       inactivos,
+      prospects,
     };
   }, [entities, clientUsers, activityMetrics]);
 
@@ -165,6 +171,9 @@ const UnifiedClientsPage = () => {
     if (filter === 'inactivos') {
       list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'inactive');
     }
+    if (filter === 'prospects') {
+      list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'prospect');
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -189,12 +198,6 @@ const UnifiedClientsPage = () => {
       u.linked_companies.some(c => c.client_name.toLowerCase().includes(q)),
     );
   }, [clientUsers, search]);
-
-  // Abre el LinkBrandDialog desde una card de cliente (modo fusión preseleccionado)
-  const handleLinkBrandFromCard = (clientId: string) => {
-    setLinkBrandPreselectedClientId(clientId);
-    setLinkBrandOpen(true);
-  };
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
@@ -232,8 +235,9 @@ const UnifiedClientsPage = () => {
       setCreateCompanyOpen(false);
       setNewCompanyData({ name: '', contact_email: '', contact_phone: '', notes: '' });
       refetch();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'No se pudo crear la empresa', variant: 'destructive' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'No se pudo crear la empresa';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
     } finally {
       setCreatingCompany(false);
     }
@@ -318,7 +322,7 @@ const UnifiedClientsPage = () => {
 
         {/* Seguimiento de actividad — solo admins */}
         {canSeeInternal && activityMetrics.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => handleFilterChange('activos')}
               className={cn(
@@ -330,26 +334,42 @@ const UnifiedClientsPage = () => {
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <Activity className="h-3.5 w-3.5 text-green-400" />
-                Clientes activos
+                Activos
               </div>
               <p className="text-xl font-bold text-green-400">{stats.activos}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Con contenido pendiente</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Contenido pendiente</p>
             </button>
             <button
               onClick={() => handleFilterChange('inactivos')}
               className={cn(
                 'rounded-sm border p-3 text-left transition-all',
                 filter === 'inactivos'
-                  ? 'border-red-500/50 bg-red-500/10'
-                  : 'border-border bg-card hover:border-red-500/30',
+                  ? 'border-amber-500/50 bg-amber-500/10'
+                  : 'border-border bg-card hover:border-amber-500/30',
               )}
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
-                Sin actividad
+                <TrendingDown className="h-3.5 w-3.5 text-amber-400" />
+                Entregados
               </div>
-              <p className="text-xl font-bold text-red-400">{stats.inactivos}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Todo entregado o sin paquetes</p>
+              <p className="text-xl font-bold text-amber-400">{stats.inactivos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Todo completado</p>
+            </button>
+            <button
+              onClick={() => handleFilterChange('prospects')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'prospects'
+                  ? 'border-blue-500/50 bg-blue-500/10'
+                  : 'border-border bg-card hover:border-blue-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <UsersIcon className="h-3.5 w-3.5 text-blue-400" />
+                Sin paquetes
+              </div>
+              <p className="text-xl font-bold text-blue-400">{stats.prospects}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Sin paquete contratado</p>
             </button>
           </div>
         )}
@@ -403,10 +423,6 @@ const UnifiedClientsPage = () => {
                   <DropdownMenuItem onClick={() => setCreateContactOpen(true)}>
                     <Contact className="h-4 w-4 mr-2" />
                     Nuevo Contacto
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLinkBrandOpen(true)}>
-                    <Link2 className="h-4 w-4 mr-2" />
-                    Vincular Brand
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -560,7 +576,6 @@ const UnifiedClientsPage = () => {
                         canEdit={canSeeInternal}
                         onUpdate={() => refetch()}
                         orgId={currentOrgId}
-                        onLinkBrand={e.entity_type === 'empresa' ? handleLinkBrandFromCard : undefined}
                         activityMetrics={e.entity_type === 'empresa' ? activityMetrics.find(m => m.client_id === e.id) : undefined}
                       />
                     ))}
@@ -767,18 +782,18 @@ const UnifiedClientsPage = () => {
           organizationId={currentOrgId}
         />
 
-        {/* Link Brand Dialog */}
-        {currentOrgId && (
-          <LinkBrandDialog
-            open={linkBrandOpen}
-            onOpenChange={setLinkBrandOpen}
-            orgId={currentOrgId}
-            orgCompanies={allCompanies}
-          />
-        )}
       </div>
     </div>
   );
-};
+}
+
+/**
+ * Default export — wrapper mínimo para cuando la ruta /clients-hub
+ * o una navegación directa carga esta página de forma autónoma.
+ * Una vez que App.tsx redirige /clients-hub → /talent?tab=clientes,
+ * este wrapper ya no se usa en producción, pero se mantiene para
+ * no romper el lazy import existente en App.tsx.
+ */
+const UnifiedClientsPage = () => <UnifiedClientsContent />;
 
 export default UnifiedClientsPage;

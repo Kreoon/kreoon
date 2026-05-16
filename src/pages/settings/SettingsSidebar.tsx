@@ -47,32 +47,19 @@ const ALL_SECTIONS: SectionGroup[] = [
     ],
   },
   {
-    id: 'organization',
-    title: 'Organización',
-    description: 'Ajustes de tu empresa',
-    icon: Building2,
-    sections: [
-      { key: 'organization', icon: Building2, title: 'Organización', description: 'Datos, registro y marca' },
-      { key: 'ai_settings', icon: Bot, title: 'IA & Modelos', description: 'Proveedores y asistente' },
-      { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
-      { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
-      { key: 'org_marketplace', icon: Store, title: 'Marketplace & Portafolio', description: 'Control y portafolio público' },
-      { key: 'org_agency_profile', icon: Building2, title: 'Perfil de Agencia', description: 'Perfil público marketplace' },
-      { key: 'white_label', icon: Paintbrush, title: 'Marca Blanca', description: 'Dominio y branding' },
-      { key: 'org_referrals', icon: Share2, title: 'Referidos Org', description: 'Links y comisiones' },
-    ],
-  },
-  {
     id: 'platform',
-    title: 'Plataforma',
-    description: 'Administración global',
+    title: 'Administración',
+    description: 'Configuración y plataforma',
     icon: Settings2,
     sections: [
-      { key: 'organization_registrations', icon: Landmark, title: 'Organizaciones', description: 'Gestionar' },
+      { key: 'ai_settings', icon: Bot, title: 'IA & Modelos', description: 'Proveedores y asistente' },
+      { key: 'permissions', icon: UserCog, title: 'Permisos', description: 'Por rol' },
+      { key: 'org_marketplace', icon: Store, title: 'Marketplace & Portafolio', description: 'Control y portafolio público' },
       { key: 'billing', icon: CreditCard, title: 'Facturación', description: 'Planes y cobros' },
       { key: 'platform_config', icon: Settings2, title: 'Configuración', description: 'Ajustes globales' },
       { key: 'platform_admin', icon: ShieldCheck, title: 'Administración', description: 'Seguridad y datos' },
       { key: 'tracking', icon: BarChart3, title: 'Tracking', description: 'Analytics y píxeles' },
+      { key: 'audit_log', icon: History, title: 'Historial', description: 'Actividad' },
       { key: 'ai_tokenization', icon: Brain, title: 'Tokens IA', description: 'Costos por perfil' },
       { key: 'prompts', icon: MessageSquareCode, title: 'Prompts AI', description: 'Editar prompts' },
     ],
@@ -103,9 +90,6 @@ export const SettingsSidebar = memo(({
       })),
     })).filter(group => {
       if (group.id === 'platform' && !permissions.isPlatformRoot) {
-        return false;
-      }
-      if (group.id === 'organization' && !permissions.isOrgOwner && !permissions.isOrgAdmin && !permissions.isPlatformRoot) {
         return false;
       }
       return true;

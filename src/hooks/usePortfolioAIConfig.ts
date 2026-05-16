@@ -15,15 +15,15 @@ export interface PortfolioAIFeatures {
 
 export interface PortfolioAIConfig {
   enabled: boolean;
-  provider: 'gemini' | 'openai' | 'anthropic';
+  provider: 'gemini' | 'openai' | 'anthropic' | 'mistral';
   model: string;
   features: PortfolioAIFeatures;
 }
 
 const DEFAULT_CONFIG: PortfolioAIConfig = {
   enabled: false,
-  provider: 'gemini',
-  model: 'gemini-2.5-flash',
+  provider: 'mistral',
+  model: 'mistral/small',
   features: {
     ai_search: false,
     ai_feed_ranking: false,
@@ -79,8 +79,8 @@ export function usePortfolioAIConfig(): PortfolioAIConfigHook {
         
         setConfig({
           enabled: data.enabled ?? false,
-          provider: (data.provider as PortfolioAIConfig['provider']) ?? 'gemini',
-          model: data.model ?? 'gemini-2.5-flash',
+          provider: (data.provider as PortfolioAIConfig['provider']) ?? 'mistral',
+          model: data.model ?? 'mistral/small',
           features: parsedFeatures,
         });
       } else {

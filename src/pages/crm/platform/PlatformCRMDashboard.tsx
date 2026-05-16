@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   UserPlus,
@@ -9,14 +8,14 @@ import {
   TrendingUp,
   Wallet,
   AlertCircle,
-  List,
-  Download,
   MessageSquare,
   Phone,
   Mail,
   Calendar,
   FileText,
 } from "lucide-react";
+import { PancakeSyncPanel } from "@/components/crm/PancakeSyncPanel";
+import { usePancakeDashboardStats, useTriggerBulkSync } from "@/hooks/usePancakeDashboard";
 import {
   LazyBarChart,
   LazyPieChart,
@@ -38,11 +37,9 @@ import {
   useLeadsByMonth,
   useRecentLeadInteractions,
   useLeadDistribution,
-  usePlatformLeads,
   useUsersNeedingAttention,
 } from "@/hooks/useCrm";
 import { usePlatformFinanceStats } from "@/hooks/useFinance";
-import { CreateLeadModal } from "@/components/crm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -171,14 +168,13 @@ function PieTooltipContent({ active, payload }: any) {
 // =====================================================
 
 const PlatformCRMDashboard = () => {
-  const [showCreateLead, setShowCreateLead] = useState(false);
-
   // Data hooks
+  const { data: pancakeStats, isLoading: pancakeLoading } = usePancakeDashboardStats();
+  const triggerSync = useTriggerBulkSync();
   const { data: overview } = usePlatformOverviewStats();
   const { data: monthlyData = [] } = useLeadsByMonth(6);
   const { data: recentInteractions = [] } = useRecentLeadInteractions(10);
   const { data: distribution } = useLeadDistribution();
-  const { data: recentLeads = [] } = usePlatformLeads({ limit: 5 });
   const { data: usersNeedingAttention = [] } = useUsersNeedingAttention();
   const { data: financeStats } = usePlatformFinanceStats();
 
@@ -308,61 +304,6 @@ const PlatformCRMDashboard = () => {
                   <p className="text-sm text-white/30">Sin datos de leads aun</p>
                 </div>
               )}
-            </Card>
-
-            {/* Leads Recientes */}
-            <Card className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Leads Recientes</h3>
-                <Link to="/crm/leads" className="text-purple-400 text-sm hover:underline">
-                  Ver todos
-                </Link>
-              </div>
-              <div className="space-y-3">
-                {recentLeads.length > 0 ? (
-                  recentLeads.map((lead) => {
-                    const catKey = lead.talent_category as TalentCategory | null;
-                    const catLabel = catKey ? TALENT_CATEGORY_LABELS[catKey] : null;
-                    const catColor = catKey ? CATEGORY_CHART_COLORS[catKey] : null;
-
-                    return (
-                      <Link
-                        key={lead.id}
-                        to="/crm/leads"
-                        className="flex items-center justify-between p-3 bg-white/5 rounded-sm hover:bg-white/[0.08] transition-colors"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 shrink-0 text-sm font-medium">
-                            {lead.full_name?.charAt(0) || "?"}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-white font-medium truncate">{lead.full_name || "Sin nombre"}</p>
-                            <p className="text-white/50 text-sm truncate">{lead.email || "—"}</p>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0 ml-3">
-                          {catLabel && (
-                            <span
-                              className="text-xs px-2 py-1 rounded-full inline-block"
-                              style={{
-                                backgroundColor: catColor ? `${catColor}20` : "rgba(255,255,255,0.1)",
-                                color: catColor || "rgba(255,255,255,0.5)",
-                              }}
-                            >
-                              {catLabel}
-                            </span>
-                          )}
-                          <p className="text-white/40 text-xs mt-1">
-                            {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true, locale: es })}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })
-                ) : (
-                  <p className="text-white/30 text-sm py-6 text-center">Sin leads aún</p>
-                )}
-              </div>
             </Card>
 
             {/* Activity Table */}
@@ -533,40 +474,22 @@ const PlatformCRMDashboard = () => {
               </div>
             </Card>
 
-            {/* Quick Actions */}
-            <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Acciones Rápidas</h3>
-              <div className="space-y-2">
-                <Button
-                  onClick={() => setShowCreateLead(true)}
-                  variant="ghost"
-                  className="w-full justify-start text-white/70 hover:text-white hover:bg-white/5"
-                >
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Nuevo Lead
-                </Button>
-                <Button asChild variant="ghost" className="w-full justify-start text-white/70 hover:text-white hover:bg-white/5">
-                  <Link to="/crm/leads">
-                    <List className="w-4 h-4 mr-2" />
-                    Ver todos los leads
-                  </Link>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-white/30 cursor-not-allowed"
-                  disabled
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar reporte
-                </Button>
-              </div>
-            </Card>
           </div>
         </div>
-      </div>
 
-      {/* Create Lead Modal */}
-      <CreateLeadModal open={showCreateLead} onOpenChange={setShowCreateLead} />
+        {/* ========== SECCIÓN: PANCAKE CRM SYNC ========== */}
+        <div className="mt-2">
+          <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3">
+            Integración Pancake CRM
+          </h2>
+          <PancakeSyncPanel
+            data={pancakeStats}
+            isLoading={pancakeLoading}
+            isSyncing={triggerSync.isPending}
+            onSync={() => triggerSync.mutate()}
+          />
+        </div>
+      </div>
     </div>
   );
 };

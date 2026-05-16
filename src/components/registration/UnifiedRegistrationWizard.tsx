@@ -8,7 +8,6 @@ import { IntentStep } from './steps/IntentStep';
 import { CredentialsStep } from './steps/CredentialsStep';
 import { TalentProfileStep } from './steps/TalentProfileStep';
 import { BrandProfileStep } from './steps/BrandProfileStep';
-import { OrgDetailsStep } from './steps/OrgDetailsStep';
 import { JoinOrgStep } from './steps/JoinOrgStep';
 import { TermsStep } from './steps/TermsStep';
 import { SuccessStep } from './steps/SuccessStep';
@@ -94,10 +93,6 @@ export function UnifiedRegistrationWizard({
 
           {currentStep === 'brand-profile' && (
             <BrandProfileStep {...stepProps} />
-          )}
-
-          {currentStep === 'org-details' && (
-            <OrgDetailsStep {...stepProps} />
           )}
 
           {currentStep === 'join-org' && (

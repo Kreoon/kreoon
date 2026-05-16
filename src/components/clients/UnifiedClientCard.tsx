@@ -1,25 +1,29 @@
-import { useState } from 'react';
-import { Building2, Contact, Crown, Video, Users as UsersIcon, Briefcase, DollarSign, Link2, Unlink, Globe, Tag, MapPin, Phone, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import {
+  Building2, Contact, Crown, Video, Users as UsersIcon, Briefcase,
+  DollarSign, Globe, Tag, MapPin, Phone, Instagram, Facebook, Linkedin,
+  Calendar, UserCog, Star,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useUnlinkBrand } from '@/hooks/useBrandOrgLinks';
 import type { UnifiedClientEntity } from '@/types/unifiedClient.types';
 import { CONTACT_TYPE_LABELS, RELATIONSHIP_STRENGTH_LABELS, RELATIONSHIP_STRENGTH_COLORS } from '@/types/crm.types';
 import { ClientActivityStatusBadge } from '@/components/clients/ClientActivityStatusBadge';
 import type { ClientActivityMetrics } from '@/types/clientActivity.types';
+
+interface AssignedStrategist {
+  id: string;
+  full_name: string;
+  avatar_url: string | null;
+  is_primary: boolean;
+}
 
 interface UnifiedClientCardProps {
   entity: UnifiedClientEntity;
@@ -28,8 +32,10 @@ interface UnifiedClientCardProps {
   canEdit?: boolean;
   onUpdate?: () => void;
   orgId?: string;
-  onLinkBrand?: (clientId: string) => void;
   activityMetrics?: ClientActivityMetrics;
+  onOpenStrategists?: (entity: UnifiedClientEntity) => void;
+  onOpenUsers?: (entity: UnifiedClientEntity) => void;
+  onOpenServices?: (entity: UnifiedClientEntity) => void;
 }
 
 function formatCurrency(n: number): string {
@@ -40,29 +46,65 @@ function formatCurrency(n: number): string {
   }).format(n);
 }
 
-export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpdate, orgId, onLinkBrand, activityMetrics }: UnifiedClientCardProps) {
+export function UnifiedClientCard({
+  entity,
+  onClick,
+  isSelected,
+  canEdit,
+  onUpdate,
+  orgId,
+  activityMetrics,
+  onOpenStrategists,
+  onOpenUsers,
+  onOpenServices,
+}: UnifiedClientCardProps) {
   const isEmpresa = entity.entity_type === 'empresa';
   const [toggling, setToggling] = useState(false);
-  const [unlinkConfirmOpen, setUnlinkConfirmOpen] = useState(false);
+  const [strategists, setStrategists] = useState<AssignedStrategist[]>([]);
   const { toast } = useToast();
-  const { mutate: unlinkBrand, isPending: unlinking } = useUnlinkBrand();
 
-  // Una empresa es "vinculada" si tiene brand_id pero NO organization_id directo
-  // (viene del UNION de brands_organization_links en get_unified_clients)
-  const isLinkedBrand = isEmpresa && !!entity.brand_id;
+  void orgId;
 
-  const handleUnlink = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setUnlinkConfirmOpen(true);
-  };
+  // Cargar estrategas asignados (solo para empresas)
+  useEffect(() => {
+    if (!isEmpresa) return;
+    let cancelled = false;
 
-  const confirmUnlink = () => {
-    if (!entity.brand_id || !orgId) return;
-    unlinkBrand(
-      { brandId: entity.brand_id, orgId },
-      { onSuccess: () => { onUpdate?.(); setUnlinkConfirmOpen(false); } },
-    );
-  };
+    async function load() {
+      const { data, error } = await supabase
+        .from('client_strategists')
+        .select('strategist_id, is_primary')
+        .eq('client_id', entity.id);
+
+      if (error || cancelled || !data?.length) {
+        if (!cancelled) setStrategists([]);
+        return;
+      }
+
+      const ids = [...new Set(data.map(d => d.strategist_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', ids);
+
+      if (cancelled) return;
+
+      const profileMap = new Map((profiles ?? []).map(p => [p.id, p]));
+      const list = data
+        .map(d => ({
+          id: d.strategist_id,
+          full_name: profileMap.get(d.strategist_id)?.full_name || 'Sin nombre',
+          avatar_url: profileMap.get(d.strategist_id)?.avatar_url || null,
+          is_primary: d.is_primary || false,
+        }))
+        .sort((a, b) => (b.is_primary ? 1 : 0) - (a.is_primary ? 1 : 0));
+
+      setStrategists(list);
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, [entity.id, isEmpresa]);
 
   const handleToggleInternalBrand = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -86,25 +128,21 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
     }
   };
 
+  const createdDate = entity.created_at
+    ? format(new Date(entity.created_at), "d MMM yyyy", { locale: es })
+    : null;
+
   return (
-    <>
     <div
       onClick={onClick}
       className={cn(
-        'group rounded-sm border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden',
+        'group rounded-sm border bg-card p-4 transition-all duration-300 hover:shadow-lg cursor-pointer relative overflow-hidden flex flex-col h-full',
         isSelected && 'ring-2 ring-[#8b5cf6] border-[#8b5cf6]/50',
-        isLinkedBrand
-          ? 'border-primary/30 hover:border-primary/60 bg-gradient-to-br from-card to-primary/5'
-          : isEmpresa
-            ? 'border-border hover:border-blue-500/30'
-            : 'border-border hover:border-purple-500/30',
+        isEmpresa
+          ? 'border-border hover:border-blue-500/30'
+          : 'border-border hover:border-purple-500/30',
       )}
     >
-      {/* Franja lateral para tarjetas vinculadas */}
-      {isLinkedBrand && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-purple-400 to-blue-400 rounded-l-sm" />
-      )}
-
       {/* VIP indicator */}
       {isEmpresa && entity.is_vip && (
         <div className="absolute top-2 right-2">
@@ -120,28 +158,18 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             <img
               src={entity.avatar_url}
               alt={entity.name}
-              className={cn(
-                'h-11 w-11 object-cover ring-1',
-                isLinkedBrand
-                  ? 'rounded-full ring-primary/40'
-                  : 'rounded-sm ring-border',
-              )}
+              className="h-11 w-11 object-cover ring-1 rounded-sm ring-border flex-shrink-0"
             />
           ) : (
-            <div className={cn(
-              'h-11 w-11 flex items-center justify-center ring-1',
-              isLinkedBrand
-                ? 'rounded-full bg-primary/15 ring-primary/30'
-                : 'rounded-sm bg-blue-500/10 ring-border',
-            )}>
-              <Building2 className={cn('h-5 w-5', isLinkedBrand ? 'text-primary' : 'text-blue-400')} />
+            <div className="h-11 w-11 flex items-center justify-center ring-1 rounded-sm bg-blue-500/10 ring-border flex-shrink-0">
+              <Building2 className="h-5 w-5 text-blue-400" />
             </div>
           )
         ) : (
           entity.avatar_url ? (
-            <img src={entity.avatar_url} alt={entity.name} className="h-11 w-11 rounded-full object-cover ring-1 ring-border" />
+            <img src={entity.avatar_url} alt={entity.name} className="h-11 w-11 rounded-full object-cover ring-1 ring-border flex-shrink-0" />
           ) : (
-            <div className="h-11 w-11 rounded-full bg-purple-500/10 flex items-center justify-center ring-1 ring-border">
+            <div className="h-11 w-11 rounded-full bg-purple-500/10 flex items-center justify-center ring-1 ring-border flex-shrink-0">
               <Contact className="h-5 w-5 text-purple-400" />
             </div>
           )
@@ -150,61 +178,37 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-card-foreground truncate text-sm">{entity.name}</h3>
 
-          {/* Slug de la brand vinculada */}
-          {isLinkedBrand && entity.brand_slug && (
-            <p className="text-[11px] text-primary/70 truncate mt-0.5">@{entity.brand_slug}</p>
-          )}
-
           <div className="flex flex-wrap gap-1 mt-1">
-            {/* Brand vinculada badge — solo si es linked */}
-            {isLinkedBrand ? (
-              <Badge variant="outline" className="text-[10px] h-5 bg-primary/10 text-primary border-primary/30 flex items-center gap-0.5">
-                <Link2 className="h-2.5 w-2.5" />
-                Brand vinculada
-              </Badge>
-            ) : (
+            {isEmpresa && (
               <Badge variant="outline" className="text-[10px] h-5 bg-blue-500/10 text-blue-400 border-blue-500/20">
                 Empresa
               </Badge>
             )}
 
-            {/* Industria de la brand */}
-            {isLinkedBrand && entity.brand_industry && (
-              <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/60 border-white/10 flex items-center gap-0.5">
-                <Tag className="h-2.5 w-2.5" />
-                {entity.brand_industry}
-              </Badge>
-            )}
-
-            {/* Contact type badge */}
             {!isEmpresa && entity.contact_type && (
               <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/60 border-white/10">
                 {CONTACT_TYPE_LABELS[entity.contact_type]}
               </Badge>
             )}
 
-            {/* Relationship strength */}
             {!isEmpresa && entity.relationship_strength && (
               <Badge variant="outline" className={cn('text-[10px] h-5', RELATIONSHIP_STRENGTH_COLORS[entity.relationship_strength])}>
                 {RELATIONSHIP_STRENGTH_LABELS[entity.relationship_strength]}
               </Badge>
             )}
 
-            {/* Categoría */}
             {isEmpresa && entity.category && (
               <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/60 border-white/10">
                 {entity.category}
               </Badge>
             )}
 
-            {/* Internal brand */}
-            {isEmpresa && !isLinkedBrand && entity.is_internal_brand && (
+            {isEmpresa && entity.is_internal_brand && (
               <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-400 border-amber-500/20">
                 Marca interna
               </Badge>
             )}
 
-            {/* Estado de actividad — solo empresas reales (no marcas internas) */}
             {isEmpresa && !entity.is_internal_brand && activityMetrics && (
               <ClientActivityStatusBadge metrics={activityMetrics} size="sm" showDetail />
             )}
@@ -212,17 +216,42 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
         </div>
       </div>
 
-      {/* Cuerpo: datos de empresa */}
+      {/* Stats row (empresas) */}
+      {isEmpresa && (
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="text-center p-2 rounded-sm bg-muted/50">
+            <div className="flex items-center justify-center gap-1">
+              <Briefcase className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold text-sm">{entity.active_projects}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Proyectos</p>
+          </div>
+          <div className="text-center p-2 rounded-sm bg-muted/50">
+            <div className="flex items-center justify-center gap-1">
+              <Video className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold text-sm">{entity.content_count}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Videos</p>
+          </div>
+          <div className="text-center p-2 rounded-sm bg-muted/50">
+            <div className="flex items-center justify-center gap-1">
+              <UsersIcon className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold text-sm">{entity.users_count}</span>
+            </div>
+            <p className="text-[10px] text-muted-foreground">Usuarios</p>
+          </div>
+        </div>
+      )}
+
+      {/* Cuerpo: datos empresa */}
       {isEmpresa ? (
-        <div className="space-y-1.5 mb-2">
-          {/* Descripción */}
+        <div className="space-y-1.5 mb-2 flex-1">
           {(entity.bio || entity.brand_description) && (
             <p className="text-xs text-muted-foreground line-clamp-2">
               {entity.bio || entity.brand_description}
             </p>
           )}
 
-          {/* Contacto principal + teléfono */}
           {entity.main_contact && (
             <p className="text-xs text-white/60 flex items-center gap-1 truncate">
               <Contact className="h-3 w-3 flex-shrink-0" />
@@ -230,12 +259,10 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             </p>
           )}
 
-          {/* Email */}
           {entity.email && (
             <p className="text-xs text-muted-foreground truncate">{entity.email}</p>
           )}
 
-          {/* Teléfono */}
           {entity.phone && (
             <p className="text-xs text-white/50 flex items-center gap-1">
               <Phone className="h-3 w-3 flex-shrink-0" />
@@ -243,7 +270,6 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             </p>
           )}
 
-          {/* Ubicación */}
           {(entity.city || entity.country) && (
             <p className="text-xs text-white/50 flex items-center gap-1">
               <MapPin className="h-3 w-3 flex-shrink-0" />
@@ -251,67 +277,40 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             </p>
           )}
 
-          {/* Web + redes sociales */}
           {(entity.website || entity.brand_website || entity.instagram || entity.tiktok || entity.facebook || entity.linkedin) && (
             <div className="flex items-center gap-2 pt-0.5">
               {(entity.website || entity.brand_website) && (
-                <a
-                  href={entity.website || entity.brand_website!}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href={entity.website || entity.brand_website!} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                  title="Sitio web"
-                >
+                  className="text-muted-foreground hover:text-primary transition-colors" title="Sitio web">
                   <Globe className="h-3.5 w-3.5" />
                 </a>
               )}
               {entity.instagram && (
-                <a
-                  href={`https://instagram.com/${entity.instagram.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href={`https://instagram.com/${entity.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-pink-400 transition-colors"
-                  title={entity.instagram}
-                >
+                  className="text-muted-foreground hover:text-pink-400 transition-colors" title={entity.instagram}>
                   <Instagram className="h-3.5 w-3.5" />
                 </a>
               )}
               {entity.tiktok && (
-                <a
-                  href={`https://tiktok.com/${entity.tiktok.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href={`https://tiktok.com/${entity.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-white transition-colors"
-                  title={entity.tiktok}
-                >
-                  {/* TikTok no tiene ícono en lucide, uso texto pequeño */}
+                  className="text-muted-foreground hover:text-white transition-colors" title={entity.tiktok}>
                   <span className="text-[10px] font-bold leading-none">TT</span>
                 </a>
               )}
               {entity.facebook && (
-                <a
-                  href={`https://facebook.com/${entity.facebook.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href={`https://facebook.com/${entity.facebook.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-blue-400 transition-colors"
-                  title={entity.facebook}
-                >
+                  className="text-muted-foreground hover:text-blue-400 transition-colors" title={entity.facebook}>
                   <Facebook className="h-3.5 w-3.5" />
                 </a>
               )}
               {entity.linkedin && (
-                <a
-                  href={`https://linkedin.com/company/${entity.linkedin.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <a href={`https://linkedin.com/company/${entity.linkedin.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                   onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-blue-500 transition-colors"
-                  title={entity.linkedin}
-                >
+                  className="text-muted-foreground hover:text-blue-500 transition-colors" title={entity.linkedin}>
                   <Linkedin className="h-3.5 w-3.5" />
                 </a>
               )}
@@ -319,7 +318,8 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
           )}
         </div>
       ) : (
-        <div className="space-y-1 mb-2">
+        /* Contacto body */
+        <div className="space-y-1 mb-2 flex-1">
           {entity.company && (
             <p className="text-xs text-white/50 flex items-center gap-1">
               <Building2 className="h-3 w-3" />
@@ -335,46 +335,80 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
         </div>
       )}
 
+      {/* Estrategas (solo empresas) */}
+      {isEmpresa && (
+        <TooltipProvider>
+          <div
+            className="mb-3 p-2 rounded-sm border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
+            onClick={e => {
+              e.stopPropagation();
+              onOpenStrategists ? onOpenStrategists(entity) : onClick();
+            }}
+          >
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5">
+                <UserCog className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">Estrategas</span>
+              </div>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {strategists.length}
+              </Badge>
+            </div>
+
+            {strategists.length > 0 ? (
+              <div className="flex items-center gap-1">
+                <div className="flex -space-x-2">
+                  {strategists.slice(0, 4).map(s => (
+                    <Tooltip key={s.id}>
+                      <TooltipTrigger asChild>
+                        <div className="relative">
+                          <Avatar className={cn(
+                            'h-6 w-6 border-2 border-card',
+                            s.is_primary && 'ring-2 ring-primary ring-offset-1 ring-offset-card',
+                          )}>
+                            <AvatarImage src={s.avatar_url || undefined} />
+                            <AvatarFallback className="text-[9px] bg-primary/10">
+                              {s.full_name?.charAt(0) || 'S'}
+                            </AvatarFallback>
+                          </Avatar>
+                          {s.is_primary && (
+                            <Star className="h-2 w-2 text-primary fill-primary absolute -top-0.5 -right-0.5" />
+                          )}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{s.full_name}{s.is_primary && ' (Principal)'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+                {strategists.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground ml-1">+{strategists.length - 4}</span>
+                )}
+                <span className="flex-1" />
+                <span className="text-[10px] text-primary">Editar</span>
+              </div>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">Click para asignar estrategas</p>
+            )}
+          </div>
+        </TooltipProvider>
+      )}
+
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-border">
+      <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
         {isEmpresa ? (
           <>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Video className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">{entity.content_count}</span>
+            {/* Fecha de ingreso */}
+            {createdDate && (
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <Calendar className="h-3 w-3" />
+                <span>Desde {createdDate}</span>
               </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <Briefcase className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">{entity.active_projects}</span>
-              </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <UsersIcon className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">{entity.users_count}</span>
-              </div>
-            </div>
-            {canEdit && isLinkedBrand && orgId && (
-              <button
-                onClick={handleUnlink}
-                disabled={unlinking}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
-                title="Desvincular brand"
-              >
-                <Unlink className="h-3 w-3" />
-                Desvincular
-              </button>
             )}
-            {canEdit && !isLinkedBrand && onLinkBrand && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onLinkBrand(entity.id); }}
-                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-                title="Vincular con brand"
-              >
-                <Link2 className="h-3 w-3" />
-                Vincular Brand
-              </button>
-            )}
-            {canEdit && !isLinkedBrand && (
+
+            {/* Toggle marca interna */}
+            {canEdit && (
               <div
                 className="flex items-center gap-1.5 cursor-pointer"
                 onClick={handleToggleInternalBrand}
@@ -399,6 +433,7 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             )}
           </>
         ) : (
+          /* Contacto footer */
           <>
             <div className="flex items-center gap-2">
               {entity.deal_value != null && entity.deal_value > 0 && (
@@ -411,7 +446,9 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
             {entity.tags && entity.tags.length > 0 && (
               <div className="flex gap-1">
                 {entity.tags.slice(0, 2).map(tag => (
-                  <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-[#8b5cf6]/15 text-[#c084fc]">{tag}</span>
+                  <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-[#8b5cf6]/15 text-[#c084fc]">
+                    <Tag className="h-2.5 w-2.5 inline mr-0.5" />{tag}
+                  </span>
                 ))}
               </div>
             )}
@@ -419,27 +456,5 @@ export function UnifiedClientCard({ entity, onClick, isSelected, canEdit, onUpda
         )}
       </div>
     </div>
-
-    <AlertDialog open={unlinkConfirmOpen} onOpenChange={setUnlinkConfirmOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Desvincular brand?</AlertDialogTitle>
-          <AlertDialogDescription>
-            <strong>{entity.name}</strong> dejará de aparecer en la lista de clientes de esta organización.
-            La brand y su información continuarán existiendo de forma independiente.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmUnlink}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Desvincular
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    </>
   );
 }

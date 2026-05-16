@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { KREOON_ORG_ID } from '@/lib/kreoon-org';
 
 const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
 
@@ -189,7 +190,7 @@ export function useOrgOwner(): OrgOwnerStatus {
     const checkOwnerStatus = async () => {
       setLoading(true);
 
-      if (!user || !profile?.current_organization_id) {
+      if (!user) {
         if (cancelled) return;
         setIsOrgOwner(false);
         setCurrentOrgId(null);
@@ -201,7 +202,8 @@ export function useOrgOwner(): OrgOwnerStatus {
         return;
       }
 
-      const orgId = profile.current_organization_id;
+      // Single-org mode: always use KREOON_ORG_ID as fallback
+      const orgId = profile?.current_organization_id ?? KREOON_ORG_ID;
 
       try {
         const result = await fetchOrgContextCached(orgId);
@@ -244,7 +246,7 @@ export function useOrgOwner(): OrgOwnerStatus {
     return () => {
       cancelled = true;
     };
-  }, [user, profile?.current_organization_id]);
+  }, [user, profile?.current_organization_id, profile]);
 
   return {
     isOrgOwner,

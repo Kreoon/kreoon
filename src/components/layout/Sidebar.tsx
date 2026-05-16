@@ -29,7 +29,6 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
-  GitBranch,
   DollarSign,
   Crown,
   Share2,
@@ -42,7 +41,7 @@ import {
   CircleUser,
   Blocks,
 } from "lucide-react";
-import { filterDevModuleItems, DEVELOPMENT_MODULES, canAccessDevModule } from '@/lib/developmentModules';
+import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,8 +51,6 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
-import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
-import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -119,9 +116,7 @@ const adminSections: NavSection[] = [
   {
     label: "GESTIÓN",
     items: [
-      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
+      { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
@@ -129,14 +124,9 @@ const adminSections: NavSection[] = [
     label: "CRM PLATAFORMA",
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard, tourId: "sidebar-crm-dashboard" },
-      { name: "Leads", href: "/crm/leads", icon: UserPlus, tourId: "sidebar-crm-leads" },
-      { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2, tourId: "sidebar-crm-orgs" },
-      { name: "Marcas", href: "/crm/marcas", icon: Store, tourId: "sidebar-crm-brands" },
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
-      { name: "Personas", href: "/crm/personas", icon: Users, tourId: "sidebar-crm-people" },
-      { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
+      { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
-      { name: "Módulos Dev", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
   },
@@ -161,9 +151,7 @@ const strategistSections: NavSection[] = [
   {
     label: "GESTIÓN",
     items: [
-      { name: "Talento", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, tourId: "sidebar-org-pipelines", requiresOrg: true },
+      { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
@@ -255,39 +243,6 @@ const basicTalentInOrgSections: NavSection[] = [
   }
 ];
 
-// Freelance users (no org) - Plan Básico Gratis
-// Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
-const freelanceSections: NavSection[] = [
-  {
-    label: "MI NEGOCIO",
-    items: [
-      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
-      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
-    ]
-  },
-  {
-    label: "MARKETPLACE",
-    items: [
-      { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
-      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
-    ]
-  },
-  {
-    label: "SOCIAL",
-    items: [
-      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-    ]
-  },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
-      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
-    ]
-  }
-];
 
 // Locked users (haven't completed referral gate) - only unlock access + profile
 const lockedUserSections: NavSection[] = [
@@ -342,10 +297,7 @@ function combineNavSections(sectionArrays: NavSection[][]): NavSection[] {
 function getSectionsForGroup(group: PermissionGroup): NavSection[] {
   switch (group) {
     case 'admin': return adminSections;
-    case 'team_leader': return adminSections; // Team leaders have admin-like nav
-    case 'strategist': return strategistSections;
-    case 'editor': return editorSections;
-    case 'creator': return creatorSections;
+    case 'talent': return creatorSections;
     case 'client': return clientSections;
     default: return creatorSections;
   }
@@ -361,14 +313,14 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
   if (activeGroup !== 'editor' && activeGroup !== 'client') {
     items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
   }
-  // "Mis Campañas" for admin/strategist/client (clients create offers here)
-  if (activeGroup === 'admin' || activeGroup === 'strategist' || activeGroup === 'client') {
+  // "Mis Campañas" for admin/talent/client
+  if (activeGroup === 'admin' || activeGroup === 'talent' || activeGroup === 'client') {
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
   items.push({ name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
-  // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
+  // Talent management — only for org roles (admin/talent), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
     return [{ label: "KREOON MARKETPLACE", items }];
   }
@@ -379,8 +331,8 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus, tourId: "sidebar-mkt-invitations" },
   ];
 
-  // Inquiries only for admin/strategist
-  if (activeGroup === 'admin' || activeGroup === 'strategist') {
+  // Inquiries only for admin/talent with permissions
+  if (activeGroup === 'admin' || activeGroup === 'talent') {
     savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare, tourId: "sidebar-mkt-inquiries" });
   }
 
@@ -443,7 +395,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // For multi-role: get the "highest" role for certain checks
   // Use activeRole directly since PermissionGroup only has 3 values
   const highestRole = useMemo(() => {
-    const priority = ['admin', 'team_leader', 'digital_strategist', 'creative_strategist', 'strategist', 'content_creator', 'creator', 'editor', 'client'];
+    const priority = ['admin', 'digital_strategist', 'creative_strategist', 'community_manager', 'content_creator', 'editor', 'client'];
     for (const r of priority) {
       if (realRoles.includes(r as any)) return r;
     }
@@ -453,8 +405,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   // IMPORTANT: Use ONLY activeRole to determine which panel to show
   // DO NOT use realRoles.includes() as fallback - it causes multi-role users to see wrong panel
   // Example: user with ['creator', 'editor'] and activeRole='creator' should see creator panel, not editor
-  const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader';
-  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist';
+  const activeIsAdmin = activeRole === 'admin';
+  const activeIsStrategist = activeRole === 'digital_strategist' || activeRole === 'creative_strategist' || activeRole === 'community_manager';
   const activeIsEditor = activeRole === 'editor';
   // Client detection: only if activeRole is client or activeGroup is client
   const activeIsClient = activeRole === 'client' || activeGroup === 'client';
@@ -545,38 +497,12 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     }
   }, [activeIsClient, user, isImpersonating, impersonationTarget]);
 
-  // Detect freelance user: has no org and is not a platform admin
-  const isFreelanceUser = !profile?.current_organization_id && !isPlatformAdmin && !isPlatformRoot;
-
-  // Filter navigation sections based on platform root vs org owner and org selection
+  // Filter navigation sections based on role
   const filteredSections = useMemo(() => {
-    // Users who haven't unlocked via referral gate only see unlock page + profile
-    // Skip this check while loading gate status or for users who bypass the gate
-    // Clients/brands bypass the gate (they don't need referral keys)
-    if (!isGateLoading && !isUnlocked && isFreelanceUser && !activeIsClient) {
-      return lockedUserSections;
-    }
-
     // Talent in org with basic/free personal plan - limited menu
-    // This takes priority over role-based sections for these users
     // BUT clients always get their own sections regardless of plan
     if (shouldUseReducedMenu && !isPlatformAdmin && !isPlatformRoot && !activeIsClient) {
       return basicTalentInOrgSections;
-    }
-
-    // Independent users (no org) - differentiate between clients and freelancers
-    if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      // Brand members/clients get marketplace + client sections
-      if (activeIsClient) {
-        const mktSections = getMarketplaceSections(activeGroup, false);
-        return [
-          ...mktSections,
-          ...clientSections,
-        ];
-      }
-
-      // Freelance talents - menu already includes marketplace section
-      return freelanceSections;
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
@@ -612,8 +538,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     // Filter items within sections and apply white-label labels
     const filtered = baseSections
       .filter(section => {
-        // Only platform admins see CRM PLATAFORMA (not org-level admins)
-        if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
+        // Solo admins (org o plataforma) ven CRM PLATAFORMA
+        if (section.label === 'CRM PLATAFORMA' && !activeIsAdmin && !isPlatformAdmin) return false;
         return true;
       })
       .map(section => {
@@ -644,7 +570,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
     // Use permission group for marketplace sections (apply label map)
     const mktSections = effectiveMktEnabled
-      ? getMarketplaceSections(activeGroup, isFreelanceUser).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
+      ? getMarketplaceSections(activeGroup, false).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
       : [];
 
     // "Buscar Talento" section - ALWAYS visible for recruitment, even when marketplace is disabled (not for clients)
@@ -664,27 +590,13 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     const configSection = filtered.find(s => s.label === 'CONFIG');
     const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
 
-    // Build "EN DESARROLLO" section for root users from DEVELOPMENT_MODULES
-    const devModulesSection: NavSection | null = canAccessDevModule(user?.email) ? {
-      label: "EN DESARROLLO",
-      items: DEVELOPMENT_MODULES.map(mod => ({
-        name: mod.name,
-        href: mod.sidebarItems[0]?.path || mod.routes[0],
-        icon: mod.icon,
-        tourId: `sidebar-dev-${mod.id}`,
-      })),
-    } : null;
-
     return [
       ...nonConfigSections,
       ...mktSections,
-      // Only add recruit section when marketplace is disabled (when enabled, /marketplace is already in mktSections)
       ...(!effectiveMktEnabled ? [recruitSection] : []),
-      // "EN DESARROLLO" section only for root users - separated from working features
-      ...(devModulesSection ? [devModulesSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, isFreelanceUser, activeGroup, isUnlocked, isGateLoading, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
@@ -761,20 +673,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
         </div>
-
-        {/* Root Admin Organization Switcher - show for superadmins or platform root */}
-        {(isSuperadmin || isPlatformRoot) && !collapsed && (
-          <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
-            <RootOrgSwitcher />
-          </div>
-        )}
-
-        {/* Regular User Organization Switcher - for users with multiple orgs (not root, not clients) */}
-        {!isSuperadmin && !isPlatformRoot && !collapsed && !activeIsClient && (
-          <div className="px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
-            <UserOrgSwitcher />
-          </div>
-        )}
 
         {/* Navigation - scrollable area */}
         <nav className="flex-1 overflow-y-auto p-3">
@@ -858,8 +756,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* Tokens IA - siempre tokens personales, admins pueden alternar a tokens de org */}
-        {profile?.current_organization_id && !isFreelanceUser && (
+        {/* Tokens IA */}
+        {profile && (
           <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
             <AITokensPanelTrigger
               organizationId={null}
@@ -867,15 +765,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               readonly={activeIsClient}
               canSwitchContext={activeIsAdmin && !activeIsClient}
               userOrganizationId={profile.current_organization_id}
-            />
-          </div>
-        )}
-
-        {/* Freelancer Stats Widget - show for unlocked freelancers */}
-        {isFreelanceUser && isUnlocked && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
-            <AITokensPanelTrigger
-              variant={collapsed ? "compact" : "header"}
             />
           </div>
         )}
@@ -890,8 +779,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             </div>
           )}
 
-          {/* Role Switcher - hide for freelancers, multi-role users, and clients */}
-          {!isImpersonating && !isFreelanceUser && !isMultiRoleUser && !activeIsClient && (
+          {/* Role Switcher - hide for multi-role users and clients */}
+          {!isImpersonating && !isMultiRoleUser && !activeIsClient && (
             <RoleSwitcher collapsed={collapsed} />
           )}
 

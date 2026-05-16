@@ -100,7 +100,7 @@ interface Brand {
   };
 }
 
-export default function BrandsCRM() {
+export function BrandsCRMContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { isPlatformRoot } = useOrgOwner();
@@ -659,4 +659,8 @@ export default function BrandsCRM() {
       )}
     </div>
   );
+}
+
+export default function BrandsCRM() {
+  return <BrandsCRMContent />;
 }

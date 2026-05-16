@@ -136,6 +136,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 export interface PlatformSubscription {
   id: string;
   organization_id: string;
+  organization_name?: string | null;
   plan: SubscriptionPlan;
   billing_cycle: BillingCycle;
   amount_monthly: number;
@@ -335,3 +336,175 @@ export interface RevenueByMonth {
   payouts: number;
   net: number;
 }
+
+// ============================================
+// NUEVAS INTERFACES — MÓDULO FINANCIERO EXPANDIDO
+// ============================================
+
+export interface PackagePayment {
+  id: string;
+  organization_id: string;
+  client_package_id: string;
+  amount: number;
+  currency: string;
+  payment_date: string;
+  payment_method: 'transferencia' | 'nequi' | 'daviplata' | 'efectivo' | 'paypal' | 'wise' | 'stripe' | 'otro';
+  reference_number: string | null;
+  receipt_url: string | null;
+  notes: string | null;
+  recorded_by: string | null;
+  created_at: string;
+}
+
+export interface PackageInstallment {
+  id: string;
+  organization_id: string;
+  package_id: string;
+  installment_number: number;
+  total_installments: number;
+  due_date: string;
+  expected_amount: number;
+  currency: string;
+  status: 'scheduled' | 'invoiced' | 'paid' | 'overdue' | 'renegotiated';
+  paid_amount: number;
+  paid_date: string | null;
+  paid_via_payment_id: string | null;
+  reminder_sent_at: string | null;
+  reminder_count: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackageCost {
+  id: string;
+  organization_id: string;
+  package_id: string;
+  cost_type: 'creator_payout' | 'editing' | 'tools' | 'product_sample' | 'adspend' | 'travel' | 'platform_fee' | 'other';
+  creator_id: string | null;
+  amount: number;
+  currency: string;
+  paid_date: string | null;
+  status: 'committed' | 'paid' | 'cancelled';
+  linked_content_id: string | null;
+  invoice_url: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PackageMilestone {
+  id: string;
+  organization_id: string;
+  package_id: string;
+  milestone_type: 'signing' | 'content_approval' | 'delivery' | 'post_publication' | 'custom';
+  name: string;
+  percentage: number | null;
+  amount_due: number | null;
+  currency: string;
+  trigger_condition: 'manual' | 'on_content_approved' | 'on_content_delivered' | 'date_based';
+  trigger_date: string | null;
+  triggered_at: string | null;
+  payment_id: string | null;
+  status: 'pending' | 'invoiced' | 'paid' | 'overdue' | 'waived';
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreatorPackageAssignment {
+  id: string;
+  organization_id: string;
+  client_package_id: string;
+  user_id: string;
+  role: 'content_creator' | 'editor' | 'digital_strategist' | 'creative_strategist';
+  agreed_amount: number;
+  currency: string;
+  payment_status: 'pending' | 'processing' | 'paid' | 'cancelled';
+  paid_at: string | null;
+  paid_via_talent_payment_id: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgingRow {
+  client_id: string;
+  client_name: string;
+  package_id: string;
+  package_name: string;
+  currency: string;
+  total_value: number;
+  paid_amount: number;
+  pending_amount: number;
+  due_date: string | null;
+  days_overdue: number;
+  aging_bucket: 'current' | '1_30d' | '31_60d' | '61_90d' | 'bad_debt';
+  risk_score: number;
+}
+
+export interface PackageProfitability {
+  package_id: string;
+  package_name: string;
+  client_id: string;
+  client_name: string;
+  currency: string;
+  total_value: number;
+  paid_amount: number;
+  agency_commission_pct: number;
+  revenue_neto: number;
+  talent_cost: number;
+  other_costs: number;
+  total_costs: number;
+  gross_margin: number;
+  gross_margin_pct: number;
+  content_quantity: number;
+  cost_per_video: number;
+}
+
+export interface RecurringExpense {
+  id: string;
+  organization_id: string;
+  name: string;
+  category: 'software' | 'salary' | 'office' | 'tools' | 'marketing' | 'services' | 'taxes' | 'other';
+  amount: number;
+  currency: string;
+  frequency: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  next_due_date: string | null;
+  payment_method: string | null;
+  vendor: string | null;
+  is_active: boolean;
+  auto_renew: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const AGING_BUCKET_LABELS: Record<string, string> = {
+  current:  'Al corriente',
+  '1_30d':  '1–30 días',
+  '31_60d': '31–60 días',
+  '61_90d': '61–90 días',
+  bad_debt: 'Cartera mala',
+};
+
+export const AGING_BUCKET_COLORS: Record<string, string> = {
+  current:  'bg-green-500/20 text-green-400 border-green-500/30',
+  '1_30d':  'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  '31_60d': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+  '61_90d': 'bg-red-500/20 text-red-400 border-red-500/30',
+  bad_debt: 'bg-red-900/30 text-red-300 border-red-700/40',
+};
+
+export const PAYMENT_METHOD_LABELS_AGENCY: Record<string, string> = {
+  transferencia: 'Transferencia',
+  nequi:        'Nequi',
+  daviplata:    'Daviplata',
+  efectivo:     'Efectivo',
+  paypal:       'PayPal',
+  wise:         'Wise',
+  stripe:       'Stripe',
+  otro:         'Otro',
+};

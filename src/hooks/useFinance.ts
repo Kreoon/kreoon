@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as financeService from '@/services/finance/financeService';
 import type { TransactionStatus, InvoiceStatus, PayoutStatus } from '@/types/finance.types';
+export type { AgencyPackageStats, ClientPackageRevenue, ActiveClientPackage, BarterPackage, CurrencyStats, PackageCurrency } from '@/services/finance/financeService';
+export type { PackagePayment, PackageInstallment, PackageCost, PackageMilestone, CreatorPackageAssignment, AgingRow, PackageProfitability, RecurringExpense } from '@/types/finance.types';
 
 // ============================================
 // PLATFORM FINANCE HOOKS
@@ -130,6 +132,50 @@ export function useOrgInvoices(orgId: string | undefined) {
 }
 
 // ============================================
+// AGENCY PACKAGE HOOKS
+// ============================================
+
+export function useAgencyPackageStats(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['agency-package-stats', orgId],
+    queryFn: () => financeService.getAgencyPackageStats(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useClientPackagesRevenue(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['client-packages-revenue', orgId],
+    queryFn: () => financeService.getClientPackagesRevenue(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useActiveClientPackages(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['active-client-packages', orgId],
+    queryFn: () => financeService.getActiveClientPackages(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useBarterPackages(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['barter-packages', orgId],
+    queryFn: () => financeService.getBarterPackages(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+// ============================================
 // CREATOR FINANCE HOOKS
 // ============================================
 
@@ -193,5 +239,87 @@ export function useUpdatePaymentInfo() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['creator-wallet', variables.creatorId] });
     },
+  });
+}
+
+// ============================================
+// ABONOS / PAGOS HOOKS
+// ============================================
+
+export function usePackagePayments(packageId: string | undefined) {
+  return useQuery({
+    queryKey: ['package-payments', packageId],
+    queryFn: () => financeService.getPackagePayments(packageId!),
+    enabled: !!packageId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useAddPackagePayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payment: Parameters<typeof financeService.addPackagePayment>[0]) =>
+      financeService.addPackagePayment(payment),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['package-payments', vars.client_package_id] });
+      queryClient.invalidateQueries({ queryKey: ['active-client-packages'] });
+      queryClient.invalidateQueries({ queryKey: ['agency-package-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['client-packages-revenue'] });
+    },
+  });
+}
+
+// ============================================
+// AGING DE CARTERA
+// ============================================
+
+export function useReceivablesAging(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['receivables-aging', orgId],
+    queryFn: () => financeService.getReceivablesAging(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+// ============================================
+// RENTABILIDAD
+// ============================================
+
+export function usePackageProfitability(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['package-profitability', orgId],
+    queryFn: () => financeService.getPackageProfitability(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+// ============================================
+// GASTOS RECURRENTES
+// ============================================
+
+export function useRecurringExpenses(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['recurring-expenses', orgId],
+    queryFn: () => financeService.getRecurringExpenses(orgId!),
+    enabled: !!orgId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ============================================
+// ASIGNACIONES DE CREADORES
+// ============================================
+
+export function useCreatorAssignments(packageId: string | undefined) {
+  return useQuery({
+    queryKey: ['creator-assignments', packageId],
+    queryFn: () => financeService.getCreatorAssignments(packageId!),
+    enabled: !!packageId,
+    staleTime: 0,
   });
 }

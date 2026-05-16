@@ -45,7 +45,7 @@ export function KpiListDialog({
     if (type === 'clients') return 'clientes';
     if (type === 'creators') return 'creadores';
     if (type === 'editors') return 'editores';
-    return 'paquetes';
+    return 'campañas';
   };
 
   return (

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Sword, Users, Heart, DollarSign, Search, Trophy,
   UserPlus, Send, Loader2, Activity, TrendingDown, AlertCircle,
@@ -21,7 +22,7 @@ import { useUnifiedTalent, useToggleAmbassador } from '@/hooks/useUnifiedTalent'
 import { useTalentActivityMetrics } from '@/hooks/useTalentActivityMetrics';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
-import { UnifiedTalentDetailPanel } from '@/components/talent/UnifiedTalentDetailPanel';
+import { TalentProfileModal } from '@/components/talent/TalentProfileModal';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { TalentRanking } from '@/components/team/TalentRanking';
 import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
@@ -30,27 +31,40 @@ import { getRoleLabel } from '@/lib/roles';
 import { supabase } from '@/integrations/supabase/client';
 import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
+import { UnifiedClientsContent } from './UnifiedClientsPage';
+import { SinAsignarSection } from './Team';
+import { TalentPayrollView } from '@/components/talent/TalentPayrollView';
+// ── Tipos de tab de nivel superior ────────────────────────────────────────────
+type TopTab = 'talento' | 'clientes' | 'sin-asignar' | 'nomina';
 
+const TOP_TABS: { key: TopTab; label: string }[] = [
+  { key: 'talento',     label: 'Talento' },
+  { key: 'clientes',    label: 'Clientes' },
+  { key: 'sin-asignar', label: 'Sin Asignar' },
+  { key: 'nomina',      label: 'Nómina' },
+];
+
+// ── Tipos de filtro internos de Talento ───────────────────────────────────────
 type FilterTab = 'activos' | 'inactivos' | 'todos' | 'ranking';
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
-  { key: 'activos', label: 'Activos' },
+  { key: 'activos',   label: 'Activos' },
   { key: 'inactivos', label: 'Inactivos' },
-  { key: 'todos', label: 'Todos' },
-  { key: 'ranking', label: 'Ranking' },
+  { key: 'todos',     label: 'Todos' },
+  { key: 'ranking',   label: 'Ranking' },
 ];
 
 type RoleFilter = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos';
 
 const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
-  { key: 'todos', label: 'Todos los roles' },
-  { key: 'creadores', label: 'Creadores' },
-  { key: 'editores', label: 'Editores' },
-  { key: 'estrategas', label: 'Estrategas' },
+  { key: 'todos',       label: 'Todos los roles' },
+  { key: 'creadores',   label: 'Creadores' },
+  { key: 'editores',    label: 'Editores' },
+  { key: 'estrategas',  label: 'Estrategas' },
   { key: 'traffickers', label: 'Traffickers' },
-  { key: 'admins', label: 'Admins' },
+  { key: 'admins',      label: 'Admins' },
   { key: 'embajadores', label: 'Embajadores' },
-  { key: 'externos', label: 'Externos' },
+  { key: 'externos',    label: 'Externos' },
 ];
 
 function formatCurrency(n: number): string {
@@ -61,7 +75,8 @@ function formatCurrency(n: number): string {
   }).format(n);
 }
 
-const UnifiedTalentPage = () => {
+// ── Sección interna de Talento ─────────────────────────────────────────────────
+function TalentoSection() {
   const { isAdmin, isTeamLeader, user } = useAuth();
   const { currentOrgId } = useOrgOwner();
   const { toast } = useToast();
@@ -124,19 +139,19 @@ const UnifiedTalentPage = () => {
     if (roleFilter !== 'todos') {
       switch (roleFilter) {
         case 'admins':
-          list = list.filter(m => m.org_role === 'admin' || m.org_role === 'team_leader' || m.is_owner);
+          list = list.filter(m => ['admin', 'team_leader'].includes(m.org_role || '') || m.is_owner);
           break;
         case 'estrategas':
-          list = list.filter(m => m.all_roles?.includes('strategist'));
+          list = list.filter(m => m.all_roles?.some(r => ['digital_strategist', 'creative_strategist', 'community_manager', 'strategist'].includes(r)));
           break;
         case 'creadores':
-          list = list.filter(m => m.all_roles?.includes('creator'));
+          list = list.filter(m => m.all_roles?.some(r => ['content_creator', 'creator'].includes(r)));
           break;
         case 'editores':
-          list = list.filter(m => m.all_roles?.includes('editor'));
+          list = list.filter(m => m.all_roles?.some(r => ['editor', 'video_editor'].includes(r)));
           break;
         case 'traffickers':
-          list = list.filter(m => m.all_roles?.includes('trafficker'));
+          list = list.filter(m => m.all_roles?.some(r => ['digital_strategist', 'trafficker'].includes(r)));
           break;
         case 'embajadores':
           list = list.filter(m => m.is_ambassador);
@@ -183,11 +198,11 @@ const UnifiedTalentPage = () => {
         body: { email: inviteData.email, role: inviteData.role, inviter_name: user?.email || 'Admin' },
       });
       if (response.error) throw response.error;
-      toast({ description: `Invitaci\u00f3n enviada a ${inviteData.email}` });
+      toast({ description: `Invitación enviada a ${inviteData.email}` });
       setInviteOpen(false);
       setInviteData({ email: '', role: 'creator' });
     } catch {
-      toast({ title: 'Error', description: 'No se pudo enviar la invitaci\u00f3n', variant: 'destructive' });
+      toast({ title: 'Error', description: 'No se pudo enviar la invitación', variant: 'destructive' });
     } finally {
       setSendingInvite(false);
     }
@@ -198,7 +213,7 @@ const UnifiedTalentPage = () => {
       <div className="min-h-screen p-4 md:p-6">
         <PageHeader icon={Sword} title="Talento" subtitle="Gestion de equipo interno y talento externo" />
         <div className="text-center py-16">
-          <p className="text-sm text-muted-foreground">Selecciona una organizaci\u00f3n</p>
+          <p className="text-sm text-muted-foreground">Selecciona una organización</p>
         </div>
       </div>
     );
@@ -250,7 +265,7 @@ const UnifiedTalentPage = () => {
                         showClientRoles={false}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        Para agregar clientes, usa la secci\u00f3n Clientes
+                        Para agregar clientes, usa la sección Clientes
                       </p>
                     </div>
                   </div>
@@ -419,10 +434,10 @@ const UnifiedTalentPage = () => {
               ) : filtered.length === 0 ? (
                 <div className="text-center py-16 border border-dashed border-border rounded-sm">
                   <Sword className="h-8 w-8 text-white/20 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">No se encontr\u00f3 talento</p>
+                  <p className="text-sm text-muted-foreground">No se encontró talento</p>
                   {search && (
                     <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
-                      Limpiar b\u00fasqueda
+                      Limpiar búsqueda
                     </button>
                   )}
                 </div>
@@ -456,7 +471,7 @@ const UnifiedTalentPage = () => {
                         <th className="text-center p-3 text-muted-foreground font-medium">Estado</th>
                         <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">En proceso</th>
                         <th className="text-center p-3 text-muted-foreground font-medium hidden md:table-cell">Sin pagar</th>
-                        <th className="text-center p-3 text-muted-foreground font-medium hidden lg:table-cell">Últ. entrega</th>
+                        <th className="text-center p-3 text-muted-foreground font-medium hidden lg:table-cell">&Uacute;lt. entrega</th>
                         <th className="text-right p-3 text-muted-foreground font-medium">Invertido</th>
                       </tr>
                     </thead>
@@ -483,12 +498,12 @@ const UnifiedTalentPage = () => {
                             </div>
                           </td>
                           <td className="p-3 text-muted-foreground hidden sm:table-cell">
-                            {m.org_role ? getRoleLabel(m.org_role) : '\u2014'}
+                            {m.org_role ? getRoleLabel(m.org_role) : '—'}
                           </td>
                           <td className="p-3 text-center">
                             {(() => {
                               const am = activityMap.get(m.id);
-                              if (!am) return <span className="text-muted-foreground">\u2014</span>;
+                              if (!am) return <span className="text-muted-foreground">—</span>;
                               return (
                                 <span className={cn(
                                   'px-2 py-0.5 rounded-full text-[10px] font-medium border',
@@ -502,25 +517,25 @@ const UnifiedTalentPage = () => {
                             })()}
                           </td>
                           <td className="p-3 text-center text-muted-foreground hidden md:table-cell">
-                            {activityMap.get(m.id)?.active_content_count || '\u2014'}
+                            {activityMap.get(m.id)?.active_content_count || '—'}
                           </td>
                           <td className="p-3 text-center hidden md:table-cell">
                             {(() => {
                               const pending = activityMap.get(m.id)?.pending_payment_count ?? 0;
                               return pending > 0
                                 ? <span className="text-warning font-medium">{pending}</span>
-                                : <span className="text-muted-foreground">\u2014</span>;
+                                : <span className="text-muted-foreground">—</span>;
                             })()}
                           </td>
                           <td className="p-3 text-center text-muted-foreground hidden lg:table-cell">
                             {(() => {
                               const days = activityMap.get(m.id)?.days_since_last_delivery;
-                              if (days === null || days === undefined) return '\u2014';
+                              if (days === null || days === undefined) return '—';
                               return days === 0 ? 'Hoy' : `Hace ${days}d`;
                             })()}
                           </td>
                           <td className="p-3 text-right text-muted-foreground">
-                            {m.total_paid > 0 ? formatCurrency(m.total_paid) : '\u2014'}
+                            {m.total_paid > 0 ? formatCurrency(m.total_paid) : '—'}
                           </td>
                         </tr>
                       ))}
@@ -530,28 +545,66 @@ const UnifiedTalentPage = () => {
               )}
             </div>
 
-            {/* Mobile backdrop */}
-            {activeMember && (
-              <div
-                className="fixed inset-0 bg-black/50 z-30 md:hidden"
-                onClick={() => setSelectedMember(null)}
-              />
-            )}
-
-            {/* Detail Side Panel */}
-            {activeMember && currentOrgId && (
-              <div className="fixed inset-y-0 right-0 w-full md:w-auto z-40">
-                <UnifiedTalentDetailPanel
-                  member={activeMember}
-                  organizationId={currentOrgId}
-                  onClose={() => setSelectedMember(null)}
-                  onUpdate={() => refetch()}
-                />
-              </div>
-            )}
+            <TalentProfileModal
+              member={activeMember}
+              organizationId={currentOrgId ?? ''}
+              open={!!activeMember && !!currentOrgId}
+              onClose={() => setSelectedMember(null)}
+              onUpdate={() => refetch()}
+            />
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Componente principal ───────────────────────────────────────────────────────
+const UnifiedTalentPage = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // El param ?tab= controla qué sección de nivel superior se muestra.
+  // Los valores válidos son: talento | clientes | marcas | sin-asignar
+  const rawTab = searchParams.get('tab');
+  const activeTab: TopTab =
+    rawTab === 'clientes' || rawTab === 'sin-asignar' || rawTab === 'nomina' ? rawTab : 'talento';
+
+  const handleTabChange = (key: TopTab) => {
+    if (key === 'talento') {
+      // Limpia el param para URL más limpia: /talent
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ tab: key }, { replace: true });
+    }
+  };
+
+  return (
+    <div className="min-h-screen">
+      {/* ── Tabs de nivel superior ─────────────────────────────────────────── */}
+      <div className="flex border-b border-border px-4 md:px-6 pt-4">
+        {TOP_TABS.map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabChange(tab.key)}
+            className={cn(
+              'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+              activeTab === tab.key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground',
+            )}
+            aria-selected={activeTab === tab.key}
+            role="tab"
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Contenido condicional por tab ─────────────────────────────────── */}
+      {activeTab === 'clientes'    && <UnifiedClientsContent />}
+      {activeTab === 'sin-asignar' && <SinAsignarSection />}
+      {activeTab === 'talento'     && <TalentoSection />}
+      {activeTab === 'nomina'      && <TalentPayrollView />}
     </div>
   );
 };

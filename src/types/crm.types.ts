@@ -3,6 +3,51 @@
 // =====================================================
 
 // =====================================================
+// PANCAKE DASHBOARD
+// =====================================================
+
+export interface PancakeSyncHealth {
+  total_synced: number;
+  total_pending: number;
+  total_errors: number;
+  total_skipped: number;
+  synced_users: number;
+  synced_orgs: number;
+  pending_users: number;
+  pending_orgs: number;
+  error_users: number;
+  error_orgs: number;
+  error_rate_pct: number;
+  total_in_map: number;
+  last_sync_at: string | null;
+}
+
+export interface PancakeSyncActivityEntry {
+  id: string;
+  direction: 'kreoon_to_pancake' | 'pancake_to_kreoon';
+  entity_type: string;
+  action: 'create' | 'update' | 'delete';
+  status: 'success' | 'error';
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface PancakeDashboardStats {
+  sync_health: PancakeSyncHealth;
+  recent_activity: PancakeSyncActivityEntry[];
+  pancake_contact_count: number | null;
+  pancake_contact_breakdown: {
+    creadores: number | null;
+    marcas: number | null;
+  };
+  config: {
+    sync_users_enabled: boolean;
+    sync_organizations_enabled: boolean;
+    shop_id: string | null;
+  };
+}
+
+// =====================================================
 // ENUMS / UNION TYPES
 // =====================================================
 

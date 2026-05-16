@@ -25,7 +25,6 @@ import {
   Video,
   TrendingUp,
   BarChart3,
-  GitBranch,
   DollarSign,
   Crown,
   Share2,
@@ -49,8 +48,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
-import { RootOrgSwitcher } from "@/components/layout/RootOrgSwitcher";
-import { UserOrgSwitcher } from "@/components/layout/UserOrgSwitcher";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
@@ -111,7 +108,6 @@ const adminSections: NavSection[] = [
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
@@ -119,10 +115,9 @@ const adminSections: NavSection[] = [
     label: "CRM PLATAFORMA",
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard },
-      { name: "Leads", href: "/crm/leads", icon: UserPlus },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
       { name: "Personas", href: "/crm/personas", icon: Users },
-      { name: "Finanzas", href: "/crm/finanzas", icon: DollarSign },
+      { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
     ]
   },
@@ -149,7 +144,6 @@ const strategistSections: NavSection[] = [
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
       { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
-      { name: "Pipelines", href: "/org-crm/pipelines", icon: GitBranch, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
@@ -667,20 +661,6 @@ export function MobileNav() {
               </div>
             </div>
           </div>
-
-          {/* Root Admin Organization Switcher */}
-          {isPlatformRoot && (
-            <div className="px-3 py-2 border-b border-border">
-              <RootOrgSwitcher />
-            </div>
-          )}
-
-          {/* Regular User Organization Switcher - for users with multiple orgs (not clients) */}
-          {!isPlatformRoot && !activeIsClient && (
-            <div className="px-3 py-2 border-b border-border">
-              <UserOrgSwitcher />
-            </div>
-          )}
 
           {/* User Info */}
           {profile && (
