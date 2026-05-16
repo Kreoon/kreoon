@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +20,8 @@ import { es } from "date-fns/locale";
 import {
   Building2, Video, Mail, Phone, Calendar, DollarSign,
   Package, Plus, Trash2, Edit2, ShoppingBag, CheckCircle,
-  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2, Handshake
+  Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2, Handshake,
+  TrendingUp, MapPin, Save
 } from "lucide-react";
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -107,6 +109,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
   const [showProfileEditor, setShowProfileEditor] = useState(false);
   const [fullClientData, setFullClientData] = useState<any>(null);
 
+  // Origin fields
+  const [originData, setOriginData] = useState({ lead_source: '', community_name: '', referred_by: '' });
+  const [savingOrigin, setSavingOrigin] = useState(false);
+
   const [formData, setFormData] = useState({
     name: "",
     contact_email: "",
@@ -140,8 +146,37 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         .eq('id', client.id)
         .single();
       setFullClientData(data);
+      if (data) {
+        setOriginData({
+          lead_source: data.lead_source ?? '',
+          community_name: data.community_name ?? '',
+          referred_by: data.referred_by ?? '',
+        });
+      }
     } catch (error) {
       console.error('Error fetching full client data:', error);
+    }
+  };
+
+  const handleSaveOrigin = async () => {
+    if (!client) return;
+    setSavingOrigin(true);
+    try {
+      const { error } = await supabase
+        .from('clients')
+        .update({
+          lead_source: originData.lead_source || null,
+          community_name: originData.community_name || null,
+          referred_by: originData.referred_by || null,
+        })
+        .eq('id', client.id);
+      if (error) throw error;
+      toast({ title: 'Origen guardado' });
+      pendingRefreshRef.current = true;
+    } catch {
+      toast({ title: 'Error al guardar', variant: 'destructive' });
+    } finally {
+      setSavingOrigin(false);
     }
   };
 
@@ -171,7 +206,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
       
       if (error) throw error;
       
-      toast({ title: "Paquete eliminado" });
+      toast({ title: "Campaña eliminada" });
       fetchPackages();
     } catch (error) {
       console.error('Error deleting package:', error);
@@ -362,23 +397,31 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
         </DialogHeader>
 
         <Tabs defaultValue="info" className="mt-4">
-          <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7">
-            <TabsTrigger value="info">Info</TabsTrigger>
-            <TabsTrigger value="dna" className="gap-1">
+          <TabsList className="flex w-full overflow-x-auto gap-0.5 h-auto flex-wrap">
+            <TabsTrigger value="info" className="flex-none">Info</TabsTrigger>
+            <TabsTrigger value="finanzas" className="flex-none gap-1">
+              <TrendingUp className="h-3 w-3" />
+              Finanzas
+            </TabsTrigger>
+            <TabsTrigger value="origen" className="flex-none gap-1">
+              <MapPin className="h-3 w-3" />
+              Origen
+            </TabsTrigger>
+            <TabsTrigger value="dna" className="flex-none gap-1">
               <Dna className="h-3 w-3" />
               ADN Marca
             </TabsTrigger>
-            <TabsTrigger value="products" className="gap-1">
+            <TabsTrigger value="products" className="flex-none gap-1">
               <Package className="h-3 w-3" />
-              ADN Productos ({products.length})
+              Productos ({products.length})
             </TabsTrigger>
-            <TabsTrigger value="packages">Paquetes ({packages.length})</TabsTrigger>
-            <TabsTrigger value="content">Videos ({assignedContent.length})</TabsTrigger>
-            <TabsTrigger value="channels" className="gap-1">
+            <TabsTrigger value="packages" className="flex-none">Campañas ({packages.length})</TabsTrigger>
+            <TabsTrigger value="content" className="flex-none">Videos ({assignedContent.length})</TabsTrigger>
+            <TabsTrigger value="channels" className="flex-none gap-1">
               <Radio className="h-3 w-3" />
               Canales
             </TabsTrigger>
-            <TabsTrigger value="stats">Stats</TabsTrigger>
+            <TabsTrigger value="stats" className="flex-none">Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
@@ -513,6 +556,164 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             )}
           </TabsContent>
 
+          {/* Finanzas Tab */}
+          <TabsContent value="finanzas" className="space-y-6 mt-4">
+            {/* Resumen financiero */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-sm border bg-card text-center">
+                <p className="text-xs text-muted-foreground mb-1">Total contratado</p>
+                <p className="text-2xl font-bold text-success flex items-center justify-center gap-1">
+                  <DollarSign className="h-5 w-5" />
+                  {packages.reduce((s, p) => s + (p.total_value || 0), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-sm border bg-card text-center">
+                <p className="text-xs text-muted-foreground mb-1">Pagado</p>
+                <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
+                  <DollarSign className="h-5 w-5" />
+                  {packages.reduce((s, p) => s + (p.paid_amount || 0), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 rounded-sm border bg-card text-center">
+                <p className="text-xs text-muted-foreground mb-1">Pendiente de cobro</p>
+                <p className="text-2xl font-bold text-warning flex items-center justify-center gap-1">
+                  <DollarSign className="h-5 w-5" />
+                  {packages.reduce((s, p) => s + ((p.total_value || 0) - (p.paid_amount || 0)), 0).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Costo de producción (pagos a creadores/editores) */}
+            <div className="p-4 rounded-sm border bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-1">Costo de producción (pagos al equipo)</p>
+              <p className="text-xl font-bold flex items-center gap-1">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                {totalValue.toLocaleString()}
+              </p>
+            </div>
+
+            {/* Detalle de paquetes */}
+            {packages.length > 0 ? (
+              <div className="space-y-3">
+                <h4 className="font-medium text-sm text-muted-foreground">Campañas contratadas</h4>
+                {packages.map(pkg => {
+                  const pending = pkg.total_value - pkg.paid_amount;
+                  const isPaid = pkg.payment_status === 'paid';
+                  const isBarter = (pkg as any).is_barter;
+                  return (
+                    <div key={pkg.id} className="p-3 rounded-sm border bg-card flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium text-sm truncate">{pkg.name}</p>
+                          {isBarter && (
+                            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30">Canje</Badge>
+                          )}
+                          {!isBarter && (
+                            <Badge className={PAYMENT_STATUS_COLORS[pkg.payment_status as PaymentStatus]}>
+                              {PAYMENT_STATUS_LABELS[pkg.payment_status as PaymentStatus]}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {pkg.content_quantity} videos · {pkg.creators_count} creadores
+                        </p>
+                      </div>
+                      {!isBarter && (
+                        <div className="text-right text-sm shrink-0">
+                          <p className="font-semibold">${pkg.total_value.toLocaleString()}</p>
+                          {!isPaid && (
+                            <p className="text-xs text-warning">-${pending.toLocaleString()} pend.</p>
+                          )}
+                          {isPaid && (
+                            <p className="text-xs text-success flex items-center gap-1">
+                              <CheckCircle className="h-3 w-3" /> Pagado
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <ShoppingBag className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+                <p className="text-muted-foreground text-sm">Sin campañas registradas</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Origen Tab */}
+          <TabsContent value="origen" className="space-y-5 mt-4">
+            <div className="space-y-1">
+              <h4 className="font-medium">Origen y Comunidad</h4>
+              <p className="text-xs text-muted-foreground">Cómo llegó este cliente a la plataforma</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Fuente de captación</Label>
+                <Select
+                  value={originData.lead_source}
+                  onValueChange={v => setOriginData(prev => ({ ...prev, lead_source: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar fuente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="instagram">Instagram</SelectItem>
+                    <SelectItem value="tiktok">TikTok</SelectItem>
+                    <SelectItem value="referral">Referido</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="website">Sitio web</SelectItem>
+                    <SelectItem value="event">Evento</SelectItem>
+                    <SelectItem value="linkedin">LinkedIn</SelectItem>
+                    <SelectItem value="other">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Comunidad o programa</Label>
+                <Input
+                  value={originData.community_name}
+                  onChange={e => setOriginData(prev => ({ ...prev, community_name: e.target.value }))}
+                  placeholder="Ej: Los Reyes del Contenido"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs">Referido por</Label>
+                <Input
+                  value={originData.referred_by}
+                  onChange={e => setOriginData(prev => ({ ...prev, referred_by: e.target.value }))}
+                  placeholder="Nombre del referidor"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleSaveOrigin} disabled={savingOrigin}>
+                {savingOrigin ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Guardar origen
+              </Button>
+            </div>
+
+            {/* Datos de ubicación (readonly, desde fullClientData) */}
+            {(fullClientData?.city || fullClientData?.country) && (
+              <div className="pt-2 border-t space-y-2">
+                <Label className="text-xs text-muted-foreground">Ubicación registrada</Label>
+                <p className="text-sm font-medium">
+                  {[fullClientData?.city, fullClientData?.country].filter(Boolean).join(', ')}
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
           {/* DNA Tab - lazy loaded */}
           <TabsContent value="dna" className="mt-4">
             <Suspense fallback={
@@ -530,7 +731,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
               <div className="flex justify-end">
                 <Button onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Paquete
+                  Nueva Campaña
                 </Button>
               </div>
             )}
@@ -544,14 +745,14 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
             ) : packages.length === 0 ? (
               <div className="text-center py-12">
                 <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground mb-3">No hay paquetes registrados</p>
+                <p className="text-muted-foreground mb-3">No hay campañas registradas</p>
                 {isAdmin && (
                   <Button 
                     variant="outline" 
                     onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Crear primer paquete
+                    Crear primera campaña
                   </Button>
                 )}
               </div>
@@ -613,7 +814,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                             {(pkg as any).is_barter ? (
                               <div className="flex items-center gap-1 text-amber-400">
                                 <Handshake className="h-4 w-4" />
-                                <span>Sin cobro — paquete por canje</span>
+                                <span>Sin cobro — campaña por canje</span>
                               </div>
                             ) : (
                               <>
@@ -673,7 +874,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Eliminar paquete?</AlertDialogTitle>
+                                  <AlertDialogTitle>¿Eliminar campaña?</AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Esta acción eliminará permanentemente "{pkg.name}".
                                   </AlertDialogDescription>
@@ -1048,11 +1249,11 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
 
             {/* Packages Stats */}
             <div>
-              <h4 className="font-medium text-sm text-muted-foreground mb-3">Paquetes</h4>
+              <h4 className="font-medium text-sm text-muted-foreground mb-3">Campañas</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-primary">{packages.length}</p>
-                  <p className="text-xs text-muted-foreground">Total paquetes</p>
+                  <p className="text-xs text-muted-foreground">Total campañas</p>
                 </div>
                 <div className="p-4 rounded-sm border bg-card text-center">
                   <p className="text-2xl font-bold text-success">

@@ -94,7 +94,7 @@ function ActivityPanelContent({ metrics }: { metrics: ClientActivityMetrics }) {
           )}
           {activity_status === 'prospect' && (
             <span className="text-sm text-muted-foreground">
-              Sin paquetes comprados aún
+              Sin campañas compradas aún
             </span>
           )}
         </div>
@@ -104,7 +104,7 @@ function ActivityPanelContent({ metrics }: { metrics: ClientActivityMetrics }) {
           <Card className="bg-card/50 border-border/50">
             <CardContent className="p-3 text-center">
               <p className="text-xl font-bold text-foreground">{metrics.total_packages}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Paquetes</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Campañas</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-border/50">
@@ -140,7 +140,7 @@ function ActivityPanelContent({ metrics }: { metrics: ClientActivityMetrics }) {
           {metrics.first_package_at && (
             <DateRow
               icon={Package}
-              label="Primer paquete comprado"
+              label="Primera campaña comprada"
               value={fmt(metrics.first_package_at)}
               sub={ago(metrics.first_package_at)}
             />
@@ -148,7 +148,7 @@ function ActivityPanelContent({ metrics }: { metrics: ClientActivityMetrics }) {
           {metrics.last_package_at && metrics.last_package_at !== metrics.first_package_at && (
             <DateRow
               icon={Package}
-              label="Último paquete comprado"
+              label="Última campaña comprada"
               value={fmt(metrics.last_package_at)}
               sub={ago(metrics.last_package_at)}
             />
@@ -208,7 +208,7 @@ function ActivityPanelContent({ metrics }: { metrics: ClientActivityMetrics }) {
         <div className="flex items-start gap-2 p-3 rounded-md bg-amber-500/10 border border-amber-500/20">
           <AlertCircle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-300">
-            Este cliente tiene paquetes activos pero aún no se ha registrado ninguna entrega.
+            Este cliente tiene campañas activas pero aún no se ha registrado ninguna entrega.
           </p>
         </div>
       )}

@@ -99,7 +99,7 @@ export function ClientPackageDialog({
     if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "El nombre del paquete es requerido",
+        description: "El nombre de la campaña es requerido",
         variant: "destructive"
       });
       return;
@@ -141,7 +141,7 @@ export function ClientPackageDialog({
       }
 
       toast({
-        title: package_ ? "Paquete actualizado" : "Paquete creado",
+        title: package_ ? "Campaña actualizada" : "Campaña creada",
         description: "Los cambios se guardaron correctamente"
       });
       
@@ -151,7 +151,7 @@ export function ClientPackageDialog({
       console.error('Error saving package:', error);
       toast({
         title: "Error",
-        description: "No se pudo guardar el paquete",
+        description: "No se pudo guardar la campaña",
         variant: "destructive"
       });
     } finally {
@@ -166,7 +166,7 @@ export function ClientPackageDialog({
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {package_ ? "Editar Paquete" : "Nuevo Paquete de Contenido"}
+            {package_ ? "Editar Campaña" : "Nueva Campaña de Contenido"}
           </DialogTitle>
         </DialogHeader>
 
@@ -174,11 +174,11 @@ export function ClientPackageDialog({
           {/* Basic Info */}
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
-              <Label>Nombre del Paquete *</Label>
+              <Label>Nombre de la Campaña *</Label>
               <Input
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ej: Paquete Premium Q1 2024"
+                placeholder="Ej: Campaña Premium Q1 2024"
               />
             </div>
 
@@ -194,7 +194,7 @@ export function ClientPackageDialog({
               <Handshake className={`h-4 w-4 shrink-0 ${formData.is_barter ? 'text-amber-400' : 'text-muted-foreground'}`} />
               <div className="flex-1">
                 <p className={`text-sm font-medium ${formData.is_barter ? 'text-amber-300' : 'text-foreground'}`}>
-                  Paquete por Canje
+                  Campaña por Canje
                 </p>
                 <p className="text-xs text-muted-foreground">
                   No genera cobro — el cliente paga con productos, servicios o contraprestación
@@ -227,7 +227,7 @@ export function ClientPackageDialog({
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descripción del paquete..."
+              placeholder="Descripción de la campaña..."
               rows={2}
             />
           </div>
@@ -303,7 +303,7 @@ export function ClientPackageDialog({
           {formData.is_barter ? (
             <div className="p-4 rounded-sm border border-amber-500/20 bg-amber-500/10 flex items-center gap-3">
               <Handshake className="h-4 w-4 text-amber-400 shrink-0" />
-              <p className="text-sm text-amber-300">Paquete por canje — no genera cobro</p>
+              <p className="text-sm text-amber-300">Campaña por canje — no genera cobro</p>
             </div>
           ) : (
             <div className="p-4 rounded-sm border border-primary/20 bg-primary/5 space-y-4">
@@ -360,7 +360,7 @@ export function ClientPackageDialog({
             <Textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notas internas sobre este paquete..."
+              placeholder="Notas internas sobre esta campaña..."
               rows={2}
             />
           </div>
@@ -376,7 +376,7 @@ export function ClientPackageDialog({
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              {package_ ? "Guardar Cambios" : "Crear Paquete"}
+              {package_ ? "Guardar Cambios" : "Crear Campaña"}
             </Button>
           </div>
         </div>

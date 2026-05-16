@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin, Loader2, Link2, Activity, TrendingDown,
+  Phone, MapPin, Loader2, Activity, TrendingDown,
 } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
@@ -30,8 +30,6 @@ import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
-import { LinkBrandDialog } from '@/components/clients/LinkBrandDialog';
-import { BrandsCRMContent } from './crm/BrandsCRM';
 import { cn } from '@/lib/utils';
 import type { UnifiedClientEntity, ClientUser } from '@/types/unifiedClient.types';
 import type { OrgContact } from '@/types/crm.types';
@@ -40,18 +38,15 @@ import type { OrgContact } from '@/types/crm.types';
 void Phone;
 void MapPin;
 
-type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'marcas';
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'activos', label: 'Activos', adminOnly: true },
-  { key: 'inactivos', label: 'Inactivos', adminOnly: true },
+  { key: 'inactivos', label: 'Entregados', adminOnly: true },
+  { key: 'prospects', label: 'Sin paquetes', adminOnly: true },
   { key: 'todos', label: 'Todos' },
   { key: 'usuarios', label: 'Usuarios' },
-  { key: 'marcas', label: 'Marcas' },
 ];
-
-const VALID_TABS: FilterTab[] = ['todos', 'usuarios', 'activos', 'inactivos', 'marcas'];
-void VALID_TABS;
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -120,13 +115,9 @@ export function UnifiedClientsContent() {
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
-  const [linkBrandOpen, setLinkBrandOpen] = useState(false);
-  const [linkBrandPreselectedClientId, setLinkBrandPreselectedClientId] = useState<string | undefined>(undefined);
   const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
   const [creatingCompany, setCreatingCompany] = useState(false);
   const { toast } = useToast();
-
-  void linkBrandPreselectedClientId;
 
   // Handle tab change (solo estado local)
   const handleFilterChange = (tab: FilterTab) => {
@@ -145,6 +136,7 @@ export function UnifiedClientsContent() {
     const pipelineValue = contactos.reduce((sum, e) => sum + (e.deal_value || 0), 0);
     const activos = activityMetrics.filter(m => m.activity_status === 'active').length;
     const inactivos = activityMetrics.filter(m => m.activity_status === 'inactive').length;
+    const prospects = activityMetrics.filter(m => m.activity_status === 'prospect').length;
     return {
       empresas: empresas.length,
       contactos: contactos.length,
@@ -153,6 +145,7 @@ export function UnifiedClientsContent() {
       usuarios: clientUsers.length,
       activos,
       inactivos,
+      prospects,
     };
   }, [entities, clientUsers, activityMetrics]);
 
@@ -178,6 +171,9 @@ export function UnifiedClientsContent() {
     if (filter === 'inactivos') {
       list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'inactive');
     }
+    if (filter === 'prospects') {
+      list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'prospect');
+    }
 
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -202,12 +198,6 @@ export function UnifiedClientsContent() {
       u.linked_companies.some(c => c.client_name.toLowerCase().includes(q)),
     );
   }, [clientUsers, search]);
-
-  // Abre el LinkBrandDialog desde una card de cliente (modo fusión preseleccionado)
-  const handleLinkBrandFromCard = (clientId: string) => {
-    setLinkBrandPreselectedClientId(clientId);
-    setLinkBrandOpen(true);
-  };
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
@@ -332,7 +322,7 @@ export function UnifiedClientsContent() {
 
         {/* Seguimiento de actividad — solo admins */}
         {canSeeInternal && activityMetrics.length > 0 && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <button
               onClick={() => handleFilterChange('activos')}
               className={cn(
@@ -344,26 +334,42 @@ export function UnifiedClientsContent() {
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
                 <Activity className="h-3.5 w-3.5 text-green-400" />
-                Clientes activos
+                Activos
               </div>
               <p className="text-xl font-bold text-green-400">{stats.activos}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Con contenido pendiente</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Contenido pendiente</p>
             </button>
             <button
               onClick={() => handleFilterChange('inactivos')}
               className={cn(
                 'rounded-sm border p-3 text-left transition-all',
                 filter === 'inactivos'
-                  ? 'border-red-500/50 bg-red-500/10'
-                  : 'border-border bg-card hover:border-red-500/30',
+                  ? 'border-amber-500/50 bg-amber-500/10'
+                  : 'border-border bg-card hover:border-amber-500/30',
               )}
             >
               <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-                <TrendingDown className="h-3.5 w-3.5 text-red-400" />
-                Sin actividad
+                <TrendingDown className="h-3.5 w-3.5 text-amber-400" />
+                Entregados
               </div>
-              <p className="text-xl font-bold text-red-400">{stats.inactivos}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Todo entregado o sin paquetes</p>
+              <p className="text-xl font-bold text-amber-400">{stats.inactivos}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Todo completado</p>
+            </button>
+            <button
+              onClick={() => handleFilterChange('prospects')}
+              className={cn(
+                'rounded-sm border p-3 text-left transition-all',
+                filter === 'prospects'
+                  ? 'border-blue-500/50 bg-blue-500/10'
+                  : 'border-border bg-card hover:border-blue-500/30',
+              )}
+            >
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+                <UsersIcon className="h-3.5 w-3.5 text-blue-400" />
+                Sin paquetes
+              </div>
+              <p className="text-xl font-bold text-blue-400">{stats.prospects}</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Sin paquete contratado</p>
             </button>
           </div>
         )}
@@ -418,10 +424,6 @@ export function UnifiedClientsContent() {
                     <Contact className="h-4 w-4 mr-2" />
                     Nuevo Contacto
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setLinkBrandOpen(true)}>
-                    <Link2 className="h-4 w-4 mr-2" />
-                    Vincular Brand
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -431,9 +433,7 @@ export function UnifiedClientsContent() {
         {/* Content */}
         <div className="flex gap-4">
           <div className={cn('flex-1 min-w-0', hasSidePanel && 'md:mr-[440px]')}>
-            {filter === 'marcas' ? (
-              <BrandsCRMContent />
-            ) : showUsuarios ? (
+            {showUsuarios ? (
               /* ===== USUARIOS CLIENTE TAB ===== */
               <>
                 {/* Unassigned alert */}
@@ -576,7 +576,6 @@ export function UnifiedClientsContent() {
                         canEdit={canSeeInternal}
                         onUpdate={() => refetch()}
                         orgId={currentOrgId}
-                        onLinkBrand={e.entity_type === 'empresa' ? handleLinkBrandFromCard : undefined}
                         activityMetrics={e.entity_type === 'empresa' ? activityMetrics.find(m => m.client_id === e.id) : undefined}
                       />
                     ))}
@@ -783,15 +782,6 @@ export function UnifiedClientsContent() {
           organizationId={currentOrgId}
         />
 
-        {/* Link Brand Dialog */}
-        {currentOrgId && (
-          <LinkBrandDialog
-            open={linkBrandOpen}
-            onOpenChange={setLinkBrandOpen}
-            orgId={currentOrgId}
-            orgCompanies={allCompanies}
-          />
-        )}
       </div>
     </div>
   );

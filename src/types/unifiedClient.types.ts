@@ -48,6 +48,10 @@ export interface UnifiedClientEntity {
   brand_website: string | null;
   brand_industry: string | null;
   brand_description: string | null;
+  // Origen/Comunidad
+  lead_source: string | null;
+  community_name: string | null;
+  referred_by: string | null;
 }
 
 /** A linked company entry for a client user */
