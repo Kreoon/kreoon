@@ -178,6 +178,18 @@ export interface PlatformConfig {
   comingSoon?: boolean;
 }
 
+// ── TikTok Post Settings (required per TikTok Content Posting API UX guidelines) ──
+
+export interface TikTokPostSettings {
+  privacyLevel: string | null;
+  allowComment: boolean;
+  allowDuet: boolean;
+  allowStitch: boolean;
+  brandContentToggle: boolean;
+  brandOrganic: boolean;
+  brandedContent: boolean;
+}
+
 // ── Composer Form Data ──────────────────────────────────────────────────
 
 export interface ComposerFormData {
@@ -195,6 +207,7 @@ export interface ComposerFormData {
   campaignId?: string | null;
   projectId?: string | null;
   brandCollaboration?: BrandCollaboration | null;
+  tiktokSettings?: TikTokPostSettings | null;
 }
 
 // ── Metrics Summary ─────────────────────────────────────────────────────

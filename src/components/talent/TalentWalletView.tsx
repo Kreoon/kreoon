@@ -136,17 +136,32 @@ function ContentTable({
       {expanded && (
         <div className="rounded-lg border border-border divide-y divide-border overflow-hidden">
           {items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
-              <div className="flex items-center gap-2 min-w-0">
-                <Badge variant="outline" className="text-[10px] shrink-0">
-                  {item.role === 'creator' ? 'Creador' : item.role === 'editor' ? 'Editor' : 'Ambos'}
-                </Badge>
-                {item.sequence_number && (
-                  <span className="font-mono text-muted-foreground shrink-0">{item.sequence_number}</span>
-                )}
-                <span className="truncate">{item.title}</span>
+            <div key={item.id} className="flex items-start justify-between gap-3 px-3 py-2 text-xs">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[10px] shrink-0">
+                    {item.role === 'creator' ? 'Creador' : 'Editor'}
+                  </Badge>
+                  {item.sequence_number && (
+                    <span className="font-mono text-muted-foreground shrink-0">{item.sequence_number}</span>
+                  )}
+                  <span className="truncate">{item.title}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-0.5">
+                  {item.client_name && (
+                    <span className="truncate">{item.client_name}</span>
+                  )}
+                  {item.client_name && item.approved_at && (
+                    <span className="opacity-40">·</span>
+                  )}
+                  {item.approved_at && (
+                    <span className="shrink-0">
+                      Aprobado {format(new Date(item.approved_at), "d MMM yyyy", { locale: es })}
+                    </span>
+                  )}
+                </div>
               </div>
-              <span className="font-semibold shrink-0">{formatCOP(item.amount)}</span>
+              <span className="font-semibold shrink-0 mt-0.5">{formatCOP(item.amount)}</span>
             </div>
           ))}
         </div>

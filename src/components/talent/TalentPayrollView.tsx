@@ -346,9 +346,11 @@ function NextPaymentBadge() {
 function ClosureRow({
   entry,
   organizationId,
+  hideIdentity = false,
 }: {
   entry: MonthlyClosureEntry;
   organizationId: string;
+  hideIdentity?: boolean;
 }) {
   const qc = useQueryClient();
   const { data: accounts = [] } = usePaymentAccounts(organizationId, entry.payment.user_id);
@@ -412,21 +414,28 @@ function ClosureRow({
   return (
     <div className={`rounded-lg border ${borderClass} bg-card overflow-hidden`}>
       <div className="flex items-center gap-3 p-3">
-        {/* Avatar */}
-        {entry.avatar_url ? (
-          <img src={entry.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover shrink-0" />
-        ) : (
-          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-            {entry.full_name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-          </div>
+        {/* Avatar — oculto cuando va dentro de un grupo de usuario */}
+        {!hideIdentity && (
+          entry.avatar_url ? (
+            <img src={entry.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover shrink-0" />
+          ) : (
+            <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+              {entry.full_name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
+          )
         )}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold truncate">{entry.full_name}</p>
+            {!hideIdentity && <p className="text-sm font-semibold truncate">{entry.full_name}</p>}
             {isProcessing && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 font-medium shrink-0">
                 En transferencia
+              </span>
+            )}
+            {!isProcessing && hideIdentity && isPending && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 font-medium shrink-0">
+                Pendiente
               </span>
             )}
           </div>
@@ -601,13 +610,56 @@ function ClosureRow({
 
       {/* Proyectos del cierre — tabla con cliente y fecha de aprobación */}
       {expanded && contentCount > 0 && (
-        <ClosureContentTable contentIds={p.content_ids ?? []} />
+        <ClosureContentTable contentIds={p.content_ids ?? []} userId={p.user_id} />
       )}
     </div>
   );
 }
 
-function ClosureContentTable({ contentIds }: { contentIds: string[] }) {
+// ─── Grupo de cierres para un mismo usuario ───────────────────────────────────
+
+function ClosureGroup({
+  entries,
+  organizationId,
+}: {
+  entries: MonthlyClosureEntry[];
+  organizationId: string;
+}) {
+  const first = entries[0];
+  const total = entries.reduce((s, e) => s + e.payment.amount, 0);
+  const hasProcessing = entries.some((e) => e.payment.status === 'processing');
+  const initials = first.full_name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+
+  return (
+    <div className={`rounded-lg border overflow-hidden ${hasProcessing ? 'border-blue-400/40' : 'border-yellow-400/30'} bg-card`}>
+      {/* Cabecera de usuario */}
+      <div className="flex items-center gap-3 px-3 py-2.5 bg-muted/30 border-b border-border">
+        {first.avatar_url ? (
+          <img src={first.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+            {initials}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold truncate">{first.full_name}</p>
+          <p className="text-[10px] text-muted-foreground">{entries.length} pagos agrupados</p>
+        </div>
+        <span className={`text-sm font-bold ${hasProcessing ? 'text-blue-600 dark:text-blue-400' : 'text-yellow-600 dark:text-yellow-400'}`}>
+          {formatCurrency(total)}
+        </span>
+      </div>
+      {/* Pagos individuales */}
+      {entries.map((entry, i) => (
+        <div key={entry.payment.id} className={i > 0 ? 'border-t border-border/50' : ''}>
+          <ClosureRow entry={entry} organizationId={organizationId} hideIdentity />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ClosureContentTable({ contentIds, userId }: { contentIds: string[]; userId: string }) {
   const { data: items = [], isLoading } = useClosureContentDetails(contentIds, true);
 
   if (isLoading) {
@@ -619,20 +671,40 @@ function ClosureContentTable({ contentIds }: { contentIds: string[] }) {
     );
   }
 
+  // Expande cada item en una fila por rol del usuario (evita sumar creator + editor)
+  const rows: Array<ClosureContentDetail & { role: 'creator' | 'editor'; roleAmount: number }> = [];
+  for (const item of items) {
+    const isCreator = item.creator_id === userId;
+    const isEditor  = item.editor_id  === userId;
+    if (isCreator && (item.creator_payment ?? 0) > 0)
+      rows.push({ ...item, role: 'creator', roleAmount: item.creator_payment! });
+    if (isEditor && (item.editor_payment ?? 0) > 0)
+      rows.push({ ...item, role: 'editor', roleAmount: item.editor_payment! });
+    // Fallback: usuario no identificado como creator/editor (pago manual sin content_ids limpios)
+    if (!isCreator && !isEditor)
+      rows.push({ ...item, role: 'creator', roleAmount: (item.creator_payment ?? 0) + (item.editor_payment ?? 0) });
+  }
+
   return (
     <div className="border-t border-border bg-muted/10">
       {/* Cabecera */}
-      <div className="grid grid-cols-[1fr_1.5fr_1fr_auto] gap-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+      <div className="grid grid-cols-[auto_1fr_1.5fr_1fr_auto] gap-2 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground border-b border-border/60">
+        <span>Rol</span>
         <span>Proyecto</span>
         <span>Cliente</span>
         <span>Aprobado</span>
         <span className="text-right">Monto</span>
       </div>
-      {items.map((item: ClosureContentDetail) => (
+      {rows.map((item, idx) => (
         <div
-          key={item.id}
-          className="grid grid-cols-[1fr_1.5fr_1fr_auto] gap-2 px-4 py-2 text-xs border-b border-border/30 last:border-0 items-center"
+          key={`${item.id}-${item.role}-${idx}`}
+          className="grid grid-cols-[auto_1fr_1.5fr_1fr_auto] gap-2 px-4 py-2 text-xs border-b border-border/30 last:border-0 items-center"
         >
+          {/* Rol */}
+          <Badge variant="outline" className="text-[10px] shrink-0 w-fit">
+            {item.role === 'creator' ? 'Creador' : 'Editor'}
+          </Badge>
+
           {/* Proyecto */}
           <div className="min-w-0">
             {item.sequence_number && (
@@ -653,11 +725,9 @@ function ClosureContentTable({ contentIds }: { contentIds: string[] }) {
               : <span className="italic opacity-50">—</span>}
           </span>
 
-          {/* Monto */}
+          {/* Monto — solo la parte del usuario en este rol */}
           <span className="font-semibold text-right whitespace-nowrap">
-            {formatCurrency(
-              (item.creator_payment ?? 0) + (item.editor_payment ?? 0)
-            )}
+            {formatCurrency(item.roleAmount)}
           </span>
         </div>
       ))}
@@ -886,6 +956,17 @@ export function TalentPayrollView() {
   const totalClosures = useMemo(() => closures.reduce((s, e) => s + e.payment.amount, 0), [closures]);
   const totalUnpaid = useMemo(() => unpaid.reduce((s, e) => s + e.total_pending, 0), [unpaid]);
 
+  // Agrupar cierres pendientes por usuario
+  const closureGroups = useMemo(() => {
+    const map = new Map<string, MonthlyClosureEntry[]>();
+    for (const entry of closures) {
+      const uid = entry.payment.user_id;
+      if (!map.has(uid)) map.set(uid, []);
+      map.get(uid)!.push(entry);
+    }
+    return [...map.values()];
+  }, [closures]);
+
   async function handleRunMonthlyClose() {
     setRunningClose(true);
     try {
@@ -1017,9 +1098,11 @@ export function TalentPayrollView() {
           </div>
         ) : (
           <div className="space-y-2">
-            {closures.map((e) => (
-              <ClosureRow key={e.payment.id} entry={e} organizationId={orgId} />
-            ))}
+            {closureGroups.map((group) =>
+              group.length === 1
+                ? <ClosureRow key={group[0].payment.id} entry={group[0]} organizationId={orgId} />
+                : <ClosureGroup key={group[0].payment.user_id} entries={group} organizationId={orgId} />
+            )}
           </div>
         )}
       </div>

@@ -165,6 +165,19 @@ export function useScheduledPosts(filters?: {
       if (form.projectId) insertData.project_id = form.projectId;
       if (form.brandCollaboration) insertData.brand_collaboration = form.brandCollaboration;
       if (form.campaignId) insertData.verification_status = 'pending';
+      if (form.tiktokSettings) {
+        insertData.metadata = {
+          tiktok: {
+            privacyLevel: form.tiktokSettings.privacyLevel,
+            disable_comment: !form.tiktokSettings.allowComment,
+            disable_duet: !form.tiktokSettings.allowDuet,
+            disable_stitch: !form.tiktokSettings.allowStitch,
+            brandContentToggle: form.tiktokSettings.brandContentToggle,
+            brandOrganic: form.tiktokSettings.brandOrganic,
+            brandedContent: form.tiktokSettings.brandedContent,
+          },
+        };
+      }
 
       const { data, error } = await supabase
         .from('scheduled_posts')

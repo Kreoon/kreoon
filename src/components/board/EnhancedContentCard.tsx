@@ -218,7 +218,7 @@ export function EnhancedContentCard({
     if (!content.deadline) return false;
     return (
       new Date(content.deadline) < new Date() &&
-      !["approved", "paid", "delivered"].includes(content.status)
+      !["approved", "paid", "archived", "delivered"].includes(content.status)
     );
   }, [content.deadline, content.status]);
 
@@ -273,7 +273,7 @@ export function EnhancedContentCard({
     }
   }, [onStatusChange, toast]);
 
-  const isShareableStatus = ['approved', 'review', 'paid'].includes(content.status);
+  const isShareableStatus = ['approved', 'review', 'paid', 'archived'].includes(content.status);
 
   const marketingIndicator = (() => {
     if (content.marketing_approved_at)

@@ -253,7 +253,7 @@ function BoardTableViewInner({
 
   // Función para renderizar celdas dinámicamente según el campo
   const renderCell = useCallback((field: string, c: Content) => {
-    const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered', 'corrected'].includes(c.status);
+    const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'archived', 'delivered', 'corrected'].includes(c.status);
     const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
     const hasRawVideo = c.raw_video_urls && c.raw_video_urls.length > 0;
 

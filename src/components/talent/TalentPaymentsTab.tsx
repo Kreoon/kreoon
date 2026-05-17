@@ -409,7 +409,8 @@ function ProjectSelector({
                       </div>
                       <p className="text-[10px] text-muted-foreground">
                         {item.role === 'creator' ? 'Como creador' : 'Como editor'}
-                        {item.delivered_at && ` · Entregado ${format(new Date(item.delivered_at), 'dd MMM', { locale: es })}`}
+                        {item.client_name && ` · ${item.client_name}`}
+                        {item.approved_at && ` · Aprobado ${format(new Date(item.approved_at), 'dd MMM', { locale: es })}`}
                       </p>
                     </div>
                     <span className="text-xs font-semibold shrink-0 text-green-600 dark:text-green-400">

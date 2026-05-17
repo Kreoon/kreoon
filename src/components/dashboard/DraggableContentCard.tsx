@@ -110,17 +110,16 @@ export function DraggableContentCard({
   const handleMarkCreatorPaid = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const updates: Record<string, unknown> = { creator_paid: true };
-      if (content.editor_paid) {
-        updates.status = "paid";
-        updates.paid_at = new Date().toISOString();
-      }
       const { error } = await supabase
         .from("content")
-        .update(updates)
+        .update({ creator_paid: true })
         .eq("id", content.id);
       if (error) throw error;
-      toast({ title: "Pago registrado", description: `Creador pagado` });
+      const bothPaid = content.editor_paid || !content.editor_id || !content.editor_payment;
+      toast({
+        title: "Pago registrado",
+        description: bothPaid ? "Creador pagado — contenido archivado" : "Creador pagado",
+      });
       onPaymentUpdate?.();
     } catch (err: unknown) {
       handleSupabaseError(err instanceof Error ? err : null, toast, "Error al registrar pago");
@@ -131,17 +130,16 @@ export function DraggableContentCard({
   const handleMarkEditorPaid = async (e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const updates: Record<string, unknown> = { editor_paid: true };
-      if (content.creator_paid) {
-        updates.status = "paid";
-        updates.paid_at = new Date().toISOString();
-      }
       const { error } = await supabase
         .from("content")
-        .update(updates)
+        .update({ editor_paid: true })
         .eq("id", content.id);
       if (error) throw error;
-      toast({ title: "Pago registrado", description: `Editor pagado` });
+      const bothPaid = content.creator_paid || !content.creator_id || !content.creator_payment;
+      toast({
+        title: "Pago registrado",
+        description: bothPaid ? "Editor pagado — contenido archivado" : "Editor pagado",
+      });
       onPaymentUpdate?.();
     } catch (err: unknown) {
       handleSupabaseError(err instanceof Error ? err : null, toast, "Error al registrar pago");

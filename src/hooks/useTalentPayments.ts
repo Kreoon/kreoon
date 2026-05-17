@@ -290,9 +290,11 @@ export interface ContentFinancialItem {
   id: string;
   title: string;
   sequence_number: string | null;
-  role: 'creator' | 'editor' | 'both';
+  role: 'creator' | 'editor';
   amount: number;
   status: string;
+  client_name?: string | null;
+  approved_at?: string | null;
 }
 
 export interface ContentFinancialSummary {
@@ -322,7 +324,7 @@ export function useContentFinancialSummary(organizationId: string, userId: strin
     queryFn: async (): Promise<ContentFinancialSummary> => {
       const { data, error } = await supabase
         .from('content')
-        .select('id, title, sequence_number, status, creator_id, editor_id, creator_payment, editor_payment, creator_paid, editor_paid')
+        .select('id, title, sequence_number, status, creator_id, editor_id, creator_payment, editor_payment, creator_paid, editor_paid, approved_at, clients(name)')
         .eq('organization_id', organizationId)
         .or(`creator_id.eq.${userId},editor_id.eq.${userId}`);
 
@@ -338,42 +340,44 @@ export function useContentFinancialSummary(organizationId: string, userId: strin
         const isCreator = row.creator_id === userId;
         const isEditor  = row.editor_id  === userId;
 
-        // Convertir a number explícitamente — PostgREST puede devolver numeric como string
-        const amount =
-          (isCreator ? Number(row.creator_payment ?? 0) : 0) +
-          (isEditor  ? Number(row.editor_payment  ?? 0) : 0);
+        // Generar un item por rol para que nunca se sumen montos de roles distintos
+        const roleEntries: Array<{ role: 'creator' | 'editor'; amount: number; paid: boolean }> = [];
+        if (isCreator) {
+          const amt = Number(row.creator_payment ?? 0);
+          if (amt > 0) roleEntries.push({ role: 'creator', amount: amt, paid: row.creator_paid ?? false });
+        }
+        if (isEditor) {
+          const amt = Number(row.editor_payment ?? 0);
+          if (amt > 0) roleEntries.push({ role: 'editor', amount: amt, paid: row.editor_paid ?? false });
+        }
 
-        if (amount <= 0) continue;
+        for (const { role, amount, paid } of roleEntries) {
+          const isPaid = PAID_STATUSES.includes(row.status) || paid;
 
-        const isPaid =
-          PAID_STATUSES.includes(row.status) ||
-          (isCreator && (row.creator_paid ?? false)) ||
-          (isEditor  && (row.editor_paid  ?? false));
+          const item: ContentFinancialItem = {
+            id: `${row.id}-${role}`,
+            title: row.title ?? 'Sin título',
+            sequence_number: (row as any).sequence_number ?? null,
+            role,
+            amount,
+            status: row.status,
+            client_name: (row as any).clients?.name ?? null,
+            approved_at: (row as any).approved_at ?? null,
+          };
 
-        const role: ContentFinancialItem['role'] =
-          isCreator && isEditor ? 'both' : isCreator ? 'creator' : 'editor';
-
-        const item: ContentFinancialItem = {
-          id: row.id,
-          title: row.title ?? 'Sin título',
-          sequence_number: (row as any).sequence_number ?? null,
-          role,
-          amount,
-          status: row.status,
-        };
-
-        if (isPaid) {
-          summary.total_pagado += amount;
-          summary.count_pagado++;
-          summary.items_pagado.push(item);
-        } else if (PENDING_PAYMENT_STATUSES.includes(row.status)) {
-          summary.total_pendiente += amount;
-          summary.count_pendiente++;
-          summary.items_pendiente.push(item);
-        } else if (IN_PROGRESS_STATUSES.includes(row.status)) {
-          summary.total_en_proceso += amount;
-          summary.count_en_proceso++;
-          summary.items_en_proceso.push(item);
+          if (isPaid) {
+            summary.total_pagado += amount;
+            summary.count_pagado++;
+            summary.items_pagado.push(item);
+          } else if (PENDING_PAYMENT_STATUSES.includes(row.status)) {
+            summary.total_pendiente += amount;
+            summary.count_pendiente++;
+            summary.items_pendiente.push(item);
+          } else if (IN_PROGRESS_STATUSES.includes(row.status)) {
+            summary.total_en_proceso += amount;
+            summary.count_en_proceso++;
+            summary.items_en_proceso.push(item);
+          }
         }
       }
 
@@ -405,18 +409,35 @@ export interface PayrollEntry {
 export function usePayrollSummary(organizationId: string) {
   return useQuery({
     queryKey: ['payroll-summary', organizationId],
-    staleTime: 0, // siempre refetch — los precios cambian en tiempo real
+    staleTime: 0,
     queryFn: async (): Promise<PayrollEntry[]> => {
-      const { data: rows, error } = await supabase
-        .from('content')
-        .select('id, title, sequence_number, creator_id, editor_id, creator_payment, editor_payment, creator_paid, editor_paid')
-        .eq('organization_id', organizationId)
-        .in('status', ['approved']);
+      // Traer contenido aprobado sin pagar y los payments activos en paralelo
+      const [contentRes, paymentsRes] = await Promise.all([
+        supabase
+          .from('content')
+          .select('id, title, sequence_number, creator_id, editor_id, creator_payment, editor_payment, creator_paid, editor_paid')
+          .eq('organization_id', organizationId)
+          .in('status', ['approved']),
+        // IDs ya vinculados a un pago activo (pendiente o en transferencia)
+        supabase
+          .from('talent_payments')
+          .select('content_ids')
+          .eq('organization_id', organizationId)
+          .neq('status', 'cancelled')
+          .neq('status', 'paid'),
+      ]);
 
-      if (error) throw error;
+      if (contentRes.error) throw contentRes.error;
+
+      // Construir set de contenidos ya en proceso de pago
+      const linkedIds = new Set<string>();
+      for (const row of paymentsRes.data ?? []) {
+        for (const id of row.content_ids ?? []) linkedIds.add(id);
+      }
 
       const userIds = new Set<string>();
-      for (const row of rows ?? []) {
+      for (const row of contentRes.data ?? []) {
+        if (linkedIds.has(row.id)) continue;
         if (row.creator_id && !row.creator_paid && Number(row.creator_payment ?? 0) > 0)
           userIds.add(row.creator_id);
         if (row.editor_id && !row.editor_paid && Number(row.editor_payment ?? 0) > 0)
@@ -448,7 +469,8 @@ export function usePayrollSummary(organizationId: string) {
         return entryMap.get(userId)!;
       };
 
-      for (const row of rows ?? []) {
+      for (const row of contentRes.data ?? []) {
+        if (linkedIds.has(row.id)) continue;
         if (row.creator_id && !row.creator_paid) {
           const amount = Number(row.creator_payment ?? 0);
           if (amount > 0) {
@@ -486,6 +508,8 @@ export interface PendingContentItem {
   status: string;
   delivered_at: string | null;
   already_linked: boolean;
+  client_name?: string | null;
+  approved_at?: string | null;
 }
 
 export function usePendingContentForUser(organizationId: string, userId: string) {
@@ -497,7 +521,7 @@ export function usePendingContentForUser(organizationId: string, userId: string)
       const [creatorRes, editorRes, paymentsRes] = await Promise.all([
         supabase
           .from('content')
-          .select('id, title, sequence_number, creator_payment, status, delivered_at')
+          .select('id, title, sequence_number, creator_payment, status, delivered_at, approved_at, clients(name)')
           .eq('organization_id', organizationId)
           .eq('creator_id', userId)
           .in('status', [...PENDING_PAYMENT_STATUSES])
@@ -507,7 +531,7 @@ export function usePendingContentForUser(organizationId: string, userId: string)
           .limit(100),
         supabase
           .from('content')
-          .select('id, title, sequence_number, editor_payment, status, delivered_at')
+          .select('id, title, sequence_number, editor_payment, status, delivered_at, approved_at, clients(name)')
           .eq('organization_id', organizationId)
           .eq('editor_id', userId)
           .in('status', [...PENDING_PAYMENT_STATUSES])
@@ -547,6 +571,8 @@ export function usePendingContentForUser(organizationId: string, userId: string)
           status: row.status,
           delivered_at: row.delivered_at ?? null,
           already_linked: linkedIds.has(row.id),
+          client_name: (row as any).clients?.name ?? null,
+          approved_at: (row as any).approved_at ?? null,
         });
       }
 
@@ -562,6 +588,8 @@ export function usePendingContentForUser(organizationId: string, userId: string)
           status: row.status,
           delivered_at: row.delivered_at ?? null,
           already_linked: linkedIds.has(row.id),
+          client_name: (row as any).clients?.name ?? null,
+          approved_at: (row as any).approved_at ?? null,
         });
       }
 
@@ -579,6 +607,8 @@ export interface ClosureContentDetail {
   sequence_number: string | null;
   client_name: string | null;
   approved_at: string | null;
+  creator_id: string | null;
+  editor_id: string | null;
   creator_payment: number | null;
   editor_payment: number | null;
 }
@@ -591,7 +621,7 @@ export function useClosureContentDetails(contentIds: string[], enabled: boolean)
     queryFn: async (): Promise<ClosureContentDetail[]> => {
       const { data, error } = await supabase
         .from('content')
-        .select('id, title, sequence_number, approved_at, creator_payment, editor_payment, clients(name)')
+        .select('id, title, sequence_number, approved_at, creator_id, editor_id, creator_payment, editor_payment, clients(name)')
         .in('id', contentIds);
       if (error) throw error;
       return (data ?? []).map((row) => ({
@@ -600,6 +630,8 @@ export function useClosureContentDetails(contentIds: string[], enabled: boolean)
         sequence_number: (row as any).sequence_number ?? null,
         client_name: (row as any).clients?.name ?? null,
         approved_at: (row as any).approved_at ?? null,
+        creator_id: row.creator_id ?? null,
+        editor_id: row.editor_id ?? null,
         creator_payment: row.creator_payment != null ? Number(row.creator_payment) : null,
         editor_payment: row.editor_payment != null ? Number(row.editor_payment) : null,
       }));

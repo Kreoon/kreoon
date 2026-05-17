@@ -22,13 +22,13 @@ import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import type { ScheduledPost } from '../types/social.types';
 
 const ALL_TABS = [
-  { id: 'analytics', label: 'Métricas', icon: BarChart3, managerOnly: false },
-  { id: 'dashboard', label: 'Publicaciones', icon: LayoutDashboard, managerOnly: false },
-  { id: 'composer', label: 'Crear Post', icon: PenSquare, managerOnly: false },
-  { id: 'calendar', label: 'Calendario', icon: Calendar, managerOnly: false },
-  { id: 'queue', label: 'Cola', icon: Clock, managerOnly: true },
-  { id: 'groups', label: 'Grupos', icon: FolderOpen, managerOnly: true },
-  { id: 'accounts', label: 'Cuentas', icon: LinkIcon, managerOnly: false },
+  { id: 'analytics', label: 'Métricas', emoji: '📊', icon: BarChart3, managerOnly: false },
+  { id: 'dashboard', label: 'Publicaciones', emoji: '🗓️', icon: LayoutDashboard, managerOnly: false },
+  { id: 'composer', label: 'Crear Post', emoji: '✏️', icon: PenSquare, managerOnly: false },
+  { id: 'calendar', label: 'Calendario', emoji: '📅', icon: Calendar, managerOnly: false },
+  { id: 'queue', label: 'Cola', emoji: '⏳', icon: Clock, managerOnly: true },
+  { id: 'groups', label: 'Grupos', emoji: '👥', icon: FolderOpen, managerOnly: true },
+  { id: 'accounts', label: 'Cuentas', emoji: '🔗', icon: LinkIcon, managerOnly: false },
 ] as const;
 
 type TabId = (typeof ALL_TABS)[number]['id'];
@@ -113,50 +113,30 @@ export default function SocialHubPage() {
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
-          <div className="w-8 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center">
-            <LinkIcon className="w-4 h-4 text-blue-400" />
+        {[
+          { emoji: '📱', label: 'Cuentas',     value: accounts.length,       bg: 'bg-blue-500/10' },
+          { emoji: '📅', label: 'Programados', value: stats.scheduledCount,  bg: 'bg-yellow-500/10' },
+          { emoji: '✅', label: 'Publicados',  value: stats.publishedCount,  bg: 'bg-green-500/10' },
+          { emoji: '✏️', label: 'Borradores',  value: stats.draftCount,      bg: 'bg-orange-500/10' },
+        ].map(stat => (
+          <div key={stat.label} className="flex items-center gap-3 p-4 rounded-2xl bg-muted/30 border-2 border-transparent hover:border-border/60 transition-colors">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 ${stat.bg}`}>
+              {stat.emoji}
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+              <p className="text-xl font-bold">{stat.value}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Cuentas</p>
-            <p className="text-lg font-bold">{accounts.length}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
-          <div className="w-8 h-8 rounded-sm bg-yellow-500/10 flex items-center justify-center">
-            <Calendar className="w-4 h-4 text-yellow-400" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Programados</p>
-            <p className="text-lg font-bold">{stats.scheduledCount}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
-          <div className="w-8 h-8 rounded-sm bg-green-500/10 flex items-center justify-center">
-            <BarChart3 className="w-4 h-4 text-green-400" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Publicados</p>
-            <p className="text-lg font-bold">{stats.publishedCount}</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/30 border">
-          <div className="w-8 h-8 rounded-sm bg-red-500/10 flex items-center justify-center">
-            <PenSquare className="w-4 h-4 text-red-400" />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Borradores</p>
-            <p className="text-lg font-bold">{stats.draftCount}</p>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabId)}>
         <TabsList className="w-full justify-start overflow-x-auto">
           {TABS.map(tab => (
-            <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
-              <tab.icon className="w-4 h-4" />
+            <TabsTrigger key={tab.id} value={tab.id} className="gap-1.5">
+              <span className="text-base leading-none">{tab.emoji}</span>
               <span className="hidden sm:inline">{tab.label}</span>
             </TabsTrigger>
           ))}

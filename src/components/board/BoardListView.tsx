@@ -159,7 +159,7 @@ export function BoardListView({
 
           <div className="space-y-1">
             {items.map(c => {
-              const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'delivered'].includes(c.status);
+              const isOverdue = c.deadline && new Date(c.deadline) < new Date() && !['approved', 'paid', 'archived', 'delivered'].includes(c.status);
               const hasVideo = c.video_url || (c.video_urls && c.video_urls.length > 0);
               const hasRawVideo = c.raw_video_urls && c.raw_video_urls.length > 0;
               const responsible = c.creator || c.editor;

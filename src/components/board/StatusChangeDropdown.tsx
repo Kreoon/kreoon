@@ -54,7 +54,7 @@ interface StatusChangeDropdownProps {
 const GROUP_ALLOWED_STATUSES: Record<StatusPermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
+    'editing', 'delivered', 'issue', 'corrected', 'approved', 'archived'
   ],
   team_leader: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
@@ -73,7 +73,7 @@ const GROUP_ALLOWED_STATUSES: Record<StatusPermissionGroup, ContentStatus[]> = {
 const GROUP_CAN_MOVE_FROM: Record<StatusPermissionGroup, ContentStatus[]> = {
   admin: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid'
+    'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid', 'archived'
   ],
   team_leader: [
     'draft', 'script_approved', 'assigned', 'recording', 'recorded',
@@ -208,6 +208,7 @@ export function StatusChangeDropdown({
               status === 'script_approved' && "bg-blue-400",
               status === 'assigned' && "bg-purple-500",
               status === 'paid' && "bg-green-600",
+              status === 'archived' && "bg-slate-500",
             )} />
             {STATUS_LABELS[status]}
           </DropdownMenuItem>

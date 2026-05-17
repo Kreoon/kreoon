@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { Plus, Trash2, Edit2, Check, X, FolderOpen } from 'lucide-react';
+import { Plus, Trash2, Edit2, Check, X, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAccountGroups } from '../../hooks/useAccountGroups';
 import { useSocialAccounts } from '../../hooks/useSocialAccounts';
@@ -70,149 +67,167 @@ export function GroupsManager() {
 
   return (
     <div className="space-y-4">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-          Grupos de Cuentas
-        </h3>
-        <Button size="sm" variant="outline" onClick={() => setIsCreating(true)}>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">👥</span>
+          <h2 className="text-xl font-bold">Grupos de Cuentas</h2>
+        </div>
+        <Button size="sm" className="rounded-xl" onClick={() => setIsCreating(true)}>
           <Plus className="w-4 h-4 mr-1" /> Nuevo Grupo
         </Button>
       </div>
 
       {/* Create form */}
       {isCreating && (
-        <Card className="bg-primary/5 border-primary/20">
-          <CardContent className="py-4 space-y-3">
-            <div className="flex gap-2">
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="Nombre del grupo..."
-                className="flex-1"
-                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-                autoFocus
+        <div className="rounded-2xl border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+          <p className="text-sm font-semibold">✨ Nuevo grupo</p>
+          <div className="flex gap-2">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="¿Cómo se llama este grupo?"
+              className="flex-1 rounded-xl"
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+              autoFocus
+            />
+            <Button size="sm" className="rounded-xl" onClick={handleCreate} disabled={createGroup.isPending}>
+              <Check className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { setIsCreating(false); setNewName(''); }}>
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <div className="flex gap-2 items-center">
+            <span className="text-xs text-muted-foreground">Color:</span>
+            {GROUP_COLORS.map(color => (
+              <button
+                key={color}
+                onClick={() => setNewColor(color)}
+                className={cn(
+                  'w-7 h-7 rounded-full transition-all',
+                  newColor === color && 'ring-2 ring-offset-2 ring-offset-background ring-white scale-110'
+                )}
+                style={{ backgroundColor: color }}
               />
-              <Button size="sm" onClick={handleCreate} disabled={createGroup.isPending}>
-                <Check className="w-4 h-4" />
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => setIsCreating(false)}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex gap-1.5">
-              {GROUP_COLORS.map(color => (
-                <button
-                  key={color}
-                  onClick={() => setNewColor(color)}
-                  className={cn(
-                    'w-6 h-6 rounded-full transition-all',
-                    newColor === color && 'ring-2 ring-offset-2 ring-offset-background ring-primary'
-                  )}
-                  style={{ backgroundColor: color }}
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Groups list */}
-      {groups.map(group => (
-        <Card key={group.id} className="bg-card/50">
-          <CardHeader className="pb-2">
-            <div className="flex items-center gap-3">
+      <div className="space-y-3">
+        {groups.map(group => (
+          <div key={group.id} className="rounded-2xl border-2 border-border/50 bg-card/30 overflow-hidden">
+            {/* Group header */}
+            <div className="flex items-center gap-3 p-4">
               <div
-                className="w-3 h-3 rounded-full shrink-0"
+                className="w-10 h-10 rounded-xl shrink-0 flex items-center justify-center text-white font-bold text-sm"
                 style={{ backgroundColor: group.color }}
-              />
+              >
+                {group.name.slice(0, 2).toUpperCase()}
+              </div>
+
               {editingId === group.id ? (
-                <div className="flex gap-1 flex-1">
+                <div className="flex gap-2 flex-1">
                   <Input
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="h-7 text-sm"
+                    className="h-8 text-sm rounded-lg flex-1"
                     onKeyDown={(e) => e.key === 'Enter' && handleRename(group.id)}
                     autoFocus
                   />
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleRename(group.id)}>
-                    <Check className="w-3 h-3" />
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => handleRename(group.id)}>
+                    <Check className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingId(null)}>
-                    <X className="w-3 h-3" />
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg" onClick={() => setEditingId(null)}>
+                    <X className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               ) : (
                 <>
-                  <CardTitle className="text-sm flex-1">{group.name}</CardTitle>
-                  <Badge variant="secondary" className="text-[10px]">
-                    {group.account_count || 0} cuentas
-                  </Badge>
-                  <Button
-                    size="icon" variant="ghost" className="h-7 w-7"
-                    onClick={() => { setEditingId(group.id); setEditName(group.name); }}
-                  >
-                    <Edit2 className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="icon" variant="ghost" className="h-7 w-7"
-                    onClick={() => setManagingId(managingId === group.id ? null : group.id)}
-                  >
-                    <FolderOpen className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="icon" variant="ghost" className="h-7 w-7 text-red-400"
-                    onClick={() => handleDelete(group.id)}
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">{group.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {group.account_count || 0} cuenta{(group.account_count || 0) !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="icon" variant="ghost" className="h-8 w-8 rounded-lg"
+                      onClick={() => { setEditingId(group.id); setEditName(group.name); }}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="icon" variant="ghost" className="h-8 w-8 rounded-lg text-red-400 hover:text-red-300"
+                      onClick={() => handleDelete(group.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="icon" variant="ghost" className="h-8 w-8 rounded-lg"
+                      onClick={() => setManagingId(managingId === group.id ? null : group.id)}
+                    >
+                      <ChevronDown className={cn('w-4 h-4 transition-transform', managingId === group.id && 'rotate-180')} />
+                    </Button>
+                  </div>
                 </>
               )}
             </div>
-          </CardHeader>
 
-          {/* Account management */}
-          {managingId === group.id && (
-            <CardContent className="pt-2 space-y-2">
-              <Label className="text-[10px] text-muted-foreground uppercase">
-                Selecciona cuentas para este grupo
-              </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {accounts.map(account => {
-                  const isMember = group.members?.some(m => m.account_id === account.id);
-                  return (
-                    <button
-                      key={account.id}
-                      onClick={() => handleToggleAccount(group, account.id)}
-                      className={cn(
-                        'flex items-center gap-2 px-2.5 py-1.5 rounded-sm border text-sm transition-all text-left',
-                        isMember
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-border bg-card hover:border-primary/30'
-                      )}
-                    >
-                      <PlatformIcon platform={account.platform} size="xs" />
-                      <span className="truncate text-xs">
-                        {account.platform_display_name || account.platform_username}
-                      </span>
-                      {isMember && <Check className="w-3 h-3 ml-auto shrink-0" />}
-                    </button>
-                  );
-                })}
+            {/* Account membership panel */}
+            {managingId === group.id && (
+              <div className="px-4 pb-4 border-t border-border/40 pt-3">
+                <p className="text-xs text-muted-foreground mb-3">
+                  Toca una cuenta para agregarla o quitarla del grupo
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {accounts.map(account => {
+                    const isMember = group.members?.some(m => m.account_id === account.id);
+                    return (
+                      <button
+                        key={account.id}
+                        onClick={() => handleToggleAccount(group, account.id)}
+                        className={cn(
+                          'flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 text-sm transition-all text-left',
+                          isMember
+                            ? 'border-green-500/50 bg-green-500/10 text-green-400'
+                            : 'border-border/50 bg-card/30 hover:border-border'
+                        )}
+                      >
+                        <PlatformIcon platform={account.platform} size="xs" />
+                        <span className="truncate flex-1 text-xs font-medium">
+                          {account.platform_display_name || account.platform_username}
+                        </span>
+                        {isMember && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                  {accounts.length === 0 && (
+                    <p className="text-xs text-muted-foreground col-span-2 py-2">
+                      Conecta cuentas primero desde la pestaña 🔗 Cuentas
+                    </p>
+                  )}
+                </div>
               </div>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+            )}
+          </div>
+        ))}
+      </div>
 
+      {/* Empty state */}
       {groups.length === 0 && !isCreating && (
-        <Card className="bg-muted/20">
-          <CardContent className="flex flex-col items-center gap-3 py-8">
-            <FolderOpen className="w-10 h-10 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              Organiza tus cuentas en grupos para publicar más rápido.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border-2 border-dashed border-border/50 bg-muted/10 py-12 flex flex-col items-center gap-3 text-center">
+          <span className="text-5xl">👥</span>
+          <p className="font-semibold">¡Sin grupos todavía!</p>
+          <p className="text-sm text-muted-foreground">
+            Agrupa tus cuentas para publicar en varias a la vez
+          </p>
+          <Button size="sm" className="rounded-xl mt-2" onClick={() => setIsCreating(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Crear mi primer grupo
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -42,7 +42,7 @@ export function UserAssignmentSection({
 
   const isOverdue = content.deadline
     ? new Date(content.deadline) < new Date() &&
-      !["approved", "paid", "delivered"].includes(content.status)
+      !["approved", "paid", "archived", "delivered"].includes(content.status)
     : false;
 
   const isDueSoon =

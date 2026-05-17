@@ -403,13 +403,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           updates.editor_assigned_at = new Date().toISOString();
         }
 
-        // Si ambos están pagados y el contenido está aprobado, cambiar a estado "paid"
-        const bothPaid = formData.creator_paid && formData.editor_paid;
-        const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
-        if (bothPaid && wasNotBothPaid && content.status === 'approved') {
-          updates.status = 'paid';
-          updates.paid_at = new Date().toISOString();
-        }
+        // El trigger fn_auto_archive_fully_paid_content maneja el archivado automático
       }
 
       const { error } = await supabase

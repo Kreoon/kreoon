@@ -1222,14 +1222,28 @@ async function publishToTikTok(
   const totalChunkCount = Math.ceil(videoSize / chunkSize);
 
   // ── Step 2: Initialize upload via FILE_UPLOAD ──
+  // Commercial content fields from TikTok UX settings
+  const tiktokMeta = (post.metadata?.tiktok as Record<string, unknown>) || {};
+  const brandContentToggle = (tiktokMeta.brandContentToggle as boolean) ?? false;
+  const brandOrganic = (tiktokMeta.brandOrganic as boolean) ?? false;
+  const brandedContent = (tiktokMeta.brandedContent as boolean) ?? false;
+
+  const postInfo: Record<string, unknown> = {
+    title: caption.substring(0, 2200),
+    privacy_level: privacyLevel,
+    disable_duet: disableDuet,
+    disable_comment: disableComment,
+    disable_stitch: disableStitch,
+  };
+
+  if (brandContentToggle) {
+    postInfo.brand_content_toggle = true;
+    if (brandOrganic) postInfo.brand_organic_toggle = true;
+    if (brandedContent) postInfo.brand_content_toggle = true;
+  }
+
   const initBody = {
-    post_info: {
-      title: caption.substring(0, 2200),
-      privacy_level: privacyLevel,
-      disable_duet: disableDuet,
-      disable_comment: disableComment,
-      disable_stitch: disableStitch,
-    },
+    post_info: postInfo,
     source_info: {
       source: "FILE_UPLOAD",
       video_size: videoSize,
@@ -2774,6 +2788,49 @@ async function handlePublishSingle(
   return { result };
 }
 
+// ── Route: TikTok Creator Info ────────────────────────────────────────────────
+
+async function handleTikTokCreatorInfo(
+  supabase: ReturnType<typeof createClient>,
+  body: { account_id: string }
+): Promise<unknown> {
+  const { account_id } = body;
+  if (!account_id) throw new Error("account_id is required");
+
+  const { data: accountData, error: accountError } = await supabase.rpc(
+    "get_social_account_token",
+    { p_account_id: account_id }
+  );
+
+  if (accountError || !accountData || accountData.length === 0) {
+    throw new Error(`TikTok account not found: ${accountError?.message || account_id}`);
+  }
+
+  const account = accountData[0] as SocialAccount;
+  if (account.platform !== "tiktok") {
+    throw new Error("Account is not a TikTok account");
+  }
+
+  const res = await fetch(
+    "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8",
+        Authorization: `Bearer ${account.access_token}`,
+      },
+      body: JSON.stringify({}),
+    }
+  );
+
+  const data = await res.json();
+  if (data.error?.code && data.error.code !== "ok") {
+    throw new Error(`TikTok API error: ${data.error.message || data.error.code}`);
+  }
+
+  return { creator_info: data.data || data };
+}
+
 // ── Route: Delete Post ───────────────────────────────────────────────────────
 
 async function handleDeletePost(
@@ -2938,11 +2995,15 @@ Deno.serve(async (req: Request) => {
         result = await handleDeletePost(supabase, body);
         break;
 
+      case "creator-info":
+        result = await handleTikTokCreatorInfo(supabase, body);
+        break;
+
       default:
         return new Response(
           JSON.stringify({
             error: `Unknown action: ${action}`,
-            available_actions: ["publish", "publish-single", "delete-post"],
+            available_actions: ["publish", "publish-single", "delete-post", "creator-info"],
           }),
           {
             status: 400,

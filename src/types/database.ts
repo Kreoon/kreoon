@@ -132,7 +132,7 @@ export type AmbassadorLevel = 'bronze' | 'silver' | 'gold';
 // Badge types available in the system
 export type BadgeType = 'ambassador';
 
-export type ContentStatus = 
+export type ContentStatus =
   | 'draft'           // Creado
   | 'script_pending'  // Pendiente guión (legacy)
   | 'script_approved' // Guión Aprobado
@@ -146,7 +146,8 @@ export type ContentStatus =
   | 'review'          // En Revisión (legacy)
   | 'approved'        // Aprobado
   | 'rejected'        // Rechazado (legacy)
-  | 'paid';           // Pagado (legacy)
+  | 'paid'            // Pagado (legacy — reemplazado por archived)
+  | 'archived';       // Archivado — pagado al 100%, fuera del flujo activo
 
 export type PaymentStatus = 'pending' | 'partial' | 'paid';
 
@@ -445,7 +446,8 @@ export const STATUS_LABELS: Record<ContentStatus, string> = {
   review: 'En Revisión',
   approved: 'Aprobado',
   rejected: 'Rechazado',
-  paid: 'Pagado'
+  paid: 'Pagado',
+  archived: 'Archivado'
 };
 
 // Colores para cada estado
@@ -463,7 +465,8 @@ export const STATUS_COLORS: Record<ContentStatus, string> = {
   review: 'bg-yellow-500/10 text-yellow-500',
   approved: 'bg-success/10 text-success',
   rejected: 'bg-destructive/10 text-destructive',
-  paid: 'bg-success/10 text-success'
+  paid: 'bg-success/10 text-success',
+  archived: 'bg-slate-500/10 text-slate-400'
 };
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
@@ -491,7 +494,8 @@ export const STATUS_ORDER: ContentStatus[] = [
   'approved',
   'issue',
   'corrected',
-  'paid'
+  'paid',
+  'archived'
 ];
 
 // Definición de columnas del Kanban - incluye todas las columnas base
@@ -514,5 +518,5 @@ export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'approved', title: 'Aprobado', color: 'bg-success' },
   { status: 'issue', title: 'Novedad', color: 'bg-destructive' },
   { status: 'corrected', title: 'Corregido', color: 'bg-blue-500' },
-  { status: 'paid', title: 'Pagado', color: 'bg-purple-600' }
+  { status: 'archived', title: 'Archivados', color: 'bg-slate-500' }
 ];

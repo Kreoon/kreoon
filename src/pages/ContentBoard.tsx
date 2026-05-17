@@ -407,6 +407,21 @@ export default function ContentBoard() {
       }));
   }, [orgStatuses]);
 
+  // Toggle "Ocultar pagados" — oculta contenido con creator_paid y editor_paid = true (persistido en localStorage)
+  const [hidePaidContent, setHidePaidContentState] = useState(false);
+  useEffect(() => {
+    const key = `board-hide-paid-${currentOrgId || 'default'}`;
+    try {
+      const v = localStorage.getItem(key);
+      setHidePaidContentState(v === null ? false : v === 'true');
+    } catch { /* ignore */ }
+  }, [currentOrgId]);
+  const setHidePaidContent = useCallback((v: boolean) => {
+    setHidePaidContentState(v);
+    const key = `board-hide-paid-${currentOrgId || 'default'}`;
+    try { localStorage.setItem(key, String(v)); } catch { /* ignore */ }
+  }, [currentOrgId]);
+
   // Toggle "Solo mis asignaciones" para editor/creador (persistido en localStorage)
   const [showOnlyAssigned, setShowOnlyAssignedState] = useState(true);
   useEffect(() => {
@@ -529,8 +544,11 @@ export default function ContentBoard() {
       if (c.campaign_week !== filterCampaignWeek) return false;
     }
 
+    // Ocultar contenido archivado (pagado al 100% y cerrado)
+    if (hidePaidContent && c.status === 'archived') return false;
+
     return true;
-  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, filterCampaignWeek]);
+  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, filterCampaignWeek, hidePaidContent]);
 
   // Agrupar contenido por estado (soporta status personalizados)
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -878,6 +896,18 @@ export default function ContentBoard() {
                   />
                   <Label htmlFor="show-only-assigned" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
                     Solo mis asignaciones
+                  </Label>
+                </div>
+              )}
+              {showAdminControls && (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="hide-paid-content"
+                    checked={hidePaidContent}
+                    onCheckedChange={setHidePaidContent}
+                  />
+                  <Label htmlFor="hide-paid-content" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
+                    Ocultar archivados
                   </Label>
                 </div>
               )}

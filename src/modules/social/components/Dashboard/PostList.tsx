@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import { MoreHorizontal, Trash2, Play, XCircle, RotateCw, Clock, Film, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -162,9 +161,7 @@ export function PostList({ onViewPost }: PostListProps) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map(i => (
-          <Card key={i} className="animate-pulse bg-muted/20">
-            <CardContent className="h-20" />
-          </Card>
+          <div key={i} className="h-20 rounded-2xl bg-muted/20 animate-pulse" />
         ))}
       </div>
     );
@@ -172,12 +169,11 @@ export function PostList({ onViewPost }: PostListProps) {
 
   if (posts.length === 0) {
     return (
-      <Card className="bg-muted/20">
-        <CardContent className="flex flex-col items-center gap-3 py-8">
-          <Clock className="w-10 h-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No hay publicaciones programadas.</p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center gap-3 py-12 text-center">
+        <span className="text-5xl">🗓️</span>
+        <p className="font-semibold">¡Todo despejado por aquí!</p>
+        <p className="text-sm text-muted-foreground">Crea tu primer post desde la pestaña ✏️ Crear Post</p>
+      </div>
     );
   }
 
@@ -211,118 +207,110 @@ export function PostList({ onViewPost }: PostListProps) {
           const postMetrics = metricsMap?.get(post.id) || [];
           const publishResults = (post.publish_results || []) as Array<{ account_id: string; platform: string; platform_post_id?: string; status: string }>;
 
+          const STATUS_EMOJI: Record<string, string> = {
+            draft: '✏️', scheduled: '📅', publishing: '⏳', published: '✅',
+            partially_published: '⚠️', failed: '❌', cancelled: '🚫',
+          };
+          const POST_TYPE_EMOJI: Record<string, string> = {
+            post: '📸', reel: '🎥', story: '⏳', carousel: '🎨', short: '🎬', thread: '💬', pin: '📌',
+          };
+
           return (
-            <Card
+            <div
               key={post.id}
-              className="bg-card/50 hover:bg-card/80 transition-colors cursor-pointer"
+              className="group rounded-2xl border-2 border-border/50 bg-card/30 hover:bg-card/70 hover:border-border transition-all cursor-pointer active:scale-[0.99] overflow-hidden"
               onClick={() => onViewPost?.(post)}
             >
-              <CardContent className="py-3">
-                <div className="flex items-center gap-4">
-                  {/* Thumbnail */}
-                  {(() => {
-                    const mediaSrc = post.thumbnail_url || (post.media_urls && post.media_urls.length > 0 ? post.media_urls[0] : null);
-                    const isBlobUrl = mediaSrc?.startsWith('blob:');
-                    if (!mediaSrc || isBlobUrl) {
-                      return (
-                        <div className="w-14 h-14 rounded-sm bg-muted/50 flex items-center justify-center shrink-0">
-                          {isBlobUrl ? <Film className="w-5 h-5 text-muted-foreground" /> : <Clock className="w-5 h-5 text-muted-foreground" />}
-                        </div>
-                      );
-                    }
-                    const isVideo = /\.(mp4|mov|webm|avi|m4v)/i.test(mediaSrc);
+              <div className="flex items-center gap-3 p-3">
+                {/* Thumbnail */}
+                {(() => {
+                  const mediaSrc = post.thumbnail_url || (post.media_urls && post.media_urls.length > 0 ? post.media_urls[0] : null);
+                  const isBlobUrl = mediaSrc?.startsWith('blob:');
+                  if (!mediaSrc || isBlobUrl) {
                     return (
-                      <div className="w-14 h-14 rounded-sm overflow-hidden bg-muted shrink-0">
-                        {isVideo ? (
-                          <video src={mediaSrc} className="w-full h-full object-cover" muted playsInline preload="metadata" />
-                        ) : (
-                          <img
-                            src={mediaSrc}
-                            alt=""
-                            className="w-full h-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        )}
+                      <div className="w-14 h-14 rounded-xl bg-muted/50 flex items-center justify-center shrink-0 text-2xl">
+                        {isBlobUrl ? '🎬' : (POST_TYPE_EMOJI[post.post_type] || '📄')}
                       </div>
                     );
-                  })()}
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">
-                      {post.caption?.slice(0, 80) || 'Sin caption'}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {/* Platforms */}
-                      <div className="flex items-center gap-1">
-                        {uniquePlatforms.slice(0, 4).map(p => (
-                          <PlatformIcon key={p} platform={p as any} size="xs" />
-                        ))}
-                      </div>
-                      {/* Post type badge */}
-                      {post.post_type && post.post_type !== 'post' && (
-                        <span className="text-[9px] bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded capitalize">
-                          {post.post_type}
-                        </span>
-                      )}
-                      {/* Time */}
-                      {post.scheduled_at && (
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(post.scheduled_at).toLocaleString('es', {
-                            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                          })}
-                        </span>
+                  }
+                  const isVideo = /\.(mp4|mov|webm|avi|m4v)/i.test(mediaSrc);
+                  return (
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-muted shrink-0">
+                      {isVideo ? (
+                        <video src={mediaSrc} className="w-full h-full object-cover" muted playsInline preload="metadata" />
+                      ) : (
+                        <img src={mediaSrc} alt="" className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                       )}
                     </div>
+                  );
+                })()}
+
+                {/* Content */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <p className="text-sm font-medium truncate">
+                    {post.caption?.slice(0, 80) || '(sin caption)'}
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-0.5">
+                      {uniquePlatforms.slice(0, 4).map(p => (
+                        <PlatformIcon key={p} platform={p as any} size="xs" />
+                      ))}
+                    </div>
+                    {post.scheduled_at && (
+                      <span className="text-[10px] text-muted-foreground">
+                        📅 {new Date(post.scheduled_at).toLocaleString('es', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
                   </div>
-
-                  {/* Status */}
-                  <PostStatusBadge status={post.status} />
-
-                  {/* Actions */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {(post.status === 'draft' || post.status === 'scheduled') && (
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePublish(post); }}>
-                          <Play className="w-4 h-4 mr-2" /> Publicar ahora
-                        </DropdownMenuItem>
-                      )}
-                      {post.status === 'scheduled' && (
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCancel(post); }}>
-                          <XCircle className="w-4 h-4 mr-2" /> Cancelar
-                        </DropdownMenuItem>
-                      )}
-                      {post.status === 'failed' && (
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePublish(post); }}>
-                          <RotateCw className="w-4 h-4 mr-2" /> Reintentar
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        className="text-red-400"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(post); }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" /> Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
 
-                {/* Metrics row for published posts */}
-                {isPublished && (
+                {/* Status */}
+                <PostStatusBadge status={post.status} />
+
+                {/* Actions */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {(post.status === 'draft' || post.status === 'scheduled') && (
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePublish(post); }}>
+                        <Play className="w-4 h-4 mr-2" /> 🚀 Publicar ahora
+                      </DropdownMenuItem>
+                    )}
+                    {post.status === 'scheduled' && (
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleCancel(post); }}>
+                        <XCircle className="w-4 h-4 mr-2" /> 🚫 Cancelar
+                      </DropdownMenuItem>
+                    )}
+                    {post.status === 'failed' && (
+                      <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handlePublish(post); }}>
+                        <RotateCw className="w-4 h-4 mr-2" /> 🔄 Reintentar
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem className="text-red-400"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(post); }}>
+                      <Trash2 className="w-4 h-4 mr-2" /> 🗑️ Eliminar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              {/* Metrics row for published posts */}
+              {isPublished && (
+                <div onClick={e => e.stopPropagation()}>
                   <PostMetricsRow
                     metrics={postMetrics}
                     publishResults={publishResults}
                     onRefresh={(accountId) => handleRefreshMetrics(post.id, accountId)}
                     isRefreshing={refreshingPostId === post.id}
                   />
-                )}
-              </CardContent>
-            </Card>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

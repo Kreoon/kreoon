@@ -285,15 +285,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         }
       }
 
-      // Admin-only: paid status transition
-      if (isAdmin) {
-        const bothPaid = data.creator_paid && data.editor_paid;
-        const wasNotBothPaid = !content.creator_paid || !content.editor_paid;
-        if (bothPaid && wasNotBothPaid && content.status === 'approved') {
-          finalUpdates.status = 'paid';
-          finalUpdates.paid_at = new Date().toISOString();
-        }
-      }
+      // El trigger fn_auto_archive_fully_paid_content maneja el archivado automático
 
       // Only hit the DB if there are actual updates
       if (Object.keys(finalUpdates).length > 0) {

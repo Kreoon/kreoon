@@ -78,7 +78,7 @@ export default function EditorDashboard() {
   const editingContent = content.filter(c => c.status === 'editing');
   const approvedContent = content.filter(c => c.status === 'approved');
   const unpaidContent = content.filter(c => c.status === 'approved' && !c.editor_paid);
-  const paidContent = content.filter(c => c.status === 'paid' || c.editor_paid);
+  const paidContent = content.filter(c => c.status === 'paid' || c.status === 'archived' || c.editor_paid);
   
   const pendingPayment = unpaidContent
     .filter(c => !c.is_ambassador_content)
@@ -90,7 +90,7 @@ export default function EditorDashboard() {
 
   // Progreso
   const totalAssigned = content.length;
-  const completedCount = content.filter(c => ['approved', 'paid', 'delivered'].includes(c.status)).length;
+  const completedCount = content.filter(c => ['approved', 'paid', 'archived', 'delivered'].includes(c.status)).length;
   const progressPercent = totalAssigned > 0 ? (completedCount / totalAssigned) * 100 : 0;
 
   // Chart data for sparklines
