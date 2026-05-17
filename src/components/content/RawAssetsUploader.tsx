@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -595,7 +594,7 @@ export function RawAssetsUploader({
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4">
-            <ScrollArea className="max-h-[250px] sm:max-h-[300px]">
+            <div className="max-h-[250px] sm:max-h-[300px] overflow-y-auto pr-1">
               <div className="space-y-2">
                 {filesToUpload.map((file) => (
                   <div 
@@ -670,7 +669,7 @@ export function RawAssetsUploader({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -714,7 +713,7 @@ export function RawAssetsUploader({
               <p className="text-sm">No hay material crudo</p>
             </div>
           ) : (
-            <ScrollArea className="max-h-[300px] sm:max-h-[400px]">
+            <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto pr-1">
               <div className="space-y-2">
                 {uploadedAssets.map((asset) => (
                   <div 
@@ -771,7 +770,7 @@ export function RawAssetsUploader({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </CardContent>
       </Card>

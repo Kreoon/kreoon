@@ -480,6 +480,7 @@ export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
 
 // Estados en orden para el flujo del Kanban
 export const STATUS_ORDER: ContentStatus[] = [
+  'script_pending',
   'draft',
   'script_approved',
   'assigned',
@@ -487,9 +488,9 @@ export const STATUS_ORDER: ContentStatus[] = [
   'recorded',
   'editing',
   'delivered',
+  'approved',
   'issue',
   'corrected',
-  'approved',
   'paid'
 ];
 
@@ -502,6 +503,7 @@ export interface KanbanColumnDef {
 }
 
 export const KANBAN_COLUMNS: KanbanColumnDef[] = [
+  { status: 'script_pending', title: 'Pendiente Guión', color: 'bg-warning' },
   { status: 'draft', title: 'Creado', color: 'bg-muted-foreground' },
   { status: 'script_approved', title: 'Guión Aprobado', color: 'bg-info' },
   { status: 'assigned', title: 'Asignado', color: 'bg-purple-500' },
@@ -509,8 +511,8 @@ export const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'recorded', title: 'Grabado', color: 'bg-cyan-500' },
   { status: 'editing', title: 'En Edición', color: 'bg-pink-500' },
   { status: 'delivered', title: 'Entregado', color: 'bg-emerald-500' },
+  { status: 'approved', title: 'Aprobado', color: 'bg-success' },
   { status: 'issue', title: 'Novedad', color: 'bg-destructive' },
   { status: 'corrected', title: 'Corregido', color: 'bg-blue-500' },
-  { status: 'approved', title: 'Aprobado', color: 'bg-success' },
   { status: 'paid', title: 'Pagado', color: 'bg-purple-600' }
 ];
