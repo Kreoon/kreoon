@@ -202,21 +202,21 @@ async function fetchProductResearch(productId: string): Promise<ResearchData | n
   research.puv = salesAnglesData?.puv || null;
   research.transformation = salesAnglesData?.transformation || null;
 
-  // ── Fetch Product DNA (ai_analysis has creative_brief, hooks, etc.) ──
+  // ── Fetch Product DNA (wizard_responses para contexto adicional) ──
   const productDnaId = (data.brief_data as any)?.product_dna_id;
   if (productDnaId) {
     const { data: pdna } = await sb
       .from('product_dna')
-      .select('ai_analysis, wizard_responses')
+      .select('content_brief, wizard_responses')
       .eq('id', productDnaId)
       .maybeSingle();
 
-    if (pdna?.ai_analysis) {
-      const analysis = parseIfString(pdna.ai_analysis);
-      research.productCreativeBrief = analysis.creative_brief || analysis.creativeBrief || {};
+    if (pdna?.content_brief) {
+      const brief = parseIfString(pdna.content_brief);
+      // content_brief contiene secciones del ADN (ej. seccion_5_ideas)
+      research.productCreativeBrief = brief;
 
-      // Merge hooks from Product DNA creative brief
-      const dnaHooks = research.productCreativeBrief?.hooks_suggestions || [];
+      const dnaHooks = brief?.hooks_suggestions || brief?.seccion_5_ideas?.hooks || [];
       if (dnaHooks.length) {
         const existing = research.creatives || [];
         research.creatives = [
@@ -225,10 +225,9 @@ async function fetchProductResearch(productId: string): Promise<ResearchData | n
         ];
       }
 
-      // Merge CTA recommendations from DNA
-      if (research.productCreativeBrief?.cta_recommendations?.length) {
-        // Store for use in selectCTA
-        (research as any)._dnaCTAs = research.productCreativeBrief.cta_recommendations;
+      const ctaRecs = brief?.cta_recommendations || [];
+      if (ctaRecs.length) {
+        (research as any)._dnaCTAs = ctaRecs;
       }
     }
   }

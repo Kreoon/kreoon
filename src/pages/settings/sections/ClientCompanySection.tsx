@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Building2, Save, Loader2, Users, Mail, Phone, FileText } from 'lucide-react';
+import { Building2, Save, Loader2, Users, Mail, Phone, FileText, MessageCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,7 @@ interface TeamMember {
   user_id: string;
   role: string;
   created_at: string;
+  whatsapp_notify: boolean;
   profile: {
     full_name: string | null;
     avatar_url: string | null;
@@ -158,6 +160,7 @@ export default function ClientCompanySection() {
           user_id,
           role,
           created_at,
+          whatsapp_notify,
           profile:profiles!client_users_user_id_fkey(full_name, avatar_url, email)
         `)
         .eq('client_id', clientId)
@@ -199,6 +202,27 @@ export default function ClientCompanySection() {
       toast({ title: 'Error', description: 'No se pudo guardar la información', variant: 'destructive' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleToggleWhatsApp = async (memberId: string, userId: string, current: boolean) => {
+    if (!clientInfo) return;
+    try {
+      const { error } = await supabase
+        .from('client_users')
+        .update({ whatsapp_notify: !current })
+        .eq('id', memberId);
+
+      if (error) throw error;
+
+      setTeamMembers(prev => prev.map(m =>
+        m.id === memberId ? { ...m, whatsapp_notify: !current } : m
+      ));
+      toast({
+        title: !current ? 'Notificaciones WA activadas' : 'Notificaciones WA desactivadas',
+      });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo actualizar', variant: 'destructive' });
     }
   };
 
@@ -395,7 +419,28 @@ export default function ClientCompanySection() {
                         </p>
                       </div>
                     </div>
-                    <Badge variant={role.variant}>{role.label}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={role.variant}>{role.label}</Badge>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-7 w-7 ${member.whatsapp_notify ? 'text-green-500 hover:text-green-600' : 'text-muted-foreground hover:text-green-500'}`}
+                              onClick={() => handleToggleWhatsApp(member.id, member.user_id, member.whatsapp_notify)}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {member.whatsapp_notify
+                              ? 'Recibe notificaciones por WhatsApp (clic para desactivar)'
+                              : 'No recibe notificaciones por WhatsApp (clic para activar)'}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
                 );
               })}

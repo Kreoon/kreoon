@@ -27,6 +27,7 @@ import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { useActiveClientPackages } from "@/hooks/useFinance";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { 
@@ -65,6 +66,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
   const { toast } = useToast();
   const { isAdmin, isClient, isCreator, isEditor, user } = useAuth();
   const { currentOrgId } = useOrgOwner();
+  const { data: clientPackages = [] } = useActiveClientPackages(currentOrgId ?? undefined);
   const [loading, setLoading] = useState(false);
   const pendingRefreshRef = useRef(false);
 
@@ -109,6 +111,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
     editor_paid: false,
     invoiced: false,
     is_published: false,
+    client_package_id: null as string | null,
     editor_guidelines: "",
     strategist_guidelines: "",
     trafficker_guidelines: "",
@@ -172,6 +175,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
         editor_paid: content.editor_paid || false,
         invoiced: content.invoiced || false,
         is_published: (content as any).is_published || false,
+        client_package_id: (content as any).client_package_id || null,
         editor_guidelines: (content as any).editor_guidelines || "",
         strategist_guidelines: (content as any).strategist_guidelines || "",
         trafficker_guidelines: (content as any).trafficker_guidelines || "",
@@ -389,6 +393,7 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
           editor_paid: formData.editor_paid,
           invoiced: formData.invoiced,
           is_published: formData.is_published,
+          client_package_id: formData.client_package_id || null,
           editor_guidelines: formData.editor_guidelines || null,
           strategist_guidelines: formData.strategist_guidelines || null,
           trafficker_guidelines: formData.trafficker_guidelines || null,
@@ -1556,6 +1561,43 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
 
           {isAdmin && (
             <TabsContent value="pagos" className="space-y-4 mt-4">
+              {/* Vinculación al paquete del cliente */}
+              <div className="p-4 rounded-sm border space-y-2">
+                <h4 className="font-medium flex items-center gap-2">
+                  <Package className="h-4 w-4" /> Paquete de cliente
+                </h4>
+                {editMode ? (
+                  <Select
+                    value={formData.client_package_id ?? "__none__"}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, client_package_id: val === "__none__" ? null : val })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sin paquete asignado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Sin paquete</SelectItem>
+                      {clientPackages
+                        .filter((pkg) => !formData.client_id || pkg.client_id === formData.client_id)
+                        .map((pkg) => (
+                          <SelectItem key={pkg.id} value={pkg.id}>
+                            #{String(pkg.campaign_number).padStart(4, '0')} {pkg.name}
+                            {pkg.total_value ? ` — $${pkg.total_value.toLocaleString()} ${pkg.currency ?? ''}` : ''}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {(() => {
+                      const p = clientPackages.find((p) => p.id === (content as any).client_package_id);
+                      return p ? `#${String(p.campaign_number).padStart(4, '0')} ${p.name}` : "Sin paquete asignado";
+                    })()}
+                  </p>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="p-4 rounded-sm border space-y-3">
                   <h4 className="font-medium flex items-center gap-2">

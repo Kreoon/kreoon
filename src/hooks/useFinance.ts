@@ -323,3 +323,218 @@ export function useCreatorAssignments(packageId: string | undefined) {
     staleTime: 0,
   });
 }
+
+// ============================================
+// COSTOS OPERATIVOS
+// ============================================
+
+export type { OrgFinancialCost, OrgFinancialClosing, FinancialPeriodSummary, CostCategory } from '@/services/finance/financeService';
+export { COST_CATEGORY_LABELS } from '@/services/finance/financeService';
+
+export function useFinancialCosts(
+  orgId: string | undefined,
+  filters?: { category?: string; currency?: string; packageId?: string }
+) {
+  return useQuery({
+    queryKey: ['financial-costs', orgId, filters],
+    queryFn: () => financeService.getFinancialCosts(orgId!, filters),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useCreateFinancialCost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (cost: Parameters<typeof financeService.createFinancialCost>[0]) =>
+      financeService.createFinancialCost(cost),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-costs'] });
+      queryClient.invalidateQueries({ queryKey: ['financial-closings'] });
+    },
+  });
+}
+
+export function useUpdateFinancialCost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: {
+      id: string;
+      updates: Parameters<typeof financeService.updateFinancialCost>[1];
+    }) => financeService.updateFinancialCost(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-costs'] });
+    },
+  });
+}
+
+export function useDeleteFinancialCost() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeService.deleteFinancialCost(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-costs'] });
+    },
+  });
+}
+
+// ============================================
+// CIERRES FINANCIEROS
+// ============================================
+
+export function useFinancialClosings(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['financial-closings', orgId],
+    queryFn: () => financeService.getFinancialClosings(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useCreateFinancialClosing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (closing: Parameters<typeof financeService.createFinancialClosing>[0]) =>
+      financeService.createFinancialClosing(closing),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-closings'] });
+    },
+  });
+}
+
+export function useUpdateFinancialClosing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: {
+      id: string;
+      updates: Parameters<typeof financeService.updateFinancialClosing>[1];
+    }) => financeService.updateFinancialClosing(id, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-closings'] });
+    },
+  });
+}
+
+export function useDeleteFinancialClosing() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeService.deleteFinancialClosing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['financial-closings'] });
+    },
+  });
+}
+
+export function useFinancialPeriodSummary(
+  orgId: string | undefined,
+  start: string,
+  end: string,
+  currency: string = 'COP',
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: ['financial-period-summary', orgId, start, end, currency],
+    queryFn: () => financeService.getFinancialPeriodSummary(orgId!, start, end, currency),
+    enabled: !!orgId && !!start && !!end && enabled,
+    staleTime: 0,
+  });
+}
+
+// ============================================
+// CUOTAS DE PAQUETE
+// ============================================
+
+export type { PackageInstallmentRow, RecurringExpenseRow, RecurringFrequency } from '@/services/finance/financeService';
+export { FREQUENCY_LABELS } from '@/services/finance/financeService';
+
+export function usePackageInstallmentsList(packageId: string | undefined) {
+  return useQuery({
+    queryKey: ['package-installments-list', packageId],
+    queryFn: () => financeService.listPackageInstallments(packageId!),
+    enabled: !!packageId,
+    staleTime: 0,
+  });
+}
+
+export function useSavePackageInstallments() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (params: {
+      orgId: string;
+      packageId: string;
+      currency: string;
+      installments: Array<{ due_date: string; expected_amount: number; notes?: string | null }>;
+    }) => financeService.createPackageInstallments(
+      params.orgId, params.packageId, params.currency, params.installments,
+    ),
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['package-installments-list', vars.packageId] });
+      qc.invalidateQueries({ queryKey: ['cash-flow-forecast'] });
+      qc.invalidateQueries({ queryKey: ['org-finance-overview'] });
+    },
+  });
+}
+
+export function useDeletePackageInstallments() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (packageId: string) => financeService.deletePackageInstallments(packageId),
+    onSuccess: (_, packageId) => {
+      qc.invalidateQueries({ queryKey: ['package-installments-list', packageId] });
+      qc.invalidateQueries({ queryKey: ['cash-flow-forecast'] });
+    },
+  });
+}
+
+// ============================================
+// GASTOS RECURRENTES
+// ============================================
+
+export function useRecurringExpensesList(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['recurring-expenses-list', orgId],
+    queryFn: () => financeService.listRecurringExpenses(orgId!),
+    enabled: !!orgId,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}
+
+export function useCreateRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (expense: Parameters<typeof financeService.createRecurringExpense>[0]) =>
+      financeService.createRecurringExpense(expense),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recurring-expenses-list'] });
+      qc.invalidateQueries({ queryKey: ['cash-flow-forecast'] });
+    },
+  });
+}
+
+export function useUpdateRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, updates }: {
+      id: string;
+      updates: Parameters<typeof financeService.updateRecurringExpense>[1];
+    }) => financeService.updateRecurringExpense(id, updates),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recurring-expenses-list'] });
+      qc.invalidateQueries({ queryKey: ['cash-flow-forecast'] });
+    },
+  });
+}
+
+export function useDeleteRecurringExpense() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => financeService.deleteRecurringExpense(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['recurring-expenses-list'] });
+      qc.invalidateQueries({ queryKey: ['cash-flow-forecast'] });
+    },
+  });
+}

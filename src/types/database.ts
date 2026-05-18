@@ -252,6 +252,7 @@ export interface ClientPackage {
   notes: string | null;
   is_active: boolean;
   is_barter: boolean;
+  campaign_number: number;
   created_at: string;
   updated_at: string;
   // Relations

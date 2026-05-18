@@ -662,7 +662,12 @@ export default function BrandDetail() {
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <h4 className="font-semibold">{pkg.name}</h4>
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <span className="font-medium opacity-50">
+                            #{String(pkg.campaign_number).padStart(4, '0')}
+                          </span>
+                          {pkg.name}
+                        </h4>
                         <p className="text-sm text-muted-foreground">
                           {pkg.content_quantity} contenidos · {pkg.hooks_per_video} hooks/video
                         </p>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Building2, Contact, Crown, Video, Users as UsersIcon, Briefcase,
   DollarSign, Globe, Tag, MapPin, Phone, Instagram, Facebook, Linkedin,
-  Calendar, UserCog, Star,
+  Calendar, UserCog, Star, Mail, ChevronRight,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -36,6 +36,8 @@ interface UnifiedClientCardProps {
   onOpenStrategists?: (entity: UnifiedClientEntity) => void;
   onOpenUsers?: (entity: UnifiedClientEntity) => void;
   onOpenServices?: (entity: UnifiedClientEntity) => void;
+  onOpenProjects?: (entity: UnifiedClientEntity) => void;
+  onOpenVideos?: (entity: UnifiedClientEntity) => void;
 }
 
 function formatCurrency(n: number): string {
@@ -57,6 +59,8 @@ export function UnifiedClientCard({
   onOpenStrategists,
   onOpenUsers,
   onOpenServices,
+  onOpenProjects,
+  onOpenVideos,
 }: UnifiedClientCardProps) {
   const isEmpresa = entity.entity_type === 'empresa';
   const [toggling, setToggling] = useState(false);
@@ -64,8 +68,10 @@ export function UnifiedClientCard({
   const { toast } = useToast();
 
   void orgId;
+  void onOpenServices;
+  void onOpenProjects;
+  void onOpenVideos;
 
-  // Cargar estrategas asignados (solo para empresas)
   useEffect(() => {
     if (!isEmpresa) return;
     let cancelled = false;
@@ -150,33 +156,32 @@ export function UnifiedClientCard({
         </div>
       )}
 
-      {/* Header */}
+      {/* ── CABECERA: logo + nombre + etiquetas ── */}
       <div className="flex items-start gap-3 mb-3">
-        {/* Avatar / Logo */}
         {isEmpresa ? (
           entity.avatar_url ? (
             <img
               src={entity.avatar_url}
               alt={entity.name}
-              className="h-11 w-11 object-cover ring-1 rounded-sm ring-border flex-shrink-0"
+              className="h-12 w-12 object-cover ring-1 rounded-sm ring-border flex-shrink-0"
             />
           ) : (
-            <div className="h-11 w-11 flex items-center justify-center ring-1 rounded-sm bg-blue-500/10 ring-border flex-shrink-0">
+            <div className="h-12 w-12 flex items-center justify-center ring-1 rounded-sm bg-blue-500/10 ring-border flex-shrink-0">
               <Building2 className="h-5 w-5 text-blue-400" />
             </div>
           )
         ) : (
           entity.avatar_url ? (
-            <img src={entity.avatar_url} alt={entity.name} className="h-11 w-11 rounded-full object-cover ring-1 ring-border flex-shrink-0" />
+            <img src={entity.avatar_url} alt={entity.name} className="h-12 w-12 rounded-full object-cover ring-1 ring-border flex-shrink-0" />
           ) : (
-            <div className="h-11 w-11 rounded-full bg-purple-500/10 flex items-center justify-center ring-1 ring-border flex-shrink-0">
+            <div className="h-12 w-12 rounded-full bg-purple-500/10 flex items-center justify-center ring-1 ring-border flex-shrink-0">
               <Contact className="h-5 w-5 text-purple-400" />
             </div>
           )
         )}
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-card-foreground truncate text-sm">{entity.name}</h3>
+          <h3 className="font-semibold text-card-foreground truncate">{entity.name}</h3>
 
           <div className="flex flex-wrap gap-1 mt-1">
             {isEmpresa && (
@@ -205,7 +210,7 @@ export function UnifiedClientCard({
 
             {isEmpresa && entity.is_internal_brand && (
               <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-400 border-amber-500/20">
-                Marca interna
+                Marca propia
               </Badge>
             )}
 
@@ -216,109 +221,149 @@ export function UnifiedClientCard({
         </div>
       </div>
 
-      {/* Stats row (empresas) */}
+      {/* ── ESTADÍSTICAS (solo empresas) ── */}
       {isEmpresa && (
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          <div className="text-center p-2 rounded-sm bg-muted/50">
-            <div className="flex items-center justify-center gap-1">
-              <Briefcase className="h-3 w-3 text-muted-foreground" />
-              <span className="font-semibold text-sm">{entity.active_projects}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">Proyectos</p>
+        <div className="grid grid-cols-3 gap-1.5 mb-3">
+          {/* Proyectos — abre tab Campañas del cliente */}
+          <div
+            className="flex flex-col items-center p-2.5 rounded-sm bg-muted/40 border border-border/50 cursor-pointer hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
+            onClick={e => { e.stopPropagation(); onOpenProjects ? onOpenProjects(entity) : onClick(); }}
+          >
+            <Briefcase className="h-3.5 w-3.5 text-blue-400 mb-1" />
+            <span className="font-bold text-lg leading-none text-foreground">{entity.active_projects}</span>
+            <p className="text-[10px] text-blue-400/70 mt-1 text-center leading-tight">
+              Campañas<br /><span className="underline">Ver todas</span>
+            </p>
           </div>
-          <div className="text-center p-2 rounded-sm bg-muted/50">
-            <div className="flex items-center justify-center gap-1">
-              <Video className="h-3 w-3 text-muted-foreground" />
-              <span className="font-semibold text-sm">{entity.content_count}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">Videos</p>
+
+          {/* Videos — abre tab Videos del cliente */}
+          <div
+            className="flex flex-col items-center p-2.5 rounded-sm bg-muted/40 border border-border/50 cursor-pointer hover:bg-purple-500/10 hover:border-purple-500/30 transition-all"
+            onClick={e => { e.stopPropagation(); onOpenVideos ? onOpenVideos(entity) : onClick(); }}
+          >
+            <Video className="h-3.5 w-3.5 text-purple-400 mb-1" />
+            <span className="font-bold text-lg leading-none text-foreground">{entity.content_count}</span>
+            <p className="text-[10px] text-purple-400/70 mt-1 text-center leading-tight">
+              Videos<br /><span className="underline">Ver todos</span>
+            </p>
+
           </div>
-          <div className="text-center p-2 rounded-sm bg-muted/50">
-            <div className="flex items-center justify-center gap-1">
-              <UsersIcon className="h-3 w-3 text-muted-foreground" />
-              <span className="font-semibold text-sm">{entity.users_count}</span>
-            </div>
-            <p className="text-[10px] text-muted-foreground">Usuarios</p>
+
+          {/* Usuarios — abre el panel de gestión de equipo y WA */}
+          <div
+            className={cn(
+              'flex flex-col items-center p-2.5 rounded-sm border cursor-pointer transition-all',
+              onOpenUsers
+                ? 'bg-primary/8 border-primary/25 hover:bg-primary/15 hover:border-primary/50'
+                : 'bg-muted/40 border-border/50 hover:bg-muted/60',
+            )}
+            onClick={e => { e.stopPropagation(); onOpenUsers ? onOpenUsers(entity) : onClick(); }}
+          >
+            <UsersIcon className={cn('h-3.5 w-3.5 mb-1', onOpenUsers ? 'text-primary' : 'text-muted-foreground')} />
+            <span className={cn('font-bold text-lg leading-none', onOpenUsers ? 'text-primary' : 'text-foreground')}>
+              {entity.users_count}
+            </span>
+            <p className={cn('text-[10px] mt-1 text-center leading-tight', onOpenUsers ? 'text-primary/70' : 'text-muted-foreground')}>
+              Equipo WA<br /><span className="underline">Ver / editar</span>
+            </p>
           </div>
         </div>
       )}
 
-      {/* Cuerpo: datos empresa */}
+      {/* ── INFORMACIÓN DE CONTACTO (empresas) ── */}
       {isEmpresa ? (
         <div className="space-y-1.5 mb-2 flex-1">
           {(entity.bio || entity.brand_description) && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
+            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
               {entity.bio || entity.brand_description}
             </p>
           )}
 
           {entity.main_contact && (
-            <p className="text-xs text-white/60 flex items-center gap-1 truncate">
-              <Contact className="h-3 w-3 flex-shrink-0" />
-              {entity.main_contact}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Contacto</span>
+              <p className="text-xs text-white/70 truncate flex items-center gap-1">
+                <Contact className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                {entity.main_contact}
+              </p>
+            </div>
           )}
 
           {entity.email && (
-            <p className="text-xs text-muted-foreground truncate">{entity.email}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Correo</span>
+              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <Mail className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+                {entity.email}
+              </p>
+            </div>
           )}
 
           {entity.phone && (
-            <p className="text-xs text-white/50 flex items-center gap-1">
-              <Phone className="h-3 w-3 flex-shrink-0" />
-              {entity.phone}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Teléfono</span>
+              <p className="text-xs text-white/60 flex items-center gap-1">
+                <Phone className="h-3 w-3 flex-shrink-0" />
+                {entity.phone}
+              </p>
+            </div>
           )}
 
           {(entity.city || entity.country) && (
-            <p className="text-xs text-white/50 flex items-center gap-1">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              {[entity.city, entity.country].filter(Boolean).join(', ')}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Ciudad</span>
+              <p className="text-xs text-white/50 flex items-center gap-1">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                {[entity.city, entity.country].filter(Boolean).join(', ')}
+              </p>
+            </div>
           )}
 
           {(entity.website || entity.brand_website || entity.instagram || entity.tiktok || entity.facebook || entity.linkedin) && (
-            <div className="flex items-center gap-2 pt-0.5">
-              {(entity.website || entity.brand_website) && (
-                <a href={entity.website || entity.brand_website!} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-primary transition-colors" title="Sitio web">
-                  <Globe className="h-3.5 w-3.5" />
-                </a>
-              )}
-              {entity.instagram && (
-                <a href={`https://instagram.com/${entity.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-pink-400 transition-colors" title={entity.instagram}>
-                  <Instagram className="h-3.5 w-3.5" />
-                </a>
-              )}
-              {entity.tiktok && (
-                <a href={`https://tiktok.com/${entity.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-white transition-colors" title={entity.tiktok}>
-                  <span className="text-[10px] font-bold leading-none">TT</span>
-                </a>
-              )}
-              {entity.facebook && (
-                <a href={`https://facebook.com/${entity.facebook.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-blue-400 transition-colors" title={entity.facebook}>
-                  <Facebook className="h-3.5 w-3.5" />
-                </a>
-              )}
-              {entity.linkedin && (
-                <a href={`https://linkedin.com/company/${entity.linkedin.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="text-muted-foreground hover:text-blue-500 transition-colors" title={entity.linkedin}>
-                  <Linkedin className="h-3.5 w-3.5" />
-                </a>
-              )}
+            <div className="flex items-center gap-1.5 pt-0.5">
+              <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Redes</span>
+              <div className="flex items-center gap-2">
+                {(entity.website || entity.brand_website) && (
+                  <a href={entity.website || entity.brand_website!} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-primary transition-colors" title="Sitio web">
+                    <Globe className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {entity.instagram && (
+                  <a href={`https://instagram.com/${entity.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-pink-400 transition-colors" title={entity.instagram}>
+                    <Instagram className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {entity.tiktok && (
+                  <a href={`https://tiktok.com/${entity.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-white transition-colors" title={entity.tiktok}>
+                    <span className="text-[10px] font-bold leading-none">TT</span>
+                  </a>
+                )}
+                {entity.facebook && (
+                  <a href={`https://facebook.com/${entity.facebook.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-blue-400 transition-colors" title={entity.facebook}>
+                    <Facebook className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {entity.linkedin && (
+                  <a href={`https://linkedin.com/company/${entity.linkedin.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="text-muted-foreground hover:text-blue-500 transition-colors" title={entity.linkedin}>
+                    <Linkedin className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </div>
       ) : (
-        /* Contacto body */
+        /* ── INFORMACIÓN DE CONTACTO (personas) ── */
         <div className="space-y-1 mb-2 flex-1">
           {entity.company && (
             <p className="text-xs text-white/50 flex items-center gap-1">
@@ -329,17 +374,17 @@ export function UnifiedClientCard({
           )}
           {entity.pipeline_stage && (
             <p className="text-xs text-white/40">
-              Pipeline: <span className="text-white/60">{entity.pipeline_stage}</span>
+              Etapa: <span className="text-white/60">{entity.pipeline_stage}</span>
             </p>
           )}
         </div>
       )}
 
-      {/* Estrategas (solo empresas) */}
+      {/* ── EQUIPO ASIGNADO / ESTRATEGAS (solo empresas) ── */}
       {isEmpresa && (
         <TooltipProvider>
           <div
-            className="mb-3 p-2 rounded-sm border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
+            className="mb-3 p-2.5 rounded-sm border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer group/strat"
             onClick={e => {
               e.stopPropagation();
               onOpenStrategists ? onOpenStrategists(entity) : onClick();
@@ -348,15 +393,19 @@ export function UnifiedClientCard({
             <div className="flex items-center justify-between mb-1.5">
               <div className="flex items-center gap-1.5">
                 <UserCog className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Estrategas</span>
+                <span className="text-xs font-semibold text-muted-foreground">Equipo asignado</span>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
+                  {strategists.length} {strategists.length === 1 ? 'persona' : 'personas'}
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                {strategists.length}
-              </Badge>
+              <span className="text-[10px] text-primary flex items-center gap-0.5 group-hover/strat:underline">
+                {strategists.length > 0 ? 'Editar' : 'Asignar'}
+                <ChevronRight className="h-3 w-3" />
+              </span>
             </div>
 
             {strategists.length > 0 ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5">
                 <div className="flex -space-x-2">
                   {strategists.slice(0, 4).map(s => (
                     <Tooltip key={s.id}>
@@ -377,42 +426,43 @@ export function UnifiedClientCard({
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p className="text-xs">{s.full_name}{s.is_primary && ' (Principal)'}</p>
+                        <p className="text-xs">{s.full_name}{s.is_primary && ' — Principal'}</p>
                       </TooltipContent>
                     </Tooltip>
                   ))}
                 </div>
                 {strategists.length > 4 && (
-                  <span className="text-[10px] text-muted-foreground ml-1">+{strategists.length - 4}</span>
+                  <span className="text-[10px] text-muted-foreground">+{strategists.length - 4} más</span>
                 )}
                 <span className="flex-1" />
-                <span className="text-[10px] text-primary">Editar</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {strategists.find(s => s.is_primary)?.full_name || strategists[0]?.full_name || ''}
+                </span>
               </div>
             ) : (
-              <p className="text-[10px] text-muted-foreground">Click para asignar estrategas</p>
+              <p className="text-[11px] text-muted-foreground/70 italic">
+                Sin equipo asignado — toca para asignar
+              </p>
             )}
           </div>
         </TooltipProvider>
       )}
 
-      {/* Footer */}
+      {/* ── PIE DE TARJETA ── */}
       <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
         {isEmpresa ? (
           <>
-            {/* Fecha de ingreso */}
             {createdDate && (
               <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                 <Calendar className="h-3 w-3" />
-                <span>Desde {createdDate}</span>
+                <span>Cliente desde {createdDate}</span>
               </div>
             )}
 
-            {/* Toggle marca interna */}
             {canEdit && (
               <div
-                className="flex items-center gap-1.5 cursor-pointer"
+                className="flex items-center gap-2 cursor-pointer group/brand"
                 onClick={handleToggleInternalBrand}
-                title={entity.is_internal_brand ? 'Desmarcar como marca interna' : 'Marcar como marca interna'}
               >
                 <Checkbox
                   checked={entity.is_internal_brand}
@@ -423,17 +473,21 @@ export function UnifiedClientCard({
                   )}
                   tabIndex={-1}
                 />
-                <span className={cn(
-                  'text-[10px] select-none',
-                  entity.is_internal_brand ? 'text-amber-400' : 'text-muted-foreground',
-                )}>
-                  Marca interna
-                </span>
+                <div>
+                  <p className={cn(
+                    'text-[10px] font-medium select-none leading-tight',
+                    entity.is_internal_brand ? 'text-amber-400' : 'text-muted-foreground',
+                  )}>
+                    {entity.is_internal_brand ? 'Marca propia ✓' : 'Marca propia'}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/50 select-none leading-tight">
+                    {entity.is_internal_brand ? 'Es de tu agencia' : 'Toca para activar'}
+                  </p>
+                </div>
               </div>
             )}
           </>
         ) : (
-          /* Contacto footer */
           <>
             <div className="flex items-center gap-2">
               {entity.deal_value != null && entity.deal_value > 0 && (

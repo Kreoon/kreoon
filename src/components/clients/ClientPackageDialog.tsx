@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ClientPackage, Product, PaymentStatus } from "@/types/database";
-import { Save, Loader2, Handshake } from "lucide-react";
-import { CurrencyInput, CurrencyDisplay, CurrencyBadge, type CurrencyType } from "@/components/ui/currency-input";
+import {
+  Save, Loader2, Handshake, Video, Zap, Users, Package,
+  Plus, Minus, DollarSign, Clock, CheckCircle2, CircleDollarSign,
+  StickyNote, ShoppingBag, Check,
+} from "lucide-react";
+import { CurrencyInput, type CurrencyType } from "@/components/ui/currency-input";
+import { cn } from "@/lib/utils";
 
 interface ClientPackageDialogProps {
   clientId: string;
@@ -21,13 +23,82 @@ interface ClientPackageDialogProps {
   onSuccess?: () => void;
 }
 
-export function ClientPackageDialog({ 
-  clientId, 
-  package_, 
+// ── Selector de estado de pago ──────────────────────────────────────────────
+const PAYMENT_OPTIONS: { value: PaymentStatus; label: string; desc: string; color: string; icon: React.ReactNode }[] = [
+  {
+    value: 'pending',
+    label: 'Sin pagar',
+    desc: 'El cliente no ha pagado nada aún',
+    color: 'border-amber-500/50 bg-amber-500/10 text-amber-400',
+    icon: <Clock className="h-4 w-4" />,
+  },
+  {
+    value: 'partial',
+    label: 'Pago parcial',
+    desc: 'El cliente pagó una parte',
+    color: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
+    icon: <CircleDollarSign className="h-4 w-4" />,
+  },
+  {
+    value: 'paid',
+    label: 'Pagado completo',
+    desc: 'El cliente pagó todo',
+    color: 'border-green-500/50 bg-green-500/10 text-green-400',
+    icon: <CheckCircle2 className="h-4 w-4" />,
+  },
+];
+
+// ── Stepper numérico ─────────────────────────────────────────────────────────
+function Stepper({
+  label, description, icon, value, color, min = 1, max = 99,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+  value: number;
+  color: string;
+  min?: number;
+  max?: number;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 p-3 rounded-xl border border-border bg-card">
+      <div className={cn("flex h-8 w-8 items-center justify-center rounded-full", color)}>
+        {icon}
+      </div>
+      <p className="text-xs font-semibold text-foreground text-center leading-tight">{label}</p>
+      <p className="text-[10px] text-muted-foreground text-center leading-tight">{description}</p>
+      <div className="flex items-center gap-2 mt-1">
+        <button
+          type="button"
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
+          className="h-6 w-6 flex items-center justify-center rounded-full border border-border bg-muted hover:bg-muted/80 disabled:opacity-30 transition-colors"
+        >
+          <Minus className="h-3 w-3" />
+        </button>
+        <span className="text-xl font-bold w-8 text-center tabular-nums">{value}</span>
+        <button
+          type="button"
+          onClick={() => onChange(Math.min(max, value + 1))}
+          disabled={value >= max}
+          className="h-6 w-6 flex items-center justify-center rounded-full border border-border bg-muted hover:bg-muted/80 disabled:opacity-30 transition-colors"
+        >
+          <Plus className="h-3 w-3" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function ClientPackageDialog({
+  clientId,
+  package_,
   products,
-  open, 
+  open,
   onOpenChange,
-  onSuccess 
+  onSuccess,
 }: ClientPackageDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -44,7 +115,7 @@ export function ClientPackageDialog({
     payment_status: "pending" as PaymentStatus,
     paid_amount: 0,
     is_barter: false,
-    notes: ""
+    notes: "",
   });
 
   useEffect(() => {
@@ -62,52 +133,47 @@ export function ClientPackageDialog({
         payment_status: package_.payment_status || "pending",
         paid_amount: package_.paid_amount || 0,
         is_barter: package_.is_barter || false,
-        notes: package_.notes || ""
+        notes: package_.notes || "",
       });
     } else {
       setFormData({
-        name: "",
-        description: "",
-        total_value: 0,
-        currency: "COP",
-        content_quantity: 1,
-        hooks_per_video: 1,
-        creators_count: 1,
-        products_count: 1,
-        product_ids: [],
-        payment_status: "pending",
-        paid_amount: 0,
-        is_barter: false,
-        notes: ""
+        name: "", description: "", total_value: 0, currency: "COP",
+        content_quantity: 1, hooks_per_video: 1, creators_count: 1,
+        products_count: 1, product_ids: [], payment_status: "pending",
+        paid_amount: 0, is_barter: false, notes: "",
       });
     }
   }, [package_, open]);
 
-  const handleProductToggle = (productId: string, checked: boolean) => {
+  function handleProductToggle(productId: string) {
+    setFormData(prev => {
+      const included = prev.product_ids.includes(productId);
+      const ids = included
+        ? prev.product_ids.filter(id => id !== productId)
+        : [...prev.product_ids, productId];
+      return { ...prev, product_ids: ids, products_count: ids.length || 1 };
+    });
+  }
+
+  function handlePaidAmountChange(paid: number) {
+    const clamped = Math.max(0, Math.min(paid, formData.total_value));
     setFormData(prev => ({
       ...prev,
-      product_ids: checked 
-        ? [...prev.product_ids, productId]
-        : prev.product_ids.filter(id => id !== productId),
-      products_count: checked 
-        ? prev.products_count + 1 
-        : Math.max(1, prev.products_count - 1)
+      paid_amount: clamped,
+      payment_status: clamped >= prev.total_value && prev.total_value > 0
+        ? 'paid'
+        : clamped > 0 ? 'partial' : 'pending',
     }));
-  };
+  }
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast({
-        title: "Error",
-        description: "El nombre de la campaña es requerido",
-        variant: "destructive"
-      });
+      toast({ title: "Falta el nombre", description: "Escribe un nombre para la campaña", variant: "destructive" });
       return;
     }
 
     setLoading(true);
     try {
-      // Canje: sin cobro — se fuerza total_value=0, payment_status='paid'
       const isBarter = formData.is_barter;
       const data = {
         client_id: clientId,
@@ -124,261 +190,344 @@ export function ClientPackageDialog({
         paid_amount: isBarter ? 0 : formData.paid_amount,
         paid_at: (isBarter || formData.payment_status === 'paid') ? new Date().toISOString() : null,
         is_barter: isBarter,
-        notes: formData.notes || null
+        notes: formData.notes || null,
       };
 
       if (package_) {
-        const { error } = await supabase
-          .from('client_packages')
-          .update(data)
-          .eq('id', package_.id);
+        const { error } = await supabase.from('client_packages').update(data).eq('id', package_.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase
-          .from('client_packages')
-          .insert(data);
+        const { error } = await supabase.from('client_packages').insert(data);
         if (error) throw error;
       }
 
-      toast({
-        title: package_ ? "Campaña actualizada" : "Campaña creada",
-        description: "Los cambios se guardaron correctamente"
-      });
-      
+      toast({ title: package_ ? "Campaña guardada" : "Campaña creada", description: "Todo quedó guardado correctamente" });
       onSuccess?.();
       onOpenChange(false);
     } catch (error) {
-      console.error('Error saving package:', error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la campaña",
-        variant: "destructive"
-      });
+      console.error(error);
+      toast({ title: "Algo salió mal", description: "No se pudo guardar la campaña", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const pendingAmount = formData.total_value - formData.paid_amount;
+  const paidPct = formData.total_value > 0
+    ? Math.min(100, Math.round((formData.paid_amount / formData.total_value) * 100))
+    : 0;
+  const pendingAmount = Math.max(0, formData.total_value - formData.paid_amount);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {package_ ? "Editar Campaña" : "Nueva Campaña de Contenido"}
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] flex flex-col gap-0 p-0 overflow-hidden">
 
-        <div className="space-y-6 mt-4">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <Label>Nombre de la Campaña *</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ej: Campaña Premium Q1 2024"
-              />
-            </div>
-
-            {/* Toggle Canje */}
-            <div
-              onClick={() => setFormData(prev => ({ ...prev, is_barter: !prev.is_barter }))}
-              className={`flex items-center gap-3 p-3 rounded-sm border cursor-pointer transition-all select-none ${
-                formData.is_barter
-                  ? 'border-amber-500/50 bg-amber-500/10'
-                  : 'border-border bg-muted/30 hover:border-amber-500/30'
-              }`}
-            >
-              <Handshake className={`h-4 w-4 shrink-0 ${formData.is_barter ? 'text-amber-400' : 'text-muted-foreground'}`} />
-              <div className="flex-1">
-                <p className={`text-sm font-medium ${formData.is_barter ? 'text-amber-300' : 'text-foreground'}`}>
-                  Campaña por Canje
+        {/* ── Header ── */}
+        <div className="bg-gradient-to-r from-blue-500/15 via-blue-500/8 to-transparent px-5 pt-5 pb-4 border-b border-border shrink-0">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                <ShoppingBag className="h-4 w-4 text-blue-400" />
+              </div>
+              <div>
+                <p className="font-bold text-base flex items-center gap-2">
+                  {package_ ? "Editar campaña" : "Nueva campaña"}
+                  {package_ && (
+                    <span className="text-sm font-medium opacity-50">
+                      #{String(package_.campaign_number).padStart(4, '0')}
+                    </span>
+                  )}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  No genera cobro — el cliente paga con productos, servicios o contraprestación
+                <p className="text-xs text-muted-foreground font-normal">
+                  {package_ ? "Modifica los datos de esta campaña" : "Registra los datos de la campaña contratada"}
                 </p>
               </div>
-              <Checkbox
-                checked={formData.is_barter}
-                onCheckedChange={(v) => setFormData(prev => ({ ...prev, is_barter: !!v }))}
-                onClick={e => e.stopPropagation()}
-                className={formData.is_barter ? 'border-amber-400 data-[state=checked]:bg-amber-500 data-[state=checked]:border-amber-500' : ''}
+            </DialogTitle>
+          </DialogHeader>
+        </div>
+
+        {/* ── Formulario con scroll ── */}
+        <div
+          className="flex-1 min-h-0 overflow-y-auto px-5 py-5 space-y-6"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+        >
+
+          {/* ① Nombre */}
+          <section className="space-y-2">
+            <p className="text-sm font-bold flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-bold shrink-0">1</span>
+              ¿Cómo se llama esta campaña?
+            </p>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Ej: Campaña UGC Q2 — Lanzamiento producto"
+              className="text-sm"
+              autoFocus
+            />
+          </section>
+
+          {/* ② ¿Es canje? */}
+          <section className="space-y-2">
+            <p className="text-sm font-bold flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-bold shrink-0">2</span>
+              ¿El cliente paga con dinero o por canje?
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Con dinero */}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, is_barter: false }))}
+                className={cn(
+                  'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center',
+                  !formData.is_barter
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : 'border-border bg-card hover:border-border/80',
+                )}
+              >
+                <DollarSign className={cn("h-6 w-6", !formData.is_barter ? 'text-blue-400' : 'text-muted-foreground')} />
+                <div>
+                  <p className={cn("text-sm font-bold", !formData.is_barter ? 'text-blue-300' : 'text-foreground')}>
+                    Con dinero
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Transferencia, efectivo o tarjeta</p>
+                </div>
+                {!formData.is_barter && (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                )}
+              </button>
+
+              {/* Por canje */}
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, is_barter: true }))}
+                className={cn(
+                  'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center',
+                  formData.is_barter
+                    ? 'border-amber-500 bg-amber-500/10'
+                    : 'border-border bg-card hover:border-border/80',
+                )}
+              >
+                <Handshake className={cn("h-6 w-6", formData.is_barter ? 'text-amber-400' : 'text-muted-foreground')} />
+                <div>
+                  <p className={cn("text-sm font-bold", formData.is_barter ? 'text-amber-300' : 'text-foreground')}>
+                    Por canje
+                  </p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Paga con productos o servicios</p>
+                </div>
+                {formData.is_barter && (
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500">
+                    <Check className="h-3 w-3 text-white" />
+                  </div>
+                )}
+              </button>
+            </div>
+          </section>
+
+          {/* ③ Valor total — solo si NO es canje */}
+          {!formData.is_barter && (
+            <section className="space-y-2">
+              <p className="text-sm font-bold flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-bold shrink-0">3</span>
+                ¿Cuánto vale la campaña en total?
+              </p>
+              <CurrencyInput
+                value={formData.total_value}
+                currency={formData.currency}
+                onValueChange={(value) => setFormData(prev => ({
+                  ...prev,
+                  total_value: value,
+                  payment_status: prev.paid_amount >= value && value > 0 ? 'paid' : prev.paid_amount > 0 ? 'partial' : 'pending',
+                }))}
+                onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
+                placeholder="0"
+              />
+            </section>
+          )}
+
+          {/* ④ Qué incluye — steppers */}
+          <section className="space-y-3">
+            <p className="text-sm font-bold flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-bold shrink-0">
+                {formData.is_barter ? '3' : '4'}
+              </span>
+              ¿Qué incluye esta campaña?
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Stepper
+                label="Videos"
+                description="Cantidad de videos a entregar"
+                icon={<Video className="h-4 w-4 text-purple-400" />}
+                color="bg-purple-500/15"
+                value={formData.content_quantity}
+                onChange={(v) => setFormData({ ...formData, content_quantity: v })}
+              />
+              <Stepper
+                label="Hooks por video"
+                description="Versiones de intro por cada video"
+                icon={<Zap className="h-4 w-4 text-yellow-400" />}
+                color="bg-yellow-500/15"
+                value={formData.hooks_per_video}
+                onChange={(v) => setFormData({ ...formData, hooks_per_video: v })}
+              />
+              <Stepper
+                label="Creadores"
+                description="Cuántos creators participan"
+                icon={<Users className="h-4 w-4 text-blue-400" />}
+                color="bg-blue-500/15"
+                value={formData.creators_count}
+                onChange={(v) => setFormData({ ...formData, creators_count: v })}
+              />
+              <Stepper
+                label="Productos"
+                description={products.length > 0 ? "Selecciona abajo" : "Productos a mostrar"}
+                icon={<Package className="h-4 w-4 text-green-400" />}
+                color="bg-green-500/15"
+                value={formData.product_ids.length || formData.products_count}
+                onChange={(v) => setFormData({ ...formData, products_count: v })}
               />
             </div>
+          </section>
 
-            {!formData.is_barter && (
-              <div className="space-y-2">
-                <Label>Valor Total</Label>
-                <CurrencyInput
-                  value={formData.total_value}
-                  currency={formData.currency}
-                  onValueChange={(value) => setFormData({ ...formData, total_value: value })}
-                  onCurrencyChange={(currency) => setFormData({ ...formData, currency })}
-                  placeholder="0"
-                />
+          {/* ⑤ Productos a mostrar — chips */}
+          {products.length > 0 && (
+            <section className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Productos que se mostrarán en los videos
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {products.map(product => {
+                  const selected = formData.product_ids.includes(product.id);
+                  return (
+                    <button
+                      key={product.id}
+                      type="button"
+                      onClick={() => handleProductToggle(product.id)}
+                      className={cn(
+                        'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium transition-all',
+                        selected
+                          ? 'border-green-500/50 bg-green-500/10 text-green-400'
+                          : 'border-border bg-muted/40 text-muted-foreground hover:border-border/80',
+                      )}
+                    >
+                      {selected && <Check className="h-3 w-3" />}
+                      {product.name}
+                    </button>
+                  );
+                })}
               </div>
-            )}
-          </div>
+            </section>
+          )}
 
-          <div className="space-y-2">
-            <Label>Descripción</Label>
+          {/* ⑥ Estado de pago — solo si NO es canje */}
+          {!formData.is_barter && (
+            <section className="space-y-3">
+              <p className="text-sm font-bold flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15 text-primary text-[11px] font-bold shrink-0">
+                  {formData.is_barter ? '4' : '5'}
+                </span>
+                ¿Cuánto ha pagado el cliente?
+              </p>
+
+              {/* Botones de estado */}
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      payment_status: opt.value,
+                      paid_amount: opt.value === 'paid' ? prev.total_value : opt.value === 'pending' ? 0 : prev.paid_amount,
+                    }))}
+                    className={cn(
+                      'flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-center',
+                      formData.payment_status === opt.value
+                        ? opt.color + ' border-opacity-100'
+                        : 'border-border bg-card hover:border-border/80',
+                    )}
+                  >
+                    <div className={formData.payment_status === opt.value ? '' : 'text-muted-foreground'}>
+                      {opt.icon}
+                    </div>
+                    <p className={cn(
+                      'text-[11px] font-bold leading-tight',
+                      formData.payment_status === opt.value ? '' : 'text-foreground',
+                    )}>
+                      {opt.label}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Monto pagado — solo si es pago parcial */}
+              {formData.payment_status === 'partial' && (
+                <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
+                  <p className="text-xs font-semibold text-blue-400">¿Cuánto pagó exactamente?</p>
+                  <Input
+                    type="number"
+                    value={formData.paid_amount || ""}
+                    onChange={(e) => handlePaidAmountChange(Number(e.target.value))}
+                    placeholder="0"
+                    min={0}
+                    max={formData.total_value}
+                    className="text-sm"
+                  />
+                  {formData.total_value > 0 && (
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>Pagado: <strong className="text-green-400">{paidPct}%</strong></span>
+                        <span>Pendiente: <strong className="text-amber-400">{pendingAmount.toLocaleString()} {formData.currency}</strong></span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-blue-500 transition-all"
+                          style={{ width: `${paidPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ⑦ Descripción y notas — opcionales */}
+          <section className="space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <StickyNote className="h-3.5 w-3.5" />
+              Detalles adicionales (opcionales)
+            </p>
             <Textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Descripción de la campaña..."
+              placeholder="Describe de qué trata esta campaña..."
               rows={2}
+              className="text-sm resize-none"
             />
-          </div>
-
-          {/* Content Details */}
-          <div className="p-4 rounded-sm bg-muted/50 space-y-4">
-            <h4 className="font-medium">Detalles del Contenido</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Cantidad de Videos</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={formData.content_quantity}
-                  onChange={(e) => setFormData({ ...formData, content_quantity: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Hooks por Video</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={formData.hooks_per_video}
-                  onChange={(e) => setFormData({ ...formData, hooks_per_video: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Creadores</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={formData.creators_count}
-                  onChange={(e) => setFormData({ ...formData, creators_count: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Productos</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={formData.product_ids.length || formData.products_count}
-                  disabled
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Products Selection */}
-          {products.length > 0 && (
-            <div className="space-y-3">
-              <Label>Productos Incluidos</Label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border rounded-sm">
-                {products.map(product => (
-                  <div key={product.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={product.id}
-                      checked={formData.product_ids.includes(product.id)}
-                      onCheckedChange={(checked) => handleProductToggle(product.id, !!checked)}
-                    />
-                    <label 
-                      htmlFor={product.id} 
-                      className="text-sm cursor-pointer"
-                    >
-                      {product.name}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Payment Section */}
-          {formData.is_barter ? (
-            <div className="p-4 rounded-sm border border-amber-500/20 bg-amber-500/10 flex items-center gap-3">
-              <Handshake className="h-4 w-4 text-amber-400 shrink-0" />
-              <p className="text-sm text-amber-300">Campaña por canje — no genera cobro</p>
-            </div>
-          ) : (
-            <div className="p-4 rounded-sm border border-primary/20 bg-primary/5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">Estado de Pago</h4>
-                <CurrencyBadge currency={formData.currency} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Estado</Label>
-                  <Select
-                    value={formData.payment_status}
-                    onValueChange={(value: PaymentStatus) => setFormData({ ...formData, payment_status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pendiente</SelectItem>
-                      <SelectItem value="partial">Pago Parcial</SelectItem>
-                      <SelectItem value="paid">Pagado Completo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Monto Pagado</Label>
-                  <Input
-                    type="number"
-                    value={formData.paid_amount}
-                    onChange={(e) => {
-                      const paid = Number(e.target.value);
-                      setFormData({
-                        ...formData,
-                        paid_amount: paid,
-                        payment_status: paid >= formData.total_value ? 'paid' : paid > 0 ? 'partial' : 'pending'
-                      });
-                    }}
-                    max={formData.total_value}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Pendiente</Label>
-                  <div className={`h-10 px-3 flex items-center rounded-sm border ${pendingAmount > 0 ? 'bg-warning/10 border-warning/30 text-warning' : 'bg-success/10 border-success/30 text-success'}`}>
-                    <CurrencyDisplay value={pendingAmount} currency={formData.currency} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label>Notas Adicionales</Label>
             <Textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Notas internas sobre esta campaña..."
+              placeholder="Notas internas (solo las ve el equipo)..."
               rows={2}
+              className="text-sm resize-none"
             />
-          </div>
+          </section>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave} disabled={loading}>
-              {loading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              {package_ ? "Guardar Cambios" : "Crear Campaña"}
-            </Button>
-          </div>
+        {/* ── Footer con acciones ── */}
+        <div className="border-t border-border px-5 py-4 flex items-center justify-between gap-3 shrink-0 bg-background">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={loading} className="flex-1 gap-2">
+            {loading
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <Save className="h-4 w-4" />
+            }
+            {package_ ? "Guardar cambios" : "Crear campaña"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

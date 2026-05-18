@@ -27,6 +27,9 @@ import { UnifiedClientCard } from '@/components/clients/UnifiedClientCard';
 import { ClientUserCard } from '@/components/clients/ClientUserCard';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
+import { ClientUsersDialog } from '@/components/clients/ClientUsersDialog';
+import { ClientPackagesDialog } from '@/components/clients/ClientPackagesDialog';
+import { ClientVideosDialog } from '@/components/clients/ClientVideosDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
@@ -117,6 +120,12 @@ export function UnifiedClientsContent() {
   const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
   const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
   const [creatingCompany, setCreatingCompany] = useState(false);
+  const [usersDialogOpen, setUsersDialogOpen] = useState(false);
+  const [selectedForUsers, setSelectedForUsers] = useState<UnifiedClientEntity | null>(null);
+  const [packagesDialogOpen, setPackagesDialogOpen] = useState(false);
+  const [videosDialogOpen, setVideosDialogOpen] = useState(false);
+  const [selectedForQuickDialog, setSelectedForQuickDialog] = useState<UnifiedClientEntity | null>(null);
+  const [clientDialogInitialTab, setClientDialogInitialTab] = useState<string | undefined>(undefined);
   const { toast } = useToast();
 
   // Handle tab change (solo estado local)
@@ -201,13 +210,31 @@ export function UnifiedClientsContent() {
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
-    setSelectedClientUser(null); // Clear client user selection
+    setSelectedClientUser(null);
     if (entity.entity_type === 'empresa') {
       setSelectedEntity(entity);
+      setClientDialogInitialTab(undefined);
       setClientDialogOpen(true);
     } else {
       setSelectedEntity(entity);
     }
+  };
+
+  const handleOpenClientTab = (entity: UnifiedClientEntity, tab: string) => {
+    setSelectedClientUser(null);
+    setSelectedEntity(entity);
+    setClientDialogInitialTab(tab);
+    setClientDialogOpen(true);
+  };
+
+  const handleOpenPackages = (entity: UnifiedClientEntity) => {
+    setSelectedForQuickDialog(entity);
+    setPackagesDialogOpen(true);
+  };
+
+  const handleOpenVideos = (entity: UnifiedClientEntity) => {
+    setSelectedForQuickDialog(entity);
+    setVideosDialogOpen(true);
   };
 
   // Handle click on client user
@@ -577,6 +604,12 @@ export function UnifiedClientsContent() {
                         onUpdate={() => refetch()}
                         orgId={currentOrgId}
                         activityMetrics={e.entity_type === 'empresa' ? activityMetrics.find(m => m.client_id === e.id) : undefined}
+                        onOpenUsers={e.entity_type === 'empresa' ? (entity) => {
+                          setSelectedForUsers(entity);
+                          setUsersDialogOpen(true);
+                        } : undefined}
+                        onOpenProjects={e.entity_type === 'empresa' ? handleOpenPackages : undefined}
+                        onOpenVideos={e.entity_type === 'empresa' ? handleOpenVideos : undefined}
                       />
                     ))}
                   </div>
@@ -713,9 +746,10 @@ export function UnifiedClientsContent() {
             open={clientDialogOpen}
             onOpenChange={(open) => {
               setClientDialogOpen(open);
-              if (!open) setSelectedEntity(null);
+              if (!open) { setSelectedEntity(null); setClientDialogInitialTab(undefined); }
             }}
             onUpdate={() => refetch()}
+            initialTab={clientDialogInitialTab}
           />
         )}
 
@@ -781,6 +815,41 @@ export function UnifiedClientsContent() {
           onOpenChange={setCreateContactOpen}
           organizationId={currentOrgId}
         />
+
+        {/* Campañas Dialog */}
+        {selectedForQuickDialog && (
+          <ClientPackagesDialog
+            clientId={selectedForQuickDialog.id}
+            clientName={selectedForQuickDialog.name}
+            open={packagesDialogOpen}
+            onOpenChange={(open) => { setPackagesDialogOpen(open); if (!open) setSelectedForQuickDialog(null); }}
+          />
+        )}
+
+        {/* Videos Dialog */}
+        {selectedForQuickDialog && (
+          <ClientVideosDialog
+            clientId={selectedForQuickDialog.id}
+            clientName={selectedForQuickDialog.name}
+            open={videosDialogOpen}
+            onOpenChange={(open) => { setVideosDialogOpen(open); if (!open) setSelectedForQuickDialog(null); }}
+          />
+        )}
+
+        {/* Client Users / WA Notifications Dialog */}
+        {selectedForUsers && (
+          <ClientUsersDialog
+            clientId={selectedForUsers.id}
+            clientName={selectedForUsers.name}
+            organizationId={currentOrgId}
+            open={usersDialogOpen}
+            onOpenChange={(open) => {
+              setUsersDialogOpen(open);
+              if (!open) setSelectedForUsers(null);
+            }}
+            onUpdate={() => refetch()}
+          />
+        )}
 
       </div>
     </div>

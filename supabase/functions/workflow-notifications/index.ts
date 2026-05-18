@@ -147,12 +147,38 @@ async function getClientName(supabase: any, clientId: string) {
   return data?.name || "Cliente";
 }
 
-/** Obtiene el WhatsApp del cliente: primero en clients, luego en el primer usuario del cliente */
-async function getClientWhatsApp(
+/**
+ * Retorna todos los números WhatsApp de miembros del cliente que tienen whatsapp_notify=true.
+ * Respeta el master switch whatsapp_enabled de cada perfil.
+ * Fallback: si ninguno está configurado, usa el teléfono directo del cliente.
+ */
+async function getClientWhatsAppRecipients(
   supabase: any,
   clientId: string
-): Promise<string | null> {
-  // 1. Verificar si el cliente tiene whatsapp_phone o phone directamente
+): Promise<string[]> {
+  // 1. Buscar miembros con whatsapp_notify activo
+  const { data: notifyUsers } = await supabase
+    .from("client_users")
+    .select("user_id")
+    .eq("client_id", clientId)
+    .eq("whatsapp_notify", true);
+
+  if (notifyUsers && notifyUsers.length > 0) {
+    const userIds = notifyUsers.map((r: any) => r.user_id);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("whatsapp_phone, whatsapp_enabled, phone")
+      .in("id", userIds);
+
+    const phones = (profiles || [])
+      .filter((p: any) => p.whatsapp_enabled !== false)
+      .map((p: any) => p.whatsapp_phone || p.phone)
+      .filter(Boolean);
+
+    if (phones.length > 0) return phones;
+  }
+
+  // 2. Fallback: teléfono directo del cliente (comportamiento anterior)
   const { data: client } = await supabase
     .from("clients")
     .select("contact_phone, whatsapp_phone, whatsapp_enabled, user_id")
@@ -161,30 +187,32 @@ async function getClientWhatsApp(
 
   const clientPhone = client?.whatsapp_phone || client?.contact_phone;
   if (clientPhone && client?.whatsapp_enabled !== false) {
-    return clientPhone;
+    return [clientPhone];
   }
 
-  // 2. Buscar en client_users → profiles
-  const { data: clientUsers } = await supabase
+  // 3. Fallback final: primer usuario del cliente
+  const { data: firstUser } = await supabase
     .from("client_users")
     .select("user_id")
     .eq("client_id", clientId)
-    .limit(1);
+    .limit(1)
+    .single();
 
-  const firstUserId = clientUsers?.[0]?.user_id || client?.user_id;
-  if (!firstUserId) return null;
+  const fallbackId = firstUser?.user_id || client?.user_id;
+  if (!fallbackId) return [];
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("whatsapp_phone, whatsapp_enabled")
-    .eq("id", firstUserId)
+    .select("whatsapp_phone, whatsapp_enabled, phone")
+    .eq("id", fallbackId)
     .single();
 
-  if (profile?.whatsapp_phone && profile?.whatsapp_enabled) {
-    return profile.whatsapp_phone;
+  const fallbackPhone = profile?.whatsapp_phone || profile?.phone;
+  if (fallbackPhone && profile?.whatsapp_enabled !== false) {
+    return [fallbackPhone];
   }
 
-  return null;
+  return [];
 }
 
 /** Envía un mensaje WhatsApp usando plantilla Meta aprobada */
@@ -499,10 +527,12 @@ async function notifyScriptPending(
     : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
 
   const title = record.title || "Sin título";
-  const waPhone = await getClientWhatsApp(supabase, clientId);
+  const waPhones = await getClientWhatsAppRecipients(supabase, clientId);
 
   // WhatsApp — plantilla script_pending: {{1}}=content_title {{2}}=org_name
-  await sendWhatsApp(waPhone, [title, orgBranding.name], "script_pending", record.id);
+  for (const phone of waPhones) {
+    await sendWhatsApp(phone, [title, orgBranding.name], "script_pending", record.id);
+  }
 
   // In-app notification para el cliente
   const { data: clientUsers } = await supabase
@@ -539,10 +569,12 @@ async function notifyContentDelivered(
     : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
 
   const title = record.title || "Sin título";
-  const waPhone = await getClientWhatsApp(supabase, clientId);
+  const waPhones = await getClientWhatsAppRecipients(supabase, clientId);
 
   // WhatsApp — plantilla content_delivered: {{1}}=content_title {{2}}=org_name
-  await sendWhatsApp(waPhone, [title, orgBranding.name], "content_delivered", record.id);
+  for (const phone of waPhones) {
+    await sendWhatsApp(phone, [title, orgBranding.name], "content_delivered", record.id);
+  }
 
   const { data: clientUsers } = await supabase
     .from("client_users")
@@ -578,10 +610,12 @@ async function notifyContentCorrected(
     : { name: "Tu organización", logo_url: null, primary_color: "#8b5cf6" };
 
   const title = record.title || "Sin título";
-  const waPhone = await getClientWhatsApp(supabase, clientId);
+  const waPhones = await getClientWhatsAppRecipients(supabase, clientId);
 
   // WhatsApp — plantilla content_corrected: {{1}}=content_title {{2}}=org_name
-  await sendWhatsApp(waPhone, [title, orgBranding.name], "content_corrected", record.id);
+  for (const phone of waPhones) {
+    await sendWhatsApp(phone, [title, orgBranding.name], "content_corrected", record.id);
+  }
 
   const { data: clientUsers } = await supabase
     .from("client_users")

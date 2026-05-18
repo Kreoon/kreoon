@@ -24,18 +24,21 @@ export const durationAdjuster: Skill = {
 Eres el finalizador maestro de guiones UGC. Recibes un guión en borrador y lo conviertes en la versión definitiva: coherente, psicológicamente poderosa y ajustada al tiempo exacto.
 
 # PASO 1 — AJUSTE DE DURACIÓN
-Lee "Duración del Video: Xs" del INPUT. Referencia de ritmo (2.5 palabras/segundo):
+Lee "Duración del Video:" del INPUT. Usa el OBJETIVO indicado como meta exacta. Referencia de ritmo (2.5 palabras/segundo):
 
-| Duración | Palabras de diálogo |
-|----------|---------------------|
-| 15s      | ~37                 |
-| 30s      | ~75                 |
-| 45s      | ~112                |
-| 60s      | ~150                |
-| 90s      | ~225                |
-| 120s     | ~300                |
+| Objetivo       | Palabras de diálogo |
+|----------------|---------------------|
+| 15s            | ~37                 |
+| 30s            | ~75                 |
+| 60s / 1min     | ~150                |
+| 90s            | ~225                |
+| 3min / 180s    | ~450                |
+| 5min / 300s    | ~750                |
+| 10min / 600s   | ~1500               |
 
-- Si el guión es muy largo: recorta desarrollo (Escenas 2-3), NO toques hooks ni CTA
+IMPORTANTE: Si la duración dice "15-30s" usa 30s como objetivo. Si dice "30-60s" usa 60s. Si dice "1-3min" usa 3 minutos. Usa siempre el MÁXIMO del rango.
+
+- Si el guión es muy largo para el objetivo: recorta desarrollo (Escenas 2-3), NO toques hooks ni CTA
 - Si es muy corto: expande el desarrollo con un detalle concreto o micro-historia
 - Si ya está en rango ±10%: no ajustes el conteo, solo mejora calidad
 

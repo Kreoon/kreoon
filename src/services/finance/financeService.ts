@@ -409,6 +409,7 @@ export interface ActiveClientPackage {
   client_id: string;
   client_name: string;
   name: string;
+  campaign_number: number;
   currency: PackageCurrency;
   total_value: number;
   paid_amount: number;
@@ -424,6 +425,7 @@ export interface BarterPackage {
   client_id: string;
   client_name: string;
   name: string;
+  campaign_number: number;
   content_quantity: number;
   created_at: string;
   is_active: boolean;
@@ -513,7 +515,7 @@ export async function getActiveClientPackages(_orgId: string): Promise<ActiveCli
   // Solo paquetes activos que NO son canje
   const { data, error } = await (supabase as any)
     .from('client_packages')
-    .select('id, client_id, name, total_value, paid_amount, payment_status, payment_due_date, content_quantity, currency, created_at, is_barter, clients(name)')
+    .select('id, client_id, name, campaign_number, total_value, paid_amount, payment_status, payment_due_date, content_quantity, currency, created_at, is_barter, clients(name)')
     .eq('is_active', true)
     .eq('is_barter', false)
     .order('created_at', { ascending: false });
@@ -525,6 +527,7 @@ export async function getActiveClientPackages(_orgId: string): Promise<ActiveCli
     client_id: row.client_id,
     client_name: row.clients?.name || 'Sin nombre',
     name: row.name,
+    campaign_number: row.campaign_number || 0,
     currency: (row.currency || 'COP') as PackageCurrency,
     total_value: row.total_value || 0,
     paid_amount: row.paid_amount || 0,
@@ -539,7 +542,7 @@ export async function getActiveClientPackages(_orgId: string): Promise<ActiveCli
 export async function getBarterPackages(_orgId: string): Promise<BarterPackage[]> {
   const { data, error } = await (supabase as any)
     .from('client_packages')
-    .select('id, client_id, name, content_quantity, created_at, is_active, clients(name)')
+    .select('id, client_id, name, campaign_number, content_quantity, created_at, is_active, clients(name)')
     .eq('is_barter', true)
     .order('created_at', { ascending: false });
 
@@ -550,6 +553,7 @@ export async function getBarterPackages(_orgId: string): Promise<BarterPackage[]
     client_id: row.client_id,
     client_name: row.clients?.name || 'Sin nombre',
     name: row.name,
+    campaign_number: row.campaign_number || 0,
     content_quantity: row.content_quantity || 0,
     created_at: row.created_at,
     is_active: row.is_active ?? false,
@@ -706,6 +710,363 @@ export async function addRecurringExpense(
     .single();
   if (error) throw error;
   return data as RecurringExpense;
+}
+
+// ============================================
+// COSTOS OPERATIVOS
+// ============================================
+
+export interface OrgFinancialCost {
+  id: string;
+  organization_id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  category: string;
+  client_package_id: string | null;
+  package_name?: string | null;
+  cost_date: string;
+  notes: string | null;
+  receipt_url: string | null;
+  receipt_filename: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CostCategory =
+  | 'operativo'
+  | 'plataforma'
+  | 'equipo'
+  | 'agencia'
+  | 'impuesto'
+  | 'talento'
+  | 'otro';
+
+export const COST_CATEGORY_LABELS: Record<CostCategory, string> = {
+  operativo: 'Operativo (arriendo, servicios)',
+  plataforma: 'Plataformas (apps, suscripciones)',
+  equipo: 'Equipo (cámaras, computadores)',
+  agencia: 'Agencia / Marketing',
+  impuesto: 'Impuestos',
+  talento: 'Pagos a talento extra',
+  otro: 'Otro',
+};
+
+export async function getFinancialCosts(
+  orgId: string,
+  filters?: { category?: string; currency?: string; packageId?: string }
+): Promise<OrgFinancialCost[]> {
+  let query = (supabase as any)
+    .from('org_financial_costs')
+    .select('*, client_packages(name, campaign_number)')
+    .eq('organization_id', orgId)
+    .order('cost_date', { ascending: false });
+
+  if (filters?.category) query = query.eq('category', filters.category);
+  if (filters?.currency) query = query.eq('currency', filters.currency);
+  if (filters?.packageId) query = query.eq('client_package_id', filters.packageId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data || []) as any[]).map(row => ({
+    ...row,
+    package_name: row.client_packages
+      ? `#${String(row.client_packages.campaign_number).padStart(4, '0')} ${row.client_packages.name}`
+      : null,
+    client_packages: undefined,
+  }));
+}
+
+export async function createFinancialCost(
+  cost: Omit<OrgFinancialCost, 'id' | 'created_at' | 'updated_at' | 'package_name'>
+): Promise<OrgFinancialCost> {
+  const { data, error } = await (supabase as any)
+    .from('org_financial_costs')
+    .insert(cost)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as OrgFinancialCost;
+}
+
+export async function updateFinancialCost(
+  id: string,
+  updates: Partial<Omit<OrgFinancialCost, 'id' | 'organization_id' | 'created_at' | 'updated_at' | 'package_name'>>
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('org_financial_costs')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteFinancialCost(id: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('org_financial_costs')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function uploadFinancialReceipt(
+  orgId: string,
+  file: File
+): Promise<{ url: string; filename: string }> {
+  const ext = file.name.split('.').pop();
+  const path = `${orgId}/${Date.now()}.${ext}`;
+  const { error: uploadError } = await supabase.storage
+    .from('financial-receipts')
+    .upload(path, file, { upsert: false });
+  if (uploadError) throw uploadError;
+
+  const { data } = supabase.storage.from('financial-receipts').getPublicUrl(path);
+  return { url: data.publicUrl, filename: file.name };
+}
+
+export async function deleteFinancialReceipt(url: string): Promise<void> {
+  const path = url.split('/financial-receipts/')[1];
+  if (!path) return;
+  await supabase.storage.from('financial-receipts').remove([path]);
+}
+
+// ============================================
+// CIERRES FINANCIEROS
+// ============================================
+
+export interface OrgFinancialClosing {
+  id: string;
+  organization_id: string;
+  name: string;
+  period_start: string;
+  period_end: string;
+  total_income: number;
+  total_costs: number;
+  currency: string;
+  status: 'open' | 'closed';
+  notes: string | null;
+  created_by: string | null;
+  closed_by: string | null;
+  closed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinancialPeriodSummary {
+  total_income: number;
+  total_costs: number;
+  net_profit: number;
+  income_by_client: Array<{ client: string; total: number }>;
+  costs_by_category: Array<{ category: string; total: number }>;
+  packages_count: number;
+}
+
+export async function getFinancialClosings(orgId: string): Promise<OrgFinancialClosing[]> {
+  const { data, error } = await (supabase as any)
+    .from('org_financial_closings')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []) as OrgFinancialClosing[];
+}
+
+export async function createFinancialClosing(
+  closing: Omit<OrgFinancialClosing, 'id' | 'created_at' | 'updated_at' | 'closed_by' | 'closed_at'>
+): Promise<OrgFinancialClosing> {
+  const { data, error } = await (supabase as any)
+    .from('org_financial_closings')
+    .insert(closing)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as OrgFinancialClosing;
+}
+
+export async function updateFinancialClosing(
+  id: string,
+  updates: Partial<Pick<OrgFinancialClosing, 'name' | 'status' | 'notes' | 'total_income' | 'total_costs' | 'closed_by' | 'closed_at'>>
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('org_financial_closings')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteFinancialClosing(id: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('org_financial_closings')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function getFinancialPeriodSummary(
+  orgId: string,
+  start: string,
+  end: string,
+  currency: string = 'COP'
+): Promise<FinancialPeriodSummary> {
+  const { data, error } = await (supabase as any).rpc('get_financial_period_summary', {
+    p_org_id: orgId,
+    p_start: start,
+    p_end: end,
+    p_currency: currency,
+  });
+  if (error) throw error;
+  const row = Array.isArray(data) ? data[0] : data;
+  return {
+    total_income: Number(row?.total_income ?? 0),
+    total_costs: Number(row?.total_costs ?? 0),
+    net_profit: Number(row?.net_profit ?? 0),
+    income_by_client: row?.income_by_client ?? [],
+    costs_by_category: row?.costs_by_category ?? [],
+    packages_count: Number(row?.packages_count ?? 0),
+  };
+}
+
+// ============================================
+// CUOTAS DE PAQUETE (package_installments)
+// ============================================
+
+export interface PackageInstallmentRow {
+  id: string;
+  organization_id: string;
+  package_id: string;
+  installment_number: number;
+  total_installments: number;
+  due_date: string;
+  expected_amount: number;
+  currency: string;
+  status: 'scheduled' | 'invoiced' | 'paid' | 'overdue' | 'cancelled';
+  paid_amount: number;
+  paid_date: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listPackageInstallments(packageId: string): Promise<PackageInstallmentRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('package_installments')
+    .select('*')
+    .eq('package_id', packageId)
+    .order('installment_number', { ascending: true });
+  if (error) throw error;
+  return (data || []) as PackageInstallmentRow[];
+}
+
+export async function createPackageInstallments(
+  orgId: string,
+  packageId: string,
+  currency: string,
+  installments: Array<{ due_date: string; expected_amount: number; notes?: string | null }>,
+): Promise<void> {
+  // Borrar las existentes primero (reemplazo completo)
+  await (supabase as any).from('package_installments').delete().eq('package_id', packageId);
+
+  const total = installments.length;
+  const rows = installments.map((inst, i) => ({
+    organization_id: orgId,
+    package_id: packageId,
+    installment_number: i + 1,
+    total_installments: total,
+    due_date: inst.due_date,
+    expected_amount: inst.expected_amount,
+    currency,
+    status: 'scheduled',
+    paid_amount: 0,
+    notes: inst.notes ?? null,
+  }));
+
+  if (rows.length === 0) return;
+  const { error } = await (supabase as any).from('package_installments').insert(rows);
+  if (error) throw error;
+}
+
+export async function deletePackageInstallments(packageId: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('package_installments')
+    .delete()
+    .eq('package_id', packageId);
+  if (error) throw error;
+}
+
+// ============================================
+// GASTOS RECURRENTES (recurring_expenses)
+// ============================================
+
+export type RecurringFrequency = 'weekly' | 'monthly' | 'quarterly' | 'annual';
+
+export interface RecurringExpenseRow {
+  id: string;
+  organization_id: string;
+  name: string;
+  category: string;
+  amount: number;
+  currency: string;
+  frequency: RecurringFrequency;
+  next_due_date: string | null;
+  payment_method: string | null;
+  vendor: string | null;
+  is_active: boolean;
+  auto_renew: boolean;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const FREQUENCY_LABELS: Record<RecurringFrequency, string> = {
+  weekly: 'Semanal',
+  monthly: 'Mensual',
+  quarterly: 'Trimestral',
+  annual: 'Anual',
+};
+
+export async function listRecurringExpenses(orgId: string): Promise<RecurringExpenseRow[]> {
+  const { data, error } = await (supabase as any)
+    .from('recurring_expenses')
+    .select('*')
+    .eq('organization_id', orgId)
+    .order('is_active', { ascending: false })
+    .order('next_due_date', { ascending: true });
+  if (error) throw error;
+  return (data || []) as RecurringExpenseRow[];
+}
+
+export async function createRecurringExpense(
+  expense: Omit<RecurringExpenseRow, 'id' | 'created_at' | 'updated_at'>,
+): Promise<RecurringExpenseRow> {
+  const { data, error } = await (supabase as any)
+    .from('recurring_expenses')
+    .insert(expense)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as RecurringExpenseRow;
+}
+
+export async function updateRecurringExpense(
+  id: string,
+  updates: Partial<Omit<RecurringExpenseRow, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>,
+): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('recurring_expenses')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteRecurringExpense(id: string): Promise<void> {
+  const { error } = await (supabase as any)
+    .from('recurring_expenses')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
 }
 
 // ============================================

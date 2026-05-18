@@ -59,6 +59,7 @@ interface StrategistScriptFormProps {
   onScriptGenerated: (content: GeneratedContent) => void;
   organizationId?: string;
   spherePhase?: string | null;
+  existingScript?: string;
 }
 
 interface DocumentContent {
@@ -296,11 +297,15 @@ const COUNTRIES = [
 
 // Video duration options
 const VIDEO_DURATIONS = [
-  { value: "15-30s", label: "15-30 segundos (Story/Reel)" },
-  { value: "30-60s", label: "30-60 segundos (Short-form)" },
-  { value: "1-3min", label: "1-3 minutos (Medio)" },
-  { value: "3-5min", label: "3-5 minutos (Largo)" },
-  { value: "5-10min", label: "5-10 minutos (YouTube)" },
+  { value: "15s",   label: "15 segundos" },
+  { value: "30s",   label: "30 segundos" },
+  { value: "45s",   label: "45 segundos" },
+  { value: "60s",   label: "60 segundos (1 min)" },
+  { value: "90s",   label: "90 segundos (1:30 min)" },
+  { value: "120s",  label: "2 minutos" },
+  { value: "180s",  label: "3 minutos" },
+  { value: "300s",  label: "5 minutos" },
+  { value: "600s",  label: "10 minutos" },
 ];
 
 // Target platform options
@@ -699,7 +704,7 @@ REGLAS:
 COMPLETA las 10-14 tomas y todas las secciones.`,
 };
 
-export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId, spherePhase }: StrategistScriptFormProps) {
+export function StrategistScriptForm({ product, contentId, onScriptGenerated, organizationId: propOrgId, spherePhase, existingScript }: StrategistScriptFormProps) {
   const { toast } = useToast();
   const { profile } = useAuth();
   const organizationId = propOrgId || profile?.current_organization_id;
@@ -770,14 +775,14 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   ]);
 
   const [formData, setFormData] = useState<ScriptFormData>({
-    cta: "",
+    cta: "Haz clic en el botón de aquí abajo y pide el tuyo ahora",
     sales_angle: "",
     hooks_count: "3",
     ideal_avatar: "",
     selected_pain: "",
     selected_desire: "",
     selected_objection: "",
-    target_country: "",
+    target_country: "Colombia",
     narrative_structure: "",
     additional_instructions: "",
     hooks: [],
@@ -789,7 +794,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     reference_transcription: "",
     video_strategies: "",
     ai_model: "mistralai/mistral-large-latest",
-    video_duration: "",
+    video_duration: "30s",
     target_platform: "",
     use_perplexity: false,
   });
@@ -2098,8 +2103,8 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           throw error;
         }
       } else {
-        // Use existing script from form data as context for other blocks
-        scriptContext = formData.script_prompt;
+        // Usar el script existente como contexto para los otros bloques
+        scriptContext = existingScript || "";
       }
 
       // Step 2-5: Other blocks (only selected ones)

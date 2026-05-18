@@ -74,9 +74,10 @@ interface ClientDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
+  initialTab?: string;
 }
 
-export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: ClientDetailDialogProps) {
+export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initialTab }: ClientDetailDialogProps) {
   const { toast } = useToast();
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -396,7 +397,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="info" className="mt-4">
+        <Tabs defaultValue={initialTab ?? "info"} className="mt-4">
           <TabsList className="flex w-full overflow-x-auto gap-0.5 h-auto flex-wrap">
             <TabsTrigger value="info" className="flex-none">Info</TabsTrigger>
             <TabsTrigger value="finanzas" className="flex-none gap-1">
@@ -604,6 +605,9 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                     <div key={pkg.id} className="p-3 rounded-sm border bg-card flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium opacity-50 shrink-0">
+                            #{String(pkg.campaign_number).padStart(4, '0')}
+                          </span>
                           <p className="font-medium text-sm truncate">{pkg.name}</p>
                           {isBarter && (
                             <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30">Canje</Badge>
@@ -774,6 +778,9 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate }: Cli
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2 flex-wrap">
                             <ShoppingBag className="h-4 w-4 text-primary shrink-0" />
+                            <span className="font-medium opacity-50 shrink-0">
+                              #{String(pkg.campaign_number).padStart(4, '0')}
+                            </span>
                             <h4 className="font-semibold truncate">{pkg.name}</h4>
                             {(pkg as any).is_barter ? (
                               <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 flex items-center gap-1">

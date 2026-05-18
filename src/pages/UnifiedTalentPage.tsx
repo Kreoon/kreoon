@@ -33,15 +33,13 @@ import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import type { AppRole } from '@/types/database';
 import { UnifiedClientsContent } from './UnifiedClientsPage';
 import { SinAsignarSection } from './Team';
-import { TalentPayrollView } from '@/components/talent/TalentPayrollView';
 // ── Tipos de tab de nivel superior ────────────────────────────────────────────
-type TopTab = 'talento' | 'clientes' | 'sin-asignar' | 'nomina';
+type TopTab = 'talento' | 'clientes' | 'sin-asignar';
 
 const TOP_TABS: { key: TopTab; label: string }[] = [
   { key: 'talento',     label: 'Talento' },
   { key: 'clientes',    label: 'Clientes' },
   { key: 'sin-asignar', label: 'Sin Asignar' },
-  { key: 'nomina',      label: 'Nómina' },
 ];
 
 // ── Tipos de filtro internos de Talento ───────────────────────────────────────
@@ -567,11 +565,10 @@ const UnifiedTalentPage = () => {
   // Los valores válidos son: talento | clientes | marcas | sin-asignar
   const rawTab = searchParams.get('tab');
   const activeTab: TopTab =
-    rawTab === 'clientes' || rawTab === 'sin-asignar' || rawTab === 'nomina' ? rawTab : 'talento';
+    rawTab === 'clientes' || rawTab === 'sin-asignar' ? rawTab : 'talento';
 
   const handleTabChange = (key: TopTab) => {
     if (key === 'talento') {
-      // Limpia el param para URL más limpia: /talent
       setSearchParams({}, { replace: true });
     } else {
       setSearchParams({ tab: key }, { replace: true });
@@ -604,7 +601,6 @@ const UnifiedTalentPage = () => {
       {activeTab === 'clientes'    && <UnifiedClientsContent />}
       {activeTab === 'sin-asignar' && <SinAsignarSection />}
       {activeTab === 'talento'     && <TalentoSection />}
-      {activeTab === 'nomina'      && <TalentPayrollView />}
     </div>
   );
 };

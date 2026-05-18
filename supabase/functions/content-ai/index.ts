@@ -886,7 +886,7 @@ serve(async (req) => {
               sphere_phase: body.script_params?.sphere_phase || "solution",
               consciousness_level: body.script_params?.consciousness_level || "problem_aware",
               generation_type: generation_type || "script",
-              video_duration: body.script_params?.video_duration || "60",
+              video_duration: body.script_params?.video_duration || "60s",
               additional_context: skillAdditionalContext,
             },
             perplexityResearch: perplexityResearch || undefined,
@@ -911,11 +911,10 @@ serve(async (req) => {
                 phase.map(async (skill: Skill) => {
                   const t0 = Date.now();
                   const input = buildSkillInput(skill, skillContext, phaseOutput, allExecutions);
-                  const response = await callAIWithSkill(skill, input, {
-                    provider: aiConfig.provider,
-                    apiKey: aiConfig.apiKey,
-                    model: aiConfig.model,
-                  });
+                  const response = await callAIWithSkill(skill, input, [
+                    { provider: aiConfig.provider, apiKey: aiConfig.apiKey, model: aiConfig.model },
+                    ...fallbacks,
+                  ]);
                   return { skill, content: response.content, confidence: response.confidence, durationMs: Date.now() - t0 };
                 })
               );
@@ -1013,11 +1012,10 @@ serve(async (req) => {
                   phase.map(async (skill: Skill) => {
                     const t0 = Date.now();
                     const input = buildSkillInput(skill, skillContext, phaseOutput, allExecutions);
-                    const response = await callAIWithSkill(skill, input, {
-                      provider: aiConfig.provider,
-                      apiKey: aiConfig.apiKey,
-                      model: aiConfig.model,
-                    });
+                    const response = await callAIWithSkill(skill, input, [
+                      { provider: aiConfig.provider, apiKey: aiConfig.apiKey, model: aiConfig.model },
+                      ...fallbacks,
+                    ]);
                     return { skill, content: response.content, confidence: response.confidence, durationMs: Date.now() - t0 };
                   })
                 );

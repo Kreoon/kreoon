@@ -16,9 +16,29 @@ interface AIConfig {
   model: string;
 }
 
+type AIConfigArray = AIConfig | AIConfig[];
+
 /**
  * Construye el input para un skill específico
  */
+const DURATION_LABELS: Record<string, string> = {
+  '15s':  '15 segundos exactos (~37 palabras de diálogo)',
+  '30s':  '30 segundos exactos (~75 palabras de diálogo)',
+  '45s':  '45 segundos exactos (~112 palabras de diálogo)',
+  '60s':  '60 segundos exactos / 1 minuto (~150 palabras de diálogo)',
+  '90s':  '90 segundos exactos / 1:30 min (~225 palabras de diálogo)',
+  '120s': '120 segundos exactos / 2 minutos (~300 palabras de diálogo)',
+  '180s': '180 segundos exactos / 3 minutos (~450 palabras de diálogo)',
+  '300s': '300 segundos exactos / 5 minutos (~750 palabras de diálogo)',
+  '600s': '600 segundos exactos / 10 minutos (~1500 palabras de diálogo)',
+  // compatibilidad con valores legacy
+  '15-30s':  '30 segundos exactos (~75 palabras de diálogo)',
+  '30-60s':  '60 segundos exactos (~150 palabras de diálogo)',
+  '1-3min':  '180 segundos exactos / 3 minutos (~450 palabras de diálogo)',
+  '3-5min':  '300 segundos exactos / 5 minutos (~750 palabras de diálogo)',
+  '5-10min': '600 segundos exactos / 10 minutos (~1500 palabras de diálogo)',
+};
+
 export function buildSkillInput(
   skill: Skill,
   context: SkillContext,
@@ -26,6 +46,7 @@ export function buildSkillInput(
   executions: SkillExecution[]
 ): string {
   const { product, formData, perplexityResearch } = context;
+  const durationLabel = DURATION_LABELS[formData.video_duration || ''] || `${formData.video_duration || '60'} segundos`;
 
   let input = `
 # PRODUCTO
@@ -43,7 +64,7 @@ Nivel de Consciencia: ${formData.consciousness_level || 'problem_aware'}
 Estructura Narrativa: ${formData.narrative_structure || 'problema-solución'}
 Cantidad de Hooks: ${formData.hooks_count || 3}
 CTA: ${formData.cta || 'N/A'}
-Duración del Video: ${formData.video_duration || '60'} segundos
+Duración del Video: ${durationLabel}
 `;
 
   // Agregar investigación de Perplexity si existe
@@ -85,9 +106,28 @@ ${executions.map((e) => `- ${e.skillId} (confianza: ${(e.confidence * 100).toFix
 }
 
 /**
- * Llama a la IA con el prompt del skill
+ * Llama a la IA con el prompt del skill (con fallback automático si se pasan varios configs)
  */
 export async function callAIWithSkill(
+  skill: Skill,
+  input: string,
+  aiConfigOrArray: AIConfigArray
+): Promise<{ content: string; confidence: number; tokensUsed?: number }> {
+  const configs = Array.isArray(aiConfigOrArray) ? aiConfigOrArray : [aiConfigOrArray];
+  let lastError: Error = new Error('No configs disponibles');
+
+  for (const cfg of configs) {
+    try {
+      return await callAIWithSkillSingle(skill, input, cfg);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      console.warn(`[Skill] ${cfg.provider}/${cfg.model} falló para ${skill.name}: ${lastError.message}. Intentando siguiente...`);
+    }
+  }
+  throw lastError;
+}
+
+async function callAIWithSkillSingle(
   skill: Skill,
   input: string,
   aiConfig: AIConfig
@@ -135,6 +175,11 @@ export async function callAIWithSkill(
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const tokensUsed = data.usageMetadata?.totalTokenCount;
 
+    if (!content) {
+      const finishReason = data.candidates?.[0]?.finishReason || 'UNKNOWN';
+      throw new Error(`Gemini devolvió contenido vacío (finishReason: ${finishReason})`);
+    }
+
     return { content, confidence: 0.95, tokensUsed };
   }
 
@@ -165,6 +210,8 @@ export async function callAIWithSkill(
     const content = data.choices?.[0]?.message?.content || '';
     const tokensUsed = data.usage?.total_tokens;
 
+    if (!content) throw new Error('OpenAI devolvió contenido vacío');
+
     return { content, confidence: 0.95, tokensUsed };
   }
 
@@ -192,6 +239,8 @@ export async function callAIWithSkill(
     const data = await response.json();
     const content = data.content?.[0]?.text || '';
     const tokensUsed = data.usage?.input_tokens + data.usage?.output_tokens;
+
+    if (!content) throw new Error('Anthropic devolvió contenido vacío');
 
     return { content, confidence: 0.95, tokensUsed };
   }

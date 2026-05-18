@@ -141,6 +141,9 @@ export function KpiListDialog({
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-primary" />
+                        <span className="font-medium opacity-50 shrink-0">
+                          #{String(pkg.campaign_number).padStart(4, '0')}
+                        </span>
                         <h4 className="font-medium text-sm">{pkg.name}</h4>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">

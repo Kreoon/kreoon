@@ -5,7 +5,7 @@ import {
   DollarSign, ChevronDown, ChevronUp, Loader2, Check,
   Download, Users, AlertCircle, Calendar, Play, RefreshCw,
   Clock, CheckCircle, Upload, X, FileText, Zap,
-  AlertTriangle, History,
+  AlertTriangle, History, Search, TrendingUp, Activity, BadgeDollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,10 @@ import type { PayrollEntry, OverduePayment, MonthlyClosureGroup, ClosureContentD
 import type { TalentPayment, PaymentStatus } from '@/types/talentPayments.types';
 import { PAYMENT_ACCOUNT_LABELS, PAYMENT_STATUS_LABELS } from '@/types/talentPayments.types';
 import { useToast } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/card';
+import { useOrgPayrollOverview } from '@/hooks/useFinanceOverview';
+import { useFinanceFilters } from '@/contexts/FinanceFiltersContext';
+import { TabIntro, HelpTip } from '@/components/finance/FinanceHelp';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -951,21 +955,65 @@ export function TalentPayrollView() {
   const [exporting, setExporting] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(false);
 
+  // ─── Filtros locales ─────────────────────────────────────────────────────
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'processing' | 'overdue'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'creator' | 'editor'>('all');
+  const [search, setSearch] = useState('');
+
+  // ─── KPIs del período global ─────────────────────────────────────────────
+  const { startDate, endDate } = useFinanceFilters();
+  const { data: payrollOverview } = useOrgPayrollOverview(orgId, startDate, endDate);
+
   useTalentFinanceRealtime(orgId);
 
-  const totalClosures = useMemo(() => closures.reduce((s, e) => s + e.payment.amount, 0), [closures]);
-  const totalUnpaid = useMemo(() => unpaid.reduce((s, e) => s + e.total_pending, 0), [unpaid]);
+  // ─── Filtrar closures + unpaid ───────────────────────────────────────────
+  const filteredClosures = useMemo(() => {
+    return closures.filter(e => {
+      const s = e.payment.status;
+      const due = e.payment.payment_date ? new Date(e.payment.payment_date) : null;
+      const isOverdue = due && due < new Date() && s !== 'paid';
 
-  // Agrupar cierres pendientes por usuario
+      if (statusFilter === 'pending' && s !== 'pending') return false;
+      if (statusFilter === 'processing' && s !== 'processing') return false;
+      if (statusFilter === 'overdue' && !isOverdue) return false;
+
+      if (search) {
+        const q = search.toLowerCase();
+        if (!e.full_name.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+  }, [closures, statusFilter, search]);
+
+  const filteredUnpaid = useMemo(() => {
+    return unpaid
+      .map(entry => {
+        let items = entry.items;
+        if (roleFilter !== 'all') items = items.filter(i => i.role === roleFilter);
+        const total_pending = items.reduce((s, i) => s + i.amount, 0);
+        const project_count = items.length;
+        return { ...entry, items, total_pending, project_count };
+      })
+      .filter(e => e.items.length > 0)
+      .filter(e => {
+        if (!search) return true;
+        return e.full_name.toLowerCase().includes(search.toLowerCase());
+      });
+  }, [unpaid, roleFilter, search]);
+
+  const totalClosures = useMemo(() => filteredClosures.reduce((s, e) => s + e.payment.amount, 0), [filteredClosures]);
+  const totalUnpaid = useMemo(() => filteredUnpaid.reduce((s, e) => s + e.total_pending, 0), [filteredUnpaid]);
+
+  // Agrupar cierres filtrados por usuario
   const closureGroups = useMemo(() => {
     const map = new Map<string, MonthlyClosureEntry[]>();
-    for (const entry of closures) {
+    for (const entry of filteredClosures) {
       const uid = entry.payment.user_id;
       if (!map.has(uid)) map.set(uid, []);
       map.get(uid)!.push(entry);
     }
     return [...map.values()];
-  }, [closures]);
+  }, [filteredClosures]);
 
   async function handleRunMonthlyClose() {
     setRunningClose(true);
@@ -992,6 +1040,19 @@ export function TalentPayrollView() {
 
   return (
     <div className="px-4 md:px-6 py-6 space-y-6">
+
+      {/* ─── Intro ─────────────────────────────────────────────── */}
+      <TabIntro
+        emoji="👥"
+        title="¿A quién le tengo que pagar?"
+        subtitle="Aquí está lo que la agencia le debe a creadores y editores: a quién, cuánto y cuándo."
+        accent="orange"
+        bullets={[
+          'Cada mes, el día 20, se cierra la nómina automáticamente con los proyectos aprobados.',
+          'El pago se hace entre el 1 y el 5 del mes siguiente.',
+          'Botón azul "Transferir" → marca un pago como en proceso. Botón verde "Confirmar pago" → marca como pagado (necesita comprobante).',
+        ]}
+      />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -1040,6 +1101,104 @@ export function TalentPayrollView() {
         </div>
       </div>
 
+      {/* ─── Hero KPIs ─────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="bg-gradient-to-br from-yellow-500/15 to-yellow-600/10 border-yellow-500/20 p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <BadgeDollarSign className="w-4 h-4 text-yellow-400" />
+            <span className="text-white/60 text-[10px] uppercase tracking-wide">Por liquidar</span>
+            <HelpTip text="Total que la agencia debe a creadores y editores. Suma de pagos pendientes + en transferencia." />
+          </div>
+          <p className="text-xl font-bold text-white">
+            {formatCurrency(payrollOverview?.to_settle ?? 0)}
+          </p>
+          <p className="text-yellow-400 text-[11px] mt-0.5">pendiente + en transferencia</p>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-blue-500/15 to-blue-600/10 border-blue-500/20 p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Zap className="w-4 h-4 text-blue-400" />
+            <span className="text-white/60 text-[10px] uppercase tracking-wide">En proceso</span>
+            <HelpTip text="Pagos que ya iniciaste pero que aún no confirmas con comprobante." />
+          </div>
+          <p className="text-xl font-bold text-white">
+            {formatCurrency(payrollOverview?.in_transfer ?? 0)}
+          </p>
+          <p className="text-blue-400 text-[11px] mt-0.5">transferencias iniciadas</p>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-500/15 to-green-600/10 border-green-500/20 p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <TrendingUp className="w-4 h-4 text-green-400" />
+            <span className="text-white/60 text-[10px] uppercase tracking-wide">Pagado en período</span>
+            <HelpTip text="TODO el dinero que salió a creadores y editores en el rango. Incluye pagos formales (talent_payments) Y los marcados directamente en cada proyecto (creator_paid/editor_paid). Sin doble conteo." />
+          </div>
+          <p className="text-xl font-bold text-white">
+            {formatCurrency(payrollOverview?.paid_in_period ?? 0)}
+          </p>
+          <p className="text-green-400 text-[11px] mt-0.5">
+            {payrollOverview?.talents_paid ?? 0} talento{(payrollOverview?.talents_paid ?? 0) !== 1 ? 's' : ''}
+          </p>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-500/15 to-purple-600/10 border-purple-500/20 p-4">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Activity className="w-4 h-4 text-purple-400" />
+            <span className="text-white/60 text-[10px] uppercase tracking-wide">Pago promedio</span>
+            <HelpTip text="Pagado en el período ÷ número de talentos que recibieron pago." />
+          </div>
+          <p className="text-xl font-bold text-white">
+            {formatCurrency(payrollOverview?.avg_payment ?? 0)}
+          </p>
+          <p className="text-purple-400 text-[11px] mt-0.5">por talento en período</p>
+        </Card>
+      </div>
+
+      {/* ─── Filtros locales ───────────────────────────────────────── */}
+      <div className="flex items-center gap-2 flex-wrap p-3 rounded-md bg-white/[0.02] border border-white/5">
+        <span className="text-white/40 text-xs">Filtros:</span>
+
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
+          className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+        >
+          <option value="all" className="bg-[#111]">Todos los estados</option>
+          <option value="pending" className="bg-[#111]">Pendientes</option>
+          <option value="processing" className="bg-[#111]">En transferencia</option>
+          <option value="overdue" className="bg-[#111]">Vencidos</option>
+        </select>
+
+        <select
+          value={roleFilter}
+          onChange={e => setRoleFilter(e.target.value as typeof roleFilter)}
+          className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+        >
+          <option value="all" className="bg-[#111]">Todos los roles</option>
+          <option value="creator" className="bg-[#111]">Solo creadores</option>
+          <option value="editor" className="bg-[#111]">Solo editores</option>
+        </select>
+
+        <div className="relative">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
+          <Input
+            placeholder="Buscar talento"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="bg-white/5 border-white/10 text-white text-xs h-7 pl-7 w-44"
+          />
+        </div>
+
+        {(statusFilter !== 'all' || roleFilter !== 'all' || search) && (
+          <button
+            onClick={() => { setStatusFilter('all'); setRoleFilter('all'); setSearch(''); }}
+            className="text-xs text-white/40 hover:text-white px-2 py-1"
+          >
+            Limpiar
+          </button>
+        )}
+      </div>
+
       {/* Próximas fechas */}
       <NextPaymentBadge />
 
@@ -1074,13 +1233,13 @@ export function TalentPayrollView() {
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <Clock className="h-4 w-4 text-yellow-500" />
             Pendientes y en transferencia
-            {closures.length > 0 && (
+            {filteredClosures.length > 0 && (
               <Badge className="text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 border-yellow-400/30">
-                {closures.length}
+                {filteredClosures.length}
               </Badge>
             )}
           </h3>
-          {closures.length > 0 && (
+          {filteredClosures.length > 0 && (
             <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
               {formatCurrency(totalClosures)}
             </span>
@@ -1091,10 +1250,14 @@ export function TalentPayrollView() {
           <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
-        ) : closures.length === 0 ? (
+        ) : filteredClosures.length === 0 ? (
           <div className="text-center py-6 border border-dashed border-border rounded-lg">
             <CheckCircle className="h-6 w-6 text-green-500 mx-auto mb-1.5" />
-            <p className="text-sm text-muted-foreground">Sin cierres pendientes de pago</p>
+            <p className="text-sm text-muted-foreground">
+              {closures.length === 0
+                ? 'Sin cierres pendientes de pago'
+                : 'Sin cierres con esos filtros'}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -1113,13 +1276,13 @@ export function TalentPayrollView() {
           <h3 className="text-sm font-semibold flex items-center gap-2">
             <RefreshCw className="h-4 w-4 text-blue-500" />
             Proyectos para el próximo cierre
-            {unpaid.length > 0 && (
+            {filteredUnpaid.length > 0 && (
               <Badge variant="outline" className="text-xs">
-                {unpaid.reduce((s, e) => s + e.project_count, 0)} proy.
+                {filteredUnpaid.reduce((s, e) => s + e.project_count, 0)} proy.
               </Badge>
             )}
           </h3>
-          {unpaid.length > 0 && (
+          {filteredUnpaid.length > 0 && (
             <span className="text-sm font-bold text-foreground">
               {formatCurrency(totalUnpaid)}
             </span>
@@ -1130,10 +1293,14 @@ export function TalentPayrollView() {
           <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground text-sm">
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
-        ) : unpaid.length === 0 ? (
+        ) : filteredUnpaid.length === 0 ? (
           <div className="text-center py-6 border border-dashed border-border rounded-lg">
             <Users className="h-6 w-6 text-muted-foreground/40 mx-auto mb-1.5" />
-            <p className="text-sm text-muted-foreground">Sin proyectos pendientes de liquidar</p>
+            <p className="text-sm text-muted-foreground">
+              {unpaid.length === 0
+                ? 'Sin proyectos pendientes de liquidar'
+                : 'Sin proyectos con esos filtros'}
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -1141,7 +1308,7 @@ export function TalentPayrollView() {
               <AlertCircle className="h-3 w-3" />
               Proyectos en estado <strong>Aprobado</strong> sin liquidar · Se incluyen en el cierre del día 20
             </p>
-            {unpaid.map((entry) => (
+            {filteredUnpaid.map((entry) => (
               <UnpaidRow key={entry.user_id} entry={entry} organizationId={orgId} />
             ))}
           </div>

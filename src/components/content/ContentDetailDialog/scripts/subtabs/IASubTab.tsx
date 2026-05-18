@@ -4,8 +4,8 @@ import { SkillsExecutionBadge } from '@/components/content/SkillsExecutionBadge'
 import { SectionCard, FieldRow } from '../../components/SectionCard';
 import { Sparkles, Package, History } from 'lucide-react';
 import { SubTabProps } from './types';
-import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export function IASubTab({
   content,
@@ -19,7 +19,6 @@ export function IASubTab({
   scriptPermissions,
   readOnly = false,
 }: SubTabProps) {
-  const { toast } = useToast();
   const { profile } = useAuth();
   const organizationId = profile?.current_organization_id;
 
@@ -28,14 +27,14 @@ export function IASubTab({
   const canGenerate = scriptPermissions.canGenerate() && !readOnly;
   const isReadOnly = scriptPermissions.isReadOnly('ia') || readOnly;
 
-  const handleScriptGenerated = (generated: {
+  const handleScriptGenerated = async (generated: {
     script: string;
     director_output?: string;
     marketing_output?: string;
     captions?: string;
     broll_output?: string;
   }) => {
-    // Guardar TODOS los bloques generados en el formulario
+    // Actualizar estado local
     setFormData(prev => ({
       ...prev,
       script: generated.script || prev.script,
@@ -46,21 +45,23 @@ export function IASubTab({
     }));
     if (!editMode) setEditMode(true);
 
-    // Mostrar qué bloques se generaron
-    const blocksGenerated = [
-      generated.script && 'Guión',
-      generated.director_output && 'Director',
-      generated.marketing_output && 'Marketing',
-      generated.captions && 'Captions',
-      generated.broll_output && 'B-Roll',
-    ].filter(Boolean);
+    // Guardar directo a DB — evita la race condition entre setFormData y setEditMode
+    // que hace que originalFormDataRef capture los nuevos datos como "baseline",
+    // impidiendo que changed() detecte el cambio y el autoSave no guarde nada.
+    if (content?.id) {
+      const updates: Record<string, string> = {};
+      if (generated.script) updates.script = generated.script;
+      if (generated.director_output) updates.director_output = generated.director_output;
+      if (generated.marketing_output) updates.marketing_output = generated.marketing_output;
+      if (generated.captions) updates.captions = generated.captions;
+      if (generated.broll_output) updates.broll_output = generated.broll_output;
 
-    toast({
-      title: 'Contenido generado',
-      description: blocksGenerated.length > 0
-        ? `${blocksGenerated.join(' + ')} listos`
-        : 'Generación completada'
-    });
+      if (Object.keys(updates).length > 0) {
+        await supabase.from('content').update(updates).eq('id', content.id);
+        onUpdate?.();
+      }
+    }
+
   };
 
   return (
@@ -100,6 +101,7 @@ export function IASubTab({
             onScriptGenerated={handleScriptGenerated}
             organizationId={organizationId}
             spherePhase={formData.sphere_phase}
+            existingScript={formData.script}
           />
         </SectionCard>
       )}

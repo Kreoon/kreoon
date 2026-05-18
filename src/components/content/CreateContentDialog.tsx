@@ -36,6 +36,9 @@ interface ClientPackage {
   name: string;
   hooks_per_video: number | null;
   is_active: boolean;
+  content_quantity: number;
+  assigned_count: number;
+  available_slots: number;
 }
 
 interface Product {
@@ -354,19 +357,19 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
   }, [productId, clientProducts]);
 
   const fetchClientData = async (clientId: string) => {
-    // Fetch packages
+    // Fetch packages with availability via RPC
     const { data: packages } = await supabase
-      .from('client_packages')
-      .select('id, name, hooks_per_video, is_active')
-      .eq('client_id', clientId)
-      .order('created_at', { ascending: false });
-    
-    setClientPackages(packages || []);
-    
-    // Auto-select active package
-    const activePackage = packages?.find(p => p.is_active);
-    if (activePackage) {
-      setPackageId(activePackage.id);
+      .rpc('get_client_packages_with_availability', { p_client_id: clientId });
+
+    const pkgs = (packages || []) as ClientPackage[];
+    setClientPackages(pkgs);
+
+    // Auto-select: primer paquete activo con slots disponibles
+    const availablePkg = pkgs.find(p => p.is_active && p.available_slots > 0);
+    if (availablePkg) {
+      setPackageId(availablePkg.id);
+    } else {
+      setPackageId('');
     }
 
     // Fetch products
@@ -375,7 +378,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       .select('id, name, strategy, market_research, ideal_avatar, sales_angles, brief_url')
       .eq('client_id', clientId)
       .order('name');
-    
+
     setClientProducts(products || []);
   };
 
@@ -568,6 +571,27 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
       return;
     }
 
+    // Validar disponibilidad en paquete cuando hay cliente asignado
+    if (clientId && clientPackages.length > 0) {
+      if (!packageId) {
+        toast({
+          title: "Paquete requerido",
+          description: "Este cliente tiene campañas activas. Debes asignar el proyecto a una de ellas.",
+          variant: "destructive"
+        });
+        return;
+      }
+      const selectedPkg = clientPackages.find(p => p.id === packageId);
+      if (selectedPkg && selectedPkg.available_slots <= 0) {
+        toast({
+          title: "Campaña sin capacidad",
+          description: `La campaña "${selectedPkg.name}" ya tiene todos sus videos asignados (${selectedPkg.content_quantity}/${selectedPkg.content_quantity}). Crea un nuevo paquete para este cliente o elige otra campaña.`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     // Validation for ambassador content
     if (isAmbassadorContent && !creatorId) {
       toast({
@@ -596,6 +620,7 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
         product_id: productId || null,
         // CRITICAL: Keep client_id for internal brand content to enable proper detection
         client_id: clientId || null,
+        client_package_id: packageId || null,
         creator_id: creatorId || null,
         editor_id: editorId || null,
         strategist_id: strategistId || null,
@@ -865,23 +890,48 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
 
               {/* Package selector */}
               <div className="space-y-2">
-                <Label htmlFor="package">Campaña de Contenido</Label>
+                <Label htmlFor="package">
+                  Campaña de Contenido
+                  {clientId && clientPackages.length > 0 && <span className="text-destructive ml-1">*</span>}
+                </Label>
                 <Select value={packageId} onValueChange={setPackageId} disabled={!clientId || clientPackages.length === 0}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={clientId ? (clientPackages.length > 0 ? "Seleccionar campaña" : "Sin campañas") : "Primero selecciona un cliente"} />
+                  <SelectTrigger className={clientId && clientPackages.length > 0 && !packageId ? 'border-destructive' : ''}>
+                    <SelectValue placeholder={
+                      !clientId
+                        ? "Primero selecciona un cliente"
+                        : clientPackages.length === 0
+                          ? "Sin campañas — crea un paquete primero"
+                          : "Seleccionar campaña"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
-                    {clientPackages.map(pkg => (
-                      <SelectItem key={pkg.id} value={pkg.id}>
-                        <div className="flex items-center gap-2">
-                          <Package className="h-3 w-3" />
-                          {pkg.name}
-                          {pkg.is_active && <Badge variant="secondary" className="text-xs ml-1">Activo</Badge>}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {clientPackages.map(pkg => {
+                      const isFull = pkg.available_slots <= 0;
+                      return (
+                        <SelectItem key={pkg.id} value={pkg.id} disabled={isFull}>
+                          <div className="flex items-center gap-2">
+                            <Package className="h-3 w-3" />
+                            <span className="text-[10px] font-bold text-primary bg-primary/15 rounded-full px-1.5 py-0.5 shrink-0">
+                            #{String((pkg as any).campaign_number ?? 0).padStart(4, '0')}
+                          </span>
+                          <span className={isFull ? 'text-muted-foreground' : ''}>{pkg.name}</span>
+                            <Badge
+                              variant={isFull ? 'destructive' : pkg.available_slots <= 2 ? 'outline' : 'secondary'}
+                              className="text-xs ml-1"
+                            >
+                              {pkg.available_slots}/{pkg.content_quantity} disponibles
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
+                {clientId && clientPackages.length > 0 && clientPackages.every(p => p.available_slots <= 0) && (
+                  <p className="text-xs text-destructive">
+                    Todas las campañas de este cliente están llenas. Crea un nuevo paquete para continuar.
+                  </p>
+                )}
               </div>
 
               {/* Product selector */}
@@ -957,10 +1007,14 @@ export function CreateContentDialog({ open, onOpenChange, onSuccess }: CreateCon
                 </SelectContent>
               </Select>
               <p className="text-sm text-muted-foreground">
-                {packageId && clientPackages.find(p => p.id === packageId)?.hooks_per_video 
-                  ? `Predefinido por campaña "${clientPackages.find(p => p.id === packageId)?.name}"`
-                  : "Define cuántos videos finales se entregarán"
-                }
+                {packageId && (() => {
+                  const pkg = clientPackages.find(p => p.id === packageId);
+                  if (!pkg) return "Define cuántos videos finales se entregarán";
+                  const parts = [];
+                  if (pkg.hooks_per_video) parts.push(`Predefinido por "#${String((pkg as any).campaign_number ?? 0).padStart(4, '0')} ${pkg.name}"`);
+                  parts.push(`${pkg.available_slots} slots restantes en la campaña`);
+                  return parts.join(' · ');
+                })() || "Define cuántos videos finales se entregarán"}
               </p>
             </div>
           </div>
