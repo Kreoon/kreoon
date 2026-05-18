@@ -34,6 +34,12 @@ export {
   callAIWithSkill,
 } from './executor.ts';
 
+// Skills fusionados v2 (reemplazan las 6 fases antiguas para tipo "script")
+export { contextIntelligence } from './context-intelligence.ts';
+export { hookNarrativeEngine } from './hook-narrative-engine.ts';
+export { persuasionMaster } from './persuasion-master.ts';
+export { scriptPolisher } from './script-polisher.ts';
+
 // Skills - Originales
 export { hooksSpecialist } from './hooks-specialist.ts';
 export { culturalAdapter } from './cultural-adapter.ts';

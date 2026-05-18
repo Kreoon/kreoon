@@ -20,6 +20,12 @@ interface SkillsLoadingStateProps {
 }
 
 const SKILL_META: Record<string, { label: string; icon: typeof Zap; color: string }> = {
+  // Skills fusionados v2
+  context_intelligence:   { label: 'Analizando avatar y tendencias...', icon: Brain,       color: 'text-violet-500' },
+  hook_narrative_engine:  { label: 'Generando hooks y narrativa...',    icon: Sparkles,    color: 'text-yellow-500' },
+  persuasion_master:      { label: 'Aplicando persuasión avanzada...',  icon: Zap,         color: 'text-pink-500' },
+  script_polisher:        { label: 'Puliendo versión definitiva...',    icon: Wand2,       color: 'text-emerald-500' },
+  // Skills individuales (usados en otras fases: director, broll, captions, marketing)
   consciousness_mapper:   { label: 'Mapeando nivel de consciencia...', icon: Brain,        color: 'text-violet-500' },
   trend_injector:         { label: 'Inyectando tendencias virales...', icon: TrendingUp,   color: 'text-rose-500' },
   avatar_mirrorer:        { label: 'Adaptando al avatar ideal...',     icon: Users,        color: 'text-indigo-500' },
@@ -46,12 +52,9 @@ const SKILL_META: Record<string, { label: string; icon: typeof Zap; color: strin
 };
 
 const PHASE_LABELS = [
-  'Analizando contexto',
-  'Generando contenido',
-  'Enriqueciendo y persuadiendo',
-  'Refinando estructura',
-  'Humanizando',
-  'Ajustando duración',
+  'Analizando contexto y avatar',
+  'Generando guión completo',
+  'Puliendo versión definitiva',
 ];
 
 export function SkillsLoadingState({ isGenerating, realProgress }: SkillsLoadingStateProps) {
@@ -59,7 +62,7 @@ export function SkillsLoadingState({ isGenerating, realProgress }: SkillsLoading
 
   const pct = realProgress?.pct ?? 0;
   const phase = realProgress?.phase ?? 0;
-  const totalPhases = realProgress?.totalPhases ?? 6;
+  const totalPhases = realProgress?.totalPhases ?? 3;
   const currentSkillNames = realProgress?.currentSkillNames ?? [];
 
   const phaseLabel = phase > 0

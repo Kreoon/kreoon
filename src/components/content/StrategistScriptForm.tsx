@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { SkillsLoadingState, type SkillsRealProgress } from "./SkillsLoadingState";
+import { useGenerationJob } from "@/contexts/GenerationJobContext";
 
 import { parseProductResearch, formatResearchForPrompt } from "@/lib/productResearchParser";
 
@@ -708,6 +709,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const { toast } = useToast();
   const { profile } = useAuth();
   const organizationId = propOrgId || profile?.current_organization_id;
+  const { startScriptGeneration, getJob, clearJob } = useGenerationJob();
   const [loading, setLoading] = useState(false);
   const [skillsProgress, setSkillsProgress] = useState<SkillsRealProgress | null>(null);
   const [loadingDocs, setLoadingDocs] = useState(false);
@@ -818,6 +820,15 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     prefilledAt: null,
     fieldsLoaded: [],
   });
+
+  // Si hay un job completado en background para este contentId, aplicar resultado al montar
+  useEffect(() => {
+    const job = getJob(contentId);
+    if (job?.status === 'completed' && job.result) {
+      onScriptGenerated(job.result);
+      clearJob(contentId);
+    }
+  }, [contentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load prefill data from content record if available
   useEffect(() => {
@@ -2089,7 +2100,21 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       if (selectedBlocks.script) {
         updateStepStatus("script", "generating");
         try {
-          generatedContent.script = await generateContent("script", formData.script_prompt);
+          const scriptBody = buildRequestBody("script", formData.script_prompt);
+          generatedContent.script = await new Promise<string>((resolve, reject) => {
+            startScriptGeneration({
+              contentId,
+              body: scriptBody,
+              onProgress: (p) => setSkillsProgress(p),
+              onResult: resolve,
+              onError: reject,
+              saveFn: async (result) => {
+                if (result.script && contentId) {
+                  await supabase.from('content').update({ script: result.script }).eq('id', contentId);
+                }
+              },
+            });
+          });
           updateStepStatus("script", "done");
           emitProgress({ script: generatedContent.script });
           scriptContext = generatedContent.script;

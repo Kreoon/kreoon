@@ -39,7 +39,12 @@ export type SkillType =
   | 'whatsapp_closer'           // Capa E — Funnel WhatsApp LATAM
   | 'paid_ads_architect'        // Capa E+T — Estructura de campanas Meta+TikTok
   | 'email_sequence_builder'
-  | 'duration_adjuster';   // Capa R+V — Secuencias de email LATAM
+  | 'duration_adjuster'    // Capa R+V — Secuencias de email LATAM
+  // Skills fusionados (v2 — optimizados para velocidad)
+  | 'context_intelligence'   // Fusión: consciousness_mapper + avatar_mirrorer + trend_injector
+  | 'hook_narrative_engine'  // Fusión: hooks_specialist + storytelling_specialist + emotion_architect + storybrand_architect
+  | 'persuasion_master'      // Fusión: neuro_persuader + objection_crusher + cultural_adapter + social_proof_weaver + retention_engineer
+  | 'script_polisher';       // Fusión: copy_sharpener + virality_optimizer + ai_humanizer + cta_specialist + duration_adjuster
 
 export interface SkillTriggers {
   sphere_phase?: string[];

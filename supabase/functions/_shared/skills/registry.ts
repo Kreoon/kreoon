@@ -35,6 +35,11 @@ import { whatsappCloser } from './whatsapp-closer.ts';
 import { paidAdsArchitect } from './paid-ads-architect.ts';
 import { emailSequenceBuilder } from './email-sequence-builder.ts';
 import { durationAdjuster } from './duration-adjuster.ts';
+// Skills fusionados v2 — mayor velocidad sin perder calidad
+import { contextIntelligence } from './context-intelligence.ts';
+import { hookNarrativeEngine } from './hook-narrative-engine.ts';
+import { persuasionMaster } from './persuasion-master.ts';
+import { scriptPolisher } from './script-polisher.ts';
 
 /**
  * Registro de Skills disponibles (20 skills)
@@ -97,25 +102,24 @@ export const skillsRegistry: Partial<Record<SkillType, Skill>> = {
   paid_ads_architect: paidAdsArchitect,
   email_sequence_builder: emailSequenceBuilder,
   duration_adjuster: durationAdjuster,
+  // Skills fusionados v2 — 4 fases, ~50% menos tiempo
+  context_intelligence: contextIntelligence,
+  hook_narrative_engine: hookNarrativeEngine,
+  persuasion_master: persuasionMaster,
+  script_polisher: scriptPolisher,
 };
 
 // Fases por tipo de bloque. Dentro de cada fase los skills corren en PARALELO;
 // las fases corren en SECUENCIA pasando el output acumulado a la siguiente.
-// Tiempo estimado = nFases × latencia_max_skill ≈ 5 × 8s = 40s para "script".
+// v2: 4 fases fusionadas (~7 llamadas vs 17 anteriores) ≈ 30-40s para "script".
 const SKILL_PHASES_BY_GENERATION_TYPE: Partial<Record<string, SkillType[][]>> = {
   script: [
-    // Fase 1 — Análisis de contexto
-    ['consciousness_mapper', 'trend_injector', 'avatar_mirrorer'],
-    // Fase 2 — Generación de contenido base
-    ['hooks_specialist', 'emotion_architect', 'storytelling_specialist', 'neuro_persuader'],
-    // Fase 3 — Enriquecimiento y persuasión
-    ['cultural_adapter', 'retention_engineer', 'social_proof_weaver', 'objection_crusher'],
-    // Fase 4 — Refinamiento y estructura
-    ['cta_specialist', 'storybrand_architect', 'copy_sharpener', 'virality_optimizer'],
-    // Fase 5 — Humanización final
-    ['ai_humanizer'],
-    // Fase 6 — Ajuste al tiempo del video
-    ['duration_adjuster'],
+    // Fase 1 — Análisis de contexto (1 llamada: consciencia + avatar + tendencias)
+    ['context_intelligence'],
+    // Fase 2 — Generación del guión completo (2 llamadas paralelas)
+    ['hook_narrative_engine', 'persuasion_master'],
+    // Fase 3 — Versión definitiva: copy + humanización + CTA + duración (1 llamada)
+    ['script_polisher'],
   ],
   director: [
     ['scene_director', 'production_director'],

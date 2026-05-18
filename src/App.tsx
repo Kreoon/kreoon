@@ -25,6 +25,8 @@ import { OnboardingGateProvider } from "@/providers/OnboardingGateProvider";
 import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
+import { GenerationJobProvider } from "@/contexts/GenerationJobContext";
+import { FloatingGenerationBadge } from "@/components/ui/FloatingGenerationBadge";
 import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
@@ -540,6 +542,7 @@ function AppContent() {
                       <StrategistClientProvider>
                         <AICopilotProvider>
                           <KiroProvider>
+                            <GenerationJobProvider>
                             <TooltipProvider delayDuration={0}>
                               <ImpersonationBanner />
                               <Toaster />
@@ -549,10 +552,12 @@ function AppContent() {
                               <MarketplaceReadinessPopup />
                               <CookieConsentBanner />
                               <ScrollToTop />
+                              <FloatingGenerationBadge />
                               <ErrorBoundary>
                                 <AppRoutes />
                               </ErrorBoundary>
                             </TooltipProvider>
+                            </GenerationJobProvider>
                           </KiroProvider>
                         </AICopilotProvider>
                       </StrategistClientProvider>
