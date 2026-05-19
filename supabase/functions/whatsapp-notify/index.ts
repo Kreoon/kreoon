@@ -166,32 +166,16 @@ Deno.serve(async (req) => {
     String(value ?? "").replace(/[\n\r\t]/g, " ").replace(/ {5,}/g, "    ").trim()
   );
 
-  const components: unknown[] = [];
-
-  if (sanitizedVars.length > 0) {
-    components.push({
-      type: "BODY",
-      params: sanitizedVars.map((v, i) => ({
-        key: `{{${i + 1}}}`,
-        parameter_name: `${i + 1}`,
-        value: v,
-      })),
-    });
-  }
-
-  // Botón CTA con URL dinámica (ej: "Ver Documento" → https://kreoon.com/{{1}})
-  if (button_variables && button_variables.length > 0) {
-    components.push({
-      type: "BUTTON",
-      sub_type: "url",
-      index: "0",
-      params: button_variables.map((v, i) => ({
-        key: `{{${i + 1}}}`,
-        parameter_name: `${i + 1}`,
-        value: String(v ?? "").trim(),
-      })),
-    });
-  }
+  const components = sanitizedVars.length > 0
+    ? [{
+        type: "BODY",
+        params: sanitizedVars.map((v, i) => ({
+          key: `{{${i + 1}}}`,
+          parameter_name: `${i + 1}`,
+          value: v,
+        })),
+      }]
+    : [];
 
   const botcakeBody = {
     psid,

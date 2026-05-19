@@ -253,7 +253,6 @@ serve(async (req) => {
             phone,
             event_type: "document_signed",
             variables: [r.signer_full_name, docLabel, signedDateShort],
-            button_variables: [`receipt/${signature_id}`],
             user_id,
             entity_id: signature_id,
           },
