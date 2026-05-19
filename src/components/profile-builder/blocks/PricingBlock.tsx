@@ -1,5 +1,9 @@
 import { memo, useState } from 'react';
-import { Plus, Trash2, Check, Star, Pencil, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Trash2, Check, Star, Pencil, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import DOMPurify from 'dompurify';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -111,6 +115,8 @@ interface PricingCardProps {
   newFeature: string;
   onNewFeatureChange: (value: string) => void;
   compact?: boolean;
+  onHire?: () => void;
+  isLoading?: boolean;
 }
 
 function PricingCard({
@@ -125,6 +131,8 @@ function PricingCard({
   newFeature,
   onNewFeatureChange,
   compact = false,
+  onHire,
+  isLoading = false,
 }: PricingCardProps) {
   return (
     <div
@@ -258,8 +266,11 @@ function PricingCard({
       <Button
         className={cn('w-full mt-2', compact && 'h-9')}
         variant={pkg.isPopular ? 'default' : 'outline'}
+        onClick={!isEditing ? onHire : undefined}
+        disabled={(!isEditing && !onHire) || isLoading}
       >
-        Contratar
+        {isLoading && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+        {isLoading ? 'Procesando...' : 'Contratar'}
       </Button>
 
       {isEditing && isSelected && (
@@ -281,14 +292,15 @@ interface CarouselLayoutProps {
   config: PricingConfig;
   isEditing: boolean;
   isSelected: boolean;
-  cardProps: Omit<PricingCardProps, 'pkg' | 'compact' | 'newFeature' | 'onNewFeatureChange'>;
+  cardProps: Omit<PricingCardProps, 'pkg' | 'compact' | 'newFeature' | 'onNewFeatureChange' | 'onHire' | 'isLoading'>;
   newFeatures: Record<string, string>;
   setNewFeature: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  createHireHandler: (pkg: PricingPackage) => (() => void) | undefined;
+  hiringPkgId: string | null;
 }
 
-function CarouselLayout({ packages, config, isEditing, isSelected, cardProps, newFeatures, setNewFeature }: CarouselLayoutProps) {
+function CarouselLayout({ packages, config, isEditing, isSelected, cardProps, newFeatures, setNewFeature, createHireHandler, hiringPkgId }: CarouselLayoutProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  // Usar config.columns para determinar cuantos elementos mostrar a la vez
   const columnsNum = parseInt(config.columns, 10) || 3;
   const visibleCount = Math.min(columnsNum, packages.length);
   const canGoPrev = currentIndex > 0;
@@ -322,6 +334,8 @@ function CarouselLayout({ packages, config, isEditing, isSelected, cardProps, ne
               compact
               newFeature={newFeatures[pkg.id] || ''}
               onNewFeatureChange={(v) => setNewFeature((prev) => ({ ...prev, [pkg.id]: v }))}
+              onHire={createHireHandler(pkg)}
+              isLoading={hiringPkgId === pkg.id}
             />
           </div>
         ))}
@@ -347,7 +361,41 @@ function CarouselLayout({ packages, config, isEditing, isSelected, cardProps, ne
 
 // ─── Main Component ─────────────────────────────────────────────────────────
 
-function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
+function PricingBlockComponent({ block, isEditing, isSelected, onUpdate, userId }: BlockProps) {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [hiringPkgId, setHiringPkgId] = useState<string | null>(null);
+
+  const createHireHandler = (pkg: PricingPackage) => {
+    if (isEditing || !userId) return undefined;
+    return async () => {
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
+      const parsedPrice = parseFloat(pkg.price);
+      if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        toast({ title: 'Precio no disponible', description: 'Contacta al creador directamente.', variant: 'destructive' });
+        return;
+      }
+      setHiringPkgId(pkg.id);
+      try {
+        const description = pkg.features.length > 0 ? pkg.features.join(' · ') : undefined;
+        const { data, error } = await supabase.functions.invoke('stripe-creator-hire', {
+          body: { creator_id: userId, title: pkg.name, price: parsedPrice, currency: pkg.currency, description },
+        });
+        if (error) throw new Error(error.message);
+        if (data?.error) throw new Error(data.error);
+        if (!data?.url) throw new Error('No se recibió URL de pago');
+        window.location.href = data.url;
+      } catch (err: any) {
+        toast({ title: 'Error al procesar el pago', description: err.message, variant: 'destructive' });
+        setHiringPkgId(null);
+      }
+    };
+  };
+
   const config = {
     layout: 'cards',
     columns: '3',
@@ -491,6 +539,8 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
           }}
           newFeatures={newFeature}
           setNewFeature={setNewFeature}
+          createHireHandler={createHireHandler}
+          hiringPkgId={hiringPkgId}
         />
       ) : config.layout === 'list' ? (
         // Layout lista vertical compacta
@@ -543,8 +593,14 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
                     <span className="text-xl font-bold text-foreground block">{pkg.price}</span>
                   )}
                 </div>
-                <Button size="sm" variant={pkg.isPopular ? 'default' : 'outline'}>
-                  Contratar
+                <Button
+                  size="sm"
+                  variant={pkg.isPopular ? 'default' : 'outline'}
+                  onClick={createHireHandler(pkg)}
+                  disabled={hiringPkgId === pkg.id}
+                >
+                  {hiringPkgId === pkg.id && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
+                  {hiringPkgId === pkg.id ? 'Procesando...' : 'Contratar'}
                 </Button>
               </div>
 
@@ -579,6 +635,8 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
                     onRemoveFeature={handleRemoveFeature}
                     newFeature={newFeature[pkg.id] || ''}
                     onNewFeatureChange={(v) => setNewFeature((prev) => ({ ...prev, [pkg.id]: v }))}
+                    onHire={createHireHandler(pkg)}
+                    isLoading={hiringPkgId === pkg.id}
                     compact
                   />
                 </div>
@@ -602,6 +660,8 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate }: Block
               onRemoveFeature={handleRemoveFeature}
               newFeature={newFeature[pkg.id] || ''}
               onNewFeatureChange={(v) => setNewFeature((prev) => ({ ...prev, [pkg.id]: v }))}
+              onHire={createHireHandler(pkg)}
+              isLoading={hiringPkgId === pkg.id}
             />
           ))}
         </div>

@@ -171,11 +171,57 @@ export function useBrand() {
 
       if (memberError) throw memberError;
 
-      // Set as active brand
+      // Set as active brand and get current org
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('current_organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
       await supabase
         .from('profiles')
         .update({ active_brand_id: brand.id } as any)
         .eq('id', user.id);
+
+      // Create clients record so the brand appears in the admin clients modal.
+      // Only if user doesn't already have a clients record in the org.
+      const orgId = (profileData as any)?.current_organization_id;
+      if (orgId) {
+        const { data: existingClient } = await supabase
+          .from('client_users')
+          .select('client_id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (!existingClient) {
+          const { data: clientRecord } = await supabase
+            .from('clients')
+            .insert({
+              name: input.name,
+              contact_email: user.email || null,
+              organization_id: orgId,
+              user_id: user.id,
+              created_by: user.id,
+              is_internal_brand: false,
+              is_public: true,
+            } as any)
+            .select('id')
+            .single();
+
+          if (clientRecord) {
+            await supabase
+              .from('client_users')
+              .upsert({
+                client_id: (clientRecord as any).id,
+                user_id: user.id,
+                role: 'owner',
+                created_by: user.id,
+                whatsapp_notify: true,
+              } as any, { onConflict: 'client_id,user_id' });
+          }
+        }
+      }
 
       return brand as Brand;
     },

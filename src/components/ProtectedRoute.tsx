@@ -81,6 +81,11 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
   const isClient = rolesToCheck.some(r => getPermissionGroup(r) === 'client');
 
+  // Brand members can be detected by: having client role, active_brand_id, or active_role='client'
+  const isBrandMember = isClient ||
+    !!profile?.active_brand_id ||
+    (profile as any)?.active_role === 'client';
+
   useEffect(() => {
     async function checkClientCompany() {
       // When impersonating, we skip the company check (root admin is just viewing)
@@ -89,22 +94,16 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
         return;
       }
 
-      if (!user || !isClient) {
+      if (!user || (!isClient && !isBrandMember)) {
         setClientHasCompany(true); // Non-clients don't need company
-        return;
-      }
-
-      // Organization clients are valid - they have access through the org
-      // If user has current_organization_id, they are attached to an organization
-      // and don't need to create/join a brand
-      if (profile?.current_organization_id) {
-        setClientHasCompany(true);
         return;
       }
 
       setCheckingCompany(true);
       try {
         // Check client_users (org-linked), company_profiles (AI matching), and brand_members (independent brands)
+        // Note: having current_organization_id alone is NOT sufficient — the client must have
+        // an actual clients record linked via client_users, otherwise they're pending setup.
         const [clientResult, companyResult, brandResult] = await Promise.all([
           withTimeout(
             supabase.from('client_users').select('id').eq('user_id', user.id).limit(1),
@@ -149,10 +148,10 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     if (rolesLoaded && user) {
       checkClientCompany();
     }
-  }, [user, isClient, rolesLoaded, isImpersonating, profile?.current_organization_id]);
+  }, [user, isClient, isBrandMember, rolesLoaded, isImpersonating]);
 
   // Wait for both auth loading AND roles to be loaded AND org check for platform root
-  if (loading || !rolesLoaded || orgLoading || talentGateLoading || (isClient && clientHasCompany === null) || checkingCompany) {
+  if (loading || !rolesLoaded || orgLoading || talentGateLoading || ((isClient || isBrandMember) && clientHasCompany === null) || checkingCompany) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -245,11 +244,6 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     || location.pathname === '/welcome-talent'
     || location.pathname.startsWith('/onboarding');
 
-  // Check if user is a brand member (they bypass referral gate)
-  // Brand members can be detected by: having client role, active_brand_id, or active_role='client'
-  const isBrandMember = isClient ||
-    !!profile?.active_brand_id ||
-    profile?.active_role === 'client';
 
   // Pure talents = users without org roles who need to complete referral gate
   // Exclude brand members (clients) from gate requirement
@@ -276,16 +270,27 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/unlock-access" replace />;
   }
 
+  // Routes that require a company/brand to be set up
+  const COMPANY_REQUIRED_ROUTES = ['/board', '/client-board'];
+  const isCompanyRequiredRoute = COMPANY_REQUIRED_ROUTES.some(r => location.pathname.startsWith(r));
+
   // Users without any roles (brand members/clients without org)
   if (realRoles.length === 0 && !isPlatformRoot) {
     const isClientAllowedRoute = CLIENT_ALLOWED_ROUTES.some(route => location.pathname.startsWith(route));
     if (!isSocialRoute && !(isBrandMember && isClientAllowedRoute)) {
       return <Navigate to="/marketplace" replace />;
     }
+    // Brand members without a company can't access board/kanban
+    if (isBrandMember && !clientHasCompany && isCompanyRequiredRoute) {
+      return <Navigate to="/no-company" replace />;
+    }
     return <>{children}</>;
   }
 
-  // Client users without an associated company can only access social routes
+  // Client users without an associated company can only access social routes and client-dashboard
+  if ((isClient || isBrandMember) && !clientHasCompany && isCompanyRequiredRoute) {
+    return <Navigate to="/no-company" replace />;
+  }
   if (isClient && !clientHasCompany) {
     if (isSocialRoute) {
       return <>{children}</>;

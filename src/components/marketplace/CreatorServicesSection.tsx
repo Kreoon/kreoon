@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Star, Clock, RefreshCw, ChevronRight, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ export function CreatorServicesSection({
 }: CreatorServicesSectionProps) {
   const { services, isLoading } = useCreatorServices({ userId, activeOnly: !isOwner });
   const [selectedService, setSelectedService] = useState<CreatorService | null>(null);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -195,6 +197,10 @@ export function CreatorServicesSection({
         service={selectedService}
         isOpen={!!selectedService}
         onClose={() => setSelectedService(null)}
+        onHire={(service) => {
+          setSelectedService(null);
+          navigate(`/marketplace/hire/${service.user_id}?service=${service.id}`);
+        }}
       />
     </div>
   );

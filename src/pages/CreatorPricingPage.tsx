@@ -33,7 +33,7 @@ interface Testimonial {
 
 const COMPARISON_FEATURES: PlanFeatureRow[] = [
   // IA
-  { label: 'Tokens IA / mes', free: '800 tokens', pro: '6,000 tokens', premium: '15,000 tokens', category: 'Inteligencia Artificial' },
+  { label: 'Tokens IA / mes', free: '500 tokens', pro: '6,000 tokens', premium: '15,000 tokens', category: 'Inteligencia Artificial' },
   { label: 'Generador de Bio con IA', free: false, pro: false, premium: true, category: 'Inteligencia Artificial' },
   { label: 'Optimización SEO con IA', free: false, pro: false, premium: true, category: 'Inteligencia Artificial' },
   { label: 'Sugerencias de contenido IA', free: false, pro: false, premium: true, category: 'Inteligencia Artificial' },
@@ -66,7 +66,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: '¿El descuento anual aplica desde el primer mes?',
-    answer: 'Al elegir el plan anual pagas 12 meses por adelantado con un 20% de descuento sobre el precio mensual. El acceso es inmediato y el descuento se refleja en el precio total al momento del pago.',
+    answer: 'Al elegir el plan anual pagas 12 meses por adelantado con un 30% de descuento sobre el precio mensual. El acceso es inmediato y el descuento se refleja en el precio total al momento del pago.',
   },
   {
     question: '¿Qué bloques están disponibles en el plan Free?',
@@ -298,7 +298,7 @@ export default function CreatorPricingPage() {
             </div>
 
             <div className="flex flex-col gap-2.5 mb-8 flex-1">
-              <FeatureItem included="800 tokens IA/mes" />
+              <FeatureItem included="500 tokens IA/mes" />
               <FeatureItem included="5 bloques en perfil" />
               <FeatureItem included="4 bloques básicos" />
               <FeatureItem included="1 template de diseño" />

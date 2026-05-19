@@ -1,4 +1,4 @@
-import { Shield, Lock, FileText, CheckCircle, MessageSquare, Gift, Package } from 'lucide-react';
+import { Shield, Lock, FileText, CheckCircle, MessageSquare, Gift, Package, ExternalLink } from 'lucide-react';
 import type { CreatorPackage, ProjectPaymentMethod } from '../types/marketplace';
 
 interface HiringStepPaymentProps {
@@ -130,14 +130,24 @@ export function HiringStepPayment({
         type="button"
         onClick={onConfirm}
         disabled={isSubmitting}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
       >
-        {isSubmitting
-          ? 'Procesando...'
-          : paymentMethod === 'exchange'
-            ? 'Confirmar Canje y Enviar Proyecto'
-            : 'Confirmar y Pagar'}
+        {isSubmitting ? (
+          'Redirigiendo a Stripe...'
+        ) : paymentMethod === 'exchange' ? (
+          'Confirmar Canje y Enviar Proyecto'
+        ) : (
+          <>
+            Pagar con Stripe
+            <ExternalLink className="h-4 w-4" />
+          </>
+        )}
       </button>
+      {paymentMethod === 'payment' && !isSubmitting && (
+        <p className="text-center text-xs text-gray-600">
+          Serás redirigido a Stripe para completar el pago de forma segura
+        </p>
+      )}
     </div>
   );
 }

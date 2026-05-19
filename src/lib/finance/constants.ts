@@ -114,12 +114,13 @@ export const TOKEN_USD_VALUE = 0.01;
 
 export const PLAN_AI_TOKENS = {
   // Marcas
-  marcas_free: 300,
+  marcas_free: 500,
   starter: 4_000,
+  growth: 7_500,
   pro: 12_000,
   business: 40_000,
   // Creadores
-  creator_free: 800,
+  creator_free: 500,
   creator_pro: 6_000,
   creator_premium: 15_000,
   // Agencias
@@ -164,8 +165,10 @@ export interface PlanDef {
   creators?: number | null;    // active creators
   badge?: string;
   highlighted?: boolean;
-  adnRecargadosPerMonth?: number | null; // null = unlimited, 0 = disabled
-  socialPostsPerMonth?: number | null;   // Social Hub posts/month, null = unlimited
+  adnRecargadosPerMonth?: number | null;   // null = unlimited, 0 = disabled
+  socialPostsPerMonth?: number | null;     // Social Hub posts/month, null = unlimited
+  creatorContactsPerMonth?: number | null; // null = unlimited, 0 = none
+  canjesPerMonth?: number | null;          // null = unlimited, 0 = disabled
 }
 
 export const PLANS: PlanDef[] = [
@@ -176,19 +179,21 @@ export const PLANS: PlanDef[] = [
     segment: "marcas",
     priceMonthly: 0,
     priceAnnual: 0,
-    aiTokens: 300,
+    aiTokens: 500,
     users: 1,
-    contentPerMonth: 0,
+    contentPerMonth: 5,
     storage: "—",
     adnRecargadosPerMonth: 0,
     socialPostsPerMonth: 50,
+    creatorContactsPerMonth: 1,
+    canjesPerMonth: 0,
   },
   {
     id: "marcas-starter",
     name: "Starter",
     segment: "marcas",
     priceMonthly: 39,
-    priceAnnual: 390,
+    priceAnnual: 328,
     aiTokens: 4_000,
     users: 3,
     contentPerMonth: 30,
@@ -197,33 +202,55 @@ export const PLANS: PlanDef[] = [
     highlighted: true,
     adnRecargadosPerMonth: 2,
     socialPostsPerMonth: 300,
+    creatorContactsPerMonth: 5,
+    canjesPerMonth: 5,
+  },
+  {
+    id: "marcas-growth",
+    name: "Growth",
+    segment: "marcas",
+    priceMonthly: 69,
+    priceAnnual: 580,
+    aiTokens: 7_500,
+    users: 5,
+    contentPerMonth: 80,
+    storage: "20GB",
+    badge: "Más popular",
+    highlighted: true,
+    adnRecargadosPerMonth: 3,
+    socialPostsPerMonth: 500,
+    creatorContactsPerMonth: 10,
+    canjesPerMonth: 10,
   },
   {
     id: "marcas-pro",
     name: "Pro",
     segment: "marcas",
     priceMonthly: 129,
-    priceAnnual: 1_290,
+    priceAnnual: 1_084,
     aiTokens: 12_000,
     users: 10,
     contentPerMonth: 150,
     storage: "50GB",
-    badge: "Más popular",
     adnRecargadosPerMonth: 5,
-    socialPostsPerMonth: null, // unlimited
+    socialPostsPerMonth: null,
+    creatorContactsPerMonth: 20,
+    canjesPerMonth: 20,
   },
   {
     id: "marcas-business",
     name: "Business",
     segment: "marcas",
     priceMonthly: 349,
-    priceAnnual: 3_490,
+    priceAnnual: 2_932,
     aiTokens: 40_000,
     users: null,
     contentPerMonth: null,
     storage: "500GB",
     adnRecargadosPerMonth: null,
-    socialPostsPerMonth: null, // unlimited
+    socialPostsPerMonth: null,
+    creatorContactsPerMonth: null,
+    canjesPerMonth: null,
   },
   // ── Creadores ──
   {
@@ -232,7 +259,7 @@ export const PLANS: PlanDef[] = [
     segment: "creadores",
     priceMonthly: 0,
     priceAnnual: 0,
-    aiTokens: 800,
+    aiTokens: 500,
     users: 1,
     contentPerMonth: null,
     storage: "—",
@@ -244,7 +271,7 @@ export const PLANS: PlanDef[] = [
     name: "Creator Pro",
     segment: "creadores",
     priceMonthly: 24,
-    priceAnnual: 240,
+    priceAnnual: 202,
     aiTokens: 6_000,
     users: 1,
     contentPerMonth: null,
@@ -259,7 +286,7 @@ export const PLANS: PlanDef[] = [
     name: "Creator Premium",
     segment: "creadores",
     priceMonthly: 49,
-    priceAnnual: 470,
+    priceAnnual: 412,
     aiTokens: 15_000,
     users: 1,
     contentPerMonth: null,
@@ -275,7 +302,7 @@ export const PLANS: PlanDef[] = [
     name: "Agency Starter",
     segment: "agencias",
     priceMonthly: 249,
-    priceAnnual: 2_490,
+    priceAnnual: 2_092,
     aiTokens: 20_000,
     users: null,
     contentPerMonth: null,
@@ -294,7 +321,7 @@ export const PLANS: PlanDef[] = [
     name: "Agency Pro",
     segment: "agencias",
     priceMonthly: 599,
-    priceAnnual: 5_990,
+    priceAnnual: 5_032,
     aiTokens: 60_000,
     users: null,
     contentPerMonth: null,

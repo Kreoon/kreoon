@@ -189,6 +189,17 @@ export default function ClientDashboard() {
   const [stagePopup, setStagePopup] = useState<{ id: string; label: string; statuses: string[] } | null>(null);
   const [stageScriptContent, setStageScriptContent] = useState<Content | null>(null);
 
+  // Create brand state
+  const [showCreateBrandDialog, setShowCreateBrandDialog] = useState(false);
+  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
+  const [createBrandForm, setCreateBrandForm] = useState({
+    name: '',
+    industry: '',
+    website: '',
+    city: '',
+    description: '',
+  });
+
   // Edit company state
   const [isEditingCompany, setIsEditingCompany] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -202,16 +213,6 @@ export default function ClientDashboard() {
   // Delete product confirmation dialog state (UX-C01)
   const [deleteProductDialog, setDeleteProductDialog] = useState<{ id: string; name: string } | null>(null);
 
-  // Create brand state (for users without brand)
-  const [showCreateBrandDialog, setShowCreateBrandDialog] = useState(false);
-  const [isCreatingBrand, setIsCreatingBrand] = useState(false);
-  const [createBrandForm, setCreateBrandForm] = useState({
-    name: '',
-    industry: '',
-    website: '',
-    city: '',
-    description: '',
-  });
 
   // In root mode, always force the dashboard to use the impersonated clientId
   useEffect(() => {
@@ -481,25 +482,21 @@ export default function ClientDashboard() {
     }
   };
 
-  // Create brand for users without one
   const handleCreateBrand = async () => {
     if (!createBrandForm.name || !user?.id) {
       toast({ title: 'Error', description: 'El nombre de la marca es requerido', variant: 'destructive' });
       return;
     }
-
     setIsCreatingBrand(true);
     try {
-      // Generate slug
       const slug = createBrandForm.name
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
         + '-' + Date.now().toString(36);
 
-      // Create brand
       const { data: newBrand, error: brandError } = await supabase
         .from('brands')
         .insert({
@@ -516,7 +513,6 @@ export default function ClientDashboard() {
 
       if (brandError) throw brandError;
 
-      // Create brand membership
       await supabase.from('brand_members').insert({
         brand_id: newBrand.id,
         user_id: user.id,
@@ -524,13 +520,11 @@ export default function ClientDashboard() {
         status: 'active',
       });
 
-      // Update profile with active_brand_id
       await supabase
         .from('profiles')
         .update({ active_brand_id: newBrand.id, active_role: 'client' } as any)
         .eq('id', user.id);
 
-      // Create associated client
       const { data: newClient } = await supabase
         .from('clients')
         .insert({
@@ -543,7 +537,6 @@ export default function ClientDashboard() {
         .select()
         .single();
 
-      // Add owner to client_users
       if (newClient) {
         await supabase.from('client_users').insert({
           client_id: newClient.id,
@@ -554,8 +547,6 @@ export default function ClientDashboard() {
 
       toast({ title: 'Empresa creada', description: 'Tu empresa se ha creado correctamente' });
       setShowCreateBrandDialog(false);
-
-      // Refresh brand context without full page reload (UX-C02)
       await refetchUserData();
     } catch (error: any) {
       console.error('Error creating brand:', error);
@@ -873,13 +864,15 @@ export default function ClientDashboard() {
       );
     }
 
-    // No brand and no client — show create brand option
+    // No brand and no client — let the user create their own company
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <Building2 className="w-16 h-16 text-primary mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Crea tu empresa</h2>
-        <p className="text-muted-foreground text-center max-w-md mb-6">
-          Comienza creando tu empresa para acceder a todas las funcionalidades de la plataforma.
+        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+          <Building2 className="w-8 h-8 text-primary" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Tu cuenta está siendo configurada</h2>
+        <p className="text-muted-foreground text-center max-w-md mb-8">
+          El equipo de KREOON está vinculando tu empresa a la plataforma. Mientras tanto puedes explorar el marketplace.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <Button onClick={() => setShowCreateBrandDialog(true)}>
@@ -887,15 +880,15 @@ export default function ClientDashboard() {
             Crear mi Empresa
           </Button>
           <Button variant="outline" onClick={() => navigate('/marketplace')}>
-            Ver Marketplace
+            <ShoppingBag className="w-4 h-4 mr-2" />
+            Explorar Marketplace
           </Button>
           <Button variant="ghost" onClick={signOut}>
             <LogOut className="w-4 h-4 mr-2" />
-            Cerrar Sesion
+            Cerrar Sesión
           </Button>
         </div>
 
-        {/* Create Brand Dialog */}
         <Dialog open={showCreateBrandDialog} onOpenChange={setShowCreateBrandDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -952,11 +945,7 @@ export default function ClientDashboard() {
               </div>
             </div>
             <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowCreateBrandDialog(false)}
-                disabled={isCreatingBrand}
-              >
+              <Button variant="outline" onClick={() => setShowCreateBrandDialog(false)} disabled={isCreatingBrand}>
                 Cancelar
               </Button>
               <Button onClick={handleCreateBrand} disabled={isCreatingBrand}>
@@ -1045,10 +1034,12 @@ export default function ClientDashboard() {
           <ClientDashboardOverview
             clientName={clientInfo.name}
             userName={profile?.full_name}
+            userId={user?.id}
             content={content}
             packages={packages}
             onVideoClick={(video) => setSelectedContent(video)}
             onViewAllContent={() => setActiveTab('portfolio')}
+            onUpdate={() => selectedClientId && fetchClientData(selectedClientId, { silent: true })}
             hasExpiredPayment={paymentStatus.hasExpiredPayment}
             expiredAmount={paymentStatus.expiredAmount}
           />
@@ -1586,11 +1577,11 @@ export default function ClientDashboard() {
                   );
                 })()}
 
-                {selectedContent.status === 'review' && (
+                {(['review', 'delivered', 'corrected'] as ContentStatus[]).includes(selectedContent.status) && (
                   <>
                     <div>
                       <Label htmlFor="feedback" className="text-xs text-muted-foreground">
-                        Comentarios (opcional para aprobar, requerido para rechazar)
+                        Comentarios (opcional para aprobar, requerido para correcciones)
                       </Label>
                       <Textarea
                         id="feedback"
@@ -1603,16 +1594,16 @@ export default function ClientDashboard() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button 
-                        className="flex-1 bg-success hover:bg-success/90" 
+                      <Button
+                        className="flex-1 bg-success hover:bg-success/90"
                         onClick={handleApprove}
                         disabled={submitting}
                       >
                         <ThumbsUp className="w-4 h-4 mr-2" />
                         Aprobar
                       </Button>
-                      <Button 
-                        variant="destructive" 
+                      <Button
+                        variant="destructive"
                         className="flex-1"
                         onClick={handleReject}
                         disabled={submitting || !feedback}

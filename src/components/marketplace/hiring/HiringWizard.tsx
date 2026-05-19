@@ -16,6 +16,7 @@ import type { CreationMode } from '@/types/unifiedProject.types';
 interface HiringWizardProps {
   creatorId: string;
   onClose: () => void;
+  preferredServiceId?: string;
 }
 
 const STEPS = [
@@ -114,7 +115,7 @@ function dbToWizardCreator(
   };
 }
 
-export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) {
+export default function HiringWizard({ creatorId, onClose, preferredServiceId }: HiringWizardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data: dbData, loading: creatorLoading } = useCreatorPublicProfile(creatorId);
@@ -128,12 +129,24 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   const [manualScript, setManualScript] = useState('');
   const [manualTitle, setManualTitle] = useState('');
   const [selectedPackageId, setSelectedPackageId] = useState(
-    draft?.packageId ?? creator?.packages.find(p => p.is_popular)?.id ?? creator?.packages[0]?.id ?? '',
+    draft?.packageId
+    ?? (preferredServiceId && creator?.packages.find(p => p.id === preferredServiceId)?.id)
+    ?? creator?.packages.find(p => p.is_popular)?.id
+    ?? creator?.packages[0]?.id
+    ?? '',
   );
   const [paymentMethod, setPaymentMethod] = useState<ProjectPaymentMethod>(draft?.paymentMethod ?? 'payment');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Pre-seleccionar servicio específico cuando llega la data del creador
+  useEffect(() => {
+    if (preferredServiceId && creator && !draft?.packageId) {
+      const match = creator.packages.find(p => p.id === preferredServiceId);
+      if (match) setSelectedPackageId(match.id);
+    }
+  }, [creator, preferredServiceId, draft?.packageId]);
 
   // Auto-save draft (debounced)
   useEffect(() => {
@@ -264,12 +277,60 @@ export default function HiringWizard({ creatorId, onClose }: HiringWizardProps) 
   };
 
   const handleConfirm = async () => {
+    if (!selectedPackage) return;
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    clearDraft(creatorId);
-    setIsComplete(true);
-    setIsSubmitting(false);
+
+    try {
+      // Canje sin pago → crear proyecto directamente
+      if (paymentMethod === 'exchange') {
+        const { error } = await (supabase as any)
+          .from('marketplace_projects')
+          .insert({
+            title: brief.product_name || selectedPackage.name,
+            creator_id: creatorId,
+            status: 'confirmed',
+            payment_method: 'exchange',
+            payment_status: 'unpaid',
+            budget: 0,
+            service_id: selectedPackage.id,
+            creation_mode: creationMode || 'standard',
+            brief: creationMode === 'manual' ? { script: manualScript } : brief,
+          });
+
+        if (error) throw error;
+        clearDraft(creatorId);
+        setIsComplete(true);
+        return;
+      }
+
+      // Pago con Stripe
+      const { data: sessionData, error: fnError } = await supabase.functions.invoke(
+        'stripe-creator-hire',
+        {
+          body: {
+            service_id: selectedPackage.id,
+            creator_id: creatorId,
+            brief_title: brief.product_name || selectedPackage.name,
+          },
+        }
+      );
+
+      if (fnError) throw new Error(fnError.message);
+      if (sessionData?.error) throw new Error(sessionData.error);
+      if (!sessionData?.url) throw new Error('No se recibió URL de pago');
+
+      clearDraft(creatorId);
+      window.location.href = sessionData.url;
+    } catch (err: any) {
+      console.error('[HiringWizard] handleConfirm error:', err);
+      toast({
+        title: 'Error al procesar el pago',
+        description: err.message || 'Intenta de nuevo',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Manual mode: create project with just title

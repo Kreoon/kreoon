@@ -166,7 +166,7 @@ Deno.serve(async (req) => {
     String(value ?? "").replace(/[\n\r\t]/g, " ").replace(/ {5,}/g, "    ").trim()
   );
 
-  const components = sanitizedVars.length > 0
+  const components: unknown[] = sanitizedVars.length > 0
     ? [{
         type: "BODY",
         params: sanitizedVars.map((v, i) => ({
@@ -176,6 +176,17 @@ Deno.serve(async (req) => {
         })),
       }]
     : [];
+
+  // Botcake espera el mismo formato params para BUTTONS que para BODY
+  if (button_variables && button_variables.length > 0) {
+    const btnValue = String(button_variables[0] ?? "").trim();
+    if (btnValue) {
+      components.push({
+        type: "BUTTONS",
+        params: [{ key: "{{1}}", parameter_name: "1", value: btnValue }],
+      });
+    }
+  }
 
   const botcakeBody = {
     psid,

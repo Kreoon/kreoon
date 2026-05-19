@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Trophy, Pencil, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, Users, Calendar, DollarSign, Gift, Layers, Megaphone, Gavel, ArrowUpDown, Loader2, Radio, UserSearch, Shield, Briefcase, CreditCard, Star, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +10,7 @@ import { CampaignApplicationsReview } from './CampaignApplicationsReview';
 import { CampaignProgress } from './CampaignProgress';
 import { BrandPublicationReview } from '../activation/BrandPublicationReview';
 import { SuggestedCreators } from '../SuggestedCreators';
+import { PaymentInstructionsModal } from '@/components/payments/PaymentInstructionsModal';
 import type { Campaign, CampaignStatus } from '../../types/marketplace';
 
 type TabFilter = 'all' | 'active' | 'draft' | 'in_progress' | 'completed';
@@ -37,6 +38,11 @@ export function BrandCampaignManager() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Payment modal state
+  const [paymentModalCampaign, setPaymentModalCampaign] = useState<Campaign | null>(null);
+  const [isNotifying, setIsNotifying] = useState(false);
+
   // Only show campaigns created by the current user
   const { campaigns, loading, activateCampaign, createCampaignCheckout, deleteCampaign } = useMarketplaceCampaigns({
     createdBy: user?.id,
@@ -51,13 +57,18 @@ export function BrandCampaignManager() {
     }
   };
 
-  const handleCompletePayment = async (campaignId: string) => {
-    const url = await createCampaignCheckout(campaignId, 'create-publish-checkout');
-    if (url) {
-      window.location.href = url;
-    } else {
-      toast({ title: 'Error al crear la sesion de pago', variant: 'destructive' });
-    }
+  const handleCompletePayment = (campaignId: string) => {
+    const campaign = campaigns.find(c => c.id === campaignId) ?? null;
+    setPaymentModalCampaign(campaign);
+  };
+
+  const handlePaymentNotified = async () => {
+    setIsNotifying(true);
+    // La campaña ya existe con payment_status = 'pending_payment'
+    // El admin la activará manualmente al confirmar el pago
+    setPaymentModalCampaign(null);
+    setIsNotifying(false);
+    toast({ title: '¡Notificación enviada! El equipo revisará tu pago en menos de 24 horas.' });
   };
 
   const handleEdit = (campaignId: string) => {
@@ -233,6 +244,19 @@ export function BrandCampaignManager() {
           </div>
         )}
       </div>
+
+      {/* Modal de pago */}
+      {paymentModalCampaign && (
+        <PaymentInstructionsModal
+          isOpen={!!paymentModalCampaign}
+          onClose={() => setPaymentModalCampaign(null)}
+          onNotified={handlePaymentNotified}
+          campaignTitle={paymentModalCampaign.title}
+          totalAmount={paymentModalCampaign.total_budget ?? paymentModalCampaign.budget_per_video ?? 0}
+          currency="USD"
+          isNotifying={isNotifying}
+        />
+      )}
     </div>
   );
 }

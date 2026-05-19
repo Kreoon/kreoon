@@ -285,8 +285,9 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   // URL base para redirecciones
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
-  // Verificar si el usuario tiene membresía de comunidad con meses gratis
-  let trialDays = tier.includes("free") ? 0 : 14; // Default: 14 días de trial
+  // Ya existe plan Explorar gratuito → sin trial para planes pagos.
+  // Solo aplica trial si el usuario tiene membresía de comunidad con meses gratis.
+  let trialDays = 0;
 
   const { data: communityMembership } = await supabase
     .from("partner_community_memberships")
@@ -318,7 +319,7 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
         },
       ],
       subscription_data: {
-        trial_period_days: trialDays,
+        ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
         metadata: {
           tier,
           user_id: userId,

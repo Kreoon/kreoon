@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import {
   Video, Calendar, Loader2, User, Scissors, Clock, CheckCircle2,
   AlertTriangle, FileText, FileCheck, Mic, Eye, XCircle, Send,
-  RefreshCw, Archive, UserCheck, Film, CircleDollarSign, ExternalLink, Package,
+  RefreshCw, Archive, UserCheck, Film, CircleDollarSign, ExternalLink, Package, Zap,
 } from 'lucide-react';
+import { BulkGenerationDrawer } from '@/components/content/BulkGenerationDrawer';
 import { format, formatDistanceToNow, isPast, isToday, isTomorrow, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -136,6 +137,7 @@ interface ClientVideosDialogProps {
 
 export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }: ClientVideosDialogProps) {
   const { toast } = useToast();
+  const [showBulkDrawer, setShowBulkDrawer] = useState(false);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(false);
@@ -283,6 +285,13 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
                 <p className="font-bold text-base">Videos del cliente</p>
                 <p className="text-xs text-muted-foreground font-normal">{clientName}</p>
               </div>
+              <button
+                onClick={() => setShowBulkDrawer(true)}
+                className="ml-auto flex items-center gap-1.5 rounded-md border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Generar en lote
+              </button>
             </DialogTitle>
           </DialogHeader>
 
@@ -627,6 +636,12 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
         }}
       />
     </Suspense>
+
+    <BulkGenerationDrawer
+      open={showBulkDrawer}
+      onOpenChange={setShowBulkDrawer}
+      clientId={clientId}
+    />
     </>
   );
 }

@@ -1,24 +1,12 @@
-/**
- * NovaRoleSelectionStep - Paso de seleccion de tipo de cuenta con Design System Nova
- *
- * Primer paso del onboarding obligatorio.
- * El usuario debe seleccionar su tipo de cuenta:
- * - Cliente: Marca/Empresa que contrata talento
- * - Organizacion: Agencia que gestiona equipos
- * - Talento: Creador independiente con multiples especialidades
- */
-
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Sparkles, Building2, ArrowRight, CheckCircle2, Users2
-} from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { AccountType } from '@/types/database';
-import { OnboardingShell, TALENT_STEPS } from './OnboardingShell';
+import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
 
 interface NovaRoleSelectionStepProps {
   onComplete: (accountType: AccountType) => void;
@@ -28,56 +16,36 @@ interface NovaRoleSelectionStepProps {
 
 interface AccountTypeOption {
   id: AccountType;
+  emoji: string;
   label: string;
   description: string;
   features: string[];
-  icon: typeof Sparkles;
-  gradient: string;
-  borderColor: string;
 }
 
 const ACCOUNT_TYPES: AccountTypeOption[] = [
   {
     id: 'talent',
-    label: 'Soy Talento',
-    description: 'Creador, editor, estratega o profesional creativo',
+    emoji: '🎬',
+    label: 'Soy Creador / Talento',
+    description: 'Videógrafo, editor, creador UGC, fotógrafo, estratega creativo...',
     features: [
-      'Perfil publico en el marketplace',
-      'Multiples especialidades',
-      'Recibe propuestas de trabajo',
-      'Gestiona tu portafolio',
+      '✅ Aparezco en el marketplace de marcas',
+      '✅ Recibo propuestas de trabajo y campañas',
+      '✅ Gestiono mis proyectos y portafolio',
+      '✅ Cobro mis pagos desde la plataforma',
     ],
-    icon: Sparkles,
-    gradient: 'from-pink-500 to-purple-500',
-    borderColor: 'border-pink-500',
-  },
-  {
-    id: 'organization',
-    label: 'Tengo una Agencia',
-    description: 'Gestiono un equipo de creadores y talento',
-    features: [
-      'Invita miembros a tu equipo',
-      'Asigna roles y permisos',
-      'Gestiona proyectos internos',
-      'Dashboard de organizacion',
-    ],
-    icon: Users2,
-    gradient: 'from-purple-500 to-indigo-500',
-    borderColor: 'border-purple-500',
   },
   {
     id: 'client',
-    label: 'Soy Cliente / Marca',
-    description: 'Busco contratar talento creativo',
+    emoji: '🏢',
+    label: 'Soy una Marca / Empresa',
+    description: 'Startup, empresa, agencia o negocio que necesita contenido',
     features: [
-      'Acceso al marketplace',
-      'Publica proyectos',
-      'Contrata creadores',
-      'Gestiona campanas',
+      '✅ Busco y contrato creadores verificados',
+      '✅ Publico proyectos con brief detallado',
+      '✅ Reviso, apruebo y descargo el contenido',
+      '✅ Gestiono todas mis campañas en un lugar',
     ],
-    icon: Building2,
-    gradient: 'from-amber-500 to-orange-500',
-    borderColor: 'border-amber-500',
   },
 ];
 
@@ -95,179 +63,188 @@ export function NovaRoleSelectionStep({
 
     setSaving(true);
 
-    // Para talento, navegar inmediatamente y guardar en background
     if (selectedType === 'talent' && onContinueToSpecializations) {
-      // Guardar en background sin esperar
       supabase
         .from('profiles')
         .update({ user_type: selectedType })
         .eq('id', user.id)
-        .then(({ error }) => {
-          if (error) {
-            // Error silencioso - el usuario ya navegó
-          }
-        })
-        .catch(() => {
-          // Error de red silencioso
-        });
+        .then(({ error }) => { if (error) {} })
+        .catch(() => {});
 
-      // Navegar inmediatamente
       onContinueToSpecializations();
       setSaving(false);
       return;
     }
 
-    // Para cliente/organizacion, esperar a guardar
     try {
-      const updateData: Record<string, unknown> = {
-        user_type: selectedType,
-      };
-
-      if (selectedType === 'client') {
-        updateData.active_role = 'client';
-      }
-
       const { error } = await supabase
         .from('profiles')
-        .update(updateData)
+        .update({ user_type: selectedType, active_role: 'client' })
         .eq('id', user.id);
 
       if (error) throw error;
 
-      toast.success('Tipo de cuenta seleccionado');
       onComplete(selectedType);
-    } catch (err) {
-      toast.error('Error al guardar el tipo de cuenta');
+    } catch {
+      toast.error('Error al guardar. Intenta de nuevo.');
     } finally {
       setSaving(false);
     }
   };
 
+  const steps = selectedType === 'talent' ? TALENT_STEPS : CLIENT_STEPS;
+
   return (
-    <OnboardingShell currentStep={1} steps={TALENT_STEPS} onLogout={onLogout}>
-      <div className="max-w-4xl mx-auto">
-        {/* Title */}
+    <OnboardingShell currentStep={1} steps={steps} onLogout={onLogout}>
+      <div className="max-w-lg mx-auto">
+
+        {/* Hero de plataforma */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8 sm:mb-12"
+          className="text-center mb-6"
         >
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-            Bienvenido a KREOON
+          <p className="text-xs font-medium text-primary tracking-widest uppercase mb-4">
+            ✨ Plataforma todo en uno para contenido UGC
+          </p>
+
+          <h2 className="text-2xl font-bold text-foreground mb-3">
+            ¡Bienvenido a KREOON! 👋
           </h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Selecciona como quieres usar la plataforma
+          <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
+            La plataforma donde <strong>marcas y creadores</strong> se conectan para producir contenido que vende.
+            Marketplace, producción y gestión en un solo lugar.
           </p>
         </motion.div>
 
-        {/* Account Type Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        {/* Features de la plataforma — mini tarjetas */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="grid grid-cols-2 gap-3 mb-8"
+        >
+          {[
+            { emoji: '🛒', text: 'Marketplace de creadores' },
+            { emoji: '🎬', text: 'Producción de contenido' },
+            { emoji: '📊', text: 'Gestión de proyectos' },
+            { emoji: '💰', text: 'Pagos y contratos' },
+          ].map((item) => (
+            <div
+              key={item.text}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-border/50 bg-card"
+            >
+              <span className="text-xl">{item.emoji}</span>
+              <p className="text-xs text-muted-foreground leading-snug">{item.text}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Divisor con pregunta */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.18 }}
+          className="flex items-center gap-3 mb-5"
+        >
+          <div className="flex-1 h-px bg-border/50" />
+          <p className="text-sm font-semibold text-foreground shrink-0">
+            ¿Cómo quieres usar KREOON?
+          </p>
+          <div className="flex-1 h-px bg-border/50" />
+        </motion.div>
+
+        {/* BigCards */}
+        <div className="flex flex-col gap-4">
           {ACCOUNT_TYPES.map((type, index) => {
-            const Icon = type.icon;
             const isSelected = selectedType === type.id;
 
             return (
               <motion.button
                 key={type.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.08 }}
                 onClick={() => setSelectedType(type.id)}
                 className={cn(
-                  'group relative p-6 rounded-[0.125rem] border-2 transition-all duration-200 text-left',
-                  'bg-card',
-                  'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background',
+                  'flex items-center gap-4 px-6 py-5 rounded-2xl border-2 text-left transition-all w-full',
                   isSelected
-                    ? `${type.borderColor}`
-                    : 'border-border hover:border-muted-foreground/50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary/40 bg-card'
                 )}
               >
-                {/* Icon */}
-                <div
-                  className={cn(
-                    'w-14 h-14 rounded-[0.125rem] flex items-center justify-center mb-4 transition-transform group-hover:scale-110',
-                    isSelected
-                      ? `bg-gradient-to-br ${type.gradient}`
-                      : 'bg-secondary'
+                {/* Emoji */}
+                <span className="text-4xl shrink-0">{type.emoji}</span>
+
+                {/* Texto */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-base text-foreground">
+                    {type.label}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {type.description}
+                  </p>
+                  {isSelected && (
+                    <motion.ul
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-3 space-y-1"
+                    >
+                      {type.features.map((f, i) => (
+                        <li key={i} className="text-xs text-muted-foreground">{f}</li>
+                      ))}
+                    </motion.ul>
                   )}
-                >
-                  <Icon
-                    className={cn('w-7 h-7', isSelected ? 'text-white' : 'text-muted-foreground')}
-                  />
                 </div>
 
-                {/* Label */}
-                <h3 className="text-lg font-semibold text-foreground mb-1">
-                  {type.label}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">{type.description}</p>
-
-                {/* Features */}
-                <ul className="space-y-1.5">
-                  {type.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <CheckCircle2
-                        className={cn('w-3.5 h-3.5 shrink-0', isSelected ? 'text-green-500' : 'text-muted-foreground/50')}
-                      />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-
-                {/* Selected indicator */}
-                {isSelected && (
-                  <div className="absolute top-4 right-4">
-                    <CheckCircle2 className={cn('w-6 h-6', type.borderColor.replace('border-', 'text-'))} />
-                  </div>
-                )}
+                {/* Radio visual */}
+                <div
+                  className={cn(
+                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+                    isSelected
+                      ? 'bg-primary border-primary'
+                      : 'border-muted-foreground/30'
+                  )}
+                >
+                  {isSelected && <Check className="w-3.5 h-3.5 text-primary-foreground" />}
+                </div>
               </motion.button>
             );
           })}
         </div>
 
-        {/* Continue Button */}
-        {selectedType && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 sm:mt-12 flex justify-center"
+        {/* Botón continuar */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: selectedType ? 1 : 0 }}
+          className="mt-8"
+        >
+          <button
+            onClick={handleContinue}
+            disabled={!selectedType || saving}
+            className={cn(
+              'w-full flex items-center justify-center gap-2 px-6 py-4 rounded-2xl font-semibold text-base transition-all',
+              'bg-primary text-primary-foreground',
+              'hover:bg-primary/90',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
           >
-            <button
-              onClick={handleContinue}
-              disabled={saving}
-              className={cn(
-                'flex items-center gap-2 px-8 py-3 rounded-[0.125rem] font-medium transition-all duration-200',
-                'bg-primary text-primary-foreground',
-                'hover:bg-primary/90',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background'
-              )}
-            >
-              {saving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  {selectedType === 'talent' ? 'Elegir especialidades' : 'Continuar'}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </motion.div>
-        )}
+            {saving ? (
+              <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+            ) : (
+              <>
+                {selectedType === 'talent' ? 'Elegir mis especialidades' : 'Continuar'}
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
 
-        {/* Helper text for talent */}
-        {selectedType === 'talent' && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-sm text-muted-foreground mt-4"
-          >
-            En el siguiente paso podras elegir hasta 5 especialidades
-          </motion.p>
-        )}
+          {selectedType === 'talent' && (
+            <p className="text-center text-xs text-muted-foreground mt-3">
+              En el siguiente paso elegirás tus áreas de especialización
+            </p>
+          )}
+        </motion.div>
       </div>
     </OnboardingShell>
   );

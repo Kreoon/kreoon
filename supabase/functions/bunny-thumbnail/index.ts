@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     // Ensure the requested video_id actually belongs to the requested content
     const { data: content, error: contentError } = await supabase
       .from('content')
-      .select('video_url, video_urls')
+      .select('video_url, video_urls, bunny_embed_url, thumbnail_url')
       .eq('id', contentId)
       .single()
 
@@ -91,6 +91,9 @@ Deno.serve(async (req) => {
     const urls: string[] = []
     if (content.video_url) urls.push(content.video_url)
     if (Array.isArray(content.video_urls)) urls.push(...content.video_urls)
+    // También aceptar bunny_embed_url y thumbnail_url como fuentes válidas
+    if (content.bunny_embed_url) urls.push(content.bunny_embed_url)
+    if (content.thumbnail_url) urls.push(content.thumbnail_url)
 
     console.log(`[bunny-thumbnail] Found ${urls.length} video URLs in content`)
 

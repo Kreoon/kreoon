@@ -2,10 +2,11 @@ import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
-import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag } from "lucide-react";
+import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
 
 const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
+import { BulkGenerationDrawer } from "@/components/content/BulkGenerationDrawer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -288,6 +289,8 @@ export default function ContentBoard() {
   // Dialog para detalle - using persisted selected content
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   
+  const [showBulkDrawer, setShowBulkDrawer] = useState(false);
+
   // Dialog para crear contenido
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
@@ -728,6 +731,15 @@ export default function ContentBoard() {
           subtitle="Centro de control inteligente de contenido • Powered by AI"
           action={
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 h-9 hidden sm:flex"
+                onClick={() => setShowBulkDrawer(true)}
+              >
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="hidden md:inline">Generar en lote</span>
+              </Button>
               <div className="relative hidden sm:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -1257,6 +1269,9 @@ export default function ContentBoard() {
           setPendingCampaignContent(null);
         }}
       />
+
+      {/* Bulk Generation Drawer */}
+      <BulkGenerationDrawer open={showBulkDrawer} onOpenChange={setShowBulkDrawer} />
     </div>
   );
 }

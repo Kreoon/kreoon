@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, Suspense, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -57,6 +57,15 @@ const creatorMobileNavigation = [
   { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
   { name: "Config", href: "/settings", icon: Settings },
 ];
+
+// Minimal loader shown only in the content area while a lazy page chunk loads
+function ContentAreaLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[40vh]">
+      <div className="animate-spin h-7 w-7 border-2 border-primary border-t-transparent rounded-full" />
+    </div>
+  );
+}
 
 // Animated page wrapper component
 function PageWrapper({ children, locationKey }: { children: ReactNode; locationKey: string }) {
@@ -181,9 +190,11 @@ export function MainLayout({
           )}
         >
           <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
-            <PageWrapper locationKey={location.pathname}>
-              {children}
-            </PageWrapper>
+            <Suspense fallback={<ContentAreaLoader />}>
+              <PageWrapper locationKey={location.pathname}>
+                {children}
+              </PageWrapper>
+            </Suspense>
           </div>
         </main>
 
@@ -283,9 +294,11 @@ export function MainLayout({
           )}
         >
           <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
-            <PageWrapper locationKey={location.pathname}>
-              {children}
-            </PageWrapper>
+            <Suspense fallback={<ContentAreaLoader />}>
+              <PageWrapper locationKey={location.pathname}>
+                {children}
+              </PageWrapper>
+            </Suspense>
           </div>
         </main>
 
@@ -409,9 +422,11 @@ export function MainLayout({
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
         >
           <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
-            <PageWrapper locationKey={location.pathname}>
-              {children}
-            </PageWrapper>
+            <Suspense fallback={<ContentAreaLoader />}>
+              <PageWrapper locationKey={location.pathname}>
+                {children}
+              </PageWrapper>
+            </Suspense>
           </div>
         </main>
 
@@ -498,9 +513,11 @@ export function MainLayout({
         )}
       >
         <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
-          <PageWrapper locationKey={location.pathname}>
-            {children}
-          </PageWrapper>
+          <Suspense fallback={<ContentAreaLoader />}>
+            <PageWrapper locationKey={location.pathname}>
+              {children}
+            </PageWrapper>
+          </Suspense>
         </div>
       </main>
 

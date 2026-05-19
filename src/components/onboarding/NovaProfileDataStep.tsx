@@ -1,39 +1,24 @@
-/**
- * NovaProfileDataStep - Formulario "Completa tu perfil" con Design System Nova
- *
- * Features:
- * - Responsive: Mobile, Tablet, Desktop
- * - Dark/Light mode support
- * - Bordes sutilmente redondeados
- * - Aurora background effect
- * - Glassmorphism cards
- */
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { motion } from 'framer-motion';
-import {
-  User, Mail, Phone, MapPin, FileText, Calendar,
-  AtSign, AlertCircle, CheckCircle2, Loader2,
-  AlertTriangle, ArrowRight, ArrowLeft, Instagram,
-  Facebook, Twitter, Youtube, Linkedin, Share2
-} from 'lucide-react';
-import { useOnboardingGate, ProfileData, City } from '@/hooks/useOnboardingGate';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle, CheckCircle2, Loader2, ArrowRight, ArrowLeft, ChevronDown } from 'lucide-react';
+import { useOnboardingGate, ProfileData, City, Country } from '@/hooks/useOnboardingGate';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
 
-// ─── Schema ─────────────────────────────────────────────────────
+// ─── Schema ────────────────────────────────────────────────────────────────────
 const profileSchema = z.object({
-  full_name: z.string().min(2, 'Nombre muy corto').max(100, 'Nombre muy largo'),
+  first_name: z.string().min(2, 'Ingresa tu nombre').max(60),
+  last_name: z.string().min(2, 'Ingresa tu apellido').max(60),
   username: z.string()
     .min(3, 'Mínimo 3 caracteres')
     .max(30, 'Máximo 30 caracteres')
     .regex(/^[a-z0-9._-]+$/, 'Solo letras minúsculas, números, puntos y guiones'),
   phone: z.string().min(7, 'Teléfono inválido').max(20),
-  email: z.string().email('Email inválido'),
+  email: z.string().email(),
   country: z.string().min(1, 'Selecciona un país'),
   city: z.string().min(2, 'Ciudad requerida'),
   address: z.string().min(5, 'Dirección muy corta'),
@@ -42,7 +27,6 @@ const profileSchema = z.object({
   document_number: z.string().min(3, 'Número de documento requerido'),
   date_of_birth: z.string().min(1, 'Fecha de nacimiento requerida'),
   gender: z.enum(['male', 'female', 'other'], { required_error: 'Selecciona tu sexo' }),
-  // Redes sociales (al menos una requerida)
   social_instagram: z.string().optional(),
   social_facebook: z.string().optional(),
   social_tiktok: z.string().optional(),
@@ -57,26 +41,65 @@ const profileSchema = z.object({
   const m = today.getMonth() - dob.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
   return age >= 18;
-}, {
-  message: 'Debes ser mayor de 18 años para usar KREOON',
-  path: ['date_of_birth'],
-}).refine((data) => {
-  // Al menos una red social
+}, { message: 'Debes ser mayor de 18 años', path: ['date_of_birth'] })
+.refine((data) => {
   return (
     (data.social_instagram && data.social_instagram.length > 0) ||
-    (data.social_facebook && data.social_facebook.length > 0) ||
-    (data.social_tiktok && data.social_tiktok.length > 0) ||
-    (data.social_x && data.social_x.length > 0) ||
-    (data.social_youtube && data.social_youtube.length > 0) ||
-    (data.social_linkedin && data.social_linkedin.length > 0)
+    (data.social_tiktok && data.social_tiktok.length > 0)
   );
-}, {
-  message: 'Debes agregar al menos una red social',
-  path: ['social_network'],
-});
+}, { message: 'Agrega al menos Instagram o TikTok', path: ['social_network'] });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+// ─── Definición de pasos del quiz ──────────────────────────────────────────────
+const QUIZ_STEPS = [
+  {
+    id: 'name',
+    emoji: '👤',
+    question: '¿Cómo te llamas?',
+    hint: 'Tu nombre aparecerá en tu perfil público de KREOON',
+    fields: ['first_name', 'last_name', 'username'] as const,
+  },
+  {
+    id: 'contact',
+    emoji: '📞',
+    question: '¿Cuál es tu teléfono?',
+    hint: 'Lo usamos para notificaciones importantes y soporte',
+    fields: ['phone'] as const,
+  },
+  {
+    id: 'age',
+    emoji: '🎂',
+    question: '¿Cuándo naciste?',
+    hint: 'Debes ser mayor de 18 años para usar KREOON',
+    fields: ['date_of_birth', 'gender'] as const,
+  },
+  {
+    id: 'location',
+    emoji: '📍',
+    question: '¿Dónde vives?',
+    hint: 'Tu ubicación nos ayuda a conectarte con oportunidades cercanas',
+    fields: ['country', 'city', 'address', 'nationality'] as const,
+  },
+  {
+    id: 'document',
+    emoji: '🪪',
+    question: '¿Cuál es tu documento de identidad?',
+    hint: 'Esto verifica que eres una persona real',
+    fields: ['document_type', 'document_number'] as const,
+  },
+  {
+    id: 'social',
+    emoji: '📱',
+    question: '¿En qué redes sociales estás?',
+    hint: 'Agrega al menos Instagram o TikTok para continuar',
+    fields: [] as const,
+  },
+] as const;
+
+type QuizStepId = typeof QUIZ_STEPS[number]['id'];
+
+// ─── Props ─────────────────────────────────────────────────────────────────────
 interface NovaProfileDataStepProps {
   onComplete: () => void;
   onBack?: () => void;
@@ -84,85 +107,171 @@ interface NovaProfileDataStepProps {
   isTalentFlow?: boolean;
 }
 
-// ─── Nova Input Component ───────────────────────────────────────
-interface NovaFieldProps {
-  label: string;
-  required?: boolean;
-  error?: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-  htmlFor?: string;
-  errorId?: string;
+// ─── Input reutilizable ────────────────────────────────────────────────────────
+const inputCls = cn(
+  'w-full h-14 rounded-2xl px-4',
+  'bg-background border-2 border-border',
+  'text-foreground placeholder:text-muted-foreground/60 text-base',
+  'transition-colors focus:outline-none focus:border-primary'
+);
+
+// ─── FlagImg — span con background-image para evitar clipping en botones Windows ──
+function FlagImg({ code }: { code: string }) {
+  if (!code) return null;
+  return (
+    <span
+      role="img"
+      aria-label={code}
+      style={{
+        display: 'inline-block',
+        width: 20,
+        height: 15,
+        minWidth: 20,
+        backgroundImage: `url(https://flagcdn.com/w20/${code.toLowerCase()}.png)`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        borderRadius: 2,
+        flexShrink: 0,
+      }}
+    />
+  );
 }
 
-function NovaField({ label, required, error, icon, children, className, htmlFor, errorId }: NovaFieldProps) {
+// ─── CountryPicker — evita el problema de emojis en select nativo de Windows ──
+interface CountryPickerProps {
+  value: string;
+  onChange: (val: string, country?: Country) => void;
+  options: Country[];
+  placeholder: string;
+  /** 'country' muestra bandera + nombre; 'dialcode' muestra bandera + indicativo */
+  mode?: 'country' | 'dialcode';
+  error?: boolean;
+  /** compact=true para usar dentro del input de teléfono (sin altura fija propia) */
+  compact?: boolean;
+}
+
+function CountryPicker({ value, onChange, options, placeholder, mode = 'country', error, compact = false }: CountryPickerProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+
+  const selected = mode === 'dialcode'
+    ? options.find(c => c.dial_code === value)
+    : options.find(c => c.code === value);
+
+  const filtered = search
+    ? options.filter(c => c.name_es.toLowerCase().includes(search.toLowerCase()) || c.dial_code.includes(search))
+    : options;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const trigger = compact ? (
+    // Versión compacta para el split del teléfono
+    <button
+      type="button"
+      onClick={() => { setOpen(!open); setSearch(''); }}
+      className="h-full px-3 bg-muted/40 border-r border-border text-sm font-medium flex items-center gap-1.5 cursor-pointer focus:outline-none whitespace-nowrap"
+      style={{ minWidth: '92px' }}
+    >
+      <FlagImg code={selected?.code ?? ''} />
+      <span className="text-foreground">{selected?.dial_code ?? value}</span>
+      <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', open && 'rotate-180')} />
+    </button>
+  ) : (
+    // Versión full-width (reemplaza el select normal)
+    <button
+      type="button"
+      onClick={() => { setOpen(!open); setSearch(''); }}
+      className={cn(
+        inputCls, 'text-left flex items-center gap-3 cursor-pointer',
+        error && 'border-red-400'
+      )}
+    >
+      {selected ? (
+        <>
+          <FlagImg code={selected.code} />
+          <span className="flex-1 text-base text-foreground">
+            {mode === 'dialcode' ? selected.dial_code : selected.name_es}
+          </span>
+        </>
+      ) : (
+        <span className="flex-1 text-muted-foreground/60">{placeholder}</span>
+      )}
+      <ChevronDown className={cn('w-4 h-4 text-muted-foreground transition-transform shrink-0', open && 'rotate-180')} />
+    </button>
+  );
+
   return (
-    <div className={cn("space-y-2", className)}>
-      <label
-        htmlFor={htmlFor}
-        className="block text-sm font-medium text-foreground"
-      >
-        {label}
-        {required && <span className="ml-1 text-destructive" aria-hidden="true">*</span>}
-      </label>
-      <div className="relative">
-        {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground" aria-hidden="true">
-            {icon}
+    <div ref={ref} className="relative">
+      {trigger}
+      {open && (
+        <div className={cn(
+          'absolute z-50 mt-1 rounded-2xl border border-border bg-popover shadow-xl overflow-hidden',
+          compact ? 'left-0 w-64' : 'w-full'
+        )}>
+          <div className="p-2 border-b border-border">
+            <input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar país..."
+              className="w-full px-3 py-2 rounded-xl bg-muted/50 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+            />
           </div>
-        )}
-        {children}
-      </div>
-      {error && (
-        <p id={errorId} className="text-xs text-destructive flex items-center gap-1" role="alert">
-          <AlertCircle className="w-3 h-3" aria-hidden="true" />
-          {error}
-        </p>
+          <div className="max-h-52 overflow-y-auto">
+            {filtered.map(c => {
+              const isSelected = mode === 'dialcode' ? c.dial_code === value : c.code === value;
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => { onChange(mode === 'dialcode' ? c.dial_code : c.code, c); setOpen(false); }}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/60',
+                    isSelected && 'bg-primary/10'
+                  )}
+                >
+                  <FlagImg code={c.code} />
+                  <span className={cn('text-sm flex-1', isSelected ? 'text-primary font-medium' : 'text-foreground')}>{c.name_es}</span>
+                  {mode === 'dialcode' && <span className="text-xs text-muted-foreground">{c.dial_code}</span>}
+                </button>
+              );
+            })}
+            {filtered.length === 0 && (
+              <p className="px-4 py-3 text-sm text-muted-foreground text-center">Sin resultados</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-// ─── Nova Select Component ──────────────────────────────────────
-interface NovaSelectProps {
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-  hasIcon?: boolean;
-  error?: boolean;
-}
-
-function NovaSelect({ value, onChange, options, placeholder, hasIcon, error }: NovaSelectProps) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={cn(
-        "w-full h-12 rounded-[0.125rem] cursor-pointer",
-        "bg-background text-foreground",
-        "border border-border",
-        "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
-        hasIcon ? "pl-11 pr-4" : "pl-4 pr-4",
-        error && "border-destructive"
-      )}
-    >
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+    <p className="flex items-center gap-1.5 text-sm text-red-500 mt-1.5">
+      <AlertCircle className="w-4 h-4 shrink-0" />
+      {message}
+    </p>
   );
 }
 
-// ─── Main Component ─────────────────────────────────────────────
+const STORAGE_KEY = 'kreoon_onboarding_quiz';
+
+// ─── Componente principal ──────────────────────────────────────────────────────
 export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow = true }: NovaProfileDataStepProps) {
-  // Para talento: paso 3 de 4, para cliente: paso 2 de 3
   const steps = isTalentFlow ? TALENT_STEPS : CLIENT_STEPS;
   const currentStep = isTalentFlow ? 3 : 2;
+
   const {
     existingProfileData,
     countries,
@@ -173,21 +282,43 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
     isSavingProfile,
   } = useOnboardingGate();
 
+  // Restaurar paso del quiz desde localStorage si hay progreso guardado
+  const [quizStep, setQuizStep] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).step ?? 0;
+    } catch {}
+    return 0;
+  });
+  const [direction, setDirection] = useState(1);
   const [availableCities, setAvailableCities] = useState<City[]>([]);
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [submitAttempted, setSubmitAttempted] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
+  // Inicializar dialCode/localPhone desde el teléfono existente
+  const [dialCode, setDialCode] = useState(() => {
+    const existing = existingProfileData.phone || '';
+    const match = countries.find(c => existing.startsWith(c.dial_code));
+    return match ? match.dial_code : '+57';
+  });
+  const [localPhone, setLocalPhone] = useState(() => {
+    const existing = existingProfileData.phone || '';
+    const match = countries.find(c => existing.startsWith(c.dial_code));
+    return match ? existing.slice(match.dial_code.length) : existing;
+  });
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    trigger,
+    reset,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
+    mode: 'onTouched',
     defaultValues: {
-      full_name: existingProfileData.full_name || '',
+      first_name: existingProfileData.full_name?.split(' ')[0] || '',
+      last_name: existingProfileData.full_name?.split(' ').slice(1).join(' ') || '',
       username: existingProfileData.username || '',
       phone: existingProfileData.phone || '',
       email: existingProfileData.email || '',
@@ -208,506 +339,539 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
     },
   });
 
-  const usernameValue = watch('username');
   const countryValue = watch('country');
   const genderValue = watch('gender');
+  const usernameValue = watch('username');
 
-  // Filter document types by country
   const filteredDocTypes = documentTypes.filter(dt =>
-    dt.countries.includes(countryValue) || dt.id === 'passport' || dt.id === 'other'
+    dt.countries.includes(countryValue) || dt.id === 'passport'
   );
 
-  // Load cities when country changes
   useEffect(() => {
-    if (countryValue) {
-      const cities = getCitiesByCountry(countryValue);
-      setAvailableCities(cities);
-    }
+    if (countryValue) setAvailableCities(getCitiesByCountry(countryValue));
   }, [countryValue, getCitiesByCountry]);
 
-  // Check username availability
   useEffect(() => {
-    if (!usernameValue || usernameValue.length < 3) {
-      setUsernameStatus('idle');
-      return;
-    }
-
-    const normalized = usernameValue.toLowerCase();
-    if (normalized === existingProfileData.username?.toLowerCase()) {
-      setUsernameStatus('available');
-      return;
-    }
-
+    if (!usernameValue || usernameValue.length < 3) { setUsernameStatus('idle'); return; }
+    if (usernameValue === existingProfileData.username) { setUsernameStatus('available'); return; }
     setUsernameStatus('checking');
-    const timeout = setTimeout(async () => {
-      const available = await checkUsernameAvailable(normalized);
-      setUsernameStatus(available ? 'available' : 'taken');
+    const t = setTimeout(async () => {
+      const ok = await checkUsernameAvailable(usernameValue);
+      setUsernameStatus(ok ? 'available' : 'taken');
     }, 500);
-
-    return () => clearTimeout(timeout);
+    return () => clearTimeout(t);
   }, [usernameValue, existingProfileData.username, checkUsernameAvailable]);
 
-  const onSubmit = useCallback(async (data: ProfileFormData) => {
+  // Restaurar valores del formulario desde localStorage al montar
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { step: number; values?: Partial<ProfileFormData> };
+      if (!parsed.values) return;
+      reset(parsed.values as ProfileFormData, { keepDefaultValues: false });
+      // Restaurar estado del selector de teléfono
+      if (parsed.values.phone) {
+        const match = countries.find(c => parsed.values!.phone!.startsWith(c.dial_code));
+        if (match) {
+          setDialCode(match.dial_code);
+          setLocalPhone(parsed.values.phone.slice(match.dial_code.length));
+        }
+      }
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Guardar progreso en localStorage después de avanzar cada paso
+  const saveProgress = useCallback((nextStep: number) => {
+    try {
+      const values = watch() as Partial<ProfileFormData>;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: nextStep, values }));
+    } catch {}
+  }, [watch]);
+
+  // Avanzar al siguiente paso del quiz
+  const handleNext = useCallback(async () => {
+    const step = QUIZ_STEPS[quizStep];
+
+    // Para el paso de contacto: asegurar que phone tenga el valor combinado
+    if (step.id === 'contact') {
+      setValue('phone', dialCode + localPhone);
+    }
+
+    // Para clientes: autogenerar username desde el primer nombre al salir del paso 'name'
+    if (step.id === 'name' && !isTalentFlow) {
+      const firstName = watch('first_name') || '';
+      const base = firstName.toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '') // quitar tildes
+        .replace(/[^a-z0-9._-]/g, '');
+      setValue('username', base || 'usuario');
+    }
+
+    // Validar campos del paso actual — para clientes en 'name' solo first_name + last_name
+    const fieldsToValidate = (
+      step.id === 'name' && !isTalentFlow
+        ? ['first_name', 'last_name']
+        : [...step.fields]
+    ) as (keyof ProfileFormData)[];
+
+    // Para el último paso (redes), exigir al menos Instagram o TikTok
+    if (step.id === 'social') {
+      const hasOne = [watch('social_instagram'), watch('social_tiktok')].some(s => s && s.length > 0);
+      if (!hasOne) {
+        toast.error('Agrega al menos Instagram o TikTok para continuar');
+        return;
+      }
+    }
+
+    if (fieldsToValidate.length > 0) {
+      const valid = await trigger(fieldsToValidate);
+      if (!valid) return;
+    }
+
     if (usernameStatus === 'taken') {
-      toast.error('El username ya está en uso');
+      toast.error('El username ya está en uso, elige otro');
       return;
     }
 
-    try {
-      await saveProfileData(data as ProfileData);
-      toast.success('Datos guardados correctamente');
-      onComplete();
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
-      if (errorMessage === 'username_taken') {
-        toast.error('El username ya está en uso');
-        setUsernameStatus('taken');
-      } else {
-        toast.error(`Error al guardar: ${errorMessage}`);
-      }
+    if (quizStep < QUIZ_STEPS.length - 1) {
+      const nextStep = quizStep + 1;
+      setDirection(1);
+      setQuizStep(nextStep);
+      saveProgress(nextStep);
+    } else {
+      // Último paso — combinar nombre + apellido y guardar
+      handleSubmit(async (data) => {
+        try {
+          const payload: ProfileData = {
+            ...data as unknown as ProfileData,
+            full_name: `${data.first_name} ${data.last_name}`.trim(),
+          };
+          await saveProfileData(payload);
+          // Limpiar progreso guardado al completar exitosamente
+          try { localStorage.removeItem(STORAGE_KEY); } catch {}
+          toast.success('¡Perfil guardado!');
+          onComplete();
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Error desconocido';
+          if (msg === 'username_taken') {
+            toast.error('El username ya está en uso');
+            setUsernameStatus('taken');
+            setQuizStep(0);
+          } else {
+            toast.error(`Error al guardar: ${msg}`);
+          }
+        }
+      })();
     }
-  }, [saveProfileData, usernameStatus, onComplete]);
+  }, [quizStep, trigger, watch, setValue, usernameStatus, dialCode, localPhone, handleSubmit, saveProfileData, saveProgress, onComplete, isTalentFlow]);
 
-  // Input base classes - optimized hierarchy
-  const inputClasses = cn(
-    "w-full h-12 rounded-[0.125rem]",
-    "bg-background",
-    "border border-border",
-    "text-foreground",
-    "placeholder:text-muted-foreground",
-    "transition-colors duration-150",
-    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-  );
+  const handlePrev = useCallback(() => {
+    if (quizStep === 0) {
+      onBack?.();
+    } else {
+      setDirection(-1);
+      setQuizStep(q => q - 1);
+    }
+  }, [quizStep, onBack]);
+
+  const current = QUIZ_STEPS[quizStep];
+  const isLastStep = quizStep === QUIZ_STEPS.length - 1;
+
+  const variants = {
+    enter: (d: number) => ({ opacity: 0, x: d > 0 ? 40 : -40 }),
+    center: { opacity: 1, x: 0 },
+    exit: (d: number) => ({ opacity: 0, x: d > 0 ? -40 : 40 }),
+  };
 
   return (
     <OnboardingShell currentStep={currentStep} steps={steps} onLogout={onLogout}>
-      {/* Back Button */}
-      {onBack && (
-        <div className="mb-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {isTalentFlow ? 'Volver' : 'Cambiar tipo de cuenta'}
-          </button>
+      <div className="max-w-lg mx-auto flex flex-col min-h-[60vh]">
+
+        {/* Mini barra de progreso del quiz */}
+        <div className="flex items-center gap-2 mb-8">
+          {QUIZ_STEPS.map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'rounded-full transition-all duration-300',
+                i < quizStep  ? 'h-2 flex-1 bg-green-500' :
+                i === quizStep ? 'h-2 flex-[2] bg-primary' :
+                                 'h-2 flex-1 bg-muted-foreground/20'
+              )}
+            />
+          ))}
         </div>
-      )}
 
-      {/* Main Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className={cn(
-            "rounded-[0.125rem] p-6 sm:p-8 md:p-10",
-            "bg-card",
-            "border border-border"
-          )}
-        >
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-              Completa tu perfil
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
-              Para usar KREOON necesitas completar tu información. Esto nos ayuda a protegerte y garantizar la seguridad de la comunidad.
-            </p>
-          </div>
-
-          {/* Error Banner */}
-          {submitAttempted && Object.keys(errors).length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 flex items-start gap-3"
-              role="alert"
-              aria-live="assertive"
-            >
-              <AlertTriangle className="w-5 h-5 text-red-500 dark:text-red-400 flex-shrink-0 mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-red-700 dark:text-red-400 font-medium">Faltan campos obligatorios</p>
-                <p className="text-red-600 dark:text-red-400/70 text-sm mt-1">
-                  Por favor completa los siguientes campos: {Object.keys(errors).map(field => {
-                    const fieldLabels: Record<string, string> = {
-                      full_name: 'Nombre completo',
-                      username: 'Username',
-                      phone: 'Teléfono',
-                      email: 'Correo electrónico',
-                      country: 'País',
-                      city: 'Ciudad',
-                      address: 'Dirección',
-                      nationality: 'Nacionalidad',
-                      document_type: 'Tipo de documento',
-                      document_number: 'Número de documento',
-                      date_of_birth: 'Fecha de nacimiento',
-                      gender: 'Sexo',
-                      social_network: 'Red social (al menos una)',
-                    };
-                    return fieldLabels[field] || field;
-                  }).join(', ')}.
-                </p>
-              </div>
-            </motion.div>
-          )}
-
-          <form ref={formRef} onSubmit={handleSubmit(onSubmit, (validationErrors) => {
-            setSubmitAttempted(true);
-            // Mostrar toast con campos faltantes
-            const errorFields = Object.keys(validationErrors);
-            if (errorFields.length > 0) {
-              const fieldNames: Record<string, string> = {
-                full_name: 'Nombre completo',
-                username: 'Username',
-                phone: 'Teléfono',
-                email: 'Email',
-                country: 'País',
-                city: 'Ciudad',
-                address: 'Dirección',
-                nationality: 'Nacionalidad',
-                document_type: 'Tipo de documento',
-                document_number: 'Número de documento',
-                date_of_birth: 'Fecha de nacimiento',
-                gender: 'Sexo',
-                social_network: 'Red social',
-              };
-              const missingFields = errorFields
-                .map(f => fieldNames[f] || f)
-                .slice(0, 3)
-                .join(', ');
-              toast.error(`Campos incompletos: ${missingFields}${errorFields.length > 3 ? '...' : ''}`);
-            }
-          })} className="space-y-8">
-            {/* Section: Información Personal */}
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-[0.125rem] bg-primary/10">
-                  <User className="w-4 h-4 text-primary" />
-                </div>
-                Información Personal
+        {/* Contenido del paso actual */}
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={current.id}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+            className="flex-1 flex flex-col"
+          >
+            {/* Pregunta */}
+            <div className="mb-8">
+              <p className="text-5xl mb-4">{current.emoji}</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">
+                {current.question}
               </h2>
+              <p className="text-sm text-muted-foreground">
+                {current.id === 'name' && !isTalentFlow
+                  ? 'Tu nombre completo para identificarte en la plataforma'
+                  : current.hint}
+              </p>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Nombre completo */}
-                <NovaField label="Nombre completo" required error={errors.full_name?.message} icon={<User className="w-5 h-5" />} htmlFor="full_name" errorId="full_name-error">
-                  <input
-                    {...register('full_name')}
-                    id="full_name"
-                    placeholder="Tu nombre completo"
-                    aria-required="true"
-                    aria-invalid={!!errors.full_name}
-                    aria-describedby={errors.full_name ? "full_name-error" : undefined}
-                    className={cn(inputClasses, "pl-11", errors.full_name && submitAttempted && "border-red-300 dark:border-red-500")}
-                  />
-                </NovaField>
+            {/* Campos del paso */}
+            <div className="space-y-4 flex-1">
 
-                {/* Username */}
-                <NovaField label="Username" required error={errors.username?.message || (usernameStatus === 'taken' ? 'Username no disponible' : undefined)} icon={<AtSign className="w-5 h-5" />} htmlFor="username" errorId="username-error">
-                  <div className="relative">
-                    <input
-                      {...register('username')}
-                      id="username"
-                      placeholder="tu_username"
-                      aria-required="true"
-                      aria-invalid={!!errors.username || usernameStatus === 'taken'}
-                      aria-describedby={errors.username || usernameStatus === 'taken' ? "username-error" : undefined}
-                      className={cn(inputClasses, "pl-11 pr-10", errors.username && submitAttempted && "border-red-300 dark:border-red-500")}
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2" aria-hidden="true">
-                      {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />}
-                      {usernameStatus === 'available' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                      {usernameStatus === 'taken' && <AlertCircle className="w-5 h-5 text-red-500" />}
+              {/* ── PASO 1: Nombre ── */}
+              {current.id === 'name' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Nombres <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        {...register('first_name')}
+                        placeholder="Ej: María"
+                        className={cn(inputCls, errors.first_name && 'border-red-400')}
+                        autoFocus
+                      />
+                      <FieldError message={errors.first_name?.message} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Apellidos <span className="text-red-400">*</span>
+                      </label>
+                      <input
+                        {...register('last_name')}
+                        placeholder="Ej: García"
+                        className={cn(inputCls, errors.last_name && 'border-red-400')}
+                      />
+                      <FieldError message={errors.last_name?.message} />
                     </div>
                   </div>
-                </NovaField>
 
-                {/* Email */}
-                <NovaField label="Correo electrónico" required icon={<Mail className="w-5 h-5" />} htmlFor="email">
-                  <input
-                    {...register('email')}
-                    id="email"
-                    type="email"
-                    disabled
-                    aria-required="true"
-                    aria-disabled="true"
-                    className={cn(inputClasses, "pl-11 opacity-60 cursor-not-allowed")}
-                  />
-                </NovaField>
-
-                {/* Teléfono */}
-                <NovaField label="Teléfono" required error={errors.phone?.message} icon={<Phone className="w-5 h-5" />} htmlFor="phone" errorId="phone-error">
-                  <input
-                    {...register('phone')}
-                    id="phone"
-                    type="tel"
-                    placeholder="+57 300 123 4567"
-                    aria-required="true"
-                    aria-invalid={!!errors.phone}
-                    aria-describedby={errors.phone ? "phone-error" : undefined}
-                    className={cn(inputClasses, "pl-11", errors.phone && submitAttempted && "border-red-300 dark:border-red-500")}
-                  />
-                </NovaField>
-
-                {/* Fecha de nacimiento */}
-                <NovaField label="Fecha de nacimiento" required error={errors.date_of_birth?.message} icon={<Calendar className="w-5 h-5" />} htmlFor="date_of_birth" errorId="date_of_birth-error">
-                  <input
-                    {...register('date_of_birth')}
-                    id="date_of_birth"
-                    type="date"
-                    aria-required="true"
-                    aria-invalid={!!errors.date_of_birth}
-                    aria-describedby={errors.date_of_birth ? "date_of_birth-error" : undefined}
-                    className={cn(inputClasses, "pl-11", errors.date_of_birth && submitAttempted && "border-red-300 dark:border-red-500")}
-                  />
-                </NovaField>
-
-                {/* Sexo */}
-                <NovaField label="Sexo" required error={errors.gender?.message} icon={<User className="w-5 h-5" />} htmlFor="gender" errorId="gender-error">
-                  <NovaSelect
-                    value={genderValue || ''}
-                    onChange={(v) => setValue('gender', v as 'male' | 'female' | 'other')}
-                    placeholder="Selecciona tu sexo"
-                    hasIcon
-                    error={!!errors.gender && submitAttempted}
-                    options={[
-                      { value: 'male', label: 'Masculino' },
-                      { value: 'female', label: 'Femenino' },
-                      { value: 'other', label: 'Otro' },
-                    ]}
-                  />
-                </NovaField>
-              </div>
-
-              <p className="mt-3 text-xs text-muted-foreground">
-                Debes ser mayor de 18 años para usar KREOON
-              </p>
-            </section>
-
-            {/* Section: Ubicación */}
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-[0.125rem] bg-cyan-500/10">
-                  <MapPin className="w-4 h-4 text-cyan-500" />
-                </div>
-                Ubicación
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* País */}
-                <NovaField label="País" required error={errors.country?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="country" errorId="country-error">
-                  <NovaSelect
-                    value={countryValue}
-                    onChange={(v) => setValue('country', v)}
-                    placeholder="Selecciona tu país"
-                    hasIcon
-                    error={!!errors.country && submitAttempted}
-                    options={countries.map(c => ({ value: c.code, label: c.name_es }))}
-                  />
-                </NovaField>
-
-                {/* Ciudad */}
-                <NovaField label="Ciudad" required error={errors.city?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="city" errorId="city-error">
-                  {availableCities.length > 0 ? (
-                    <NovaSelect
-                      value={watch('city')}
-                      onChange={(v) => setValue('city', v)}
-                      placeholder="Selecciona tu ciudad"
-                      hasIcon
-                      error={!!errors.city && submitAttempted}
-                      options={availableCities.map(c => ({ value: c.name, label: c.name }))}
-                    />
-                  ) : (
-                    <input
-                      {...register('city')}
-                      id="city"
-                      placeholder="Tu ciudad"
-                      aria-required="true"
-                      aria-invalid={!!errors.city}
-                      aria-describedby={errors.city ? "city-error" : undefined}
-                      className={cn(inputClasses, "pl-11", errors.city && submitAttempted && "border-red-300 dark:border-red-500")}
-                    />
+                  {/* Username: solo para talento. Para clientes se autogenera del email */}
+                  {isTalentFlow && (
+                    <div>
+                      <label className="block text-sm font-medium text-foreground mb-2">
+                        Username <span className="text-red-400">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          {...register('username')}
+                          placeholder="Ej: maria.garcia"
+                          className={cn(inputCls, 'pr-12',
+                            (errors.username || usernameStatus === 'taken') && 'border-red-400',
+                            usernameStatus === 'available' && 'border-green-500'
+                          )}
+                        />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                          {usernameStatus === 'checking' && <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />}
+                          {usernameStatus === 'available' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                          {usernameStatus === 'taken' && <AlertCircle className="w-5 h-5 text-red-500" />}
+                        </div>
+                      </div>
+                      <FieldError message={errors.username?.message || (usernameStatus === 'taken' ? 'Este username ya está en uso' : undefined)} />
+                      <p className="text-xs text-muted-foreground mt-1.5">Solo letras minúsculas, números, puntos y guiones</p>
+                    </div>
                   )}
-                </NovaField>
+                </>
+              )}
 
-                {/* Dirección */}
-                <NovaField label="Dirección" required error={errors.address?.message} icon={<MapPin className="w-5 h-5" />} className="sm:col-span-2" htmlFor="address" errorId="address-error">
-                  <input
-                    {...register('address')}
-                    id="address"
-                    placeholder="Tu dirección completa"
-                    aria-required="true"
-                    aria-invalid={!!errors.address}
-                    aria-describedby={errors.address ? "address-error" : undefined}
-                    className={cn(inputClasses, "pl-11", errors.address && submitAttempted && "border-red-300 dark:border-red-500")}
-                  />
-                </NovaField>
+              {/* ── PASO 2: Teléfono ── */}
+              {current.id === 'contact' && (
+                <>
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/50">
+                    <p className="text-xs text-muted-foreground mb-1">Tu correo electrónico</p>
+                    <p className="font-medium text-foreground">{watch('email')}</p>
+                  </div>
 
-                {/* Nacionalidad */}
-                <NovaField label="Nacionalidad" required error={errors.nationality?.message} icon={<MapPin className="w-5 h-5" />} htmlFor="nationality" errorId="nationality-error">
-                  <NovaSelect
-                    value={watch('nationality')}
-                    onChange={(v) => setValue('nationality', v)}
-                    placeholder="Selecciona tu nacionalidad"
-                    hasIcon
-                    error={!!errors.nationality && submitAttempted}
-                    options={countries.map(c => ({ value: c.code, label: c.name_es }))}
-                  />
-                </NovaField>
-              </div>
-            </section>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Número de teléfono <span className="text-red-400">*</span>
+                    </label>
+                    <div className={cn(
+                      'flex h-14 rounded-2xl border-2 bg-background overflow-hidden transition-colors',
+                      errors.phone ? 'border-red-400' : 'border-border focus-within:border-primary'
+                    )}>
+                      {/* Selector de indicativo */}
+                      <CountryPicker
+                        value={dialCode}
+                        onChange={(val) => {
+                          setDialCode(val);
+                          setValue('phone', val + localPhone);
+                        }}
+                        options={countries}
+                        placeholder="+57"
+                        mode="dialcode"
+                        compact
+                      />
+                      {/* Input número local */}
+                      <input
+                        type="tel"
+                        value={localPhone}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9 \-()]/g, '');
+                          setLocalPhone(val);
+                          setValue('phone', dialCode + val);
+                        }}
+                        placeholder="300 123 4567"
+                        className="flex-1 px-4 bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+                    <FieldError message={errors.phone?.message} />
+                  </div>
 
-            {/* Section: Documento de Identidad */}
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-[0.125rem] bg-emerald-500/10">
-                  <FileText className="w-4 h-4 text-emerald-500" />
-                </div>
-                Documento de Identidad
-              </h2>
+                  {/* Aviso WhatsApp */}
+                  <div className="flex items-start gap-3 p-4 rounded-2xl border border-border/50 bg-card">
+                    <span className="text-2xl shrink-0">💬</span>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Este número debe tener WhatsApp activo</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Por ahí te enviamos notificaciones de proyectos, pagos y mensajes de tu equipo.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Tipo de documento */}
-                <NovaField label="Tipo de documento" required error={errors.document_type?.message} icon={<FileText className="w-5 h-5" />} htmlFor="document_type" errorId="document_type-error">
-                  <NovaSelect
-                    value={watch('document_type')}
-                    onChange={(v) => setValue('document_type', v)}
-                    placeholder="Selecciona tipo"
-                    hasIcon
-                    error={!!errors.document_type && submitAttempted}
-                    options={filteredDocTypes.map(dt => ({ value: dt.id, label: dt.label_es }))}
-                  />
-                </NovaField>
+              {/* ── PASO 3: Edad ── */}
+              {current.id === 'age' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Fecha de nacimiento <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      {...register('date_of_birth')}
+                      type="date"
+                      className={cn(inputCls, errors.date_of_birth && 'border-red-400')}
+                      autoFocus
+                    />
+                    <FieldError message={errors.date_of_birth?.message} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-3">
+                      Sexo <span className="text-red-400">*</span>
+                    </label>
+                    <div className="flex flex-col gap-3">
+                      {[
+                        { value: 'female', emoji: '👩', label: 'Femenino' },
+                        { value: 'male',   emoji: '👨', label: 'Masculino' },
+                        { value: 'other',  emoji: '🧑', label: 'Prefiero no decirlo' },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setValue('gender', opt.value as 'male' | 'female' | 'other')}
+                          className={cn(
+                            'flex items-center gap-4 px-5 py-4 rounded-2xl border-2 text-left transition-all',
+                            genderValue === opt.value
+                              ? 'border-primary bg-primary/10'
+                              : 'border-border/50 bg-card hover:border-primary/40'
+                          )}
+                        >
+                          <span className="text-2xl">{opt.emoji}</span>
+                          <span className="font-medium text-foreground">{opt.label}</span>
+                          {genderValue === opt.value && (
+                            <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    <FieldError message={errors.gender?.message} />
+                  </div>
+                </>
+              )}
 
-                {/* Número de documento */}
-                <NovaField label="Número de documento" required error={errors.document_number?.message} icon={<FileText className="w-5 h-5" />} htmlFor="document_number" errorId="document_number-error">
-                  <input
-                    {...register('document_number')}
-                    id="document_number"
-                    placeholder="Tu número de documento"
-                    aria-required="true"
-                    aria-invalid={!!errors.document_number}
-                    aria-describedby={errors.document_number ? "document_number-error" : undefined}
-                    className={cn(inputClasses, "pl-11", errors.document_number && submitAttempted && "border-red-300 dark:border-red-500")}
-                  />
-                </NovaField>
-              </div>
-            </section>
+              {/* ── PASO 4: Ubicación ── */}
+              {current.id === 'location' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      ¿En qué país vives? <span className="text-red-400">*</span>
+                    </label>
+                    <CountryPicker
+                      value={countryValue}
+                      onChange={(val) => { setValue('country', val); setValue('city', ''); }}
+                      options={countries}
+                      placeholder="Selecciona tu país"
+                      error={!!errors.country}
+                    />
+                    <FieldError message={errors.country?.message} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Ciudad <span className="text-red-400">*</span>
+                    </label>
+                    {availableCities.length > 0 ? (
+                      <select
+                        value={watch('city')}
+                        onChange={(e) => setValue('city', e.target.value)}
+                        className={cn(inputCls, 'cursor-pointer', errors.city && 'border-red-400')}
+                      >
+                        <option value="">Selecciona tu ciudad</option>
+                        {availableCities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        {...register('city')}
+                        placeholder="Ej: Bogotá"
+                        className={cn(inputCls, errors.city && 'border-red-400')}
+                      />
+                    )}
+                    <FieldError message={errors.city?.message} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Dirección <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      {...register('address')}
+                      placeholder="Ej: Calle 123 # 45-67"
+                      className={cn(inputCls, errors.address && 'border-red-400')}
+                    />
+                    <FieldError message={errors.address?.message} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Nacionalidad <span className="text-red-400">*</span>
+                    </label>
+                    <CountryPicker
+                      value={watch('nationality')}
+                      onChange={(val) => setValue('nationality', val)}
+                      options={countries}
+                      placeholder="Selecciona tu nacionalidad"
+                      error={!!errors.nationality}
+                    />
+                    <FieldError message={errors.nationality?.message} />
+                  </div>
+                </>
+              )}
 
-            {/* Section: Redes Sociales */}
-            <section>
-              <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                <div className="p-1.5 rounded-[0.125rem] bg-pink-500/10">
-                  <Share2 className="w-4 h-4 text-pink-500" />
-                </div>
-                Redes Sociales
-                <span className="text-xs font-normal text-muted-foreground ml-2">(al menos una)</span>
-              </h2>
+              {/* ── PASO 5: Documento ── */}
+              {current.id === 'document' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Tipo de documento <span className="text-red-400">*</span>
+                    </label>
+                    <select
+                      value={watch('document_type')}
+                      onChange={(e) => setValue('document_type', e.target.value)}
+                      className={cn(inputCls, 'cursor-pointer', errors.document_type && 'border-red-400')}
+                    >
+                      <option value="">Selecciona tipo</option>
+                      {filteredDocTypes.map(dt => (
+                        <option key={dt.id} value={dt.id}>{dt.label_es}</option>
+                      ))}
+                    </select>
+                    <FieldError message={errors.document_type?.message} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Número de documento <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      {...register('document_number')}
+                      placeholder="Ej: 1234567890"
+                      className={cn(inputCls, errors.document_number && 'border-red-400')}
+                      autoFocus
+                    />
+                    <FieldError message={errors.document_number?.message} />
+                  </div>
+                </>
+              )}
 
-              {(errors as any).social_network && submitAttempted && (
-                <div className="mb-4 p-3 rounded-[0.125rem] bg-destructive/10 border border-destructive/30">
-                  <p className="text-sm text-destructive flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4" />
-                    Debes agregar al menos una red social
+              {/* ── PASO 6: Redes sociales ── */}
+              {current.id === 'social' && (
+                <div className="space-y-4">
+                  {[
+                    { id: 'social_instagram', emoji: '📸', label: 'Instagram', placeholder: '@tu_usuario' },
+                    { id: 'social_tiktok',    emoji: '🎵', label: 'TikTok',    placeholder: '@tu_usuario' },
+                  ].map((net) => {
+                    const val = watch(net.id as keyof ProfileFormData) as string;
+                    const filled = val && val.length > 0;
+                    return (
+                      <div
+                        key={net.id}
+                        className={cn(
+                          'flex items-center gap-4 px-4 py-4 rounded-2xl border-2 transition-all',
+                          filled ? 'border-primary bg-primary/10' : 'border-border/50 bg-card'
+                        )}
+                      >
+                        <span className="text-3xl shrink-0">{net.emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-foreground mb-1.5">{net.label}</p>
+                          <input
+                            {...register(net.id as keyof ProfileFormData)}
+                            placeholder={net.placeholder}
+                            className={cn(
+                              'w-full bg-transparent text-sm text-foreground',
+                              'placeholder:text-muted-foreground/60',
+                              'focus:outline-none border-b border-border/50 pb-0.5',
+                              'focus:border-primary transition-colors'
+                            )}
+                          />
+                        </div>
+                        {filled && <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />}
+                      </div>
+                    );
+                  })}
+
+                  <p className="text-xs text-muted-foreground text-center pt-1">
+                    Debes completar al menos uno para continuar
                   </p>
                 </div>
               )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Instagram */}
-                <NovaField label="Instagram" icon={<Instagram className="w-5 h-5" />} htmlFor="social_instagram">
-                  <input
-                    {...register('social_instagram')}
-                    id="social_instagram"
-                    placeholder="@tu_usuario"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
+        {/* Navegación */}
+        <div className="flex gap-3 mt-8">
+          <button
+            type="button"
+            onClick={handlePrev}
+            className={cn(
+              'flex items-center gap-2 px-5 py-4 rounded-2xl border-2 border-border font-medium text-sm',
+              'text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all'
+            )}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {quizStep === 0 ? 'Volver' : 'Anterior'}
+          </button>
 
-                {/* TikTok */}
-                <NovaField label="TikTok" icon={<AtSign className="w-5 h-5" />} htmlFor="social_tiktok">
-                  <input
-                    {...register('social_tiktok')}
-                    id="social_tiktok"
-                    placeholder="@tu_usuario"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
-
-                {/* Facebook */}
-                <NovaField label="Facebook" icon={<Facebook className="w-5 h-5" />} htmlFor="social_facebook">
-                  <input
-                    {...register('social_facebook')}
-                    id="social_facebook"
-                    placeholder="Tu perfil de Facebook"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
-
-                {/* YouTube */}
-                <NovaField label="YouTube" icon={<Youtube className="w-5 h-5" />} htmlFor="social_youtube">
-                  <input
-                    {...register('social_youtube')}
-                    id="social_youtube"
-                    placeholder="Tu canal de YouTube"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
-
-                {/* X (Twitter) */}
-                <NovaField label="X (Twitter)" icon={<Twitter className="w-5 h-5" />} htmlFor="social_x">
-                  <input
-                    {...register('social_x')}
-                    id="social_x"
-                    placeholder="@tu_usuario"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
-
-                {/* LinkedIn */}
-                <NovaField label="LinkedIn" icon={<Linkedin className="w-5 h-5" />} htmlFor="social_linkedin">
-                  <input
-                    {...register('social_linkedin')}
-                    id="social_linkedin"
-                    placeholder="Tu perfil de LinkedIn"
-                    className={cn(inputClasses, "pl-11")}
-                  />
-                </NovaField>
-              </div>
-
-              <p className="mt-3 text-xs text-muted-foreground">
-                Agrega al menos una red social para verificar tu identidad como creador
-              </p>
-            </section>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isSavingProfile}
-              aria-label={isSavingProfile ? 'Guardando datos del perfil' : 'Continuar al siguiente paso'}
-              className={cn(
-                "w-full h-12 sm:h-14 rounded-[0.125rem] font-semibold text-primary-foreground",
-                "bg-primary hover:bg-primary/90",
-                "transition-all duration-200",
-                "flex items-center justify-center gap-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-              )}
-            >
-              {isSavingProfile ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
-                  Guardando...
-                </>
-              ) : (
-                <>
-                  Continuar
-                  <ArrowRight className="w-5 h-5" aria-hidden="true" />
-                </>
-              )}
-            </button>
-          </form>
-        </motion.div>
+          <button
+            type="button"
+            onClick={handleNext}
+            disabled={isSavingProfile}
+            className={cn(
+              'flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-base',
+              'bg-primary text-primary-foreground hover:bg-primary/90 transition-all',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+          >
+            {isSavingProfile ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Guardando...</>
+            ) : isLastStep ? (
+              <>¡Listo! <CheckCircle2 className="w-5 h-5" /></>
+            ) : (
+              <>Siguiente <ArrowRight className="w-5 h-5" /></>
+            )}
+          </button>
+        </div>
+      </div>
     </OnboardingShell>
   );
 }

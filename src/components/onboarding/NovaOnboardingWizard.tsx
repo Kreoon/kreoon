@@ -2,8 +2,7 @@
  * NovaOnboardingWizard - Wizard de onboarding con diseno Nova
  *
  * Flujo segun tipo de cuenta:
- * - Cliente: Tipo de cuenta -> Datos Personales -> Documentos Legales
- * - Organizacion: Tipo de cuenta -> Datos Personales -> Documentos Legales
+ * - Cliente/Marca: Tipo de cuenta -> Datos Personales -> Documentos Legales
  * - Talento: Tipo de cuenta -> Especialidades -> Datos Personales -> Documentos Legales
  */
 

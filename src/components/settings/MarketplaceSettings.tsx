@@ -37,6 +37,7 @@ import { EXPERTISE_TAG_GROUPS } from '@/components/marketplace/types/marketplace
 import { CONTENT_STYLE_LABELS, BUDGET_RANGE_LABELS } from '@/types/ai-matching';
 import type { ContentStyle, BudgetRange } from '@/types/ai-matching';
 import { SERVICE_TYPE_LABELS, SERVICE_TYPE_CATEGORIES } from '@/types/marketplace';
+import type { ServiceDeliverable } from '@/types/marketplace';
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
 
@@ -576,6 +577,23 @@ export function CreatorServicesTab() {
   const [newDeliveryDays, setNewDeliveryDays] = useState('');
   const [expandedService, setExpandedService] = useState<string | null>(null);
 
+  // Deliverables editor state
+  const [deliverables, setDeliverables] = useState<ServiceDeliverable[]>([]);
+  const [dQty, setDQty] = useState('1');
+  const [dItem, setDItem] = useState('');
+
+  const addDeliverable = () => {
+    const qty = parseInt(dQty);
+    if (!dItem.trim() || isNaN(qty) || qty < 1) return;
+    setDeliverables(prev => [...prev, { quantity: qty, item: dItem.trim() }]);
+    setDItem('');
+    setDQty('1');
+  };
+
+  const removeDeliverable = (index: number) => {
+    setDeliverables(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleAdd = () => {
     if (newTitle && newType && newPrice) {
       createService({
@@ -585,6 +603,7 @@ export function CreatorServicesTab() {
         price_amount: parseFloat(newPrice),
         price_currency: newCurrency,
         delivery_days: newDeliveryDays ? parseInt(newDeliveryDays) : undefined,
+        deliverables: deliverables.length > 0 ? deliverables : undefined,
         is_active: true,
       });
       setNewTitle('');
@@ -593,6 +612,7 @@ export function CreatorServicesTab() {
       setNewCurrency('USD');
       setNewDescription('');
       setNewDeliveryDays('');
+      setDeliverables([]);
     }
   };
 
@@ -610,7 +630,7 @@ export function CreatorServicesTab() {
     <Card>
       <CardHeader>
         <CardTitle>Tus Servicios</CardTitle>
-        <CardDescription>Define qué servicios ofreces y sus precios</CardDescription>
+        <CardDescription>Define qué servicios ofreces, qué incluye cada uno y su precio</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Services list from DB */}
@@ -624,10 +644,13 @@ export function CreatorServicesTab() {
                 >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium">{service.title}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                       <span>{SERVICE_TYPE_LABELS[service.service_type as keyof typeof SERVICE_TYPE_LABELS] || service.service_type}</span>
                       {service.price_amount ? <span>· ${service.price_amount.toLocaleString()} {service.price_currency}</span> : null}
                       {(service as any).delivery_days ? <span>· {(service as any).delivery_days} días</span> : null}
+                      {service.deliverables?.length > 0 && (
+                        <span className="text-purple-400">· {service.deliverables.length} entregable{service.deliverables.length !== 1 ? 's' : ''}</span>
+                      )}
                     </div>
                   </div>
                   <Button
@@ -638,9 +661,24 @@ export function CreatorServicesTab() {
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
-                {expandedService === service.id && (service as any).description && (
-                  <div className="px-3 pb-3 border-t border-border/50">
-                    <p className="text-sm text-muted-foreground pt-2">{(service as any).description}</p>
+                {expandedService === service.id && (
+                  <div className="px-3 pb-3 border-t border-border/50 space-y-2 pt-2">
+                    {(service as any).description && (
+                      <p className="text-sm text-muted-foreground">{(service as any).description}</p>
+                    )}
+                    {service.deliverables?.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-muted-foreground">Entregables:</p>
+                        {service.deliverables.map((d, i) => (
+                          <div key={i} className="flex items-center gap-2 text-sm">
+                            <span className="bg-purple-500/20 text-purple-300 text-xs font-bold px-1.5 py-0.5 rounded min-w-[1.5rem] text-center">
+                              {d.quantity}
+                            </span>
+                            <span className="text-foreground/80">{d.item}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -676,12 +714,64 @@ export function CreatorServicesTab() {
             </Select>
           </div>
           <Textarea
-            placeholder="Descripción del servicio (qué incluye, proceso de trabajo...)"
+            placeholder="Descripción del servicio (proceso de trabajo, formato de entrega...)"
             value={newDescription}
             onChange={e => setNewDescription(e.target.value)}
             className="min-h-[80px]"
             maxLength={500}
           />
+
+          {/* Deliverables editor */}
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Entregables (qué recibe el cliente)</p>
+            {deliverables.length > 0 && (
+              <div className="space-y-1.5">
+                {deliverables.map((d, i) => (
+                  <div key={i} className="flex items-center gap-2 bg-muted rounded px-2 py-1.5">
+                    <span className="bg-purple-500/20 text-purple-300 text-xs font-bold px-1.5 py-0.5 rounded min-w-[1.5rem] text-center">
+                      {d.quantity}
+                    </span>
+                    <span className="text-sm flex-1">{d.item}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeDeliverable(i)}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Input
+                type="number"
+                placeholder="Cant."
+                value={dQty}
+                onChange={e => setDQty(e.target.value)}
+                className="w-20 flex-shrink-0"
+                min={1}
+              />
+              <Input
+                placeholder="Ej: Video UGC vertical 15-30s, Foto producto, Reel con audio..."
+                value={dItem}
+                onChange={e => setDItem(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addDeliverable(); } }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={addDeliverable}
+                disabled={!dItem.trim()}
+                className="flex-shrink-0"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Presiona Enter o el botón + para agregar cada entregable</p>
+          </div>
+
           <div className="grid grid-cols-3 gap-3">
             <div className="relative">
               <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

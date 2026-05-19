@@ -122,12 +122,13 @@ serve(async (req) => {
 
 const TIER_TOKENS: Record<string, number> = {
   // Marcas
-  brand_free: 300,
+  brand_free: 500,
   brand_starter: 4_000,
+  brand_growth: 7_500,
   brand_pro: 12_000,
   brand_business: 40_000,
   // Creadores
-  creator_free: 800,
+  creator_free: 500,
   creator_pro: 6_000,
   // Agencias
   org_starter: 20_000,
@@ -182,7 +183,7 @@ async function getBalance(supabase: any, userId: string, organizationId?: string
   if (!balance) {
     // Verificar si el usuario tiene una suscripción activa
     let subscriptionTier = organizationId ? "org_starter" : "creator_free";
-    let tokensFromPlan = TIER_TOKENS[subscriptionTier] || 800;
+    let tokensFromPlan = TIER_TOKENS[subscriptionTier] || 500;
     let nextResetAt: Date;
 
     // Buscar suscripción activa (incluye current_period_end para sincronizar ciclo)

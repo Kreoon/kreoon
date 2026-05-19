@@ -11,17 +11,14 @@ export function KreoonLogo({
   alt = "KREOON",
 }: KreoonLogoProps) {
   return (
-    <picture>
-      <source srcSet="/logo.webp" type="image/webp" />
-      <img
-        src="/logo.png"
-        alt={alt}
-        className={`${heightClass} ${className}`}
-        width="auto"
-        height="auto"
-        loading="lazy"
-        decoding="async"
-      />
-    </picture>
+    <img
+      src="/logo.png"
+      alt={alt}
+      className={`${heightClass} ${className}`}
+      width="auto"
+      height="auto"
+      loading="lazy"
+      decoding="async"
+    />
   );
 }

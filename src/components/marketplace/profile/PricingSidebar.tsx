@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, FileText, CheckCircle, Flag, MessageSquare, Gift, UserPlus, Check } from 'lucide-react';
+import { Shield, Lock, FileText, CheckCircle, Flag, MessageSquare, Gift, UserPlus, Check, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CreatorPackage } from '../types/marketplace';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useHasPendingInvitation } from '@/hooks/useMarketplaceOrgInvitations';
 import { OrgInviteModal } from './OrgInviteModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PricingSidebarProps {
   creatorId: string;
@@ -38,6 +39,7 @@ export function PricingSidebar({
     packages.find(p => p.is_popular)?.id || packages[0]?.id || '',
   );
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [isLoadingCheckout, setIsLoadingCheckout] = useState(false);
   const { toast } = useToast();
   const { user, profile } = useAuth();
   const navigate = useNavigate();
@@ -47,12 +49,40 @@ export function PricingSidebar({
   const hasPendingInvite = useHasPendingInvitation(userOrgId, creatorUserId);
   const canInvite = !!userOrgId && !!creatorUserId && !isOwnProfile;
 
-  const handleHire = () => {
+  const handleHire = async () => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    navigate(`/marketplace/hire/${creatorId}`);
+    if (!creatorUserId) {
+      toast({ title: 'Error', description: 'No se pudo identificar al creador.', variant: 'destructive' });
+      return;
+    }
+    const pkg = selected;
+    if (!pkg) {
+      toast({ title: 'Selecciona un paquete', variant: 'destructive' });
+      return;
+    }
+    setIsLoadingCheckout(true);
+    try {
+      const description = pkg.includes.length > 0 ? pkg.includes.join(' · ') : undefined;
+      const { data, error } = await supabase.functions.invoke('stripe-creator-hire', {
+        body: {
+          creator_id: creatorUserId,
+          title: pkg.name,
+          price: pkg.price,
+          currency: pkg.currency,
+          description,
+        },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+      if (!data?.url) throw new Error('No se recibió URL de pago');
+      window.location.href = data.url;
+    } catch (err: any) {
+      toast({ title: 'Error al procesar el pago', description: err.message, variant: 'destructive' });
+      setIsLoadingCheckout(false);
+    }
   };
 
   const handleMessage = () => {
@@ -152,9 +182,11 @@ export function PricingSidebar({
       {/* CTA */}
       <button
         onClick={handleHire}
-        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25"
+        disabled={isLoadingCheckout}
+        className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-4 rounded-sm text-base transition-all hover:shadow-lg hover:shadow-purple-500/25 flex items-center justify-center gap-2"
       >
-        Contratar Ahora
+        {isLoadingCheckout && <Loader2 className="h-4 w-4 animate-spin" />}
+        {isLoadingCheckout ? 'Procesando...' : 'Contratar Ahora'}
       </button>
       {!compact && (
         <div>

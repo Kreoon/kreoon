@@ -1,13 +1,4 @@
-/**
- * OnboardingShell - Layout compartido para todos los pasos del onboarding
- *
- * Unifica:
- * - Header con logo y botón de logout
- * - Indicador de pasos
- * - Estructura de contenido
- */
-
-import { LogOut, CheckCircle2 } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { KreoonLogo } from '@/components/ui/kreoon-logo';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';
@@ -15,12 +6,12 @@ import type { ReactNode } from 'react';
 export interface OnboardingStep {
   id: string;
   label: string;
-  shortLabel?: string;
+  emoji: string;
 }
 
 interface OnboardingShellProps {
   children: ReactNode;
-  currentStep: number;
+  currentStep: number; // 1-based
   steps: OnboardingStep[];
   onLogout?: () => void;
   className?: string;
@@ -33,110 +24,84 @@ export function OnboardingShell({
   onLogout,
   className,
 }: OnboardingShellProps) {
+  const total = steps.length;
+  const current = currentStep - 1; // 0-based para los pills
+
   return (
-    <div className={cn("min-h-screen bg-background", className)}>
+    <div className={cn('min-h-screen bg-background flex flex-col', className)}>
+
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <KreoonLogo heightClass="h-8" />
-            <span className="text-lg font-semibold text-foreground tracking-tight">
-              KREOON
-            </span>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur border-b border-border/50">
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <KreoonLogo heightClass="h-7" />
           </div>
           {onLogout && (
             <button
               onClick={onLogout}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Cerrar sesión</span>
+              <span className="hidden sm:inline">Salir</span>
             </button>
           )}
         </div>
       </header>
 
-      {/* Progress Steps */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-center">
-          {steps.map((step, index) => {
-            const stepNumber = index + 1;
-            const isCompleted = stepNumber < currentStep;
-            const isActive = stepNumber === currentStep;
-            const isPending = stepNumber > currentStep;
+      {/* Indicador de progreso */}
+      <div className="max-w-2xl mx-auto w-full px-4 pt-5 pb-2">
 
-            return (
-              <div key={step.id} className="flex items-center">
-                {/* Step indicator */}
-                <div className="flex items-center gap-2">
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-[0.125rem] flex items-center justify-center text-sm font-mono font-medium transition-colors",
-                      isCompleted && "bg-green-500 text-white",
-                      isActive && "bg-primary text-primary-foreground",
-                      isPending && "bg-secondary text-muted-foreground"
-                    )}
-                  >
-                    {isCompleted ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : (
-                      stepNumber
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      "text-sm hidden sm:inline transition-colors",
-                      isCompleted && "text-muted-foreground",
-                      isActive && "font-medium text-foreground",
-                      isPending && "text-muted-foreground"
-                    )}
-                  >
-                    {step.shortLabel || step.label}
-                  </span>
-                </div>
-
-                {/* Connector line */}
-                {index < steps.length - 1 && (
-                  <div
-                    className={cn(
-                      "w-8 sm:w-12 h-px mx-2 sm:mx-4 transition-colors",
-                      stepNumber < currentStep ? "bg-green-500" : "bg-border"
-                    )}
-                  />
-                )}
-              </div>
-            );
-          })}
+        {/* Pills WizardSteps */}
+        <div className="flex items-center justify-center gap-2 mb-3">
+          {steps.map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                'rounded-full transition-all duration-300',
+                i < current  ? 'h-2 w-6 bg-green-500' :
+                i === current ? 'h-2 w-8 bg-primary' :
+                                'h-2 w-2 bg-muted-foreground/25'
+              )}
+            />
+          ))}
         </div>
+
+        {/* Paso actual con emoji */}
+        <p className="text-center text-sm text-muted-foreground">
+          <span className="mr-1">{steps[current]?.emoji}</span>
+          <span className="font-medium text-foreground">{steps[current]?.label}</span>
+          <span className="ml-2 text-xs">Paso {currentStep} de {total}</span>
+        </p>
       </div>
 
-      {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 pb-12">
+      {/* Contenido */}
+      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="max-w-3xl mx-auto px-4 sm:px-6 pb-8 text-center">
-        <p className="text-xs font-mono text-muted-foreground">
-          © 2026 KREOON TECH LLC. Todos los derechos reservados.
+      <footer className="py-4 text-center">
+        <p className="text-xs text-muted-foreground/50">
+          © 2026 KREOON TECH LLC
         </p>
       </footer>
     </div>
   );
 }
 
-// Configuraciones de pasos predefinidas
+// ─── Definición de pasos ─────────────────────────────────────────
+
 export const TALENT_STEPS: OnboardingStep[] = [
-  { id: 'account_type', label: 'Tipo de cuenta', shortLabel: 'Cuenta' },
-  { id: 'specializations', label: 'Especialidades', shortLabel: 'Roles' },
-  { id: 'profile', label: 'Datos personales', shortLabel: 'Datos' },
-  { id: 'legal', label: 'Términos legales', shortLabel: 'Términos' },
+  { id: 'account_type',      label: '¿Quién eres?',       emoji: '👋' },
+  { id: 'specializations',   label: 'Tus especialidades',  emoji: '⭐' },
+  { id: 'profile',           label: 'Tus datos',           emoji: '📋' },
+  { id: 'legal',             label: 'Términos legales',    emoji: '📄' },
 ];
 
 export const CLIENT_STEPS: OnboardingStep[] = [
-  { id: 'account_type', label: 'Tipo de cuenta', shortLabel: 'Cuenta' },
-  { id: 'profile', label: 'Datos personales', shortLabel: 'Datos' },
-  { id: 'legal', label: 'Términos legales', shortLabel: 'Términos' },
+  { id: 'account_type', label: '¿Quién eres?',    emoji: '👋' },
+  { id: 'profile',      label: 'Tus datos',        emoji: '📋' },
+  { id: 'legal',        label: 'Términos legales', emoji: '📄' },
 ];
 
 export default OnboardingShell;

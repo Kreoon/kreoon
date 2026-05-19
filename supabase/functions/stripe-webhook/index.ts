@@ -77,6 +77,12 @@ serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.metadata?.type?.startsWith("campaign_")) {
           await handleCampaignCheckoutCompleted(supabase, session);
+        } else if (session.metadata?.type === "client_package_payment") {
+          await handleClientPackagePaymentCompleted(supabase, session);
+        } else if (session.metadata?.type === "managed_campaign_payment") {
+          await handleManagedCampaignPaymentCompleted(supabase, session);
+        } else if (session.metadata?.type === "creator_hire_payment") {
+          await handleCreatorHirePaymentCompleted(supabase, session);
         }
         break;
       }
@@ -685,7 +691,7 @@ async function getPlanConfig(supabase: any, tier: string) {
   return {
     price_monthly: 0,
     price_annual: 0,
-    ai_tokens_monthly: 800,
+    ai_tokens_monthly: 500,
     limits: { features: [] },
   };
 }
@@ -864,4 +870,180 @@ async function processReferralSubscriptionCommission(supabase: any, wallet: any,
   });
 
   console.log(`Referral commission $${commissionAmount} credited to ${referral.referrer_id} for period ${periodKey}`);
+}
+
+// ============================================================================
+// HANDLER: PAGO DE PAQUETE CLIENTE
+// ============================================================================
+
+async function handleClientPackagePaymentCompleted(
+  supabase: any,
+  session: Stripe.Checkout.Session
+) {
+  const metadata = session.metadata || {};
+
+  // Soporte para pago múltiple (package_ids) y simple (package_id)
+  const packageIdsRaw = metadata.package_ids || metadata.package_id || "";
+  const amountsRaw = metadata.amounts || metadata.amount || "";
+
+  const packageIds = packageIdsRaw.split(",").map((s: string) => s.trim()).filter(Boolean);
+  const amounts = amountsRaw.split(",").map((s: string) => Number(s.trim()));
+
+  if (packageIds.length === 0) {
+    console.error("[stripe-webhook] client_package_payment: missing package_ids");
+    return;
+  }
+
+  console.log(`[stripe-webhook] Processing client package payment: ${packageIds.length} packages`);
+
+  for (let i = 0; i < packageIds.length; i++) {
+    const packageId = packageIds[i];
+    const paidAmount = amounts[i] || 0;
+
+    if (!packageId || paidAmount <= 0) continue;
+
+    const { data: pkg, error } = await supabase
+      .from("client_packages")
+      .select("id, total_value, paid_amount")
+      .eq("id", packageId)
+      .single();
+
+    if (error || !pkg) {
+      console.error(`[stripe-webhook] Package not found: ${packageId}`, error);
+      continue;
+    }
+
+    const newPaidAmount = Number(pkg.paid_amount) + paidAmount;
+    const totalValue = Number(pkg.total_value);
+    const newStatus = newPaidAmount >= totalValue ? "paid" : newPaidAmount > 0 ? "partial" : "pending";
+
+    const { error: updateError } = await supabase
+      .from("client_packages")
+      .update({
+        paid_amount: newPaidAmount,
+        payment_status: newStatus,
+        ...(newStatus === "paid" ? { paid_at: new Date().toISOString() } : {}),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", packageId);
+
+    if (updateError) {
+      console.error(`[stripe-webhook] Error updating package ${packageId}:`, updateError);
+    } else {
+      console.log(`[stripe-webhook] Package ${packageId}: paid_amount=${newPaidAmount}, status=${newStatus}`);
+    }
+  }
+}
+
+// ============================================================================
+// HANDLER: PAGO PLAN CAMPAÑA GESTIONADA
+// ============================================================================
+
+async function handleManagedCampaignPaymentCompleted(
+  supabase: any,
+  session: Stripe.Checkout.Session
+) {
+  const meta = session.metadata || {};
+  const { plan, currency, duration, cycle_total, user_id, user_email, user_name } = meta;
+
+  console.log(`[stripe-webhook] Managed campaign payment: ${plan} · ${duration}m · ${cycle_total} ${currency} · user=${user_id}`);
+
+  // Registrar en tabla managed_campaign_subscriptions (si existe) o en unified_transactions
+  try {
+    await supabase.from("managed_campaign_subscriptions").insert({
+      user_id,
+      user_email,
+      user_name,
+      plan,
+      currency: currency?.toUpperCase(),
+      duration_months: Number(duration),
+      total_paid: Number(cycle_total),
+      stripe_session_id: session.id,
+      stripe_payment_intent: session.payment_intent,
+      status: "active",
+      starts_at: new Date().toISOString(),
+    });
+    console.log(`[stripe-webhook] Managed campaign subscription recorded for user ${user_id}`);
+  } catch (err) {
+    // La tabla podría no existir aún — solo loguear
+    console.warn("[stripe-webhook] Could not insert managed_campaign_subscription:", (err as Error).message);
+  }
+}
+
+// ============================================================================
+// HANDLER: CONTRATACIÓN DE CREADOR
+// ============================================================================
+
+async function handleCreatorHirePaymentCompleted(
+  supabase: any,
+  session: Stripe.Checkout.Session
+) {
+  const meta = session.metadata || {};
+  const { mode, service_id, package_title, creator_id, buyer_id, currency, amount, brief_title } = meta;
+
+  console.log(`[stripe-webhook] Creator hire payment: mode=${mode} service=${service_id} package=${package_title} · creator=${creator_id} · buyer=${buyer_id} · ${amount} ${currency?.toUpperCase()}`);
+
+  // Crear proyecto en marketplace_projects con estado confirmado
+  try {
+    let projectTitle = brief_title || "Proyecto de contenido";
+    let deliveryDays: number | undefined;
+    let revisionsIncluded: number | undefined;
+
+    if (service_id) {
+      // Modo service_id: obtener datos del servicio para enriquecer el proyecto
+      const { data: service } = await supabase
+        .from("creator_services")
+        .select("title, revisions_included, delivery_days")
+        .eq("id", service_id)
+        .single();
+
+      if (service) {
+        projectTitle = brief_title || service.title;
+        deliveryDays = service.delivery_days;
+        revisionsIncluded = service.revisions_included;
+      }
+    } else if (package_title) {
+      // Modo directo (Profile Builder): usar package_title
+      projectTitle = brief_title || package_title;
+    }
+
+    const projectData: Record<string, unknown> = {
+      title: projectTitle,
+      creator_id,
+      client_user_id: buyer_id,
+      status: "confirmed",
+      payment_status: "paid",
+      payment_method: "stripe",
+      budget: Number(amount),
+      currency: currency?.toUpperCase(),
+      stripe_session_id: session.id,
+      stripe_payment_intent_id: session.payment_intent as string,
+      creation_mode: "direct_hire",
+      brief: {},
+    };
+
+    if (service_id) projectData.service_id = service_id;
+    if (deliveryDays != null) projectData.delivery_days = deliveryDays;
+    if (revisionsIncluded != null) projectData.revisions_included = revisionsIncluded;
+
+    await supabase.from("marketplace_projects").insert(projectData);
+
+    console.log(`[stripe-webhook] Marketplace project created: title="${projectTitle}" buyer=${buyer_id}`);
+  } catch (err) {
+    console.warn("[stripe-webhook] Could not insert marketplace_project:", (err as Error).message);
+  }
+
+  // Incrementar contador de órdenes del servicio (solo en modo service_id)
+  if (service_id) {
+    try {
+      await supabase.rpc("increment_column", {
+        p_table: "creator_services",
+        p_column: "orders_count",
+        p_amount: 1,
+        p_id: service_id,
+      });
+    } catch {
+      // RPC puede no existir
+    }
+  }
 }

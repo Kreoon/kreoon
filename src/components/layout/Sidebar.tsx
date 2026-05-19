@@ -40,6 +40,7 @@ import {
   Package,
   CircleUser,
   Blocks,
+  Heart,
 } from "lucide-react";
 import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -93,6 +94,7 @@ const MARKETING_ITEMS: NavItem[] = [
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
   { name: "Booking", href: "/booking/calendar", icon: CalendarDays, tourId: "sidebar-booking" },
+  { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
   { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -127,6 +129,7 @@ const adminSections: NavSection[] = [
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
       { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
+      { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, tourId: "sidebar-pending-payments", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
     ]
   },
@@ -201,8 +204,18 @@ const clientSections: NavSection[] = [
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package, tourId: "sidebar-products" },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText, tourId: "sidebar-portfolio" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
+      { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
       { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { name: "Explorar Talento", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
+      { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" },
+      { name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" },
+      { name: "Crear Campaña", href: "/marketplace/campaigns/create", icon: ImagePlus, tourId: "sidebar-mkt-create-campaign" },
     ]
   },
 ];
@@ -318,6 +331,7 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
   }
 
+  items.push({ name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" });
   items.push({ name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
   // Talent management — only for org roles (admin/talent), NOT for clients or freelancers
@@ -652,24 +666,28 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           "shrink-0 flex h-16 items-center border-b border-white/5 px-4 bg-transparent",
           collapsed ? "justify-center" : "justify-between"
         )}>
+          {/* hasCustomLogo: white-label activo Y hay un logo real (no el favicon por defecto) */}
           {!collapsed && (
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 dark:bg-purple-500/10 border border-purple-500/20">
-                <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
+            isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? (
+              <div className="flex items-center gap-3">
+                <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 dark:bg-purple-500/10 border border-purple-500/20">
+                  <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
+                </div>
+                <div className="min-w-0">
+                  <h1 className="text-base font-bold text-zinc-900 dark:text-white">{effectivePlatformName}</h1>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h1 className="text-base font-bold text-zinc-900 dark:text-white">{effectivePlatformName}</h1>
-                {currentOrgName && !isWhiteLabelActive ? (
-                  <p className="text-xs text-purple-600 dark:text-purple-400 truncate font-medium">{currentOrgName}</p>
-                ) : isWhiteLabelActive ? null : (
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-500">AI Content Platform</p>
-                )}
-              </div>
-            </div>
+            ) : (
+              <img src="/logo.png" alt="KREOON" className="h-10 object-contain" />
+            )
           )}
           {collapsed && (
             <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 border border-purple-500/20">
-              <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
+              <img
+                src={isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? effectiveLogoUrl : '/favicon.png'}
+                alt={effectivePlatformName}
+                className="h-8 w-8 object-contain"
+              />
             </div>
           )}
         </div>

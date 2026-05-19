@@ -105,7 +105,7 @@ export default function TermsOfService() {
           </p>
           <ul className="list-disc pl-6 space-y-1">
             <li>Kreoon actúa como intermediario y cobra una comisión por transacciones</li>
-            <li>Los pagos se mantienen en escrow hasta la entrega satisfactoria del trabajo</li>
+            <li>El Cliente paga el 100% del valor acordado a KREOON antes de iniciar cualquier trabajo; los fondos se liberan al Creador tras la aprobación de la entrega</li>
             <li>Las disputas se resuelven según nuestro proceso de arbitraje</li>
             <li>Los creadores son contratistas independientes, no empleados de Kreoon</li>
           </ul>

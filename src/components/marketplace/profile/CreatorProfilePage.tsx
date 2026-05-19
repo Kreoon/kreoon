@@ -10,18 +10,42 @@
  * - Slug: /marketplace/creator/carloslima
  */
 
-import { useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { TemplateProfileRenderer } from '@/components/profile-viewer/TemplateProfileRenderer';
+import { useToast } from '@/hooks/use-toast';
 
 export default function CreatorProfilePage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  // Si no hay ID, no renderizar nada
-  if (!id) {
-    return null;
-  }
+  useEffect(() => {
+    const payment = searchParams.get('payment');
+    if (!payment) return;
 
-  // El hook useCreatorPublicProfile maneja tanto UUIDs como slugs
+    if (payment === 'success') {
+      toast({
+        title: '¡Pago exitoso!',
+        description: 'Tu contratación fue procesada. El creador recibirá tu proyecto pronto.',
+      });
+    } else if (payment === 'cancelled') {
+      toast({
+        title: 'Pago cancelado',
+        description: 'Puedes volver a intentarlo cuando quieras.',
+        variant: 'destructive',
+      });
+    }
+
+    // Limpiar el query param de la URL
+    const params = new URLSearchParams(searchParams);
+    params.delete('payment');
+    navigate({ search: params.toString() }, { replace: true });
+  }, []);
+
+  if (!id) return null;
+
   return (
     <TemplateProfileRenderer
       creatorProfileId={id}

@@ -154,7 +154,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
   const [content, setContent] = useState<UnifiedContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState('approved');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState<number | null>(null);
 
@@ -366,10 +366,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       case 'progress':
         return filteredContent.filter(c => !['approved', 'published', 'paid', 'completed'].includes(c.status));
       case 'approved':
-        return filteredContent.filter(c => ['approved', 'paid', 'completed'].includes(c.status));
-      case 'kreoon_social':
-        // Kreoon Social: shows content that is published OR shared on Kreoon
-        return filteredContent.filter(c => c.is_published || c.shared_on_kreoon);
+        return filteredContent.filter(c => ['approved', 'published', 'paid', 'completed'].includes(c.status) || c.is_published || c.shared_on_kreoon);
       default:
         return filteredContent;
     }
@@ -585,23 +582,19 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
       {/* Tabs */}
       <div className="px-4 md:px-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="approved" className="text-xs">
+              Aprobados
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {content.filter(c => ['approved', 'published', 'paid', 'completed'].includes(c.status) || c.is_published || c.shared_on_kreoon).length}
+              </Badge>
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="text-xs">
+              En Progreso
+            </TabsTrigger>
             <TabsTrigger value="all" className="text-xs">
               Todos
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">{filteredContent.length}</Badge>
-            </TabsTrigger>
-            <TabsTrigger value="progress" className="text-xs">
-              Progreso
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="text-xs">
-              Aprobados
-            </TabsTrigger>
-            <TabsTrigger value="kreoon_social" className="text-xs">
-              <Globe className="h-3 w-3 mr-1" />
-              Publicados
-              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {content.filter(c => c.is_published || c.shared_on_kreoon).length}
-              </Badge>
             </TabsTrigger>
           </TabsList>
 

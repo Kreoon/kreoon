@@ -6,6 +6,7 @@ import { getOptimizedImageUrl, getOptimizedThumbnail } from '@/lib/imageOptimiza
 import { getSpecializationLabel, getSpecializationBgColor, getSpecializationColor } from '@/lib/specializations';
 import type { Specialization } from '@/types/database';
 import { TrustScoreBadge } from './TrustScoreBadge';
+import { useCreatorFavorites } from '@/contexts/CreatorFavoritesContext';
 
 // Card dimensions for image optimization (2x for retina)
 const CARD_WIDTH = 180;
@@ -47,9 +48,11 @@ interface CreatorCardProps {
 }
 
 function CreatorCardComponent({ creator, onClick, className, priority = false }: CreatorCardProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { favoritedIds, toggleFavorite, isLoaded } = useCreatorFavorites();
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+
+  const isFavorite = isLoaded ? favoritedIds.has(creator.id) : false;
 
   // Prioridad: featured_media (si es imagen) > imagen aleatoria del portafolio > avatar
   // Featured media seleccionado por el usuario (solo si es imagen)
@@ -88,8 +91,8 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
 
   const handleFavorite = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(prev => !prev);
-  }, []);
+    toggleFavorite(creator.id);
+  }, [creator.id, toggleFavorite]);
 
   const hasDiscount = creator.introductory_discount_pct && creator.introductory_discount_pct > 0;
 

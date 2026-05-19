@@ -142,9 +142,6 @@ export function StatusPageLayout({
         <div className="flex items-center justify-between px-4 py-3 lg:px-6">
           <div className="flex items-center gap-3">
             <KreoonLogo heightClass="h-8" />
-            <span className="text-lg font-bold tracking-tight text-foreground uppercase tracking-widest font-mono">
-              KREOON
-            </span>
           </div>
           {userInfo && (userInfo.name || userInfo.email) && (
             <div className="flex items-center gap-2">

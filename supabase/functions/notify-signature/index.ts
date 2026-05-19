@@ -248,17 +248,26 @@ serve(async (req) => {
     let whatsappSent = false;
     if (phone) {
       try {
-        const { error: waErr } = await supabase.functions.invoke("whatsapp-notify", {
-          body: {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const waRes = await fetch(`${supabaseUrl}/functions/v1/whatsapp-notify`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
+          },
+          body: JSON.stringify({
             phone,
             event_type: "document_signed",
             variables: [r.signer_full_name, docLabel, signedDateShort],
+            button_variables: [`receipt/${signature_id}`],
             user_id,
             entity_id: signature_id,
-          },
+          }),
         });
-        whatsappSent = !waErr;
-        if (waErr) console.warn("[notify-signature] WhatsApp no enviado:", waErr);
+        const waData = await waRes.json().catch(() => null);
+        whatsappSent = waRes.ok && (waData as Record<string, unknown>)?.success === true;
+        if (!whatsappSent) console.warn("[notify-signature] WhatsApp no enviado:", waData);
       } catch (waEx) {
         console.warn("[notify-signature] Excepción WhatsApp:", waEx);
       }

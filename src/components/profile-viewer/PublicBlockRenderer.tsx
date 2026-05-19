@@ -130,8 +130,9 @@ function PublicBlockRendererComponent({ block, creatorProfile }: PublicBlockProp
           isSelected={false}
           onSelect={() => undefined}
           onUpdate={() => undefined}
-          // Pasar creatorProfileId para bloques que lo necesitan
+          // Pasar IDs del creador para bloques que los necesitan (ej: PricingBlock)
           creatorProfileId={creatorProfile?.id}
+          userId={creatorProfile?.user_id}
         />
       </Suspense>
     </div>

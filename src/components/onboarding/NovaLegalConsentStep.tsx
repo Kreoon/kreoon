@@ -12,18 +12,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ChevronLeft, Lock, FileText, CheckCircle2,
-  Loader2, AlertCircle, ScrollText, PenTool, Shield
+  ChevronLeft, CheckCircle2,
+  Loader2, Shield, X, ChevronDown
 } from 'lucide-react';
 import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useOnboardingGate, PendingDocument } from '@/hooks/useOnboardingGate';
 import { useLegalConsent } from '@/hooks/useLegalConsent';
 import { useDigitalSignature } from '@/hooks/useDigitalSignature';
@@ -75,6 +67,7 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
   const [documentContent, setDocumentContent] = useState<string>('');
   const [hasReadToBottom, setHasReadToBottom] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const [signatureModalDoc, setSignatureModalDoc] = useState<PendingDocument | null>(null);
   const [signatureModalContent, setSignatureModalContent] = useState<string>('');
@@ -146,6 +139,12 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     }
   }, [mySignatures, documentsToShow]);
 
+  const AGE_DOC_TYPES = ['age_verification_policy', 'age_verification'];
+
+  const isAgeDoc = (docType: string) => AGE_DOC_TYPES.includes(docType);
+
+  const hasAgeDocInList = documentsToShow.some(d => isAgeDoc(d.document_type));
+
   const allDocsAccepted = useMemo(
     () => documentsToShow.every(
       doc => acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id)
@@ -153,9 +152,10 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     [documentsToShow, acceptedDocs, signedDocuments]
   );
 
+  // Si la lista ya incluye un documento de edad, ese acepta la verificación implícitamente
   const canComplete = useMemo(
-    () => ageConfirmed && allDocsAccepted,
-    [ageConfirmed, allDocsAccepted]
+    () => hasAgeDocInList ? allDocsAccepted : (ageConfirmed && allDocsAccepted),
+    [hasAgeDocInList, ageConfirmed, allDocsAccepted]
   );
 
   // Cargar contenido del documento
@@ -206,7 +206,16 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     setOpenDocument(null);
     setDocumentContent('');
     setHasReadToBottom(false);
+    setScrollProgress(0);
   };
+
+  const handleDocScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight <= el.clientHeight) { setHasReadToBottom(true); return; }
+    const progress = Math.min(100, Math.round((el.scrollTop / (el.scrollHeight - el.clientHeight)) * 100));
+    setScrollProgress(progress);
+    if (progress >= 95) setHasReadToBottom(true);
+  }, []);
 
   const openSignatureModal = async (doc: PendingDocument) => {
     setLoadingContent(true);
@@ -249,6 +258,13 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     if (signatureModalDoc) {
       setSignedDocuments(prev => new Set([...prev, signatureModalDoc.document_id]));
       setAcceptedDocs(prev => new Set([...prev, signatureModalDoc.document_id]));
+
+      // Si es el documento de declaración de edad, verificar edad automáticamente
+      if (isAgeDoc(signatureModalDoc.document_type) && !isAgeVerified()) {
+        setAgeConfirmed(true);
+        verifyAge(true).catch(() => {});
+      }
+
       setShowReceipt(signatureId);
     }
     setSignatureModalDoc(null);
@@ -260,22 +276,18 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     try {
       await acceptDocument(docId);
       setAcceptedDocs(prev => new Set([...prev, docId]));
+
+      // Si es el documento de declaración de edad, verificar edad automáticamente
+      const doc = documentsToShow.find(d => d.document_id === docId);
+      if (doc && isAgeDoc(doc.document_type) && !isAgeVerified()) {
+        setAgeConfirmed(true);
+        verifyAge(true).catch(() => {});
+      }
+
       closeDocumentDrawer();
       toast.success('Documento aceptado');
     } catch {
       toast.error('Error al aceptar el documento');
-    }
-  };
-
-  const handleAgeConfirm = async (confirmed: boolean) => {
-    setAgeConfirmed(confirmed);
-    if (confirmed && !isAgeVerified()) {
-      try {
-        await verifyAge(true);
-      } catch {
-        toast.error('Error al verificar edad');
-        setAgeConfirmed(false);
-      }
     }
   };
 
@@ -362,6 +374,24 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     }
   };
 
+  const getDocEmoji = (type: string): string => {
+    const map: Record<string, string> = {
+      age_verification_policy: '🎂',
+      age_verification: '🎂',
+      terms_of_service: '📋',
+      talent_agreement: '🎬',
+      client_agreement: '🤝',
+      brand_agreement: '🏢',
+      privacy_policy: '🔒',
+      data_processing_agreement: '🛡️',
+      escrow_payment_terms: '💳',
+      creator_agreement: '✍️',
+      organization_agreement: '🏗️',
+      white_label_agreement: '🏗️',
+    };
+    return map[type] ?? '📄';
+  };
+
   const getDocTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
       terms_of_service: 'Términos de Servicio',
@@ -384,323 +414,242 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     return labels[type] || type;
   };
 
+  // Progreso: solo documentos (el de edad es uno más de la lista)
+  const totalItems = documentsToShow.length;
+  const doneItems = documentsToShow.filter(
+    d => acceptedDocs.has(d.document_id) || signedDocuments.has(d.document_id)
+  ).length;
+
+  // Suprimir advertencia de isVerifyingAge no usado
+  void isVerifyingAge;
+
   return (
     <OnboardingShell currentStep={currentStep} steps={steps} onLogout={onLogout}>
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className={cn(
-            "rounded-[0.125rem] p-6 sm:p-8 md:p-10",
-            "bg-card",
-            "border border-border"
-          )}
-        >
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">
-              Términos y Condiciones
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-lg mx-auto">
-              Los siguientes documentos regulan tu uso de la plataforma KREOON, operada por KREOON TECH LLC. Lee cada uno antes de aceptar.
-            </p>
-          </div>
+      <div className="max-w-lg mx-auto">
 
-          {/* Age Verification */}
-          <section className="mb-8" aria-labelledby="age-verification-heading">
-            <div
-              className={cn(
-                "p-4 rounded-[0.125rem] border transition-colors",
-                ageConfirmed
-                  ? "border-green-500/30 bg-green-500/5"
-                  : "border-amber-500/30 bg-amber-500/5"
-              )}
-            >
-              <label htmlFor="age-verification-checkbox" className="flex items-start gap-3 cursor-pointer">
-                <Checkbox
-                  id="age-verification-checkbox"
-                  checked={ageConfirmed}
-                  onCheckedChange={(checked) => handleAgeConfirm(checked === true)}
-                  disabled={isVerifyingAge}
-                  aria-required="true"
-                  aria-describedby="age-verification-description"
-                  className="mt-1"
-                />
-                <div>
-                  <p id="age-verification-heading" className="font-medium text-foreground">
-                    Verificación de Edad <span className="text-destructive" aria-hidden="true">*</span>
-                    <span className="sr-only">(campo requerido)</span>
-                  </p>
-                  <p id="age-verification-description" className="text-sm text-muted-foreground mt-1">
-                    <strong>Declaro bajo juramento que soy mayor de 18 años de edad</strong> o tengo la mayoría de edad legal en mi jurisdicción, y tengo capacidad legal para aceptar estos términos.
-                  </p>
-                </div>
-              </label>
-            </div>
-          </section>
-
-          {/* Documents List */}
-          <section className="space-y-3">
-            {documentsToShow.map((doc) => {
-              const isAccepted = acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id);
-              const isSigned = signedDocuments.has(doc.document_id);
-              const signatureMethod = getSignatureMethodForDocument(doc.document_type);
-              const requiresSignature = signatureMethod !== 'clickwrap';
-
-              return (
-                <motion.div
-                  key={doc.document_id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className={cn(
-                    "p-4 rounded-[0.125rem] border transition-colors",
-                    isAccepted
-                      ? "border-green-500/30 bg-green-500/5"
-                      : "border-border bg-secondary/50"
-                  )}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="mt-1">
-                      {isAccepted ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-                      )}
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <p className="font-medium text-foreground flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-primary" />
-                          {doc.title || getDocTypeLabel(doc.document_type)}
-                          {doc.is_required && (
-                            <span className="text-xs font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-[0.125rem]">
-                              Requerido
-                            </span>
-                          )}
-                          {requiresSignature && (
-                            <span className="text-xs font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-[0.125rem] flex items-center gap-1">
-                              <PenTool className="w-3 h-3" />
-                              Firma
-                            </span>
-                          )}
-                        </p>
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => openDocumentDrawer(doc)}
-                            className="flex items-center gap-1 px-3 py-1.5 text-sm text-primary hover:bg-primary/10 rounded-[0.125rem] transition-colors"
-                          >
-                            <ScrollText className="w-4 h-4" />
-                            Leer
-                          </button>
-
-                          {!isAccepted && (
-                            <button
-                              onClick={() => requiresSignature ? openSignatureModal(doc) : openDocumentDrawer(doc)}
-                              className={cn(
-                                "flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary-foreground rounded-[0.125rem]",
-                                "bg-primary hover:bg-primary/90",
-                                "transition-colors"
-                              )}
-                            >
-                              {requiresSignature ? (
-                                <>
-                                  <PenTool className="w-4 h-4" />
-                                  Firmar
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-4 h-4" />
-                                  Aceptar
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {doc.summary && (
-                        <p className="text-sm text-muted-foreground mt-1">{doc.summary}</p>
-                      )}
-
-                      <div className="flex items-center gap-3 mt-2">
-                        <p className="text-xs font-mono text-muted-foreground">Versión {doc.version}</p>
-                        {isSigned && (
-                          <p className="text-xs text-green-500 flex items-center gap-1">
-                            <Shield className="w-3 h-3" />
-                            Firmado digitalmente
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </section>
-
-          {/* Legal Note */}
-          <div className="mt-6 p-4 rounded-[0.125rem] bg-secondary border border-border">
-            <p className="text-xs text-muted-foreground flex items-start gap-2">
-              <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              Tu aceptación se registra con fecha, hora, dirección IP y navegador para cumplimiento legal. Esta información se almacena de forma segura y solo se utiliza para demostrar tu consentimiento.
-            </p>
-          </div>
-
-          {/* Buttons */}
-          <div className="mt-8 flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={onBack}
-              aria-label="Volver al paso anterior"
-              className="flex items-center justify-center gap-2 h-12 px-6 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-[0.125rem] transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-            >
-              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-              Volver
-            </button>
-
-            <button
-              onClick={handleComplete}
-              disabled={!canComplete || isCompletingOnboarding || isAccepting}
-              aria-label={isCompletingOnboarding ? 'Procesando solicitud' : 'Completar verificacion y acceder a KREOON'}
-              aria-disabled={!canComplete || isCompletingOnboarding || isAccepting}
-              className={cn(
-                "flex-1 h-12 sm:h-14 rounded-[0.125rem] font-semibold text-primary-foreground",
-                "bg-primary hover:bg-primary/90",
-                "transition-all duration-200",
-                "flex items-center justify-center gap-2",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-                "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-              )}
-            >
-              {isCompletingOnboarding ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
-                  Procesando...
-                </>
-              ) : (
-                <>
-                  <Lock className="w-5 h-5" aria-hidden="true" />
-                  Completar y acceder a KREOON
-                </>
-              )}
-            </button>
-          </div>
-
-          {!canComplete && (
-            <p className="text-center text-sm text-amber-500 mt-4 flex items-center justify-center gap-2" role="alert" aria-live="polite">
-              <AlertCircle className="w-4 h-4" aria-hidden="true" />
-              Debes confirmar tu edad y aceptar todos los documentos
-            </p>
-          )}
+        {/* Hero */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+          <p className="text-5xl mb-4">{canComplete ? '🎉' : '📋'}</p>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            {canComplete ? '¡Todo listo!' : '¡Casi terminamos!'}
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Lee y acepta los documentos para entrar a KREOON. Solo se hace una vez.
+          </p>
         </motion.div>
 
-      {/* Document Drawer */}
-      <Sheet open={!!openDocument} onOpenChange={(open) => !open && closeDocumentDrawer()}>
-        <SheetContent
-          side="right"
-          className="w-full sm:max-w-2xl bg-background border-border p-0 z-[200] flex flex-col h-full"
-        >
-          <SheetHeader className="p-4 sm:p-6 border-b border-border flex-shrink-0">
-            <SheetTitle className="text-foreground text-base sm:text-lg">
-              {openDocument?.title || getDocTypeLabel(openDocument?.document_type || '')}
-            </SheetTitle>
-            <SheetDescription className="text-muted-foreground text-xs sm:text-sm">
-              Versión {openDocument?.version} — Lee el documento completo
-            </SheetDescription>
-          </SheetHeader>
+        {/* Barra de progreso */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-muted-foreground">Progreso</p>
+            <p className="text-xs font-semibold text-foreground">{doneItems} de {totalItems} completados</p>
+          </div>
+          <div className="flex gap-1.5">
+            {Array.from({ length: totalItems }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'h-2 flex-1 rounded-full transition-all duration-300',
+                  i < doneItems ? 'bg-green-500' : 'bg-muted-foreground/20'
+                )}
+              />
+            ))}
+          </div>
+        </div>
 
-          <div
-            ref={docScrollRef}
-            className="flex-1 min-h-0 overflow-y-auto"
-            onScroll={(e) => {
-              const el = e.currentTarget;
-              if (!hasReadToBottom && el.scrollTop + el.clientHeight >= el.scrollHeight - 50) {
-                setHasReadToBottom(true);
-              }
-            }}
-          >
-            <div className="p-4 sm:p-6">
-              {loadingContent ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        {/* Documentos */}
+        <div className="space-y-3 mb-6">
+          {documentsToShow.map((doc, index) => {
+            const isAccepted = acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id);
+            const isSigned = signedDocuments.has(doc.document_id);
+            const requiresSignature = getSignatureMethodForDocument(doc.document_type) !== 'clickwrap';
+            const emoji = getDocEmoji(doc.document_type);
+
+            return (
+              <motion.div
+                key={doc.document_id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.08 + index * 0.05 }}
+              >
+                <div className={cn(
+                  'flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all',
+                  isAccepted ? 'border-green-500 bg-green-500/10' : 'border-border/50 bg-card'
+                )}>
+                  <span className="text-3xl shrink-0">{emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground text-sm leading-tight">
+                      {doc.title || getDocTypeLabel(doc.document_type)}
+                    </p>
+                    {doc.summary && (
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">
+                        {doc.summary}
+                      </p>
+                    )}
+                    {isSigned && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                        <Shield className="w-3 h-3" /> Firmado digitalmente
+                      </p>
+                    )}
+                  </div>
+
+                  {isAccepted ? (
+                    <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
+                  ) : (
+                    <button
+                      onClick={() => requiresSignature ? openSignatureModal(doc) : openDocumentDrawer(doc)}
+                      className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors whitespace-nowrap"
+                    >
+                      {requiresSignature ? '✍️ Firmar' : '👀 Leer y aceptar'}
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <DocumentContent
-                  html={documentContent}
-                  onScrollEnd={() => setHasReadToBottom(true)}
-                />
-              )}
-            </div>
-          </div>
+              </motion.div>
+            );
+          })}
+        </div>
 
-          <div className="p-4 sm:p-6 border-t border-border flex-shrink-0 bg-background">
-            {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
-              <button
-                onClick={() => {
-                  closeDocumentDrawer();
-                  openSignatureModal(openDocument);
-                }}
-                disabled={!hasReadToBottom}
-                className={cn(
-                  "w-full h-12 rounded-[0.125rem] font-semibold text-primary-foreground",
-                  "bg-primary hover:bg-primary/90",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "flex items-center justify-center gap-2",
-                  "transition-colors"
-                )}
-              >
-                {hasReadToBottom ? (
-                  <>
-                    <PenTool className="w-5 h-5" />
-                    Continuar a firma
-                  </>
-                ) : (
-                  <>
-                    <ScrollText className="w-5 h-5" />
-                    Lee hasta el final para firmar
-                  </>
-                )}
-              </button>
+        {/* Nota de seguridad */}
+        <div className="flex items-start gap-3 p-4 rounded-2xl border border-border/50 bg-card mb-8">
+          <span className="text-xl shrink-0">🔒</span>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Tu aceptación queda registrada con fecha y hora de forma segura. Solo sirve para demostrar que leíste los términos.
+          </p>
+        </div>
+
+        {/* Botones */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-2 px-5 py-4 rounded-2xl border-2 border-border font-medium text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Volver
+          </button>
+
+          <button
+            type="button"
+            onClick={handleComplete}
+            disabled={!canComplete || isCompletingOnboarding || isAccepting}
+            className={cn(
+              'flex-1 flex items-center justify-center gap-2 py-4 rounded-2xl font-semibold text-base',
+              'bg-primary text-primary-foreground hover:bg-primary/90 transition-all',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+          >
+            {isCompletingOnboarding ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> Procesando...</>
             ) : (
-              <button
-                onClick={() => openDocument && handleAcceptDocument(openDocument.document_id)}
-                disabled={!hasReadToBottom || isAccepting}
-                className={cn(
-                  "w-full h-12 rounded-[0.125rem] font-semibold text-primary-foreground",
-                  "bg-primary hover:bg-primary/90",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "flex items-center justify-center gap-2",
-                  "transition-colors"
-                )}
-              >
-                {isAccepting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Aceptando...
-                  </>
-                ) : hasReadToBottom ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5" />
-                    He leído y acepto
-                  </>
-                ) : (
-                  <>
-                    <ScrollText className="w-5 h-5" />
-                    Lee hasta el final para aceptar
-                  </>
-                )}
-              </button>
+              <>🎉 Entrar a KREOON</>
             )}
-            {!hasReadToBottom && (
-              <p className="text-xs text-muted-foreground text-center mt-2">
-                Desplázate hasta el final del documento para habilitarlo
+          </button>
+        </div>
+
+        {/* Hint de qué falta */}
+        {!canComplete && (
+          <p className="text-center text-xs text-muted-foreground mt-3">
+            {!ageConfirmed
+              ? '⬆️ Primero confirma que tienes más de 18 años'
+              : '⬆️ Acepta todos los documentos para continuar'}
+          </p>
+        )}
+
+      </div>
+
+      {/* Document Modal */}
+      {openDocument && (() => {
+        const modalRequiresSignature = getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap';
+        return (
+          <div className="fixed inset-0 z-[200] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-background border-t-2 sm:border-2 border-border rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl max-h-[92vh] sm:max-h-[86vh] flex flex-col overflow-hidden"
+            >
+              {/* Header */}
+              <div className="flex items-center gap-4 px-5 py-4 border-b border-border/50 shrink-0">
+                <span className="text-3xl shrink-0">{getDocEmoji(openDocument.document_type)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-foreground text-base leading-tight">
+                    {openDocument.title || getDocTypeLabel(openDocument.document_type)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {modalRequiresSignature ? 'Lee y firma este documento' : 'Lee y acepta este documento'}
+                  </p>
+                </div>
+                <button
+                  onClick={closeDocumentDrawer}
+                  className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center shrink-0 transition-colors"
+                >
+                  <X className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </div>
+
+              {/* Barra de progreso de lectura */}
+              <div className="h-1.5 bg-muted/30 shrink-0">
+                <div
+                  className="h-full bg-primary transition-all duration-300 rounded-full"
+                  style={{ width: `${scrollProgress}%` }}
+                />
+              </div>
+              <p className="text-center text-xs text-muted-foreground py-1.5 shrink-0">
+                {scrollProgress < 95 ? `Llevas ${scrollProgress}% leído — sigue hasta el final` : '¡Lo leíste todo! 🎉'}
               </p>
-            )}
+
+              {/* Contenido */}
+              <div
+                ref={docScrollRef}
+                className="flex-1 overflow-y-auto px-5 pb-5 min-h-0"
+                onScroll={handleDocScroll}
+              >
+                {loadingContent ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <DocumentContent
+                    html={documentContent}
+                    onScrollEnd={() => { setHasReadToBottom(true); setScrollProgress(100); }}
+                  />
+                )}
+              </div>
+
+              {/* CTA */}
+              <div className="p-5 border-t border-border/50 shrink-0 bg-background">
+                {!hasReadToBottom ? (
+                  <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+                    <ChevronDown className="w-4 h-4 text-amber-500 animate-bounce shrink-0" />
+                    <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">Sigue leyendo para continuar</span>
+                  </div>
+                ) : modalRequiresSignature ? (
+                  <button
+                    onClick={() => {
+                      closeDocumentDrawer();
+                      openSignatureModal(openDocument);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all"
+                  >
+                    ✍️ Siguiente: Firmar el documento
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleAcceptDocument(openDocument.document_id)}
+                    disabled={isAccepting}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-green-600 text-white font-semibold text-base hover:bg-green-700 transition-all disabled:opacity-50"
+                  >
+                    {isAccepting ? (
+                      <><Loader2 className="w-5 h-5 animate-spin" /> Guardando...</>
+                    ) : (
+                      '✅ He leído y acepto este documento'
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
           </div>
-        </SheetContent>
-      </Sheet>
+        );
+      })()}
 
       {/* Signature Modal */}
       {signatureModalDoc && (

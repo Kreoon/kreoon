@@ -1,5 +1,11 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.notify-signature]
+verify_jwt = false
+
+[functions.get-public-receipt]
+verify_jwt = false
+
 [functions.whatsapp-notify]
 verify_jwt = false
 
@@ -300,6 +306,15 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.stripe-client-checkout]
+verify_jwt = true
+
+[functions.stripe-campaign-checkout]
+verify_jwt = true
+
+[functions.stripe-creator-hire]
+verify_jwt = true
 
 [functions.resend-webhook]
 verify_jwt = false

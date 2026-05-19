@@ -21,6 +21,7 @@ import { MarketplaceRoleSelector } from '../../roles/MarketplaceRoleSelector';
 import { ActivationCampaignConfig } from './ActivationCampaignConfig';
 import type { BrandActivationConfig } from '../../types/brandActivation';
 import { COMMISSION_RATES } from '@/lib/finance/constants';
+import { PaymentInstructionsModal } from '@/components/payments/PaymentInstructionsModal';
 
 type CampaignPurpose = 'content' | 'activation' | 'talent' | 'live_shopping';
 
@@ -163,6 +164,11 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
   const [isComplete, setIsComplete] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [notificationsSent, setNotificationsSent] = useState(0);
+
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [pendingCampaignId, setPendingCampaignId] = useState<string | null>(null);
+  const [isNotifying, setIsNotifying] = useState(false);
 
   // File refs — raw File objects for upload after campaign creation (not serializable to draft)
   const coverFileRef = useRef<File | null>(null);
@@ -399,13 +405,21 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
     }
   };
 
+  const handlePaymentNotified = async () => {
+    setIsNotifying(true);
+    // La campaña ya fue creada con payment_status = 'pending_payment'
+    // El admin la activará manualmente al confirmar el pago
+    setShowPaymentModal(false);
+    navigate('/marketplace/my-campaigns', { replace: true });
+  };
+
   const handlePublish = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       if (needsImmediatePayment()) {
-        // ── FIXED PRICE PAID: create as draft → redirect to Stripe ──
+        // ── PAID/HYBRID: crear campaña en draft → mostrar instrucciones de pago ──
         const payload = buildCampaignPayload('draft');
         payload.payment_status = 'pending_payment';
 
@@ -437,14 +451,14 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
           });
         }
 
-        // Redirect to Stripe Checkout
-        const checkoutUrl = await createCampaignCheckout(campaignId, 'create-publish-checkout');
-
+        // Limpiar draft y mostrar modal de pago
         clearDraft();
         coverFileRef.current = null;
         videoBriefFileRef.current = null;
-        window.location.href = checkoutUrl;
-        return; // User leaves the app → Stripe handles the rest
+        setPendingCampaignId(campaignId);
+        setShowPaymentModal(true);
+        setIsSubmitting(false);
+        return;
       }
 
       // ── AUCTION/RANGE/EXCHANGE: current flow (no immediate payment) ──
@@ -876,6 +890,22 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
           </div>
         </div>
       </div>
+
+      {/* Modal de instrucciones de pago */}
+      {showPaymentModal && (
+        <PaymentInstructionsModal
+          isOpen={showPaymentModal}
+          onClose={() => {
+            setShowPaymentModal(false);
+            navigate('/marketplace/my-campaigns', { replace: true });
+          }}
+          onNotified={handlePaymentNotified}
+          campaignTitle={basicInfo.title}
+          totalAmount={budgetData.total_budget || 0}
+          currency="USD"
+          isNotifying={isNotifying}
+        />
+      )}
     </div>
   );
 }
