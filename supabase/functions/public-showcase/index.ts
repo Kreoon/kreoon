@@ -166,12 +166,12 @@ async function handleVideos(
 
   const overFetch = Math.min(limit * 4, 96);
 
-  // Fetch approved content from UGC Colombia
+  // Fetch approved/paid/archived content from UGC Colombia
   const { data: items, error } = await supabase
     .from("content")
     .select("id, title, video_url, video_urls, thumbnail_url, creator_id, client_id")
     .eq("organization_id", orgId)
-    .in("status", ["approved", "paid"])
+    .in("status", ["approved", "paid", "archived"])
     .order("approved_at", { ascending: false, nullsFirst: false })
     .limit(overFetch);
 

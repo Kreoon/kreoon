@@ -183,9 +183,9 @@ export function ClientDashboardOverview({
     return differenceInDays(nextDueDate, new Date()) <= 3 ? "warning" : "info";
   };
 
-  // Solo entregados, corregidos y aprobados
+  // Entregados, corregidos, aprobados y archivados
   const recentVideos = [...content]
-    .filter(c => ['delivered', 'corrected', 'approved'].includes(c.status))
+    .filter(c => ['delivered', 'corrected', 'approved', 'archived'].includes(c.status))
     .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
     .slice(0, 9);
 
