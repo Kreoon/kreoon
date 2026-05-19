@@ -364,9 +364,9 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
   const tabFilteredContent = useMemo(() => {
     switch (activeTab) {
       case 'progress':
-        return filteredContent.filter(c => !['approved', 'published', 'paid', 'completed'].includes(c.status));
+        return filteredContent.filter(c => !['approved', 'published', 'paid', 'completed', 'archived'].includes(c.status));
       case 'approved':
-        return filteredContent.filter(c => ['approved', 'published', 'paid', 'completed'].includes(c.status) || c.is_published || c.shared_on_kreoon);
+        return filteredContent.filter(c => ['approved', 'published', 'paid', 'completed', 'archived'].includes(c.status) || c.is_published || c.shared_on_kreoon);
       default:
         return filteredContent;
     }
@@ -586,7 +586,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
             <TabsTrigger value="approved" className="text-xs">
               Aprobados
               <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                {content.filter(c => ['approved', 'published', 'paid', 'completed'].includes(c.status) || c.is_published || c.shared_on_kreoon).length}
+                {content.filter(c => ['approved', 'published', 'paid', 'completed', 'archived'].includes(c.status) || c.is_published || c.shared_on_kreoon).length}
               </Badge>
             </TabsTrigger>
             <TabsTrigger value="progress" className="text-xs">
