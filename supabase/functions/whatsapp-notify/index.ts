@@ -22,9 +22,10 @@ const corsHeaders = {
 };
 
 interface WhatsAppPayload {
-  phone: string;         // número telefónico del destinatario
-  event_type: string;   // clave del template (ej: "content_assigned")
-  variables: string[];  // valores para {{1}}, {{2}}, ... del template
+  phone: string;
+  event_type: string;
+  variables: string[];         // valores para {{1}}, {{2}}, ... del cuerpo
+  button_variables?: string[]; // valores para {{1}} del botón CTA (URL dinámica)
   entity_id?: string;
   user_id?: string;
 }
@@ -93,7 +94,7 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { phone, event_type, variables = [], entity_id, user_id } = payload;
+  const { phone, event_type, variables = [], button_variables, entity_id, user_id } = payload;
 
   if (!phone || !event_type) {
     return new Response(
@@ -165,17 +166,32 @@ Deno.serve(async (req) => {
     String(value ?? "").replace(/[\n\r\t]/g, " ").replace(/ {5,}/g, "    ").trim()
   );
 
-  // Botcake usa params con key/parameter_name/value (formato interno de su API)
-  const components = sanitizedVars.length > 0
-    ? [{
-        type: "BODY",
-        params: sanitizedVars.map((v, i) => ({
-          key: `{{${i + 1}}}`,
-          parameter_name: `${i + 1}`,
-          value: v,
-        })),
-      }]
-    : [];
+  const components: unknown[] = [];
+
+  if (sanitizedVars.length > 0) {
+    components.push({
+      type: "BODY",
+      params: sanitizedVars.map((v, i) => ({
+        key: `{{${i + 1}}}`,
+        parameter_name: `${i + 1}`,
+        value: v,
+      })),
+    });
+  }
+
+  // Botón CTA con URL dinámica (ej: "Ver Documento" → https://kreoon.com/{{1}})
+  if (button_variables && button_variables.length > 0) {
+    components.push({
+      type: "BUTTON",
+      sub_type: "url",
+      index: "0",
+      params: button_variables.map((v, i) => ({
+        key: `{{${i + 1}}}`,
+        parameter_name: `${i + 1}`,
+        value: String(v ?? "").trim(),
+      })),
+    });
+  }
 
   const botcakeBody = {
     psid,
