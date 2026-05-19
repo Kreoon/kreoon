@@ -43,9 +43,9 @@ const DEADLINE_CHOICES: DeadlineChoice[] = [
 
 const CREATORS_CHOICES: SimpleChoice[] = [
   { label: '1 creador', value: 1, emoji: '🧑' },
-  { label: '2–3 creadores', value: 3, emoji: '👥' },
-  { label: '5–10 creadores', value: 5, emoji: '👨‍👩‍👧‍👦' },
-  { label: 'Más de 10', value: 10, emoji: '🏟️' },
+  { label: '3 creadores', value: 3, emoji: '👥' },
+  { label: '5 creadores', value: 5, emoji: '👨‍👩‍👧‍👦' },
+  { label: '10 creadores', value: 10, emoji: '🏟️' },
 ];
 
 const VIDEOS_PER_CREATOR_CHOICES: SimpleChoice[] = [
@@ -108,8 +108,8 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
 
 // ── Wizard principal ──────────────────────────────────────────────────────────
 
-// Steps 0-9 son formulario, step 10 es review
-const TOTAL_STEPS = 11;
+// Steps 0-10 son formulario, step 11 es review
+const TOTAL_STEPS = 12;
 
 export default function EasyCampaignWizard() {
   const navigate = useNavigate();
@@ -143,6 +143,14 @@ export default function EasyCampaignWizard() {
   const [customCreatorsStr, setCustomCreatorsStr] = useState('');
   const [showCustomVPC, setShowCustomVPC] = useState(false);
   const [customVPCStr, setCustomVPCStr] = useState('');
+
+  // Gestión de contenido
+  const [managementType, setManagementType] = useState<'kreoon' | 'self'>('kreoon');
+
+  // Comisión según modo de gestión
+  // kreoon: 30% (KREOON escribe guiones, selecciona creadores, produce)
+  // self:   15% (cliente gestiona su propio contenido, solo usa la plataforma)
+  const commissionRate = managementType === 'kreoon' ? 30 : 15;
 
   // Imagen de portada 9:16
   const [campaignImageFile, setCampaignImageFile] = useState<File | null>(null);
@@ -200,7 +208,8 @@ export default function EasyCampaignWizard() {
         }
         return paymentType === 'exchange' ? productName.trim().length > 0 : true;
       case 8: return true;
-      case 9: return true; // imagen opcional
+      case 9: return !!managementType; // gestión de contenido
+      case 10: return true; // imagen opcional
       default: return true;
     }
   };
@@ -262,6 +271,12 @@ export default function EasyCampaignWizard() {
       exchange_product_value: productValue ? Number(productValue) : 0,
       exchange_product_description: '',
       tags: [contentType.toLowerCase().replace(/\//g, '-')],
+      // Gestión de contenido y comisión
+      content_management_type: managementType,
+      commission_rate: commissionRate,
+      requires_agency_support: managementType === 'kreoon',
+      // Cliente que crea la campaña
+      ...(selectedClientId ? { client_id: selectedClientId } : {}),
       ...(campaignImageUrl ? { cover_image_url: campaignImageUrl } : {}),
     };
 
@@ -337,6 +352,11 @@ export default function EasyCampaignWizard() {
         { emoji: '🏷️', label: 'Valor aprox. del producto', value: `$${productValue} USD` },
       ] : []),
       { emoji: collab?.emoji || '📦', label: 'Tipo de colaboración', value: collab?.label },
+      {
+        emoji: managementType === 'kreoon' ? '🚀' : '📋',
+        label: 'Gestión de contenido',
+        value: managementType === 'kreoon' ? 'KREOON lo gestiona' : 'Yo gestiono',
+      },
     ];
 
     return (
@@ -371,6 +391,34 @@ export default function EasyCampaignWizard() {
             </div>
           ))}
         </div>
+
+        {/* Desglose de pago */}
+        {paymentType !== 'exchange' && effectiveTotal > 0 && (() => {
+          const commission = Math.round(effectiveTotal * commissionRate) / 100;
+          const totalToPay = effectiveTotal + commission;
+          return (
+            <div className="bg-purple-500/8 border border-purple-500/25 rounded-2xl p-4 space-y-2">
+              <p className="text-purple-300 font-semibold text-sm mb-3">💳 Resumen de pago</p>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Pago a creadores ({totalVideos} videos × ${effectiveBudgetPerVideo})</span>
+                <span className="text-white font-medium">${effectiveTotal} USD</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Comisión KREOON ({commissionRate}%{managementType === 'kreoon' ? ' — servicio completo' : ' — plataforma'})
+                </span>
+                <span className="text-white font-medium">${commission} USD</span>
+              </div>
+              <div className="border-t border-purple-500/20 pt-2 flex justify-between">
+                <span className="text-white font-bold">Total a pagar hoy</span>
+                <span className="text-purple-300 font-bold text-lg">${totalToPay} USD</span>
+              </div>
+              <p className="text-xs text-muted-foreground pt-1">
+                El pago es anticipado y activa la campaña inmediatamente.
+              </p>
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -710,10 +758,56 @@ export default function EasyCampaignWizard() {
       </div>
     </div>,
 
-    // 9 — Imagen de portada 9:16
+    // 9 — Gestión de contenido
     <div key={9} className="space-y-5">
       <div>
         <p className="text-purple-400 font-medium text-sm uppercase tracking-wider mb-1">Paso 10 de {T}</p>
+        <h2 className="text-2xl font-bold text-white">¿Quién gestiona el contenido? 🎯</h2>
+        <p className="text-muted-foreground text-sm mt-1">Esto define cómo trabajaremos juntos y la comisión de la plataforma.</p>
+      </div>
+      <div className="flex flex-col gap-3">
+        <BigOption
+          emoji="🚀"
+          label="KREOON lo gestiona todo"
+          hint="Nuestro equipo escribe los guiones, selecciona creadores y coordina el proceso completo. Comisión: 30%"
+          selected={managementType === 'kreoon'}
+          onClick={() => setManagementType('kreoon')}
+        />
+        <BigOption
+          emoji="📋"
+          label="Yo gestiono mi contenido"
+          hint="Tú escribes los guiones y coordinas con los creadores. Nosotros proveemos la plataforma y los creadores. Comisión: 15%"
+          selected={managementType === 'self'}
+          onClick={() => setManagementType('self')}
+        />
+      </div>
+      <div className={cn(
+        'rounded-2xl border px-4 py-3 flex items-start gap-3',
+        managementType === 'kreoon'
+          ? 'bg-purple-500/10 border-purple-500/25'
+          : 'bg-blue-500/10 border-blue-500/25',
+      )}>
+        <span className="text-xl mt-0.5">{managementType === 'kreoon' ? '✨' : 'ℹ️'}</span>
+        <div>
+          {managementType === 'kreoon' ? (
+            <>
+              <p className="text-purple-300 font-semibold text-sm">Comisión KREOON: 30%</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Incluye: guiones profesionales, selección de creadores, coordinación y seguimiento de entrega.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-blue-300 font-semibold text-sm">Comisión plataforma: 15%</p>
+              <p className="text-muted-foreground text-xs mt-0.5">Acceso a creadores verificados y sistema de entrega. Tú gestionas los guiones y la coordinación.</p>
+            </>
+          )}
+        </div>
+      </div>
+    </div>,
+
+    // 10 — Imagen de portada 9:16
+    <div key={10} className="space-y-5">
+      <div>
+        <p className="text-purple-400 font-medium text-sm uppercase tracking-wider mb-1">Paso 11 de {T}</p>
         <h2 className="text-2xl font-bold text-white">Imagen de tu campaña 🖼️</h2>
         <p className="text-muted-foreground text-sm mt-1">Agrega una imagen en formato vertical 9:16 para destacar tu campaña. Es opcional pero recomendado.</p>
       </div>
@@ -820,7 +914,7 @@ export default function EasyCampaignWizard() {
             {submitting
               ? <><Loader2 className="h-4 w-4 animate-spin" /> {paymentType !== 'exchange' ? 'Iniciando pago...' : 'Publicando...'}</>
               : paymentType !== 'exchange' && effectiveTotal > 0
-                ? <><CreditCard className="h-4 w-4" /> Pagar y publicar · ${effectiveTotal} USD</>
+                ? <><CreditCard className="h-4 w-4" /> Pagar y publicar · ${effectiveTotal + Math.round(effectiveTotal * commissionRate) / 100} USD</>
                 : <><Rocket className="h-4 w-4" /> ¡Publicar campaña!</>
             }
           </button>

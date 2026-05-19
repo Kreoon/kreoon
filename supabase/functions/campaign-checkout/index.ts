@@ -150,8 +150,10 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
 
   if (pricingMode === "fixed") {
     // Fixed: charge 100%
+    // contentCount = sum of content_requirements[].quantity = TOTAL videos (all creators combined)
+    // budget_per_video × contentCount = total creator payment (do NOT multiply by maxCreators again)
     if (campaign.budget_mode === "per_video" && campaign.budget_per_video) {
-      totalCreator = campaign.budget_per_video * contentCount * maxCreators;
+      totalCreator = campaign.budget_per_video * contentCount;
     } else {
       totalCreator = campaign.total_budget || 0;
     }
@@ -160,9 +162,10 @@ async function createPublishCheckout(supabase: any, userId: string, body: { camp
 
   } else if (pricingMode === "auction") {
     // Auction: 70% deposit based on max budget per video
+    // contentCount already = total videos; multiply by maxCreators for estimated max
     const maxBudget = campaign.budget_per_video || 0;
     if (maxBudget <= 0) throw new Error("Auction campaign requires budget_per_video (max budget)");
-    totalCreator = maxBudget * contentCount * maxCreators;
+    totalCreator = maxBudget * contentCount;
     depositCreator = Math.round(totalCreator * 0.7 * 100) / 100;
     depositLabel = "Depósito subasta (70%)";
 
