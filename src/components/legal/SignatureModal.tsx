@@ -1,15 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X, FileText, CheckCircle2, Lock, AlertCircle,
-  ChevronDown, Loader2, Shield
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
+import { X, CheckCircle2, ChevronDown, Loader2, User } from 'lucide-react';
 import { SignatureCanvas } from './SignatureCanvas';
 import { useDigitalSignature } from '@/hooks/useDigitalSignature';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { SignatureMethod, getSignatureMethodForDocument } from '@/types/digital-signature';
 import { cn } from '@/lib/utils';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
@@ -32,6 +27,48 @@ interface SignatureModalProps {
   signatureMethod?: SignatureMethod;
 }
 
+const DOC_EMOJI: Record<string, string> = {
+  age_verification_policy: '🎂', age_verification: '🎂',
+  terms_of_service: '📋', talent_agreement: '🎬', client_agreement: '🤝',
+  brand_agreement: '🏢', privacy_policy: '🔒', creator_agreement: '✍️',
+  organization_agreement: '🏛️', data_processing_agreement: '📊',
+  escrow_payment_terms: '💳', white_label_agreement: '🏷️',
+};
+
+// Resumen de 3 puntos por tipo de documento (para mostrar antes de firmar)
+const DOC_SUMMARY_POINTS: Record<string, string[]> = {
+  client_agreement: [
+    '💰 Pagas el 100% antes de que inicie cualquier trabajo',
+    '✅ Los derechos del contenido son tuyos tras la aprobación',
+    '⚠️ Si incumples pagos, tu cuenta puede ser suspendida',
+  ],
+  creator_agreement: [
+    '🎬 Entregas contenido de calidad según el brief acordado',
+    '💸 Recibes el pago tras la aprobación del cliente',
+    '🤝 KREOON actúa como intermediario y cobra una comisión',
+  ],
+  talent_agreement: [
+    '🎭 Produces contenido bajo las instrucciones del brief',
+    '💸 El pago se libera automáticamente tras la aprobación',
+    '🔒 Mantienes confidencialidad sobre la información del cliente',
+  ],
+  brand_agreement: [
+    '🏢 Contratas creadores a través de la plataforma KREOON',
+    '💳 El pago anticipado activa la producción del contenido',
+    '📦 Los derechos de uso se transfieren al aprobar el entregable',
+  ],
+  organization_agreement: [
+    '🏛️ Representas a tu empresa ante KREOON',
+    '👥 Eres responsable de las acciones de los miembros de tu org',
+    '📜 Aceptas los términos en nombre de la organización',
+  ],
+  escrow_payment_terms: [
+    '💳 Los pagos van directamente a KREOON (Stripe o transferencia)',
+    '✅ El trabajo comienza solo tras confirmar el pago',
+    '🔄 KREOON libera el pago al creador tras tu aprobación',
+  ],
+};
+
 export function SignatureModal({
   document,
   isOpen,
@@ -39,110 +76,83 @@ export function SignatureModal({
   onSigned,
   signatureMethod: overrideMethod,
 }: SignatureModalProps) {
+  const { user } = useAuth();
   const {
     signDocument,
     isSigning,
     signerFullName,
-    signerEmail,
-    signerDocumentType,
-    signerDocumentNumber,
   } = useDigitalSignature();
 
-  const contentRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
-  const [typedName, setTypedName] = useState('');
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [confirmChecked, setConfirmChecked] = useState(false);
-  const [currentIP, setCurrentIP] = useState<string>('...');
-  const [currentTime, setCurrentTime] = useState(new Date());
 
   const signatureMethod = overrideMethod || getSignatureMethodForDocument(document.document_type);
-
-  // Actualizar hora cada segundo
-  useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Obtener IP al abrir
-  useEffect(() => {
-    if (isOpen) {
-      fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(d => setCurrentIP(d.ip || '...'))
-        .catch(() => setCurrentIP('...'));
-    }
-  }, [isOpen]);
+  const summaryPoints = DOC_SUMMARY_POINTS[document.document_type];
+  const docEmoji = DOC_EMOJI[document.document_type] ?? '📄';
 
   // Detectar scroll al final del documento
   useEffect(() => {
     if (!isOpen) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setHasScrolledToEnd(true);
-        }
-      },
+      ([entry]) => { if (entry.isIntersecting) setHasScrolledToEnd(true); },
       { threshold: 0.1 }
     );
 
     const sentinel = sentinelRef.current;
-    if (sentinel) {
-      observer.observe(sentinel);
-    }
-
+    if (sentinel) observer.observe(sentinel);
     return () => observer.disconnect();
   }, [isOpen, document.content_html]);
 
-  // Generar declaración automática
-  const declarationText = `Yo, ${typedName || signerFullName}, identificado(a) con ${signerDocumentType || 'documento'} No. ${signerDocumentNumber || 'N/A'}, declaro que he leído y acepto el documento "${document.title}" versión ${document.version} de SICOMMER INT LLC. Confirmo que soy mayor de 18 años y que actúo de manera libre y voluntaria.`;
+  const declarationText = `${signerFullName} confirma que leyó y acepta "${document.title}" versión ${document.version} de KREOON.`;
 
-  // Validar si puede firmar
   const canSign = useCallback(() => {
-    if (!hasScrolledToEnd) return false;
-    if (!confirmChecked) return false;
+    if (!hasScrolledToEnd || !confirmChecked) return false;
+    if (signatureMethod === 'drawn_signature') return signatureImage !== null;
+    // Para clickwrap y typed_name: solo necesita nombre en el perfil
+    return signerFullName.length >= 2;
+  }, [hasScrolledToEnd, confirmChecked, signatureMethod, signatureImage, signerFullName]);
 
-    switch (signatureMethod) {
-      case 'clickwrap':
-        return true;
-      case 'typed_name':
-        return typedName.length >= 3 && typedName.toLowerCase() === signerFullName.toLowerCase();
-      case 'drawn_signature':
-        return signatureImage !== null;
-      default:
-        return false;
-    }
-  }, [hasScrolledToEnd, confirmChecked, signatureMethod, typedName, signerFullName, signatureImage]);
-
-  // Firmar documento
   const handleSign = async () => {
     if (!canSign()) return;
 
     try {
       const signatureId = await signDocument({
         documentId: document.document_id,
-        signerFullName: signerFullName,
-        signatureMethod,
-        typedSignature: signatureMethod === 'typed_name' ? typedName : undefined,
-        signatureImageUrl: signatureMethod === 'drawn_signature' ? signatureImage || undefined : undefined,
+        signerFullName,
+        signatureMethod: signatureMethod === 'typed_name' ? 'clickwrap' : signatureMethod,
+        typedSignature: signatureMethod === 'typed_name' ? signerFullName : undefined,
+        signatureImageUrl: signatureMethod === 'drawn_signature' ? signatureImage ?? undefined : undefined,
         declarationText,
       });
 
-      toast.success('Documento firmado correctamente');
+      toast.success('¡Documento firmado! Enviando comprobante...');
       onSigned(signatureId);
-    } catch (error: any) {
-      toast.error(error.message || 'Error al firmar el documento');
+
+      // Enviar email + WhatsApp en segundo plano (fire-and-forget)
+      if (user?.id) {
+        supabase.functions.invoke('notify-signature', {
+          body: { signature_id: signatureId, user_id: user.id },
+        }).then(({ error }) => {
+          if (error) {
+            console.warn('[SignatureModal] notify-signature falló:', error);
+          } else {
+            toast.success('Comprobante enviado a tu email y WhatsApp', { duration: 4000 });
+          }
+        });
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Error al firmar el documento';
+      toast.error(msg);
     }
   };
 
-  // Reset al cerrar
   useEffect(() => {
     if (!isOpen) {
       setHasScrolledToEnd(false);
-      setTypedName('');
       setSignatureImage(null);
       setConfirmChecked(false);
     }
@@ -150,173 +160,173 @@ export function SignatureModal({
 
   if (!isOpen) return null;
 
+  const step = !hasScrolledToEnd ? 'reading' : 'signing';
+
   return (
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[250] bg-black/80 flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 z-[250] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4"
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-sm w-full max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 40, opacity: 0 }}
+          className="bg-background border-t-2 sm:border-2 border-border rounded-t-3xl sm:rounded-3xl w-full sm:max-w-2xl max-h-[96vh] sm:max-h-[88vh] flex flex-col overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-3 sm:p-4 border-b border-white/10 flex-shrink-0">
-            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-              <div className="p-1.5 sm:p-2 bg-purple-500/20 rounded-sm flex-shrink-0">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="text-base sm:text-lg font-semibold text-white truncate">{document.title}</h2>
-                <p className="text-xs sm:text-sm text-white/60">v{document.version} — SICOMMER INT LLC</p>
-              </div>
+          <div className="flex items-center gap-4 px-5 py-4 border-b border-border/50 shrink-0">
+            <span className="text-3xl shrink-0">{docEmoji}</span>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-foreground text-base leading-tight truncate">{document.title}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {step === 'reading' ? '⬇️ Lee hasta el final para poder firmar' : '✅ Leíste todo — ya puedes firmar'}
+              </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 bg-white/10 hover:bg-white/20 rounded-sm transition-colors flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-muted/50 hover:bg-muted flex items-center justify-center shrink-0 transition-colors"
               aria-label="Cerrar"
             >
-              <X className="w-5 h-5 text-white" />
+              <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
 
+          {/* Barra de progreso */}
+          <div className="h-1.5 bg-muted/30 shrink-0">
+            <motion.div
+              className="h-full bg-primary rounded-full"
+              animate={{ width: step === 'signing' ? '100%' : '30%' }}
+              transition={{ duration: 0.4 }}
+            />
+          </div>
+
           {/* Contenido del documento */}
-          <div
-            ref={contentRef}
-            className="flex-1 overflow-y-auto p-4 sm:p-6 prose prose-invert prose-sm max-w-none min-h-0"
-          >
+          <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-0">
             {document.content_html ? (
               <>
-                {/* SECURITY: Sanitize HTML to prevent XSS attacks */}
-                <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(document.content_html) }} />
+                <div
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(document.content_html) }}
+                  className={cn(
+                    "pt-4",
+                    "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h1]:text-foreground",
+                    "[&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:text-foreground",
+                    "[&_p]:text-sm [&_p]:text-muted-foreground [&_p]:leading-relaxed [&_p]:mb-3",
+                    "[&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3 [&_li]:text-sm [&_li]:text-muted-foreground [&_li]:mb-1",
+                    "[&_strong]:text-foreground [&_strong]:font-semibold",
+                    "[&_table]:w-full [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:py-2 [&_th]:px-3 [&_th]:bg-muted/30",
+                    "[&_td]:text-xs [&_td]:py-2 [&_td]:px-3 [&_td]:border-t [&_td]:border-border/30"
+                  )}
+                />
                 <div ref={sentinelRef} className="h-4" />
               </>
             ) : (
-              <div className="text-center py-12 text-white/40">
-                <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Cargando contenido del documento...</p>
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 <div ref={sentinelRef} className="h-4" />
               </div>
             )}
           </div>
 
-          {/* Indicador de scroll */}
-          {!hasScrolledToEnd && (
-            <div className="flex items-center justify-center gap-2 py-2 bg-yellow-500/10 border-t border-yellow-500/20">
-              <ChevronDown className="w-4 h-4 text-yellow-400 animate-bounce" />
-              <span className="text-sm text-yellow-400">Desplázate para leer todo el documento</span>
+          {/* Hint de scroll — solo mientras lee */}
+          {step === 'reading' && (
+            <div className="flex items-center justify-center gap-2 py-2.5 bg-amber-500/10 border-t border-amber-500/20 shrink-0">
+              <ChevronDown className="w-4 h-4 text-amber-500 animate-bounce" />
+              <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">Sigue leyendo para poder firmar</span>
             </div>
           )}
 
-          {/* Sección de firma */}
-          <div className="border-t border-white/10 p-4 sm:p-6 space-y-3 sm:space-y-4 bg-black/20 flex-shrink-0 max-h-[50vh] overflow-y-auto">
-            {/* Estado de lectura */}
-            <div className={cn(
-              "flex items-center gap-2 text-sm",
-              hasScrolledToEnd ? "text-green-400" : "text-white/40"
-            )}>
-              <CheckCircle2 className={cn("w-4 h-4", !hasScrolledToEnd && "opacity-40")} />
-              Has leído el documento completo
-            </div>
-
-            {/* Campo de firma según método */}
-            {signatureMethod === 'typed_name' && (
-              <div className="space-y-2">
-                <Label className="text-white/90">
-                  Escribe tu nombre completo para firmar
-                </Label>
-                <Input
-                  value={typedName}
-                  onChange={(e) => setTypedName(e.target.value)}
-                  placeholder={signerFullName}
-                  className="bg-white/5 border-white/10 text-white text-lg font-medium"
-                  disabled={!hasScrolledToEnd}
-                />
-                {typedName && typedName.toLowerCase() !== signerFullName.toLowerCase() && (
-                  <p className="text-xs text-yellow-400 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    El nombre debe coincidir exactamente con: {signerFullName}
-                  </p>
+          {/* Sección de firma — solo tras leer todo */}
+          <AnimatePresence>
+            {step === 'signing' && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="border-t border-border/50 p-5 space-y-3 shrink-0"
+              >
+                {/* Resumen del documento */}
+                {summaryPoints && (
+                  <div className="bg-muted/20 rounded-2xl px-4 py-3 space-y-1.5 border border-border/30">
+                    <p className="text-xs font-semibold text-foreground mb-1">Lo que estás aceptando:</p>
+                    {summaryPoints.map((point, i) => (
+                      <p key={i} className="text-xs text-muted-foreground leading-relaxed">{point}</p>
+                    ))}
+                  </div>
                 )}
-              </div>
+
+                {/* Identidad — mostrar nombre, no pedir que lo escriban */}
+                <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-border/50 bg-card">
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Firmando como</p>
+                    <p className="font-semibold text-foreground text-sm truncate">{signerFullName || 'Tu nombre'}</p>
+                  </div>
+                  <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                </div>
+
+                {/* Canvas de firma dibujada (solo para drawn_signature) */}
+                {signatureMethod === 'drawn_signature' && (
+                  <div>
+                    <p className="text-sm font-semibold text-foreground mb-2">✍️ Dibuja tu firma</p>
+                    <SignatureCanvas
+                      onSignatureChange={setSignatureImage}
+                      fallbackName={signerFullName}
+                      width={Math.min(400, window.innerWidth - 80)}
+                      height={120}
+                    />
+                  </div>
+                )}
+
+                {/* BigCard de confirmación */}
+                <button
+                  type="button"
+                  onClick={() => setConfirmChecked(!confirmChecked)}
+                  className={cn(
+                    'w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 text-left transition-all',
+                    confirmChecked ? 'border-primary bg-primary/10' : 'border-border/50 bg-card'
+                  )}
+                >
+                  <span className="text-2xl shrink-0">{confirmChecked ? '✅' : '☑️'}</span>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground text-sm">Leí y acepto este documento</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Tiene la misma validez legal que una firma en papel</p>
+                  </div>
+                  <div className={cn(
+                    'w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-all',
+                    confirmChecked ? 'bg-primary border-primary' : 'border-muted-foreground/30'
+                  )}>
+                    {confirmChecked && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                  </div>
+                </button>
+
+                {/* Botón firmar */}
+                <button
+                  type="button"
+                  onClick={handleSign}
+                  disabled={!canSign() || isSigning}
+                  className={cn(
+                    'w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base transition-all',
+                    'bg-primary text-primary-foreground',
+                    canSign() && !isSigning ? 'hover:bg-primary/90 scale-100' : 'opacity-40 cursor-not-allowed scale-95'
+                  )}
+                >
+                  {isSigning ? (
+                    <><Loader2 className="w-5 h-5 animate-spin" /> Firmando...</>
+                  ) : (
+                    '🖊️ Firmar ahora'
+                  )}
+                </button>
+
+                <p className="text-xs text-muted-foreground/50 text-center">
+                  🔒 {new Date().toLocaleDateString('es-CO')} · versión {document.version}
+                </p>
+              </motion.div>
             )}
-
-            {signatureMethod === 'drawn_signature' && (
-              <div className="space-y-2">
-                <Label className="text-white/90">Dibuja tu firma</Label>
-                <SignatureCanvas
-                  onSignatureChange={setSignatureImage}
-                  fallbackName={signerFullName}
-                  width={Math.min(400, window.innerWidth - 80)}
-                  height={120}
-                />
-              </div>
-            )}
-
-            {/* Declaración */}
-            <div className="bg-white/5 rounded-sm p-4 space-y-2">
-              <p className="text-xs text-white/40 uppercase tracking-wide">Declaración</p>
-              <p className="text-sm text-white/80 italic">"{declarationText}"</p>
-            </div>
-
-            {/* Checkbox de confirmación */}
-            <div className="flex items-start gap-3">
-              <Checkbox
-                id="confirm"
-                checked={confirmChecked}
-                onCheckedChange={(checked) => setConfirmChecked(checked === true)}
-                disabled={!hasScrolledToEnd}
-                className="mt-0.5"
-              />
-              <label htmlFor="confirm" className="text-sm text-white/70 leading-relaxed cursor-pointer">
-                Confirmo que la información anterior es correcta y que esta firma electrónica
-                tiene la misma validez que mi firma manuscrita conforme a la Ley 527 de 1999
-                (Colombia), ESIGN Act (USA), eIDAS (UE) y normativa aplicable.
-              </label>
-            </div>
-
-            {/* Botón de firma */}
-            <Button
-              onClick={handleSign}
-              disabled={!canSign() || isSigning}
-              className={cn(
-                "w-full h-12 text-base font-semibold",
-                "bg-gradient-to-r from-purple-600 to-pink-600",
-                "hover:from-purple-500 hover:to-pink-500",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
-              )}
-            >
-              {isSigning ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Firmando...
-                </>
-              ) : (
-                <>
-                  <Lock className="w-5 h-5 mr-2" />
-                  Firmar documento
-                </>
-              )}
-            </Button>
-
-            {/* Metadata de la firma */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/40">
-              <span>Firmante: {signerFullName}</span>
-              <span>IP: {currentIP}</span>
-              <span>Fecha: {currentTime.toLocaleString('es-CO', { timeZone: 'America/Bogota' })}</span>
-              <span>Doc v{document.version}</span>
-            </div>
-
-            {/* Badge de seguridad */}
-            <div className="flex items-center justify-center gap-2 pt-2 text-xs text-white/30">
-              <Shield className="w-3 h-3" />
-              Firma electrónica segura — SHA-256 — SICOMMER INT LLC
-            </div>
-          </div>
+          </AnimatePresence>
         </motion.div>
       </motion.div>
     </AnimatePresence>

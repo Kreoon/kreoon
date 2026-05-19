@@ -227,7 +227,7 @@ export function RoleLegalConsentModal({
       brand_agreement: 'Acuerdo de Marca',
       content_moderation_policy: 'Politica de Moderacion',
       dmca_policy: 'Politica DMCA',
-      escrow_payment_terms: 'Terminos de Escrow y Pagos',
+      escrow_payment_terms: 'Términos de Pago Anticipado',
     };
     return labels[type] || type;
   };

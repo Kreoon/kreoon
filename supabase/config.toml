@@ -102,6 +102,9 @@ verify_jwt = false
 [functions.board-ai]
 verify_jwt = false
 
+[functions.campaign-wizard-ai]
+verify_jwt = false
+
 [functions.up-ai-copilot]
 verify_jwt = false
 

@@ -26,6 +26,7 @@ import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
 import { GenerationJobProvider } from "@/contexts/GenerationJobContext";
+import { CreatorFavoritesProvider } from "@/contexts/CreatorFavoritesContext";
 import { FloatingGenerationBadge } from "@/components/ui/FloatingGenerationBadge";
 import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
@@ -156,6 +157,7 @@ const MarketplaceInvitationsPage = lazyWithRetry(() => import("./pages/marketpla
 const MarketplaceInquiriesPage = lazyWithRetry(() => import("./pages/marketplace/MarketplaceInquiriesPage"));
 const CampaignPaymentSuccessPage = lazyWithRetry(() => import("./pages/marketplace/CampaignPaymentSuccess"));
 const CampaignPaymentCancelPage = lazyWithRetry(() => import("./pages/marketplace/CampaignPaymentCancel"));
+const FavoritosPage = lazyWithRetry(() => import("./pages/marketplace/FavoritosPage"));
 const CreatorProfileSetup = lazyWithRetry(() => import("./pages/CreatorProfileSetup"));
 const Unete = lazyWithRetry(() => import("./pages/Unete"));
 const UneteTalento = lazyWithRetry(() => import("./pages/unete/talento"));
@@ -184,6 +186,7 @@ const KAEAnalyticsDashboard = lazyWithRetry(() => import("./components/admin/ana
 // Admin pages
 const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
 const DevModulesPage = lazyWithRetry(() => import("./pages/admin/DevModulesPage"));
+const PendingPaymentsPage = lazyWithRetry(() => import("./pages/admin/PendingPaymentsPage"));
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
@@ -194,6 +197,7 @@ const OnboardingProfile = lazyWithRetry(() => import("./pages/OnboardingProfile"
 const SubscriptionSuccess = lazyWithRetry(() => import("./pages/subscription/SubscriptionSuccess"));
 const SubscriptionCancel = lazyWithRetry(() => import("./pages/subscription/SubscriptionCancel"));
 const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
+const CampanasGestionadasPage = lazyWithRetry(() => import("./pages/CampanasGestionadasPage"));
 const CreatorPricingPage = lazyWithRetry(() => import("./pages/CreatorPricingPage"));
 const FreelancerDashboard = lazyWithRetry(() => import("./pages/FreelancerDashboard"));
 const PartnerCommunityLanding = lazyWithRetry(() => import("./pages/PartnerCommunityLanding"));
@@ -208,6 +212,7 @@ const PrivacyPolicy = lazyWithRetry(() => import("./pages/legal/PrivacyPolicy"))
 const TermsOfService = lazyWithRetry(() => import("./pages/legal/TermsOfService"));
 const DataDeletion = lazyWithRetry(() => import("./pages/legal/DataDeletion"));
 const LegalDocumentPage = lazyWithRetry(() => import("./pages/legal/LegalDocumentPage"));
+const ReceiptPage = lazyWithRetry(() => import("./pages/legal/ReceiptPage"));
 
 // Wallet Module Pages
 const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
@@ -368,6 +373,7 @@ function AppRoutes() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />
         <Route path="/legal/:documentType" element={<LegalDocumentPage />} />
+        <Route path="/receipt/:signatureId" element={<ReceiptPage />} />
         {/* Redirect old /social routes to /marketplace */}
         <Route path="/social" element={<Navigate to="/marketplace" replace />} />
         <Route path="/social/*" element={<Navigate to="/marketplace" replace />} />
@@ -381,6 +387,7 @@ function AppRoutes() {
         {/* Protected: actions that require login */}
         <Route path="/marketplace/videos" element={<ProtectedRoute allowNoRoles><MainLayout><VideosPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/guardados" element={<ProtectedRoute allowNoRoles><MainLayout><SavedPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/marketplace/favoritos" element={<ProtectedRoute allowNoRoles><MainLayout><FavoritosPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketplace/hire/:creatorId" element={<ProtectedRoute allowNoRoles><HiringWizardPage /></ProtectedRoute>} />
         <Route path="/marketplace/profile/setup" element={<ProtectedRoute allowNoRoles><CreatorProfileSetup /></ProtectedRoute>} />
         <Route path="/marketplace/dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><MarketplaceDashboard /></MainLayout></ProtectedRoute>} />
@@ -491,6 +498,7 @@ function AppRoutes() {
         <Route path="/admin/social-scraper" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/papelera" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PapeleraPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/dev-modules" element={<RootOnlyRoute><MainLayout><DevModulesPage /></MainLayout></RootOnlyRoute>} />
+        <Route path="/admin/pending-payments" element={<ProtectedRoute allowedRoles={["admin"]}><MainLayout><PendingPaymentsPage /></MainLayout></ProtectedRoute>} />
         {/* Ad Generator Module */}
         <Route path="/ad-generator" element={<ProtectedRoute allowedRoles={['admin', 'client']}><MainLayout><AdGeneratorPage /></MainLayout></ProtectedRoute>} />
         <Route path="/ad-generator/:productId" element={<ProtectedRoute allowedRoles={['admin', 'client']}><MainLayout><ProductBannersPage /></MainLayout></ProtectedRoute>} />
@@ -503,6 +511,7 @@ function AppRoutes() {
         <Route path="/book/reschedule/:bookingId" element={<RescheduleBookingPage />} />
         <Route path="/settings" element={<ProtectedRoute allowNoRoles><MainLayout><Settings /></MainLayout></ProtectedRoute>} />
         <Route path="/planes" element={<ProtectedRoute allowNoRoles><MainLayout><PlanesPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/campanas-gestionadas" element={<ProtectedRoute allowNoRoles><MainLayout><CampanasGestionadasPage /></MainLayout></ProtectedRoute>} />
         <Route path="/freelancer-dashboard" element={<Navigate to="/creator-dashboard" replace />} />
         <Route path="/creator-dashboard" element={<ProtectedRoute allowNoRoles><MainLayout><CreatorDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/editor-dashboard" element={<ProtectedRoute allowedRoles={['editor']}><MainLayout><EditorDashboard /></MainLayout></ProtectedRoute>} />
@@ -554,7 +563,9 @@ function AppContent() {
                               <ScrollToTop />
                               <FloatingGenerationBadge />
                               <ErrorBoundary>
-                                <AppRoutes />
+                                <CreatorFavoritesProvider>
+                                  <AppRoutes />
+                                </CreatorFavoritesProvider>
                               </ErrorBoundary>
                             </TooltipProvider>
                             </GenerationJobProvider>
