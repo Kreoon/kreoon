@@ -26,6 +26,7 @@ import {
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
+import { ClientBillingTab } from "@/components/clients/ClientBillingTab";
 import { ClientActivityPanel } from "@/components/clients/ClientActivityPanel";
 import { VipBadge } from "@/components/ui/vip-badge";
 
@@ -423,6 +424,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
               Canales
             </TabsTrigger>
             <TabsTrigger value="stats" className="flex-none">Stats</TabsTrigger>
+            <TabsTrigger value="billing" className="flex-none gap-1">
+              <DollarSign className="h-3 w-3" />
+              Cobros
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-4 mt-4">
@@ -1287,6 +1292,20 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
           {/* Streaming Channels Tab */}
           <TabsContent value="channels" className="mt-4">
             <ClientStreamingChannels clientId={client.id} clientName={client.name} />
+          </TabsContent>
+
+          {/* Cobros Tab */}
+          <TabsContent value="billing" className="mt-4">
+            {fullClientData?.organization_id ? (
+              <ClientBillingTab
+                orgId={fullClientData.organization_id}
+                clientId={client.id}
+                clientName={client.name}
+                orgName="Kreoon"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">Cargando...</p>
+            )}
           </TabsContent>
         </Tabs>
       </DialogContent>
