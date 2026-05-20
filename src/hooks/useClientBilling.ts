@@ -233,7 +233,7 @@ export function useFillmakerPayroll(orgId: string) {
         .select('id, fillmaker_service_id, user_id, description, amount, currency, status, created_at')
         .eq('organization_id', orgId)
         .not('fillmaker_service_id', 'is', null)
-        .in('status', ['pending', 'processing'])
+        .eq('status', 'pending')
         .order('created_at', { ascending: false });
       if (error) throw error;
       if (!payments?.length) return [];
