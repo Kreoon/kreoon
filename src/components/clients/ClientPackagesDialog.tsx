@@ -1,14 +1,20 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ShoppingBag, Video, CheckCircle2,
   Handshake, Loader2, Users, Package, Zap, Plus, Pencil,
-  ChevronDown, MoveRight, AlertTriangle,
+  ChevronDown, AlertTriangle, Camera, FolderKanban,
 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { type ClientPackage, type PaymentStatus, type Product } from '@/types/database';
 import { ClientPackageDialog } from '@/components/clients/ClientPackageDialog';
+import { FillmakerDialog } from '@/components/clients/FillmakerDialog';
+import { useClientBillingItems } from '@/hooks/useClientBilling';
+import { formatCurrency } from '@/lib/finance-format';
 import { cn } from '@/lib/utils';
 
 interface ContentItem {
@@ -31,8 +37,58 @@ const STATUS_DOT: Record<string, string> = {
 interface ClientPackagesDialogProps {
   clientId: string;
   clientName: string;
+  orgId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+// ─── Utilidades de agrupación por mes ────────────────────────────────────────
+
+function monthKey(dateStr: string) {
+  try { return format(parseISO(dateStr), 'MMMM yyyy', { locale: es }); }
+  catch { return 'Sin fecha'; }
+}
+
+function groupByMonth<T>(items: T[], getDate: (item: T) => string): [string, T[]][] {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const key = monthKey(getDate(item));
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(item);
+  }
+  return Array.from(map.entries());
+}
+
+const BILLING_STATUS_COLOR: Record<string, string> = {
+  pending:    'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  in_closing: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  paid:       'bg-green-500/15 text-green-400 border-green-500/30',
+};
+const BILLING_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pendiente', in_closing: 'En cierre', paid: 'Pagado',
+};
+
+// ─── Sección colapsable por mes ───────────────────────────────────────────────
+
+function MonthSection({ month, count, children, defaultOpen = false }: {
+  month: string; count: number; children: React.ReactNode; defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded border border-white/10 overflow-hidden">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left"
+      >
+        <span className="text-sm font-medium capitalize">{month}</span>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs h-5">{count}</Badge>
+          <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
+        </div>
+      </button>
+      {open && <div className="divide-y divide-white/5">{children}</div>}
+    </div>
+  );
 }
 
 const PAYMENT_STYLE: Record<string, {
@@ -80,7 +136,7 @@ const BARTER_STYLE = {
   dot:      'bg-amber-400',
 };
 
-export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange }: ClientPackagesDialogProps) {
+export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpenChange }: ClientPackagesDialogProps) {
   const [packages, setPackages] = useState<ClientPackage[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +145,26 @@ export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange 
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [expandedPkgs, setExpandedPkgs] = useState<Set<string>>(new Set());
   const [movingId, setMovingId] = useState<string | null>(null);
+  const [fillmakerOpen, setFillmakerOpen] = useState(false);
+
+  // orgId resolto: si no viene como prop, lo cargamos de la tabla clients
+  const [resolvedOrgId, setResolvedOrgId] = useState<string | undefined>(orgId);
+  useEffect(() => {
+    if (orgId) { setResolvedOrgId(orgId); return; }
+    if (!open || !clientId) return;
+    supabase.from('clients').select('organization_id').eq('id', clientId).single()
+      .then(({ data }) => { if (data) setResolvedOrgId(data.organization_id); });
+  }, [orgId, open, clientId]);
+
+  const { data: billingItems = [], isLoading: loadingBilling } = useClientBillingItems(
+    resolvedOrgId ?? '', clientId,
+  );
+
+  const fillmakers = useMemo(() => billingItems.filter(i => i.item_type === 'fillmaker'), [billingItems]);
+  const projects   = useMemo(() => billingItems.filter(i => i.item_type === 'project'),   [billingItems]);
+
+  const fillmakersByMonth = useMemo(() => groupByMonth(fillmakers, i => i.item_date), [fillmakers]);
+  const projectsByMonth   = useMemo(() => groupByMonth(projects,   i => i.item_date), [projects]);
 
   const loadPackages = useCallback(() => {
     setLoading(true);
@@ -167,18 +243,24 @@ export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange 
                   <ShoppingBag className="h-4 w-4 text-blue-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-base">Campañas contratadas</p>
+                  <p className="font-bold text-base">Servicios contratados</p>
                   <p className="text-xs text-muted-foreground font-normal">{clientName}</p>
                 </div>
-                <Button size="sm" onClick={handleNew} className="shrink-0 gap-1.5">
-                  <Plus className="h-3.5 w-3.5" />
-                  Nueva campaña
-                </Button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => setFillmakerOpen(true)} className="gap-1.5 h-8 text-xs">
+                    <Camera className="h-3.5 w-3.5" />
+                    Grabación
+                  </Button>
+                  <Button size="sm" onClick={handleNew} className="gap-1.5 h-8 text-xs">
+                    <Plus className="h-3.5 w-3.5" />
+                    Campaña
+                  </Button>
+                </div>
               </DialogTitle>
             </DialogHeader>
 
             {!loading && (
-              <div className="flex items-center gap-2 mt-3">
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
                 <div className="flex items-center gap-1.5 rounded-full bg-background/60 border border-border px-3 py-1.5">
                   <ShoppingBag className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="text-sm font-semibold">{packages.length}</span>
@@ -186,22 +268,46 @@ export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange 
                     {packages.length === 1 ? 'campaña' : 'campañas'}
                   </span>
                 </div>
+                {fillmakers.length > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-background/60 border border-border px-3 py-1.5">
+                    <Camera className="h-3.5 w-3.5 text-violet-400" />
+                    <span className="text-sm font-semibold">{fillmakers.length}</span>
+                    <span className="text-xs text-muted-foreground">grabaciones</span>
+                  </div>
+                )}
+                {projects.length > 0 && (
+                  <div className="flex items-center gap-1.5 rounded-full bg-background/60 border border-border px-3 py-1.5">
+                    <FolderKanban className="h-3.5 w-3.5 text-blue-400" />
+                    <span className="text-sm font-semibold">{projects.length}</span>
+                    <span className="text-xs text-muted-foreground">proyectos</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Lista con scroll nativo */}
           <div
-            className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 pt-4 space-y-4"
+            className="flex-1 min-h-0 overflow-y-auto px-5 pb-6 pt-4 space-y-6"
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
           >
+            {/* ─── Sección Campañas ───────────────────────── */}
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <ShoppingBag className="h-4 w-4 text-primary" />
+                Campañas
+                {packages.length > 0 && (
+                  <Badge variant="secondary" className="text-xs h-5">{packages.length}</Badge>
+                )}
+              </h3>
+
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
                 <Loader2 className="h-7 w-7 animate-spin text-primary/60" />
                 <p className="text-sm text-muted-foreground">Cargando campañas...</p>
               </div>
             ) : packages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full gap-3">
+              <div className="flex flex-col items-center justify-center py-8 gap-3">
                 <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
                   <ShoppingBag className="h-6 w-6 text-muted-foreground" />
                 </div>
@@ -415,11 +521,101 @@ export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange 
                 </div>
               );
             })}
+            </section>
+
+            {/* ─── Sección Fillmakers ─────────────────────── */}
+            {(loadingBilling || fillmakers.length > 0) && (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-violet-400" />
+                    Grabaciones Fillmaker
+                    {fillmakers.length > 0 && (
+                      <Badge variant="secondary" className="text-xs h-5">{fillmakers.length}</Badge>
+                    )}
+                  </h3>
+                  <Button size="sm" variant="outline" onClick={() => setFillmakerOpen(true)} className="h-7 gap-1.5 text-xs">
+                    <Plus className="h-3.5 w-3.5" />
+                    Nueva grabación
+                  </Button>
+                </div>
+
+                {loadingBilling ? (
+                  <div className="h-12 rounded border border-white/10 animate-pulse bg-white/[0.03]" />
+                ) : (
+                  <div className="space-y-2">
+                    {fillmakersByMonth.map(([month, items], idx) => (
+                      <MonthSection key={month} month={month} count={items.length} defaultOpen={idx < 2}>
+                        {items.map(item => (
+                          <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                            <Camera className="h-4 w-4 text-violet-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.title}</p>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                              )}
+                            </div>
+                            <Badge className={cn('text-xs shrink-0', BILLING_STATUS_COLOR[item.billing_status] ?? '')}>
+                              {BILLING_STATUS_LABEL[item.billing_status] ?? item.billing_status}
+                            </Badge>
+                            <span className="text-sm font-semibold text-green-400 whitespace-nowrap shrink-0">
+                              {formatCurrency(item.price_client, item.currency)}
+                            </span>
+                          </div>
+                        ))}
+                      </MonthSection>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* ─── Sección Proyectos sueltos ──────────────── */}
+            {(loadingBilling || projects.length > 0) && (
+              <section className="space-y-3">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  <FolderKanban className="h-4 w-4 text-blue-400" />
+                  Proyectos sueltos
+                  {projects.length > 0 && (
+                    <Badge variant="secondary" className="text-xs h-5">{projects.length}</Badge>
+                  )}
+                  <span className="text-xs text-muted-foreground font-normal">(sin paquete)</span>
+                </h3>
+
+                {loadingBilling ? (
+                  <div className="h-12 rounded border border-white/10 animate-pulse bg-white/[0.03]" />
+                ) : (
+                  <div className="space-y-2">
+                    {projectsByMonth.map(([month, items], idx) => (
+                      <MonthSection key={month} month={month} count={items.length} defaultOpen={idx < 2}>
+                        {items.map(item => (
+                          <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                            <FolderKanban className="h-4 w-4 text-blue-400 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.title}</p>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                              )}
+                            </div>
+                            <Badge className={cn('text-xs shrink-0', BILLING_STATUS_COLOR[item.billing_status] ?? '')}>
+                              {BILLING_STATUS_LABEL[item.billing_status] ?? item.billing_status}
+                            </Badge>
+                            <span className="text-sm font-semibold text-green-400 whitespace-nowrap shrink-0">
+                              {formatCurrency(item.price_client, item.currency)}
+                            </span>
+                          </div>
+                        ))}
+                      </MonthSection>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Formulario crear / editar — fuera del Dialog principal para evitar z-index */}
+      {/* Formulario crear / editar campaña */}
       <ClientPackageDialog
         clientId={clientId}
         package_={editingPackage}
@@ -428,6 +624,16 @@ export function ClientPackagesDialog({ clientId, clientName, open, onOpenChange 
         onOpenChange={setFormOpen}
         onSuccess={loadPackages}
       />
+
+      {/* Dialog nueva grabación Fillmaker */}
+      {resolvedOrgId && (
+        <FillmakerDialog
+          open={fillmakerOpen}
+          onOpenChange={setFillmakerOpen}
+          orgId={resolvedOrgId}
+          clientId={clientId}
+        />
+      )}
     </>
   );
 }
