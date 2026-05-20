@@ -311,3 +311,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.create_client_closing(UUID, UUID, TEXT, TEXT, TEXT, UUID[], UUID[], UUID) TO authenticated;
+
+-- Permisos de tabla para PostgREST
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.fillmaker_services TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.client_closings TO authenticated;

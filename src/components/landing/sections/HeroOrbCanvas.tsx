@@ -201,9 +201,22 @@ function AtmosphericEffects({ scrollProgress }: { scrollProgress: number }) {
   );
 }
 
+function isWebGLAvailable(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(
+      window.WebGLRenderingContext &&
+      (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+    );
+  } catch {
+    return false;
+  }
+}
+
 export function HeroOrbCanvas() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
+  const [webglSupported] = useState(() => isWebGLAvailable());
 
   useEffect(() => {
     let ticking = false;
@@ -305,30 +318,32 @@ export function HeroOrbCanvas() {
         />
       </div>
 
-      {/* Three.js Canvas */}
-      <Canvas
-        gl={{
-          antialias: true,
-          alpha: true,
-          powerPreference: "high-performance"
-        }}
-        className="absolute inset-0"
-      >
-        <Suspense fallback={null}>
-          <PerspectiveCamera makeDefault position={[0, 0, 35]} fov={50} />
-          <group
-            rotation={[
-              mouse.y * -0.1,
-              mouse.x * 0.1,
-              0
-            ]}
-          >
-            <MorphingParticles count={5000} scrollProgress={scrollProgress} />
-            <AtmosphericEffects scrollProgress={scrollProgress} />
-          </group>
-          <DynamicCamera scrollProgress={scrollProgress} />
-        </Suspense>
-      </Canvas>
+      {/* Three.js Canvas — solo si WebGL está disponible */}
+      {webglSupported && (
+        <Canvas
+          gl={{
+            antialias: true,
+            alpha: true,
+            powerPreference: "high-performance"
+          }}
+          className="absolute inset-0"
+        >
+          <Suspense fallback={null}>
+            <PerspectiveCamera makeDefault position={[0, 0, 35]} fov={50} />
+            <group
+              rotation={[
+                mouse.y * -0.1,
+                mouse.x * 0.1,
+                0
+              ]}
+            >
+              <MorphingParticles count={5000} scrollProgress={scrollProgress} />
+              <AtmosphericEffects scrollProgress={scrollProgress} />
+            </group>
+            <DynamicCamera scrollProgress={scrollProgress} />
+          </Suspense>
+        </Canvas>
+      )}
 
       {/* Vignette overlay that intensifies */}
       <div

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PROJECT_TYPE_REGISTRY } from '@/types/unifiedProject.types';
 import type { ProjectType } from '@/types/unifiedProject.types';
-import { Video, Film, Target, Code, GraduationCap } from 'lucide-react';
+import { Video, Film, Target, Code, GraduationCap, Camera } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -10,6 +10,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Target,
   Code,
   GraduationCap,
+  Camera,
 };
 
 interface ProjectTypeSelectorProps {
@@ -18,9 +19,11 @@ interface ProjectTypeSelectorProps {
   onSelect: (type: ProjectType) => void;
   /** Optional: hide specific types (e.g., hide content_creation in marketplace) */
   excludeTypes?: ProjectType[];
+  /** Optional: muestra una tarjeta especial de Fillmaker/Grabación */
+  onSelectFillmaker?: () => void;
 }
 
-export function ProjectTypeSelector({ open, onOpenChange, onSelect, excludeTypes = [] }: ProjectTypeSelectorProps) {
+export function ProjectTypeSelector({ open, onOpenChange, onSelect, excludeTypes = [], onSelectFillmaker }: ProjectTypeSelectorProps) {
   const types = Object.values(PROJECT_TYPE_REGISTRY).filter(
     config => !excludeTypes.includes(config.type),
   );
@@ -64,6 +67,30 @@ export function ProjectTypeSelector({ open, onOpenChange, onSelect, excludeTypes
               </button>
             );
           })}
+
+          {onSelectFillmaker && (
+            <button
+              onClick={() => {
+                onSelectFillmaker();
+                onOpenChange(false);
+              }}
+              className={cn(
+                'flex items-start gap-3 p-4 rounded-sm border text-left transition-all',
+                'hover:shadow-md hover:scale-[1.02] active:scale-[0.98]',
+                'border-violet-500/30 hover:border-violet-500/60 bg-card hover:bg-violet-500/5',
+              )}
+            >
+              <div className="p-2 rounded-sm shrink-0 bg-violet-500/10">
+                <Camera className="h-5 w-5 text-violet-500" />
+              </div>
+              <div className="min-w-0">
+                <p className="font-medium text-sm">Servicio de Grabación</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                  Fillmaker: grabación en locación para un cliente, con pago al editor
+                </p>
+              </div>
+            </button>
+          )}
         </div>
       </DialogContent>
     </Dialog>

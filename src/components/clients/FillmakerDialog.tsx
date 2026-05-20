@@ -16,15 +16,24 @@ interface Editor {
   avatar_url: string | null;
 }
 
+interface ClientOption {
+  id: string;
+  name: string;
+}
+
 interface FillmakerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   orgId: string;
-  clientId: string;
+  /** Si no se pasa, se muestra un selector de cliente dentro del formulario */
+  clientId?: string;
+  /** Lista de clientes para el selector (requerida cuando clientId no se pasa) */
+  clients?: ClientOption[];
 }
 
-export function FillmakerDialog({ open, onOpenChange, orgId, clientId }: FillmakerDialogProps) {
+export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients = [] }: FillmakerDialogProps) {
   const [editors, setEditors] = useState<Editor[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState(clientId ?? '');
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -42,6 +51,11 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId }: Fillmak
     if (!open || !orgId) return;
     loadEditors();
   }, [open, orgId]);
+
+  // Sincronizar selectedClientId cuando clientId prop cambia o el dialog se abre
+  useEffect(() => {
+    if (open) setSelectedClientId(clientId ?? '');
+  }, [open, clientId]);
 
   async function loadEditors() {
     const { data: members } = await (supabase as any)
@@ -67,8 +81,14 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId }: Fillmak
   }
 
   async function handleSubmit() {
+    const effectiveClientId = clientId ?? selectedClientId;
+
     if (!form.title.trim()) {
       toast({ title: 'Falta el título', variant: 'destructive' });
+      return;
+    }
+    if (!effectiveClientId) {
+      toast({ title: 'Selecciona un cliente', variant: 'destructive' });
       return;
     }
 
@@ -77,7 +97,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId }: Fillmak
     try {
       await createFillmaker.mutateAsync({
         organization_id: orgId,
-        client_id: clientId,
+        client_id: effectiveClientId,
         title: form.title.trim(),
         description: form.description.trim() || undefined,
         service_date: form.service_date,
@@ -116,6 +136,23 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId }: Fillmak
         </DialogHeader>
 
         <div className="space-y-3 py-1">
+          {/* Selector de cliente — solo cuando no se pasa clientId como prop */}
+          {!clientId && (
+            <div>
+              <Label className="text-xs text-muted-foreground mb-1 block">Cliente *</Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger className="bg-white/5 border-white/10">
+                  <SelectValue placeholder="Seleccionar cliente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Título *</Label>
             <Input
