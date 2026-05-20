@@ -228,26 +228,39 @@ export function useFillmakerPayroll(orgId: string) {
   return useQuery({
     queryKey: ['fillmaker-payroll', orgId],
     queryFn: async (): Promise<FillmakerPayrollItem[]> => {
-      const { data, error } = await (supabase as any)
+      const { data: payments, error } = await (supabase as any)
         .from('talent_payments')
-        .select('id, fillmaker_service_id, user_id, description, amount, currency, status, created_at, profiles(full_name, avatar_url)')
+        .select('id, fillmaker_service_id, user_id, description, amount, currency, status, created_at')
         .eq('organization_id', orgId)
         .not('fillmaker_service_id', 'is', null)
         .in('status', ['pending', 'processing'])
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []).map((d: any) => ({
-        id: d.id,
-        fillmaker_service_id: d.fillmaker_service_id,
-        user_id: d.user_id,
-        full_name: d.profiles?.full_name ?? null,
-        avatar_url: d.profiles?.avatar_url ?? null,
-        description: d.description,
-        amount: Number(d.amount),
-        currency: d.currency ?? 'COP',
-        status: d.status,
-        created_at: d.created_at,
-      }));
+      if (!payments?.length) return [];
+
+      const userIds = [...new Set((payments as any[]).map((p) => p.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', userIds);
+
+      const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+
+      return (payments as any[]).map((d) => {
+        const profile = profileMap.get(d.user_id);
+        return {
+          id: d.id,
+          fillmaker_service_id: d.fillmaker_service_id,
+          user_id: d.user_id,
+          full_name: profile?.full_name ?? null,
+          avatar_url: profile?.avatar_url ?? null,
+          description: d.description,
+          amount: Number(d.amount),
+          currency: d.currency ?? 'COP',
+          status: d.status,
+          created_at: d.created_at,
+        };
+      });
     },
     enabled: !!orgId,
     staleTime: 0,
