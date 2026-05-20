@@ -1630,7 +1630,7 @@ export default function ClientDashboard() {
           // Refrescar el producto seleccionado para que las pestañas nuevas
           // (Comunidad, SEO, Partnerships, etc.) muestren el contenido recien generado.
           setSelectedProduct(updated as any);
-          if (selectedClientId) fetchClientData(selectedClientId);
+          if (selectedClientId) fetchClientData(selectedClientId, { silent: true });
         }}
       />
 
