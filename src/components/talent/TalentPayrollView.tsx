@@ -294,6 +294,7 @@ function useMonthlyClosures(organizationId: string) {
         .select('*')
         .eq('organization_id', organizationId)
         .in('status', ['pending', 'processing'])
+        .is('fillmaker_service_id', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -1230,45 +1231,6 @@ export function TalentPayrollView() {
         </div>
       )}
 
-      {/* ─── Grabaciones Fillmaker pendientes de pago ──────────── */}
-      {fillmakerItems.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
-              <Camera className="h-4 w-4 text-violet-400" />
-              Grabaciones Fillmaker — pendiente de pago
-              <Badge className="text-xs bg-violet-500/20 text-violet-400 border-violet-500/30">
-                {fillmakerItems.length}
-              </Badge>
-            </h3>
-            <span className="text-sm font-bold text-violet-400">
-              {formatCurrency(fillmakerItems.reduce((s, i) => s + i.amount, 0))}
-            </span>
-          </div>
-          <div className="rounded-lg border border-white/10 overflow-hidden divide-y divide-white/5">
-            {fillmakerItems.map((item: FillmakerPayrollItem) => (
-              <div key={item.id} className="flex items-center gap-3 px-4 py-3">
-                <Camera className="h-4 w-4 text-violet-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{item.full_name ?? 'Editor'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{item.description}</p>
-                </div>
-                <Badge className={`text-xs shrink-0 ${
-                  item.status === 'processing'
-                    ? 'bg-blue-500/15 text-blue-400 border-blue-500/30'
-                    : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                }`}>
-                  {item.status === 'processing' ? 'En transferencia' : 'Pendiente'}
-                </Badge>
-                <span className="text-sm font-semibold text-violet-300 whitespace-nowrap">
-                  {formatCurrency(item.amount, item.currency)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Sección A: Cierres pendientes de pago */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -1353,6 +1315,38 @@ export function TalentPayrollView() {
             {filteredUnpaid.map((entry) => (
               <UnpaidRow key={entry.user_id} entry={entry} organizationId={orgId} />
             ))}
+          </div>
+        )}
+
+        {/* ─── Grabaciones Fillmaker (dentro del próximo cierre) ── */}
+        {fillmakerItems.length > 0 && (
+          <div className="space-y-2 pt-1">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                <Camera className="h-3.5 w-3.5 text-violet-400" />
+                Grabaciones Fillmaker por liquidar
+              </p>
+              <span className="text-xs font-semibold text-violet-300">
+                {formatCurrency(fillmakerItems.reduce((s, i) => s + i.amount, 0))}
+              </span>
+            </div>
+            <div className="rounded-lg border border-violet-500/20 overflow-hidden divide-y divide-white/5">
+              {fillmakerItems.map((item: FillmakerPayrollItem) => (
+                <div key={item.id} className="flex items-center gap-3 px-4 py-3">
+                  <Camera className="h-4 w-4 text-violet-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{item.full_name ?? 'Editor'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                  </div>
+                  <Badge className="text-xs bg-amber-500/15 text-amber-400 border-amber-500/30 shrink-0">
+                    Pendiente de cierre
+                  </Badge>
+                  <span className="text-sm font-semibold text-violet-300 whitespace-nowrap">
+                    {formatCurrency(item.amount, item.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

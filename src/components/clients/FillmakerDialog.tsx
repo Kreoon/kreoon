@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,17 +47,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
 
   const createFillmaker = useCreateFillmaker();
 
-  useEffect(() => {
-    if (!open || !orgId) return;
-    loadEditors();
-  }, [open, orgId]);
-
-  // Sincronizar selectedClientId cuando clientId prop cambia o el dialog se abre
-  useEffect(() => {
-    if (open) setSelectedClientId(clientId ?? '');
-  }, [open, clientId]);
-
-  async function loadEditors() {
+  const loadEditors = useCallback(async () => {
     const { data: members } = await (supabase as any)
       .from('organization_members')
       .select('user_id')
@@ -74,7 +64,16 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
       .order('full_name');
 
     setEditors((profiles ?? []) as Editor[]);
-  }
+  }, [orgId]);
+
+  useEffect(() => {
+    if (!open || !orgId) return;
+    loadEditors();
+  }, [open, orgId, loadEditors]);
+
+  useEffect(() => {
+    if (open) setSelectedClientId(clientId ?? '');
+  }, [open, clientId]);
 
   function f(field: keyof typeof form, val: string) {
     setForm(prev => ({ ...prev, [field]: val }));

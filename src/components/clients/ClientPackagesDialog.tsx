@@ -151,9 +151,12 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
   const [resolvedOrgId, setResolvedOrgId] = useState<string | undefined>(orgId);
   useEffect(() => {
     if (orgId) { setResolvedOrgId(orgId); return; }
-    if (!open || !clientId) return;
+    if (!open) { setResolvedOrgId(undefined); return; }
+    if (!clientId) return;
+    let cancelled = false;
     supabase.from('clients').select('organization_id').eq('id', clientId).single()
-      .then(({ data }) => { if (data) setResolvedOrgId(data.organization_id); });
+      .then(({ data }) => { if (!cancelled && data) setResolvedOrgId(data.organization_id); });
+    return () => { cancelled = true; };
   }, [orgId, open, clientId]);
 
   const { data: billingItems = [], isLoading: loadingBilling } = useClientBillingItems(
