@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
+import { FillmakerDialog } from "@/components/clients/FillmakerDialog";
 import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
 
@@ -298,6 +299,7 @@ export default function ContentBoard() {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
   const [showUnifiedCreate, setShowUnifiedCreate] = useState(false);
   const [createProjectType, setCreateProjectType] = useState<ProjectType | null>(null);
+  const [showFillmakerFromBoard, setShowFillmakerFromBoard] = useState(false);
   
   // AI Panel state
   const [showAIPanel, setShowAIPanel] = useState(false);
@@ -1214,7 +1216,19 @@ export default function ContentBoard() {
             setShowUnifiedCreate(true);
           }
         }}
+        onSelectFillmaker={showAdminControls ? () => setShowFillmakerFromBoard(true) : undefined}
       />
+
+      {/* Fillmaker desde el kanban */}
+      {showAdminControls && currentOrgId && (
+        <FillmakerDialog
+          open={showFillmakerFromBoard}
+          onOpenChange={setShowFillmakerFromBoard}
+          orgId={currentOrgId}
+          clientId={filterClientId !== 'all' ? filterClientId : undefined}
+          clients={filterClientId === 'all' ? clients : undefined}
+        />
+      )}
 
       {/* Unified modal for non-content project types */}
       {showUnifiedCreate && createProjectType && (

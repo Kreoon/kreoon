@@ -821,6 +821,7 @@ export function UnifiedClientsContent() {
           <ClientPackagesDialog
             clientId={selectedForQuickDialog.id}
             clientName={selectedForQuickDialog.name}
+            orgId={currentOrgId}
             open={packagesDialogOpen}
             onOpenChange={(open) => { setPackagesDialogOpen(open); if (!open) setSelectedForQuickDialog(null); }}
           />
