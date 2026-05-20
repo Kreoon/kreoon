@@ -27,6 +27,7 @@ import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientStreamingChannels } from "@/components/clients/ClientStreamingChannels";
 import { ClientBillingTab } from "@/components/clients/ClientBillingTab";
+import { ClientServicesTab } from "@/components/clients/ClientServicesTab";
 import { ClientActivityPanel } from "@/components/clients/ClientActivityPanel";
 import { VipBadge } from "@/components/ui/vip-badge";
 
@@ -417,7 +418,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
               <Package className="h-3 w-3" />
               Productos ({products.length})
             </TabsTrigger>
-            <TabsTrigger value="packages" className="flex-none">Campañas ({packages.length})</TabsTrigger>
+            <TabsTrigger value="packages" className="flex-none">Servicios ({packages.length})</TabsTrigger>
             <TabsTrigger value="content" className="flex-none">Videos ({assignedContent.length})</TabsTrigger>
             <TabsTrigger value="channels" className="flex-none gap-1">
               <Radio className="h-3 w-3" />
@@ -734,181 +735,23 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
             </Suspense>
           </TabsContent>
 
-          {/* Packages Tab */}
-          <TabsContent value="packages" className="space-y-4 mt-4">
-            {isAdmin && (
-              <div className="flex justify-end">
-                <Button onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nueva Campaña
-                </Button>
-              </div>
-            )}
-
-            {loadingPackages ? (
-              <div className="space-y-3">
-                {[1, 2].map(i => (
-                  <Skeleton key={i} className="h-32 rounded-sm" />
-                ))}
-              </div>
-            ) : packages.length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingBag className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground mb-3">No hay campañas registradas</p>
-                {isAdmin && (
-                  <Button 
-                    variant="outline" 
-                    onClick={() => { setSelectedPackage(null); setShowPackageDialog(true); }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Crear primera campaña
-                  </Button>
-                )}
-              </div>
+          {/* Servicios Tab (campañas + fillmakers + proyectos sueltos) */}
+          <TabsContent value="packages" className="mt-4">
+            {fullClientData?.organization_id ? (
+              <ClientServicesTab
+                orgId={fullClientData.organization_id}
+                clientId={client.id}
+                clientName={client.name}
+                isAdmin={isAdmin}
+                packages={packages}
+                loadingPackages={loadingPackages}
+                assignedContent={assignedContent}
+                onCreatePackage={() => { setSelectedPackage(null); setShowPackageDialog(true); }}
+                onEditPackage={(pkg) => { setSelectedPackage(pkg); setShowPackageDialog(true); }}
+                onDeletePackage={handleDeletePackage}
+              />
             ) : (
-              <div className="grid gap-4">
-                {packages.map((pkg) => {
-                  const pendingAmount = pkg.total_value - pkg.paid_amount;
-                  const contentDelivered = assignedContent.filter(c => 
-                    ['approved', 'paid'].includes(c.status)
-                  ).length;
-                  const contentOwed = pkg.content_quantity - contentDelivered;
-
-                  return (
-                    <div 
-                      key={pkg.id}
-                      className="p-4 rounded-sm border bg-card hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            <ShoppingBag className="h-4 w-4 text-primary shrink-0" />
-                            <span className="font-medium opacity-50 shrink-0">
-                              #{String(pkg.campaign_number).padStart(4, '0')}
-                            </span>
-                            <h4 className="font-semibold truncate">{pkg.name}</h4>
-                            {(pkg as any).is_barter ? (
-                              <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/30 flex items-center gap-1">
-                                <Handshake className="h-3 w-3" />
-                                Canje
-                              </Badge>
-                            ) : (
-                              <Badge className={PAYMENT_STATUS_COLORS[pkg.payment_status as PaymentStatus]}>
-                                {PAYMENT_STATUS_LABELS[pkg.payment_status as PaymentStatus]}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          {pkg.description && (
-                            <p className="text-sm text-muted-foreground mb-3">{pkg.description}</p>
-                          )}
-
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
-                            <div className="p-2 rounded bg-muted/50">
-                              <p className="text-muted-foreground">Videos</p>
-                              <p className="font-semibold">{pkg.content_quantity}</p>
-                            </div>
-                            <div className="p-2 rounded bg-muted/50">
-                              <p className="text-muted-foreground">Hooks/Video</p>
-                              <p className="font-semibold">{pkg.hooks_per_video}</p>
-                            </div>
-                            <div className="p-2 rounded bg-muted/50">
-                              <p className="text-muted-foreground">Creadores</p>
-                              <p className="font-semibold">{pkg.creators_count}</p>
-                            </div>
-                            <div className="p-2 rounded bg-muted/50">
-                              <p className="text-muted-foreground">Productos</p>
-                              <p className="font-semibold">{pkg.product_ids?.length || pkg.products_count}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap gap-4 text-sm">
-                            {(pkg as any).is_barter ? (
-                              <div className="flex items-center gap-1 text-amber-400">
-                                <Handshake className="h-4 w-4" />
-                                <span>Sin cobro — campaña por canje</span>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center gap-1">
-                                  <DollarSign className="h-4 w-4 text-primary" />
-                                  <span className="font-medium">${pkg.total_value.toLocaleString()}</span>
-                                  <span className="text-muted-foreground">valor</span>
-                                </div>
-                                {pkg.payment_status === 'paid' ? (
-                                  <div className="flex items-center gap-1 text-success">
-                                    <CheckCircle className="h-4 w-4" />
-                                    <span>Pagado completo</span>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <div className="flex items-center gap-1 text-success">
-                                      <span className="font-medium">${pkg.paid_amount.toLocaleString()}</span>
-                                      <span className="text-muted-foreground">recaudado</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-warning">
-                                      <span className="font-medium">${pendingAmount.toLocaleString()}</span>
-                                      <span className="text-muted-foreground">pendiente</span>
-                                    </div>
-                                  </>
-                                )}
-                              </>
-                            )}
-                            {contentOwed > 0 && pkg.payment_status === 'paid' && (
-                              <div className="flex items-center gap-1 text-info">
-                                <Video className="h-4 w-4" />
-                                <span className="font-medium">{contentOwed}</span>
-                                <span className="text-muted-foreground">videos por entregar</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {isAdmin && (
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => { setSelectedPackage(pkg); setShowPackageDialog(true); }}
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Eliminar campaña?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta acción eliminará permanentemente "{pkg.name}".
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => handleDeletePackage(pkg.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  >
-                                    Eliminar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="text-sm text-muted-foreground text-center py-8">Cargando...</p>
             )}
           </TabsContent>
 
