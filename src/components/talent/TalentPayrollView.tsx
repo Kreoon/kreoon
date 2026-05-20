@@ -839,6 +839,7 @@ function FillmakerPayRow({
         id: item.id,
         userId: item.user_id,
         status: 'processing',
+        amount: parseFloat(amount) || item.amount,
         payment_account_id: accountId || null,
         payment_date: new Date(date).toISOString(),
         description: item.description ?? `Fillmaker — ${format(new Date(), 'dd/MM/yyyy')}`,
