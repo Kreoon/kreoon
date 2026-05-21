@@ -147,6 +147,11 @@ export function useBlockConfig(
   // Realtime refresh when config changes
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const subscriptionIdRef = useRef(0);
+  // Ref para fetchConfig: evita que cambios de referencia recreen el canal
+  const fetchConfigRef = useRef(fetchConfig);
+  useEffect(() => {
+    fetchConfigRef.current = fetchConfig;
+  }, [fetchConfig]);
 
   useEffect(() => {
     const orgId = organizationId || contentExt?.organization_id;
@@ -155,10 +160,11 @@ export function useBlockConfig(
     // Increment subscription ID to track stale cleanups
     const currentSubscriptionId = ++subscriptionIdRef.current;
 
-    // Clean up any existing channel first
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
+    // Clean up any existing channel before creating a new one
+    const prevChannel = channelRef.current;
+    channelRef.current = null;
+    if (prevChannel) {
+      supabase.removeChannel(prevChannel);
     }
 
     // Create unique channel name with timestamp to avoid conflicts
@@ -170,28 +176,28 @@ export function useBlockConfig(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_config', filter: `organization_id=eq.${orgId}` },
         () => {
-          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfigRef.current();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_state_rules', filter: `organization_id=eq.${orgId}` },
         () => {
-          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfigRef.current();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_block_permissions', filter: `organization_id=eq.${orgId}` },
         () => {
-          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfigRef.current();
         }
       )
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content_advanced_config', filter: `organization_id=eq.${orgId}` },
         () => {
-          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfig();
+          if (currentSubscriptionId === subscriptionIdRef.current) fetchConfigRef.current();
         }
       )
       .subscribe();
@@ -199,12 +205,13 @@ export function useBlockConfig(
     channelRef.current = channel;
 
     return () => {
-      if (channelRef.current === channel) {
-        supabase.removeChannel(channel);
-        channelRef.current = null;
-      }
+      subscriptionIdRef.current++;
+      supabase.removeChannel(channel);
+      if (channelRef.current === channel) channelRef.current = null;
     };
-  }, [organizationId, contentExt?.organization_id, effectiveRole, fetchConfig]);
+  // fetchConfig excluida a propósito: se accede vía fetchConfigRef para no recrear el canal
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId, contentExt?.organization_id, effectiveRole]);
 
   // Check if block is visible in org config
   const isBlockVisible = useCallback((blockKey: BlockKey): boolean => {
