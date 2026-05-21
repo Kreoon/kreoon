@@ -27,8 +27,6 @@ DECLARE
   v_paid_tp        NUMERIC := 0;
   v_paid_content   NUMERIC := 0;
   v_paid           NUMERIC := 0;
-  v_talents_tp     BIGINT  := 0;
-  v_talents_ct     BIGINT  := 0;
   v_talents        BIGINT  := 0;
   v_overdue_n      BIGINT  := 0;
   v_overdue_a      NUMERIC := 0;
@@ -50,14 +48,14 @@ BEGIN
   v_to_settle := v_to_settle + v_in_transfer;
 
   -- Pagado en período: talent_payments
-  SELECT COALESCE(SUM(amount), 0), COUNT(DISTINCT user_id)
-  INTO v_paid_tp, v_talents_tp
+  SELECT COALESCE(SUM(amount), 0)
+  INTO v_paid_tp
   FROM talent_payments
   WHERE organization_id = p_org_id
     AND status = 'paid'
     AND payment_date::date BETWEEN p_start AND p_end;
 
-  -- Pagado en período: content.creator_paid/editor_paid (sin dup)
+  -- Pagado en período: content.creator_paid/editor_paid (sin dup con talent_payments)
   WITH contents_in_payments AS (
     SELECT DISTINCT unnest(content_ids) AS content_id
     FROM talent_payments
@@ -80,23 +78,52 @@ BEGIN
         + CASE WHEN editor_paid THEN COALESCE(editor_payment, 0) ELSE 0 END
       ), 0) AS amount
     FROM content_paid
-  ),
-  unique_talents AS (
-    SELECT DISTINCT talent_id FROM (
-      SELECT creator_id AS talent_id FROM content_paid WHERE creator_paid = true AND creator_id IS NOT NULL
-      UNION
-      SELECT editor_id  AS talent_id FROM content_paid WHERE editor_paid  = true AND editor_id  IS NOT NULL
-    ) sub
   )
-  SELECT totals.amount, (SELECT COUNT(*) FROM unique_talents)
-  INTO v_paid_content, v_talents_ct
+  SELECT totals.amount
+  INTO v_paid_content
   FROM totals;
 
   v_paid := v_paid_tp + v_paid_content;
-  v_talents := GREATEST(v_talents_tp, v_talents_ct);
-  IF v_talents_tp > 0 AND v_talents_ct > 0 THEN
-    v_talents := v_talents_tp + v_talents_ct;
-  END IF;
+
+  -- WARNING FIX: contar talents únicos combinando AMBAS fuentes con UNION + DISTINCT
+  -- para evitar doble conteo de un talent que aparece en talent_payments Y en content pagado.
+  WITH tp_users AS (
+    SELECT DISTINCT user_id AS talent_id
+    FROM talent_payments
+    WHERE organization_id = p_org_id
+      AND status = 'paid'
+      AND payment_date::date BETWEEN p_start AND p_end
+  ),
+  contents_in_payments AS (
+    SELECT DISTINCT unnest(content_ids) AS content_id
+    FROM talent_payments
+    WHERE organization_id = p_org_id AND content_ids IS NOT NULL
+  ),
+  content_users AS (
+    SELECT creator_id AS talent_id
+    FROM content
+    WHERE organization_id = p_org_id
+      AND creator_paid = true
+      AND creator_id IS NOT NULL
+      AND COALESCE(paid_at::date, updated_at::date) BETWEEN p_start AND p_end
+      AND id NOT IN (SELECT content_id FROM contents_in_payments)
+    UNION
+    SELECT editor_id AS talent_id
+    FROM content
+    WHERE organization_id = p_org_id
+      AND editor_paid = true
+      AND editor_id IS NOT NULL
+      AND COALESCE(paid_at::date, updated_at::date) BETWEEN p_start AND p_end
+      AND id NOT IN (SELECT content_id FROM contents_in_payments)
+  ),
+  all_talents AS (
+    SELECT talent_id FROM tp_users
+    UNION
+    SELECT talent_id FROM content_users
+  )
+  SELECT COUNT(*)
+  INTO v_talents
+  FROM all_talents;
 
   SELECT COUNT(*), COALESCE(SUM(amount), 0)
   INTO v_overdue_n, v_overdue_a

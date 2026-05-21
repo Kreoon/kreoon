@@ -176,7 +176,7 @@ export function ClientServicesTab({
           <div className="space-y-2">
             {packages.map(pkg => {
               const pending = pkg.total_value - pkg.paid_amount;
-              const delivered = assignedContent.filter(c => ['approved', 'paid'].includes(c.status)).length;
+              const delivered = assignedContent.filter(c => c.client_package_id === pkg.id && ['approved', 'paid'].includes(c.status)).length;
               const owed = pkg.content_quantity - delivered;
               return (
                 <Card key={pkg.id} className="p-4 bg-card border-white/10">

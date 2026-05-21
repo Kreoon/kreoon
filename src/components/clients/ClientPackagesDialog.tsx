@@ -180,15 +180,16 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
         setPackages((data || []) as ClientPackage[]);
         setLoading(false);
       });
-  }, [clientId]);
+  }, [clientId, resolvedOrgId]);
 
   const loadContent = useCallback(() => {
     supabase
       .from('content')
       .select('id, title, status, client_package_id')
       .eq('client_id', clientId)
+      .eq('organization_id', resolvedOrgId)
       .then(({ data }) => setContentItems((data || []) as ContentItem[]));
-  }, [clientId]);
+  }, [clientId, resolvedOrgId]);
 
   useEffect(() => {
     if (!open) return;
@@ -198,6 +199,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
       .from('products')
       .select('*')
       .eq('client_id', clientId)
+      .eq('organization_id', resolvedOrgId)
       .then(({ data }) => setProducts((data || []) as Product[]));
   }, [open, clientId, loadPackages, loadContent]);
 

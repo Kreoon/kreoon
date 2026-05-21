@@ -74,19 +74,21 @@ export function useClientBillingItems(orgId: string, clientId: string) {
   });
 }
 
-export function useClientClosings(clientId: string) {
+// CRITICAL 1 — query key incluye orgId y filtra por organization_id
+export function useClientClosings(orgId: string, clientId: string) {
   return useQuery({
-    queryKey: ['client-closings', clientId],
+    queryKey: ['client-closings', orgId, clientId],
     queryFn: async (): Promise<ClientClosing[]> => {
       const { data, error } = await (supabase as any)
         .from('client_closings')
         .select('*')
+        .eq('organization_id', orgId)
         .eq('client_id', clientId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return (data ?? []) as ClientClosing[];
     },
-    enabled: !!clientId,
+    enabled: !!(orgId && clientId),
     staleTime: 0,
   });
 }
@@ -123,6 +125,7 @@ export function useCreateFillmaker() {
   });
 }
 
+// CRITICAL 2 — DELETE filtra también por organization_id
 export function useDeleteFillmaker() {
   const qc = useQueryClient();
   return useMutation({
@@ -130,7 +133,8 @@ export function useDeleteFillmaker() {
       const { error } = await (supabase as any)
         .from('fillmaker_services')
         .delete()
-        .eq('id', payload.id);
+        .eq('id', payload.id)
+        .eq('organization_id', payload.orgId);
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
@@ -167,43 +171,65 @@ export function useCreateClientClosing() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ['client-billing-items', vars.org_id, vars.client_id] });
-      qc.invalidateQueries({ queryKey: ['client-closings', vars.client_id] });
+      qc.invalidateQueries({ queryKey: ['client-closings', vars.org_id, vars.client_id] });
     },
   });
 }
 
+// CRITICAL 2 — UPDATE filtra también por organization_id
 export function useUpdateClientClosing() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
       id: string;
+      orgId: string;
       clientId: string;
       updates: Partial<Pick<ClientClosing, 'status' | 'payment_date' | 'payment_method' | 'notes' | 'paid_at'>>;
     }) => {
       const { error } = await (supabase as any)
         .from('client_closings')
         .update(payload.updates)
-        .eq('id', payload.id);
+        .eq('id', payload.id)
+        .eq('organization_id', payload.orgId);
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['client-closings', vars.clientId] });
+      qc.invalidateQueries({ queryKey: ['client-closings', vars.orgId, vars.clientId] });
     },
   });
 }
 
+// CRITICAL 3 — Pagar un closing via RPC (cascade correcto en BD)
+export function usePayClientClosing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { closingId: string; orgId: string; clientId: string }) => {
+      const { error } = await (supabase as any).rpc('mark_client_closing_paid', {
+        p_closing_id: payload.closingId,
+        p_org_id: payload.orgId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: ['client-closings', vars.orgId, vars.clientId] });
+      qc.invalidateQueries({ queryKey: ['client-billing-items', vars.orgId, vars.clientId] });
+    },
+  });
+}
+
+// CRITICAL 4 — Borrar draft closing via RPC (rollback correcto en BD)
 export function useDeleteClientClosing() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (payload: { id: string; clientId: string; orgId: string }) => {
-      const { error } = await (supabase as any)
-        .from('client_closings')
-        .delete()
-        .eq('id', payload.id);
+      const { error } = await (supabase as any).rpc('rollback_client_closing_draft', {
+        p_closing_id: payload.id,
+        p_org_id: payload.orgId,
+      });
       if (error) throw error;
     },
     onSuccess: (_, vars) => {
-      qc.invalidateQueries({ queryKey: ['client-closings', vars.clientId] });
+      qc.invalidateQueries({ queryKey: ['client-closings', vars.orgId, vars.clientId] });
       qc.invalidateQueries({ queryKey: ['client-billing-items', vars.orgId, vars.clientId] });
     },
   });
@@ -267,6 +293,7 @@ export function useFillmakerPayroll(orgId: string) {
   });
 }
 
+// CRITICAL 2 — UPDATE filtra también por organization_id
 export function useUpdateContentBillingPrice() {
   const qc = useQueryClient();
   return useMutation({
@@ -283,7 +310,8 @@ export function useUpdateContentBillingPrice() {
           billing_price: payload.billing_price,
           billing_currency: payload.billing_currency,
         })
-        .eq('id', payload.id);
+        .eq('id', payload.id)
+        .eq('organization_id', payload.orgId);
       if (error) throw error;
     },
     onSuccess: (_, vars) => {

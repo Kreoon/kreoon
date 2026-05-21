@@ -742,6 +742,7 @@ export function UnifiedClientsContent() {
               notes: selectedEntity.client_notes,
               is_vip: selectedEntity.is_vip,
               username: selectedEntity.username,
+              organization_id: currentOrgId,
             }}
             open={clientDialogOpen}
             onOpenChange={(open) => {

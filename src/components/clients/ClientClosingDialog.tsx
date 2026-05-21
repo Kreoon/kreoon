@@ -49,10 +49,35 @@ export function ClientClosingDialog({
     setForm(prev => ({ ...prev, [field]: val }));
   }
 
-  function toggleItem(id: string) {
+  function toggleItem(item: BillingItem) {
+    const isSelected = selected.has(item.id);
+
+    // Si estamos deseleccionando, siempre permitir
+    if (isSelected) {
+      setSelected(prev => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+      return;
+    }
+
+    // Si estamos seleccionando, validar que la moneda coincida con los items ya seleccionados
+    const currentSelectedItems = pendingItems.filter(i => selected.has(i.id));
+    const existingCurrency = currentSelectedItems[0]?.currency ?? null;
+
+    if (existingCurrency !== null && item.currency !== existingCurrency) {
+      toast({
+        title: 'Moneda incompatible',
+        description: 'No puedes mezclar items de monedas diferentes en un mismo cierre. Crea cierres separados por moneda.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSelected(prev => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      next.add(item.id);
       return next;
     });
   }
@@ -64,6 +89,11 @@ export function ClientClosingDialog({
 
   const total = useMemo(
     () => selectedItems.reduce((acc, i) => acc + i.price_client, 0),
+    [selectedItems],
+  );
+
+  const hasMixedCurrencies = useMemo(
+    () => new Set(selectedItems.map(i => i.currency)).size > 1,
     [selectedItems],
   );
 
@@ -79,6 +109,7 @@ export function ClientClosingDialog({
     }
 
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) return;
     const contentIds = selectedItems.filter(i => i.item_type === 'project').map(i => i.id);
     const fillmakerIds = selectedItems.filter(i => i.item_type === 'fillmaker').map(i => i.id);
 
@@ -91,7 +122,7 @@ export function ClientClosingDialog({
         notes: form.notes.trim(),
         content_ids: contentIds,
         fillmaker_ids: fillmakerIds,
-        created_by: user!.id,
+        created_by: user?.id ?? null,
       });
 
       setCreatedClosing({
@@ -181,11 +212,11 @@ export function ClientClosingDialog({
                     <div
                       key={item.id}
                       className="flex items-center gap-3 p-2.5 rounded border border-white/5 bg-white/3 hover:bg-white/6 cursor-pointer"
-                      onClick={() => toggleItem(item.id)}
+                      onClick={() => toggleItem(item)}
                     >
                       <Checkbox
                         checked={selected.has(item.id)}
-                        onCheckedChange={() => toggleItem(item.id)}
+                        onCheckedChange={() => toggleItem(item)}
                         onClick={e => e.stopPropagation()}
                       />
                       <div className="flex-1 min-w-0">
@@ -210,6 +241,13 @@ export function ClientClosingDialog({
                 </div>
               </div>
 
+              {/* Advertencia monedas mixtas (fallback para pre-selección inicial) */}
+              {hasMixedCurrencies && (
+                <div className="flex items-center gap-2 p-2.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs">
+                  <span>⚠️</span>
+                  <span>Tienes ítems de monedas distintas seleccionados. Deselecciona los que no correspondan a este cierre.</span>
+                </div>
+              )}
               {/* Total */}
               <div className="flex items-center justify-between p-3 rounded bg-violet-500/10 border border-violet-500/20">
                 <span className="text-sm font-medium">Total a cobrar</span>
@@ -234,7 +272,7 @@ export function ClientClosingDialog({
               <Button variant="ghost" onClick={handleClose}>Cancelar</Button>
               <Button
                 onClick={handleCreate}
-                disabled={createClosing.isPending || selected.size === 0}
+                disabled={createClosing.isPending || selected.size === 0 || hasMixedCurrencies}
                 className="gap-2"
               >
                 {createClosing.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

@@ -3,6 +3,15 @@ import { formatCurrency } from '@/lib/finance-format';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 interface InvoiceData {
   closing: ClientClosing;
   items: BillingItem[];
@@ -20,8 +29,8 @@ export function generateClientInvoicePDF({ closing, items, clientName, orgName }
   const itemRows = items.map(item => `
     <tr>
       <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb">
-        <div style="font-weight:500;color:#111">${item.title}</div>
-        ${item.description ? `<div style="font-size:12px;color:#6b7280;margin-top:2px">${item.description}</div>` : ''}
+        <div style="font-weight:500;color:#111">${escapeHtml(item.title)}</div>
+        ${item.description ? `<div style="font-size:12px;color:#6b7280;margin-top:2px">${escapeHtml(item.description ?? "")}</div>` : ''}
         ${item.item_type === 'fillmaker' ? '<div style="font-size:11px;color:#8b5cf6;margin-top:2px">Servicio de Grabación (Fillmaker)</div>' : ''}
       </td>
       <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;color:#6b7280;text-align:center;white-space:nowrap">
@@ -37,7 +46,7 @@ export function generateClientInvoicePDF({ closing, items, clientName, orgName }
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<title>Cobro — ${clientName} — ${closing.name}</title>
+<title>Cobro — ${escapeHtml(clientName)} — ${escapeHtml(closing.name)}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#111; background:#fff; padding:40px; }
@@ -71,11 +80,11 @@ export function generateClientInvoicePDF({ closing, items, clientName, orgName }
 
   <div class="header">
     <div>
-      <div class="org-name">${orgName}</div>
+      <div class="org-name">${escapeHtml(orgName)}</div>
     </div>
     <div>
       <div class="invoice-label">Cobro</div>
-      <div class="invoice-meta">${closing.name}</div>
+      <div class="invoice-meta">${escapeHtml(closing.name)}</div>
       <div class="invoice-meta">Generado: ${fmtDate(new Date().toISOString())}</div>
     </div>
   </div>
@@ -85,11 +94,11 @@ export function generateClientInvoicePDF({ closing, items, clientName, orgName }
   <div class="info-grid">
     <div class="info-block">
       <label>Facturar a</label>
-      <div class="value">${clientName}</div>
+      <div class="value">${escapeHtml(clientName)}</div>
     </div>
     <div class="info-block">
       <label>Moneda</label>
-      <div class="value">${closing.currency}</div>
+      <div class="value">${escapeHtml(closing.currency)}</div>
     </div>
   </div>
 
@@ -113,7 +122,7 @@ export function generateClientInvoicePDF({ closing, items, clientName, orgName }
   ${closing.notes ? `
   <div class="notes">
     <label>Notas</label>
-    <span style="font-size:13px;color:#374151">${closing.notes}</span>
+    <span style="font-size:13px;color:#374151">${escapeHtml(closing.notes ?? "")}</span>
   </div>` : ''}
 
   <div class="footer">

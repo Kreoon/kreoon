@@ -164,6 +164,10 @@ CREATE INDEX IF NOT EXISTS idx_content_billing_status
   ON public.content(client_id, billing_status)
   WHERE client_package_id IS NULL AND client_id IS NOT NULL;
 
+-- CRITICAL FIX: índice sobre la FK client_closing_id en content
+CREATE INDEX IF NOT EXISTS idx_content_client_closing_id
+  ON public.content(client_closing_id);
+
 -- ─────────────────────────────────────────────────────────────
 -- 4. RPC: ítems pendientes de cobro para un cliente
 -- ─────────────────────────────────────────────────────────────
@@ -190,6 +194,12 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
+  -- CRITICAL FIX: verificar que el caller sea miembro de la organización
+  IF NOT EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE user_id = auth.uid() AND organization_id = p_org_id
+  ) THEN RETURN; END IF;
+
   -- Proyectos ad-hoc: content sin client_package_id
   RETURN QUERY
   SELECT
@@ -260,6 +270,12 @@ DECLARE
   v_content_total NUMERIC := 0;
   v_fill_total    NUMERIC := 0;
 BEGIN
+  -- CRITICAL FIX: verificar que el caller sea miembro de la organización
+  IF NOT EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE user_id = auth.uid() AND organization_id = p_org_id
+  ) THEN RETURN NULL; END IF;
+
   -- Calcular total de proyectos
   SELECT COALESCE(SUM(billing_price), 0)
   INTO v_content_total
@@ -287,22 +303,28 @@ BEGIN
   RETURNING id INTO v_closing_id;
 
   -- Marcar proyectos ad-hoc
+  -- CRITICAL FIX: agregar AND organization_id = p_org_id para evitar
+  -- que un caller manipule contenido de otra organización.
   IF array_length(p_content_ids, 1) > 0 THEN
     UPDATE public.content
     SET billing_status = 'in_closing',
         client_closing_id = v_closing_id
     WHERE id = ANY(p_content_ids)
       AND client_id = p_client_id
+      AND organization_id = p_org_id
       AND billing_status = 'pending';
   END IF;
 
   -- Marcar fillmakers
+  -- CRITICAL FIX: agregar AND organization_id = p_org_id para evitar
+  -- que un caller manipule servicios de otra organización.
   IF array_length(p_fillmaker_ids, 1) > 0 THEN
     UPDATE public.fillmaker_services
     SET billing_status = 'in_closing',
         client_closing_id = v_closing_id
     WHERE id = ANY(p_fillmaker_ids)
       AND client_id = p_client_id
+      AND organization_id = p_org_id
       AND billing_status = 'pending';
   END IF;
 
@@ -315,3 +337,84 @@ GRANT EXECUTE ON FUNCTION public.create_client_closing(UUID, UUID, TEXT, TEXT, T
 -- Permisos de tabla para PostgREST
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.fillmaker_services TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.client_closings TO authenticated;
+
+-- ─────────────────────────────────────────────────────────────
+-- 6. Funciones de cascade para cambio de estado del cierre
+-- ─────────────────────────────────────────────────────────────
+
+-- FIX 6: p_org_id agregado a la firma; guard de membresía al inicio;
+-- AND organization_id = p_org_id en los tres UPDATE para evitar
+-- que un p_closing_id de otra org afecte registros fuera del tenant.
+CREATE OR REPLACE FUNCTION public.mark_client_closing_paid(
+  p_closing_id UUID,
+  p_org_id     UUID
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Guard de membresía: solo miembros de la organización pueden ejecutar
+  IF NOT EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE user_id = auth.uid() AND organization_id = p_org_id
+  ) THEN
+    RAISE EXCEPTION 'access denied';
+  END IF;
+
+  UPDATE public.client_closings
+  SET status = 'paid', paid_at = now()
+  WHERE id = p_closing_id
+    AND organization_id = p_org_id;
+
+  UPDATE public.content
+  SET billing_status = 'paid'
+  WHERE client_closing_id = p_closing_id
+    AND organization_id = p_org_id;
+
+  UPDATE public.fillmaker_services
+  SET billing_status = 'paid'
+  WHERE client_closing_id = p_closing_id
+    AND organization_id = p_org_id;
+END;
+$$;
+
+-- FIX 6: p_org_id agregado a la firma; guard de membresía al inicio;
+-- AND organization_id = p_org_id en los dos UPDATE y en el DELETE.
+CREATE OR REPLACE FUNCTION public.rollback_client_closing_draft(
+  p_closing_id UUID,
+  p_org_id     UUID
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Guard de membresía: solo miembros de la organización pueden ejecutar
+  IF NOT EXISTS (
+    SELECT 1 FROM organization_members
+    WHERE user_id = auth.uid() AND organization_id = p_org_id
+  ) THEN
+    RAISE EXCEPTION 'access denied';
+  END IF;
+
+  UPDATE public.content
+  SET billing_status = 'pending', client_closing_id = NULL
+  WHERE client_closing_id = p_closing_id
+    AND organization_id = p_org_id;
+
+  UPDATE public.fillmaker_services
+  SET billing_status = 'pending', client_closing_id = NULL
+  WHERE client_closing_id = p_closing_id
+    AND organization_id = p_org_id;
+
+  DELETE FROM public.client_closings
+  WHERE id = p_closing_id
+    AND organization_id = p_org_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.mark_client_closing_paid(UUID, UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rollback_client_closing_draft(UUID, UUID) TO authenticated;
