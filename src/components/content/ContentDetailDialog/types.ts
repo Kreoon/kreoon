@@ -45,6 +45,9 @@ export interface ContentFormData {
   reward_type?: 'money' | 'UP';
   // Método Esfera
   sphere_phase?: string;
+  // Tipo de creador y formato de narración
+  creator_type?: string;
+  video_pov?: string;
 }
 
 // ============= PERMISSIONS =============

@@ -26,6 +26,10 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
 
 interface MarketplaceDashboardTabProps {
   role: 'creator' | 'editor' | 'brand' | 'admin';
+  /** Cuando se pasa desde el padre, se omiten los hooks internos para evitar doble suscripción Realtime */
+  externalProjects?: MarketplaceProject[];
+  /** Ocultar la sección de KPIs superior (útil cuando ya se muestran en el dashboard padre) */
+  hideKpis?: boolean;
 }
 
 const ROLE_CONFIG = {
@@ -139,12 +143,17 @@ function ProjectRow({ project, statusLabels }: { project: MarketplaceProject; st
   );
 }
 
-export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) {
+export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: MarketplaceDashboardTabProps) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const hookRole = role === 'admin' ? 'brand' : role;
-  const { projects, loading: projectsLoading } = useMarketplaceProjects({ role: hookRole });
-  const { stats, loading: statsLoading } = useMarketplaceStats({ role: hookRole });
+  // Cuando el padre pasa proyectos, se desactiva fetch + realtime para evitar doble suscripción
+  const { projects: internalProjects, loading: projectsLoading } = useMarketplaceProjects({
+    role: hookRole,
+    enabled: !externalProjects,
+  });
+  const { stats, loading: statsLoading } = useMarketplaceStats({ role: externalProjects ? undefined : hookRole });
+  const projects = externalProjects ?? internalProjects;
 
   // Detectar si es freelancer para mostrar secciones adicionales
   const isFreelancer = !profile?.organization_id && profile?.platform_access_unlocked;
@@ -250,7 +259,7 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
     });
   }, [projects]);
 
-  if (projectsLoading || statsLoading) {
+  if (!externalProjects && (projectsLoading || statsLoading)) {
     return (
       <div className="min-h-[40vh] flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-purple-400 animate-spin" />
@@ -263,26 +272,28 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
 
   return (
     <div className="space-y-6">
-      {/* KPIs */}
-      <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
-        {kpis.map(kpi => (
-          <div key={kpi.label} className="bg-card/80 border border-white/10 rounded-sm p-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${kpi.color}`}>
-                <kpi.icon className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-white">{kpi.value}</p>
-                <p className="text-gray-500 text-xs">{kpi.label}</p>
+      {/* KPIs — ocultos cuando el padre los muestra fusionados */}
+      {!hideKpis && (
+        <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
+          {kpis.map(kpi => (
+            <div key={kpi.label} className="bg-card/80 border border-white/10 rounded-sm p-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${kpi.color}`}>
+                  <kpi.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-white">{kpi.value}</p>
+                  <p className="text-gray-500 text-xs">{kpi.label}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {/* Freelancer Stats - Solo visible para freelancers */}
-      {isFreelancer && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Freelancer Stats — solo cuando no está embebido en dashboard padre (hideKpis=false) */}
+      {isFreelancer && !hideKpis && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-sm p-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-sm flex items-center justify-center bg-green-500/20 text-green-400">
@@ -316,20 +327,6 @@ export function MarketplaceDashboardTab({ role }: MarketplaceDashboardTabProps) 
               </div>
             </div>
           </div>
-          <Link
-            to="/social-hub"
-            className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-sm p-4 hover:border-purple-500/40 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-sm flex items-center justify-center bg-purple-500/20 text-purple-400">
-                <Share2 className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-white">Social Hub</p>
-                <p className="text-gray-500 text-xs">Gestiona tus redes</p>
-              </div>
-            </div>
-          </Link>
         </div>
       )}
 

@@ -10,6 +10,8 @@ import { LEVEL_META } from '@/lib/reputation/types';
 interface RoleUPWidgetProps {
   userId: string;
   role: 'creator' | 'editor';
+  /** Si se pasa, suma las métricas de todos los roles indicados */
+  roles?: Array<'creator' | 'editor'>;
   compact?: boolean;
 }
 
@@ -23,47 +25,43 @@ const LEVEL_THRESHOLDS = {
 
 const LEVEL_ORDER = ['Novato', 'Pro', 'Elite', 'Master', 'Legend'] as const;
 
-export function RoleUPWidget({ userId, role, compact = false }: RoleUPWidgetProps) {
+export function RoleUPWidget({ userId, role, roles, compact = false }: RoleUPWidgetProps) {
   const { scores, loading } = useUserReputation(userId);
 
-  const RoleIcon = role === 'creator' ? Video : Scissors;
-  const roleLabel = role === 'creator' ? 'Creador' : 'Editor';
+  const effectiveRoles = roles ?? [role];
+  const isMultiRole = effectiveRoles.length > 1;
 
-  // Find the score for the requested role
-  const roleScore = useMemo(() => {
-    return scores.find(s => s.role_key === role) || null;
-  }, [scores, role]);
+  const RoleIcon = isMultiRole ? Video : (role === 'creator' ? Video : Scissors);
+  const roleLabel = isMultiRole ? 'Creador & Editor' : (role === 'creator' ? 'Creador' : 'Editor');
 
-  // Calculate stats from the role score
+  // Collect all matching role scores
+  const roleScores = useMemo(() =>
+    scores.filter(s => effectiveRoles.includes(s.role_key as 'creator' | 'editor')),
+  [scores, effectiveRoles]);
+
+  // Sum stats across all role scores
   const stats = useMemo(() => {
-    if (!roleScore) {
-      return {
-        totalPoints: 0,
-        totalDeliveries: 0,
-        onTimeDeliveries: 0,
-        lateDeliveries: 0,
-        cleanApprovals: 0,
-        totalIssues: 0,
-        currentLevel: 'Novato',
-      };
+    if (roleScores.length === 0) {
+      return { totalPoints: 0, totalDeliveries: 0, onTimeDeliveries: 0, lateDeliveries: 0, cleanApprovals: 0, totalIssues: 0, currentLevel: 'Novato' };
     }
 
-    const totalDeliveries = roleScore.lifetime_tasks;
-    const onTimeDeliveries = Math.round(roleScore.on_time_rate * totalDeliveries);
+    const totalPoints = roleScores.reduce((s, r) => s + (r.lifetime_points || 0), 0);
+    const totalDeliveries = roleScores.reduce((s, r) => s + (r.lifetime_tasks || 0), 0);
+    const onTimeDeliveries = roleScores.reduce((s, r) => s + Math.round((r.on_time_rate || 0) * (r.lifetime_tasks || 0)), 0);
+    const cleanApprovals = roleScores.reduce((s, r) => s + Math.round((r.approval_rate || 0) * (r.lifetime_tasks || 0)), 0);
+    const totalIssues = roleScores.reduce((s, r) => s + Math.round((r.revision_rate || 0) * (r.lifetime_tasks || 0)), 0);
     const lateDeliveries = totalDeliveries - onTimeDeliveries;
-    const cleanApprovals = Math.round(roleScore.approval_rate * totalDeliveries);
-    const totalIssues = Math.round(roleScore.revision_rate * totalDeliveries);
 
-    return {
-      totalPoints: roleScore.lifetime_points,
-      totalDeliveries,
-      onTimeDeliveries,
-      lateDeliveries,
-      cleanApprovals,
-      totalIssues,
-      currentLevel: roleScore.current_level || 'Novato',
-    };
-  }, [roleScore]);
+    // Level based on combined points
+    const currentLevel = (() => {
+      for (let i = LEVEL_ORDER.length - 1; i >= 0; i--) {
+        if (totalPoints >= LEVEL_THRESHOLDS[LEVEL_ORDER[i]]) return LEVEL_ORDER[i];
+      }
+      return 'Novato';
+    })();
+
+    return { totalPoints, totalDeliveries, onTimeDeliveries, lateDeliveries, cleanApprovals, totalIssues, currentLevel };
+  }, [roleScores]);
 
   // Calculate progress to next level
   const progressData = useMemo(() => {

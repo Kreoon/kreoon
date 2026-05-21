@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase, SUPABASE_ANON_KEY, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,9 +15,9 @@ import { useOrganizationAI } from "@/hooks/useOrganizationAI";
 import { useUnifiedTokens } from "@/hooks/useUnifiedTokens";
 import { AI_TOKEN_COSTS } from "@/lib/finance/constants";
 import {
-  Sparkles, Loader2, Target, Users, Globe, FileText,
-  MessageSquare, ListOrdered, Plus, X, Wand2, Settings2,
-  Video, ChevronDown, ChevronUp, CheckCircle2, Bot, RefreshCw, FileSearch, AlertCircle, Search,
+  Sparkles, Loader2, Users, Globe, FileText,
+  MessageSquare, Plus, X, Wand2, Settings2,
+  Video, ChevronDown, ChevronUp, CheckCircle2, Bot, AlertCircle, Search,
   Brain, Zap, ChevronRight, Hash, Shuffle
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -92,6 +92,8 @@ interface ScriptFormData {
   video_duration: string;
   target_platform: string;
   use_perplexity: boolean;
+  creator_type: string;
+  video_pov: string;
 }
 
 interface PerplexityQueriesState {
@@ -319,6 +321,51 @@ const TARGET_PLATFORMS = [
   { value: "linkedin", label: "LinkedIn" },
   { value: "multi", label: "Multi-plataforma" },
 ];
+
+// Creator type definitions
+const CREATOR_TYPES = [
+  { value: 'ugc',           emoji: '📱', label: 'UGC',            fullName: 'User-Generated Content',     shortDesc: 'Usuario real compartiendo' },
+  { value: 'marca-personal',emoji: '🌟', label: 'Marca Personal', fullName: 'El dueño de la marca',       shortDesc: 'Yo soy la marca' },
+  { value: 'egc',           emoji: '🏢', label: 'EGC',            fullName: 'Employee-Generated Content', shortDesc: 'Perspectiva interna' },
+  { value: 'fgc',           emoji: '❤️', label: 'FGC',            fullName: 'Fan-Generated Content',      shortDesc: 'Fan apasionado' },
+  { value: 'bgc',           emoji: '🎯', label: 'BGC',            fullName: 'Brand-Generated Content',    shortDesc: 'Contenido oficial de marca' },
+  { value: 'pgc',           emoji: '🎬', label: 'PGC',            fullName: 'Professional-Generated',     shortDesc: 'Creador profesional contratado' },
+  { value: 'igc',           emoji: '✨', label: 'IGC',            fullName: 'Influencer-Generated',       shortDesc: 'Influencer con audiencia propia' },
+  { value: 'cgc',           emoji: '⭐', label: 'CGC',            fullName: 'Consumer-Generated',         shortDesc: 'Cliente que ya compró' },
+  { value: 'aigc',          emoji: '🤖', label: 'AIGC',           fullName: 'AI-Generated Content',       shortDesc: 'Generado por IA pura' },
+  { value: 'ai-ugc',        emoji: '🧠', label: 'AI-UGC',         fullName: 'AI-Enhanced UGC',            shortDesc: 'Parece UGC, optimizado por IA' },
+];
+
+const VIDEO_POV_FORMATS = [
+  { value: 'primera_persona', emoji: '🙋', label: 'Primera Persona', shortDesc: '"Yo uso esto..."' },
+  { value: 'segunda_persona', emoji: '👥', label: 'Segunda Persona',  shortDesc: '"Tú eres quien..."' },
+  { value: 'testimonial',     emoji: '⭐', label: 'Testimonial',      shortDesc: 'Reseña de cliente' },
+  { value: 'demo',            emoji: '📱', label: 'Demo',             shortDesc: 'Mostrando el producto' },
+  { value: 'voz_en_off',      emoji: '🎙️', label: 'Voz en Off',      shortDesc: 'Solo voz, sin cara' },
+  { value: 'entrevista',      emoji: '🎤', label: 'Entrevista',       shortDesc: 'Formato Q&A' },
+];
+
+const CREATOR_TYPE_PROMPT_INSTRUCTIONS: Record<string, string> = {
+  'ugc': 'Tono espontáneo y auténtico, como un usuario real compartiendo su experiencia. Imperfecciones naturales, primera persona, lenguaje cotidiano sin tecnicismos. El creador no es un actor, es una persona normal.',
+  'marca-personal': 'El DUEÑO o CREADOR de la marca graba el video en primera persona. Tono de autoridad personal y cercana. Usar "Mi método", "Yo te enseño", "En mi experiencia". Incluir la historia y trayectoria del fundador como argumento de confianza.',
+  'egc': 'Un empleado o miembro del equipo interno graba desde la perspectiva "insider". Tono de experto con conocimiento profundo del producto. "Yo trabajo aquí y te digo que...", "Como parte del equipo...". Credibilidad basada en el conocimiento interno.',
+  'fgc': 'Un fan apasionado de la marca que lo usa por convicción propia. Tono entusiasta y genuino, sin guión forzado. La emoción y el amor por la marca son el eje central. "Llevo X tiempo usando esto y nunca paro."',
+  'bgc': 'La marca misma produce el contenido con su voz oficial. Tono pulido y on-brand. Incluir nombre de marca con confianza. Puede ser más directo en el mensaje de ventas. Producción más cuidada.',
+  'pgc': 'Creador profesional contratado. Alta producción, guión estructurado, articulación clara. Puede mezclarse con elementos de actuación. El tono es experto y fluido, no necesariamente "real" o espontáneo.',
+  'igc': 'Influencer con audiencia establecida que integra el producto. El influencer habla desde su perspectiva personal pero con autoridad social. Mencionar la comunidad, los seguidores, la credibilidad ganada. "Como siempre les comparto lo que uso yo..."',
+  'cgc': 'Cliente real que ya compró y comparte su experiencia post-compra. Foco en la reseña honesta, antes/después, resultados reales. Tono de recomendación genuina a amigos. "Lo compré hace X tiempo y..."',
+  'aigc': 'Contenido generado 100% por IA (avatar, voz sintética). Tono puede ser más estructurado. Evitar imperfecciones humanas. El guión debe estar perfectamente articulado para síntesis de voz.',
+  'ai-ugc': 'Híbrido: parece UGC orgánico pero está optimizado por IA. Mantener la espontaneidad aparente del UGC pero con estructura narrativa más precisa. Equilibrio entre autenticidad percibida y efectividad de conversión.',
+};
+
+const VIDEO_POV_PROMPT_INSTRUCTIONS: Record<string, string> = {
+  'primera_persona': 'Escribe en primera persona ("Yo", "Me", "Mi"). El creador habla de su propia experiencia directa con el producto.',
+  'segunda_persona': 'Escribe en segunda persona ("Tú", "Tu", "Te"). El espectador ES el protagonista. Formato viral tipo "POV: eres tú quien..." El creador señala directamente al espectador.',
+  'testimonial': 'Formato de reseña o testimonio. El creador cuenta su historia de transformación con el producto: antes/durante/después. Estructura narrativa de caso de éxito.',
+  'demo': 'Formato demostrativo: el creador muestra el producto mientras habla. Usa segunda o primera persona mezclada. El HOOK de apertura debe mostrar el resultado final primero ("Mira lo que hace esto en 10 segundos..."). Cada escena describe una acción física concreta: "Abro la caja", "Aplico aquí", "Ves cómo cambia al instante". Guión como comentario en tiempo real de lo que el espectador ve en pantalla.',
+  'voz_en_off': 'El narrador NO aparece en cámara, solo su voz. El guión debe funcionar como narración sobre imágenes o acciones en pantalla. Redactar como si fuera un narrador externo describiendo lo que se ve.',
+  'entrevista': 'Formato pregunta-respuesta tipo FAQ o confesión. El HOOK de apertura debe ser la respuesta a la pregunta más polémica o deseada ("¿Que si funciona de verdad? Te cuento la verdad completa..."). Cada escena es una pregunta implícita del avatar respondida en voz alta. Usar frases de transición: "Ahora bien, lo que más me preguntan...", "Y la pregunta del millón es...", "Alguien me escribió preguntando...". La persona gramatical puede mezclar primera y segunda persona.',
+};
 
 // CAST layer info — Método CAST de Alexander Cast (NO ESFERA, NO CONVERT)
 // Maps the legacy DB column `sphere_phase` (engage/solution/remarketing/fidelize)
@@ -738,7 +785,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   const totalAvailable = balance?.total_available ?? Infinity;
   const insufficientTokens = totalAvailable < totalCost && totalAvailable !== Infinity;
   const [promptsOpen, setPromptsOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [intelOpen, setIntelOpen] = useState(false);
+  const [ctaContext, setCtaContext] = useState<'organico' | 'pauta'>('organico');
   const [selectedIdeaIdx, setSelectedIdeaIdx] = useState<number | null>(null);
   const [selectedInsightIdx, setSelectedInsightIdx] = useState<number | null>(null);
   
@@ -776,6 +825,9 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     { key: "broll", label: "🎬 B-Roll (Ideas de tomas)", status: "pending" },
   ]);
 
+  // Guard: only persist creator_type/video_pov to DB after the initial load from DB completes
+  const creatorTypeInitializedRef = useRef(false);
+
   const [formData, setFormData] = useState<ScriptFormData>({
     cta: "Haz clic en el botón de aquí abajo y pide el tuyo ahora",
     sales_angle: "",
@@ -795,10 +847,12 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     broll_prompt: DEFAULT_PROMPTS.broll,
     reference_transcription: "",
     video_strategies: "",
-    ai_model: "mistralai/mistral-large-latest",
+    ai_model: "google/gemini-2.5-flash",
     video_duration: "30s",
     target_platform: "",
     use_perplexity: false,
+    creator_type: "ugc",
+    video_pov: "primera_persona",
   });
   const [perplexityQueries, setPerplexityQueries] = useState<PerplexityQueriesState>({
     trends: true,
@@ -835,16 +889,29 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     let cancelled = false;
 
     const loadPrefillData = async () => {
-      if (!contentId) return;
+      if (!contentId) {
+        creatorTypeInitializedRef.current = true;
+        return;
+      }
 
       try {
         const { data: contentData, error } = await supabase
           .from('content')
-          .select('ai_prefilled, ai_prefilled_at, selected_pain, selected_desire, selected_objection, target_country, narrative_structure, video_duration, ideal_avatar, sales_angle, suggested_hooks, cta, target_platform')
+          .select('ai_prefilled, ai_prefilled_at, selected_pain, selected_desire, selected_objection, target_country, narrative_structure, video_duration, ideal_avatar, sales_angle, suggested_hooks, cta, target_platform, creator_type, video_pov')
           .eq('id', contentId)
           .maybeSingle();
 
         if (error || !contentData || cancelled) return;
+
+        // Load creator_type and video_pov unconditionally (regardless of ai_prefilled)
+        // Mark initialized BEFORE setFormData so the persist effect sees the ref correctly
+        creatorTypeInitializedRef.current = true;
+        const creatorTypeUpdates: Partial<ScriptFormData> = {};
+        if ((contentData as any).creator_type) creatorTypeUpdates.creator_type = (contentData as any).creator_type;
+        if ((contentData as any).video_pov) creatorTypeUpdates.video_pov = (contentData as any).video_pov;
+        if (Object.keys(creatorTypeUpdates).length > 0) {
+          setFormData(prev => ({ ...prev, ...creatorTypeUpdates }));
+        }
 
         // Check if this content was AI-prefilled
         if (contentData.ai_prefilled) {
@@ -933,6 +1000,24 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
   }, [customPrompts, loadingPrompts]);
 
   // No provider selection needed - using Kreoon AI
+
+  // Auto-set creator_type to 'marca-personal' when product is personal_brand,
+  // but only before the DB load completes (to avoid overwriting a manually saved value)
+  useEffect(() => {
+    if (product?.business_type === 'personal_brand' && !creatorTypeInitializedRef.current) {
+      setFormData(prev => ({
+        ...prev,
+        creator_type: prev.creator_type === 'ugc' ? 'marca-personal' : prev.creator_type,
+      }));
+    }
+  }, [product?.business_type]);
+
+  // Persist creator_type to DB when it changes (only after initial DB load to avoid overwriting)
+  useEffect(() => {
+    if (!contentId || !creatorTypeInitializedRef.current) return;
+    supabase.from('content').update({ creator_type: formData.creator_type, video_pov: formData.video_pov }).eq('id', contentId)
+      .then(({ error }) => { if (error) console.error('[StrategistScriptForm] creator_type persist error:', error); });
+  }, [formData.creator_type, formData.video_pov, contentId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Pre-fill avatar from product if available
   useEffect(() => {
@@ -1523,6 +1608,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
       { key: "director", label: "🎥 Director", status: "pending" },
       { key: "marketing", label: "📊 Marketing", status: "pending" },
       { key: "captions", label: "📱 Captions", status: "pending" },
+      { key: "broll", label: "🎬 B-Roll", status: "pending" },
     ]);
   };
 
@@ -1704,6 +1790,7 @@ export function StrategistScriptForm({ product, contentId, onScriptGenerated, or
     let context = `${isPersonalBrand ? '🎯 MARCA PERSONAL' : '📦 PRODUCTO/SERVICIO'}: ${product?.name}
 DESCRIPCIÓN: ${product?.description || 'No disponible'}
 CTA: ${formData.cta}
+DESTINO DEL CONTENIDO: ${ctaContext === 'pauta' ? 'PAUTA PAGADA (Meta Ads / TikTok Ads / YouTube Ads) — El CTA DEBE indicar "haz clic en el botón de abajo" o variantes del botón nativo del anuncio. PROHIBIDO usar "link en bio". Lenguaje de conversión directo, urgente, orientado al botón.' : 'CONTENIDO ORGÁNICO — El CTA DEBE dirigir al link en bio, comentar, guardar, compartir o seguir. PROHIBIDO decir "haz clic en el botón". Sin lenguaje publicitario agresivo.'}
 ÁNGULO DE VENTA: ${formData.sales_angle}
 ESTRUCTURA NARRATIVA: ${narrativeLabel}
 ${narrativeStrategy ? `\n${narrativeStrategy}\n` : ''}PAÍS OBJETIVO: ${formData.target_country}
@@ -1744,6 +1831,24 @@ AVATAR/CLIENTE IDEAL: ${formData.ideal_avatar}
 - Incluir referencias a la experiencia y trayectoria personal
 
 `;
+    }
+
+    // ── TIPO DE CREADOR ──
+    const creatorInfo = CREATOR_TYPES.find(t => t.value === formData.creator_type);
+    const creatorPromptInstr = CREATOR_TYPE_PROMPT_INSTRUCTIONS[formData.creator_type] || '';
+    if (creatorInfo) {
+      context += `\n=== TIPO DE CREADOR: ${creatorInfo.fullName} (${creatorInfo.label}) ===
+⚠️ TODOS LOS BLOQUES (Guión, Director, Marketing, Captions, B-Roll) deben adaptar su output a este tipo de creador.
+${creatorPromptInstr}\n`;
+    }
+
+    // ── FORMATO / POV ──
+    const povInfo = VIDEO_POV_FORMATS.find(f => f.value === formData.video_pov);
+    const povPromptInstr = VIDEO_POV_PROMPT_INSTRUCTIONS[formData.video_pov] || '';
+    if (povInfo) {
+      context += `\n=== FORMATO DE NARRACIÓN: ${povInfo.label} ===
+⚠️ El guión y todos los bloques deben respetar este formato de narración.
+${povPromptInstr}\n`;
     }
 
     // Add detailed CAST layer context (Método CAST de Alexander Cast)
@@ -1944,6 +2049,15 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         document_brief: documentContent.brief,
         document_onboarding: documentContent.onboarding,
         document_research: documentContent.research,
+        creator_type: formData.creator_type,
+        video_pov: formData.video_pov,
+        cta_context: ctaContext,
+        cta_context_instruction: ctaContext === 'pauta'
+          ? 'PAUTA: CTA debe decir "haz clic en el botón de abajo" o variante. Prohibido link en bio.'
+          : 'ORGÁNICO: CTA debe decir "link en bio", "comenta", "guarda" o "sígueme". Prohibido botón de abajo.',
+        selected_pain: formData.selected_pain,
+        selected_desire: formData.selected_desire,
+        selected_objection: formData.selected_objection,
       },
     };
   };
@@ -2217,22 +2331,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       <div className="flex items-center justify-between gap-2">
         <h4 className="font-semibold flex items-center gap-1.5 sm:gap-2 text-sm sm:text-lg">
           <Wand2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-          Formulario de Guión
+          Guionizador IA
         </h4>
         <div className="flex items-center gap-1.5">
-          {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleRandomize}
-              className="h-7 px-2 text-[10px] sm:text-xs gap-1 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
-              title="Aleatorizar combinación de ángulo, dolor, deseo, estructura y CTA"
-            >
-              <Shuffle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="hidden sm:inline">Aleatorizar</span>
-            </Button>
-          )}
           {/* Investigación en tiempo real — toggle compacto */}
           <div
             className={`flex items-center gap-1 rounded-sm border px-1.5 py-1 transition-colors cursor-pointer ${
@@ -2289,9 +2390,164 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
-      {/* ——————————————————————————————————————————————————
-          Fila de 4 columnas: Pre-llenado · CAST · Intel ADN · Bloques
-          —————————————————————————————————————————————————— */}
+      {/* ── SECCIÓN 1: ¿Quién va a grabar? ── */}
+      <div className="rounded-2xl border-2 border-border/60 bg-card/40 p-4 space-y-4">
+        {/* Tipo de Creador */}
+        <div>
+          <p className="text-sm font-bold mb-0.5">🎙️ ¿Quién va a grabar?</p>
+          <p className="text-xs text-muted-foreground mb-3">Esto adapta el tono y estilo del guión automáticamente</p>
+          <div className="grid grid-cols-5 gap-2">
+            {CREATOR_TYPES.map(type => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, creator_type: type.value }))}
+                className={`flex flex-col items-center gap-1 p-2.5 rounded-2xl border-2 text-center transition-all ${
+                  formData.creator_type === type.value
+                    ? 'border-primary bg-primary/10 shadow-sm'
+                    : 'border-border/50 hover:border-primary/40 hover:bg-muted/50'
+                }`}
+              >
+                <span className="text-lg leading-none" aria-hidden="true">{type.emoji}</span>
+                <span className="text-[11px] font-bold leading-tight">{type.label}</span>
+                <span className="text-[9px] text-muted-foreground leading-tight line-clamp-2">{type.shortDesc}</span>
+              </button>
+            ))}
+          </div>
+          {(() => {
+            const selected = CREATOR_TYPES.find(t => t.value === formData.creator_type);
+            return selected ? (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                <span className="font-semibold text-foreground">{selected.emoji} {selected.fullName}</span>
+                {' — '}{selected.shortDesc}
+              </p>
+            ) : null;
+          })()}
+        </div>
+
+        {/* POV / Formato */}
+        <div>
+          <p className="text-sm font-bold mb-0.5">🎬 ¿Desde qué perspectiva?</p>
+          <p className="text-xs text-muted-foreground mb-2">Define cómo el creador habla al espectador</p>
+          <div className="flex flex-wrap gap-2">
+            {VIDEO_POV_FORMATS.map(format => (
+              <button
+                key={format.value}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, video_pov: format.value }))}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-xs transition-all ${
+                  formData.video_pov === format.value
+                    ? 'border-primary bg-primary/10 text-primary font-semibold'
+                    : 'border-border/50 hover:border-primary/40 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <span>{format.emoji}</span>
+                <span>{format.label}</span>
+              </button>
+            ))}
+          </div>
+          {(() => {
+            const selected = VIDEO_POV_FORMATS.find(f => f.value === formData.video_pov);
+            return selected ? (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">{selected.emoji} {selected.label} — {selected.shortDesc}</p>
+            ) : null;
+          })()}
+        </div>
+
+        {/* Plataforma — pills visuales */}
+        <div>
+          <p className="text-sm font-bold mb-2">📲 ¿En qué red se va a publicar?</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: 'instagram',       emoji: '📸', label: 'Instagram' },
+              { value: 'tiktok',          emoji: '🎵', label: 'TikTok' },
+              { value: 'youtube_shorts',  emoji: '▶️', label: 'YouTube' },
+              { value: 'facebook',        emoji: '📘', label: 'Facebook' },
+              { value: 'linkedin',        emoji: '💼', label: 'LinkedIn' },
+              { value: 'multi',           emoji: '🌐', label: 'Multi' },
+            ].map(p => (
+              <button
+                key={p.value}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, target_platform: prev.target_platform === p.value ? '' : p.value }))}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 text-xs transition-all ${
+                  formData.target_platform === p.value
+                    ? 'border-primary bg-primary/10 text-primary font-semibold'
+                    : 'border-border/50 hover:border-primary/40 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <span aria-hidden="true">{p.emoji}</span>
+                <span>{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Banner de estado: DNA · CAST · Aleatorizar ── */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-border/50 bg-muted/20 flex-wrap text-[11px]">
+        {/* Intel ADN status */}
+        <button
+          type="button"
+          onClick={() => setIntelOpen(o => !o)}
+          className="flex items-center gap-1.5 hover:text-violet-400 transition-colors"
+        >
+          <Brain className="h-3.5 w-3.5 text-violet-400" aria-hidden="true" />
+          {researchAngles.length + researchPains.length + researchDesires.length > 0 ? (
+            <span className="text-violet-300 font-semibold">
+              Intel ADN:
+              {researchAngles.length > 0 && ` ${researchAngles.length} ángulos`}
+              {researchPains.length > 0 && ` · ${researchPains.length} dolores`}
+              {researchHookSuggestions.length > 0 && ` · ${researchHookSuggestions.length} hooks`}
+              {hasV2Data && <span className="text-green-400"> · V2</span>}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">Sin datos de ADN</span>
+          )}
+          <span className="text-muted-foreground">{intelOpen ? '↑' : '↓'}</span>
+        </button>
+
+        {/* CAST badge */}
+        {(() => {
+          const castInfo = spherePhase ? getCastLayerInfo(spherePhase) : null;
+          if (!castInfo) return null;
+          const textMap: Record<string, string> = { C: 'text-blue-400', A: 'text-yellow-400', S: 'text-red-400', T: 'text-green-400' };
+          const borderMap: Record<string, string> = { C: 'border-blue-500/40', A: 'border-yellow-500/40', S: 'border-red-500/40', T: 'border-green-500/40' };
+          return (
+            <>
+              <div className="h-3 w-px bg-border mx-1" aria-hidden="true" />
+              <span className={`flex items-center gap-1 px-2 py-0.5 rounded-full border ${borderMap[castInfo.letter]} ${textMap[castInfo.letter]} font-semibold`}>
+                CAST {castInfo.letter} — {castInfo.layerName}
+              </span>
+            </>
+          );
+        })()}
+
+        {/* Prefill indicator */}
+        {prefillStatus.isPrefilled && (
+          <>
+            <div className="h-3 w-px bg-border mx-1" aria-hidden="true" />
+            <span className="flex items-center gap-1 text-green-400">
+              <CheckCircle2 className="h-3 w-3" aria-hidden="true" /> IA precargada
+            </span>
+          </>
+        )}
+
+        {/* Aleatorizar */}
+        {(researchAngles.length > 0 || researchPains.length > 0 || researchDesires.length > 0) && (
+          <button
+            type="button"
+            onClick={handleRandomize}
+            className="ml-auto flex items-center gap-1 text-amber-500 hover:text-amber-400 transition-colors font-medium"
+          >
+            <Shuffle className="h-3 w-3" aria-hidden="true" /> Aleatorizar
+          </button>
+        )}
+      </div>
+
+      {/* Intel ADN — panel expandido */}
+      {/* GRID DE 4 COLUMNAS (legacy — mantenido oculto, reemplazado por banner arriba) */}
+      <div className="hidden">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
 
         {/* Col 1 — Pre-llenado IA */}
@@ -2455,8 +2711,9 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
 
       </div>
+      </div>{/* cierre hidden wrapper grid legacy */}
 
-      {/* Intel ADN — contenido expandido (ancho completo, debajo de la fila) */}
+      {/* Intel ADN — contenido expandido (ancho completo, debajo del banner) */}
       {intelOpen && (hasV2Data || researchAngles.length > 0 || researchPains.length > 0) && (
         <div className="rounded-sm border bg-violet-500/5 border-violet-500/20 p-3 space-y-3">
 
@@ -2709,169 +2966,328 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
         </div>
       )}
 
-      {/* Document Loading Section */}
-      {hasDocumentUrls && (
-        <div className="p-2.5 sm:p-4 rounded-sm bg-muted/50 border space-y-2 sm:space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-              <FileSearch className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
-              <Label className="text-xs sm:text-sm font-medium truncate">Documentos</Label>
-              {docsLoaded && (
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0 sm:hidden" />
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {docsLoaded && (
-                <Badge variant="outline" className="text-xs text-green-600 border-green-600 hidden sm:flex">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Cargados
-                </Badge>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={loadProductDocuments}
-                disabled={loadingDocs}
-                className="h-7 sm:h-8 px-2 sm:px-3 text-xs"
+      {/* ── SECCIÓN 2: Lo esencial ── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">✏️ Lo esencial</span>
+          <div className="h-px flex-1 bg-border/50" />
+        </div>
+
+        {/* CTA — el campo MÁS importante */}
+        <div className="space-y-2">
+          <Label className="text-sm font-bold flex items-center gap-1.5">
+            🎯 ¿Qué quieres que haga el espectador?
+            <span className="text-[10px] font-normal text-muted-foreground ml-1">(CTA)</span>
+          </Label>
+
+          {/* Contexto: Orgánico vs Pauta */}
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground shrink-0">Destino:</span>
+            <div className="flex gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCtaContext('organico')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-semibold transition-all ${
+                  ctaContext === 'organico'
+                    ? 'border-sky-500 bg-sky-500/15 text-sky-400'
+                    : 'border-border/50 text-muted-foreground hover:border-sky-500/40'
+                }`}
               >
-                {loadingDocs ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-3.5 w-3.5" />
-                )}
-                <span className="ml-1.5 hidden sm:inline">{docsLoaded ? "Recargar" : "Cargar Docs"}</span>
-              </Button>
+                📱 Orgánico
+                <span className="text-[9px] font-normal opacity-70">link en bio / comentar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setCtaContext('pauta')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border text-xs font-semibold transition-all ${
+                  ctaContext === 'pauta'
+                    ? 'border-purple-500 bg-purple-500/15 text-purple-400'
+                    : 'border-border/50 text-muted-foreground hover:border-purple-500/40'
+                }`}
+              >
+                📣 Pauta
+                <span className="text-[9px] font-normal opacity-70">clic al botón / swipe</span>
+              </button>
             </div>
           </div>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 text-xs">
-            {product.brief_url && (
-              <Badge variant={documentContent.brief ? "default" : "secondary"}>
-                Brief {documentContent.brief ? `(${Math.round(documentContent.brief.length / 100)}kb)` : ""}
-              </Badge>
-            )}
-            {product.onboarding_url && (
-              <Badge variant={documentContent.onboarding ? "default" : "secondary"}>
-                Onboarding {documentContent.onboarding ? `(${Math.round(documentContent.onboarding.length / 100)}kb)` : ""}
-              </Badge>
-            )}
-            {product.research_url && (
-              <Badge variant={documentContent.research ? "default" : "secondary"}>
-                Research {documentContent.research ? `(${Math.round(documentContent.research.length / 100)}kb)` : ""}
-              </Badge>
-            )}
+
+          {/* Botones de CTA predecible — cambian según contexto */}
+          <div className="grid grid-cols-4 gap-2">
+            {([
+              {
+                key: 'venta',
+                emoji: '🛒',
+                label: 'Venta',
+                color: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/25 hover:border-emerald-500/70',
+                organico: {
+                  desc: 'Link en bio',
+                  templates: [
+                    `Da clic en el link de la bio y pide el tuyo ahora`,
+                    `Entra al link en mi bio y compra${product?.name ? ` ${product.name}` : ' el tuyo'} hoy`,
+                    `Pídelo en el link de la bio antes de que se agote`,
+                    `Ve al link en bio — envío a todo el país`,
+                    `Toca el link de la bio y adquiere el tuyo hoy`,
+                  ],
+                },
+                pauta: {
+                  desc: 'Clic al botón',
+                  templates: [
+                    `Haz clic en el botón de abajo y pídelo ahora mismo`,
+                    `Toca "Comprar ahora" y adquiere el tuyo hoy`,
+                    `Presiona el botón y aparta el tuyo antes de que se agote`,
+                    `Clic en "Ver más" y obtén el tuyo con envío incluido`,
+                    `Toca el botón y cómpralo directo desde aquí`,
+                  ],
+                },
+              },
+              {
+                key: 'engagement',
+                emoji: '💬',
+                label: 'Engagement',
+                color: 'border-sky-500/40 bg-sky-500/10 text-sky-400 hover:bg-sky-500/25 hover:border-sky-500/70',
+                organico: {
+                  desc: 'Comentar',
+                  templates: [
+                    `Comenta "SÍ" si esto te sirvió`,
+                    `Comparte esto con alguien que lo necesite ahora`,
+                    `Guarda este video para cuando lo necesites`,
+                    `Etiqueta a un amigo que deba ver esto`,
+                    `Comenta tu experiencia con esto 👇`,
+                  ],
+                },
+                pauta: {
+                  desc: 'Interacción',
+                  templates: [
+                    `Escribe tu pregunta en los comentarios y te respondemos`,
+                    `Cuéntanos: ¿esto te ha pasado a ti?`,
+                    `Déjanos saber qué opinas en los comentarios`,
+                    `Comenta si quieres más información sobre esto`,
+                    `¿Te identificas? Cuéntanos en los comentarios`,
+                  ],
+                },
+              },
+              {
+                key: 'leadmagnet',
+                emoji: '🎁',
+                label: 'Lead Magnet',
+                color: 'border-violet-500/40 bg-violet-500/10 text-violet-400 hover:bg-violet-500/25 hover:border-violet-500/70',
+                organico: {
+                  desc: 'Comenta palabra',
+                  templates: [
+                    `Comenta la palabra GUÍA y te la mando gratis al DM`,
+                    `Escribe INFO en los comentarios y te lo envío`,
+                    `Comenta QUIERO y te mando el material por DM`,
+                    `Escribe GRATIS en comentarios y recibe el PDF`,
+                    `Comenta RECURSO y te mando el acceso directo`,
+                  ],
+                },
+                pauta: {
+                  desc: 'Clic + descarga',
+                  templates: [
+                    `Haz clic en el botón y descárgalo gratis ahora`,
+                    `Toca "Descargar" y recibe el material al instante`,
+                    `Clic en el botón y obtén acceso inmediato sin costo`,
+                    `Presiona el botón y descarga el recurso gratuito ya`,
+                    `Haz clic y llévate el PDF gratis directo a tu correo`,
+                  ],
+                },
+              },
+              {
+                key: 'seguir',
+                emoji: '📲',
+                label: 'Seguir',
+                color: 'border-orange-500/40 bg-orange-500/10 text-orange-400 hover:bg-orange-500/25 hover:border-orange-500/70',
+                organico: {
+                  desc: 'Sígueme',
+                  templates: [
+                    `Sígueme para más tips como este`,
+                    `Activa la campanita para no perderte nada`,
+                    `Sigue la cuenta si quieres aprender más cada semana`,
+                    `Sígueme — subo contenido así todos los días`,
+                    `Dale follow y aprende más estrategias como esta`,
+                  ],
+                },
+                pauta: {
+                  desc: 'Sigue la página',
+                  templates: [
+                    `Haz clic en "Seguir" y únete a nuestra comunidad`,
+                    `Toca "Me gusta" en la página para no perderte nada`,
+                    `Sigue nuestra página y recibe contenido como este`,
+                    `Únete a la comunidad — haz clic en Seguir ahora`,
+                    `Sigue la página y entérate de todo lo que viene`,
+                  ],
+                },
+              },
+            ] as const).map(type => {
+              const ctx = ctaContext === 'pauta' ? type.pauta : type.organico;
+              return (
+                <button
+                  key={type.key}
+                  type="button"
+                  title={`CTA ${type.label} (${ctaContext})`}
+                  onClick={() => {
+                    const pool = ctx.templates as readonly string[];
+                    const current = formData.cta;
+                    const others = pool.filter(t => t !== current);
+                    const next = (others.length > 0 ? others : pool)[Math.floor(Math.random() * (others.length > 0 ? others.length : pool.length))];
+                    setFormData(prev => ({ ...prev, cta: next }));
+                  }}
+                  className={`flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 text-center transition-all cursor-pointer ${type.color}`}
+                >
+                  <span className="text-xl leading-none" aria-hidden="true">{type.emoji}</span>
+                  <span className="text-[11px] font-bold leading-tight">{type.label}</span>
+                  <span className="text-[9px] opacity-70 leading-tight">{ctx.desc}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      )}
 
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
-
-        {/* ── Fila 1: Hooks | País | Duración ── */}
-        {/* Número de Hooks */}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1 text-xs">
-            <ListOrdered className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Hooks
-          </Label>
-          <Select
-            value={formData.hooks_count}
-            onValueChange={(v) => setFormData({ ...formData, hooks_count: v })}
-          >
-            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[1, 2, 3, 4, 5].map(n => (
-                <SelectItem key={n} value={String(n)}>{n} Hook{n > 1 ? 's' : ''}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* País Objetivo */}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1 text-xs">
-            <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> País
-          </Label>
-          <Select
-            value={formData.target_country}
-            onValueChange={(v) => setFormData({ ...formData, target_country: v })}
-          >
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="País..." /></SelectTrigger>
-            <SelectContent>
-              {COUNTRIES.map((country) => (
-                <SelectItem key={country} value={country}>{country}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Duración del Video */}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1 text-xs">
-            <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Duración
-          </Label>
-          <Select
-            value={formData.video_duration}
-            onValueChange={(v) => setFormData({ ...formData, video_duration: v })}
-          >
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Duración..." /></SelectTrigger>
-            <SelectContent>
-              {VIDEO_DURATIONS.map((duration) => (
-                <SelectItem key={duration.value} value={duration.value}>{duration.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* ── Fila 2: CTA (2 cols) | Plataforma ── */}
-        {/* CTA */}
-        <div className="space-y-1.5 col-span-2">
-          <Label className="flex items-center gap-1 text-xs">
-            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> CTA *
-          </Label>
           <Input
             value={formData.cta}
             onChange={(e) => setFormData({ ...formData, cta: e.target.value })}
-            placeholder="Ej: Haz clic en el link de la bio"
-            className="h-8 text-xs sm:text-sm"
+            placeholder="Elige un tipo arriba o escribe tu CTA personalizado"
+            className="h-10 text-sm"
           />
-        </div>
 
-        {/* Plataforma Destino */}
-        <div className="space-y-1.5">
-          <Label className="flex items-center gap-1 text-xs">
-            <Target className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Plataforma
-          </Label>
-          <Select
-            value={formData.target_platform}
-            onValueChange={(v) => setFormData({ ...formData, target_platform: v })}
-          >
-            <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Red..." /></SelectTrigger>
-            <SelectContent>
-              {TARGET_PLATFORMS.map((platform) => (
-                <SelectItem key={platform.value} value={platform.value}>{platform.label}</SelectItem>
+          {researchCtaSuggestions.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              <span className="text-[10px] text-muted-foreground shrink-0 mt-0.5">Del ADN:</span>
+              {researchCtaSuggestions.slice(0, 4).map((cta, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, cta }))}
+                  className="text-[10px] px-2 py-0.5 rounded-full border border-green-500/30 bg-green-500/10 text-green-300 hover:bg-green-500/20 transition-colors"
+                >
+                  {cta}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
         </div>
 
-        {/* ── Campos de ancho completo ── */}
+        {/* País | Duración — pills */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1 text-xs font-semibold">
+              <Globe className="h-3 w-3" aria-hidden="true" /> País objetivo
+            </Label>
+            <Select
+              value={formData.target_country}
+              onValueChange={(v) => setFormData({ ...formData, target_country: v })}
+            >
+              <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="País..." /></SelectTrigger>
+              <SelectContent>
+                {COUNTRIES.map((country) => (
+                  <SelectItem key={country} value={country}>{country}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Estructura Narrativa */}
-        <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
-          <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Estructura Narrativa *
-          </Label>
-          <Select 
-            value={formData.narrative_structure} 
-            onValueChange={(v) => setFormData({ ...formData, narrative_structure: v })}
-          >
-            <SelectTrigger><SelectValue placeholder="Seleccionar estructura..." /></SelectTrigger>
-            <SelectContent>
-              {NARRATIVE_STRUCTURES.map((structure) => (
-                <SelectItem key={structure.value} value={structure.value}>{structure.label}</SelectItem>
+          <div className="space-y-1.5">
+            <Label className="flex items-center gap-1 text-xs font-semibold">
+              <Video className="h-3 w-3" aria-hidden="true" /> Duración del video
+            </Label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { value: '15s', label: '15s' },
+                { value: '30s', label: '30s' },
+                { value: '60s', label: '60s' },
+                { value: '90s', label: '90s' },
+              ].map(d => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, video_duration: d.value }))}
+                  className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all ${
+                    formData.video_duration === d.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/50 text-muted-foreground hover:border-primary/40'
+                  }`}
+                >
+                  {d.label}
+                </button>
               ))}
-            </SelectContent>
-          </Select>
+              {!['15s','30s','60s','90s'].includes(formData.video_duration) ? (
+                <Select
+                  value={formData.video_duration}
+                  onValueChange={(v) => setFormData({ ...formData, video_duration: v })}
+                >
+                  <SelectTrigger className="h-7 text-xs w-20 border-primary bg-primary/5"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {VIDEO_DURATIONS.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Select
+                  value=""
+                  onValueChange={(v) => v && setFormData({ ...formData, video_duration: v })}
+                >
+                  <SelectTrigger className="h-7 text-xs w-16 border-border/50">
+                    <span className="text-muted-foreground text-[10px]">+ otro</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VIDEO_DURATIONS.filter(d => !['15s','30s','60s','90s'].includes(d.value)).map((d) => (
+                      <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Estructura Narrativa — tarjetas visuales */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" aria-hidden="true" /> Estructura narrativa
+          </Label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {NARRATIVE_STRUCTURES.map(s => {
+              const NARRATIVE_EMOJIS: Record<string, string> = {
+                'problema-solucion': '🔥', 'historia-personal': '🌟', 'antes-despues': '🔄',
+                'tutorial': '📋', 'testimonio': '⭐', 'urgencia': '⚡', 'educativo': '🧠',
+                'entretenimiento': '🎭', 'mitos-realidades': '🆚', 'comparativa': '⚖️',
+                'detras-camaras': '🎬', 'unboxing': '📦', 'reaccion': '😮', 'lista': '📝',
+                'pov': '👁️', 'controversia': '💥', 'trend': '🚀', 'dia-en-vida': '🌅',
+                'pregunta-respuesta': '❓', 'storytime': '📖',
+              };
+              const isSelected = formData.narrative_structure === s.value;
+              return (
+                <button
+                  key={s.value}
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, narrative_structure: s.value }))}
+                  className={`flex flex-col items-center text-center gap-1 p-2 rounded-xl border-2 transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 shadow-sm'
+                      : 'border-border/40 bg-muted/10 hover:border-primary/40 hover:bg-muted/30'
+                  }`}
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">{NARRATIVE_EMOJIS[s.value] || '🎬'}</span>
+                  <span className={`text-[10px] font-bold leading-tight ${isSelected ? 'text-primary' : 'text-foreground'}`}>{s.label}</span>
+                  <span className="text-[9px] text-muted-foreground leading-tight">{s.description}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+
+      {/* ── Campos de ancho completo (Audiencia) ── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">🎯 Audiencia & Ángulo</span>
+          <div className="h-px flex-1 bg-border/50" />
+        </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
 
         {/* Ángulo de Venta */}
         <div className="space-y-1.5 sm:space-y-2 col-span-2 sm:col-span-3">
@@ -2947,10 +3363,47 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               </div>
             );
           })() : (
-            <p className="text-xs text-muted-foreground py-2">
-              {formData.sales_angle || 'Sin ángulo seleccionado'}
-            </p>
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { emoji: '💰', label: 'Precio', color: 'hover:border-emerald-500/40 hover:bg-emerald-500/5', templates: ['La forma más económica de obtener resultados reales', 'El mejor precio del mercado sin sacrificar calidad', 'Más beneficios por menos dinero que cualquier alternativa', 'La inversión más rentable para transformar tu resultado'] },
+                  { emoji: '⚡', label: 'Resultado', color: 'hover:border-yellow-500/40 hover:bg-yellow-500/5', templates: ['Resultados visibles desde la primera semana de uso', 'El método comprobado que funciona cuando todo lo demás falla', 'Consigue el cambio que buscas en menos tiempo del que imaginas', 'Lo que miles ya usaron para transformar su vida'] },
+                  { emoji: '🧪', label: 'Único', color: 'hover:border-blue-500/40 hover:bg-blue-500/5', templates: ['La única solución que combina efectividad con facilidad de uso', 'Lo que ninguna otra opción del mercado puede ofrecerte hoy', 'La fórmula exclusiva que cambia las reglas del juego', 'Tecnología única desarrollada para resultados únicos'] },
+                  { emoji: '❤️', label: 'Emocional', color: 'hover:border-rose-500/40 hover:bg-rose-500/5', templates: ['La solución que te devuelve la confianza que mereces', 'Por fin libre del problema que te ha limitado tanto tiempo', 'El cambio que llevas tanto tiempo queriendo hacer realidad', 'Para quienes ya están cansados de conformarse con menos'] },
+                ] as const).map(type => (
+                  <button
+                    key={type.label}
+                    type="button"
+                    onClick={() => {
+                      const pool = type.templates as readonly string[];
+                      const others = pool.filter(t => t !== formData.sales_angle);
+                      const next = (others.length ? others : pool)[Math.floor(Math.random() * (others.length || pool.length))];
+                      setFormData(prev => ({ ...prev, sales_angle: next }));
+                    }}
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border border-border/40 bg-muted/10 text-center transition-all ${type.color}`}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                    <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                  </button>
+                ))}
+              </div>
+              {formData.sales_angle ? (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg border bg-muted/20 text-xs">
+                  <span className="flex-1 text-foreground">{formData.sales_angle}</span>
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, sales_angle: '' }))} className="shrink-0 opacity-50 hover:opacity-100"><X className="h-3 w-3" /></button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">Elige un tipo de ángulo arriba o genera con ADN del producto</p>
+              )}
+            </div>
           )}
+        </div>
+
+        {/* ── Divisor: Audiencia ── */}
+        <div className="col-span-2 sm:col-span-3 flex items-center gap-2 pt-1">
+          <div className="h-px flex-1 bg-border/50" />
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2">🎯 Audiencia & Contexto</span>
+          <div className="h-px flex-1 bg-border/50" />
         </div>
 
         {/* Avatar Ideal */}
@@ -3024,9 +3477,39 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
               </div>
             );
           })() : (
-            <p className="text-xs text-muted-foreground py-2">
-              {formData.ideal_avatar || 'Selecciona un producto con investigación para ver los avatares'}
-            </p>
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { emoji: '👩', label: 'Mujer adulta', color: 'hover:border-pink-500/40 hover:bg-pink-500/5', templates: ['Mujer de 25-40 años que busca resultados reales sin complicar su rutina diaria', 'Mujer que ya lo intentó todo y quiere una solución que de verdad funcione', 'Mujer ocupada que necesita algo rápido, efectivo y fácil de incorporar a su vida'] },
+                  { emoji: '👨', label: 'Emprendedor', color: 'hover:border-blue-500/40 hover:bg-blue-500/5', templates: ['Emprendedor que necesita resultados rápidos para hacer crecer su negocio', 'Dueño de negocio que quiere mejorar sus resultados sin invertir más tiempo del que tiene', 'Profesional independiente buscando soluciones prácticas para sus principales retos'] },
+                  { emoji: '🎓', label: 'Joven', color: 'hover:border-violet-500/40 hover:bg-violet-500/5', templates: ['Joven de 18-28 años que quiere resultados rápidos sin gastar una fortuna', 'Estudiante o recién egresado buscando la forma más eficiente de lograr su meta', 'Persona joven que quiere empezar con el pie derecho y no perder tiempo'] },
+                  { emoji: '👨‍👩‍👧', label: 'Familia', color: 'hover:border-orange-500/40 hover:bg-orange-500/5', templates: ['Padre o madre que busca lo mejor para su familia sin complicaciones ni costos altos', 'Persona responsable que cuida a otros y necesita soluciones confiables y seguras', 'Familia que quiere mejorar su calidad de vida con decisiones inteligentes'] },
+                ] as const).map(type => (
+                  <button
+                    key={type.label}
+                    type="button"
+                    onClick={() => {
+                      const pool = type.templates as readonly string[];
+                      const others = pool.filter(t => t !== formData.ideal_avatar);
+                      const next = (others.length ? others : pool)[Math.floor(Math.random() * (others.length || pool.length))];
+                      setFormData(prev => ({ ...prev, ideal_avatar: next }));
+                    }}
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border border-border/40 bg-muted/10 text-center transition-all ${type.color}`}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                    <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                  </button>
+                ))}
+              </div>
+              {formData.ideal_avatar ? (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg border bg-muted/20 text-xs">
+                  <span className="flex-1 text-foreground">{formData.ideal_avatar}</span>
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, ideal_avatar: '' }))} className="shrink-0 opacity-50 hover:opacity-100"><X className="h-3 w-3" /></button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground">Elige un perfil de avatar arriba o genera con ADN del producto</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -3035,14 +3518,47 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             💔 Dolor Seleccionado
           </Label>
-          <ResearchItemCards
-            items={researchPains}
-            selected={formData.selected_pain}
-            onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
-            selectedBorderClass="ring-2 ring-rose-500 border-rose-500 bg-rose-500/10"
-            hoverClass="border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
-            emptyText={formData.selected_pain || 'Selecciona un producto con investigación para ver dolores'}
-          />
+          {researchPains.length === 0 ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { emoji: '⏱️', label: 'Tiempo', text: 'Lleva meses intentándolo sin resultados y siente que pierde el tiempo con cada intento' },
+                  { emoji: '💸', label: 'Dinero', text: 'Ha gastado en varias soluciones que prometían mucho y no le dieron ningún resultado real' },
+                  { emoji: '😤', label: 'Frustración', text: 'Siente que ya lo intentó todo y nada le funciona, está desmotivado y a punto de rendirse' },
+                  { emoji: '😔', label: 'Inseguridad', text: 'Se siente inseguro e incómodo cada día por un problema que afecta su vida sin solución' },
+                ] as const).map(type => (
+                  <button
+                    key={type.label}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, selected_pain: prev.selected_pain === type.text ? '' : type.text }))}
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border-2 text-center transition-all ${
+                      formData.selected_pain === type.text
+                        ? 'border-rose-500 bg-rose-500/10 text-rose-400'
+                        : 'border-border/40 bg-muted/10 hover:border-rose-500/40 hover:bg-rose-500/5'
+                    }`}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                    <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                  </button>
+                ))}
+              </div>
+              {formData.selected_pain && (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg border border-rose-500/20 bg-rose-500/5 text-xs">
+                  <span className="flex-1 text-foreground">{formData.selected_pain}</span>
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, selected_pain: '' }))} className="shrink-0 opacity-50 hover:opacity-100"><X className="h-3 w-3" /></button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <ResearchItemCards
+              items={researchPains}
+              selected={formData.selected_pain}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_pain: text }))}
+              selectedBorderClass="ring-2 ring-rose-500 border-rose-500 bg-rose-500/10"
+              hoverClass="border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5"
+              emptyText={formData.selected_pain || ''}
+            />
+          )}
         </div>
 
         {/* Deseos */}
@@ -3050,89 +3566,200 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
             ✨ Deseo Seleccionado
           </Label>
-          <ResearchItemCards
-            items={researchDesires}
-            selected={formData.selected_desire}
-            onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
-            selectedBorderClass="ring-2 ring-primary border-primary bg-primary/10"
-            hoverClass="border-primary/20 hover:border-primary/40 hover:bg-primary/5"
-            emptyText={formData.selected_desire || 'Selecciona un producto con investigación para ver deseos'}
-          />
+          {researchDesires.length === 0 ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { emoji: '🏆', label: 'Resultado', text: 'Quiere lograr un cambio real y visible que pueda mostrar y del que se sienta orgulloso' },
+                  { emoji: '💪', label: 'Confianza', text: 'Quiere sentirse seguro, confiado y cómodo consigo mismo sin esfuerzo adicional' },
+                  { emoji: '⏰', label: 'Tiempo libre', text: 'Quiere recuperar tiempo para dedicarlo a lo que realmente importa en su vida' },
+                  { emoji: '💰', label: 'Dinero/Ahorro', text: 'Quiere ahorrar dinero o generar más ingresos con menos esfuerzo y más inteligencia' },
+                ] as const).map(type => (
+                  <button
+                    key={type.label}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, selected_desire: prev.selected_desire === type.text ? '' : type.text }))}
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border-2 text-center transition-all ${
+                      formData.selected_desire === type.text
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border/40 bg-muted/10 hover:border-primary/40 hover:bg-primary/5'
+                    }`}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                    <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                  </button>
+                ))}
+              </div>
+              {formData.selected_desire && (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg border border-primary/20 bg-primary/5 text-xs">
+                  <span className="flex-1 text-foreground">{formData.selected_desire}</span>
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, selected_desire: '' }))} className="shrink-0 opacity-50 hover:opacity-100"><X className="h-3 w-3" /></button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <ResearchItemCards
+              items={researchDesires}
+              selected={formData.selected_desire}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_desire: text }))}
+              selectedBorderClass="ring-2 ring-primary border-primary bg-primary/10"
+              hoverClass="border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+              emptyText={formData.selected_desire || ''}
+            />
+          )}
         </div>
 
         {/* Objeciones */}
         <div className="space-y-2 col-span-2 sm:col-span-3">
           <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-            🚫 Objeción Seleccionada
+            🚫 Objeción Principal
           </Label>
-          <ResearchItemCards
-            items={researchObjections}
-            selected={formData.selected_objection}
-            onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
-            selectedBorderClass="ring-2 ring-orange-500 border-orange-500 bg-orange-500/10"
-            hoverClass="border-orange-500/20 hover:border-orange-500/40 hover:bg-orange-500/5"
-            emptyText={formData.selected_objection || 'Selecciona un producto con investigación para ver objeciones'}
-          />
-        </div>
-      </div>
-
-      {/* Reference Transcription */}
-      <div className="space-y-1.5 sm:space-y-2">
-        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Transcripción de Referencia <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
-        </Label>
-        <Textarea
-          value={formData.reference_transcription}
-          onChange={(e) => setFormData({ ...formData, reference_transcription: e.target.value })}
-          placeholder="Pega aquí la transcripción de un video de referencia..."
-          rows={3}
-        />
-      </div>
-
-      {/* Hooks personalizados */}
-      <div className="space-y-2 sm:space-y-3 pt-3 sm:pt-4 border-t">
-        <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
-          <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks Sugeridos <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
-        </Label>
-        
-        <div className="flex gap-2">
-          <Input
-            value={newHook}
-            onChange={(e) => setNewHook(e.target.value)}
-            placeholder="Ej: ¿Sabías que el 80% de las personas...?"
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHook())}
-            disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
-          />
-          <Button type="button" onClick={addHook} variant="outline" disabled={formData.hooks.length >= parseInt(formData.hooks_count)}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {formData.hooks.length > 0 && (
-          <div className="space-y-2">
-            {formData.hooks.map((hook, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-sm">
-                <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
-                <span className="flex-1 text-sm">{hook}</span>
-                <button type="button" onClick={() => removeHook(idx)} className="p-1 hover:bg-destructive/20 rounded">
-                  <X className="h-4 w-4" />
-                </button>
+          {researchObjections.length === 0 ? (
+            <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-1.5">
+                {([
+                  { emoji: '💲', label: 'Precio', text: 'Es muy caro y en este momento no puedo permitirme gastarlo en algo que no sé si funciona' },
+                  { emoji: '⏳', label: 'Tiempo', text: 'No tengo tiempo ahora mismo para dedicarle atención a esto aunque quiera hacerlo' },
+                  { emoji: '🤔', label: 'Desconfianza', text: '¿Realmente funciona? Ya me engañaron antes con productos que prometían lo mismo' },
+                  { emoji: '🔄', label: 'Ya intenté', text: 'Ya lo intenté antes con algo parecido y no me funcionó, no creo que esto sea diferente' },
+                ] as const).map(type => (
+                  <button
+                    key={type.label}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, selected_objection: prev.selected_objection === type.text ? '' : type.text }))}
+                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border-2 text-center transition-all ${
+                      formData.selected_objection === type.text
+                        ? 'border-orange-500 bg-orange-500/10 text-orange-400'
+                        : 'border-border/40 bg-muted/10 hover:border-orange-500/40 hover:bg-orange-500/5'
+                    }`}
+                  >
+                    <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                    <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+              {formData.selected_objection && (
+                <div className="flex items-start gap-2 p-2.5 rounded-lg border border-orange-500/20 bg-orange-500/5 text-xs">
+                  <span className="flex-1 text-foreground">{formData.selected_objection}</span>
+                  <button type="button" onClick={() => setFormData(prev => ({ ...prev, selected_objection: '' }))} className="shrink-0 opacity-50 hover:opacity-100"><X className="h-3 w-3" /></button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <ResearchItemCards
+              items={researchObjections}
+              selected={formData.selected_objection}
+              onSelect={(text) => setFormData(prev => ({ ...prev, selected_objection: text }))}
+              selectedBorderClass="ring-2 ring-orange-500 border-orange-500 bg-orange-500/10"
+              hoverClass="border-orange-500/20 hover:border-orange-500/40 hover:bg-orange-500/5"
+              emptyText={formData.selected_objection || ''}
+            />
+          )}
+        </div>
       </div>
+      </div>{/* cierre space-y-3 Configuración del video */}
 
-      {/* Instrucciones adicionales */}
-      <div className="space-y-1.5 sm:space-y-2">
-        <Label className="text-xs sm:text-sm">Instrucciones adicionales</Label>
-        <Textarea
-          value={formData.additional_instructions}
-          onChange={(e) => setFormData({ ...formData, additional_instructions: e.target.value })}
-          placeholder="Agrega cualquier indicación especial..."
-          rows={2}
-        />
-      </div>
+      {/* ── SECCIÓN 3: Opciones avanzadas (collapsible) ── */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger asChild>
+          <button
+            type="button"
+            className="w-full flex items-center justify-between px-3 py-2 rounded-xl border border-border/60 bg-muted/30 hover:bg-muted/50 transition-colors text-sm font-medium"
+          >
+            <span className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4 text-muted-foreground" />
+              🔧 Opciones avanzadas
+            </span>
+            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 pt-3">
+          {/* Reference Transcription */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Transcripción de Referencia <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
+            </Label>
+            <Textarea
+              value={formData.reference_transcription}
+              onChange={(e) => setFormData({ ...formData, reference_transcription: e.target.value })}
+              placeholder="Pega aquí la transcripción de un video de referencia..."
+              rows={3}
+            />
+          </div>
+
+          {/* Hooks personalizados */}
+          <div className="space-y-2 sm:space-y-3">
+            <Label className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
+              <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Hooks Personalizados <span className="text-muted-foreground font-normal hidden sm:inline">(opcional)</span>
+            </Label>
+
+            {/* Tipos de hook rápidos */}
+            <div className="grid grid-cols-4 gap-1.5">
+              {([
+                { emoji: '❓', label: 'Pregunta', color: 'hover:border-sky-500/40 hover:bg-sky-500/5', templates: [`¿Sabías que el 80% de las personas falla en esto por un error que se puede evitar?`, `¿Cuánto tiempo llevas buscando una solución que de verdad funcione?`, `¿Qué pasaría si te dijera que existe una forma mucho más fácil de lograrlo?`, `¿Por qué nadie te contó esto antes sobre ${product?.name || 'este producto'}?`] },
+                { emoji: '😱', label: 'Shock', color: 'hover:border-red-500/40 hover:bg-red-500/5', templates: [`Lo que nadie te dice sobre cómo funciona esto de verdad...`, `Esto cambió todo lo que creía saber sobre el tema`, `El 90% de la gente lo hace mal y ni siquiera lo sabe`, `Llevo años viendo esto y por fin lo entiendo`] },
+                { emoji: '🏆', label: 'Resultado', color: 'hover:border-emerald-500/40 hover:bg-emerald-500/5', templates: [`Así logré el resultado que quería en menos de 30 días sin sacrificar nada`, `De cero a resultado increíble en tiempo récord y sin gastar una fortuna`, `El antes y después que nadie esperaba que fuera posible`, `Finalmente lo conseguí después de intentarlo mil veces`] },
+                { emoji: '⚠️', label: 'Error', color: 'hover:border-amber-500/40 hover:bg-amber-500/5', templates: [`Estás cometiendo este error y te está costando tiempo y dinero sin darte cuenta`, `Para. Lo que estás haciendo ahora mismo está arruinando tus resultados`, `El error número uno que comete la gente y por qué yo también lo cometí`, `Si haces esto, nunca vas a lograr lo que realmente quieres`] },
+              ] as const).map(type => (
+                <button
+                  key={type.label}
+                  type="button"
+                  disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
+                  onClick={() => {
+                    const pool = type.templates as readonly string[];
+                    const others = pool.filter(t => !formData.hooks.includes(t));
+                    const next = (others.length ? others : pool)[Math.floor(Math.random() * (others.length || pool.length))];
+                    if (formData.hooks.length < parseInt(formData.hooks_count)) {
+                      setFormData(prev => ({ ...prev, hooks: [...prev.hooks, next] }));
+                    }
+                  }}
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border border-border/40 bg-muted/10 text-center transition-all disabled:opacity-40 disabled:cursor-not-allowed ${type.color}`}
+                >
+                  <span className="text-base leading-none" aria-hidden="true">{type.emoji}</span>
+                  <span className="text-[10px] font-bold leading-tight">{type.label}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-2">
+              <Input
+                value={newHook}
+                onChange={(e) => setNewHook(e.target.value)}
+                placeholder="O escribe tu hook personalizado aquí..."
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addHook())}
+                disabled={formData.hooks.length >= parseInt(formData.hooks_count)}
+              />
+              <Button type="button" onClick={addHook} variant="outline" disabled={formData.hooks.length >= parseInt(formData.hooks_count)}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            {formData.hooks.length > 0 && (
+              <div className="space-y-2">
+                {formData.hooks.map((hook, idx) => (
+                  <div key={idx} className="flex items-center gap-2 p-2 bg-muted rounded-sm">
+                    <Badge variant="outline" className="shrink-0">{idx + 1}</Badge>
+                    <span className="flex-1 text-sm">{hook}</span>
+                    <button type="button" onClick={() => removeHook(idx)} className="p-1 hover:bg-destructive/20 rounded">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Instrucciones adicionales */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <Label className="text-xs sm:text-sm">Instrucciones adicionales</Label>
+            <Textarea
+              value={formData.additional_instructions}
+              onChange={(e) => setFormData({ ...formData, additional_instructions: e.target.value })}
+              placeholder="Agrega cualquier indicación especial..."
+              rows={2}
+            />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Custom Prompts Section */}
       <Collapsible open={promptsOpen} onOpenChange={setPromptsOpen}>
@@ -3229,25 +3856,37 @@ ${formData.hooks.length > 0 ? formData.hooks.map((h, i) => `${i + 1}. ${h}`).joi
       )}
 
       {/* Generate Button */}
-      <Button
-        onClick={handleGenerate}
-        disabled={loading || insufficientTokens || selectedCount === 0}
-        className="w-full"
-        size="lg"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Generando con IA...
-          </>
-        ) : (
-          <>
-            <Wand2 className="h-4 w-4 mr-2" />
-            Generar {selectedCount === 6 ? "Todo" : `${selectedCount} bloque${selectedCount !== 1 ? "s" : ""}`} con IA
-            <span className="ml-1.5 opacity-75 font-mono text-xs">({totalCost})</span>
-          </>
-        )}
-      </Button>
+      <div className="pt-2">
+        <Button
+          onClick={handleGenerate}
+          disabled={loading || insufficientTokens || selectedCount === 0}
+          className="w-full h-12 text-base font-bold shadow-lg"
+          size="lg"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+              Generando con IA...
+            </>
+          ) : insufficientTokens ? (
+            <>
+              <Wand2 className="h-5 w-5 mr-2 opacity-50" />
+              Sin tokens suficientes
+            </>
+          ) : selectedCount === 0 ? (
+            <>
+              <Wand2 className="h-5 w-5 mr-2 opacity-50" />
+              Selecciona bloques arriba
+            </>
+          ) : (
+            <>
+              <Wand2 className="h-5 w-5 mr-2" />
+              ✨ Generar {selectedCount === 5 ? "todo" : `${selectedCount} bloque${selectedCount !== 1 ? "s" : ""}`} con IA
+              <span className="ml-2 opacity-75 font-mono text-xs">({totalCost} tkn)</span>
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

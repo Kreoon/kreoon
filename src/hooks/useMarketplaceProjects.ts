@@ -116,6 +116,8 @@ interface UseMarketplaceProjectsOptions {
   brandId?: string;
   /** For brand members without brandId yet - returns empty array instead of all projects */
   isBrandMember?: boolean;
+  /** Deshabilitar fetch y realtime (útil cuando el padre ya provee los datos) */
+  enabled?: boolean;
 }
 
 export interface CreateProjectParams {
@@ -138,7 +140,7 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
   const [error, setError] = useState<string | null>(null);
 
   const fetchProjects = useCallback(async () => {
-    if (!user?.id) {
+    if (!user?.id || options.enabled === false) {
       setLoading(false);
       return;
     }
@@ -307,12 +309,12 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     setProjects(updater);
   }, []);
 
-  // Suscripción realtime para sincronización entre usuarios
+  // Suscripción realtime — se desactiva cuando el padre ya provee los datos
   useRealtimeMarketplaceProjects({
     userId: user?.id || null,
     role: options.role || 'brand',
     brandId: options.brandId,
-    enabled: !!user?.id,
+    enabled: !!user?.id && options.enabled !== false,
     onProjectChange: handleRealtimeChange,
   });
 

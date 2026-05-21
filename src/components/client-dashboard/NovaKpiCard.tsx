@@ -7,7 +7,7 @@ interface NovaKpiCardProps {
   title: string;
   value: number;
   icon: LucideIcon;
-  variant?: "success" | "primary" | "warning" | "info";
+  variant?: "success" | "primary" | "warning" | "info" | "danger";
   prefix?: string;
   suffix?: string;
   subtitle?: string;
@@ -84,6 +84,10 @@ const variantStyles = {
   info: {
     iconBg: "bg-blue-50 dark:bg-blue-950/30",
     iconColor: "text-blue-600 dark:text-blue-400",
+  },
+  danger: {
+    iconBg: "bg-red-50 dark:bg-red-950/30",
+    iconColor: "text-red-600 dark:text-red-400",
   },
 };
 

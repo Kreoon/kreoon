@@ -259,7 +259,7 @@ export function ContentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[calc(100%-0.5rem)] sm:w-full max-w-6xl max-h-[95vh] overflow-hidden p-0 flex flex-col bg-[var(--nova-bg-surface)] border-[var(--nova-accent-primary)]/10" aria-describedby="content-detail-description">
+      <DialogContent className="w-[calc(100%-0.5rem)] sm:w-full max-w-[90vw] xl:max-w-[1440px] max-h-[95vh] overflow-hidden p-0 flex flex-col bg-[var(--nova-bg-surface)] border-[var(--nova-accent-primary)]/10" aria-describedby="content-detail-description">
         <DialogDescription id="content-detail-description" className="sr-only">Detalle del proyecto de contenido</DialogDescription>
         {/* Hero Header - Nova Style (colapsable) */}
         <div className="relative bg-gradient-to-br from-[var(--nova-accent-primary)]/10 via-[var(--nova-accent-secondary)]/5 to-[var(--nova-bg-surface)] border-b border-[var(--nova-border-subtle)] shrink-0">

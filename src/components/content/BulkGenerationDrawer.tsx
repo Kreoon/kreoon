@@ -33,6 +33,50 @@ const NARRATIVE_STRUCTURES = [
   'dia-en-vida', 'storytime', 'pregunta-respuesta',
 ];
 
+const CREATOR_TYPE_OPTIONS = [
+  { value: 'ugc',            label: '📱 UGC — Usuario real' },
+  { value: 'marca-personal', label: '🌟 Marca Personal — Dueño de marca' },
+  { value: 'egc',            label: '🏢 EGC — Empleado/equipo' },
+  { value: 'fgc',            label: '❤️ FGC — Fan apasionado' },
+  { value: 'bgc',            label: '🎯 BGC — Contenido oficial marca' },
+  { value: 'pgc',            label: '🎬 PGC — Profesional contratado' },
+  { value: 'igc',            label: '✨ IGC — Influencer' },
+  { value: 'cgc',            label: '⭐ CGC — Cliente que ya compró' },
+  { value: 'aigc',           label: '🤖 AIGC — Generado por IA pura' },
+  { value: 'ai-ugc',         label: '🧠 AI-UGC — Híbrido IA+UGC' },
+];
+
+const VIDEO_POV_OPTIONS = [
+  { value: 'primera_persona', label: '🙋 Primera Persona' },
+  { value: 'segunda_persona', label: '👥 Segunda Persona/POV' },
+  { value: 'testimonial',     label: '⭐ Testimonial' },
+  { value: 'demo',            label: '📱 Demo del producto' },
+  { value: 'voz_en_off',      label: '🎙️ Voz en Off' },
+  { value: 'entrevista',      label: '🎤 Entrevista/Q&A' },
+];
+
+const CREATOR_TYPE_INSTRUCTIONS: Record<string, string> = {
+  'ugc': 'Tono espontáneo y auténtico como usuario real. Imperfecciones naturales, primera persona, lenguaje cotidiano.',
+  'marca-personal': 'El dueño de la marca graba en primera persona. "Mi método", "Yo te enseño". Autoridad personal y cercana.',
+  'egc': 'Empleado interno con perspectiva insider. "Yo trabajo aquí y te digo que...". Credibilidad basada en conocimiento interno.',
+  'fgc': 'Fan apasionado que lo usa por convicción. Tono entusiasta y genuino. Emoción y amor por la marca como eje.',
+  'bgc': 'La marca misma produce el contenido. Tono pulido y on-brand. Directo en el mensaje de ventas.',
+  'pgc': 'Creador profesional contratado. Alta producción, guión estructurado. Tono experto y fluido.',
+  'igc': 'Influencer con audiencia propia. Autoridad social. "Como siempre les comparto lo que yo uso..."',
+  'cgc': 'Cliente real post-compra. Reseña honesta, antes/después, resultados reales. Recomendación genuina.',
+  'aigc': 'Contenido generado por IA. Evitar imperfecciones. Guión perfectamente articulado para síntesis de voz.',
+  'ai-ugc': 'Parece UGC orgánico pero optimizado por IA. Espontaneidad aparente con estructura narrativa precisa.',
+};
+
+const VIDEO_POV_INSTRUCTIONS: Record<string, string> = {
+  'primera_persona': 'Escribe en primera persona ("Yo", "Me", "Mi"). El creador habla de su propia experiencia directa.',
+  'segunda_persona': 'Escribe en segunda persona ("Tú", "Tu", "Te"). El espectador ES el protagonista.',
+  'testimonial': 'Formato de reseña. Historia de transformación: antes/durante/después. Caso de éxito.',
+  'demo': 'El creador muestra el producto en acción. Instrucciones paso a paso de lo que está haciendo.',
+  'voz_en_off': 'Narrador sin aparecer en cámara. Narración sobre imágenes. Narrador externo describiendo lo que se ve.',
+  'entrevista': 'Formato Q&A. "Me preguntan mucho sobre...", "La pregunta que más recibo es..."',
+};
+
 const CAST_INFO: Record<string, { letter: string; label: string; color: string; objective: string; audience: string; tone: string; ctaStyle: string }> = {
   engage: {
     letter: 'C', label: 'Conocer',
@@ -106,6 +150,8 @@ interface GlobalConfig {
   country: string;
   duration: string;
   cta: string;
+  creator_type: string;
+  video_pov: string;
 }
 
 interface ItemConfig {
@@ -152,6 +198,16 @@ function buildSimpleContext(item: ContentItem, itemCfg: ItemConfig, global: Glob
   ctx += `\n\nDURACIÓN OBJETIVO: ${global.duration}`;
   ctx += `\nPAÍS OBJETIVO: ${global.country}`;
   ctx += `\nPLATAFORMA: TikTok/Instagram`;
+  if (global.creator_type) {
+    const ct = CREATOR_TYPE_OPTIONS.find(o => o.value === global.creator_type);
+    const ctInstr = CREATOR_TYPE_INSTRUCTIONS[global.creator_type] || '';
+    ctx += `\n\n=== TIPO DE CREADOR: ${ct?.label || global.creator_type} ===\n${ctInstr}`;
+  }
+  if (global.video_pov) {
+    const pov = VIDEO_POV_OPTIONS.find(o => o.value === global.video_pov);
+    const povInstr = VIDEO_POV_INSTRUCTIONS[global.video_pov] || '';
+    ctx += `\n\n=== FORMATO DE NARRACIÓN: ${pov?.label || global.video_pov} ===\n${povInstr}`;
+  }
   return ctx;
 }
 
@@ -188,6 +244,8 @@ function buildBody(item: ContentItem, itemCfg: ItemConfig, global: GlobalConfig,
       ...(itemCfg.desire      && { selected_desire: itemCfg.desire }),
       ...(itemCfg.objection   && { selected_objection: itemCfg.objection }),
       product_category: p?.name,
+      creator_type: global.creator_type,
+      video_pov: global.video_pov,
     },
   };
 }
@@ -331,6 +389,8 @@ export function BulkGenerationDrawer({ open, onOpenChange, clientId }: Props) {
     country: 'Colombia',
     duration: '30s',
     cta: '',
+    creator_type: 'ugc',
+    video_pov: 'primera_persona',
   });
 
   useEffect(() => {
@@ -421,6 +481,10 @@ export function BulkGenerationDrawer({ open, onOpenChange, clientId }: Props) {
   }, []);
 
   const handleGenerate = useCallback(() => {
+    if (!orgId) {
+      console.error('[BulkGeneration] No organization ID available');
+      return;
+    }
     const toGenerate = displayed.filter(i => selected.has(i.id) && !jobs.get(i.id));
     toGenerate.forEach(item => {
       const itemCfg = configs[item.id] ?? { pain: '', desire: '', avatar: '', objection: '' };
@@ -508,6 +572,34 @@ export function BulkGenerationDrawer({ open, onOpenChange, clientId }: Props) {
               placeholder="Ej: Sigue el link en bio para pedirlo"
               className="h-8 text-xs"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-1">🎙️ Tipo de Creador</p>
+              <Select value={globalConfig.creator_type} onValueChange={v => setGlobalConfig(g => ({ ...g, creator_type: v }))}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CREATOR_TYPE_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground mb-1">🎬 Formato / POV</p>
+              <Select value={globalConfig.video_pov} onValueChange={v => setGlobalConfig(g => ({ ...g, video_pov: v }))}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VIDEO_POV_OPTIONS.map(o => (
+                    <SelectItem key={o.value} value={o.value} className="text-xs">{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <p className="text-[10px] text-muted-foreground/50">
             Narrativa, ángulos y hooks se asignan aleatoriamente por item.

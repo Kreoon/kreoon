@@ -326,7 +326,7 @@ export function UnifiedProjectModal({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full sm:w-full max-w-6xl max-sm:!h-[100dvh] max-h-[100dvh] sm:max-h-[95vh] max-sm:!left-0 max-sm:!top-0 max-sm:!translate-x-0 max-sm:!translate-y-0 max-sm:!rounded-none max-sm:!border-0 overflow-hidden p-0 flex flex-col" aria-describedby="unified-project-description">
+      <DialogContent className="w-full sm:w-full max-w-[90vw] xl:max-w-[1440px] max-sm:!h-[100dvh] max-h-[100dvh] sm:max-h-[95vh] max-sm:!left-0 max-sm:!top-0 max-sm:!translate-x-0 max-sm:!translate-y-0 max-sm:!rounded-none max-sm:!border-0 overflow-hidden p-0 flex flex-col" aria-describedby="unified-project-description">
         <DialogDescription id="unified-project-description" className="sr-only">
           Detalle del proyecto
         </DialogDescription>

@@ -116,8 +116,28 @@ export function TeamTab({
   const currentCreatorValid = !isInternalOrgContent || !formData.creator_id || isAmbassador(formData.creator_id);
   const currentEditorValid = !isInternalOrgContent || !formData.editor_id || isAmbassador(formData.editor_id);
 
+  const SELF_RECORDED_TYPES = ['marca-personal', 'bgc', 'egc'];
+  const isSelfRecorded = SELF_RECORDED_TYPES.includes(formData.creator_type || '');
+
   return (
     <div className="space-y-4">
+      {/* Self-recorded brand content banner */}
+      {isSelfRecorded && (
+        <Alert className="border-blue-500/50 bg-blue-500/10">
+          <Info className="h-4 w-4 text-blue-500" />
+          <AlertDescription>
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                🎙️ Contenido grabado por la marca
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Este tipo de contenido lo graba el propio equipo o dueño de la marca. No requiere asignar un creador externo.
+              </span>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Internal Organization Content Banner - FIXED AND CLEAR */}
       {isInternalOrgContent && (
         <Alert className="border-amber-500/50 bg-amber-500/10">
@@ -152,8 +172,8 @@ export function TeamTab({
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Creador / Embajador */}
-        <FieldRow label={isInternalOrgContent ? "Embajador" : "Creador"} icon={isInternalOrgContent ? Medal : User}>
+        {/* Creador / Embajador — oculto cuando el tipo de creador es autorecordado por la marca */}
+        {!isSelfRecorded && <FieldRow label={isInternalOrgContent ? "Embajador" : "Creador"} icon={isInternalOrgContent ? Medal : User}>
           <EditableField
             permissions={permissions}
             resource="content.team"
@@ -187,7 +207,7 @@ export function TeamTab({
               </div>
             }
           />
-        </FieldRow>
+        </FieldRow>}
 
         {/* Productor AV - For internal content, only ambassadors */}
         <FieldRow label={isInternalOrgContent ? "Productor AV (Embajador)" : "Productor Audio-Visual"} icon={isInternalOrgContent ? Medal : User}>

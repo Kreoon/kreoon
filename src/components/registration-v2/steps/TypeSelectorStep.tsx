@@ -1,12 +1,18 @@
-import { Building2, Users, Sparkles, User, ChevronRight } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   UserType,
-  UserTypeOption,
   ORG_USER_TYPE_OPTIONS,
   GENERAL_USER_TYPE_OPTIONS,
   RegistrationFlow,
 } from '../types';
+
+const EMOJI_MAP: Record<string, string> = {
+  client: '🏢',
+  freelancer: '✨',
+  brand: '🏢',
+  organization: '🏛️',
+};
 
 interface TypeSelectorStepProps {
   flow: RegistrationFlow;
@@ -14,13 +20,6 @@ interface TypeSelectorStepProps {
   onSelect: (type: UserType) => void;
   orgName?: string;
 }
-
-const ICONS = {
-  Building2,
-  Users,
-  Sparkles,
-  User,
-};
 
 export function TypeSelectorStep({
   flow,
@@ -31,28 +30,26 @@ export function TypeSelectorStep({
   const options = flow === 'org' ? ORG_USER_TYPE_OPTIONS : GENERAL_USER_TYPE_OPTIONS;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-white">
+      <div className="text-center space-y-3">
+        <div className="text-5xl mb-2">👋</div>
+        <h1 className="text-3xl font-bold text-white leading-tight">
           {flow === 'org' ? (
-            <>¿Cómo te unirás a {orgName || 'la organización'}?</>
+            <>¿Cómo te unes a<br />{orgName || 'la organización'}?</>
           ) : (
-            <>¿Qué tipo de cuenta necesitas?</>
+            <>¿Cómo quieres<br />usar Kreoon?</>
           )}
         </h1>
-        <p className="text-white/60">
-          Selecciona la opción que mejor describe tu perfil
+        <p className="text-white/60 text-base">
+          Elige tu tipo de cuenta — puedes cambiarlo después
         </p>
       </div>
 
-      {/* Options grid */}
-      <div className={cn(
-        "grid gap-4",
-        options.length <= 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
-      )}>
+      {/* Big Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {options.map((option) => {
-          const Icon = ICONS[option.icon as keyof typeof ICONS];
+          const emoji = EMOJI_MAP[option.type] ?? '👤';
           const isSelected = selectedType === option.type;
 
           return (
@@ -61,53 +58,36 @@ export function TypeSelectorStep({
               type="button"
               onClick={() => onSelect(option.type)}
               className={cn(
-                "relative flex items-center gap-4 p-5 rounded-sm border-2 transition-all text-left group",
-                "hover:scale-[1.02] hover:shadow-lg",
+                "relative flex flex-col items-center gap-4 p-8 rounded-2xl border-2 transition-all text-center",
+                "hover:scale-[1.03] active:scale-[0.97] cursor-pointer",
                 isSelected
-                  ? "border-primary bg-primary/10 shadow-primary/20"
-                  : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                  ? "border-primary bg-primary/15 shadow-2xl shadow-primary/20"
+                  : "border-white/15 bg-white/5 hover:border-white/30 hover:bg-white/10"
               )}
             >
-              {/* Icon */}
-              <div className={cn(
-                "flex-shrink-0 w-12 h-12 rounded-sm flex items-center justify-center transition-colors",
-                isSelected
-                  ? "bg-primary text-white"
-                  : "bg-white/10 text-white/60 group-hover:bg-white/15 group-hover:text-white/80"
+              {/* Giant emoji */}
+              <span className="text-6xl leading-none select-none">{emoji}</span>
+
+              {/* Title */}
+              <h3 className={cn(
+                "text-xl font-bold leading-tight",
+                isSelected ? "text-white" : "text-white/90"
               )}>
-                <Icon className="h-6 w-6" />
-              </div>
+                {option.title}
+              </h3>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <h3 className={cn(
-                  "font-semibold text-lg",
-                  isSelected ? "text-white" : "text-white/90"
-                )}>
-                  {option.title}
-                </h3>
-                <p className={cn(
-                  "text-sm mt-0.5",
-                  isSelected ? "text-white/70" : "text-white/50"
-                )}>
-                  {option.description}
-                </p>
-              </div>
+              {/* Description */}
+              <p className={cn(
+                "text-sm leading-relaxed",
+                isSelected ? "text-white/70" : "text-white/50"
+              )}>
+                {option.description}
+              </p>
 
-              {/* Arrow */}
-              <ChevronRight className={cn(
-                "h-5 w-5 flex-shrink-0 transition-all",
-                isSelected
-                  ? "text-primary translate-x-0"
-                  : "text-white/30 -translate-x-1 group-hover:translate-x-0 group-hover:text-white/50"
-              )} />
-
-              {/* Selected indicator */}
+              {/* Selected checkmark */}
               {isSelected && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                <div className="absolute top-3 right-3 w-7 h-7 bg-primary rounded-full flex items-center justify-center shadow-lg">
+                  <Check className="h-4 w-4 text-white" />
                 </div>
               )}
             </button>
@@ -115,15 +95,6 @@ export function TypeSelectorStep({
         })}
       </div>
 
-      {/* Helper text for general flow */}
-      {flow === 'general' && (
-        <p className="text-center text-xs text-white/40">
-          ¿Ya tienes una cuenta?{' '}
-          <a href="/auth" className="text-primary hover:underline">
-            Inicia sesión
-          </a>
-        </p>
-      )}
     </div>
   );
 }

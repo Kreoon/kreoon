@@ -316,6 +316,19 @@ function getSectionsForGroup(group: PermissionGroup): NavSection[] {
   }
 }
 
+/**
+ * Obtiene las secciones específicas para un rol de talento individual.
+ * Diferencia entre creator, editor y estrategas dentro del mismo grupo talent.
+ */
+function getSectionsForTalentRole(role: string): NavSection[] {
+  if (role === 'editor' || role === 'video_editor') return editorSections;
+  if (
+    role === 'digital_strategist' || role === 'creative_strategist' ||
+    role === 'community_manager' || role === 'strategist'
+  ) return strategistSections;
+  return creatorSections;
+}
+
 // Marketplace navigation sections — available to ALL users
 function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
   const items: NavItem[] = [
@@ -403,8 +416,22 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     return Array.from(groups);
   }, [isImpersonating, effectiveRoles, realRoles]);
 
-  // User has multiple distinct permission groups (e.g., creator + editor)
+  // User has multiple distinct permission groups (e.g., talent + client)
   const isMultiRoleUser = allUserGroups.length > 1;
+
+  // Detect multi-talent: multiple roles within the SAME talent group (e.g. creator + editor)
+  // These don't trigger isMultiRoleUser (same group) but need combined nav sections
+  const talentSubRoles = useMemo(() => {
+    const roles = isImpersonating ? effectiveRoles : realRoles;
+    return roles.filter(r => getPermissionGroup(r) === 'talent' && r !== 'ambassador');
+  }, [isImpersonating, effectiveRoles, realRoles]);
+
+  // True when user has talent sub-roles that map to DIFFERENT section arrays
+  const hasMultipleTalentRoles = useMemo(() => {
+    if (talentSubRoles.length <= 1) return false;
+    const uniqueSections = new Set(talentSubRoles.map(getSectionsForTalentRole));
+    return uniqueSections.size > 1;
+  }, [talentSubRoles]);
 
   // For multi-role: get the "highest" role for certain checks
   // Use activeRole directly since PermissionGroup only has 3 values
@@ -529,6 +556,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         .filter(g => g !== 'client') // Don't mix client sections with other roles
         .map(g => getSectionsForGroup(g));
       baseSections = combineNavSections(sectionArrays);
+    } else if (hasMultipleTalentRoles && !activeIsClient) {
+      // Combine role-specific sections for multi-talent users (e.g. creator + editor)
+      // Uses role-level sections instead of group-level to get proper nav per sub-role
+      const uniqueSectionArrays = Array.from(new Set(talentSubRoles.map(getSectionsForTalentRole)));
+      baseSections = combineNavSections(uniqueSectionArrays);
     } else if (activeIsAdmin) {
       baseSections = adminSections;
     } else if (activeIsStrategist) {
@@ -610,7 +642,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       ...(!effectiveMktEnabled ? [recruitSection] : []),
       ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" }] }]),
     ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, shouldUseReducedMenu, isMultiRoleUser, allUserGroups, hasMultipleTalentRoles, talentSubRoles]);
 
   // Collapsible sections state — auto-expand section containing active route
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
