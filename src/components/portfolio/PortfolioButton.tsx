@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { User, Share2, Copy, ExternalLink, Check } from 'lucide-react';
+import { User, Copy, ExternalLink, Check } from 'lucide-react';
 
 interface PortfolioButtonProps {
   userId: string;
@@ -17,20 +19,40 @@ interface PortfolioButtonProps {
   showLabel?: boolean;
 }
 
-export function PortfolioButton({ 
-  userId, 
-  variant = 'outline', 
+function useCreatorSlug(userId: string) {
+  return useQuery({
+    queryKey: ['creator-slug', userId],
+    staleTime: 10 * 60 * 1000,
+    enabled: !!userId,
+    queryFn: async (): Promise<string | null> => {
+      const { data } = await (supabase as any)
+        .from('creator_profiles')
+        .select('slug')
+        .eq('user_id', userId)
+        .maybeSingle();
+      return (data?.slug as string) ?? null;
+    },
+  });
+}
+
+export function PortfolioButton({
+  userId,
+  variant = 'outline',
   size = 'sm',
-  showLabel = true 
+  showLabel = true,
 }: PortfolioButtonProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const portfolioUrl = `${window.location.origin}/p/${userId}`;
+  const { data: slug } = useCreatorSlug(userId);
+
+  const profileId = slug ?? userId;
+  const publicUrl = `${window.location.origin}/marketplace/creator/${profileId}`;
+  const internalPath = `/marketplace/creator/${profileId}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(portfolioUrl);
+    navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     toast({
       title: 'Link copiado',
@@ -40,11 +62,11 @@ export function PortfolioButton({
   };
 
   const handleOpenPortfolio = () => {
-    navigate(`/p/${userId}`);
+    navigate(internalPath);
   };
 
   const handleOpenInNewTab = () => {
-    window.open(portfolioUrl, '_blank');
+    window.open(publicUrl, '_blank');
   };
 
   return (

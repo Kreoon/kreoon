@@ -179,15 +179,17 @@ export function useCreatePayment(organizationId: string) {
       return data;
     },
     onSuccess: (data) => {
-      // Invalida el pago específico del usuario
       qc.invalidateQueries({ queryKey: ['talent-payments',           organizationId, data.user_id] });
-      // Invalida vistas de nómina — el trigger SQL ya actualizó creator_paid/editor_paid en content
       qc.invalidateQueries({ queryKey: ['payroll-summary',           organizationId] });
       qc.invalidateQueries({ queryKey: ['monthly-closures',          organizationId] });
       qc.invalidateQueries({ queryKey: ['overdue-payments',          organizationId] });
       qc.invalidateQueries({ queryKey: ['paid-closures-by-month',    organizationId] });
       qc.invalidateQueries({ queryKey: ['content-financial-summary', organizationId] });
       qc.invalidateQueries({ queryKey: ['pending-content-payment',   organizationId] });
+      // Notificar al talent via WhatsApp cuando el pago queda como 'paid'
+      if (data.status === 'paid') {
+        supabase.functions.invoke('notify-talent-payment', { body: { payment_id: data.id } }).catch(() => {});
+      }
       toast({ title: 'Pago registrado' });
     },
     onError: () => toast({ title: 'Error al registrar pago', variant: 'destructive' }),
@@ -825,4 +827,93 @@ export function useTalentFinanceRealtime(organizationId: string, userId?: string
 
     return () => { supabase.removeChannel(channel); };
   }, [organizationId, userId, qc]);
+}
+
+// ─── Contenido agrupado por cierre (vista talento) ────────────────────────────
+
+export interface ClosingContentGroup {
+  closingId: string;
+  closing: {
+    name: string;
+    status: 'draft' | 'sent' | 'paid';
+    payment_date: string | null;
+    paid_at: string | null;
+    currency: string;
+  };
+  items: Array<{
+    id: string;
+    title: string | null;
+    sequence_number: string | null;
+    client_name: string | null;
+    role: 'creator' | 'editor';
+    myAmount: number;
+    billing_status: string;
+  }>;
+  myTotal: number;
+}
+
+export function useMyContentByCierre(organizationId: string, userId: string) {
+  return useQuery({
+    queryKey: ['my-content-by-cierre', organizationId, userId],
+    staleTime: 0,
+    queryFn: async (): Promise<ClosingContentGroup[]> => {
+      const { data, error } = await (supabase as any)
+        .from('content')
+        .select(`
+          id, title, sequence_number, creator_id, editor_id,
+          creator_payment, editor_payment, billing_status, client_closing_id,
+          clients(name),
+          client_closings(id, name, status, payment_date, paid_at, currency)
+        `)
+        .eq('organization_id', organizationId)
+        .or(`creator_id.eq.${userId},editor_id.eq.${userId}`)
+        .in('billing_status', ['in_closing', 'paid'])
+        .not('client_closing_id', 'is', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const byClosing = new Map<string, ClosingContentGroup>();
+
+      for (const row of data ?? []) {
+        const closingId = row.client_closing_id as string;
+        const cc = (row as any).client_closings;
+        if (!closingId || !cc) continue;
+
+        if (!byClosing.has(closingId)) {
+          byClosing.set(closingId, {
+            closingId,
+            closing: {
+              name: cc.name,
+              status: cc.status,
+              payment_date: cc.payment_date ?? null,
+              paid_at: cc.paid_at ?? null,
+              currency: cc.currency ?? 'COP',
+            },
+            items: [],
+            myTotal: 0,
+          });
+        }
+
+        const group = byClosing.get(closingId)!;
+        const isCreator = row.creator_id === userId;
+        const role: 'creator' | 'editor' = isCreator ? 'creator' : 'editor';
+        const myAmount = Number(isCreator ? (row.creator_payment ?? 0) : (row.editor_payment ?? 0));
+
+        group.items.push({
+          id: row.id,
+          title: row.title ?? null,
+          sequence_number: (row as any).sequence_number ?? null,
+          client_name: (row as any).clients?.name ?? null,
+          role,
+          myAmount,
+          billing_status: row.billing_status ?? 'pending',
+        });
+        group.myTotal += myAmount;
+      }
+
+      return Array.from(byClosing.values());
+    },
+    enabled: !!organizationId && !!userId,
+  });
 }

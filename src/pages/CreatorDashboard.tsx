@@ -1,16 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Store } from 'lucide-react';
-import { MarketplaceDashboardTab } from '@/components/marketplace/dashboard/MarketplaceDashboardTab';
+import {
+  Loader2, Video, Clock, CheckCircle2, DollarSign, CreditCard,
+  Star, Clapperboard, ArrowRight, Store, AlertTriangle
+} from 'lucide-react';
 import { TalentWalletView } from '@/components/talent/TalentWalletView';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
+import { useContentFinancialSummary, useTalentFinanceRealtime } from '@/hooks/useTalentPayments';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
+import { UnifiedKpiDialog } from '@/components/dashboard/UnifiedKpiDialog';
+import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
+import type { MarketplaceProject } from '@/components/marketplace/types/marketplace';
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
@@ -21,622 +26,527 @@ import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { GlobalRankingWidget } from '@/components/points/GlobalRankingWidget';
 import { SidebarAchievementsWidget } from '@/components/points/SidebarAchievementsWidget';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
-import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
-import { TechPageHeader } from '@/components/layout/TechPageHeader';
-import { TechCard, TechCardContent } from '@/components/ui/tech-card';
-import {
-  TechGrid,
-  TechParticles,
-  TechOrb,
-  StaggerContainer,
-  StaggerItem,
-  DataFlowLines,
-  NeonText
-} from '@/components/ui/tech-effects';
-import {
-  Video,
-  Clock,
-  CheckCircle2,
-  Star,
-  ArrowRight,
-  Loader2,
-  DollarSign,
-  CreditCard,
-  TrendingUp,
-  Play,
-  Sword,
-  Sparkles,
-  Zap,
-  Clapperboard,
-  Award
-} from 'lucide-react';
+import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
+import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
+import { SeasonBanner, ProgressToNextLevel, VOCABULARIO_ROL } from '@/components/studio';
 import { cn } from '@/lib/utils';
 
-// Importar componentes del sistema Kreoon IA
-import {
-  LevelBadge,
-  CreditsDisplay,
-  ProgressToNextLevel,
-  QuickActions,
-  SeasonBanner,
-  VOCABULARIO_ROL
-} from '@/components/studio';
+const TABS = [
+  { id: 'studio', label: 'Estudio', Icon: Clapperboard },
+  { id: 'wallet', label: 'Mis Cobros', Icon: DollarSign },
+] as const;
+
+type DashboardTab = (typeof TABS)[number]['id'];
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Buenos días';
+  if (h < 18) return 'Buenas tardes';
+  return 'Buenas noches';
+}
 
 export default function CreatorDashboard() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, refetchUserData, roles } = useAuth();
   const { effectiveUserId, isImpersonating } = useImpersonation();
 
-  // Detectar si es freelancer (sin organización pero con acceso desbloqueado)
   const isFreelancer = !profile?.organization_id && profile?.platform_access_unlocked;
-
-  // Use effective user ID for impersonation, otherwise real user ID
   const targetUserId = isImpersonating ? effectiveUserId : user?.id;
+  const hasEditorRole = roles.some(r => ['editor', 'video_editor'].includes(r));
 
-  const { content: allContent, loading, refetch } = useContent(targetUserId, 'creator');
+  const { content: creatorRaw, loading, refetch: refetchCreator } = useContent(targetUserId, 'creator');
+  const { content: editorRaw, refetch: refetchEditor } = useContent(targetUserId, 'editor', false);
+
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [videoViewer, setVideoViewer] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
-  // Tab por defecto: marketplace para freelancers, studio para creators en org
-  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace' | 'wallet'>(isFreelancer ? 'marketplace' : 'studio');
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>('studio');
   const [kpiDialog, setKpiDialog] = useState<{
-    open: boolean;
-    title: string;
-    content: Content[];
-  }>({ open: false, title: '', content: [] });
+    open: boolean; title: string;
+    studioContent: Content[]; marketplaceProjects: MarketplaceProject[];
+  }>({ open: false, title: '', studioContent: [], marketplaceProjects: [] });
 
-  // Filtrar por mes actual
-  const content = useThisMonthFilter(allContent, thisMonthActive);
+  const creatorFiltered = useThisMonthFilter(creatorRaw, thisMonthActive);
+  const editorFiltered = useThisMonthFilter(editorRaw, thisMonthActive);
 
-  const openKpiDialog = (title: string, contentList: Content[]) => {
-    setKpiDialog({ open: true, title, content: contentList });
-  };
+  // Merge creator + editor content (dedup by id) when user has both roles
+  const content = useMemo(() => {
+    if (!hasEditorRole) return creatorFiltered;
+    const ids = new Set(creatorFiltered.map(c => c.id));
+    return [...creatorFiltered, ...editorFiltered.filter(c => !ids.has(c.id))];
+  }, [hasEditorRole, creatorFiltered, editorFiltered]);
 
-  const showAmbassadorBadge = !!profile?.is_ambassador;
-  const inProgressContent = content.filter(c => ['assigned', 'recording'].includes(c.status));
-  const approvedContent = content.filter(c => c.status === 'approved');
-  const ambassadorContent = content.filter(c => c.is_ambassador_content);
-  const unpaidContent = content.filter(c => c.status === 'approved' && !c.creator_paid);
-  const paidContent = content.filter(c => c.status === 'paid' || c.creator_paid);
-  
-  const pendingPayment = unpaidContent
+  const refetch = () => { refetchCreator(); refetchEditor(); };
+
+  // Fuente de verdad financiera — misma que el módulo de nómina/finanzas
+  const orgId = profile?.organization_id ?? '';
+  const { data: finSummary } = useContentFinancialSummary(orgId, targetUserId ?? '');
+  useTalentFinanceRealtime(orgId, targetUserId ?? undefined);
+
+  // Marketplace data para KPIs fusionados
+  const { projects: mktProjects } = useMarketplaceProjects({ role: 'creator' });
+
+  // Wallet freelancer (solo si no pertenece a org)
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet', targetUserId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('unified_wallets')
+        .select('available_balance, pending_balance')
+        .eq('user_id', targetUserId!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!targetUserId && isFreelancer,
+  });
+
+  // Aplicaciones pendientes del creador
+  const { data: creatorProfileRow } = useQuery({
+    queryKey: ['creator-profile-id', targetUserId],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from('creator_profiles')
+        .select('id')
+        .eq('user_id', targetUserId!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!targetUserId && isFreelancer,
+  });
+  const { data: pendingAppsCount } = useQuery({
+    queryKey: ['pending-apps-count', creatorProfileRow?.id],
+    queryFn: async () => {
+      const { count } = await (supabase as any)
+        .from('campaign_applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('creator_id', creatorProfileRow!.id)
+        .eq('status', 'pending');
+      return count || 0;
+    },
+    enabled: !!creatorProfileRow?.id,
+  });
+
+  const openKpiDialog = (title: string, studio: Content[], marketplace: MarketplaceProject[] = []) =>
+    setKpiDialog({ open: true, title, studioContent: studio, marketplaceProjects: marketplace });
+
+  // ── Filtros Studio ────────────────────────────────────────────────────
+  const issueContent = content.filter(c => c.status === 'issue');
+  const assignedContent = content.filter(c => c.status === 'assigned');
+  const inProgressContent = content.filter(c => ['recording', 'recorded', 'editing'].includes(c.status));
+  const deliveredContent = content.filter(c => ['delivered', 'corrected'].includes(c.status));
+  const approvedContent = content.filter(c => {
+    if (c.status !== 'approved') return false;
+    const creatorUnpaid = c.creator_id === targetUserId && !c.creator_paid;
+    const editorUnpaid = c.editor_id === targetUserId && !c.editor_paid;
+    return creatorUnpaid || editorUnpaid;
+  });
+  const unpaidContent = content.filter(c => {
+    const creatorUnpaid = c.creator_id === targetUserId && c.status === 'approved' && !c.creator_paid;
+    const editorUnpaid = c.editor_id === targetUserId && c.status === 'approved' && !c.editor_paid;
+    return creatorUnpaid || editorUnpaid;
+  });
+  const paidContent = content.filter(c => {
+    const creatorPaid = c.creator_id === targetUserId && !!c.creator_paid;
+    const editorPaid = c.editor_id === targetUserId && !!c.editor_paid;
+    return creatorPaid || editorPaid;
+  });
+
+  // ── Montos Studio (COP) ───────────────────────────────────────────────
+  const studioPendingCOP = content
     .filter(c => !c.is_ambassador_content)
-    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
-  
-  const totalPaid = paidContent
-    .filter(c => !c.is_ambassador_content)
-    .reduce((sum, c) => sum + (c.creator_payment || 0), 0);
+    .reduce((s, c) => {
+      let pay = 0;
+      if (c.creator_id === targetUserId && c.status === 'approved' && !c.creator_paid) pay += c.creator_payment || 0;
+      if (hasEditorRole && c.editor_id === targetUserId && c.status === 'approved' && !c.editor_paid) pay += c.editor_payment || 0;
+      return s + pay;
+    }, 0);
+  const studioPaidCOP = content.reduce((s, c) => {
+    let pay = 0;
+    if (c.creator_id === targetUserId && c.creator_paid) pay += c.creator_payment || 0;
+    if (hasEditorRole && c.editor_id === targetUserId && c.editor_paid) pay += c.editor_payment || 0;
+    return s + pay;
+  }, 0);
 
-  // Progreso
-  const totalAssigned = content.length;
-  const completedCount = content.filter(c => ['approved', 'paid', 'delivered'].includes(c.status)).length;
-  const progressPercent = totalAssigned > 0 ? (completedCount / totalAssigned) * 100 : 0;
+  // ── Filtros Marketplace ────────────────────────────────────────────────
+  const mktAssigned = useMemo(() =>
+    mktProjects.filter(p => ['pending', 'briefing'].includes(p.status)),
+  [mktProjects]);
+  const mktInProgress = useMemo(() =>
+    mktProjects.filter(p => p.status === 'in_progress'),
+  [mktProjects]);
+  const mktDelivered = useMemo(() =>
+    mktProjects.filter(p => p.status === 'revision'),
+  [mktProjects]);
+  const mktNovedades = useMemo(() => {
+    const now = Date.now();
+    return mktProjects.filter(p => {
+      if (p.status === 'overdue') return true;
+      if (['completed', 'cancelled'].includes(p.status)) return false;
+      return p.deadline ? new Date(p.deadline).getTime() < now : false;
+    });
+  }, [mktProjects]);
+  const mktApproved = useMemo(() =>
+    mktProjects.filter(p => ['approved', 'completed'].includes(p.status) && p.payment_status !== 'released'),
+  [mktProjects]);
+  const mktUnpaid = useMemo(() =>
+    mktProjects.filter(p => p.payment_method === 'payment' && p.payment_status !== 'released' && p.status !== 'cancelled'),
+  [mktProjects]);
+  const mktPaid = useMemo(() =>
+    mktProjects.filter(p => p.payment_status === 'released'),
+  [mktProjects]);
+
+  // ── Montos Marketplace por moneda ─────────────────────────────────────
+  const mktPendingByCurrency = useMemo(() =>
+    mktUnpaid.reduce<Record<string, number>>((acc, p) => {
+      const cur = p.currency || 'USD';
+      acc[cur] = (acc[cur] || 0) + (p.creator_payout ?? p.total_price);
+      return acc;
+    }, {}),
+  [mktUnpaid]);
+  const mktPaidByCurrency = useMemo(() =>
+    mktPaid.reduce<Record<string, number>>((acc, p) => {
+      const cur = p.currency || 'USD';
+      acc[cur] = (acc[cur] || 0) + (p.creator_payout ?? p.total_price);
+      return acc;
+    }, {}),
+  [mktPaid]);
+
+  // ── KPI combinados ────────────────────────────────────────────────────
+  const totalPendingCOP = studioPendingCOP + (mktPendingByCurrency['COP'] || 0);
+  const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
+  const pendingUSD = mktPendingByCurrency['USD'] || 0;
+  const paidUSD = mktPaidByCurrency['USD'] || 0;
+  // Alias para compatibilidad con ProgressToNextLevel
+  const pendingPayment = studioPendingCOP;
+  const totalPaid = studioPaidCOP;
+  const approvedVideos = useMemo(() =>
+    [...content]
+      .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
+      .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+      .slice(0, 6),
+  [content]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="relative">
-          <motion.div 
-            className="absolute inset-0 rounded-full bg-primary/30 blur-xl"
-            animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-          >
-            <Loader2 className="w-12 h-12 text-primary relative z-10" />
-          </motion.div>
-          <motion.p
-            className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-primary whitespace-nowrap"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            Cargando dashboard...
-          </motion.p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Animated Tech Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={30} />
-        <TechOrb size="lg" position="top-right" delay={0} />
-        <TechOrb size="md" position="bottom-left" delay={1} />
-        <DataFlowLines />
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Creador'}
+          </h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+            {VOCABULARIO_ROL.creator.dashboard}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {profile?.is_ambassador && <AmbassadorBadge size="md" />}
+          <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
+          {targetUserId && <PortfolioButton userId={targetUserId} />}
+        </div>
       </div>
 
-      <div className="relative z-10 space-y-6 p-4 md:p-6">
-        {/* Header del Camerino - El Estudio */}
-        <TechPageHeader
-          icon={Clapperboard}
-          title={VOCABULARIO_ROL.creator.dashboard}
-          subtitle={VOCABULARIO_ROL.creator.bienvenida.replace('tu Camerino', `tu Camerino, ${profile?.full_name ?? ''}`)}
-          badge={
-            <div className="flex items-center gap-3">
-              {showAmbassadorBadge && <AmbassadorBadge size="md" variant="glow" />}
-              <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="md" />
-            </div>
-          }
-          action={
-            <div className="flex flex-wrap items-center gap-3">
-              <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
-              <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
-              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-success/20 to-success/10 border border-success/30 rounded-sm">
-                <DollarSign className="w-4 h-4 text-success" />
-                <span className="font-bold text-success">
-                  ${pendingPayment.toLocaleString()}
-                </span>
-                <span className="text-xs text-success/70 hidden sm:inline">pendiente</span>
-              </div>
-              {targetUserId && <PortfolioButton userId={targetUserId} />}
-            </div>
-          }
-        />
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800/60 p-1 rounded-lg w-fit">
+        {TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setDashboardTab(id)}
+            className={cn(
+              'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+              dashboardTab === id
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300',
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* Dashboard Mode Toggle */}
-        <div className="flex gap-2 bg-secondary p-1 rounded-sm w-fit">
-          <button
-            onClick={() => setDashboardTab('studio')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'studio' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Clapperboard className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Estudio
-          </button>
-          <button
-            onClick={() => setDashboardTab('marketplace')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'marketplace' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Marketplace
-          </button>
-          <button
-            onClick={() => setDashboardTab('wallet')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'wallet' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <DollarSign className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Mis cobros
-          </button>
-        </div>
-
-        {dashboardTab === 'wallet' && profile?.organization_id && user?.id ? (
-          <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+      {/* Wallet tab */}
+      {dashboardTab === 'wallet' && (
+        profile?.current_organization_id && user?.id ? (
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4 md:p-6">
             <TalentWalletView
               userId={targetUserId ?? user.id}
-              organizationId={profile.organization_id}
+              organizationId={profile.current_organization_id}
+              talentName={profile.full_name || 'Creador'}
             />
           </div>
-        ) : dashboardTab === 'marketplace' ? (
-          <MarketplaceDashboardTab role="creator" />
         ) : (
-        <>
-        {/* Season Urgency Banner - Solo para creators en org */}
-        {!isFreelancer && <SeasonUrgencyBanner />}
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Función no disponible para tu tipo de cuenta.
+          </div>
+        )
+      )}
 
-        {/* Banner de Temporada - El Estudio - Solo para creators en org */}
-        {!isFreelancer && <SeasonBanner variant="compact" showMetas={false} />}
-
-        {/* Progreso al Siguiente Nivel - Solo para creators en org */}
-        {!isFreelancer && (
-          <ProgressToNextLevel
-            creditosActuales={totalPaid + (approvedContent.length * 50)}
-            size="md"
-          />
-        )}
-
-        {/* Acciones Rápidas del Camerino */}
-        <QuickActions
-          rol="creator"
-          stats={{
-            pendientes: inProgressContent.length,
-            urgentes: inProgressContent.filter(c => c.status === 'recording').length,
-          }}
-          onAction={(action) => {
-            switch (action) {
-              case 'ver_llamados':
-                navigate('/board');
-                break;
-              case 'ir_rodaje':
-                navigate('/board');
-                break;
-              case 'entregar':
-                navigate('/board');
-                break;
-              case 'ver_reel':
-                if (targetUserId) navigate(`/portfolio/${targetUserId}`);
-                break;
-            }
-          }}
-          variant="grid"
-        />
-
-        {/* Dashboard Content */}
+      {/* Studio tab */}
+      {dashboardTab === 'studio' && (
         <div className="space-y-6">
-          {/* Bento-Box Stats Grid */}
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 auto-rows-[minmax(140px,auto)]" staggerDelay={0.08}>
-            <StaggerItem className="md:col-span-2 md:row-span-2">
-              <TechKpiCard
-                title="Total Asignados"
-                value={content.length}
-                icon={Video}
-                onClick={() => openKpiDialog('Total Asignados', content)}
-                chartType="sparkline"
-                chartData={[12, 18, 15, 22, 19, 28, content.length]}
-                color="violet"
-                size="md"
-              />
-            </StaggerItem>
-            <StaggerItem className="md:col-span-1 lg:col-span-2">
-              <TechKpiCard
-                title="En Progreso"
-                value={inProgressContent.length}
-                icon={Clock}
-                onClick={() => openKpiDialog('En Progreso', inProgressContent)}
-                chartType="bar"
-                chartData={[3, 5, 2, 7, 4, 6, inProgressContent.length]}
-                color="amber"
-                size="md"
-              />
-            </StaggerItem>
-            <StaggerItem className="md:col-span-1 md:row-span-2">
-              <TechKpiCard
-                title="Aprobados"
-                value={approvedContent.length}
-                icon={CheckCircle2}
-                onClick={() => openKpiDialog('Aprobados', approvedContent)}
-                chartType="radial"
-                goalValue={content.length || 1}
-                goalLabel="Del total"
-                color="emerald"
-                size="md"
-              />
-            </StaggerItem>
-            <StaggerItem className="md:col-span-2 lg:col-span-1">
-              <TechKpiCard
-                title="Embajador"
-                value={ambassadorContent.length}
-                icon={Star}
-                onClick={() => openKpiDialog('Contenido Embajador', ambassadorContent)}
-                chartType="sparkline"
-                chartData={[1, 2, 1, 3, 2, 4, ambassadorContent.length]}
-                color="rose"
-                size="md"
-              />
-            </StaggerItem>
-            <StaggerItem className="md:col-span-1 lg:col-span-2">
-              <TechKpiCard
-                title="Por Pagar"
-                value={unpaidContent.length}
-                icon={DollarSign}
-                subtitle={`$${pendingPayment.toLocaleString()}`}
-                onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
-                chartType="bar"
-                chartData={[5, 8, 4, 10, 6, 9, unpaidContent.length]}
-                color="cyan"
-                size="md"
-              />
-            </StaggerItem>
-            <StaggerItem className="md:col-span-1 lg:col-span-2">
-              <TechKpiCard
-                title="Pagados"
-                value={paidContent.length}
-                icon={CreditCard}
-                subtitle={`$${totalPaid.toLocaleString()}`}
-                onClick={() => openKpiDialog('Pagados', paidContent)}
-                chartType="radial"
-                goalValue={approvedContent.length + paidContent.length || 1}
-                goalLabel="Completados"
-                color="violet"
-                size="md"
-              />
-            </StaggerItem>
-          </StaggerContainer>
-
-          {/* UGC Points Widget */}
-          {targetUserId && (
-            <motion.div 
-              className="grid grid-cols-1 lg:grid-cols-3 gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <RoleUPWidget userId={targetUserId} role="creator" />
-              <div className="lg:col-span-2">
-                <TechCard variant="glass" className="h-full overflow-hidden">
-                  <TechCardContent className="p-4 relative">
-                    {/* Animated background */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5"
-                      animate={{ x: ["-100%", "100%"] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                    />
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <motion.div 
-                            className="p-2 rounded-sm bg-primary/10 border border-primary/20"
-                            animate={{ boxShadow: ["0 0 0 0 hsl(270 100% 60% / 0)", "0 0 20px 5px hsl(270 100% 60% / 0.3)", "0 0 0 0 hsl(270 100% 60% / 0)"] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                          >
-                            <TrendingUp className="w-4 h-4 text-primary" />
-                          </motion.div>
-                          <h3 className="font-semibold text-sm">
-                            <NeonText>Progreso General</NeonText>
-                          </h3>
-                        </div>
-                        <motion.span 
-                          className="text-xs text-[hsl(270,60%,60%)] font-medium"
-                          animate={{ opacity: [0.7, 1, 0.7] }}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          {completedCount} de {totalAssigned} completados
-                        </motion.span>
+          {/* Banner de actividad — rol + en proceso + por cobrar */}
+          {(inProgressContent.length + mktInProgress.length > 0 || totalPendingCOP > 0 || pendingUSD > 0) && (() => {
+            const totalInProgress = inProgressContent.length + mktInProgress.length;
+            const roleLabel = hasEditorRole ? 'Creador & Editor' : 'Creador';
+            const actionLabel = hasEditorRole ? 'graba, edita y entrega' : 'graba y entrega';
+            return (
+              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 via-zinc-900/60 to-zinc-900/40 p-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none" />
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2.5 rounded-lg bg-purple-500/15 flex-shrink-0">
+                      <Clapperboard className="h-4 w-4 text-purple-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-purple-400 bg-purple-500/15 px-2 py-0.5 rounded-full">
+                          {roleLabel}
+                        </span>
+                        {totalInProgress > 0 && (
+                          <p className="text-sm font-semibold text-white">
+                            {totalInProgress} {totalInProgress === 1 ? 'proyecto' : 'proyectos'} en proceso
+                          </p>
+                        )}
                       </div>
-                      <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
-                        <motion.div 
-                          className="h-full rounded-full relative overflow-hidden"
-                          style={{ 
-                            background: "linear-gradient(90deg, hsl(270 100% 50%), hsl(280 100% 60%))",
-                            boxShadow: "0 0 20px hsl(270 100% 60% / 0.5)",
-                          }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${progressPercent}%` }}
-                          transition={{ duration: 1.5, ease: "easeOut", delay: 0.6 }}
-                        >
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-                            animate={{ x: ["-100%", "200%"] }}
-                            transition={{ duration: 1.5, repeat: Infinity, delay: 1 }}
-                          />
-                        </motion.div>
-                      </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-xs text-muted-foreground">
-                          {progressPercent.toFixed(0)}% de tu contenido ha sido aprobado o entregado
-                        </p>
-                        <motion.div
-                          className="flex items-center gap-1 text-xs text-primary"
-                          animate={{ x: [0, 3, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        >
-                          <Zap className="w-3 h-3" />
-                          <span>En curso</span>
-                        </motion.div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                        {totalInProgress > 0 && (
+                          <p className="text-xs text-zinc-400">Es hora de {actionLabel}</p>
+                        )}
+                        {totalPendingCOP > 0 && (
+                          <p className="text-xs font-semibold text-green-400">
+                            ${totalPendingCOP.toLocaleString()} COP por cobrar
+                          </p>
+                        )}
+                        {pendingUSD > 0 && (
+                          <p className="text-xs font-semibold text-cyan-400">
+                            ${pendingUSD.toLocaleString()} USD por cobrar
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </TechCardContent>
-                </TechCard>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate('/board')}
+                    className="bg-purple-600 hover:bg-purple-500 text-white border-0 flex-shrink-0 self-start sm:self-center"
+                  >
+                    Ver tablero
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </div>
               </div>
-            </motion.div>
+            );
+          })()}
+
+          {/* Banners de temporada */}
+          {!isFreelancer && <SeasonUrgencyBanner />}
+          {!isFreelancer && <SeasonBanner variant="compact" showMetas={false} />}
+          {!isFreelancer && (
+            <ProgressToNextLevel
+              creditosActuales={totalPaid + (approvedContent.length * 50)}
+              size="md"
+            />
           )}
 
-          {/* Gamification Section - Ranking & Achievements */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55 }}
-          >
-            <GlobalRankingWidget showTopN={3} compact className="h-full" />
-            <TechCard variant="glass" className="h-full">
-              <TechCardContent className="p-4">
+          {/* KPI Cards — Studio + Marketplace fusionados */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <NovaKpiCard
+              title="Asignados"
+              value={assignedContent.length + mktAssigned.length}
+              icon={Video}
+              variant="primary"
+              subtitle="sin iniciar"
+              onClick={() => openKpiDialog('Asignados', assignedContent, mktAssigned)}
+            />
+            <NovaKpiCard
+              title="En Proceso"
+              value={inProgressContent.length + mktInProgress.length}
+              icon={Clock}
+              variant="warning"
+              subtitle="antes de entrega"
+              onClick={() => openKpiDialog('En Proceso', inProgressContent, mktInProgress)}
+            />
+            <NovaKpiCard
+              title="Entregados"
+              value={deliveredContent.length + mktDelivered.length}
+              icon={CheckCircle2}
+              variant="success"
+              subtitle="entregados y corregidos"
+              onClick={() => openKpiDialog('Entregados', deliveredContent, mktDelivered)}
+            />
+            <NovaKpiCard
+              title="Novedades"
+              value={issueContent.length + mktNovedades.length}
+              icon={AlertTriangle}
+              variant="danger"
+              subtitle="requieren atención"
+              onClick={() => openKpiDialog('Novedades', issueContent, mktNovedades)}
+            />
+            <NovaKpiCard
+              title="Aprobados"
+              value={approvedContent.length + mktApproved.length}
+              icon={CheckCircle2}
+              variant="success"
+              subtitle="pendientes de cobro"
+              onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
+            />
+            <NovaKpiCard
+              title="Por Cobrar COP"
+              value={totalPendingCOP}
+              prefix="$"
+              icon={DollarSign}
+              variant="info"
+              subtitle={`${unpaidContent.length + mktUnpaid.filter(p => p.currency === 'COP' || !p.currency?.startsWith('USD')).length} ítems`}
+              onClick={() => openKpiDialog('Por Cobrar', unpaidContent, mktUnpaid)}
+            />
+            {pendingUSD > 0 && (
+              <NovaKpiCard
+                title="Por Cobrar USD"
+                value={pendingUSD}
+                prefix="$"
+                icon={DollarSign}
+                variant="info"
+                subtitle={`${mktUnpaid.filter(p => p.currency === 'USD').length} ítems`}
+                onClick={() => openKpiDialog('Por Cobrar USD', [], mktUnpaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            <NovaKpiCard
+              title="Cobrado COP"
+              value={totalPaidCOP}
+              prefix="$"
+              icon={CreditCard}
+              variant="success"
+              subtitle={`${paidContent.length + mktPaid.filter(p => (p.currency || 'USD') !== 'USD').length} pagados`}
+              onClick={() => openKpiDialog('Cobrado', paidContent, mktPaid)}
+            />
+            {paidUSD > 0 && (
+              <NovaKpiCard
+                title="Cobrado USD"
+                value={paidUSD}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={`${mktPaid.filter(p => p.currency === 'USD').length} pagados`}
+                onClick={() => openKpiDialog('Cobrado USD', [], mktPaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            {isFreelancer && wallet && (
+              <NovaKpiCard
+                title="Balance Wallet"
+                value={wallet.available_balance || 0}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={(wallet.pending_balance ?? 0) > 0 ? `+ $${(wallet.pending_balance ?? 0).toLocaleString()} pendiente` : 'disponible'}
+              />
+            )}
+            {isFreelancer && (pendingAppsCount ?? 0) > 0 && (
+              <NovaKpiCard
+                title="Aplicaciones"
+                value={pendingAppsCount ?? 0}
+                icon={Star}
+                variant="info"
+                subtitle="pendientes de respuesta"
+              />
+            )}
+          </div>
+
+          {/* UGC Points */}
+          {targetUserId && (
+            <RoleUPWidget
+              userId={targetUserId}
+              role="creator"
+              roles={hasEditorRole ? ['creator', 'editor'] : undefined}
+            />
+          )}
+
+          {/* Ranking y Logros */}
+          {targetUserId && !isFreelancer && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <GlobalRankingWidget showTopN={3} compact className="h-full" />
+              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 rounded-sm bg-amber-500/10 border border-amber-500/20">
-                    <Award className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <h3 className="font-semibold text-sm">Mis Insignias</h3>
+                  <Star className="h-4 w-4 text-amber-500" />
+                  <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                    Mis Insignias
+                  </h3>
                 </div>
                 <SidebarAchievementsWidget />
-              </TechCardContent>
-            </TechCard>
-          </motion.div>
-
-          {/* Pending Work Alert - Animated */}
-          {inProgressContent.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 }}
-            >
-              <TechCard variant="neon" className="border-[hsl(260,80%,60%,0.3)] overflow-hidden">
-                <TechCardContent className="p-4 relative">
-                  {/* Animated pulse background */}
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10"
-                    animate={{ opacity: [0.3, 0.6, 0.3] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  />
-                  <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-3">
-                      <motion.div 
-                        className="p-2.5 rounded-sm bg-[hsl(270,100%,60%,0.15)] border border-[hsl(270,100%,60%,0.25)]"
-                        animate={{ 
-                          boxShadow: [
-                            "0 0 0 0 hsl(270 100% 60% / 0)",
-                            "0 0 15px 3px hsl(270 100% 60% / 0.4)",
-                            "0 0 0 0 hsl(270 100% 60% / 0)"
-                          ]
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Clock className="h-5 w-5 text-primary" />
-                      </motion.div>
-                      <div>
-                        <p className="font-medium text-sm">
-                          Tienes <NeonText>{inProgressContent.length}</NeonText> proyecto(s) en progreso
-                        </p>
-                        <p className="text-xs text-muted-foreground">Continúa con tus grabaciones</p>
-                      </div>
-                    </div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button 
-                        size="sm" 
-                        onClick={() => navigate('/board')}
-                        className="bg-[hsl(270,100%,60%,0.15)] hover:bg-[hsl(270,100%,60%,0.25)] text-[hsl(270,100%,75%)] border border-[hsl(270,100%,60%,0.3)] hover:border-[hsl(270,100%,60%,0.5)]"
-                      >
-                        Ver tablero
-                        <motion.div
-                          animate={{ x: [0, 4, 0] }}
-                          transition={{ duration: 1, repeat: Infinity }}
-                        >
-                          <ArrowRight className="w-4 h-4 ml-1" />
-                        </motion.div>
-                      </Button>
-                    </motion.div>
-                  </div>
-                </TechCardContent>
-              </TechCard>
-            </motion.div>
+              </div>
+            </div>
           )}
 
-          {/* Recent Content - Animated List */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold flex items-center gap-2">
-                <motion.div
-                  animate={{ rotate: [0, 15, -15, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
-                  <Sparkles className="w-4 h-4 text-primary" />
-                </motion.div>
-                <NeonText>Contenido Reciente</NeonText>
-              </h3>
-              <motion.div whileHover={{ scale: 1.05 }}>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/board')}>
-                  Ver todo
-                </Button>
-              </motion.div>
-            </div>
-            <StaggerContainer className="space-y-2" staggerDelay={0.1}>
-              {content.slice(0, 5).map((item, index) => (
-                <StaggerItem key={item.id}>
-                  <motion.div whileHover={{ scale: 1.01, x: 4 }}>
-                    <TechCard 
-                      variant="glass"
-                      className="cursor-pointer" 
-                      onClick={() => setSelectedContent(item)}
-                    >
-                      <TechCardContent className="p-3 flex items-center gap-3">
-                        <motion.div 
-                          className="h-10 w-10 rounded-sm bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center flex-shrink-0 overflow-hidden"
-                          whileHover={{ borderColor: "hsl(270 100% 60% / 0.5)" }}
-                        >
-                          {item.thumbnail_url ? (
-                            <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
-                          ) : (
-                            <motion.div
-                              animate={{ scale: [1, 1.1, 1] }}
-                              transition={{ duration: 2, repeat: Infinity, delay: index * 0.2 }}
-                            >
-                              <Play className="h-4 w-4 text-primary" />
-                            </motion.div>
-                          )}
-                        </motion.div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{item.title}</p>
-                          <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {item.is_ambassador_content && (
-                            <motion.div
-                              animate={{ rotate: [0, 360] }}
-                              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            >
-                              <Star className="w-3 h-3 text-primary fill-primary" />
-                            </motion.div>
-                          )}
-                          <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
-                            {STATUS_LABELS[item.status]}
-                          </Badge>
-                        </div>
-                      </TechCardContent>
-                    </TechCard>
-                  </motion.div>
-                </StaggerItem>
-              ))}
-              {content.length === 0 && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <TechCard variant="glass">
-                    <TechCardContent className="p-8 text-center">
-                      <motion.div 
-                        className="w-16 h-16 mx-auto rounded-sm bg-muted border border-[hsl(270,100%,60%,0.2)] flex items-center justify-center mb-4"
-                        animate={{ 
-                          boxShadow: [
-                            "0 0 0 0 hsl(270 100% 60% / 0)",
-                            "0 0 30px 10px hsl(270 100% 60% / 0.2)",
-                            "0 0 0 0 hsl(270 100% 60% / 0)"
-                          ]
-                        }}
-                        transition={{ duration: 3, repeat: Infinity }}
-                      >
-                        <Video className="w-8 h-8 text-primary" />
-                      </motion.div>
-                      <h4 className="font-semibold mb-2">
-                        <NeonText>Sin proyectos asignados</NeonText>
-                      </h4>
-                      <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
-                    </TechCardContent>
-                  </TechCard>
-                </motion.div>
-              )}
-            </StaggerContainer>
-          </motion.div>
 
-          {/* Ranking y Historial de Puntos - Animated */}
-          {/* Ranking y Historial de Puntos - Solo para creators en org */}
+
+          {/* Videos aprobados */}
+          {approvedVideos.length > 0 && (
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    Últimos Aprobados
+                  </h3>
+                  <span className="text-xs text-zinc-500">({approvedVideos.length})</span>
+                </div>
+                <button
+                  onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
+                  className="text-xs text-purple-500 hover:text-purple-400 transition-colors"
+                >
+                  Ver todos
+                </button>
+              </div>
+              <NovaVerticalVideoGrid
+                videos={approvedVideos}
+                onVideoClick={setVideoViewer}
+                maxItems={6}
+              />
+            </div>
+          )}
+
+          {/* Ranking e historial de puntos */}
           {targetUserId && !isFreelancer && (
-            <motion.div
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1 }}
-            >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <RoleLeaderboard role="creator" currentUserId={targetUserId} maxItems={5} />
               <UPHistoryTable userId={targetUserId} />
-            </motion.div>
+            </div>
           )}
+
         </div>
-        </>
-        )}
+      )}
 
-        {/* Content Detail Modal */}
-        <UnifiedProjectModal
-          source="content"
-          projectId={selectedContent?.id}
-          open={!!selectedContent}
-          onOpenChange={(open) => !open && setSelectedContent(null)}
-          onUpdate={() => {
-            refetch();
-            setSelectedContent(null);
-          }}
-        />
-
-        {/* KPI Content Dialog - New Tech Version */}
-        <TechKpiDialog
-          title={kpiDialog.title}
-          content={kpiDialog.content}
-          open={kpiDialog.open}
-          onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
-          onSelectContent={setSelectedContent}
-        />
-      </div>
+      {/* Modals */}
+      <UnifiedProjectModal
+        source="content"
+        projectId={selectedContent?.id}
+        open={!!selectedContent}
+        onOpenChange={(open) => !open && setSelectedContent(null)}
+        onUpdate={() => { refetch(); setSelectedContent(null); }}
+      />
+      <UnifiedKpiDialog
+        title={kpiDialog.title}
+        studioContent={kpiDialog.studioContent}
+        marketplaceProjects={kpiDialog.marketplaceProjects}
+        open={kpiDialog.open}
+        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+        onSelectContent={setSelectedContent}
+        userId={user?.id}
+      />
+      <ClientVideoDetailSheet
+        content={videoViewer}
+        userId={user?.id}
+        open={!!videoViewer}
+        onClose={() => setVideoViewer(null)}
+        onUpdate={refetch}
+      />
     </div>
   );
 }
