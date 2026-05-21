@@ -264,7 +264,6 @@ const basicTalentInOrgSections: NavSection[] = [
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store },
       { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone },
-      { name: "Billetera", href: "/wallet", icon: Wallet },
     ]
   },
   {
@@ -333,7 +332,7 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
     items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone });
   }
 
-  items.push({ name: "Billetera", href: "/wallet", icon: Wallet });
+
 
   // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
@@ -618,7 +617,7 @@ export function MobileNav() {
       const hasActiveItem = section.items.some(item => {
         const hrefPath = item.href.split('?')[0];
         if (item.href === '/marketplace') return pathname === '/marketplace';
-        if (hrefPath.startsWith('/marketplace/') || item.href === '/wallet') return pathname.startsWith(hrefPath);
+        if (hrefPath.startsWith('/marketplace/')) return pathname.startsWith(hrefPath);
         return pathname === hrefPath;
       });
       if (hasActiveItem) {
@@ -728,7 +727,7 @@ export function MobileNav() {
                       });
                       const isActive = item.href === '/marketplace'
                         ? location.pathname === '/marketplace'
-                        : (itemPath.startsWith('/marketplace/') || item.href === '/wallet')
+                        : itemPath.startsWith('/marketplace/')
                         ? location.pathname.startsWith(itemPath)
                         : itemSearch
                         ? location.pathname === itemPath && location.search === itemSearch

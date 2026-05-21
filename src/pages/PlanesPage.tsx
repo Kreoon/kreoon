@@ -21,11 +21,11 @@ export default function PlanesPage() {
   } else if (!organizationId) {
     // Freelance users without org: talent → creadores
     segment = 'creadores';
-  } else if (group === 'creator' || group === 'editor' || group === 'strategist') {
+  } else if (group === 'talent') {
     // Org members with talent-type roles always see creadores
     segment = 'creadores';
   } else {
-    // Any org member (admin, team_leader, etc.) → agencias plans
+    // Admin users → agencias plans
     segment = 'agencias';
   }
 

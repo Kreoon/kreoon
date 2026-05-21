@@ -243,7 +243,6 @@ const basicTalentInOrgSections: NavSection[] = [
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
       { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
-      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
     ]
   },
   {
@@ -345,7 +344,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
   }
 
   items.push({ name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" });
-  items.push({ name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" });
 
   // Talent management — only for org roles (admin/talent), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {
@@ -657,7 +655,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           : item.href as string;
         const hrefPath = href.split('?')[0];
         if (href === '/marketplace') return pathname === '/marketplace';
-        if (hrefPath.startsWith('/marketplace/') || href === '/wallet') return pathname.startsWith(hrefPath);
+        if (hrefPath.startsWith('/marketplace/')) return pathname.startsWith(hrefPath);
         return pathname === hrefPath;
       });
       if (hasActiveItem) {
@@ -768,7 +766,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                     });
                     const isActive = href === '/marketplace'
                       ? location.pathname === '/marketplace'
-                      : (hrefPath.startsWith('/marketplace/') || href === '/wallet')
+                      : hrefPath.startsWith('/marketplace/')
                       ? location.pathname.startsWith(hrefPath)
                       : hrefSearch
                       ? location.pathname === hrefPath && location.search === hrefSearch

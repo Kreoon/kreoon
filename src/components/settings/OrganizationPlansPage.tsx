@@ -63,10 +63,63 @@ const SEGMENT_CONFIG: Record<Segment, { label: string; icon: React.ReactNode }> 
   agencias: { label: 'Agencias', icon: <Briefcase className="h-4 w-4" /> },
 };
 
+interface FeatureItem {
+  label: string;
+  included: boolean;
+  highlight?: boolean;
+}
+
+function getPlanTagline(planId: string): string {
+  const taglines: Record<string, string> = {
+    'creadores-basico':    'Para comenzar a mostrar tu trabajo',
+    'creadores-pro':       'Para creadores que quieren crecer en serio',
+    'creadores-premium':   'Para creadores en modo profesional full-time',
+    'marcas-free':         'Explora la plataforma sin costo',
+    'marcas-starter':      'Para marcas que están dando sus primeros pasos',
+    'marcas-growth':       'Para marcas en crecimiento activo con UGC',
+    'marcas-pro':          'Para equipos de marketing con alto volumen',
+    'marcas-business':     'Para empresas con operaciones UGC a escala',
+    'agencias-starter':    'Para agencias que gestionan múltiples clientes',
+    'agencias-pro':        'Para agencias consolidadas con equipo completo',
+    'agencias-enterprise': 'Para operaciones a gran escala con SLA personalizado',
+  };
+  return taglines[planId] ?? '';
+}
+
+function getPlanFeatureItems(plan: PlanDef): FeatureItem[] {
+  if (plan.segment === 'creadores') {
+    const isBasico  = plan.id === 'creadores-basico';
+    const isPremium = plan.id === 'creadores-premium';
+    return [
+      { label: 'Portafolio público de creador',          included: true },
+      { label: 'Postulación a campañas del Marketplace', included: true },
+      {
+        label: isBasico ? '50 posts en Social Hub/mes' : 'Posts en Social Hub ilimitados',
+        included: true,
+        highlight: !isBasico,
+      },
+      {
+        label: isBasico ? 'ADN Recargados — guiones con IA' : `${plan.adnRecargadosPerMonth} ADN Recargados/mes`,
+        included: !isBasico,
+        highlight: !isBasico,
+      },
+      { label: isPremium ? 'Badge Premium en perfil 👑'    : 'Badge verificado en perfil ⚡', included: !isBasico, highlight: !isBasico },
+      { label: 'Prioridad en búsquedas y campañas',      included: !isBasico },
+      { label: 'Estadísticas avanzadas de perfil',       included: !isBasico },
+      { label: isPremium ? 'Soporte VIP 24/7'             : 'Soporte prioritario',            included: !isBasico },
+      {
+        label: `${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}.000` : plan.aiTokens} tokens IA/mes`,
+        included: true,
+        highlight: !isBasico,
+      },
+    ];
+  }
+  return getPlanFeatures(plan).map(f => ({ label: f, included: true }));
+}
+
 function getPlanFeatures(plan: PlanDef): string[] {
   const features: string[] = [];
 
-  // Common features based on limits
   if (plan.users !== undefined) {
     features.push(`Hasta ${plan.users ?? 'ilimitados'} usuarios`);
   }
@@ -80,22 +133,19 @@ function getPlanFeatures(plan: PlanDef): string[] {
   }
   features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Tokens IA/mes`);
 
-  // Agency-specific: role-based limits
   if (plan.adminUsers !== undefined) {
     features.push(`${plan.adminUsers ?? 'Ilimitados'} admins`);
     features.push(`${plan.strategists ?? 'Ilimitados'} estrategas`);
-    features.push(`${plan.editors ?? 'Ilimitados'} post-produccion`);
+    features.push(`${plan.editors ?? 'Ilimitados'} post-producción`);
     features.push(`${plan.creators ?? 'Ilimitados'} creadores activos`);
   }
   if (plan.clients !== undefined) {
     features.push(`Hasta ${plan.clients ?? 'ilimitados'} clientes`);
   }
 
-  // Segment + tier specific features
   switch (plan.id) {
-    // Marcas
     case 'marcas-free':
-      features.push('1 contacto revelado de creador');
+      features.push('1 contacto revelado de creador/mes');
       features.push('1 campaña activa');
       features.push('Sin canjes');
       break;
@@ -110,12 +160,13 @@ function getPlanFeatures(plan: PlanDef): string[] {
       features.push('10 canjes/mes');
       features.push('10 campañas activas');
       features.push('3 ADN Recargados/mes');
-      features.push('Analytics basicos');
+      features.push('Analytics básicos');
       break;
     case 'marcas-pro':
       features.push('20 contactos revelados/mes');
       features.push('20 canjes/mes');
       features.push('Campañas ilimitadas');
+      features.push('5 ADN Recargados/mes');
       features.push('Soporte prioritario');
       features.push('Reportes de rendimiento');
       break;
@@ -123,29 +174,20 @@ function getPlanFeatures(plan: PlanDef): string[] {
       features.push('Contactos revelados ilimitados');
       features.push('Canjes ilimitados');
       features.push('Campañas ilimitadas');
+      features.push('ADN Recargados ilimitados');
       features.push('Soporte 24/7');
       features.push('API access');
       features.push('Manager dedicado');
       break;
-    // Creadores
-    case 'creadores-basico':
-      features.push('Portafolio publico');
-      features.push('Postulacion a campanas');
-      break;
-    case 'creadores-pro':
-      features.push('Badge verificado');
-      features.push('Prioridad en campanas');
-      features.push('Estadisticas avanzadas');
-      features.push('Soporte prioritario');
-      break;
-    // Agencias
     case 'agencias-starter':
-      features.push('Gestion multi-cliente');
+      features.push('Gestión multi-cliente');
       features.push('Board Kanban avanzado');
       features.push('Reportes por cliente');
+      features.push('ADN Recargados ilimitados');
+      features.push('Social Hub ilimitado');
       break;
     case 'agencias-pro':
-      features.push('Gestion multi-cliente');
+      features.push('Todo de Agency Starter');
       features.push('Todas las integraciones');
       features.push('White-label');
       features.push('API access');
@@ -683,8 +725,9 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
           'marcas-growth':   { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]',                   accentText: 'text-purple-200', metricBg: 'bg-purple-950',   metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',emoji: '⚡' },
           'marcas-pro':      { bar: 'bg-orange-500', cardBg: 'bg-[#1a0f00]',                   accentText: 'text-orange-300', metricBg: 'bg-orange-950',   metricText: 'text-orange-200', btnClass: 'bg-orange-600 hover:bg-orange-500 text-white',emoji: '🔥' },
           'marcas-business': { bar: 'bg-amber-400',  cardBg: 'bg-[#1a1200]',                   accentText: 'text-amber-300',  metricBg: 'bg-amber-950',    metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',  emoji: '👑' },
-          'creadores-basico':{ bar: 'bg-zinc-500',   cardBg: 'bg-zinc-900',                    accentText: 'text-zinc-300',   metricBg: 'bg-zinc-800',     metricText: 'text-zinc-200',   btnClass: 'bg-zinc-700 hover:bg-zinc-600 text-white',   emoji: '🎬' },
-          'creadores-pro':   { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]',                   accentText: 'text-purple-200', metricBg: 'bg-purple-950',   metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',emoji: '⭐' },
+          'creadores-basico':  { bar: 'bg-zinc-500',   cardBg: 'bg-zinc-900',   accentText: 'text-zinc-300',   metricBg: 'bg-zinc-800',   metricText: 'text-zinc-200',   btnClass: 'bg-zinc-700 hover:bg-zinc-600 text-white',    emoji: '🎬' },
+          'creadores-pro':     { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]', accentText: 'text-purple-200', metricBg: 'bg-purple-950', metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white', emoji: '⭐' },
+          'creadores-premium': { bar: 'bg-amber-400',  cardBg: 'bg-[#1a1200]', accentText: 'text-amber-300',  metricBg: 'bg-amber-950',  metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',   emoji: '👑' },
           'agencias-starter':{ bar: 'bg-blue-500',   cardBg: 'bg-[#0c1929]',                   accentText: 'text-blue-300',   metricBg: 'bg-blue-950',     metricText: 'text-blue-200',   btnClass: 'bg-blue-600 hover:bg-blue-500 text-white',   emoji: '🏢' },
           'agencias-pro':    { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]',                   accentText: 'text-purple-200', metricBg: 'bg-purple-950',   metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',emoji: '🏆' },
           'agencias-enterprise':{ bar:'bg-amber-400',cardBg: 'bg-[#1a1200]',                   accentText: 'text-amber-300',  metricBg: 'bg-amber-950',    metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',  emoji: '👑' },
@@ -719,13 +762,25 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
           const annualSaving = plan.priceMonthly > 0 && plan.priceAnnual
             ? Math.round((plan.priceMonthly - monthlyAnnualPrice) * 12)
             : 0;
+          const annualSavingCOP = plan.priceMonthlyCOP && plan.priceAnnualCOP
+            ? Math.round(plan.priceMonthlyCOP * 12 - plan.priceAnnualCOP)
+            : annualSaving * COP_RATE;
 
           const hasContacts = plan.creatorContactsPerMonth !== undefined;
           const hasCanjes = plan.canjesPerMonth !== undefined;
           const showMarcasMetrics = hasContacts || hasCanjes;
 
+          const getCOPDisplay = () => {
+            const isAnnual = billingCycle === 'annual';
+            const copPrice = isAnnual && plan.priceAnnualCOP
+              ? Math.round(plan.priceAnnualCOP / 12)
+              : (plan.priceMonthlyCOP ?? price * COP_RATE);
+            return copPrice >= 1_000_000
+              ? `$${(copPrice / 1_000_000).toFixed(1).replace('.0', '')}M`
+              : `$${(copPrice / 1_000).toFixed(0)}K`;
+          };
           const priceDisplay = isEnterprise ? null : isFreeplan ? 'Gratis' : isColombia
-            ? (() => { const cop = price * COP_RATE; return cop >= 1_000_000 ? `$${(cop/1_000_000).toFixed(1).replace('.0','')}M` : `$${(cop/1_000).toFixed(0)}K`; })()
+            ? getCOPDisplay()
             : `$${price}`;
           const priceSuffix = isFreeplan || isEnterprise ? '' : isColombia ? ' COP/mes' : '/mes';
 
@@ -760,15 +815,15 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
               )}
 
               <div className="flex flex-col flex-1 p-5 gap-5">
-                {/* Plan name */}
+                {/* Plan name + tagline */}
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-2xl">{ts.emoji}</span>
                     <h3 className={cn("text-xl font-black tracking-tight", ts.accentText)}>{plan.name}</h3>
                   </div>
-                  {isEnterprise && (
-                    <p className="text-xs text-zinc-500">Contacta al equipo para un plan a medida</p>
-                  )}
+                  <p className="text-xs text-zinc-400 leading-snug">
+                    {isEnterprise ? 'Contacta al equipo para un plan a medida' : getPlanTagline(plan.id)}
+                  </p>
                 </div>
 
                 {/* Price — BIG */}
@@ -786,7 +841,9 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                 {!isFreeplan && !isEnterprise && billingCycle === 'monthly' && annualSaving > 0 && (
                   <div className="flex items-center gap-1.5 -mt-2">
                     <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                      💰 Ahorra ${annualSaving}/año en anual
+                      {isColombia
+                        ? `💰 Ahorra $${(annualSavingCOP / 1_000).toFixed(0)}K COP/año en anual`
+                        : `💰 Ahorra $${annualSaving}/año en anual`}
                     </span>
                   </div>
                 )}
@@ -818,27 +875,51 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                   </div>
                 )}
 
-                {/* Other segments (creadores) */}
+                {/* Creadores metrics */}
                 {!showMarcasMetrics && plan.adminUsers === undefined && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <StatBox emoji="👤" value={plan.users === null ? '∞' : String(plan.users ?? '∞')} label="usuarios" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="✨" value={plan.aiTokens >= 1000 ? `${(plan.aiTokens/1000).toFixed(0)}k` : String(plan.aiTokens)} label="tokens IA" bg={ts.metricBg} text={ts.metricText} />
+                  <div className="grid grid-cols-3 gap-2">
+                    <StatBox
+                      emoji="📝"
+                      value={plan.adnRecargadosPerMonth === null ? '∞' : plan.adnRecargadosPerMonth === 0 ? '—' : String(plan.adnRecargadosPerMonth)}
+                      label="ADN/mes"
+                      dim={plan.adnRecargadosPerMonth === 0}
+                      bg={ts.metricBg}
+                      text={ts.metricText}
+                    />
+                    <StatBox
+                      emoji="📱"
+                      value={plan.socialPostsPerMonth === null ? '∞' : String(plan.socialPostsPerMonth ?? 0)}
+                      label="posts/mes"
+                      bg={ts.metricBg}
+                      text={ts.metricText}
+                    />
+                    <StatBox
+                      emoji="✨"
+                      value={plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : String(plan.aiTokens)}
+                      label="tokens IA"
+                      bg={ts.metricBg}
+                      text={ts.metricText}
+                    />
                   </div>
                 )}
 
                 {/* Separator */}
                 <div className="flex items-center gap-2">
                   <div className="h-px flex-1 bg-zinc-700/50" />
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">Incluye</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+                    {plan.segment === 'creadores' ? 'Características' : 'Incluye'}
+                  </span>
                   <div className="h-px flex-1 bg-zinc-700/50" />
                 </div>
 
                 {/* Features */}
-                <ul className="flex-1 space-y-2.5">
-                  {features.map((feature, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-sm text-zinc-300">
-                      <span className="text-emerald-400 text-base leading-none mt-0.5">✓</span>
-                      {feature}
+                <ul className="flex-1 space-y-2">
+                  {(plan.segment === 'creadores' ? getPlanFeatureItems(plan) : features.map(f => ({ label: f, included: true, highlight: false }))).map((item, idx) => (
+                    <li key={idx} className={cn('flex items-start gap-2 text-sm', item.included ? 'text-zinc-300' : 'text-zinc-600')}>
+                      <span className={cn('shrink-0 leading-none mt-0.5 text-base', item.included ? 'text-emerald-400' : 'text-zinc-700')}>
+                        {item.included ? '✓' : '✗'}
+                      </span>
+                      <span className={cn(item.highlight && item.included ? 'font-semibold' : '')}>{item.label}</span>
                     </li>
                   ))}
                 </ul>

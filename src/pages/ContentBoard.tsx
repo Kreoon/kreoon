@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
 import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
@@ -16,6 +17,7 @@ import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useTrialGuard } from "@/hooks/useTrialGuard";
 import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
+import { KREOON_ORG_ID } from "@/lib/kreoon-org";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
 import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
@@ -170,7 +172,9 @@ const canMoveToStatusLegacy = (
 export default function ContentBoard() {
   const { user, profile, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole, roles } = useAuth();
   const { effectiveUserId, effectiveRoles, isImpersonating, impersonationTarget } = useImpersonation();
-  const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
+  const { isPlatformRoot } = useOrgOwner();
+  // Derive org ID directly from profile — available immediately without waiting for the RPC
+  const currentOrgId = profile?.current_organization_id ?? KREOON_ORG_ID;
   const { toast } = useToast();
   const { guardAction, isReadOnly } = useTrialGuard();
 
@@ -233,7 +237,8 @@ export default function ContentBoard() {
   // For external clients (client_users): force filter by their client_id
   const [externalClientId, setExternalClientId] = useState<string | null>(null);
   useEffect(() => {
-    if (!user?.id || !isClient || currentOrgId) {
+    // Use raw profile org ID (no KREOON_ORG_ID fallback) — external clients have no org of their own
+    if (!user?.id || !isClient || profile?.current_organization_id) {
       setExternalClientId(null);
       return;
     }
@@ -250,7 +255,7 @@ export default function ContentBoard() {
       }
     };
     fetchClientUser();
-  }, [user?.id, isClient, currentOrgId]);
+  }, [user?.id, isClient, profile?.current_organization_id]);
 
   // Memoized options for SearchableSelect
   const creatorOptions = useMemo<SearchableSelectOption[]>(() => [
@@ -289,7 +294,10 @@ export default function ContentBoard() {
   
   // Dialog para detalle - using persisted selected content
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
-  
+
+  // Deeplink: ?item=ID abre automáticamente el item (usado por la extensión)
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [showBulkDrawer, setShowBulkDrawer] = useState(false);
 
   // Dialog para crear contenido
@@ -454,6 +462,17 @@ export default function ContentBoard() {
     clientId: effectiveClientId
   });
 
+  // Deeplink: ?item=ID abre automáticamente el item (usado por la extensión Kreoon Capture)
+  useEffect(() => {
+    const itemId = searchParams.get('item');
+    if (!itemId || loading || !content.length) return;
+    const found = content.find(c => c.id === itemId);
+    if (found) {
+      setSelectedContent(found);
+      setSearchParams(p => { p.delete('item'); return p; }, { replace: true });
+    }
+  }, [searchParams, content, loading]);
+
   const handleDeleteContent = async (contentId: string) => {
     try {
       await deleteContent(contentId);
@@ -478,7 +497,6 @@ export default function ContentBoard() {
 
   // Fetch clients & products for filter dropdowns (admin only)
   useEffect(() => {
-    if (orgLoading) return;
     if (!showAdminControls || !currentOrgId) {
       setClients([]);
       setProducts([]);
@@ -495,7 +513,7 @@ export default function ContentBoard() {
       setProducts((productsRes.data || []).map((p: any) => ({ id: p.id, name: p.name, client_name: p.client_name })));
     };
     fetchClientProducts();
-  }, [showAdminControls, currentOrgId, orgLoading]);
+  }, [showAdminControls, currentOrgId]);
 
   // Batch-fetch social publishing status for all content
   const allContentIds = useMemo(() => content.map(c => c.id), [content]);
@@ -733,15 +751,17 @@ export default function ContentBoard() {
           subtitle="Centro de control inteligente de contenido • Powered by AI"
           action={
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 h-9 hidden sm:flex"
-                onClick={() => setShowBulkDrawer(true)}
-              >
-                <Zap className="h-4 w-4 text-primary" />
-                <span className="hidden md:inline">Generar en lote</span>
-              </Button>
+              {(isAdmin || isClient) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 h-9 hidden sm:flex"
+                  onClick={() => setShowBulkDrawer(true)}
+                >
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="hidden md:inline">Generar en lote</span>
+                </Button>
+              )}
               <div className="relative hidden sm:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -1285,7 +1305,7 @@ export default function ContentBoard() {
       />
 
       {/* Bulk Generation Drawer */}
-      <BulkGenerationDrawer open={showBulkDrawer} onOpenChange={setShowBulkDrawer} />
+      <BulkGenerationDrawer open={showBulkDrawer} onOpenChange={setShowBulkDrawer} clientId={externalClientId ?? undefined} />
     </div>
   );
 }

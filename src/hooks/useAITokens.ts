@@ -120,6 +120,22 @@ export function useAITokens(organizationId?: string | null) {
       ]);
 
       if (b) {
+        // Fix: si monthly_allowance es 0 para usuario free, resetear a 500
+        const allowance = b.monthly_allowance ?? 0;
+        const subBalance = b.balance_subscription ?? 0;
+        const needsRepair = !orgId && allowance === 0 && subBalance === 0;
+
+        if (needsRepair) {
+          // Reparar silenciosamente: upsert con el mínimo free tier
+          await supabase
+            .from('ai_token_balances')
+            .update({ monthly_allowance: 500, balance_subscription: 500 })
+            .eq('user_id', user.id)
+            .is('organization_id', null);
+          b.monthly_allowance = 500;
+          b.balance_subscription = 500;
+        }
+
         const totalBalance = (b.balance_subscription ?? 0) + (b.balance_purchased ?? 0) + (b.balance_bonus ?? 0);
 
         setBalance({
@@ -129,6 +145,32 @@ export function useAITokens(organizationId?: string | null) {
           purchasedTokens: b.balance_purchased ?? 0,
           periodStartDate: b.last_reset_at ?? null,
           periodEndDate: b.next_reset_at ?? null,
+          customApiEnabled: false,
+        });
+      } else if (!orgId) {
+        // No existe fila → crearla con el plan free (500 tokens)
+        const { data: newBalance } = await supabase
+          .from('ai_token_balances')
+          .upsert(
+            {
+              user_id: user.id,
+              balance_subscription: 500,
+              monthly_allowance: 500,
+              subscription_tier: 'creator_free',
+              next_reset_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+            { onConflict: 'user_id' }
+          )
+          .select('balance_subscription, balance_purchased, balance_bonus, monthly_allowance, total_consumed, last_reset_at, next_reset_at')
+          .maybeSingle();
+
+        setBalance({
+          tokensRemaining: newBalance ? (newBalance.balance_subscription ?? 500) : 500,
+          tokensUsedThisPeriod: 0,
+          monthlyTokensIncluded: 500,
+          purchasedTokens: 0,
+          periodStartDate: null,
+          periodEndDate: null,
           customApiEnabled: false,
         });
       } else {

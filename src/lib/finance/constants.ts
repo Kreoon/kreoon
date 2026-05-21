@@ -152,6 +152,8 @@ export interface PlanDef {
   segment: "marcas" | "creadores" | "agencias";
   priceMonthly: number;
   priceAnnual: number;
+  priceMonthlyCOP?: number;  // explicit COP price (overrides USD * rate conversion)
+  priceAnnualCOP?: number;   // explicit COP annual price
   aiTokens: number;
   users: number | null;        // null = unlimited
   contentPerMonth: number | null;
@@ -270,8 +272,10 @@ export const PLANS: PlanDef[] = [
     id: "creadores-pro",
     name: "Creator Pro",
     segment: "creadores",
-    priceMonthly: 24,
-    priceAnnual: 202,
+    priceMonthly: 25,
+    priceAnnual: 250,
+    priceMonthlyCOP: 79_900,
+    priceAnnualCOP: 799_000,
     aiTokens: 6_000,
     users: 1,
     contentPerMonth: null,
@@ -285,8 +289,10 @@ export const PLANS: PlanDef[] = [
     id: "creadores-premium",
     name: "Creator Premium",
     segment: "creadores",
-    priceMonthly: 49,
-    priceAnnual: 412,
+    priceMonthly: 45,
+    priceAnnual: 450,
+    priceMonthlyCOP: 159_900,
+    priceAnnualCOP: 1_599_000,
     aiTokens: 15_000,
     users: 1,
     contentPerMonth: null,

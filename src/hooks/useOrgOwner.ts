@@ -175,12 +175,21 @@ function toBrandingData(row: CachedOrgContext): OrgBrandingData {
 export function useOrgOwner(): OrgOwnerStatus {
   const { user, profile } = useAuth();
   const [isOrgOwner, setIsOrgOwner] = useState(false);
-  const [currentOrgId, setCurrentOrgId] = useState<string | null>(null);
+  // Initialize optimistically from profile to avoid a loading flash on cache hit
+  const [currentOrgId, setCurrentOrgId] = useState<string | null>(
+    () => profile?.current_organization_id ?? (user ? KREOON_ORG_ID : null)
+  );
   const [currentOrgName, setCurrentOrgName] = useState<string | null>(null);
   const [marketplaceEnabled, setMarketplaceEnabled] = useState(true);
   const [orgBranding, setOrgBranding] = useState<OrgBrandingData | null>(null);
   const [orgTimezone, setOrgTimezone] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Start as loading=false if we already have a cached result for this org
+  const [loading, setLoading] = useState(() => {
+    const orgId = profile?.current_organization_id ?? (user ? KREOON_ORG_ID : null);
+    if (!orgId) return false;
+    const cached = orgContextCache.get(orgId);
+    return !(cached && Date.now() - cached.ts < CACHE_TTL);
+  });
 
   const isPlatformRoot = user?.email ? ROOT_EMAILS.includes(user.email) : false;
 
@@ -188,8 +197,6 @@ export function useOrgOwner(): OrgOwnerStatus {
     let cancelled = false;
 
     const checkOwnerStatus = async () => {
-      setLoading(true);
-
       if (!user) {
         if (cancelled) return;
         setIsOrgOwner(false);
@@ -204,6 +211,11 @@ export function useOrgOwner(): OrgOwnerStatus {
 
       // Single-org mode: always use KREOON_ORG_ID as fallback
       const orgId = profile?.current_organization_id ?? KREOON_ORG_ID;
+
+      // Only show loading spinner when the data is NOT already in cache
+      const cached = orgContextCache.get(orgId);
+      const isCacheHit = cached && Date.now() - cached.ts < CACHE_TTL;
+      if (!isCacheHit) setLoading(true);
 
       try {
         const result = await fetchOrgContextCached(orgId);
@@ -246,7 +258,7 @@ export function useOrgOwner(): OrgOwnerStatus {
     return () => {
       cancelled = true;
     };
-  }, [user, profile?.current_organization_id, profile]);
+  }, [user?.id, profile?.current_organization_id]);
 
   return {
     isOrgOwner,

@@ -214,12 +214,6 @@ const DataDeletion = lazyWithRetry(() => import("./pages/legal/DataDeletion"));
 const LegalDocumentPage = lazyWithRetry(() => import("./pages/legal/LegalDocumentPage"));
 const ReceiptPage = lazyWithRetry(() => import("./pages/legal/ReceiptPage"));
 
-// Wallet Module Pages
-const WalletPage = lazyWithRetry(() => import("./modules/wallet/pages/WalletPage").then(m => ({ default: m.WalletPage })));
-const TransactionsPage = lazyWithRetry(() => import("./modules/wallet/pages/TransactionsPage").then(m => ({ default: m.TransactionsPage })));
-const WithdrawalsPage = lazyWithRetry(() => import("./modules/wallet/pages/WithdrawalsPage").then(m => ({ default: m.WithdrawalsPage })));
-const AdminWalletsPage = lazyWithRetry(() => import("./modules/wallet/pages/AdminWalletsPage").then(m => ({ default: m.AdminWalletsPage })));
-
 // Social Hub Module
 const SocialHubPage = lazy(() => import("./modules/social/pages/SocialHubPage"));
 const MarketingAdsPage = lazy(() => import("./modules/marketing/pages/MarketingPage"));
@@ -486,13 +480,6 @@ function AppRoutes() {
         {/* Social Hub Module */}
         <Route path="/social-hub" element={<ProtectedRoute allowNoRoles><MainLayout><SocialHubPage /></MainLayout></ProtectedRoute>} />
         <Route path="/marketing-ads" element={<ProtectedRoute allowedRoles={['admin', 'client']}><MainLayout><MarketingAdsPage /></MainLayout></ProtectedRoute>} />
-        {/* Wallet Module Routes */}
-        <Route path="/wallet" element={<ProtectedRoute allowNoRoles><MainLayout><WalletPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/wallet/transactions" element={<ProtectedRoute allowNoRoles><MainLayout><TransactionsPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/wallet/withdrawals" element={<ProtectedRoute allowNoRoles><MainLayout><WithdrawalsPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/wallet/payment-methods" element={<Navigate to="/wallet?tab=payment-methods" replace />} />
-        <Route path="/wallet/settings" element={<Navigate to="/wallet" replace />} />
-        <Route path="/admin/wallets" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminWalletsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><KAEAnalyticsDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/ad-intelligence" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdIntelligencePage /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/social-scraper" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><SocialScraperPage /></MainLayout></ProtectedRoute>} />
