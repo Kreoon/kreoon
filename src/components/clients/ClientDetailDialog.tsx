@@ -192,7 +192,6 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .from('client_packages')
         .select('*')
         .eq('client_id', client.id)
-        .eq('organization_id', client.organization_id)
         .order('created_at', { ascending: false });
       setPackages((data || []) as ClientPackage[]);
     } catch (error) {
@@ -230,7 +229,6 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .from('products')
         .select('*')
         .eq('client_id', client.id)
-        .eq('organization_id', client.organization_id)
         .order('product_code', { ascending: true });
       setProducts(data || []);
     } catch (error) {
