@@ -93,9 +93,12 @@ CREATE TRIGGER trg_fillmaker_talent_payment
   EXECUTE FUNCTION public.trg_fillmaker_auto_talent_payment();
 
 -- ── 3. Backfill: crear talent_payments para fillmakers existentes sin pago ───
+-- WARNING FIX: incluir payment_date para registros backfilled (era NULL antes).
+-- Se usa created_at del fillmaker_service como fecha de pago; fallback a now().
 INSERT INTO public.talent_payments (
   organization_id, user_id, amount, currency, status,
-  description, fillmaker_service_id, created_by
+  description, fillmaker_service_id, created_by,
+  payment_date
 )
 SELECT
   f.organization_id,
@@ -105,7 +108,8 @@ SELECT
   CASE WHEN f.billing_status = 'paid' THEN 'paid' ELSE 'pending' END,
   'Fillmaker: ' || f.title,
   f.id,
-  f.created_by
+  f.created_by,
+  COALESCE(f.created_at, now())
 FROM public.fillmaker_services f
 WHERE f.editor_id IS NOT NULL
   AND f.cost_own > 0

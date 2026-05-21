@@ -72,6 +72,7 @@ interface ClientDetailDialogProps {
     notes: string | null;
     is_vip?: boolean;
     username?: string | null;
+    organization_id?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -191,6 +192,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .from('client_packages')
         .select('*')
         .eq('client_id', client.id)
+        .eq('organization_id', client.organization_id)
         .order('created_at', { ascending: false });
       setPackages((data || []) as ClientPackage[]);
     } catch (error) {
@@ -228,6 +230,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .from('products')
         .select('*')
         .eq('client_id', client.id)
+        .eq('organization_id', client.organization_id)
         .order('product_code', { ascending: true });
       setProducts(data || []);
     } catch (error) {
@@ -267,6 +270,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .from('content')
         .select('*')
         .eq('client_id', client.id)
+        .eq('organization_id', client.organization_id)
         .order('created_at', { ascending: false });
       
       if (error) {

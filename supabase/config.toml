@@ -1,5 +1,8 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
+[functions.extension-video-capture]
+verify_jwt = true
+
 [functions.notify-signature]
 verify_jwt = false
 
@@ -645,3 +648,10 @@ verify_jwt = true
 [functions.mcp-key-manager]
 # Gestión de API keys MCP — requiere sesión de usuario activa
 verify_jwt = true
+
+# -- Talent Payment Notifications --
+
+[functions.notify-talent-payment]
+# Procesa la cola talent_payment_notifications y envia WhatsApp al talent via Botcake.
+# verify_jwt=false para invocacion desde n8n/cron sin token de usuario.
+verify_jwt = false

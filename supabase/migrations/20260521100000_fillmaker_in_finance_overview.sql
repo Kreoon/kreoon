@@ -148,13 +148,16 @@ BEGIN
 
   -- ── Nómina (solo COP) ────────────────────────────────────────────────────────
   IF p_currency = v_talent_cur THEN
+    -- CRITICAL FIX: excluir talent_payments que vienen de fillmaker_services
+    -- (fillmaker_service_id IS NOT NULL) para evitar doble conteo con v_fill_payroll.
     SELECT COALESCE(SUM(amount), 0)
     INTO v_payroll_tp
     FROM talent_payments
     WHERE organization_id = p_org_id
       AND COALESCE(currency, 'COP') = v_talent_cur
       AND status = 'paid'
-      AND payment_date::date BETWEEN p_start AND p_end;
+      AND payment_date::date BETWEEN p_start AND p_end
+      AND fillmaker_service_id IS NULL;
 
     WITH contents_in_payments AS (
       SELECT DISTINCT unnest(content_ids) AS content_id

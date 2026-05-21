@@ -252,6 +252,23 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     triggerOrgSyncSilent(org.id);
   }, [state.partnerCommunity]);
 
+  const handleClientGeneralSubmit = useCallback(async (
+    userId: string,
+    data: RegistrationFormData
+  ) => {
+    // Only update profile — org registration and company creation happen post-wizard
+    await supabase
+      .from('profiles')
+      .update({
+        full_name: data.fullName,
+        phone: `${data.phoneCountryCode} ${data.phone}`,
+        active_role: 'client',
+      })
+      .eq('id', userId);
+
+    toast.success('¡Cuenta creada! Completa tu perfil para continuar.');
+  }, []);
+
   const handleClientJoinOrg = useCallback(async (
     userId: string,
     data: RegistrationFormData
@@ -376,6 +393,8 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
           else {
             if (state.userType === 'freelancer') {
               await handleTalentSubmit(userId, data);
+            } else if (state.userType === 'client') {
+              await handleClientGeneralSubmit(userId, data);
             } else if (state.userType === 'brand') {
               await handleBrandSubmit(userId, data);
             } else if (state.userType === 'organization') {
@@ -466,6 +485,7 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     setRequiresEmailConfirmation,
     goToNextStep,
     handleTalentSubmit,
+    handleClientGeneralSubmit,
     handleBrandSubmit,
     handleOrganizationSubmit,
     handleClientJoinOrg,

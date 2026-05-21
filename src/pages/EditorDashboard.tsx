@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Store } from 'lucide-react';
-import { MarketplaceDashboardTab } from '@/components/marketplace/dashboard/MarketplaceDashboardTab';
+import {
+  Loader2, Video, Clock, CheckCircle2, DollarSign, CreditCard,
+  Film, ArrowRight, Store, Scissors, AlertTriangle
+} from 'lucide-react';
 import { TalentWalletView } from '@/components/talent/TalentWalletView';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useContent } from '@/hooks/useContent';
+import { useContentFinancialSummary, useTalentFinanceRealtime } from '@/hooks/useTalentPayments';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
 import { Content, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
-import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
+import { UnifiedKpiDialog } from '@/components/dashboard/UnifiedKpiDialog';
+import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
+import type { MarketplaceProject } from '@/components/marketplace/types/marketplace';
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
@@ -21,531 +24,458 @@ import { SeasonUrgencyBanner } from '@/components/points/SeasonUrgencyBanner';
 import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
 import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
-import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
-import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
-import {
-  Scissors,
-  Clock,
-  CheckCircle2,
-  Loader2,
-  DollarSign,
-  Video,
-  CreditCard,
-  TrendingUp,
-  Play,
-  ArrowRight,
-  Film
-} from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
+import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
+import { SeasonBanner, ProgressToNextLevel, VOCABULARIO_ROL } from '@/components/studio';
 import { cn } from '@/lib/utils';
 
-// Importar componentes del sistema Kreoon IA
-import {
-  LevelBadge,
-  CreditsDisplay,
-  ProgressToNextLevel,
-  QuickActions,
-  SeasonBanner,
-  VOCABULARIO_ROL
-} from '@/components/studio';
+const TABS = [
+  { id: 'studio', label: 'Estudio', Icon: Film },
+  { id: 'wallet', label: 'Mis Cobros', Icon: DollarSign },
+] as const;
+
+type DashboardTab = (typeof TABS)[number]['id'];
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Buenos días';
+  if (h < 18) return 'Buenas tardes';
+  return 'Buenas noches';
+}
 
 export default function EditorDashboard() {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, roles } = useAuth();
   const { effectiveUserId, isImpersonating } = useImpersonation();
-  
+
   const targetUserId = isImpersonating ? effectiveUserId : user?.id;
-  
-  const { content: allContent, loading, refetch } = useContent(targetUserId, 'editor');
-  const { toast } = useToast();
+  const hasCreatorRole = roles.some(r => ['creator', 'content_creator'].includes(r));
+
+  const { content: editorRaw, loading, refetch: refetchEditor } = useContent(targetUserId, 'editor');
+  const { content: creatorRaw, refetch: refetchCreator } = useContent(targetUserId, 'creator', false);
+
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const [videoViewer, setVideoViewer] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<'studio' | 'marketplace' | 'wallet'>('studio');
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>('studio');
   const [kpiDialog, setKpiDialog] = useState<{
-    open: boolean;
-    title: string;
-    content: Content[];
-  }>({ open: false, title: '', content: [] });
+    open: boolean; title: string;
+    studioContent: Content[]; marketplaceProjects: MarketplaceProject[];
+  }>({ open: false, title: '', studioContent: [], marketplaceProjects: [] });
 
-  const content = useThisMonthFilter(allContent, thisMonthActive);
+  const editorFiltered = useThisMonthFilter(editorRaw, thisMonthActive);
+  const creatorFiltered = useThisMonthFilter(creatorRaw, thisMonthActive);
 
-  const openKpiDialog = (title: string, contentList: Content[]) => {
-    setKpiDialog({ open: true, title, content: contentList });
-  };
+  // Merge editor + creator content (dedup by id) when user has both roles
+  const content = useMemo(() => {
+    if (!hasCreatorRole) return editorFiltered;
+    const ids = new Set(editorFiltered.map(c => c.id));
+    return [...editorFiltered, ...creatorFiltered.filter(c => !ids.has(c.id))];
+  }, [hasCreatorRole, editorFiltered, creatorFiltered]);
 
-  // Métricas
-  const toEditContent = content.filter(c => c.status === 'recorded');
-  const editingContent = content.filter(c => c.status === 'editing');
+  const refetch = () => { refetchEditor(); refetchCreator(); };
+
+  // Fuente de verdad financiera — misma que el módulo de nómina/finanzas
+  const orgId = profile?.organization_id ?? '';
+  const { data: finSummary } = useContentFinancialSummary(orgId, targetUserId ?? '');
+  useTalentFinanceRealtime(orgId, targetUserId ?? undefined);
+
+  // Marketplace data para KPIs fusionados
+  const { projects: mktProjects } = useMarketplaceProjects({ role: 'editor' });
+
+  // Wallet freelancer (solo si no pertenece a org)
+  const isFreelancer = !profile?.organization_id && !!profile?.platform_access_unlocked;
+  const { data: wallet } = useQuery({
+    queryKey: ['wallet', targetUserId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('unified_wallets')
+        .select('available_balance, pending_balance')
+        .eq('user_id', targetUserId!)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!targetUserId && isFreelancer,
+  });
+
+  const openKpiDialog = (title: string, studio: Content[], marketplace: MarketplaceProject[] = []) =>
+    setKpiDialog({ open: true, title, studioContent: studio, marketplaceProjects: marketplace });
+
+  // ── Filtros Studio ────────────────────────────────────────────────────
+  const issueContent = content.filter(c => c.status === 'issue');
+  const assignedContent = content.filter(c => c.status === 'assigned');
+  const inProgressContent = content.filter(c => ['recording', 'recorded', 'editing'].includes(c.status));
+  const deliveredContent = content.filter(c => ['delivered', 'corrected'].includes(c.status));
   const approvedContent = content.filter(c => c.status === 'approved');
-  const unpaidContent = content.filter(c => c.status === 'approved' && !c.editor_paid);
-  const paidContent = content.filter(c => c.status === 'paid' || c.status === 'archived' || c.editor_paid);
-  
-  const pendingPayment = unpaidContent
-    .filter(c => !c.is_ambassador_content)
-    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
-  
-  const totalPaid = paidContent
-    .filter(c => !c.is_ambassador_content)
-    .reduce((sum, c) => sum + (c.editor_payment || 0), 0);
+  const unpaidContent = content.filter(c => {
+    const editorUnpaid = c.editor_id === targetUserId && c.status === 'approved' && !c.editor_paid;
+    const creatorUnpaid = c.creator_id === targetUserId && c.status === 'approved' && !c.creator_paid;
+    return editorUnpaid || creatorUnpaid;
+  });
+  const paidContent = content.filter(c => {
+    const editorPaid = c.editor_id === targetUserId && !!c.editor_paid;
+    const creatorPaid = c.creator_id === targetUserId && !!c.creator_paid;
+    return editorPaid || creatorPaid;
+  });
 
-  // Progreso
-  const totalAssigned = content.length;
-  const completedCount = content.filter(c => ['approved', 'paid', 'archived', 'delivered'].includes(c.status)).length;
-  const progressPercent = totalAssigned > 0 ? (completedCount / totalAssigned) * 100 : 0;
+  // ── Montos Studio (COP) ───────────────────────────────────────────────
+  const studioPendingCOP = content
+    .filter(c => !c.is_ambassador_content)
+    .reduce((s, c) => {
+      let pay = 0;
+      if (c.editor_id === targetUserId && c.status === 'approved' && !c.editor_paid) pay += c.editor_payment || 0;
+      if (hasCreatorRole && c.creator_id === targetUserId && c.status === 'approved' && !c.creator_paid) pay += c.creator_payment || 0;
+      return s + pay;
+    }, 0);
+  const studioPaidCOP = content.reduce((s, c) => {
+    let pay = 0;
+    if (c.editor_id === targetUserId && c.editor_paid) pay += c.editor_payment || 0;
+    if (hasCreatorRole && c.creator_id === targetUserId && c.creator_paid) pay += c.creator_payment || 0;
+    return s + pay;
+  }, 0);
 
-  // Chart data for sparklines
-  const chartData = [totalAssigned, toEditContent.length, editingContent.length, approvedContent.length, paidContent.length];
+  // ── Filtros Marketplace ────────────────────────────────────────────────
+  const mktAssigned = useMemo(() =>
+    mktProjects.filter(p => ['pending', 'briefing'].includes(p.status)),
+  [mktProjects]);
+  const mktInProgress = useMemo(() =>
+    mktProjects.filter(p => p.status === 'in_progress'),
+  [mktProjects]);
+  const mktDelivered = useMemo(() =>
+    mktProjects.filter(p => ['revision', 'approved', 'completed'].includes(p.status) && p.payment_status !== 'released'),
+  [mktProjects]);
+  const mktNovedades = useMemo(() => {
+    const now = Date.now();
+    return mktProjects.filter(p => {
+      if (p.status === 'overdue') return true;
+      if (['completed', 'cancelled'].includes(p.status)) return false;
+      return p.deadline ? new Date(p.deadline).getTime() < now : false;
+    });
+  }, [mktProjects]);
+  const mktUnpaid = useMemo(() =>
+    mktProjects.filter(p => p.payment_method === 'payment' && p.payment_status !== 'released' && p.status !== 'cancelled'),
+  [mktProjects]);
+  const mktPaid = useMemo(() =>
+    mktProjects.filter(p => p.payment_status === 'released'),
+  [mktProjects]);
+
+  // ── Montos Marketplace por moneda ─────────────────────────────────────
+  const mktPendingByCurrency = useMemo(() =>
+    mktUnpaid.reduce<Record<string, number>>((acc, p) => {
+      const cur = p.currency || 'USD';
+      acc[cur] = (acc[cur] || 0) + (p.editor_payout ?? p.creator_payout ?? p.total_price);
+      return acc;
+    }, {}),
+  [mktUnpaid]);
+  const mktPaidByCurrency = useMemo(() =>
+    mktPaid.reduce<Record<string, number>>((acc, p) => {
+      const cur = p.currency || 'USD';
+      acc[cur] = (acc[cur] || 0) + (p.editor_payout ?? p.creator_payout ?? p.total_price);
+      return acc;
+    }, {}),
+  [mktPaid]);
+
+  // ── KPI combinados ────────────────────────────────────────────────────
+  const totalPendingCOP = studioPendingCOP + (mktPendingByCurrency['COP'] || 0);
+  const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
+  const pendingUSD = mktPendingByCurrency['USD'] || 0;
+  const paidUSD = mktPaidByCurrency['USD'] || 0;
+  // Alias para compatibilidad con ProgressToNextLevel
+  const pendingPayment = studioPendingCOP;
+  const totalPaid = studioPaidCOP;
+  const approvedVideos = useMemo(() =>
+    [...content]
+      .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
+      .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
+      .slice(0, 6),
+  [content]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={15} />
-        <motion.div
-          className="flex flex-col items-center gap-4"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            <Loader2 className="w-10 h-10 text-[hsl(270,100%,60%)]" />
-          </motion.div>
-          <motion.span
-            className="text-primary text-sm font-medium"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            Cargando panel...
-          </motion.span>
-        </motion.div>
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Tech Background Effects */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={25} />
-        <TechOrb size="lg" position="top-right" />
-        <TechOrb size="md" position="bottom-left" delay={1} />
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+            {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Editor'}
+          </h2>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+            {VOCABULARIO_ROL.editor.dashboard}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {profile?.is_ambassador && <AmbassadorBadge size="md" />}
+          <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
+          {user && <PortfolioButton userId={user.id} />}
+        </div>
       </div>
 
-      <div className="relative z-10 space-y-4 p-4 md:p-6">
-        {/* Header de la Sala de Edición - El Estudio */}
-        <PageHeader
-          icon={Film}
-          title={VOCABULARIO_ROL.editor.dashboard}
-          subtitle={VOCABULARIO_ROL.editor.bienvenida.replace('la Sala de Edición', `la Sala de Edición, ${profile?.full_name ?? ''}`)}
-          action={
-            <div className="flex flex-wrap items-center gap-3">
-              <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
-              {profile?.is_ambassador && (
-                <AmbassadorBadge size="md" variant="glow" />
-              )}
-              <LevelBadge creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
-              <CreditsDisplay creditos={totalPaid + (approvedContent.length * 50)} size="sm" />
-              <motion.div
-                className="flex items-center gap-2 px-4 py-2 rounded-sm border"
-                style={{
-                  background: 'linear-gradient(135deg, hsl(160 100% 45% / 0.15), hsl(160 100% 45% / 0.05))',
-                  borderColor: 'hsl(160 100% 45% / 0.3)',
-                  boxShadow: '0 0 20px hsl(160 100% 45% / 0.2)',
-                }}
-                whileHover={{ scale: 1.02 }}
-              >
-                <DollarSign className="w-5 h-5 text-emerald-400" />
-                <span className="font-bold text-emerald-400 text-lg">
-                  ${pendingPayment.toLocaleString()}
-                </span>
-                <span className="text-xs text-emerald-400/70 hidden sm:inline">pendiente</span>
-              </motion.div>
-              {user && <PortfolioButton userId={user.id} />}
-            </div>
-          }
-        />
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800/60 p-1 rounded-lg w-fit">
+        {TABS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            onClick={() => setDashboardTab(id)}
+            className={cn(
+              'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
+              dashboardTab === id
+                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300',
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
 
-        {/* Dashboard Mode Toggle */}
-        <div className="flex gap-2 bg-white/5 p-1 rounded-sm w-fit">
-          <button
-            onClick={() => setDashboardTab('studio')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'studio' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Film className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Estudio
-          </button>
-          <button
-            onClick={() => setDashboardTab('marketplace')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'marketplace' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <Store className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Marketplace
-          </button>
-          <button
-            onClick={() => setDashboardTab('wallet')}
-            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
-              dashboardTab === 'wallet' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            <DollarSign className="h-4 w-4 inline-block mr-1.5 -mt-0.5" />
-            Mis cobros
-          </button>
-        </div>
-
-        {dashboardTab === 'wallet' && profile?.organization_id && user?.id ? (
-          <div className="bg-card border border-border rounded-xl p-4 md:p-6">
+      {/* Wallet tab */}
+      {dashboardTab === 'wallet' && (
+        profile?.current_organization_id && user?.id ? (
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4 md:p-6">
             <TalentWalletView
               userId={targetUserId ?? user.id}
-              organizationId={profile.organization_id}
+              organizationId={profile.current_organization_id}
+              talentName={profile.full_name || 'Editor'}
             />
           </div>
-        ) : dashboardTab === 'marketplace' ? (
-          <MarketplaceDashboardTab role="editor" />
         ) : (
-        <>
-        {/* Season Urgency Banner */}
-        <SeasonUrgencyBanner />
+          <div className="py-12 text-center text-sm text-muted-foreground">
+            Función no disponible para tu tipo de cuenta.
+          </div>
+        )
+      )}
 
-        {/* Banner de Temporada - El Estudio */}
-        <SeasonBanner variant="compact" showMetas={false} />
-
-        {/* Progreso al Siguiente Nivel */}
-        <ProgressToNextLevel
-          creditosActuales={totalPaid + (approvedContent.length * 50)}
-          size="sm"
-        />
-
-        {/* Acciones Rápidas de la Sala de Edición */}
-        <QuickActions
-          rol="editor"
-          stats={{
-            pendientes: toEditContent.length + editingContent.length,
-            urgentes: editingContent.length,
-          }}
-          onAction={(action) => {
-            switch (action) {
-              case 'ver_cola':
-                navigate('/board');
-                break;
-              case 'editar':
-                navigate('/board');
-                break;
-              case 'exportar':
-                navigate('/board');
-                break;
-              case 'ver_reel':
-                if (user) navigate(`/portfolio/${user.id}`);
-                break;
-            }
-          }}
-          variant="row"
-        />
-
-        {/* Stats Grid - Tech Style */}
-        <motion.div 
-          className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ staggerChildren: 0.1 }}
-        >
-          <TechKpiCard
-            title="Total Asignados"
-            value={content.length}
-            icon={Scissors}
-            color="violet"
-            chartType="sparkline"
-            chartData={chartData}
-            onClick={() => openKpiDialog('Total Asignados', content)}
-            size="sm"
-          />
-          <TechKpiCard
-            title="Por Editar"
-            value={toEditContent.length}
-            icon={Clock}
-            color="cyan"
-            chartType="radial"
-            goalValue={content.length}
-            onClick={() => openKpiDialog('Por Editar', toEditContent)}
-            size="sm"
-          />
-          <TechKpiCard
-            title="En Edición"
-            value={editingContent.length}
-            icon={Video}
-            color="amber"
-            chartType="bar"
-            onClick={() => openKpiDialog('En Edición', editingContent)}
-            size="sm"
-          />
-          <TechKpiCard
-            title="Aprobados"
-            value={approvedContent.length}
-            icon={CheckCircle2}
-            color="emerald"
-            chartType="radial"
-            goalValue={content.length}
-            onClick={() => openKpiDialog('Aprobados', approvedContent)}
-            size="sm"
-          />
-          <TechKpiCard
-            title="Por Pagar"
-            value={unpaidContent.length}
-            icon={DollarSign}
-            color="amber"
-            subtitle={`$${pendingPayment.toLocaleString()}`}
-            chartType="bar"
-            onClick={() => openKpiDialog('Por Pagar', unpaidContent)}
-            size="sm"
-          />
-          <TechKpiCard
-            title="Pagados"
-            value={paidContent.length}
-            icon={CreditCard}
-            color="emerald"
-            subtitle={`$${totalPaid.toLocaleString()}`}
-            chartType="sparkline"
-            onClick={() => openKpiDialog('Pagados', paidContent)}
-            size="sm"
-          />
-        </motion.div>
-
-        {/* UGC Points Widget + Progress */}
-        {targetUserId && (
-          <motion.div 
-            className="grid grid-cols-1 lg:grid-cols-3 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <RoleUPWidget userId={targetUserId} role="editor" />
-            <div className="lg:col-span-2">
-              <Card className="border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-background h-full overflow-hidden relative">
-                {/* Card glow effect */}
-                <motion.div
-                  className="absolute inset-0 opacity-30"
-                  style={{
-                    background: 'radial-gradient(circle at 50% 0%, hsl(270 100% 60% / 0.1), transparent 50%)',
-                  }}
-                />
-                <CardContent className="p-4 relative z-10">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <motion.div
-                        className="p-2 rounded-sm"
-                        style={{
-                          background: 'hsl(270 100% 60% / 0.15)',
-                          border: '1px solid hsl(270 100% 60% / 0.3)',
-                        }}
-                        animate={{
-                          boxShadow: [
-                            '0 0 10px hsl(270 100% 60% / 0.2)',
-                            '0 0 20px hsl(270 100% 60% / 0.4)',
-                            '0 0 10px hsl(270 100% 60% / 0.2)',
-                          ],
-                        }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <TrendingUp className="w-4 h-4 text-[hsl(270,100%,60%)]" />
-                      </motion.div>
-                      <h3 className="font-semibold text-sm text-primary">Progreso General</h3>
+      {/* Studio tab */}
+      {dashboardTab === 'studio' && (
+        <div className="space-y-6">
+          {/* Banner de actividad — rol + en proceso + por cobrar */}
+          {(inProgressContent.length + mktInProgress.length > 0 || totalPendingCOP > 0 || pendingUSD > 0) && (() => {
+            const totalInProgress = inProgressContent.length + mktInProgress.length;
+            const roleLabel = hasCreatorRole ? 'Editor & Creador' : 'Editor';
+            const actionLabel = hasCreatorRole ? 'edita, graba y entrega' : 'edita y entrega';
+            return (
+              <div className="relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-zinc-900/60 to-zinc-900/40 p-4">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent pointer-events-none" />
+                <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="p-2.5 rounded-lg bg-blue-500/15 flex-shrink-0">
+                      <Scissors className="h-4 w-4 text-blue-400" />
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {completedCount} de {totalAssigned} completados
-                    </span>
-                  </div>
-                  
-                  {/* Custom Tech Progress Bar */}
-                  <div className="h-3 bg-muted rounded-full overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
-                    <motion.div
-                      className="h-full relative overflow-hidden"
-                      style={{
-                        background: 'linear-gradient(90deg, hsl(270 100% 60%), hsl(300 100% 60%))',
-                        boxShadow: '0 0 20px hsl(270 100% 60% / 0.5)',
-                      }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressPercent}%` }}
-                      transition={{ duration: 1.5, ease: "easeOut" }}
-                    >
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                        animate={{ x: ["-100%", "200%"] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
-                    </motion.div>
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground mt-3">
-                    <span className="text-primary font-bold">{progressPercent.toFixed(0)}%</span> de tu contenido ha sido aprobado o entregado
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Pending Edit Alert */}
-        {toEditContent.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="border-[hsl(190,100%,50%,0.3)] bg-gradient-to-r from-[hsl(190,100%,50%,0.1)] to-transparent overflow-hidden relative">
-              <motion.div
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(90deg, hsl(190 100% 50% / 0.05), transparent)',
-                }}
-              />
-              <CardContent className="p-4 relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <motion.div 
-                      className="p-3 rounded-sm"
-                      style={{
-                        background: 'hsl(190 100% 50% / 0.15)',
-                        border: '1px solid hsl(190 100% 50% / 0.3)',
-                      }}
-                      animate={{
-                        boxShadow: [
-                          '0 0 10px hsl(190 100% 50% / 0.3)',
-                          '0 0 25px hsl(190 100% 50% / 0.5)',
-                          '0 0 10px hsl(190 100% 50% / 0.3)',
-                        ],
-                      }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      <Clock className="h-5 w-5 text-cyan-400" />
-                    </motion.div>
-                    <div>
-                      <p className="font-semibold text-cyan-300">Tienes {toEditContent.length} video(s) por editar</p>
-                      <p className="text-xs text-cyan-400/70">Revisa tu cola de edición</p>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 bg-blue-500/15 px-2 py-0.5 rounded-full">
+                          {roleLabel}
+                        </span>
+                        {totalInProgress > 0 && (
+                          <p className="text-sm font-semibold text-white">
+                            {totalInProgress} {totalInProgress === 1 ? 'proyecto' : 'proyectos'} en proceso
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
+                        {totalInProgress > 0 && (
+                          <p className="text-xs text-zinc-400">Es hora de {actionLabel}</p>
+                        )}
+                        {totalPendingCOP > 0 && (
+                          <p className="text-xs font-semibold text-green-400">
+                            ${totalPendingCOP.toLocaleString()} COP por cobrar
+                          </p>
+                        )}
+                        {pendingUSD > 0 && (
+                          <p className="text-xs font-semibold text-cyan-400">
+                            ${pendingUSD.toLocaleString()} USD por cobrar
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={() => navigate('/board')}
-                    className="bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30"
+                    className="bg-blue-600 hover:bg-blue-500 text-white border-0 flex-shrink-0 self-start sm:self-center"
                   >
                     Ver tablero
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                    <ArrowRight className="h-3 w-3 ml-1" />
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+              </div>
+            );
+          })()}
 
-        {/* Recent Content */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-primary">Contenido Reciente</h3>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/board')}
-              className="text-[hsl(270,100%,60%)] hover:text-primary hover:bg-[hsl(270,100%,60%,0.1)]"
-            >
-              Ver todo
-            </Button>
-          </div>
-          <div className="space-y-2">
-            {content.slice(0, 5).map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-              >
-                <Card 
-                  className="hover:border-[hsl(270,100%,60%,0.3)] transition-all cursor-pointer group"
-                  onClick={() => setSelectedContent(item)}
-                >
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-sm bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden border border-[hsl(270,100%,60%,0.2)]">
-                      {item.thumbnail_url ? (
-                        <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Play className="h-4 w-4 text-[hsl(270,100%,60%)]" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate text-white group-hover:text-primary transition-colors">{item.title}</p>
-                      <p className="text-xs text-muted-foreground">{item.creator?.full_name || 'Sin creador'}</p>
-                    </div>
-                    <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
-                      {STATUS_LABELS[item.status]}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-            {content.length === 0 && (
-              <Card className="border-[hsl(270,100%,60%,0.2)]">
-                <CardContent className="p-8 text-center">
-                  <motion.div
-                    animate={{
-                      rotate: [0, 10, -10, 0],
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <Scissors className="w-12 h-12 mx-auto text-[hsl(270,100%,60%)] mb-4" />
-                  </motion.div>
-                  <h4 className="font-semibold mb-2 text-white">Sin proyectos asignados</h4>
-                  <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
-                </CardContent>
-              </Card>
+          {/* Banners de temporada */}
+          <SeasonUrgencyBanner />
+          <SeasonBanner variant="compact" showMetas={false} />
+          <ProgressToNextLevel
+            creditosActuales={totalPaid + (approvedContent.length * 50)}
+            size="md"
+          />
+
+          {/* KPI Cards — Studio + Marketplace fusionados */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <NovaKpiCard
+              title="Asignados"
+              value={assignedContent.length + mktAssigned.length}
+              icon={Scissors}
+              variant="primary"
+              subtitle="sin iniciar"
+              onClick={() => openKpiDialog('Asignados', assignedContent, mktAssigned)}
+            />
+            <NovaKpiCard
+              title="En Proceso"
+              value={inProgressContent.length + mktInProgress.length}
+              icon={Clock}
+              variant="warning"
+              subtitle="antes de entrega"
+              onClick={() => openKpiDialog('En Proceso', inProgressContent, mktInProgress)}
+            />
+            <NovaKpiCard
+              title="Entregados"
+              value={deliveredContent.length + mktDelivered.length}
+              icon={CheckCircle2}
+              variant="success"
+              subtitle="entregados y corregidos"
+              onClick={() => openKpiDialog('Entregados', deliveredContent, mktDelivered)}
+            />
+            <NovaKpiCard
+              title="Novedades"
+              value={issueContent.length + mktNovedades.length}
+              icon={AlertTriangle}
+              variant="danger"
+              subtitle="requieren atención"
+              onClick={() => openKpiDialog('Novedades', issueContent, mktNovedades)}
+            />
+            <NovaKpiCard
+              title="Por Cobrar COP"
+              value={totalPendingCOP}
+              prefix="$"
+              icon={DollarSign}
+              variant="warning"
+              subtitle={`${unpaidContent.length + mktUnpaid.filter(p => (p.currency || 'USD') !== 'USD').length} ítems`}
+              onClick={() => openKpiDialog('Por Cobrar', unpaidContent, mktUnpaid)}
+            />
+            {pendingUSD > 0 && (
+              <NovaKpiCard
+                title="Por Cobrar USD"
+                value={pendingUSD}
+                prefix="$"
+                icon={DollarSign}
+                variant="warning"
+                subtitle={`${mktUnpaid.filter(p => p.currency === 'USD').length} ítems`}
+                onClick={() => openKpiDialog('Por Cobrar USD', [], mktUnpaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            <NovaKpiCard
+              title="Cobrado COP"
+              value={totalPaidCOP}
+              prefix="$"
+              icon={CreditCard}
+              variant="success"
+              subtitle={`${paidContent.length + mktPaid.filter(p => (p.currency || 'USD') !== 'USD').length} pagados`}
+              onClick={() => openKpiDialog('Cobrado', paidContent, mktPaid)}
+            />
+            {paidUSD > 0 && (
+              <NovaKpiCard
+                title="Cobrado USD"
+                value={paidUSD}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={`${mktPaid.filter(p => p.currency === 'USD').length} pagados`}
+                onClick={() => openKpiDialog('Cobrado USD', [], mktPaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            {isFreelancer && wallet && (
+              <NovaKpiCard
+                title="Balance Wallet"
+                value={wallet.available_balance || 0}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={(wallet.pending_balance ?? 0) > 0 ? `+ $${(wallet.pending_balance ?? 0).toLocaleString()} pendiente` : 'disponible'}
+              />
             )}
           </div>
-        </motion.div>
 
-        {/* Ranking y Historial de Puntos */}
-        {targetUserId && (
-          <motion.div 
-            className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
-            <UPHistoryTable userId={targetUserId} />
-          </motion.div>
-        )}
-        </>
-        )}
+          {/* UGC Points */}
+          {targetUserId && (
+            <RoleUPWidget
+              userId={targetUserId}
+              role="editor"
+              roles={hasCreatorRole ? ['creator', 'editor'] : undefined}
+            />
+          )}
 
-        {/* Content Detail Dialog */}
-        <UnifiedProjectModal
-          source="content"
-          projectId={selectedContent?.id}
-          open={!!selectedContent}
-          onOpenChange={(open) => !open && setSelectedContent(null)}
-          onUpdate={() => {
-            refetch();
-            setSelectedContent(null);
-          }}
-        />
 
-        {/* KPI Content Dialog - Now using TechKpiDialog */}
-        <TechKpiDialog
-          title={kpiDialog.title}
-          content={kpiDialog.content}
-          open={kpiDialog.open}
-          onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
-          onSelectContent={setSelectedContent}
-        />
-      </div>
+
+          {/* Videos aprobados */}
+          {approvedVideos.length > 0 && (
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                    Últimos Aprobados
+                  </h3>
+                  <span className="text-xs text-zinc-500">({approvedVideos.length})</span>
+                </div>
+                <button
+                  onClick={() => openKpiDialog('Aprobados', approvedContent, mktDelivered)}
+                  className="text-xs text-purple-500 hover:text-purple-400 transition-colors"
+                >
+                  Ver todos
+                </button>
+              </div>
+              <NovaVerticalVideoGrid
+                videos={approvedVideos}
+                onVideoClick={setVideoViewer}
+                maxItems={6}
+              />
+            </div>
+          )}
+
+          {/* Ranking e historial de puntos */}
+          {targetUserId && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
+              <UPHistoryTable userId={targetUserId} />
+            </div>
+          )}
+
+        </div>
+      )}
+
+      {/* Modals */}
+      <UnifiedProjectModal
+        source="content"
+        projectId={selectedContent?.id}
+        open={!!selectedContent}
+        onOpenChange={(open) => !open && setSelectedContent(null)}
+        onUpdate={() => { refetch(); setSelectedContent(null); }}
+      />
+      <UnifiedKpiDialog
+        title={kpiDialog.title}
+        studioContent={kpiDialog.studioContent}
+        marketplaceProjects={kpiDialog.marketplaceProjects}
+        open={kpiDialog.open}
+        onOpenChange={(open) => setKpiDialog(prev => ({ ...prev, open }))}
+        onSelectContent={setSelectedContent}
+        userId={user?.id}
+      />
+      <ClientVideoDetailSheet
+        content={videoViewer}
+        userId={user?.id}
+        open={!!videoViewer}
+        onClose={() => setVideoViewer(null)}
+        onUpdate={refetch}
+      />
     </div>
   );
 }

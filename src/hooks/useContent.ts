@@ -107,7 +107,7 @@ interface UseContentOptions {
   showOnlyAssigned?: boolean;
 }
 
-export function useContent(userId?: string, role?: 'creator' | 'editor' | 'client' | 'admin') {
+export function useContent(userId?: string, role?: 'creator' | 'editor' | 'client' | 'admin', enableRealtime: boolean = true) {
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -166,7 +166,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
   // Suscripción realtime para sincronización entre usuarios
   useRealtimeContent({
     organizationId: currentOrgId,
-    enabled: !orgLoading && !!currentOrgId,
+    enabled: enableRealtime && !orgLoading && !!currentOrgId,
     onContentChange: handleRealtimeChange,
     profileCache: profileCacheRef.current,
   });

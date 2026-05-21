@@ -18,7 +18,7 @@ import {
   useClientBillingItems,
   useClientClosings,
   useDeleteFillmaker,
-  useUpdateClientClosing,
+  usePayClientClosing,
   useDeleteClientClosing,
   useUpdateContentBillingPrice,
   type BillingItem,
@@ -166,7 +166,7 @@ function BillingItemRow({
 // ─── Fila de cierre ───────────────────────────────────────────
 
 function ClosingRow({
-  closing, orgId, clientId, clientName, orgName, onRefetch,
+  closing, orgId, clientId, clientName, orgName, onRefetch, allItems,
 }: {
   closing: ClientClosing;
   orgId: string;
@@ -174,23 +174,21 @@ function ClosingRow({
   clientName: string;
   orgName: string;
   onRefetch: () => void;
+  allItems: BillingItem[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
-  const updateClosing = useUpdateClientClosing();
+  // CRITICAL 3 — usar RPC con cascade correcto en lugar de UPDATE directo
+  const payClosing = usePayClientClosing();
   const deleteClosing = useDeleteClientClosing();
 
   async function handleMarkPaid() {
     setMarkingPaid(true);
     try {
-      await updateClosing.mutateAsync({
-        id: closing.id,
+      await payClosing.mutateAsync({
+        closingId: closing.id,
+        orgId,
         clientId,
-        updates: {
-          status: 'paid',
-          paid_at: new Date().toISOString(),
-          payment_date: new Date().toISOString().split('T')[0],
-        },
       });
       toast({ title: 'Marcado como pagado' });
       onRefetch();
@@ -215,9 +213,10 @@ function ClosingRow({
   }
 
   function handleDownloadPDF() {
+    const closingItems = allItems.filter(i => i.closing_id === closing.id);
     generateClientInvoicePDF({
       closing,
-      items: [],
+      items: closingItems,
       clientName,
       orgName,
     });
@@ -293,11 +292,20 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
   const [closingOpen, setClosingOpen] = useState(false);
 
   const { data: allItems = [], isLoading: loadingItems, refetch: refetchItems } = useClientBillingItems(orgId, clientId);
-  const { data: closings = [], isLoading: loadingClosings, refetch: refetchClosings } = useClientClosings(clientId);
+  // CRITICAL 1 — pasar orgId como primer argumento
+  const { data: closings = [], isLoading: loadingClosings, refetch: refetchClosings } = useClientClosings(orgId, clientId);
   const deleteFillmaker = useDeleteFillmaker();
 
   const pendingItems = useMemo(() => allItems.filter(i => i.billing_status === 'pending'), [allItems]);
   const pendingTotal = useMemo(() => pendingItems.reduce((acc, i) => acc + i.price_client, 0), [pendingItems]);
+  const pendingByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of pendingItems) {
+      map.set(item.currency, (map.get(item.currency) ?? 0) + item.price_client);
+    }
+    return Array.from(map.entries());
+  }, [pendingItems]);
+  const hasMultiCurrency = pendingByCurrency.length > 1;
 
   async function handleDeleteFillmaker(id: string) {
     try {
@@ -324,7 +332,12 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
             </div>
             <div>
               <p className="text-white/60 text-xs uppercase tracking-wide">Pendiente de cobrar</p>
-              <p className="text-2xl font-bold text-white">{formatCurrency(pendingTotal, 'COP')}</p>
+              {hasMultiCurrency
+                ? pendingByCurrency.map(([cur, amt]) => (
+                    <p key={cur} className="text-lg font-bold text-white leading-tight">{formatCurrency(amt, cur)}</p>
+                  ))
+                : <p className="text-2xl font-bold text-white">{formatCurrency(pendingTotal, pendingByCurrency[0]?.[0] ?? 'COP')}</p>
+              }
               <p className="text-violet-400 text-xs mt-0.5">{pendingItems.length} ítem{pendingItems.length !== 1 ? 's' : ''} sin cobrar</p>
             </div>
           </div>
@@ -410,6 +423,7 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
                 clientName={clientName}
                 orgName={orgName}
                 onRefetch={handleRefetch}
+                allItems={allItems}
               />
             ))}
           </div>

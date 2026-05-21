@@ -65,24 +65,24 @@ export const LATAM_COUNTRIES: CountryOption[] = [
 export const registrationFormSchema = z.object({
   // Datos personales
   fullName: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(100, 'El nombre no puede exceder 100 caracteres'),
+    .min(2, 'Tu nombre debe tener al menos 2 letras')
+    .max(100, 'Ese nombre es demasiado largo'),
 
   email: z.string()
-    .email('Email inválido')
-    .max(255, 'El email no puede exceder 255 caracteres'),
+    .email('Escribe un correo válido, como nombre@email.com')
+    .max(255, 'Ese correo es demasiado largo'),
 
   phone: z.string()
     .min(7, 'El teléfono debe tener al menos 7 dígitos')
-    .max(20, 'El teléfono no puede exceder 20 dígitos')
-    .regex(/^[0-9\s]+$/, 'Solo se permiten números'),
+    .max(20, 'Ese número es demasiado largo')
+    .regex(/^[0-9\s]+$/, 'Solo escribe números, sin letras ni símbolos'),
 
-  phoneCountryCode: z.string().min(1, 'Selecciona un país'),
+  phoneCountryCode: z.string().min(1, 'Elige tu país'),
 
   // Contraseña
   password: z.string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .max(72, 'La contraseña no puede exceder 72 caracteres'),
+    .min(8, 'La contraseña debe tener mínimo 8 caracteres')
+    .max(72, 'La contraseña es demasiado larga'),
 
   confirmPassword: z.string(),
 
@@ -95,7 +95,7 @@ export const registrationFormSchema = z.object({
   }),
 
   acceptTerms: z.literal(true, {
-    errorMap: () => ({ message: 'Debes aceptar los términos y condiciones' })
+    errorMap: () => ({ message: 'Debes aceptar los términos para continuar' })
   }),
 
   acceptPrivacy: z.literal(true, {
@@ -188,35 +188,29 @@ export interface UserTypeOption {
 export const ORG_USER_TYPE_OPTIONS: UserTypeOption[] = [
   {
     type: 'client',
-    title: 'Cliente',
-    description: 'Solicita contenido y gestiona proyectos',
+    title: 'Empresa / Marca',
+    description: 'Quiero contratar creadores y gestionar campañas de contenido',
     icon: 'Building2',
   },
   {
     type: 'freelancer',
-    title: 'Freelancer',
-    description: 'Crea contenido y ofrece servicios',
-    icon: 'User',
+    title: 'Creador / Talento',
+    description: 'Quiero crear contenido y trabajar con marcas',
+    icon: 'Sparkles',
   },
 ];
 
 export const GENERAL_USER_TYPE_OPTIONS: UserTypeOption[] = [
   {
-    type: 'brand',
-    title: 'Marca / Empresa',
-    description: 'Busco talento para crear contenido',
+    type: 'client',
+    title: 'Empresa / Marca',
+    description: 'Quiero contratar creadores para mi negocio o marca',
     icon: 'Building2',
   },
   {
-    type: 'organization',
-    title: 'Organización / Agencia',
-    description: 'Gestiono equipos de creadores',
-    icon: 'Users',
-  },
-  {
     type: 'freelancer',
-    title: 'Freelancer',
-    description: 'Soy creador de contenido independiente',
+    title: 'Creador / Talento',
+    description: 'Soy creador de contenido y quiero trabajar con marcas',
     icon: 'Sparkles',
   },
 ];
@@ -228,8 +222,8 @@ export const GENERAL_USER_TYPE_OPTIONS: UserTypeOption[] = [
 /**
  * Determina si el tipo de usuario requiere nombre de empresa
  */
-export function requiresCompanyName(userType: UserType | undefined): boolean {
-  return userType === 'client' || userType === 'brand' || userType === 'organization';
+export function requiresCompanyName(_userType: UserType | undefined): boolean {
+  return false; // Company is created post-wizard from the dashboard
 }
 
 /**
@@ -257,8 +251,8 @@ export function getStepIndex(steps: WizardStep[], currentStep: WizardStep): numb
 export function getStepLabel(step: WizardStep): string {
   const labels: Record<WizardStep, string> = {
     'invite-code': 'Código',
-    'type-selector': 'Tipo',
-    'form': 'Datos',
+    'type-selector': 'Elige',
+    'form': 'Tus datos',
     'success': 'Listo',
   };
   return labels[step];

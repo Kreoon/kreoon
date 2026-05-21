@@ -44,6 +44,7 @@ interface Client {
   is_vip: boolean;
   username: string | null;
   is_internal_brand: boolean;
+  organization_id: string | null;
 }
 
 interface ClientUser {
@@ -248,7 +249,8 @@ export function ClientsContent() {
         users_count: usersCountMap.get(c.id) || 0,
         is_vip: c.is_vip ?? false,
         username: c.username,
-        is_internal_brand: c.is_internal_brand ?? false
+        is_internal_brand: c.is_internal_brand ?? false,
+        organization_id: c.organization_id ?? null,
       }));
 
       clientsList.sort((a, b) => {

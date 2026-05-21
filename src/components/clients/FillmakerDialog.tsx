@@ -48,21 +48,23 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
   const createFillmaker = useCreateFillmaker();
 
   const loadEditors = useCallback(async () => {
-    const { data: members } = await (supabase as any)
+    const { data: members, error: membersError } = await (supabase as any)
       .from('organization_members')
       .select('user_id')
       .eq('organization_id', orgId)
       .in('role', ['editor', 'admin', 'content_creator']);
 
+    if (membersError) { console.error('Error cargando miembros para editors:', membersError); return; }
     if (!members?.length) return;
 
     const ids = members.map((m: any) => m.user_id);
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('id, full_name, avatar_url')
       .in('id', ids)
       .order('full_name');
 
+    if (profilesError) { console.error('Error cargando perfiles de editors:', profilesError); return; }
     setEditors((profiles ?? []) as Editor[]);
   }, [orgId]);
 
@@ -92,6 +94,10 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
     }
 
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) {
+      toast({ title: 'Error de sesión', variant: 'destructive' });
+      return;
+    }
 
     try {
       await createFillmaker.mutateAsync({
@@ -105,7 +111,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
         currency: form.currency,
         editor_id: form.editor_id || undefined,
         notes: form.notes.trim() || undefined,
-        created_by: user!.id,
+        created_by: user.id,
       });
       toast({ title: 'Servicio de grabación registrado' });
       onOpenChange(false);

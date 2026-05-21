@@ -2,6 +2,7 @@ import * as React from "react";
 import { Play, Video, CheckCircle2, Clock, Eye, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Content, STATUS_LABELS, ContentStatus } from "@/types/database";
+import { getBunnyVideoUrls } from "@/hooks/useHLSPlayer";
 
 interface NovaVerticalVideoGridProps {
   videos: Content[];
@@ -10,44 +11,30 @@ interface NovaVerticalVideoGridProps {
   className?: string;
 }
 
-const statusConfig: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
+const statusConfig: Record<string, { icon: React.ElementType; color: string; bg: string; label?: string }> = {
   approved: { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
-  paid: { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
+  paid:     { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10" },
+  archived: { icon: CheckCircle2, color: "text-green-500", bg: "bg-green-500/10", label: "Aprobado" },
   delivered: { icon: Eye, color: "text-blue-500", bg: "bg-blue-500/10" },
   corrected: { icon: Eye, color: "text-blue-500", bg: "bg-blue-500/10" },
-  review: { icon: Eye, color: "text-amber-500", bg: "bg-amber-500/10" },
-  issue: { icon: AlertTriangle, color: "text-orange-500", bg: "bg-orange-500/10" },
-  editing: { icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
-  recording: { icon: Clock, color: "text-cyan-500", bg: "bg-cyan-500/10" },
-  draft: { icon: Clock, color: "text-zinc-500", bg: "bg-zinc-500/10" },
+  review:   { icon: Eye, color: "text-amber-500", bg: "bg-amber-500/10" },
+  issue:    { icon: AlertTriangle, color: "text-orange-500", bg: "bg-orange-500/10" },
+  editing:  { icon: Clock, color: "text-purple-500", bg: "bg-purple-500/10" },
+  recording:{ icon: Clock, color: "text-cyan-500", bg: "bg-cyan-500/10" },
+  draft:    { icon: Clock, color: "text-zinc-500", bg: "bg-zinc-500/10" },
 };
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-
 function getThumbnailUrl(content: Content): string | null {
-  // Prefer explicit thumbnail stored in DB
-  if (content.thumbnail_url && !content.thumbnail_url.includes('iframe.mediadelivery.net')) {
-    return content.thumbnail_url;
-  }
+  // Build ordered URL list identical to ClientDashboardOverview's VideoThumbnailCard
+  const urlList: string[] = [];
+  if (content.bunny_embed_url) urlList.push(content.bunny_embed_url);
+  if (content.video_url && !urlList.includes(content.video_url)) urlList.push(content.video_url);
+  const extra = content.video_urls as string[] | null;
+  if (extra) extra.filter(u => u?.trim() && !urlList.includes(u)).forEach(u => urlList.push(u));
 
-  const videoUrl = (content.video_urls as string[] | undefined)?.find(u => u?.trim())
-    || content.video_url
-    || content.bunny_embed_url
-    || '';
-
-  // Extract video ID from embed URL and proxy through edge function
-  // (avoids constructing wrong CDN hostname from library ID)
-  const embedMatch = videoUrl.match(/iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i);
-  if (embedMatch) {
-    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(embedMatch[1])}`;
-  }
-
-  const cdnMatch = videoUrl.match(/b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdnMatch) {
-    return `${SUPABASE_URL}/functions/v1/bunny-thumbnail?content_id=${encodeURIComponent(content.id)}&video_id=${encodeURIComponent(cdnMatch[1])}`;
-  }
-
-  return null;
+  const firstUrl = urlList.find(u => u?.trim()) || '';
+  const bunnyUrls = firstUrl ? getBunnyVideoUrls(firstUrl) : null;
+  return bunnyUrls?.thumbnail || content.thumbnail_url || null;
 }
 
 export function NovaVerticalVideoGrid({
@@ -148,7 +135,7 @@ export function NovaVerticalVideoGrid({
                   {video.title}
                 </p>
                 <p className="text-[10px] text-zinc-100/70 mt-0.5">
-                  {STATUS_LABELS[status] || status}
+                  {config.label ?? STATUS_LABELS[status] ?? status}
                 </p>
               </div>
             </div>

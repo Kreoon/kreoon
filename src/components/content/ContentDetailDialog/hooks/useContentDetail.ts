@@ -69,7 +69,9 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     marketing_output: '',
     captions: '',
     broll_output: '',
-    sphere_phase: ''
+    sphere_phase: '',
+    creator_type: 'ugc',
+    video_pov: 'primera_persona',
   };
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
@@ -146,9 +148,11 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         marketing_output: (content as any).marketing_output || '',
         captions: (content as any).captions || '',
         broll_output: (content as any).broll_output || '',
-        sphere_phase: (content as any).sphere_phase || ''
+        sphere_phase: (content as any).sphere_phase || '',
+        creator_type: (content as any).creator_type || 'ugc',
+        video_pov: (content as any).video_pov || 'primera_persona',
       };
-      
+
       setFormData(newFormData);
       originalFormDataRef.current = newFormData;
       setCurrentStatus(content.status);
@@ -385,6 +389,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('trafficker_guidelines')) updates.trafficker_guidelines = data.trafficker_guidelines || null;
       if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+      if (changed('creator_type')) updates.creator_type = data.creator_type || 'ugc';
+      if (changed('video_pov')) updates.video_pov = data.video_pov || 'primera_persona';
       // Script generation blocks
       if (changed('director_output')) updates.director_output = data.director_output || null;
       if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;
@@ -436,6 +442,8 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('designer_guidelines')) updates.designer_guidelines = data.designer_guidelines || null;
       if (changed('admin_guidelines')) updates.admin_guidelines = data.admin_guidelines || null;
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
+      if (changed('creator_type')) updates.creator_type = data.creator_type || 'ugc';
+      if (changed('video_pov')) updates.video_pov = data.video_pov || 'primera_persona';
       // Script generation blocks
       if (changed('director_output')) updates.director_output = data.director_output || null;
       if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;

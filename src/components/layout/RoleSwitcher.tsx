@@ -80,8 +80,11 @@ export function RoleSwitcher({ collapsed = false }: RoleSwitcherProps) {
   // Filter out 'ambassador' - it's a badge/privilege, not a switchable functional role
   const selectableRoles = roles.filter((r) => r !== 'ambassador');
 
-  // Only show if user has multiple selectable roles
-  if (selectableRoles.length <= 1) {
+  // Only show if user has roles from DIFFERENT permission groups (meaningful context switch)
+  // e.g. creator+editor = both talent → no switch needed
+  // e.g. creator+client = talent+client → switch needed
+  const uniqueGroups = new Set(selectableRoles.map((r) => getPermissionGroup(r)));
+  if (selectableRoles.length <= 1 || uniqueGroups.size <= 1) {
     return null;
   }
 
