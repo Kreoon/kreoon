@@ -190,9 +190,10 @@ export function useOrgFinancialHealth(orgId: string | undefined, currency: strin
 export function useOrgFinancialAnomalies(orgId: string | undefined, currency: string = 'COP') {
   return useQuery({
     queryKey: ['org-financial-anomalies', orgId, currency],
+    enabled: !!orgId,
     queryFn: async (): Promise<FinancialAnomaly[]> => {
       const { data, error } = await (supabase as any).rpc('get_org_financial_anomalies', {
-        p_org_id: orgId, p_currency: currency,
+        p_org_id: orgId!, p_currency: currency,
       });
       if (error) throw error;
       return ((data ?? []) as any[]).map(r => ({
