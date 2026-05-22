@@ -210,17 +210,56 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const formData = await req.formData();
-    const audioFile = formData.get("audio") as File | null;
+    // Soporte dual: JSON con base64 (nuevo) o FormData (legacy)
+    const contentType = req.headers.get("content-type") || "";
+    let audioFile: File;
 
-    if (!audioFile) {
-      return new Response(
-        JSON.stringify({ success: false, error: "No audio file provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (contentType.includes("application/json")) {
+      // Nuevo path: { audio_base64: string, audio_type: string }
+      const body = await req.json();
+      const { audio_base64, audio_type } = body as { audio_base64?: string; audio_type?: string };
+
+      if (!audio_base64) {
+        return new Response(
+          JSON.stringify({ success: false, error: "audio_base64 requerido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Decodificar base64 → bytes
+      const binaryStr = atob(audio_base64);
+      const audioBytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
+
+      // Normalizar MIME type
+      const rawMime = (audio_type || "audio/webm").split(";")[0].trim().toLowerCase();
+      const extMap2: Record<string, string> = {
+        "audio/webm": ".webm", "audio/ogg": ".ogg", "audio/mp4": ".m4a",
+        "video/mp4": ".mp4", "audio/mpeg": ".mp3", "audio/wav": ".wav",
+        "audio/x-wav": ".wav", "audio/flac": ".flac", "audio/aac": ".m4a",
+        "audio/x-m4a": ".m4a",
+      };
+      const ext2 = extMap2[rawMime] || ".webm";
+      const whisperMime2 = rawMime === "video/mp4" ? "audio/mp4" : rawMime;
+      const fileName2 = `recording${ext2}`;
+
+      console.log(`[transcribe] Base64 path: bytes=${audioBytes.byteLength}, rawMime=${rawMime}, fileName=${fileName2}`);
+      audioFile = new File([audioBytes], fileName2, { type: whisperMime2 });
+
+    } else {
+      // Legacy path: FormData
+      const formData = await req.formData();
+      const rawFile = formData.get("audio") as File | null;
+
+      if (!rawFile) {
+        return new Response(
+          JSON.stringify({ success: false, error: "No audio file provided" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      audioFile = rawFile;
+      console.log(`[transcribe] FormData path: name=${audioFile.name}, size=${audioFile.size}, type=${audioFile.type}`);
     }
-
-    console.log(`[transcribe] Received audio: ${audioFile.name}, size: ${audioFile.size}, type: ${audioFile.type}`);
 
     // Step 1: Transcribe with Whisper (reliable, purpose-built for speech-to-text)
     const transcription = await transcribeWithWhisper(audioFile);

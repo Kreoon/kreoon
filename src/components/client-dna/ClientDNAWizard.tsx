@@ -21,6 +21,19 @@ interface TranscriptionResult {
   emotional_analysis: Record<string, unknown>;
 }
 
+// Convierte un Blob a base64 puro (sin prefijo data:) — evita problemas de multipart/FormData en Supabase Edge Functions
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      resolve(dataUrl.split(',')[1]); // quita "data:audio/webm;base64,"
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 // Extract actual error message from Supabase FunctionsHttpError or data (async)
 async function extractErrorMessage(data: unknown, fnError: unknown, fallback: string): Promise<string> {
   // Try data.error first (when SDK passes response body in data)
@@ -103,14 +116,15 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
     transcriptionRef.current = null;
 
     const promise = (async (): Promise<TranscriptionResult> => {
-      const formData = new FormData();
-      formData.append('audio', blob);
-
+      // Usar base64 JSON en vez de FormData — evita bugs de multipart en Supabase Edge Functions
+      const audio_base64 = await blobToBase64(blob);
       const data = await invokeWithRetry<{
         success: boolean;
         transcription: string;
         emotional_analysis: Record<string, unknown>;
-      }>('transcribe-audio-gemini', { body: formData });
+      }>('transcribe-audio-gemini', {
+        body: { audio_base64, audio_type: blob.type || 'audio/webm' },
+      });
 
       return {
         transcription: data.transcription,
@@ -155,15 +169,15 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
         // Still running in background - wait for it
         result = await transcriptionPromiseRef.current;
       } else {
-        // Shouldn't happen, but start fresh if needed
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
-
+        // Fallback: convertir a base64 y enviar como JSON
+        const audio_base64 = await blobToBase64(audioBlob);
         const data = await invokeWithRetry<{
           success: boolean;
           transcription: string;
           emotional_analysis: Record<string, unknown>;
-        }>('transcribe-audio-gemini', { body: formData });
+        }>('transcribe-audio-gemini', {
+          body: { audio_base64, audio_type: audioBlob.type || 'audio/webm' },
+        });
 
         result = {
           transcription: data.transcription,
