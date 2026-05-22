@@ -91,6 +91,10 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
   const [error, setError] = useState<string | null>(null);
 
+  // Contexto del producto — ayuda a la IA a entender el audio
+  const [productName, setProductName] = useState('');
+  const [productContext, setProductContext] = useState('');
+
   // Background transcription state
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [transcriptionReady, setTranscriptionReady] = useState(false);
@@ -125,7 +129,13 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
         transcription: string;
         emotional_analysis: Record<string, unknown>;
       }>('transcribe-audio-gemini', {
-        body: { audio_base64, audio_type: blob.type || '', audio_name },
+        body: {
+          audio_base64,
+          audio_type: blob.type || '',
+          audio_name,
+          product_name: productName || undefined,
+          product_context: productContext || undefined,
+        },
       });
 
       return {
@@ -147,7 +157,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
         setIsTranscribing(false);
         // Don't set error state here - will surface when user clicks submit
       });
-  }, []);
+  }, [productName, productContext]);
 
   const canSubmit = audioBlob && selectedLocations.length > 0;
 
@@ -179,7 +189,13 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
           transcription: string;
           emotional_analysis: Record<string, unknown>;
         }>('transcribe-audio-gemini', {
-          body: { audio_base64, audio_type: audioBlob.type || '', audio_name },
+          body: {
+            audio_base64,
+            audio_type: audioBlob.type || '',
+            audio_name,
+            product_name: productName || undefined,
+            product_context: productContext || undefined,
+          },
         });
 
         result = {
@@ -195,7 +211,9 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
           client_id: clientId,
           transcription: result.transcription,
           emotional_analysis: result.emotional_analysis,
-          locations: selectedLocations
+          locations: selectedLocations,
+          product_name: productName || undefined,
+          product_context: productContext || undefined,
         }
       });
 
@@ -317,12 +335,55 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
             <h3 className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Graba tu audio</h3>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center">
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-xs mb-6 sm:mb-10">
+          <div className="flex-1 flex flex-col">
+            {/* Contexto del producto — ayuda a la IA a entender el audio */}
+            <div className="space-y-2.5 mb-5">
+              <div>
+                <label className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5 block">
+                  Producto o servicio principal
+                </label>
+                <input
+                  type="text"
+                  value={productName}
+                  onChange={e => setProductName(e.target.value)}
+                  placeholder="Ej: Webinar gratuito Vlight Solution"
+                  disabled={processingStep !== 'idle'}
+                  className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
+                             bg-zinc-50 dark:bg-zinc-900
+                             border border-zinc-200 dark:border-zinc-700
+                             text-zinc-900 dark:text-white
+                             placeholder-zinc-400 dark:placeholder-zinc-600
+                             focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500
+                             disabled:opacity-50 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  Descripción corta
+                  <span className="text-zinc-400 dark:text-zinc-600 normal-case font-normal">(opcional)</span>
+                </label>
+                <textarea
+                  value={productContext}
+                  onChange={e => setProductContext(e.target.value)}
+                  placeholder="Ej: Lipolítico para médicos estéticos que elimina grasa facial sin dolor desde la primera sesión"
+                  rows={2}
+                  disabled={processingStep !== 'idle'}
+                  className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
+                             bg-zinc-50 dark:bg-zinc-900
+                             border border-zinc-200 dark:border-zinc-700
+                             text-zinc-900 dark:text-white
+                             placeholder-zinc-400 dark:placeholder-zinc-600
+                             focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500
+                             disabled:opacity-50 resize-none transition-colors"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-xs mx-auto mb-5 sm:mb-8">
               Responde todas las preguntas en un solo audio. Entre más detalles, mejor será tu ADN.
             </p>
 
-            <div className="py-4 sm:py-6">
+            <div className="flex justify-center py-2 sm:py-4">
               <AudioRecorder
                 onAudioReady={handleAudioReady}
                 disabled={processingStep !== 'idle'}

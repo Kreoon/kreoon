@@ -417,7 +417,7 @@ Deno.serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { client_id, transcription, emotional_analysis, locations } = body;
+    const { client_id, transcription, emotional_analysis, locations, product_name, product_context } = body;
 
     if (!client_id) {
       return new Response(
@@ -460,9 +460,12 @@ Deno.serve(async (req: Request) => {
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
     const systemPrompt = DNA_SYSTEM_PROMPT + emotionalContext;
 
-    // Build user prompt with locations
+    // Build user prompt with product context and locations
     const locationsContext = formatLocations(locations || []);
-    const userPrompt = `Transcripcion del audio del cliente describiendo su negocio:\n\n${transcription}${locationsContext}`;
+    const productCtx = product_name
+      ? `\n\nContexto adicional del producto/servicio principal: ${product_name}${product_context ? ` — ${product_context}` : ""}. Usa esta informacion para enriquecer y precisar el ADN generado.`
+      : "";
+    const userPrompt = `Transcripcion del audio del cliente describiendo su negocio:\n\n${transcription}${productCtx}${locationsContext}`;
 
     // Generate DNA with Perplexity (fallback to Gemini) with retry logic
     let aiResponse = "";
