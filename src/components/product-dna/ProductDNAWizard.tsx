@@ -1,5 +1,15 @@
 import { useState, useRef, useCallback } from 'react';
 import { Dna, ChevronRight, Loader2, CheckCircle2, Circle, Sparkles, Check } from 'lucide-react';
+
+// Convierte Blob a base64 puro (evita bugs de multipart en Supabase Edge Functions)
+async function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
 import { AudioRecorder } from '@/components/client-dna/AudioRecorder';
 import {
   PRODUCT_DNA_QUESTIONS,
@@ -77,6 +87,10 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const transcriptionRef = useRef<TranscriptionResult | null>(null);
   const transcriptionPromiseRef = useRef<Promise<TranscriptionResult> | null>(null);
 
+  // Contexto del producto — ayuda a la IA a entender el audio
+  const [productName, setProductName] = useState('');
+  const [productContext, setProductContext] = useState('');
+
   // Selection state (all multi-select, max 3 each)
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [goals, setGoals] = useState<string[]>([]);
@@ -105,14 +119,22 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
     transcriptionRef.current = null;
 
     const promise = (async (): Promise<TranscriptionResult> => {
-      const formData = new FormData();
-      formData.append('audio', blob);
+      const audio_base64 = await blobToBase64(blob);
+      const audio_name = (blob instanceof File && blob.name) ? blob.name : undefined;
 
       const data = await invokeWithRetry<{
         success: boolean;
         transcription: string;
         emotional_analysis: Record<string, unknown>;
-      }>('transcribe-audio-gemini', { body: formData });
+      }>('transcribe-audio-gemini', {
+        body: {
+          audio_base64,
+          audio_type: blob.type || '',
+          audio_name,
+          product_name: productName || undefined,
+          product_context: productContext || undefined,
+        },
+      });
 
       return {
         transcription: data.transcription,
@@ -132,7 +154,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         console.error('Background transcription failed:', err);
         setIsTranscribing(false);
       });
-  }, []);
+  }, [productName, productContext]);
 
   // Toggle selection helpers (all max 3)
   const toggleSelection = (
@@ -201,15 +223,23 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       } else if (transcriptionPromiseRef.current) {
         transcriptionResult = await transcriptionPromiseRef.current;
       } else {
-        // Fallback: start transcription now
-        const formData = new FormData();
-        formData.append('audio', audioBlob);
+        // Fallback: start transcription now via base64 JSON
+        const audio_base64 = await blobToBase64(audioBlob);
+        const audio_name = (audioBlob instanceof File && audioBlob.name) ? audioBlob.name : undefined;
 
         const data = await invokeWithRetry<{
           success: boolean;
           transcription: string;
           emotional_analysis: Record<string, unknown>;
-        }>('transcribe-audio-gemini', { body: formData });
+        }>('transcribe-audio-gemini', {
+          body: {
+            audio_base64,
+            audio_type: audioBlob.type || '',
+            audio_name,
+            product_name: productName || undefined,
+            product_context: productContext || undefined,
+          },
+        });
 
         transcriptionResult = {
           transcription: data.transcription,
@@ -228,6 +258,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         target_locations: targetLocations,
         transcription: transcriptionResult.transcription,
         emotional_analysis: transcriptionResult.emotional_analysis,
+        product_name: productName || undefined,
+        product_context: productContext || undefined,
       };
 
       // product_dna table not yet in generated types — cast to any
@@ -393,27 +425,68 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
               <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center">
-              <p className="text-sm text-gray-400 text-center max-w-xs mb-8">
-                Responde las preguntas en un solo audio de 2-5 minutos.
-              </p>
-
-              <div className="py-4">
-                <AudioRecorder onAudioReady={handleAudioReady} disabled={processingStep !== 'idle'} />
+            <div className="flex-1 flex flex-col">
+              {/* Contexto del producto — ayuda a la IA a entender el audio */}
+              <div className="space-y-2.5 mb-5">
+                <div>
+                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1.5 block">
+                    Nombre del producto o servicio
+                  </label>
+                  <input
+                    type="text"
+                    value={productName}
+                    onChange={e => setProductName(e.target.value)}
+                    placeholder="Ej: Webinar gratuito Be Light / Vlight Solution"
+                    disabled={processingStep !== 'idle'}
+                    className="w-full px-3 py-2 rounded-sm text-xs
+                               bg-white/5 border border-white/10
+                               text-white placeholder-white/25
+                               focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
+                               disabled:opacity-40 transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    Descripción corta
+                    <span className="text-white/25 normal-case font-normal">(opcional)</span>
+                  </label>
+                  <textarea
+                    value={productContext}
+                    onChange={e => setProductContext(e.target.value)}
+                    placeholder="Ej: Lipolítico para médicos estéticos que elimina grasa facial sin dolor desde la primera sesión"
+                    rows={2}
+                    disabled={processingStep !== 'idle'}
+                    className="w-full px-3 py-2 rounded-sm text-xs
+                               bg-white/5 border border-white/10
+                               text-white placeholder-white/25
+                               focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
+                               disabled:opacity-40 resize-none transition-colors"
+                  />
+                </div>
               </div>
 
-              {isTranscribing && (
-                <div className="flex items-center gap-2 mt-4 text-purple-400">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-xs">Transcribiendo...</span>
+              <div className="flex flex-col items-center justify-center flex-1">
+                <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
+                  Responde las preguntas en un solo audio de 2-5 minutos.
+                </p>
+
+                <div className="py-4">
+                  <AudioRecorder onAudioReady={handleAudioReady} disabled={processingStep !== 'idle'} />
                 </div>
-              )}
-              {transcriptionReady && (
-                <div className="flex items-center gap-2 mt-4 text-green-400">
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span className="text-xs">Audio listo</span>
-                </div>
-              )}
+
+                {isTranscribing && (
+                  <div className="flex items-center gap-2 mt-4 text-purple-400">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="text-xs">Transcribiendo...</span>
+                  </div>
+                )}
+                {transcriptionReady && (
+                  <div className="flex items-center gap-2 mt-4 text-green-400">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span className="text-xs">Audio listo</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
