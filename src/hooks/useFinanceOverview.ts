@@ -82,26 +82,31 @@ export function useOrgFinanceOverview(
       });
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
+      // RPC retorna: total_sold, total_collected, total_pending, costs, payroll, net_profit,
+      // margin_pct, packages_sold, payments_count, overdue_count, overdue_amount
+      const totalCollected = num(row?.total_collected);
+      const costs          = num(row?.costs);
+      const payroll        = num(row?.payroll);
       return {
-        agency_sold: num(row?.agency_sold),
-        agency_collected: num(row?.agency_collected),
-        agency_pending: num(row?.agency_pending),
-        mp_revenue: num(row?.mp_revenue),
-        mp_creator_cost: num(row?.mp_creator_cost),
-        mp_editor_cost: num(row?.mp_editor_cost),
-        mp_platform_fee: num(row?.mp_platform_fee),
-        mp_projects_count: num(row?.mp_projects_count),
-        costs_operative: num(row?.costs_operative),
-        costs_package: num(row?.costs_package),
-        payroll: num(row?.payroll),
-        total_revenue: num(row?.total_revenue),
-        total_costs: num(row?.total_costs),
-        net_profit: num(row?.net_profit),
-        margin_pct: num(row?.margin_pct),
-        packages_sold: num(row?.packages_sold),
-        payments_count: num(row?.payments_count),
-        overdue_count: num(row?.overdue_count),
-        overdue_amount: num(row?.overdue_amount),
+        agency_sold:       num(row?.total_sold),
+        agency_collected:  totalCollected,
+        agency_pending:    num(row?.total_pending),
+        mp_revenue:        0,
+        mp_creator_cost:   0,
+        mp_editor_cost:    0,
+        mp_platform_fee:   0,
+        mp_projects_count: 0,
+        costs_operative:   costs,
+        costs_package:     0,
+        payroll,
+        total_revenue:     totalCollected,
+        total_costs:       costs + payroll,
+        net_profit:        num(row?.net_profit),
+        margin_pct:        num(row?.margin_pct),
+        packages_sold:     num(row?.packages_sold),
+        payments_count:    num(row?.payments_count),
+        overdue_count:     num(row?.overdue_count),
+        overdue_amount:    num(row?.overdue_amount),
       };
     },
     enabled: !!orgId && !!startDate && !!endDate,
