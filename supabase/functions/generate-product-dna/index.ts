@@ -90,7 +90,7 @@ async function transcribeWithGemini(audioBlob: Blob): Promise<string> {
             { inline_data: { mime_type: mimeType, data: base64Audio } },
           ],
         }],
-        generationConfig: { temperature: 0 },
+        generationConfig: { temperature: 0, thinkingConfig: { thinkingBudget: 0 } },
       }),
     }
   );
@@ -208,9 +208,16 @@ async function extractFromAudio(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
 
+  // Contexto explícito del producto si el usuario lo proporcionó
+  const pNameCtx = (wizardResponses.product_name as string | undefined)?.trim();
+  const pContextCtx = (wizardResponses.product_context as string | undefined)?.trim();
+  const productHint = pNameCtx
+    ? `\n\nCONTEXTO EXPLÍCITO DEL PRODUCTO (usa esto como base, tiene prioridad sobre cualquier inferencia):\nNombre: ${pNameCtx}${pContextCtx ? `\nDescripción: ${pContextCtx}` : ""}`
+    : "";
+
   const extractionPrompt = `Eres un estratega de contenido digital experto en briefing creativo.
 
-Analiza esta transcripcion de audio donde un cliente describe lo que necesita:
+Analiza esta transcripcion de audio donde un cliente describe lo que necesita:${productHint}
 
 TRANSCRIPCION:
 ${transcription}
@@ -243,7 +250,7 @@ Extrae y devuelve SOLO este JSON (sin texto adicional, sin markdown):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: extractionPrompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 2000 },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2000, thinkingConfig: { thinkingBudget: 0 } },
         }),
       }
     );
@@ -354,7 +361,14 @@ async function callPerplexityResearch(
   const mercadoNombre = getMarketDescription(wizardResponses);
 
   const canalPrimario = extractedData.canal_primario || platforms[0] || "instagram";
-  const servicioExacto = extractedData.servicio_exacto || "producto/servicio";
+  const servicioExacto = (extractedData.servicio_exacto as string) || "producto/servicio";
+
+  // Usar product_name/context del wizard directamente si están disponibles (más confiables que la extracción)
+  const productNameDirect = (wizardResponses.product_name as string | undefined)?.trim();
+  const productContextDirect = (wizardResponses.product_context as string | undefined)?.trim();
+  const productLabel = productNameDirect
+    ? (productContextDirect ? `${productNameDirect} — ${productContextDirect}` : productNameDirect)
+    : servicioExacto;
 
   const systemPrompt = `Eres un estratega digital especialista en contenido para ${canalPrimario}.
 Tu investigacion debe ser ESPECIFICA para crear contenido de ${serviceTypes.join(" y ") || "video UGC"}
@@ -364,7 +378,7 @@ Usa datos reales y actuales.`;
 
   const userPrompt = `Necesito una investigacion de mercado completa para crear contenido.
 
-PRODUCTO/SERVICIO: ${servicioExacto}
+PRODUCTO/SERVICIO: ${productLabel}
 CANAL PRINCIPAL: ${platforms.join(", ") || "Instagram, TikTok"}
 AUDIENCIA: ${audiences.join(", ") || "25-34"} anos
 OBJETIVO: ${goals.join(", ") || "vender"}
@@ -571,6 +585,7 @@ async function callGeminiWithPrompt(
           generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 12000,
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       }
@@ -813,9 +828,15 @@ function buildCall1Prompt(
   const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
 
+  const pName = (wizardResponses.product_name as string | undefined)?.trim();
+  const pCtx = (wizardResponses.product_context as string | undefined)?.trim();
+  const productLine = pName
+    ? `PRODUCTO PRINCIPAL: ${pName}${pCtx ? ` — ${pCtx}` : ""}\n`
+    : "";
+
   return `Eres un estratega de marketing digital y creativo de contenido experto en ${mercado}.
 
-DATOS DEL ENCARGO:
+${productLine}DATOS DEL ENCARGO:
 ${JSON.stringify(extractedData, null, 2)}
 
 INVESTIGACION DE MERCADO:
@@ -869,10 +890,16 @@ function buildCall2Prompt(
   const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
 
+  const pName2 = (wizardResponses.product_name as string | undefined)?.trim();
+  const pCtx2 = (wizardResponses.product_context as string | undefined)?.trim();
+  const productLine2 = pName2
+    ? `${pName2}${pCtx2 ? ` — ${pCtx2}` : ""}`
+    : (extractedData.servicio_exacto as string || "No especificado");
+
   return `Eres un estratega de marketing digital experto en psicologia del consumidor
 y comportamiento de audiencias digitales en ${mercado}.
 
-PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+PRODUCTO/SERVICIO: ${productLine2}
 CANAL: ${platforms.join(", ")}
 AUDIENCIA: ${audiences.join(", ")} anos
 OBJETIVO: ${goals.join(", ")}
@@ -937,10 +964,16 @@ function buildCall3Prompt(
   const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
 
+  const pName3 = (wizardResponses.product_name as string | undefined)?.trim();
+  const pCtx3 = (wizardResponses.product_context as string | undefined)?.trim();
+  const productLine3 = pName3
+    ? `${pName3}${pCtx3 ? ` — ${pCtx3}` : ""}`
+    : (extractedData.servicio_exacto as string || "No especificado");
+
   return `Eres un estratega creativo de contenido digital especialista en UGC,
 copywriting de alto impacto y produccion de contenido para ${platforms.join("/")} en ${mercado}.
 
-PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+PRODUCTO/SERVICIO: ${productLine3}
 OBJETIVO: ${goals.join(", ")}
 CANAL: ${platforms.join(", ")}
 MERCADO: ${mercado}
@@ -1003,10 +1036,16 @@ function buildCall4Prompt(
   const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
 
+  const pName4 = (wizardResponses.product_name as string | undefined)?.trim();
+  const pCtx4 = (wizardResponses.product_context as string | undefined)?.trim();
+  const productLine4 = pName4
+    ? `${pName4}${pCtx4 ? ` — ${pCtx4}` : ""}`
+    : (extractedData.servicio_exacto as string || "No especificado");
+
   return `Eres un estratega digital senior especialista en growth de contenido organico
 y performance de campanas pagas en ${platforms.join("/")} para el mercado de ${mercado}.
 
-PRODUCTO/SERVICIO: ${extractedData.servicio_exacto || "No especificado"}
+PRODUCTO/SERVICIO: ${productLine4}
 OBJETIVO: ${goals.join(", ")}
 CANAL: ${platforms.join(", ")}
 AUDIENCIA: ${audiences.join(", ")} anos
@@ -1164,6 +1203,18 @@ Deno.serve(async (req: Request) => {
     console.log("[generate-product-dna] Step 1: Extracting data from audio...");
     const extractedData = await extractFromAudio(transcription, wizardResponses);
     console.log(`[generate-product-dna] Extracted data keys: ${Object.keys(extractedData).join(", ")}`);
+
+    // Prioridad: product_name y product_context del wizard > extracción de Gemini
+    const pName = (wizardResponses.product_name as string | undefined)?.trim();
+    const pContext = (wizardResponses.product_context as string | undefined)?.trim();
+    if (pName) {
+      extractedData.servicio_exacto = pContext
+        ? `${pName} — ${pContext}`
+        : pName;
+      console.log(`[generate-product-dna] product_name override: "${extractedData.servicio_exacto}"`);
+    } else {
+      console.log(`[generate-product-dna] No product_name, using extracted: "${extractedData.servicio_exacto}"`);
+    }
 
     // ── 4. Research with Perplexity ────────────────────────────────────────
     let perplexityResearch = "";
