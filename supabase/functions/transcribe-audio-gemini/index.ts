@@ -215,9 +215,13 @@ Deno.serve(async (req: Request) => {
     let audioFile: File;
 
     if (contentType.includes("application/json")) {
-      // Nuevo path: { audio_base64: string, audio_type: string }
+      // Nuevo path: { audio_base64: string, audio_type: string, audio_name?: string }
       const body = await req.json();
-      const { audio_base64, audio_type } = body as { audio_base64?: string; audio_type?: string };
+      const { audio_base64, audio_type, audio_name } = body as {
+        audio_base64?: string;
+        audio_type?: string;
+        audio_name?: string;
+      };
 
       if (!audio_base64) {
         return new Response(
@@ -231,19 +235,39 @@ Deno.serve(async (req: Request) => {
       const audioBytes = new Uint8Array(binaryStr.length);
       for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
 
-      // Normalizar MIME type
-      const rawMime = (audio_type || "audio/webm").split(";")[0].trim().toLowerCase();
+      // Mapa MIME type → extensión
       const extMap2: Record<string, string> = {
         "audio/webm": ".webm", "audio/ogg": ".ogg", "audio/mp4": ".m4a",
         "video/mp4": ".mp4", "audio/mpeg": ".mp3", "audio/wav": ".wav",
         "audio/x-wav": ".wav", "audio/flac": ".flac", "audio/aac": ".m4a",
-        "audio/x-m4a": ".m4a",
+        "audio/x-m4a": ".m4a", "audio/m4a": ".m4a",
       };
-      const ext2 = extMap2[rawMime] || ".webm";
-      const whisperMime2 = rawMime === "video/mp4" ? "audio/mp4" : rawMime;
-      const fileName2 = `recording${ext2}`;
 
-      console.log(`[transcribe] Base64 path: bytes=${audioBytes.byteLength}, rawMime=${rawMime}, fileName=${fileName2}`);
+      // Mapa extensión de archivo → MIME type normalizado para Whisper
+      const nameExtMap: Record<string, string> = {
+        ".m4a": "audio/mp4", ".mp4": "audio/mp4", ".mp3": "audio/mpeg",
+        ".wav": "audio/wav", ".ogg": "audio/ogg", ".flac": "audio/flac",
+        ".webm": "audio/webm", ".oga": "audio/ogg", ".mpga": "audio/mpeg",
+      };
+
+      // Prioridad 1: extensión del nombre de archivo original (más confiable que MIME type en Windows)
+      let fileName2: string;
+      let whisperMime2: string;
+
+      if (audio_name && audio_name.includes(".")) {
+        // Usar el nombre original del archivo preservando su extensión
+        const origExt = audio_name.substring(audio_name.lastIndexOf(".")).toLowerCase();
+        fileName2 = `recording${origExt}`;
+        whisperMime2 = nameExtMap[origExt] || "audio/mp4";
+      } else {
+        // Prioridad 2: derivar de MIME type
+        const rawMime = (audio_type || "audio/webm").split(";")[0].trim().toLowerCase();
+        const ext2 = extMap2[rawMime] || ".webm";
+        fileName2 = `recording${ext2}`;
+        whisperMime2 = rawMime === "video/mp4" ? "audio/mp4" : (rawMime || "audio/webm");
+      }
+
+      console.log(`[transcribe] Base64 path: bytes=${audioBytes.byteLength}, origName=${audio_name}, fileName=${fileName2}, mimeType=${whisperMime2}`);
       audioFile = new File([audioBytes], fileName2, { type: whisperMime2 });
 
     } else {

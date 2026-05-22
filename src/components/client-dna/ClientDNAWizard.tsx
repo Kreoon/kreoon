@@ -118,12 +118,14 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
     const promise = (async (): Promise<TranscriptionResult> => {
       // Usar base64 JSON en vez de FormData — evita bugs de multipart en Supabase Edge Functions
       const audio_base64 = await blobToBase64(blob);
+      // Enviar el nombre original del archivo para derivar extensión cuando MIME type está vacío
+      const audio_name = (blob instanceof File && blob.name) ? blob.name : undefined;
       const data = await invokeWithRetry<{
         success: boolean;
         transcription: string;
         emotional_analysis: Record<string, unknown>;
       }>('transcribe-audio-gemini', {
-        body: { audio_base64, audio_type: blob.type || 'audio/webm' },
+        body: { audio_base64, audio_type: blob.type || '', audio_name },
       });
 
       return {
@@ -171,12 +173,13 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       } else {
         // Fallback: convertir a base64 y enviar como JSON
         const audio_base64 = await blobToBase64(audioBlob);
+        const audio_name = (audioBlob instanceof File && audioBlob.name) ? audioBlob.name : undefined;
         const data = await invokeWithRetry<{
           success: boolean;
           transcription: string;
           emotional_analysis: Record<string, unknown>;
         }>('transcribe-audio-gemini', {
-          body: { audio_base64, audio_type: audioBlob.type || 'audio/webm' },
+          body: { audio_base64, audio_type: audioBlob.type || '', audio_name },
         });
 
         result = {
