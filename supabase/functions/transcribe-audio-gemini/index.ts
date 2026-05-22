@@ -48,33 +48,41 @@ async function transcribeWithWhisper(audioFile: File): Promise<string> {
   const openaiKey = Deno.env.get("OPENAI_API_KEY");
   if (!openaiKey) throw new Error("OPENAI_API_KEY not configured");
 
-  // Ensure the file has a proper name with extension — Whisper requires it
-  // When a Blob (not File) is sent via FormData, the name may be "blob" or empty
-  const mimeType = audioFile.type || "audio/webm";
+  // Normalize MIME type: strip codecs suffix that Whisper doesn't recognize
+  // e.g. "audio/webm;codecs=opus" → "audio/webm", "audio/ogg;codecs=opus" → "audio/ogg"
+  const rawMimeType = audioFile.type || "audio/webm";
+  const mimeType = rawMimeType.split(";")[0].trim().toLowerCase();
+
   const extMap: Record<string, string> = {
     "audio/webm": ".webm",
     "audio/ogg": ".ogg",
     "audio/mp4": ".m4a",
+    "video/mp4": ".mp4",   // Safari puede grabar como video/mp4
     "audio/mpeg": ".mp3",
     "audio/wav": ".wav",
     "audio/x-wav": ".wav",
     "audio/flac": ".flac",
+    "audio/aac": ".m4a",
+    "audio/x-m4a": ".m4a",
   };
   const ext = extMap[mimeType] || ".webm";
   const fileName = audioFile.name && audioFile.name !== "blob" && audioFile.name.includes(".")
     ? audioFile.name
     : `recording${ext}`;
 
+  // Normalizar video/mp4 → audio/mp4 para Whisper (solo acepta audio)
+  const whisperMimeType = mimeType === "video/mp4" ? "audio/mp4" : mimeType;
+
   // Read audio bytes explicitly — Deno FormData File may not transfer bytes when re-wrapped
   const audioBytes = await audioFile.arrayBuffer();
-  console.log(`[transcribe] Audio: name=${fileName}, origName=${audioFile.name}, bytes=${audioBytes.byteLength}, type=${mimeType}`);
+  console.log(`[transcribe] Audio: name=${fileName}, origName=${audioFile.name}, bytes=${audioBytes.byteLength}, rawType=${rawMimeType}, normalizedType=${whisperMimeType}`);
 
   if (audioBytes.byteLength === 0) {
     throw new Error("Audio file is empty (0 bytes)");
   }
 
-  // Create a fresh Blob from raw bytes with correct name for Whisper
-  const properFile = new File([audioBytes], fileName, { type: mimeType });
+  // Create a fresh Blob from raw bytes with normalized MIME type (sin codecs suffix)
+  const properFile = new File([audioBytes], fileName, { type: whisperMimeType });
 
   const form = new FormData();
   form.append("file", properFile, fileName);
@@ -82,7 +90,7 @@ async function transcribeWithWhisper(audioFile: File): Promise<string> {
   form.append("language", "es");
   form.append("response_format", "text");
 
-  console.log(`[transcribe] Sending to Whisper: fileSize=${properFile.size}, fileName=${fileName}`);
+  console.log(`[transcribe] Sending to Whisper: fileSize=${properFile.size}, fileName=${fileName}, mimeType=${whisperMimeType}`);
   const res = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
     headers: { Authorization: `Bearer ${openaiKey}` },
