@@ -80,7 +80,7 @@ const PLANES: Plan[] = [
       'Garantía de performance (CTR ≥ 1.5% / Hook Rate ≥ 25%)',
       'Licencia de publicidad 12 meses',
     ],
-    whatsappMessage: 'Hola, me interesa el plan INICIO de campañas gestionadas por KREOON (6 videos/mes). ¿Podemos agendar una llamada?',
+    whatsappMessage: 'Hola, estoy en KREOON y me interesa conocer más sobre las campañas de contenido. Específicamente el plan INICIO de 6 videos al mes. ¿Me pueden dar más información?',
   },
   {
     id: 'crecimiento',
@@ -107,7 +107,7 @@ const PLANES: Plan[] = [
     ],
     badge: 'MÁS POPULAR',
     highlighted: true,
-    whatsappMessage: 'Hola, me interesa el plan CRECIMIENTO de campañas gestionadas por KREOON (10 videos/mes). ¿Podemos agendar una llamada?',
+    whatsappMessage: 'Hola, estoy en KREOON y me interesa adquirir o conocer más sobre las campañas de contenido. Me llama la atención el plan CRECIMIENTO de 10 videos al mes. ¿Podemos hablar?',
   },
   {
     id: 'escala',
@@ -133,7 +133,7 @@ const PLANES: Plan[] = [
       'Garantía de performance (CTR ≥ 1.5% / Hook Rate ≥ 25%)',
       'Licencia de publicidad 12 meses',
     ],
-    whatsappMessage: 'Hola, me interesa el plan ESCALA de campañas gestionadas por KREOON (30 videos/mes). ¿Podemos agendar una llamada?',
+    whatsappMessage: 'Hola, estoy en KREOON y me interesa adquirir o conocer más sobre las campañas de contenido. Quiero escalar con 30 videos al mes. ¿Podemos hablar?',
   },
 ];
 
@@ -156,7 +156,7 @@ const WA_NUMBER = '573113842399';
 
 function buildWhatsAppLink(message: string, currency: Currency, duration: BillingDuration, price: number) {
   const priceStr = formatPrice(price, currency);
-  const full = `${message} Estoy viendo el plan a ${priceStr} ${DURATION_LABEL[duration].toLowerCase()}.`;
+  const full = `${message} Estoy viendo la opción ${DURATION_LABEL[duration].toLowerCase()} por ${priceStr} ${currency}.`;
   return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(full)}`;
 }
 
@@ -385,7 +385,7 @@ export default function CampanasGestionadasPage() {
     return Math.max(0, soloFor10 - kreoonFor10);
   }, [currency]);
 
-  const enterpriseWaLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, me interesa un plan a la medida de campañas gestionadas por KREOON (60+ videos/mes). ¿Podemos agendar una llamada?')}`;
+  const enterpriseWaLink = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, estoy en KREOON y me interesa adquirir o conocer más sobre las campañas de contenido a la medida para alto volumen (60+ videos/mes). ¿Podemos hablar?')}`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -636,7 +636,7 @@ export default function CampanasGestionadasPage() {
           <p className="text-muted-foreground text-sm mb-4">¿Tienes dudas sobre qué plan elegir?</p>
           <Button
             size="lg"
-            onClick={() => window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, quiero asesoría para elegir el plan de campañas gestionadas correcto para mi marca.')}`, '_blank')}
+            onClick={() => window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent('Hola, estoy en KREOON y me interesa adquirir o conocer más sobre las campañas de contenido. Necesito ayuda para elegir el plan correcto para mi marca.')}`, '_blank')}
             className="gap-2"
           >
             <MessageCircle className="h-4 w-4" />
