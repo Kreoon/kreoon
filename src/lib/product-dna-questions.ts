@@ -1,26 +1,39 @@
-export const PRODUCT_DNA_QUESTIONS = [
+// Tipos de oferta — define el contexto completo de la estrategia
+export const OFFER_TYPE_OPTIONS = [
+  { id: 'event_webinar',    label: 'Webinar / Live',        emoji: '🎙️', description: 'Clase gratuita, evento en vivo, masterclass' },
+  { id: 'service',          label: 'Servicio',              emoji: '🛠️', description: 'Consultoría, asesoría, tratamiento, atención profesional' },
+  { id: 'product_physical', label: 'Producto Físico',       emoji: '📦', description: 'Producto tangible, e-commerce, tienda' },
+  { id: 'infoproduct',      label: 'Infoproducto / Curso',  emoji: '📚', description: 'Curso online, reto, membresía, programa' },
+  { id: 'saas_app',         label: 'SaaS / App',            emoji: '💻', description: 'Software, aplicación, plataforma digital' },
+  { id: 'personal_brand',   label: 'Marca Personal',        emoji: '👤', description: 'Posicionamiento personal, creador de contenido, speaker' },
+  { id: 'ecommerce',        label: 'E-commerce',            emoji: '🛒', description: 'Tienda online, dropshipping, marketplace' },
+  { id: 'consulting',       label: 'Agencia / Consultoría', emoji: '🤝', description: 'Agencia de servicios, firma de consultoría' },
+];
+
+// Preguntas base (común a todos los tipos)
+const BASE_QUESTIONS = [
   {
     id: 1,
-    block: 'Tu Producto',
-    question: '¿Qué producto o servicio ofreces, para quién es y qué lo hace único frente a la competencia?',
+    block: 'Tu Oferta',
+    question: '¿Qué ofreces exactamente, para quién es y qué lo hace único frente a la competencia?',
     tip: 'Nombre, propuesta de valor, diferenciador principal'
   },
   {
     id: 2,
     block: 'Tu Cliente Ideal',
-    question: '¿Quién es la persona que más necesita tu producto? Describe su vida, frustraciones y qué busca.',
-    tip: 'Edad, género, ocupación, dolores, deseos'
+    question: '¿Quién es la persona que más necesita esto? Describe su vida, frustraciones y qué busca.',
+    tip: 'Edad, perfil, dolores, deseos, situación actual'
   },
   {
     id: 3,
     block: 'El Problema',
-    question: '¿Cuál es el problema principal que resuelve tu producto? ¿Qué pasa si tu cliente NO lo compra?',
-    tip: 'Dolor principal, consecuencia de no actuar'
+    question: '¿Cuál es el problema principal que resuelves? ¿Qué pasa si NO actúan?',
+    tip: 'Dolor principal, consecuencia de no actuar, urgencia'
   },
   {
     id: 4,
     block: 'La Transformación',
-    question: '¿Qué resultado concreto obtiene tu cliente? ¿Cómo cambia su vida antes y después?',
+    question: '¿Qué resultado concreto obtienen? ¿Cómo cambia su vida antes y después?',
     tip: 'Resultado tangible, transformación emocional, casos de éxito'
   },
   {
@@ -30,6 +43,114 @@ export const PRODUCT_DNA_QUESTIONS = [
     tip: 'Precio, entregables, garantías, prueba social'
   },
 ];
+
+// Preguntas específicas por tipo de oferta (reemplazan las base para mayor contexto)
+const OFFER_TYPE_QUESTIONS: Record<string, typeof BASE_QUESTIONS> = {
+  event_webinar: [
+    {
+      id: 1,
+      block: 'Tu Evento',
+      question: '¿De qué trata el webinar/live, quién lo imparte y qué lo hace único o urgente?',
+      tip: 'Tema, ponente, fecha, formato (en vivo, grabado, con Q&A)'
+    },
+    {
+      id: 2,
+      block: 'Tu Asistente Ideal',
+      question: '¿Quién NECESITA asistir a este evento? Describe su situación actual y qué lo frena.',
+      tip: 'Perfil, dónde está ahora, qué desea lograr, objeciones para no inscribirse'
+    },
+    {
+      id: 3,
+      block: 'El Problema',
+      question: '¿Qué problema urgente resuelves en el evento? ¿Qué pasa si NO asisten?',
+      tip: 'Dolor que el evento soluciona, costo de no asistir'
+    },
+    {
+      id: 4,
+      block: 'Lo que aprenderán',
+      question: '¿Qué aprenderán en el evento? Da 3 puntos clave o revelaciones que se llevarán.',
+      tip: 'Contenido concreto, aha-moments, metodología'
+    },
+    {
+      id: 5,
+      block: 'Inscripción',
+      question: '¿Es gratuito o de pago? ¿Cuántos cupos hay? ¿Hay bonus por registrarse antes?',
+      tip: 'Precio, urgencia de cupos, bonos, qué pasa después del evento'
+    },
+  ],
+  infoproduct: [
+    {
+      id: 1,
+      block: 'Tu Programa',
+      question: '¿Cómo se llama el curso/programa, qué enseñas y en cuánto tiempo lo logran?',
+      tip: 'Nombre, módulos, duración, formato (en vivo, asincrónico, comunidad)'
+    },
+    {
+      id: 2,
+      block: 'Tu Estudiante Ideal',
+      question: '¿Quién es la persona perfecta para tu programa? ¿Dónde está hoy y adónde quiere llegar?',
+      tip: 'Nivel, experiencia previa, motivación, objeciones'
+    },
+    {
+      id: 3,
+      block: 'El Problema',
+      question: '¿Qué frustración o bloqueo específico resuelve tu programa?',
+      tip: 'Dolor que frena su progreso, consecuencia de no aprender esto'
+    },
+    {
+      id: 4,
+      block: 'La Transformación',
+      question: '¿Qué resultado concreto logran al completar el programa? Casos de éxito si tienes.',
+      tip: 'Resultado específico, cambio de vida, testimonios'
+    },
+    {
+      id: 5,
+      block: 'La Oferta',
+      question: '¿Cuánto vale, qué bonos incluye, hay garantía? ¿Cómo se inscribe?',
+      tip: 'Precio, garantía, urgencia (cohorte, plazas), proceso de compra'
+    },
+  ],
+  personal_brand: [
+    {
+      id: 1,
+      block: 'Tu Marca',
+      question: '¿Qué haces, en qué eres experto/a y cuál es tu punto de vista único?',
+      tip: 'Especialidad, posicionamiento, perspectiva diferente al mainstream'
+    },
+    {
+      id: 2,
+      block: 'Tu Audiencia',
+      question: '¿A quién le hablas? Describe a tu seguidor ideal: qué quiere lograr, qué le preocupa.',
+      tip: 'Perfil, aspiraciones, frustraciones, qué busca en tu contenido'
+    },
+    {
+      id: 3,
+      block: 'Tu Historia',
+      question: '¿Cuál es tu historia personal? ¿Qué viviste que te llevó a donde estás hoy?',
+      tip: 'Momento turning point, fracaso que transformaste, credenciales únicas'
+    },
+    {
+      id: 4,
+      block: 'Tu Impacto',
+      question: '¿Qué transformación generas en tu audiencia? ¿Qué logran gracias a seguirte?',
+      tip: 'Cambios reales en seguidores, testimonios, comunidad'
+    },
+    {
+      id: 5,
+      block: 'Tu Oferta',
+      question: '¿Cómo monetizas? ¿Qué servicios, productos o programas ofreces?',
+      tip: 'Forma de ingresos: servicios, cursos, mentoría, colaboraciones'
+    },
+  ],
+};
+
+// Retorna las preguntas correctas según el tipo de oferta
+export function getQuestionsForOfferType(offerType: string) {
+  return OFFER_TYPE_QUESTIONS[offerType] || BASE_QUESTIONS;
+}
+
+// Para compatibilidad — preguntas base por defecto
+export const PRODUCT_DNA_QUESTIONS = BASE_QUESTIONS;
 
 // Opciones simplificadas para selección rápida
 export const SERVICE_TYPE_OPTIONS = [

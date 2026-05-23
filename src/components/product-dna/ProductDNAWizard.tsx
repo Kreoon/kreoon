@@ -12,11 +12,12 @@ async function blobToBase64(blob: Blob): Promise<string> {
 }
 import { AudioRecorder } from '@/components/client-dna/AudioRecorder';
 import {
-  PRODUCT_DNA_QUESTIONS,
+  OFFER_TYPE_OPTIONS,
   SERVICE_TYPE_OPTIONS,
   GOAL_OPTIONS,
   PLATFORM_OPTIONS,
   AUDIENCE_OPTIONS,
+  getQuestionsForOfferType,
 } from '@/lib/product-dna-questions';
 import { LocationSelector } from './LocationSelector';
 import { supabase } from '@/integrations/supabase/client';
@@ -91,12 +92,18 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   const [productName, setProductName] = useState('');
   const [productContext, setProductContext] = useState('');
 
+  // Tipo de oferta — single select, define el contexto de toda la estrategia
+  const [offerType, setOfferType] = useState<string>('');
+
   // Selection state (all multi-select, max 3 each)
   const [serviceTypes, setServiceTypes] = useState<string[]>([]);
   const [goals, setGoals] = useState<string[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [audiences, setAudiences] = useState<string[]>([]);
   const [targetLocations, setTargetLocations] = useState<string[]>([]);
+
+  // Preguntas dinámicas según el tipo de oferta
+  const dynamicQuestions = getQuestionsForOfferType(offerType);
 
   // Processing state
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('idle');
@@ -170,7 +177,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   };
 
   // Validation
-  const canSubmit = audioBlob && serviceTypes.length > 0 && goals.length > 0 && platforms.length > 0;
+  const canSubmit = audioBlob && offerType && serviceTypes.length > 0 && goals.length > 0 && platforms.length > 0;
 
   // Submit handler
   const handleSubmit = async () => {
@@ -251,6 +258,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       setProcessingStep('generating');
 
       const wizardResponses = {
+        offer_type: offerType,
         service_types: serviceTypes,
         goals,
         platforms,
@@ -379,9 +387,56 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         )}
       </div>
 
-      {/* Grid: Preguntas + Audio */}
+      {/* ── Paso 1: Tipo de oferta — selector prominente single-select ── */}
+      <div className="relative overflow-hidden rounded-sm border border-purple-500/30">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/15 via-transparent to-pink-600/10" />
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-sm bg-purple-500/20 border border-purple-500/30 flex items-center justify-center">
+              <span className="text-base">🎯</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">¿Qué tipo de oferta es?</h3>
+              <p className="text-[10px] text-gray-400">Esto define toda la estrategia de contenido</p>
+            </div>
+            {offerType && (
+              <span className="ml-auto text-[10px] text-purple-400 flex items-center gap-1">
+                <Check className="w-3 h-3" /> Seleccionado
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {OFFER_TYPE_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setOfferType(offerType === opt.id ? '' : opt.id)}
+                className={cn(
+                  "group flex flex-col items-center gap-1.5 p-3 rounded-sm border text-center transition-all duration-200",
+                  offerType === opt.id
+                    ? "border-purple-500/70 bg-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.2)]"
+                    : "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/8"
+                )}
+              >
+                <span className="text-xl">{opt.emoji}</span>
+                <span className={cn(
+                  "text-[11px] font-semibold leading-tight",
+                  offerType === opt.id ? "text-purple-300" : "text-white/70 group-hover:text-white"
+                )}>
+                  {opt.label}
+                </span>
+                <span className="text-[9px] text-white/30 leading-tight hidden sm:block">
+                  {opt.description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Grid: Preguntas dinámicas + Audio ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Left Panel: Questions */}
+        {/* Left Panel: Preguntas según tipo de oferta */}
         <div className="relative overflow-hidden rounded-sm border border-white/10">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/20" />
           <div className="absolute inset-0 bg-black/40" />
@@ -391,11 +446,18 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
               <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
                 <span className="text-lg">💬</span>
               </div>
-              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Responde en tu audio</h3>
+              <div>
+                <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Responde en tu audio</h3>
+                {offerType && (
+                  <p className="text-[10px] text-purple-400 mt-0.5">
+                    Guía para {OFFER_TYPE_OPTIONS.find(o => o.id === offerType)?.label}
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
-              {PRODUCT_DNA_QUESTIONS.map((q) => (
+              {dynamicQuestions.map((q) => (
                 <div key={q.id} className="flex gap-2.5 group">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-white/10 flex items-center justify-center text-[10px] font-bold text-purple-300">
                     {q.id}
