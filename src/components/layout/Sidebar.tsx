@@ -119,6 +119,7 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/talent?tab=clientes", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
@@ -155,6 +156,7 @@ const strategistSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento & Equipo", href: "/talent", icon: Users, tourId: "sidebar-talent", requiresOrg: true },
+      { name: "Clientes", href: "/talent?tab=clientes", icon: Building2, tourId: "sidebar-clients", requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, tourId: "sidebar-org-finances", requiresOrg: true },
     ]
   },
