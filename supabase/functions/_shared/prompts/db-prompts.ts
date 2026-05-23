@@ -6,6 +6,14 @@
 // Imports locales para fallback
 import { MASTER_SCRIPT_PROMPT } from "./scripts.ts";
 import { BOARD_SYSTEM_PROMPTS, BOARD_USER_TEMPLATES } from "./board.ts";
+import {
+  CLIENT_DNA_PROMPT,
+  TALENT_DNA_PROMPT,
+  PRODUCT_EMOTIONS_PROMPT,
+  PRODUCT_EXTRACTION_PROMPT,
+  LIVE_SHOPPING_PROMPT,
+} from "./dna.ts";
+import { KIRO_MASTER_PROMPT } from "./research.ts";
 
 // ============================================================================
 // TIPOS
@@ -97,6 +105,54 @@ const FALLBACK_PROMPTS: Record<string, Record<string, Partial<PlatformPrompt>>> 
       system_prompt: MASTER_SCRIPT_PROMPT,
       temperature: 0.7,
       max_tokens: 4096,
+    },
+    chat_refiner: {
+      system_prompt: `Eres un experto en copywriting y guiones de video UGC.
+Tu tarea es ayudar a mejorar y refinar guiones de video basándote en las instrucciones del usuario.
+
+REGLAS:
+- Mantén la estructura del guión original
+- Conserva el tono y estilo del guión
+- Mejora según las instrucciones específicas del usuario
+- Responde con el guión mejorado directamente, sin explicaciones previas`,
+      temperature: 0.7,
+      max_tokens: 4096,
+    },
+  },
+  dna: {
+    client_dna: {
+      system_prompt: CLIENT_DNA_PROMPT,
+      temperature: 0.3,
+      max_tokens: 8192,
+    },
+    talent_dna: {
+      system_prompt: TALENT_DNA_PROMPT,
+      temperature: 0.3,
+      max_tokens: 4096,
+    },
+    product_emotions: {
+      system_prompt: PRODUCT_EMOTIONS_PROMPT,
+      temperature: 0.3,
+      max_tokens: 1024,
+    },
+    product_extraction: {
+      system_prompt: PRODUCT_EXTRACTION_PROMPT,
+      temperature: 0.3,
+      max_tokens: 4096,
+    },
+  },
+  research: {
+    kiro_master: {
+      system_prompt: KIRO_MASTER_PROMPT,
+      temperature: 0.3,
+      max_tokens: 16384,
+    },
+  },
+  streaming: {
+    live_shopping: {
+      system_prompt: LIVE_SHOPPING_PROMPT,
+      temperature: 0.7,
+      max_tokens: 2000,
     },
   },
   board: {
