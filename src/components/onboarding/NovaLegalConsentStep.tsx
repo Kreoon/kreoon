@@ -414,11 +414,11 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
     return labels[type] || type;
   };
 
-  // Progreso: solo documentos (el de edad es uno más de la lista)
-  const totalItems = documentsToShow.length;
+  // Progreso: documentos + checkbox de edad si no hay doc de edad en la lista
+  const totalItems = documentsToShow.length + (!hasAgeDocInList ? 1 : 0);
   const doneItems = documentsToShow.filter(
     d => acceptedDocs.has(d.document_id) || signedDocuments.has(d.document_id)
-  ).length;
+  ).length + (!hasAgeDocInList && ageConfirmed ? 1 : 0);
 
   // Suprimir advertencia de isVerifyingAge no usado
   void isVerifyingAge;
@@ -459,6 +459,41 @@ export function NovaLegalConsentStep({ onBack, onLogout, userRole, accountType }
 
         {/* Documentos */}
         <div className="space-y-3 mb-6">
+          {/* Checkbox de edad manual cuando ningún doc de la lista la cubre */}
+          {!hasAgeDocInList && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+            >
+              <button
+                type="button"
+                onClick={() => setAgeConfirmed(prev => !prev)}
+                className={cn(
+                  'w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all text-left',
+                  ageConfirmed
+                    ? 'border-green-500 bg-green-500/10'
+                    : 'border-border/50 bg-card hover:border-primary/40'
+                )}
+              >
+                <span className="text-3xl shrink-0">🎂</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-foreground text-sm leading-tight">
+                    Declaro que tengo más de 18 años
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    Declaración jurada requerida para usar la plataforma
+                  </p>
+                </div>
+                {ageConfirmed ? (
+                  <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full border-2 border-muted-foreground/40 shrink-0" />
+                )}
+              </button>
+            </motion.div>
+          )}
+
           {documentsToShow.map((doc, index) => {
             const isAccepted = acceptedDocs.has(doc.document_id) || signedDocuments.has(doc.document_id);
             const isSigned = signedDocuments.has(doc.document_id);
