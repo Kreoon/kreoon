@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     const discountPct = Math.round(discount * 100);
     const planFeatures = PLAN_DETAILS[planKey] || [];
 
-    const appUrl = Deno.env.get("APP_URL") || "https://app.kreoon.com";
+    const appUrl = Deno.env.get("APP_URL") || "https://www.kreoon.com";
 
     // Obtener perfil del usuario para el email
     const { data: profile } = await adminClient
@@ -137,6 +137,7 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
+      allow_promotion_codes: true,
       ...(customerEmail ? { customer_email: customerEmail } : {}),
       line_items: [
         {

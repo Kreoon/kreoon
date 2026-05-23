@@ -152,7 +152,7 @@ const ENTERPRISE_FEATURES = [
   'Arranque ejecutivo con Alexander Cast',
 ];
 
-const WA_NUMBER = '573218000000'; // Alexander actualiza con el número real
+const WA_NUMBER = '573113842399';
 
 function buildWhatsAppLink(message: string, currency: Currency, duration: BillingDuration, price: number) {
   const priceStr = formatPrice(price, currency);
