@@ -2,8 +2,9 @@ import { useState, useMemo } from 'react';
 import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
-  Phone, MapPin, Loader2, Activity, TrendingDown,
+  Phone, MapPin, Loader2, Activity, TrendingDown, CalendarDays, X,
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -40,6 +41,40 @@ import type { OrgContact } from '@/types/crm.types';
 // Phone y MapPin importados pero usados en tipos derivados — se mantienen para compatibilidad futura
 void Phone;
 void MapPin;
+
+// ── Filtro de fechas ──────────────────────────────────────────────────────────
+type DatePreset = 'todo' | 'hoy' | 'semana' | 'mes' | '3meses' | 'ano' | 'personalizado';
+interface DateRange { preset: DatePreset; from: Date | null; to: Date | null }
+const DATE_PRESETS: { key: DatePreset; label: string }[] = [
+  { key: 'todo',          label: 'Todo' },
+  { key: 'hoy',          label: 'Hoy' },
+  { key: 'semana',       label: 'Esta semana' },
+  { key: 'mes',          label: 'Este mes' },
+  { key: '3meses',       label: 'Últimos 3 meses' },
+  { key: 'ano',          label: 'Este año' },
+  { key: 'personalizado', label: 'Personalizado' },
+];
+function getPresetRange(preset: DatePreset): { from: Date | null; to: Date | null } {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  switch (preset) {
+    case 'todo':  return { from: null, to: null };
+    case 'hoy':   return { from: today, to: now };
+    case 'semana': {
+      const from = new Date(today);
+      from.setDate(today.getDate() - today.getDay());
+      return { from, to: now };
+    }
+    case 'mes':    return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: now };
+    case '3meses': {
+      const from = new Date(now);
+      from.setMonth(now.getMonth() - 3);
+      return { from, to: now };
+    }
+    case 'ano':    return { from: new Date(now.getFullYear(), 0, 1), to: now };
+    default:       return { from: null, to: null };
+  }
+}
 
 type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects';
 
@@ -111,6 +146,8 @@ export function UnifiedClientsContent() {
   const [filter, setFilter] = useState<FilterTab>(defaultTab);
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
+  const [dateRange, setDateRange] = useState<DateRange>({ preset: 'todo', from: null, to: null });
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
   // Selection state
   const [selectedEntity, setSelectedEntity] = useState<UnifiedClientEntity | null>(null);
@@ -194,19 +231,41 @@ export function UnifiedClientsContent() {
       );
     }
 
+    // Filtro de fechas (por fecha de creación del cliente)
+    if (dateRange.from || dateRange.to) {
+      list = list.filter(e => {
+        const date = new Date(e.created_at);
+        if (dateRange.from && date < dateRange.from) return false;
+        if (dateRange.to && date > dateRange.to) return false;
+        return true;
+      });
+    }
+
     return list;
-  }, [entities, filter, search, canSeeInternal, activityMap]);
+  }, [entities, filter, search, canSeeInternal, activityMap, dateRange]);
 
   // Filtered client users
   const filteredClientUsers = useMemo(() => {
-    if (!search.trim()) return clientUsers;
-    const q = search.toLowerCase();
-    return clientUsers.filter(u =>
-      u.full_name.toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      u.linked_companies.some(c => c.client_name.toLowerCase().includes(q)),
-    );
-  }, [clientUsers, search]);
+    let list = clientUsers;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(u =>
+        u.full_name.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q) ||
+        u.linked_companies.some(c => c.client_name.toLowerCase().includes(q)),
+      );
+    }
+    // Filtro de fechas (por fecha de registro del usuario)
+    if (dateRange.from || dateRange.to) {
+      list = list.filter(u => {
+        const date = new Date(u.created_at);
+        if (dateRange.from && date < dateRange.from) return false;
+        if (dateRange.to && date > dateRange.to) return false;
+        return true;
+      });
+    }
+    return list;
+  }, [clientUsers, search, dateRange]);
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
@@ -422,6 +481,95 @@ export function UnifiedClientsContent() {
           </div>
 
           <div className="flex items-center gap-2 ml-auto">
+            {/* Date range filter */}
+            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className={cn(
+                  'h-8 gap-1.5 text-xs',
+                  dateRange.preset !== 'todo' && 'border-primary/50 bg-primary/10 text-primary',
+                )}>
+                  <CalendarDays className="h-3 w-3" />
+                  {dateRange.preset === 'todo'
+                    ? 'Fecha'
+                    : DATE_PRESETS.find(p => p.key === dateRange.preset)?.label ?? 'Fecha'}
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-3" align="end">
+                <div className="space-y-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Fecha de registro
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DATE_PRESETS.map(p => (
+                      <button
+                        key={p.key}
+                        onClick={() => {
+                          if (p.key === 'personalizado') {
+                            setDateRange(prev => ({ ...prev, preset: 'personalizado' }));
+                          } else {
+                            const { from, to } = getPresetRange(p.key);
+                            setDateRange({ preset: p.key, from, to });
+                            if (p.key === 'todo') setDatePopoverOpen(false);
+                          }
+                        }}
+                        className={cn(
+                          'px-2.5 py-1 rounded-sm text-xs font-medium transition-all',
+                          dateRange.preset === p.key
+                            ? 'bg-primary text-white'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {dateRange.preset === 'personalizado' && (
+                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Desde</p>
+                        <input
+                          type="date"
+                          value={dateRange.from ? dateRange.from.toISOString().split('T')[0] : ''}
+                          onChange={e => {
+                            const from = e.target.value ? new Date(e.target.value) : null;
+                            setDateRange(prev => ({ ...prev, from }));
+                          }}
+                          className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
+                        <input
+                          type="date"
+                          value={dateRange.to ? dateRange.to.toISOString().split('T')[0] : ''}
+                          onChange={e => {
+                            const to = e.target.value ? new Date(e.target.value + 'T23:59:59') : null;
+                            setDateRange(prev => ({ ...prev, to }));
+                          }}
+                          className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {dateRange.preset !== 'todo' && (
+                    <button
+                      onClick={() => {
+                        setDateRange({ preset: 'todo', from: null, to: null });
+                        setDatePopoverOpen(false);
+                      }}
+                      className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 py-1.5 border-t border-border mt-1"
+                    >
+                      <X className="h-3 w-3" />
+                      Limpiar filtro
+                    </button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
               <Input
