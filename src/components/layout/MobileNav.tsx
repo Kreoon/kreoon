@@ -107,7 +107,7 @@ const adminSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
+      { name: "Clientes", href: "/clientes", icon: Building2, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },
@@ -143,7 +143,7 @@ const strategistSections: NavSection[] = [
     label: "GESTIÓN",
     items: [
       { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
-      { name: "Clientes", href: "/clients-hub", icon: Building2, requiresOrg: true },
+      { name: "Clientes", href: "/clientes", icon: Building2, requiresOrg: true },
       { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
     ]
   },

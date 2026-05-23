@@ -441,9 +441,10 @@ function AppRoutes() {
         <Route path="/board" element={<ProtectedRoute allowedRoles={['admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager', 'client']}><MainLayout><ContentBoard /></MainLayout></ProtectedRoute>} />
         <Route path="/content" element={<ProtectedRoute allowedRoles={['admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager']}><MainLayout><Content /></MainLayout></ProtectedRoute>} />
         <Route path="/talent" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist', 'creative_strategist']}><MainLayout><UnifiedTalentPage /></MainLayout></ProtectedRoute>} />
-        <Route path="/clients-hub" element={<Navigate to="/talent?tab=clientes" replace />} />
+        <Route path="/clientes" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist', 'creative_strategist', 'community_manager']}><MainLayout><UnifiedClientsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/clients-hub" element={<Navigate to="/clientes" replace />} />
         <Route path="/creators" element={<Navigate to="/talent" replace />} />
-        <Route path="/clients" element={<Navigate to="/talent?tab=clientes" replace />} />
+        <Route path="/clients" element={<Navigate to="/clientes" replace />} />
         <Route path="/scripts" element={<ProtectedRoute allowedRoles={['admin', 'editor', 'digital_strategist', 'creative_strategist']}><MainLayout><Scripts /></MainLayout></ProtectedRoute>} />
         <Route path="/team" element={<Navigate to="/talent?tab=sin-asignar" replace />} />
         {/* Streaming V2 - Unified Module */}
@@ -462,7 +463,7 @@ function AppRoutes() {
         <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/overview" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/leads" element={<Navigate to="/crm" replace />} />
-        <Route path="/crm/marcas" element={<Navigate to="/talent?tab=clientes" replace />} />
+        <Route path="/crm/marcas" element={<Navigate to="/clientes" replace />} />
         <Route path="/crm/marcas/:brandId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/comunidades" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/personas" element={<Navigate to="/team" replace />} />
@@ -473,7 +474,7 @@ function AppRoutes() {
         <Route path="/crm/email-marketing" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Organización */}
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
-        <Route path="/org-crm/contactos" element={<Navigate to="/talent?tab=clientes" replace />} />
+        <Route path="/org-crm/contactos" element={<Navigate to="/clientes" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/talent?tab=externo" replace />} />
         <Route path="/org-crm/pipelines" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/finanzas" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><OrgCRMFinances /></MainLayout></ProtectedRoute>} />
