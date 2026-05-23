@@ -1,0 +1,117 @@
+origen,destino,status,fase,notas
+# ============================================================================
+# REDIRECTS ugccolombia.co → kreoon.com
+# Aplicar en apps/web/middleware.ts cuando ugccolombia.co sea alias del proyecto Vercel kreoon-web.
+# ============================================================================
+https://ugccolombia.co/,https://kreoon.com/,301,F6,Home agencia se convierte en home Kreoon master (que ya incluye sección agencia)
+https://ugccolombia.co/servicios,https://kreoon.com/servicios,301,F6,Slug mantenido
+https://ugccolombia.co/precios,https://kreoon.com/precios,301,F6,Página /precios del Next.js mantiene estructura
+https://ugccolombia.co/casos,https://kreoon.com/casos,301,F6,Mantener slug del Next.js (NO unificar con /casos-de-exito de SPA — al revés ver abajo)
+https://ugccolombia.co/agendar,https://kreoon.com/agendar,301,F6,Booking Cal.com
+https://ugccolombia.co/forge,https://kreoon.com/forge,301,F6,Lead magnet/forge tool
+https://ugccolombia.co/diagnostico,https://kreoon.com/diagnostico,301,F6,Hub de diagnósticos AI
+https://ugccolombia.co/diagnostico/:handle,https://kreoon.com/diagnostico/:handle,301,F6,Página dinámica de diagnóstico (cientos de URLs indexadas potencialmente)
+https://ugccolombia.co/garantia,https://kreoon.com/garantia,301,F6,Página garantía
+https://ugccolombia.co/regalos,https://kreoon.com/regalos,301,F6,Promo regalos
+https://ugccolombia.co/legal/privacidad,https://kreoon.com/legal/privacidad,301,F6,Slug legal mantenido (Next.js usa /legal/* español)
+https://ugccolombia.co/legal/terminos,https://kreoon.com/legal/terminos,301,F6,
+https://ugccolombia.co/legal/cookies,https://kreoon.com/legal/cookies,301,F6,
+https://ugccolombia.co/gracias,https://kreoon.com/gracias,301,F6,Thank you page lead form
+https://ugccolombia.co/gracias-pago,https://kreoon.com/gracias-pago,301,F6,Thank you page checkout
+https://ugccolombia.co/checkout,https://kreoon.com/checkout,301,F6,Stripe checkout
+https://ugccolombia.co/login,https://kreoon.com/login,301,F6,Login admin (Next.js)
+https://ugccolombia.co/registro,https://kreoon.com/registro,301,F6,Registro cliente
+https://ugccolombia.co/admin,https://kreoon.com/admin,301,F6,Admin panel agencia (Next.js)
+# ============================================================================
+# REDIRECTS de RUTAS PÚBLICAS Kreoon SPA → kreoon.com Next.js
+# Aplicar en apps/app (SPA) cuando las páginas se migren al Next.js.
+# Hasta entonces, mantener doble: SPA sirve la página y Next.js también (canonical apunta a Next.js).
+# ============================================================================
+https://kreoon.com/casos-de-exito,https://kreoon.com/casos,301,F7,Unificar a slug Next.js /casos. Mantener /casos-de-exito como alias hasta que Search Console reindex
+https://kreoon.com/casos-de-exito/:slug,https://kreoon.com/casos/:slug,301,F7,Slug dinámico de case studies
+https://kreoon.com/calculadora-ugc,https://kreoon.com/precios#calculadora,301,F7,Calculadora pasa a sección dentro de /precios (mejor SEO un solo URL fuerte)
+https://kreoon.com/portafolio,https://kreoon.com/casos,301,F7,Portafolio público → casos de éxito (consolidar)
+https://kreoon.com/blog,https://kreoon.com/blog,200,F3,Mantener slug. Migrar contenido del SPA al Next.js MDX/Sanity. NO redirect.
+https://kreoon.com/blog/:slug,https://kreoon.com/blog/:slug,200,F3,Igual. Detalle de post.
+https://kreoon.com/unete,https://kreoon.com/unete,200,F7,Migrar al Next.js. Mantener slugs idénticos.
+https://kreoon.com/unete/talento,https://kreoon.com/unete/talento,200,F7,
+https://kreoon.com/unete/marcas,https://kreoon.com/unete/marcas,200,F7,
+https://kreoon.com/unete/organizaciones,https://kreoon.com/unete/organizaciones,200,F7,
+https://kreoon.com/comunidad/:slug,https://kreoon.com/comunidad/:slug,200,F7,Partner Communities Landing migrar a Next.js (SEO crítico para reclutamiento)
+https://kreoon.com/templates,https://kreoon.com/templates,200,F7,Template Library público
+# ============================================================================
+# REDIRECTS de SaaS Routes → app.kreoon.com (todas las rutas autenticadas)
+# Aplicar en apps/web/middleware.ts en Fase 4. Detección por pathname matching.
+# ============================================================================
+https://kreoon.com/dashboard,https://app.kreoon.com/dashboard,301,F4,
+https://kreoon.com/board,https://app.kreoon.com/board,301,F4,
+https://kreoon.com/content,https://app.kreoon.com/content,301,F4,
+https://kreoon.com/talent,https://app.kreoon.com/talent,301,F4,
+https://kreoon.com/scripts,https://app.kreoon.com/scripts,301,F4,
+https://kreoon.com/clients,https://app.kreoon.com/talent?tab=clientes,301,F4,Ya hace redirect interno en SPA, mantener mismo destino
+https://kreoon.com/creators,https://app.kreoon.com/talent,301,F4,
+https://kreoon.com/team,https://app.kreoon.com/talent?tab=sin-asignar,301,F4,
+https://kreoon.com/marketing,https://app.kreoon.com/marketing,301,F4,
+https://kreoon.com/marketing-ads,https://app.kreoon.com/marketing-ads,301,F4,
+https://kreoon.com/crm,https://app.kreoon.com/crm,301,F4,
+https://kreoon.com/crm/*,https://app.kreoon.com/crm/*,301,F4,Wildcard para todo el CRM
+https://kreoon.com/org-crm,https://app.kreoon.com/org-crm,301,F4,
+https://kreoon.com/org-crm/*,https://app.kreoon.com/org-crm/*,301,F4,
+https://kreoon.com/settings,https://app.kreoon.com/settings,301,F4,
+https://kreoon.com/planes,https://app.kreoon.com/planes,301,F4,
+https://kreoon.com/wallet,https://app.kreoon.com/wallet,301,F4,
+https://kreoon.com/wallet/*,https://app.kreoon.com/wallet/*,301,F4,
+https://kreoon.com/admin/*,https://app.kreoon.com/admin/*,301,F4,
+https://kreoon.com/ad-generator,https://app.kreoon.com/ad-generator,301,F4,
+https://kreoon.com/ad-generator/:productId,https://app.kreoon.com/ad-generator/:productId,301,F4,
+https://kreoon.com/social-hub,https://app.kreoon.com/social-hub,301,F4,
+https://kreoon.com/booking/*,https://app.kreoon.com/booking/*,301,F4,Calendario interno
+https://kreoon.com/book/:username,https://app.kreoon.com/book/:username,301,F4,Booking público (decidir si va en web o app — recomiendo app por features de auth)
+https://kreoon.com/streaming/*,https://app.kreoon.com/streaming/*,301,F4,
+https://kreoon.com/live,https://app.kreoon.com/live,301,F4,
+https://kreoon.com/live/*,https://app.kreoon.com/live/*,301,F4,
+https://kreoon.com/auth,https://app.kreoon.com/auth,301,F4,Auth interno del SaaS. /login del Next.js es admin agency.
+https://kreoon.com/auth/*,https://app.kreoon.com/auth/*,301,F4,
+https://kreoon.com/register,https://app.kreoon.com/register,301,F4,Registro SaaS (diferente a /registro Next.js que es agencia)
+https://kreoon.com/welcome,https://app.kreoon.com/welcome,301,F4,
+https://kreoon.com/welcome/*,https://app.kreoon.com/welcome/*,301,F4,Incluye /welcome/ugc-colombia
+https://kreoon.com/onboarding/*,https://app.kreoon.com/onboarding/*,301,F4,
+https://kreoon.com/dashboard,https://app.kreoon.com/dashboard,301,F4,
+https://kreoon.com/creator-dashboard,https://app.kreoon.com/creator-dashboard,301,F4,
+https://kreoon.com/editor-dashboard,https://app.kreoon.com/editor-dashboard,301,F4,
+https://kreoon.com/strategist-dashboard,https://app.kreoon.com/strategist-dashboard,301,F4,
+https://kreoon.com/client-dashboard,https://app.kreoon.com/client-dashboard,301,F4,
+https://kreoon.com/client-board,https://app.kreoon.com/client-board,301,F4,
+https://kreoon.com/demo,https://app.kreoon.com/demo,301,F4,
+https://kreoon.com/marketplace,https://app.kreoon.com/marketplace,301,F4,DECISIÓN: marketplace puede ser SEO-friendly en Next.js — evaluar mover a web/ en F7
+https://kreoon.com/marketplace/*,https://app.kreoon.com/marketplace/*,301,F4,
+https://kreoon.com/ranking,https://app.kreoon.com/ranking,301,F4,
+https://kreoon.com/ambassador,https://app.kreoon.com/ambassador,301,F4,
+https://kreoon.com/research/:productId,https://app.kreoon.com/research/:productId,301,F4,
+https://kreoon.com/profile-builder,https://app.kreoon.com/profile-builder,301,F4,
+https://kreoon.com/preview/:token,https://app.kreoon.com/preview/:token,301,F4,
+https://kreoon.com/p/:username,https://kreoon.com/p/:username,200,F7,Perfil público de creator — DECISIÓN: mover a web/ por SEO (es la home del creator)
+https://kreoon.com/@:username,https://kreoon.com/@:username,200,F7,Igual que /p/:username
+https://kreoon.com/profile/:userId,https://app.kreoon.com/profile/:userId,301,F4,Perfil autenticado
+https://kreoon.com/company/:username,https://kreoon.com/company/:username,200,F7,Perfil público de organización — mover a web/ por SEO
+https://kreoon.com/review/:token,https://app.kreoon.com/review/:token,301,F4,Review público (link mágico)
+https://kreoon.com/up-documentation,https://app.kreoon.com/up-documentation,301,F4,
+https://kreoon.com/mcp-docs,https://app.kreoon.com/mcp-docs,301,F4,
+https://kreoon.com/r/:code,https://app.kreoon.com/r/:code,301,F4,Referral landing
+https://kreoon.com/marca-referida,https://app.kreoon.com/marca-referida,301,F4,
+https://kreoon.com/no-company,https://app.kreoon.com/no-company,301,F4,
+https://kreoon.com/no-organization,https://app.kreoon.com/no-organization,301,F4,
+https://kreoon.com/pending-access,https://app.kreoon.com/pending-access,301,F4,
+https://kreoon.com/unauthorized,https://app.kreoon.com/unauthorized,301,F4,
+https://kreoon.com/unlock-access,https://app.kreoon.com/unlock-access,301,F4,
+https://kreoon.com/welcome-talent,https://app.kreoon.com/welcome-talent,301,F4,
+https://kreoon.com/subscription/success,https://app.kreoon.com/subscription/success,301,F4,
+https://kreoon.com/subscription/cancel,https://app.kreoon.com/subscription/cancel,301,F4,
+https://kreoon.com/org/:slug,https://app.kreoon.com/org/:slug,301,F4,
+https://kreoon.com/org/:slug/talento,https://app.kreoon.com/org/:slug/talento,301,F4,
+https://kreoon.com/org/:slug/contenido,https://app.kreoon.com/org/:slug/contenido,301,F4,
+https://kreoon.com/auth/org/:slug,https://app.kreoon.com/auth/org/:slug,301,F4,
+https://kreoon.com/privacy,https://kreoon.com/legal/privacidad,301,F3,Unificar slug legal con Next.js (español)
+https://kreoon.com/terms,https://kreoon.com/legal/terminos,301,F3,
+https://kreoon.com/data-deletion,https://kreoon.com/legal/eliminacion-datos,301,F3,Crear página en Next.js
+https://kreoon.com/legal/:documentType,https://kreoon.com/legal/:documentType,200,F3,Mantener (Next.js ya tiene /legal/*)
