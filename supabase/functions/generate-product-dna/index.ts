@@ -1,5 +1,10 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+import {
+  batchScrape,
+  extractUrlsFromText,
+  formatScrapeContextForLLM,
+} from "../_shared/firecrawl-client.ts";
 
 // ── JSON extraction and repair ─────────────────────────────────────────────
 function extractJsonFromText(text: string): string | null {
@@ -90,7 +95,7 @@ async function transcribeWithGemini(audioBlob: Blob): Promise<string> {
             { inline_data: { mime_type: mimeType, data: base64Audio } },
           ],
         }],
-        generationConfig: { temperature: 0, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { temperature: 0 },
       }),
     }
   );
@@ -208,36 +213,75 @@ async function extractFromAudio(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
 
+  const offerType = (wizardResponses.offer_type as string) || "";
+
   // Contexto explícito del producto si el usuario lo proporcionó
   const pNameCtx = (wizardResponses.product_name as string | undefined)?.trim();
   const pContextCtx = (wizardResponses.product_context as string | undefined)?.trim();
   const productHint = pNameCtx
-    ? `\n\nCONTEXTO EXPLÍCITO DEL PRODUCTO (usa esto como base, tiene prioridad sobre cualquier inferencia):\nNombre: ${pNameCtx}${pContextCtx ? `\nDescripción: ${pContextCtx}` : ""}`
+    ? `\n\nCONTEXTO EXPLÍCITO (prioridad sobre cualquier inferencia):\nNombre: ${pNameCtx}${pContextCtx ? `\nDescripción: ${pContextCtx}` : ""}`
+    : "";
+
+  // Campos adicionales según tipo de oferta
+  const offerTypeFieldsMap: Record<string, string> = {
+    event_webinar: `  "fecha_evento": "fecha o periodo del webinar/live si se menciona",
+  "tema_principal_evento": "el tema central o revelacion principal del evento",
+  "ponente_o_experto": "quien imparte el evento",
+  "cupos_o_urgencia": "si menciona cupos limitados, fecha limite u otra urgencia",
+  "que_aprenderan": "puntos clave que aprenderan los asistentes",
+  "oferta_post_evento": "si menciona producto/servicio que venderan despues del evento",`,
+    infoproduct: `  "nombre_programa": "nombre exacto del curso/programa",
+  "modulos_o_temas": "modulos o temas principales que cubre",
+  "duracion_programa": "cuanto dura el programa",
+  "precio_o_inversion": "precio o inversion mencionada",
+  "garantia": "si tiene garantia de resultados o devolucion",
+  "resultados_alumnos": "resultados de alumnos anteriores si los menciona",`,
+    service: `  "proceso_servicio": "como funciona el servicio paso a paso",
+  "duracion_o_sesiones": "cuanto dura o cuantas sesiones incluye",
+  "precio_o_rango": "precio o rango de precio mencionado",
+  "garantia_o_resultados": "garantias o resultados prometidos",
+  "diferenciador_clave": "que lo diferencia de otros proveedores del servicio",`,
+    personal_brand: `  "especialidad_declarada": "en que se especializa o que lo hace experto",
+  "historia_personal": "historia o experiencia personal clave mencionada",
+  "perspectiva_unica": "punto de vista diferente al mainstream del nicho",
+  "comunidad_o_audiencia": "descripcion de su comunidad o audiencia objetivo",`,
+    saas_app: `  "problema_que_resuelve": "el problema especifico que soluciona la app",
+  "funcionalidad_estrella": "la funcion principal o mas valorada",
+  "modelo_precio": "free/freemium/trial/pago desde X",
+  "integraciones": "con que otras herramientas se integra",`,
+  };
+
+  const extraFields = offerTypeFieldsMap[offerType] || `  "diferenciador_clave": "que hace unico este producto/servicio",`;
+
+  const offerTypeContext = offerType
+    ? `\nTIPO DE OFERTA SELECCIONADO: ${offerType} — enfoca la extraccion en informacion relevante para este tipo.`
     : "";
 
   const extractionPrompt = `Eres un estratega de contenido digital experto en briefing creativo.
 
-Analiza esta transcripcion de audio donde un cliente describe lo que necesita:${productHint}
+Analiza esta transcripcion de audio donde un cliente describe su oferta:${productHint}${offerTypeContext}
 
 TRANSCRIPCION:
 ${transcription}
 
 SELECCIONES DEL WIZARD:
-- Tipos de servicio: ${serviceTypes.join(", ") || "No especificado"}
+- Tipo de oferta: ${offerType || "No especificado"}
+- Tipos de servicio de contenido: ${serviceTypes.join(", ") || "No especificado"}
 - Objetivos: ${goals.join(", ") || "No especificado"}
 - Plataformas: ${platforms.join(", ") || "No especificado"}
 - Audiencias: ${audiences.join(", ") || "No especificado"}
 
-Extrae y devuelve SOLO este JSON (sin texto adicional, sin markdown):
+Extrae SOLO este JSON (sin texto adicional, sin markdown):
 {
-  "servicio_exacto": "descripcion exacta del producto/servicio en las palabras del cliente",
+  "servicio_exacto": "descripcion exacta de la oferta en las palabras del cliente",
   "objetivo_real": "objetivo declarado + objetivo implicito detectado",
   "palabras_clave_cliente": ["frase literal 1", "frase literal 2", "frase literal 3"],
   "restricciones_creativas": "lo que NO quiere en el contenido",
   "referentes_estilo": "estilos o ejemplos mencionados",
   "tono_emocional": "urgente|claro|apasionado|inseguro|neutral",
-  "canal_primario": "el canal mas importante mencionado o seleccionado",
-  "tipo_contenido_principal": "el tipo de contenido mas solicitado"
+  "canal_primario": "el canal mas importante",
+  "tipo_contenido_principal": "el tipo de contenido mas relevante para la oferta",
+${extraFields}
 }`;
 
   console.log("[generate-product-dna] Extracting data from audio with Gemini...");
@@ -250,7 +294,7 @@ Extrae y devuelve SOLO este JSON (sin texto adicional, sin markdown):
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: extractionPrompt }] }],
-          generationConfig: { temperature: 0.2, maxOutputTokens: 2000, thinkingConfig: { thinkingBudget: 0 } },
+          generationConfig: { temperature: 0.2, maxOutputTokens: 2000 },
         }),
       }
     );
@@ -343,74 +387,298 @@ function getMarketDescription(wizardResponses: Record<string, unknown>): string 
   return "Latinoamérica";
 }
 
-// ── Perplexity AI call (content-focused research) ────────────────────────
+// ── Builder de prompts Perplexity según tipo de oferta ───────────────────────
+function buildPerplexityPrompts(
+  offerType: string,
+  productLabel: string,
+  platforms: string[],
+  audiences: string[],
+  goals: string[],
+  mercado: string,
+  canal: string,
+): { system: string; user: string } {
+  const canales = platforms.join("/") || "Instagram, TikTok";
+  const audienciaStr = audiences.join(", ") || "25-40";
+
+  // Secciones base que comparten todos los tipos
+  const seccionCompetencia = `
+2. COMPETIDORES DIRECTOS (5 reales y activos en ${mercado})
+   Para cada uno: nombre completo, URL si la conoces, promesa principal, precio referencial,
+   fortaleza en contenido, debilidad explotable, plataformas que usa
+
+3. GAP COMPETITIVO
+   - Que angulo o promesa NO esta usando nadie en ${mercado}
+   - La oportunidad real de diferenciacion para este tipo de oferta`;
+
+  const seccionAudiencia = `
+4. COMPORTAMIENTO DE LA AUDIENCIA EN ${canales} (${mercado})
+   - Como consume contenido esta audiencia (${audienciaStr} anos)
+   - Que formatos generan mas engagement y registros/ventas
+   - Que tipo de hooks los detienen en el scroll
+   - Palabras, frases y emociones que resuenan con ellos`;
+
+  // Prompts específicos por tipo de oferta
+  if (offerType === "event_webinar") {
+    return {
+      system: `Eres un investigador de mercado digital especializado en webinars y eventos en vivo en ${mercado}.
+Tu tarea es BUSCAR Y ENCONTRAR información real y actual usando búsqueda web.
+Busca activamente: nombres reales de competidores, sus URLs, lo que publican, cómo promocionan sus eventos.
+NO digas que no tienes acceso — simplemente busca y reporta lo que encuentras.
+Mercado: ${mercado}. Idioma: español.`,
+      user: `BUSCA EN LA WEB información real y actual sobre este nicho para crear contenido efectivo:
+
+EVENTO A PROMOVER: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} años | MERCADO: ${mercado}
+
+BUSCA Y REPORTA (con URLs cuando las encuentres):
+
+1. COMPETIDORES REALES — Encuentra 4-5 creadores, coaches, marcas o empresas que hagan webinars gratuitos sobre temas similares en ${mercado}. Para cada uno: nombre, URL o red social, qué prometen en sus eventos, cómo los promocionan en ${canales}.
+
+2. CONTENIDO QUE FUNCIONA — Busca ejemplos reales de publicaciones o videos en ${canales} que promocionen webinars en este nicho en ${mercado}. ¿Qué hooks usan? ¿Qué ángulos de contenido generan registros?
+
+3. GAP DE MERCADO — ¿Qué promesa, ángulo o tema NO está usando nadie en ${mercado} para webinars de este nicho? ¿Cuál es la oportunidad de diferenciación?
+
+4. AUDIENCIA Y COMPORTAMIENTO — ¿Cómo busca y consume contenido esta audiencia (${audienciaStr} años) en ${mercado}? ¿Qué palabras y frases usan cuando buscan soluciones como esta? ¿Qué objeciones tienen para registrarse?
+
+5. HOOKS Y COPY QUE CONVIERTEN — Encuentra ejemplos reales de hooks, CTAs y textos que usen eventos similares en ${canales} para generar registros. Incluye frases específicas que funcionan en este nicho en ${mercado}.
+
+Incluye URLs reales de ejemplos que encuentres. Reporta solo datos verificables.`,
+    };
+  }
+
+  if (offerType === "infoproduct") {
+    return {
+      system: `Eres un investigador de mercado especializado en infoproductos y educación digital en ${mercado}.
+Tu tarea es BUSCAR y reportar información real y actual usando búsqueda web.
+Encuentra nombres reales de competidores, sus URLs, precios y estrategias de contenido.
+NO digas que no tienes acceso — simplemente busca y reporta lo que encuentras.
+Mercado: ${mercado}. Idioma: español.`,
+      user: `BUSCA EN LA WEB información real sobre este mercado de cursos y programas digitales:
+
+PROGRAMA: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} años | MERCADO: ${mercado}
+
+1. COMPETIDORES REALES — Encuentra 4-5 cursos, programas o infoproductos sobre temas similares en ${mercado}. Para cada uno: nombre, URL/plataforma, precio aproximado, promesa de transformación, cómo lo promocionan en ${canales}.
+
+2. CONTENIDO QUE VENDE CURSOS — Busca ejemplos reales de publicaciones o videos que vendan programas similares en ${mercado}. ¿Qué hooks usan? ¿Qué ángulos convierten más?
+
+3. GAP Y OPORTUNIDAD — ¿Qué promesa, módulo o transformación NO está ofreciendo nadie en este nicho en ${mercado}?
+
+4. AUDIENCIA — ¿Qué objeciones tiene esta audiencia para comprar cursos? ("no tengo tiempo", "muy caro", "¿funcionará para mí?") ¿Qué testimonios y prueba social los convence?
+
+5. HOOKS Y COPY — Encuentra frases y hooks reales que usen los competidores para atraer estudiantes en ${canales} en ${mercado}.
+
+Incluye URLs de ejemplos reales que encuentres.`,
+    };
+  }
+
+  if (offerType === "service") {
+    return {
+      system: `Eres un investigador de mercado especializado en servicios profesionales en ${mercado}.
+Tu tarea es BUSCAR y reportar información real y actual usando búsqueda web.
+Encuentra proveedores reales, sus perfiles en redes, precios y estrategias de contenido.
+NO digas que no tienes acceso — simplemente busca y reporta lo que encuentras.
+Mercado: ${mercado}. Idioma: español.`,
+      user: `BUSCA EN LA WEB información real sobre este mercado de servicios profesionales:
+
+SERVICIO: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} años | MERCADO: ${mercado}
+
+1. PROVEEDORES REALES — Encuentra 4-5 personas, clínicas o empresas que ofrezcan servicios similares en ${mercado}. Para cada uno: nombre, URL o red social, cómo se posicionan, qué resultados muestran, cómo generan confianza.
+
+2. CONTENIDO QUE GENERA CONSULTAS — Busca ejemplos reales de publicaciones o videos de proveedores similares en ${mercado}. ¿Qué hooks usan? ¿Qué formatos generan más solicitudes?
+
+3. GAP Y DIFERENCIACIÓN — ¿Qué ángulo, garantía o promesa NO está usando nadie en ${mercado} para este servicio?
+
+4. AUDIENCIA Y DECISIÓN — ¿Qué busca esta audiencia antes de contratar? ¿Qué miedos tiene (precio, resultados, confianza)? ¿Qué los convence de contactar?
+
+5. HOOKS Y CTA — Encuentra frases reales que usen para atraer clientes en ${canales} en ${mercado}. ¿Qué palabras generan confianza y urgencia?
+
+Incluye URLs de perfiles o publicaciones reales que encuentres.`,
+    };
+  }
+
+  if (offerType === "saas_app") {
+    return {
+      system: `Eres un experto en go-to-market para SaaS y aplicaciones digitales en ${mercado}.
+Especialista en contenido que convierte usuarios a trials gratuitos y demos.
+Mercado: ${mercado}. Datos actuales.`,
+      user: `Investigacion para crear contenido que lleve usuarios a probar este SaaS/app:
+
+PRODUCTO: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} anos | MERCADO: ${mercado}
+
+1. MERCADO SAAS EN ESTE NICHO (${mercado})
+   - Principales jugadores en ${mercado} y sus estrategias de contenido
+   - Modelos de precio: freemium, trial, demo requerido
+   - Principales pain points que el software resuelve en ${mercado}
+${seccionCompetencia}
+   - Funcionalidades que promocionan, precio mensual/anual, propuesta de valor
+   - Que tipo de contenido usan para adquirir usuarios
+${seccionAudiencia}
+   - Objeciones tipicas: costo, migracion de herramienta actual, curva de aprendizaje
+   - Que tipo de demostracion los convence de hacer el trial
+
+5. CONTENIDO QUE CONVIERTE EN TRIALS/DEMOS (${mercado})
+   - Formatos mas efectivos para demos de software en ${canales}
+   - Como mostrar ROI de forma convincente
+   - Comparativas que funcionan sin atacar directamente a competidores
+
+Datos reales. URLs cuando las conozcas.`,
+    };
+  }
+
+  if (offerType === "personal_brand") {
+    return {
+      system: `Eres un experto en construccion de marca personal y crecimiento de audiencia en ${mercado}.
+Especialista en posicionamiento de thought leaders y creadores en ${canales}.
+Mercado: ${mercado}. Datos actuales.`,
+      user: `Investigacion para posicionar esta marca personal y hacer crecer la audiencia:
+
+MARCA PERSONAL: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} anos | MERCADO: ${mercado}
+
+1. PANORAMA DE MARCAS PERSONALES EN ESTE NICHO (${mercado})
+   - Principales referentes y creadores en este nicho en ${mercado}
+   - Que tipo de contenido domina el nicho actualmente
+   - Que perspectivas o angulos estan SOBRE-explotados y cuales faltan
+${seccionCompetencia}
+   - Cuantos seguidores tienen, engagement rate, como monetizan
+   - Su estilo de contenido, frecuencia, formatos principales
+${seccionAudiencia}
+   - Que tipo de creador sigue esta audiencia y por que
+   - Que los hace dejar de seguir a alguien
+   - Que temas generan mas guardados/compartidos en este nicho
+
+5. ESTRATEGIA DE CONTENIDO PARA CRECIMIENTO DE MARCA PERSONAL (${mercado})
+   - Pilares de contenido que funcionan para construir autoridad en este nicho
+   - Formatos de mayor alcance organico actual en ${canales}
+   - Como hacer crecer la audiencia de forma organica en este nicho
+   - Que tipo de colaboraciones o apariciones aceleran el crecimiento
+
+Datos reales. URLs cuando las conozcas.`,
+    };
+  }
+
+  if (offerType === "product_physical" || offerType === "ecommerce") {
+    return {
+      system: `Eres un experto en marketing de productos fisicos y e-commerce en ${mercado}.
+Especialista en contenido UGC, reviews y demostraciones de producto que convierten.
+Mercado: ${mercado}. Datos actuales.`,
+      user: `Investigacion para crear contenido que venda este producto fisico/e-commerce:
+
+PRODUCTO: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} anos | MERCADO: ${mercado}
+
+1. MERCADO DE ESTE TIPO DE PRODUCTO EN ${mercado}
+   - Estado del mercado y tendencias de compra online en ${mercado}
+   - Precios tipicos y competidores principales en ${mercado}
+   - Canales de venta mas usados: Instagram Shop, TikTok Shop, Mercado Libre, etc.
+${seccionCompetencia}
+   - Sus precios, que muestran en redes, tipo de contenido, reviews que generan
+${seccionAudiencia}
+   - Como decide esta audiencia una compra online en ${mercado}
+   - Que dudas y miedos tiene antes de comprar (calidad, envio, garantia)
+   - Que tipo de contenido los convence: reviews, unboxing, antes/despues
+
+5. CONTENIDO QUE VENDE PRODUCTOS FISICOS EN ${mercado}
+   - Formatos UGC que mas convierten para este tipo de producto en ${canales}
+   - Hooks de apertura que detienen el scroll para productos similares
+   - Como mostrar el producto de forma autentica y confiable
+   - Urgencia que funciona: stock limitado, descuentos, envio gratis
+
+Datos reales. URLs cuando las conozcas.`,
+    };
+  }
+
+  if (offerType === "consulting") {
+    return {
+      system: `Eres un experto en marketing de agencias y firmas de consultoría en ${mercado}.
+Especialista en generar leads calificados y posicionar el expertise de la agencia.
+Mercado: ${mercado}. Datos actuales.`,
+      user: `Investigacion para crear contenido que genere leads para esta agencia/consultoria:
+
+AGENCIA/CONSULTORIA: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} anos | MERCADO: ${mercado}
+
+1. MERCADO DE CONSULTORIA/AGENCIAS EN ESTE NICHO (${mercado})
+   - Principales agencias y consultoras en ${mercado}
+   - Rangos de honorarios tipicos en ${mercado}
+   - Como se diferencia una agencia premium de una economica en ${mercado}
+${seccionCompetencia}
+   - Sus propuestas de valor, casos de exito que muestran, precios si son publicos
+   - Como generan confianza y credibilidad en redes
+${seccionAudiencia}
+   - Que tipo de empresa/persona busca este servicio en ${mercado}
+   - Que los hace elegir una agencia sobre hacerlo internamente
+   - Sus principales miedos al contratar una agencia
+
+5. CONTENIDO QUE GENERA LEADS B2B/PREMIUM EN ${mercado}
+   - Formatos que posicionan expertise y generan solicitudes de propuesta
+   - Como mostrar casos de exito sin revelar datos confidenciales
+   - Thought leadership: que temas generan autoridad en este nicho
+   - Hooks para audiencias de decision-makers en ${canales}
+
+Datos reales. URLs cuando las conozcas.`,
+    };
+  }
+
+  // Fallback genérico mejorado
+  return {
+    system: `Eres un estratega digital especialista en contenido para ${canal}.
+Tu investigacion debe ayudar a crear contenido con objetivo de ${goals.join(" y ") || "vender"}.
+MERCADO OBJETIVO: ${mercado}. Usa datos reales y actuales.`,
+    user: `Investigacion de mercado completa para crear contenido:
+
+OFERTA: ${productLabel}
+CANAL: ${canales} | AUDIENCIA: ${audienciaStr} anos | OBJETIVO: ${goals.join(", ")} | MERCADO: ${mercado}
+
+1. PANORAMA DEL MERCADO en ${mercado} (tamaño, tendencias, oportunidades)
+${seccionCompetencia}
+${seccionAudiencia}
+
+5. CONTENIDO QUE CONVIERTE EN ${mercado}
+   - Formatos y hooks que generan resultados en ${canales} para esta categoria
+   - Tendencias actuales de contenido en este nicho
+   - CTAs que mas convierten
+
+Datos reales y actuales. URLs cuando las conozcas.`,
+  };
+}
+
+// ── Perplexity AI call (research adaptado por tipo de oferta) ─────────────
 async function callPerplexityResearch(
   extractedData: Record<string, unknown>,
   wizardResponses: Record<string, unknown>
-): Promise<string> {
+): Promise<{ content: string; citations: string[] }> {
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) {
     console.error("[generate-product-dna] PERPLEXITY_API_KEY not found");
     throw new Error("PERPLEXITY_API_KEY not configured");
   }
 
-  const serviceTypes = (wizardResponses.service_types as string[]) || [];
-  const goals = (wizardResponses.goals as string[]) || [];
+  const offerType = (wizardResponses.offer_type as string) || "";
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
+  const goals = (wizardResponses.goals as string[]) || [];
   const mercadoNombre = getMarketDescription(wizardResponses);
+  const canalPrimario = (extractedData.canal_primario as string) || platforms[0] || "instagram";
 
-  const canalPrimario = extractedData.canal_primario || platforms[0] || "instagram";
-  const servicioExacto = (extractedData.servicio_exacto as string) || "producto/servicio";
-
-  // Usar product_name/context del wizard directamente si están disponibles (más confiables que la extracción)
+  // product_name/context del wizard son más confiables que la extracción
   const productNameDirect = (wizardResponses.product_name as string | undefined)?.trim();
   const productContextDirect = (wizardResponses.product_context as string | undefined)?.trim();
+  const servicioExacto = (extractedData.servicio_exacto as string) || "producto/servicio";
   const productLabel = productNameDirect
     ? (productContextDirect ? `${productNameDirect} — ${productContextDirect}` : productNameDirect)
     : servicioExacto;
 
-  const systemPrompt = `Eres un estratega digital especialista en contenido para ${canalPrimario}.
-Tu investigacion debe ser ESPECIFICA para crear contenido de ${serviceTypes.join(" y ") || "video UGC"}
-con el objetivo de ${goals.join(" y ") || "vender"}.
-MERCADO OBJETIVO: ${mercadoNombre}. Enfoca toda tu investigacion en este mercado especifico.
-Usa datos reales y actuales.`;
+  // Construir prompts específicos según el tipo de oferta
+  const { system: systemPrompt, user: userPrompt } = buildPerplexityPrompts(
+    offerType, productLabel, platforms, audiences, goals, mercadoNombre, canalPrimario,
+  );
 
-  const userPrompt = `Necesito una investigacion de mercado completa para crear contenido.
+  console.log(`[generate-product-dna] Perplexity research: offer_type="${offerType}", mercado="${mercadoNombre}", producto="${productLabel.substring(0, 60)}"`);
 
-PRODUCTO/SERVICIO: ${productLabel}
-CANAL PRINCIPAL: ${platforms.join(", ") || "Instagram, TikTok"}
-AUDIENCIA: ${audiences.join(", ") || "25-34"} anos
-OBJETIVO: ${goals.join(", ") || "vender"}
-MERCADO: ${mercadoNombre}
-
-Investiga y dame:
-
-1. PANORAMA DEL MERCADO
-   - Estado actual del mercado para este producto/servicio en ${mercadoNombre}
-   - Tamano aproximado y tendencias actuales en ${mercadoNombre}
-   - Que esta funcionando HOY en ${platforms.join("/") || "redes sociales"} para esta categoria en ${mercadoNombre}
-
-2. ANALISIS DE COMPETENCIA (5 competidores reales y activos en ${mercadoNombre})
-   Para cada uno: nombre, promesa principal, precio referencial si aplica,
-   principal fortaleza en contenido, principal debilidad, que plataformas usa
-
-3. GAP COMPETITIVO EN ${mercadoNombre}
-   - Que NO estan haciendo bien los competidores en contenido
-   - La oportunidad real de diferenciacion en este mercado
-
-4. COMPORTAMIENTO DE LA AUDIENCIA EN ${platforms.join("/") || "REDES"} (${mercadoNombre})
-   - Como consume contenido esta audiencia en ese canal en ${mercadoNombre}
-   - Que formatos generan mas engagement
-   - Que tipo de hooks detienen el scroll
-   - Horarios y frecuencias de mayor actividad en ${mercadoNombre}
-
-5. TENDENCIAS DE CONTENIDO ACTUALES EN ${mercadoNombre}
-   - Formatos que estan funcionando ahora mismo en ${mercadoNombre}
-   - Estilos de video que generan conversion en este nicho
-   - Hashtags y terminos relevantes para ${mercadoNombre}
-
-Responde con datos reales, especificos y actuales de ${mercadoNombre}. Evita generalidades.`;
 
   console.log("[generate-product-dna] Step 2: Perplexity research (content-focused)...");
 
@@ -426,9 +694,10 @@ Responde con datos reales, especificos y actuales de ${mercadoNombre}. Evita gen
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 12000,
+      max_tokens: 6000,
       temperature: 0.3,
       return_citations: true,
+      search_recency_filter: "month",
     }),
   });
 
@@ -447,36 +716,98 @@ Responde con datos reales, especificos y actuales de ${mercadoNombre}. Evita gen
     throw new Error("Perplexity returned empty response");
   }
 
-  console.log(`[generate-product-dna] Perplexity research: ${content.length} chars`);
-  return content;
+  // Extraer citations (URLs fuente que Perplexity consultó)
+  const citations: string[] = Array.isArray(data.citations)
+    ? data.citations.filter((u: unknown) => typeof u === "string")
+    : [];
+
+  console.log(`[generate-product-dna] Perplexity research: ${content.length} chars, ${citations.length} citations`);
+  return { content, citations };
 }
 
-// ── Execute 4 parallel Gemini calls for 8 sections ───────────────────────
+// ── Firecrawl enrichment: scrapea URLs reales de competidores ───────────────
+async function callFirecrawlEnrichment(
+  perplexityContent: string,
+  citations: string[],
+): Promise<string> {
+  const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
+  if (!firecrawlKey) {
+    console.log("[generate-product-dna] FIRECRAWL_API_KEY no configurada — saltando enriquecimiento");
+    return "";
+  }
+
+  // Combinar URLs del cuerpo del texto + citations de Perplexity, deduplicadas
+  const fromText = extractUrlsFromText(perplexityContent, 10);
+  const allUrls = Array.from(new Set([...citations, ...fromText]))
+    // Filtrar redes sociales y dominios genéricos que no aportan contexto de competidores
+    .filter(u => !u.includes("instagram.com") && !u.includes("tiktok.com") &&
+                 !u.includes("facebook.com") && !u.includes("twitter.com") &&
+                 !u.includes("wikipedia.org") && !u.includes("youtube.com") &&
+                 !u.includes("google.com") && !u.includes("linkedin.com/in/"))
+    .slice(0, 4); // Máximo 4 URLs para controlar tiempo y costo
+
+  if (allUrls.length === 0) {
+    console.log("[generate-product-dna] Firecrawl: no hay URLs candidatas para scrapear");
+    return "";
+  }
+
+  console.log(`[generate-product-dna] Firecrawl: scrapeando ${allUrls.length} URLs de competidores...`);
+  console.log(`[generate-product-dna] Firecrawl URLs: ${allUrls.join(", ")}`);
+
+  try {
+    const results = await batchScrape(allUrls, firecrawlKey, {
+      concurrency: 4,
+      timeoutMs: 20000,
+      onlyMainContent: true,
+      maxCharsPerUrl: 4000,
+    });
+
+    const okCount = results.filter(r => r.ok).length;
+    console.log(`[generate-product-dna] Firecrawl: ${okCount}/${allUrls.length} URLs scrapeadas OK`);
+
+    if (okCount === 0) return "";
+
+    return formatScrapeContextForLLM(results, "Datos reales de competidores (Firecrawl)");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[generate-product-dna] Firecrawl falló, continuando sin scraping: ${msg}`);
+    return "";
+  }
+}
+
+// ── Execute 4 AI calls for 8 sections ────────────────────────────────────
 async function generateAllSections(
   extractedData: Record<string, unknown>,
   perplexityResearch: string,
-  wizardResponses: Record<string, unknown>
+  wizardResponses: Record<string, unknown>,
+  firecrawlContext: string = "",
 ): Promise<{
   market_research: Record<string, unknown>;
   competitor_analysis: Record<string, unknown>;
   strategy_recommendations: Record<string, unknown>;
   content_brief: Record<string, unknown>;
 }> {
-  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
-  if (!apiKey) {
-    throw new Error("GOOGLE_AI_API_KEY not configured");
-  }
+  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY") || "";
 
-  console.log("[generate-product-dna] Step 2: Generating 8 sections with 4 parallel Gemini calls...");
+  console.log(`[generate-product-dna] Step 2: Generating 8 sections via Mistral/GPT/Gemini... (firecrawl=${firecrawlContext.length > 0 ? firecrawlContext.length + "chars" : "none"})`);
 
-  // Call 1: Contexto + Mercado
-  const call1Promise = callGeminiWithPrompt(apiKey, buildCall1Prompt(extractedData, perplexityResearch, wizardResponses), "call1_contexto_mercado");
+  // Call 1: Contexto + Mercado (+ datos reales de Firecrawl si están disponibles)
+  const call1Promise = callGeminiWithPrompt(apiKey, buildCall1Prompt(extractedData, perplexityResearch, wizardResponses, firecrawlContext), "call1_contexto_mercado");
 
   // Call 2: Avatares (independiente)
   const call2Promise = callGeminiWithPrompt(apiKey, buildCall2Prompt(extractedData, perplexityResearch, wizardResponses), "call2_avatares");
 
   // Wait for call1 and call2 to complete
   const [call1Result, call2Result] = await Promise.all([call1Promise, call2Promise]);
+
+  // Validate that calls produced real content
+  if (!call1Result?.seccion_1_contexto && !call1Result?.seccion_2_mercado) {
+    throw new Error("call1_contexto_mercado: resultado vacío — Gemini no generó las secciones de contexto/mercado");
+  }
+  const avataresResult = (call2Result?.seccion_3_avatares as unknown[]) || [];
+  if (avataresResult.length === 0) {
+    console.warn("[generate-product-dna] call2_avatares: resultado vacío, se usarán avatares por defecto en call3");
+  }
 
   // Extract avatares for call3
   const avatares = call2Result?.seccion_3_avatares || [];
@@ -518,13 +849,15 @@ async function generateAllSections(
     senales_de_escalar: "CTR >2%, CPA bajo objetivo, ROAS >2x",
     senales_de_pausar: "CTR <0.5% despues de 1000 impresiones, CPA 2x objetivo",
   };
+  const offerCtxDefault = getOfferTypeContext((wizardResponses.offer_type as string) || "");
+  const ctaDefault = offerCtxDefault.cta_primario.split("/")[0].trim();
   const defaultBrief = {
     tono_de_voz: "Cercano, confiable, experto pero accesible",
     palabras_usar: ["Resultados", "Facil", "Rapido", "Comprobado", "Autentico"],
     palabras_evitar: ["Barato", "Gratis", "Garantizado", "Milagroso"],
     indicaciones_visuales: "Luz natural, fondo limpio, ropa casual-profesional, encuadre vertical 9:16",
     especificaciones_tecnicas: "Video vertical 9:16, minimo 1080p, audio claro sin eco",
-    cta_recomendado: goals.includes("sales") ? "Link en bio para mas info" : "Guardalo y sigueme para mas",
+    cta_recomendado: ctaDefault,
     restricciones_del_cliente: (extractedData.restricciones_creativas as string) || "Ninguna especificada",
   };
 
@@ -566,56 +899,152 @@ async function generateAllSections(
   };
 }
 
-// ── Single Gemini call helper ────────────────────────────────────────────
+// ── Single AI call helper (Mistral → GPT-4o-mini → Gemini) ──────────────────
 async function callGeminiWithPrompt(
   apiKey: string,
   prompt: string,
   callName: string
 ): Promise<Record<string, unknown>> {
-  console.log(`[generate-product-dna] ${callName}: calling Gemini...`);
+  console.log(`[generate-product-dna] ${callName}: starting AI call chain...`);
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 12000,
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`[generate-product-dna] ${callName} error:`, errText.substring(0, 200));
-      return {};
+  function parseJsonFromText(text: string, label: string): Record<string, unknown> {
+    if (!text) throw new Error(`${label}: contenido vacío`);
+    console.log(`[generate-product-dna] ${callName} [${label}] raw length=${text.length}, preview: ${text.substring(0, 200).replace(/\n/g, " ")}`);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      console.error(`[generate-product-dna] ${callName} [${label}] no JSON found. Full preview: ${text.substring(0, 400)}`);
+      throw new Error(`${label}: no se encontró JSON en la respuesta`);
     }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    console.log(`[generate-product-dna] ${callName} response: ${content.length} chars`);
-
-    // Extract and parse JSON
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      const repaired = repairJsonForParse(jsonMatch[0]);
-      const parsed = JSON.parse(repaired);
-      console.log(`[generate-product-dna] ${callName} parsed keys:`, Object.keys(parsed).join(", "));
+    try {
+      const parsed = JSON.parse(repairJsonForParse(jsonMatch[0]));
+      console.log(`[generate-product-dna] ${callName} [${label}] ✓ top-level keys: ${Object.keys(parsed).join(", ")}`);
       return parsed;
+    } catch (parseErr) {
+      const msg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+      console.error(`[generate-product-dna] ${callName} [${label}] JSON parse error: ${msg}. Fragment (first 400): ${jsonMatch[0].substring(0, 400)}`);
+      throw new Error(`${label}: JSON parse failed — ${msg}`);
     }
-
-    console.warn(`[generate-product-dna] ${callName} no JSON found in response`);
-    return {};
-  } catch (err) {
-    console.error(`[generate-product-dna] ${callName} exception:`, err);
-    return {};
   }
+
+  // Attempt 1: Mistral AI — rápido, excelente en JSON estructurado, costo bajo
+  const mistralKey = Deno.env.get("MISTRAL_API_KEY");
+  if (mistralKey) {
+    try {
+      console.log(`[generate-product-dna] ${callName}: trying mistral-small-latest...`);
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 35000);
+      const r = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${mistralKey}`,
+        },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          model: "mistral-small-latest",
+          messages: [
+            {
+              role: "system",
+              content: "Eres un estratega de marketing digital experto en LATAM. Responde ÚNICAMENTE con JSON válido, sin markdown ni texto adicional. No incluyas explicaciones, solo el objeto JSON.",
+            },
+            { role: "user", content: prompt },
+          ],
+          max_tokens: 4096,
+          temperature: 0.4,
+          response_format: { type: "json_object" },
+        }),
+      });
+      clearTimeout(t);
+      if (!r.ok) {
+        const errText = await r.text();
+        throw new Error(`Mistral HTTP ${r.status}: ${errText.substring(0, 200)}`);
+      }
+      const d = await r.json();
+      const text = d.choices?.[0]?.message?.content || "";
+      const finishReason = d.choices?.[0]?.finish_reason || "unknown";
+      const promptTokens = d.usage?.prompt_tokens || 0;
+      const completionTokens = d.usage?.completion_tokens || 0;
+      console.log(`[generate-product-dna] ${callName} mistral finish_reason=${finishReason} tokens=${promptTokens}+${completionTokens}`);
+      if (finishReason === "length") {
+        console.warn(`[generate-product-dna] ${callName} mistral TRUNCATED at ${completionTokens} tokens — increasing max_tokens or shortening prompt`);
+      }
+      return parseJsonFromText(text, "mistral-small-latest");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message.substring(0, 150) : String(e).substring(0, 150);
+      console.warn(`[generate-product-dna] ${callName} attempt-1 (mistral) failed: ${msg}`);
+    }
+  } else {
+    console.warn(`[generate-product-dna] ${callName}: MISTRAL_API_KEY not set, skipping`);
+  }
+
+  // Attempt 2: GPT-4o-mini (OpenAI) — respaldo secundario
+  const openaiKey = Deno.env.get("OPENAI_API_KEY");
+  if (openaiKey) {
+    try {
+      console.log(`[generate-product-dna] ${callName}: trying gpt-4o-mini...`);
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 30000);
+      const r2 = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${openaiKey}`,
+        },
+        signal: ctrl2.signal,
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "Eres un estratega de marketing digital experto en LATAM. Responde ÚNICAMENTE con JSON válido, sin markdown ni texto adicional." },
+            { role: "user", content: prompt },
+          ],
+          max_tokens: 4000,
+          temperature: 0.4,
+          response_format: { type: "json_object" },
+        }),
+      });
+      clearTimeout(t2);
+      if (!r2.ok) {
+        const errText = await r2.text();
+        throw new Error(`OpenAI HTTP ${r2.status}: ${errText.substring(0, 200)}`);
+      }
+      const d2 = await r2.json();
+      const text2 = d2.choices?.[0]?.message?.content || "";
+      const finishReason2 = d2.choices?.[0]?.finish_reason || "unknown";
+      const pt2 = d2.usage?.prompt_tokens || 0;
+      const ct2 = d2.usage?.completion_tokens || 0;
+      console.log(`[generate-product-dna] ${callName} gpt-4o-mini finish_reason=${finishReason2} tokens=${pt2}+${ct2}`);
+      return parseJsonFromText(text2, "gpt-4o-mini");
+    } catch (e2) {
+      const msg2 = e2 instanceof Error ? e2.message.substring(0, 150) : String(e2).substring(0, 150);
+      console.warn(`[generate-product-dna] ${callName} attempt-2 (gpt-4o-mini) failed: ${msg2}`);
+    }
+  }
+
+  // Attempt 3: Gemini 1.5 Flash — último recurso
+  console.log(`[generate-product-dna] ${callName}: trying gemini-1.5-flash (last resort)...`);
+  const ctrl3 = new AbortController();
+  const t3 = setTimeout(() => ctrl3.abort(), 30000);
+  const r3 = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: ctrl3.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 4000 },
+      }),
+    }
+  );
+  clearTimeout(t3);
+  if (!r3.ok) {
+    const err3 = await r3.text();
+    console.error(`[generate-product-dna] ${callName} attempt-3 (gemini) failed HTTP ${r3.status}: ${err3.substring(0, 300)}`);
+    throw new Error(`${callName}: todos los modelos fallaron (Mistral, GPT-4o-mini, Gemini). Último error HTTP ${r3.status}: ${err3.substring(0, 100)}`);
+  }
+  const d3 = await r3.json();
+  const text3 = d3.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  return parseJsonFromText(text3, "gemini-1.5-flash");
 }
 
 // ── Extract data from Perplexity research text ──────────────────────────
@@ -675,7 +1104,7 @@ function extractFromResearch(research: string): Record<string, unknown> {
   };
 }
 
-// ── Generate fallback analysis (no client_dna) ──────────────────────────
+// ── Generate fallback analysis — usa datos reales del producto ────────────
 function generateEnrichedAnalysis(
   wizardResponses: Record<string, unknown>,
   extractedData: Record<string, unknown>,
@@ -689,117 +1118,274 @@ function generateEnrichedAnalysis(
   const extracted = extractFromResearch(research);
   const goals = (wizardResponses.goals as string[]) || ["sales"];
   const platforms = (wizardResponses.platforms as string[]) || ["instagram"];
-  const audiences = (wizardResponses.audiences as string[]) || ["25_34"];
   const serviceTypes = (wizardResponses.service_types as string[]) || ["video_ugc"];
+  const mercado = getMarketDescription(wizardResponses);
 
-  // Build competitor objects from research
-  const competidores = (extracted.competitors as string[]).slice(0, 5).map((name) => ({
-    nombre: String(name).replace(/[,;]/g, "").trim(),
-    promesa_principal: "Propuesta no identificada",
-    precio_referencial: "Variable",
-    fortaleza: "Presencia de mercado",
-    debilidad: "Por analizar",
-    plataformas: platforms,
-  }));
+  // ── Datos reales del producto (SIEMPRE usar extractedData, nunca hardcodear) ──
+  const servicioExacto = (extractedData.servicio_exacto as string)
+    || (wizardResponses.product_name as string | undefined)?.trim()
+    || serviceTypes.join(", ");
+  const pContext = (wizardResponses.product_context as string | undefined)?.trim() || "";
+  const objetivoReal = (extractedData.objetivo_real as string) || goals.join(", ");
+  const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
+  const restricciones = (extractedData.restricciones_creativas as string) || "Ninguna especificada";
+  const referentes = (extractedData.referentes_estilo as string) || "";
+  const tono = (extractedData.tono_emocional as string) || "neutral";
+  const p50 = servicioExacto.substring(0, 50);
+  const p35 = servicioExacto.substring(0, 35);
 
-  // Build default avatars based on audience
+  // ── CTA y objetivo usando getOfferTypeContext (SIEMPRE basado en offer_type) ──
+  const offerTypeStr = (wizardResponses.offer_type as string) || "";
+  const offerCtx = getOfferTypeContext(offerTypeStr);
+  const ctaPrincipal = offerCtx.cta_primario.split("/")[0].trim(); // Tomar la primera variante del CTA
+  const objetivoContenido = offerCtx.objetivo_contenido;
+  const esWebinar = offerTypeStr === "event_webinar";
+  const tonoVoz = tono === "apasionado" ? "Apasionado, experto y cercano" : tono === "urgente" ? "Urgente y directo" : "Cercano, confiable y profesional";
+
+  // ── Competidores desde investigación de Perplexity (si la hay) ───────────
+  const competidoresRaw = (extracted.competitors as string[]).filter(c =>
+    c.length > 3 && c.length < 80 && !c.includes("\n") && !c.toLowerCase().includes("competidor")
+  ).slice(0, 5);
+  const competidores = competidoresRaw.length > 0
+    ? competidoresRaw.map((name) => ({
+        nombre: String(name).replace(/[,;:\-–]/g, "").trim(),
+        promesa_principal: `Solución alternativa en el mercado de ${p35}`,
+        precio_referencial: "Variable según mercado",
+        fortaleza: "Presencia establecida en el sector",
+        debilidad: "No combina eficacia clínica + rentabilidad + seguridad en un solo mensaje",
+        plataformas: platforms,
+      }))
+    : [{
+        nombre: "Competidores del sector",
+        promesa_principal: `Alternativas similares a ${p35} sin diferenciación clara`,
+        precio_referencial: "Variable",
+        fortaleza: "Reconocimiento de marca por tiempo en el mercado",
+        debilidad: "No articulan el beneficio completo: resultado clínico + negocio + experiencia del paciente",
+        plataformas: platforms,
+      }];
+
+  // ── Avatares derivados del producto real (NO hardcodear María/Carlos/Ana) ──
+  const frase1 = palabrasClave[0] ? `"${palabrasClave[0]}"` : `¿${p35} realmente funciona?`;
+  const frase2 = palabrasClave[1] ? `"${palabrasClave[1]}"` : `¿Vale la pena la inversión?`;
+  const frase3 = palabrasClave[2] ? `"${palabrasClave[2]}"` : `¿Hay respaldo científico y resultados comprobados?`;
+
   const avatarDefaults = [
     {
       id: "avatar_1",
-      nombre_edad: "Maria, 28 anos",
-      situacion_actual: "Emprendedora buscando escalar su negocio online",
-      dolor_principal: "No tiene tiempo para crear contenido de calidad",
-      deseo_principal: "Aumentar ventas sin invertir mas horas",
-      objecion_principal: "No se si realmente funciona para mi nicho",
-      como_habla: ["Necesito algo rapido", "No tengo presupuesto enorme", "Quiero resultados ya"],
-      trigger_de_compra: "Ver casos de exito similares a su negocio",
+      nombre_edad: "Perfil A — Buscador activo, 30-42 años",
+      situacion_actual: `Profesional que busca activamente una solución como ${p50}`,
+      dolor_principal: palabrasClave.length > 0
+        ? `Necesita validar: ${frase1} — tiene dudas sobre resultados reales`
+        : `Incertidumbre sobre la calidad y resultados reales de ${p35}`,
+      deseo_principal: `Obtener ${objetivoReal.replace("sales", "ventas sólidas").replace("leads", "clientes potenciales calificados")} con ${p35}`,
+      objecion_principal: `¿${p35} funciona para mi caso específico? ¿Hay casos de éxito comprobados?`,
+      como_habla: [frase1, `¿Qué diferencia a ${p35} de otras opciones?`, "Necesito ver resultados reales antes de decidirme"],
+      trigger_de_compra: "Testimonios reales de pares + demostración en vivo + garantía de resultados",
       nivel_consciencia: "consciente_de_la_solucion",
     },
     {
       id: "avatar_2",
-      nombre_edad: "Carlos, 35 anos",
-      situacion_actual: "Dueno de PYME queriendo digitalizar su negocio",
-      dolor_principal: "No entiende de redes sociales ni contenido",
-      deseo_principal: "Tener presencia profesional sin complicarse",
-      objecion_principal: "Es muy caro para lo que necesito",
-      como_habla: ["Solo quiero que funcione", "No tengo tiempo para aprender", "Necesito algo simple"],
-      trigger_de_compra: "Recomendacion de alguien de confianza",
-      nivel_consciencia: "consciente_del_problema",
+      nombre_edad: "Perfil B — Decisor experimentado, 35-50 años",
+      situacion_actual: `Profesional con experiencia que evalúa ${p50} como ventaja competitiva frente a colegas`,
+      dolor_principal: palabrasClave.length > 1
+        ? `${frase2} — compite con rivales que ofrecen lo mismo a menor precio`
+        : `Todos sus competidores ofrecen productos similares y la guerra de precios erosiona su margen`,
+      deseo_principal: `Diferenciarse claramente del mercado usando ${p35} como su propuesta única de valor`,
+      objecion_principal: `Ya intenté otras soluciones y no cumplieron las expectativas. ¿${p35} es realmente diferente?`,
+      como_habla: [frase2, "Necesito algo que me diferencie de verdad", "¿Qué resultados concretos y medibles ofrece?"],
+      trigger_de_compra: "Comparativa directa con competidores + ROI calculado + cases de diferenciación real",
+      nivel_consciencia: "consciente_del_producto",
     },
     {
       id: "avatar_3",
-      nombre_edad: "Ana, 32 anos",
-      situacion_actual: "Marketing manager buscando optimizar recursos",
-      dolor_principal: "El equipo interno no da abasto",
-      deseo_principal: "Escalar produccion sin contratar mas gente",
-      objecion_principal: "Ya probamos agencias y no funcionaron",
-      como_habla: ["Necesito calidad consistente", "El ROI es lo que importa", "Quiero ver metricas"],
-      trigger_de_compra: "Demostracion de resultados medibles",
-      nivel_consciencia: "consciente_del_producto",
+      nombre_edad: "Perfil C — Investigador cauteloso, 28-40 años",
+      situacion_actual: `Conoce el mercado, está evaluando ${p50} pero necesita certeza antes de comprometerse`,
+      dolor_principal: palabrasClave.length > 2
+        ? `${frase3} — no quiere cometer errores costosos en la adopción de nuevas soluciones`
+        : `Tiene miedo a tomar la decisión incorrecta: invertir tiempo y dinero en algo que no funcione`,
+      deseo_principal: `Tomar la decisión correcta con información completa sobre ${p35} y su viabilidad real`,
+      objecion_principal: `No tengo tiempo para probar algo nuevo. ¿Cuánto tiempo realista para ver resultados con ${p35}?`,
+      como_habla: [frase3, "Muéstrame datos concretos y casos reales", "¿Cuánto tiempo y recursos requiere implementarlo?"],
+      trigger_de_compra: "Webinar o demo en vivo + datos técnicos + ROI proyectado para su caso específico",
+      nivel_consciencia: "consciente_del_problema",
     },
   ];
 
-  // Build default angles
+  // ── Ángulos de contenido usando las palabras clave reales del cliente ────
+  const palabraPoderosa1 = palabrasClave[0] || (pContext ? pContext.split(" ")[0] : "los resultados");
+  const palabraPoderosa2 = palabrasClave[1] || "diferenciarte";
+  const beneficioClave = pContext
+    ? pContext.substring(0, 60)
+    : `los beneficios reales de ${p35}`;
+
   const angulosDefault = [
-    { id: 1, tipo: "educativo", hook_apertura: "El error que comete el 90% de los emprendedores en redes", desarrollo: "Explicar el problema comun y la solucion", cta: "Guardalo para despues", avatar_objetivo: "avatar_1", fase_esfera: "enganche", uso_recomendado: "organico" },
-    { id: 2, tipo: "transformacion", hook_apertura: "Asi pasamos de 0 a 10k seguidores en 30 dias", desarrollo: "Mostrar el antes/despues con el proceso", cta: "Te cuento como en el link", avatar_objetivo: "avatar_1", fase_esfera: "solucion", uso_recomendado: "ambos" },
-    { id: 3, tipo: "prueba_social", hook_apertura: "Lo que dicen nuestros clientes despues de 3 meses", desarrollo: "Testimoniales reales con resultados", cta: "Quieres lo mismo? Link en bio", avatar_objetivo: "avatar_2", fase_esfera: "remarketing", uso_recomendado: "ads" },
+    {
+      id: 1, tipo: "educativo",
+      hook_apertura: `Lo que el 90% NO sabe sobre ${palabraPoderosa1} — y está perdiendo dinero por eso`,
+      desarrollo: `Revelar el error más costoso del mercado relacionado con ${p50} y por qué los líderes del sector ya lo están evitando. Demostrar autoridad técnica.`,
+      cta: esWebinar ? "Regístrate gratis y aprende la solución completa" : "Guarda este video y compártelo con tu equipo",
+      avatar_objetivo: "avatar_1",
+      fase_esfera: "enganche",
+      uso_recomendado: "organico",
+    },
+    {
+      id: 2, tipo: "transformacion",
+      hook_apertura: `Antes no podía ${palabraPoderosa2}. Después de conocer ${p35}, todo cambió`,
+      desarrollo: `Mostrar el contraste real: situación problemática del mercado vs solución con ${p50}. Usar datos concretos del antes/después de un caso real.`,
+      cta: esWebinar ? "Aprende cómo en el webinar gratuito — link en bio" : `Descubre ${p35} — link en bio`,
+      avatar_objetivo: "avatar_1",
+      fase_esfera: "solucion",
+      uso_recomendado: "ambos",
+    },
+    {
+      id: 3, tipo: "prueba_social",
+      hook_apertura: `Profesionales en ${mercado} ya están usando ${p35} — esto dijeron`,
+      desarrollo: `Testimoniales reales de clientes que adoptaron ${p50}: qué problema resolvieron, qué resultados obtuvieron, por qué lo recomiendan. Incluir datos medibles.`,
+      cta: ctaPrincipal + " — link en bio",
+      avatar_objetivo: "avatar_2",
+      fase_esfera: "remarketing",
+      uso_recomendado: "ads",
+    },
+    {
+      id: 4, tipo: "anti_objecion",
+      hook_apertura: `"¿Pero funciona realmente?" — Respondemos las 3 dudas más grandes sobre ${p35}`,
+      desarrollo: `Abordar directamente las objeciones más comunes: seguridad, resultados, inversión, tiempo. Usar datos, certificaciones y testimonios para derribar cada barrera.`,
+      cta: `Resuelve todas tus dudas en el ${esWebinar ? "webinar gratuito" : "call de descubrimiento"} — agenda ya`,
+      avatar_objetivo: "avatar_3",
+      fase_esfera: "solucion",
+      uso_recomendado: "ambos",
+    },
+    {
+      id: 5, tipo: "educativo",
+      hook_apertura: `3 razones por las que ${beneficioClave.substring(0, 45)} es el futuro del sector`,
+      desarrollo: `Contenido educativo de alto valor: contexto del mercado, por qué la demanda crece, y cómo ${p35} está posicionado para liderar. Cifras y tendencias reales.`,
+      cta: "Guárdalo para compartirlo con tu equipo",
+      avatar_objetivo: "avatar_2",
+      fase_esfera: "enganche",
+      uso_recomendado: "organico",
+    },
   ];
+
+  // ── Distribución 4V según objetivo ───────────────────────────────────────
+  const dist4V = goals.includes("leads") || esWebinar
+    ? { viral: 20, valor: 45, venta: 25, personal: 10, justificacion: `Para ${p35} con objetivo leads/webinar: más contenido de valor educativo que convierte orgánicamente` }
+    : goals.includes("brand_awareness")
+    ? { viral: 35, valor: 40, venta: 15, personal: 10, justificacion: `Fase de reconocimiento: priorizar contenido viral y de valor para generar awareness de ${p35}` }
+    : { viral: 25, valor: 35, venta: 30, personal: 10, justificacion: `Balance entre educación de mercado y conversión directa para ${p35}` };
+
+  // ── Intereses de audiencia basados en el tipo de servicio ─────────────────
+  const interesesFrio = palabrasClave.slice(0, 2).length > 0
+    ? [...palabrasClave.slice(0, 2).map(p => p.charAt(0).toUpperCase() + p.slice(1)), "Negocios y emprendimiento"]
+    : ["Profesionales del sector", "Educación y capacitación", "Negocios B2B"];
 
   return {
     market_research: {
       seccion_1_contexto: {
-        servicio_exacto: extractedData.servicio_exacto || serviceTypes.join(", "),
-        objetivo_real: extractedData.objetivo_real || goals.join(", "),
-        palabras_clave_cliente: extractedData.palabras_clave_cliente || [],
-        restricciones_creativas: extractedData.restricciones_creativas || "",
-        referentes_estilo: extractedData.referentes_estilo || "",
-        tono_emocional_audio: extractedData.tono_emocional || "neutral",
+        servicio_exacto: servicioExacto,
+        objetivo_real: objetivoReal,
+        palabras_clave_cliente: palabrasClave,
+        restricciones_creativas: restricciones,
+        referentes_estilo: referentes,
+        tono_emocional_audio: tono,
       },
       seccion_2_mercado: {
-        panorama_mercado: `El mercado de ${serviceTypes.join(" y ")} en LATAM muestra crecimiento sostenido, impulsado por la demanda de contenido autentico.`,
-        tendencias_actuales: "Videos cortos verticales dominan. El contenido UGC genera mayor engagement que el producido profesionalmente.",
+        panorama_mercado: research.length > 300
+          ? research.substring(0, 700).trim() + "..."
+          : `El mercado de ${p50} en ${mercado} muestra crecimiento sostenido impulsado por la búsqueda de soluciones especializadas y diferenciación competitiva. La demanda de contenido auténtico con resultados comprobados es la principal tendencia.`,
+        tendencias_actuales: extracted.opportunities.length > 0
+          ? extracted.opportunities.slice(0, 2).join(" | ")
+          : `Contenido basado en prueba social y resultados reales genera 3x más conversión que contenido corporativo. Los profesionales de ${mercado} responden mejor a testimonios de pares que a publicidad tradicional.`,
         competidores: competidores,
-        gap_competitivo: "Oportunidad en contenido autentico y personalizado para nichos especificos.",
-        posicionamiento_sugerido: "Diferenciarse por autenticidad y resultados medibles.",
+        gap_competitivo: `Oportunidad en ${mercado}: la mayoría de competidores habla de características del producto pero NO articula el beneficio completo (resultado clínico + rentabilidad + experiencia del cliente). ${p35} puede apropiarse de ese posicionamiento.`,
+        posicionamiento_sugerido: `${servicioExacto.substring(0, 70)}: el único que combina ${objetivoReal.substring(0, 40)} con resultados comprobados desde la primera sesión`,
       },
     },
     competitor_analysis: {
-      competidores: competidores,
-      gap_competitivo: "Contenido autentico y personalizado",
-      posicionamiento: "Autenticidad + Resultados",
+      competidores,
+      gap_competitivo: `El gap en ${mercado}: nadie está comunicando bien el triple beneficio (eficacia + seguridad + rentabilidad) que ${p35} ofrece`,
+      posicionamiento: `${p35} = Resultados comprobados + Diferenciación real + Confianza del mercado`,
     },
     strategy_recommendations: {
       seccion_3_avatares: avatarDefaults,
       seccion_4_angulos: angulosDefault,
       seccion_6_organico: {
-        objetivo_organico: "Construir autoridad y comunidad",
-        distribucion_contenido: { viral: 25, valor: 40, venta: 25, personal: 10, justificacion: "Balance entre engagement y conversion" },
-        frecuencia_publicacion: "5 veces por semana",
-        tipo_contenido_organico: "Reels, carruseles educativos, stories interactivos",
-        pilares_tematicos: ["Educacion", "Casos de exito", "Detras de camaras"],
-        tono_organico: "Cercano y profesional",
-        metricas_organico: { retencion_objetivo: "50-70%", interacciones_clave: "Guardados > Compartidos > Comentarios", frecuencia_revision: "Semanal" },
-        errores_comunes_organico: ["Publicar sin estrategia", "Ignorar metricas", "No responder comentarios"],
+        objetivo_organico: `${objetivoContenido} — posicionar ${p35} como referente en ${mercado}`,
+        distribucion_contenido: dist4V,
+        frecuencia_publicacion: "4-5 veces por semana en horario de mayor actividad profesional",
+        tipo_contenido_organico: `Reels educativos de 30-60 seg, carruseles con datos del sector, testimoniales de clientes reales, stories de preguntas frecuentes`,
+        pilares_tematicos: [
+          `Resultados comprobados con ${p35}`,
+          "Educación del mercado y tendencias del sector",
+          "Casos de éxito y testimoniales reales",
+          "Diferenciación vs alternativas del mercado",
+        ],
+        tono_organico: tonoVoz,
+        metricas_organico: {
+          retencion_objetivo: "55-75% del video (alto — audiencia profesional comprometida)",
+          interacciones_clave: "Guardados > Compartidos con colegas > Comentarios con preguntas > Likes",
+          frecuencia_revision: "Semanal — ajustar según tasa de retención y comentarios",
+        },
+        errores_comunes_organico: [
+          "Hablar solo de características técnicas sin mostrar el beneficio para el negocio",
+          "No usar testimoniales reales de clientes del mismo perfil que la audiencia",
+          `Ignorar objeciones frecuentes sobre ${p35} sin responderlas en el contenido`,
+        ],
       },
       seccion_7_ads: {
-        objetivo_campana: "conversiones",
-        estructura_campana: { frio: "Contenido educativo de valor", tibio: "Casos de exito y testimoniales", remarketing: "Oferta directa con urgencia" },
-        publico_frio: { intereses: ["Marketing digital", "Emprendimiento", "E-commerce"], comportamientos: ["Compradores online", "Duenos de paginas"], caracteristicas: "25-45 anos, interes en negocios" },
-        publico_remarketing: "Visitantes web ultimos 30 dias, engagement en redes",
-        presupuesto_minimo_sugerido: "$300-500 USD/mes para empezar",
-        ideas_para_ads: "Ideas 2 y 3 son ideales para pauta por su enfoque en resultados",
-        estructura_creativo_ad: { hook: "0-3 seg: Pregunta o dato impactante", problema: "3-10 seg: Identificar el dolor", solucion: "10-25 seg: Mostrar la solucion", cta: "25-30 seg: Llamada clara a la accion" },
-        variaciones_recomendadas: "3-5 variaciones de hook por creativo",
-        ctr_objetivo: "Meta Ads >1%, TikTok Ads >1.5%",
-        senales_de_escalar: "CTR >2%, CPA bajo objetivo, ROAS >2x",
-        senales_de_pausar: "CTR <0.5% despues de 1000 impresiones, CPA 2x objetivo",
+        objetivo_campana: goals.includes("leads") || esWebinar ? "trafico" : "conversiones",
+        estructura_campana: {
+          frio: `Contenido educativo de alto valor: el problema que resuelve ${p35} y por qué es diferente. Hook de dato impactante + beneficio clave`,
+          tibio: `Casos de éxito y testimoniales de ${p35} para reforzar la decisión. Audiencia que ya interactuó con contenido orgánico`,
+          remarketing: `Urgencia real: cupos limitados al ${esWebinar ? "webinar" : "evento"} + oferta directa + prueba social concentrada. Máxima especificidad`,
+        },
+        publico_frio: {
+          intereses: interesesFrio,
+          comportamientos: ["Compradores B2B recientes", "Seguidores de páginas del sector", "Asistentes a eventos de la industria"],
+          caracteristicas: `Profesionales 28-50 años en ${mercado} con interés en ${p35}`,
+        },
+        publico_remarketing: `Visitantes web 30 días + Engagement con videos > 50% + Interacciones con página ${esWebinar ? "+ Inscriptos anteriores" : ""}`,
+        presupuesto_minimo_sugerido: `$200-400 USD/mes para testear creativos en ${mercado}. Escalar lo que funcione semana 3-4`,
+        ideas_para_ads: `Los ángulos 2 (transformación) y 3 (prueba social) son los más recomendados para pauta de ${p35}. El ángulo 4 (anti-objeción) es excelente para remarketing`,
+        estructura_creativo_ad: {
+          hook: `0-3 seg: Dato impactante o resultado real de ${p35} que detiene el scroll`,
+          problema: `3-10 seg: El dolor específico del cliente ideal — hablar SU idioma`,
+          solucion: `10-25 seg: Cómo ${p35} lo resuelve mejor que cualquier alternativa — prueba concreta`,
+          cta: `25-30 seg: ${ctaPrincipal} — urgencia real o razón para actuar ahora`,
+        },
+        variaciones_recomendadas: "3-5 variaciones de hook para testear. Ganador se escala semana 2",
+        ctr_objetivo: `Meta Ads >1.2%, TikTok Ads >1.5% para audiencia profesional de ${mercado}`,
+        senales_de_escalar: "CTR >2%, CPA bajo objetivo de conversión, ROAS >2.5x por 3 días consecutivos",
+        senales_de_pausar: "CTR <0.8% después de 2000 impresiones, o CPA 2x por encima del objetivo",
       },
     },
     content_brief: {
       seccion_5_ideas: [
-        { id: 1, titulo: "El secreto que nadie te cuenta", formato: "educativo", hook_variacion_1: "Nadie te dice esto sobre...", hook_variacion_2: "Lo que los gurus no quieren que sepas", hook_variacion_3: "El error que yo cometi y tu puedes evitar", desarrollo: "Revelar insight valioso del nicho", cta: "Guardalo", duracion_recomendada: "30-60 seg", fase_esfera: "enganche", uso_recomendado: "organico" },
-        { id: 2, titulo: "Antes vs Despues real", formato: "antes_despues", hook_variacion_1: "Mira esta transformacion", hook_variacion_2: "De esto a esto en 30 dias", hook_variacion_3: "No vas a creer el cambio", desarrollo: "Mostrar resultados tangibles", cta: "Quieres lo mismo?", duracion_recomendada: "15-30 seg", fase_esfera: "solucion", uso_recomendado: "ambos" },
+        {
+          id: 1,
+          titulo: `La verdad que nadie dice sobre ${palabraPoderosa1} en ${mercado}`,
+          formato: "educativo",
+          hook_variacion_1: `Lo que los líderes del sector ya saben sobre ${palabraPoderosa1} (y tú deberías saber)`,
+          hook_variacion_2: `Por qué el 80% en ${mercado} está abordando esto de forma equivocada`,
+          hook_variacion_3: `El error más costoso sobre ${palabraPoderosa1} — y cómo evitarlo`,
+          desarrollo: `Revelar insight de alto valor: el enfoque incorrecto del mercado vs. la solución correcta con ${p50}. Datos reales + demostración de autoridad`,
+          cta: esWebinar ? "Regístrate gratis al webinar — aprende la solución completa" : "Guárdalo y síguenos para más",
+          duracion_recomendada: "30-60 seg",
+          fase_esfera: "enganche",
+          uso_recomendado: "organico",
+        },
+        {
+          id: 2,
+          titulo: `Resultados reales de ${p35}: antes vs. después`,
+          formato: "antes_despues",
+          hook_variacion_1: `De [problema] a [resultado] con ${p35} — historia real de un cliente`,
+          hook_variacion_2: `Esto pasó cuando usamos ${p35} por primera vez — los números hablan`,
+          hook_variacion_3: `¿Increíble o real? Lo que lograron nuestros clientes con ${p35}`,
+          desarrollo: "Caso real con datos medibles: situación inicial → proceso → resultado obtenido → impacto en negocio. Sin exageraciones, todo verificable",
+          cta: ctaPrincipal + " y obtén los mismos resultados",
+          duracion_recomendada: "15-45 seg",
+          fase_esfera: "solucion",
+          uso_recomendado: "ambos",
+        },
       ],
       seccion_8_brief_creador: {
         tono_de_voz: "Cercano, confiable, experto pero accesible",
@@ -807,75 +1393,143 @@ function generateEnrichedAnalysis(
         palabras_evitar: ["Barato", "Gratis", "Garantizado", "Milagroso"],
         indicaciones_visuales: "Luz natural, fondo limpio, ropa casual-profesional, encuadre vertical 9:16",
         especificaciones_tecnicas: "Video vertical 9:16, minimo 1080p, audio claro sin eco",
-        cta_recomendado: goals.includes("vender") ? "Link en bio para mas info" : "Guardalo y sigueme para mas",
+        cta_recomendado: ctaPrincipal,
         restricciones_del_cliente: (extractedData.restricciones_creativas as string) || "Ninguna especificada",
       },
     },
   };
 }
 
-// ── Prompt Builders for 8 Sections ───────────────────────────────────────
+// ── Prompt Builders for 8 Sections (compactos para evitar timeout) ──────────
 
-// Call 1: Seccion 1 (Contexto) + Seccion 2 (Mercado)
+// Helpers para construir contexto compacto
+function buildProductContext(extractedData: Record<string, unknown>, wizardResponses: Record<string, unknown>): string {
+  const pName = (wizardResponses.product_name as string | undefined)?.trim();
+  const pCtx = (wizardResponses.product_context as string | undefined)?.trim();
+  if (pName) return pCtx ? `${pName} — ${pCtx}` : pName;
+  return (extractedData.servicio_exacto as string) || "No especificado";
+}
+
+function buildResearchSummary(research: string, maxChars: number): string {
+  if (!research || research.length < 50) return "Sin investigacion disponible.";
+  // Tomar solo el fragmento más relevante evitando listas de referencias
+  const clean = research.replace(/\[\d+\]/g, "").replace(/https?:\/\/\S+/g, "").trim();
+  return clean.substring(0, maxChars);
+}
+
+// ── Helper: contexto estratégico según tipo de oferta ───────────────────────
+function getOfferTypeContext(offerType: string): {
+  label: string;
+  cta_primario: string;
+  objetivo_contenido: string;
+  metricas_exito: string;
+  instrucciones_especiales: string;
+} {
+  const map: Record<string, ReturnType<typeof getOfferTypeContext>> = {
+    event_webinar: {
+      label: "Webinar / Live / Clase gratuita",
+      cta_primario: "Regístrate gratis / Reserva tu lugar / Únete al live",
+      objetivo_contenido: "ATRAER REGISTROS al evento, NO vender directamente. El contenido debe generar FOMO y curiosidad sobre lo que aprenderán",
+      metricas_exito: "Tasa de registro, asistencia, retención en el evento",
+      instrucciones_especiales: "Los ángulos deben crear urgencia de cupos limitados y revelar UN insight del webinar sin spoilear todo. Los hooks deben hacer la pregunta que el avatar se hace antes de registrarse. El CTA siempre es registro gratuito.",
+    },
+    service: {
+      label: "Servicio profesional",
+      cta_primario: "Agenda tu consulta / Solicita más info / Reserva tu cita",
+      objetivo_contenido: "Generar confianza, mostrar resultados reales y posicionarse como experto para que el avatar dé el paso de contactar",
+      metricas_exito: "Solicitudes de consulta, mensajes recibidos, agendamiento",
+      instrucciones_especiales: "Los ángulos deben mostrar resultados concretos (antes/después), casos reales y expertise. Usar formatos testimonial y POV del cliente. El contenido debe reducir la percepción de riesgo.",
+    },
+    product_physical: {
+      label: "Producto físico",
+      cta_primario: "Compra ahora / Pide el tuyo / Envíos a todo el país",
+      objetivo_contenido: "Mostrar el producto en uso, demostrar beneficios tangibles y crear deseo de compra inmediata",
+      metricas_exito: "Clicks en link, mensajes de compra, conversión en tienda",
+      instrucciones_especiales: "Priorizar formatos unboxing, demostración de uso y reviews. Los hooks deben sorprender con un beneficio inesperado del producto. Urgencia por stock limitado cuando aplique.",
+    },
+    infoproduct: {
+      label: "Infoproducto / Curso online",
+      cta_primario: "Inscríbete ahora / Accede al programa / Empieza hoy",
+      objetivo_contenido: "Mostrar la transformación que logran y reducir el escepticismo ('¿Funcionará para mí?')",
+      metricas_exito: "Inscripciones, ventas del programa, tasa de completación",
+      instrucciones_especiales: "Los ángulos deben mezclar aspiración (lo que lograrán) con validación social (resultados de otros estudiantes). Usar formato 'Lo que nadie te enseña sobre X'. Manejar la objeción 'no tengo tiempo/dinero/experiencia'.",
+    },
+    saas_app: {
+      label: "SaaS / Aplicación digital",
+      cta_primario: "Pruébalo gratis / Regístrate gratis / Ver demo",
+      objetivo_contenido: "Demostrar el problema que resuelve, mostrar cómo funciona y generar pruebas gratuitas o demos",
+      metricas_exito: "Trials iniciados, demos solicitados, activación de usuarios",
+      instrucciones_especiales: "Los ángulos deben mostrar el 'antes sin la app vs después con la app'. Priorizar demos cortos en pantalla (screen recording). Comparar con método manual para mostrar el ahorro de tiempo.",
+    },
+    personal_brand: {
+      label: "Marca personal",
+      cta_primario: "Sígueme / Únete a mi comunidad / Descarga gratis",
+      objetivo_contenido: "Construir autoridad, generar confianza y hacer crecer la audiencia comprometida",
+      metricas_exito: "Seguidores, engagement, comunidad activa, leads calificados",
+      instrucciones_especiales: "Los ángulos deben mezclar contenido de valor (posicionamiento experto) con historia personal (humanización). Usar perspectivas contrarias al mainstream del nicho. El CTA principal es seguir / guardar / compartir.",
+    },
+    ecommerce: {
+      label: "E-commerce / Tienda online",
+      cta_primario: "Compra aquí / Envío gratis / Ver catálogo",
+      objetivo_contenido: "Mostrar productos en contexto real, generar deseo de compra y manejar objeciones de compra online",
+      metricas_exito: "Clicks en link de tienda, conversión, carrito promedio",
+      instrucciones_especiales: "Priorizar formatos 'haul', 'lo que compré' y 'review honesto'. Los hooks deben mostrar el producto en situaciones reales de uso. Incluir urgencia por descuentos temporales o stock limitado.",
+    },
+    consulting: {
+      label: "Agencia / Consultoría",
+      cta_primario: "Solicita tu diagnóstico gratuito / Agenda una llamada / Cotiza con nosotros",
+      objetivo_contenido: "Demostrar expertise con casos reales, resultados de clientes y metodología propia",
+      metricas_exito: "Solicitudes de propuesta, llamadas agendadas, clientes cerrados",
+      instrucciones_especiales: "Los ángulos deben mostrar el error que cometen solos vs los resultados con tu consultoría. Usar formatos de case study y behind-the-scenes. Posicionar el costo como inversión con ROI claro.",
+    },
+  };
+
+  return map[offerType] || {
+    label: "Producto/Servicio",
+    cta_primario: "Contáctanos / Compra ahora / Solicita info",
+    objetivo_contenido: "Generar interés, mostrar valor y convertir a compradores o leads",
+    metricas_exito: "Ventas, leads, contactos recibidos",
+    instrucciones_especiales: "Adaptar el contenido al funnel: TOFU para awareness, MOFU para consideración, BOFU para conversión.",
+  };
+}
+
+// Call 1: Seccion 1 (Contexto) + Seccion 2 (Mercado) — incluye datos reales de Firecrawl si están disponibles
 function buildCall1Prompt(
   extractedData: Record<string, unknown>,
   perplexityResearch: string,
-  wizardResponses: Record<string, unknown>
+  wizardResponses: Record<string, unknown>,
+  firecrawlContext: string = "",
 ): string {
-  const serviceTypes = (wizardResponses.service_types as string[]) || [];
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
-  const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
+  const producto = buildProductContext(extractedData, wizardResponses);
+  const research = buildResearchSummary(perplexityResearch, 4000);
 
-  const pName = (wizardResponses.product_name as string | undefined)?.trim();
-  const pCtx = (wizardResponses.product_context as string | undefined)?.trim();
-  const productLine = pName
-    ? `PRODUCTO PRINCIPAL: ${pName}${pCtx ? ` — ${pCtx}` : ""}\n`
-    : "";
+  // Si hay datos de Firecrawl, reducir el research de Perplexity para compensar
+  const researchSection = firecrawlContext
+    ? `INVESTIGACION DE MERCADO (Perplexity):\n${buildResearchSummary(perplexityResearch, 2500)}\n\nDATOS REALES DE COMPETIDORES (scraping directo):\n${firecrawlContext.substring(0, 4000)}`
+    : `RESUMEN DE INVESTIGACION:\n${research}`;
 
-  return `Eres un estratega de marketing digital y creativo de contenido experto en ${mercado}.
+  const offerCtx = getOfferTypeContext((wizardResponses.offer_type as string) || "");
 
-${productLine}DATOS DEL ENCARGO:
-${JSON.stringify(extractedData, null, 2)}
+  return `Estratega de marketing en ${mercado}. Responde SOLO JSON válido.
 
-INVESTIGACION DE MERCADO:
-${perplexityResearch.substring(0, 15000)}
+TIPO DE OFERTA: ${offerCtx.label}
+OBJETIVO DEL CONTENIDO: ${offerCtx.objetivo_contenido}
+CTA PRINCIPAL: ${offerCtx.cta_primario}
+PRODUCTO/OFERTA: ${producto}
+METAS: ${goals.join(", ")}
+CANAL: ${platforms.join(", ")}
+MERCADO: ${mercado}
+PALABRAS CLAVE: ${((extractedData.palabras_clave_cliente as string[]) || []).join(", ")}
+RESTRICCIONES: ${extractedData.restricciones_creativas || "ninguna"}
+TONO: ${extractedData.tono_emocional || "neutral"}
 
-WIZARD:
-- Tipos de servicio: ${serviceTypes.join(", ")}
-- Objetivos: ${goals.join(", ")}
-- Plataformas: ${platforms.join(", ")}
-- Audiencias: ${audiences.join(", ")} anos
-- Mercado objetivo: ${mercado}
+${researchSection}
 
-Genera SOLO este JSON (sin texto adicional, sin markdown):
-{
-  "seccion_1_contexto": {
-    "servicio_exacto": "string",
-    "objetivo_real": "string",
-    "palabras_clave_cliente": ["string"],
-    "restricciones_creativas": "string",
-    "referentes_estilo": "string",
-    "tono_emocional_audio": "string"
-  },
-  "seccion_2_mercado": {
-    "panorama_mercado": "string - 3-4 oraciones con datos concretos",
-    "tendencias_actuales": "string - que funciona HOY en el canal",
-    "competidores": [
-      {
-        "nombre": "string",
-        "promesa_principal": "string",
-        "precio_referencial": "string",
-        "fortaleza": "string",
-        "debilidad": "string",
-        "plataformas": ["string"]
-      }
-    ],
-    "gap_competitivo": "string - la oportunidad real",
-    "posicionamiento_sugerido": "string - como diferenciarse en ese canal"
-  }
-}`;
+JSON exacto (sin texto extra):
+{"seccion_1_contexto":{"servicio_exacto":"string","tipo_oferta":"${(wizardResponses.offer_type as string) || "service"}","objetivo_real":"string","cta_principal":"${offerCtx.cta_primario}","palabras_clave_cliente":["string"],"restricciones_creativas":"string","referentes_estilo":"string","tono_emocional_audio":"string"},"seccion_2_mercado":{"panorama_mercado":"2-3 oraciones con datos del mercado","tendencias_actuales":"que funciona HOY en el canal","competidores":[{"nombre":"string","promesa_principal":"string","precio_referencial":"string","fortaleza":"string","debilidad":"string","plataformas":["string"]}],"gap_competitivo":"la oportunidad real de diferenciacion","posicionamiento_sugerido":"como diferenciarse en ese canal"}}`;
 }
 
 // Call 2: Seccion 3 (3 Avatares)
@@ -887,72 +1541,32 @@ function buildCall2Prompt(
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
-  const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
+  const producto = buildProductContext(extractedData, wizardResponses);
+  const palabrasClave = (extractedData.palabras_clave_cliente as string[]) || [];
+  const research = buildResearchSummary(perplexityResearch, 3000);
 
-  const pName2 = (wizardResponses.product_name as string | undefined)?.trim();
-  const pCtx2 = (wizardResponses.product_context as string | undefined)?.trim();
-  const productLine2 = pName2
-    ? `${pName2}${pCtx2 ? ` — ${pCtx2}` : ""}`
-    : (extractedData.servicio_exacto as string || "No especificado");
+  const offerCtx = getOfferTypeContext((wizardResponses.offer_type as string) || "");
 
-  return `Eres un estratega de marketing digital experto en psicologia del consumidor
-y comportamiento de audiencias digitales en ${mercado}.
+  return `Experto en psicologia del consumidor y audiencias digitales en ${mercado}. Responde SOLO JSON válido.
 
-PRODUCTO/SERVICIO: ${productLine2}
-CANAL: ${platforms.join(", ")}
-AUDIENCIA: ${audiences.join(", ")} anos
-OBJETIVO: ${goals.join(", ")}
-MERCADO: ${mercado}
-PALABRAS DEL CLIENTE: ${palabrasClave.join(", ")}
+TIPO DE OFERTA: ${offerCtx.label}
+LO QUE QUIEREN LOGRAR CON EL CONTENIDO: ${offerCtx.objetivo_contenido}
+PRODUCTO/OFERTA: ${producto}
+CANAL: ${platforms.join(", ")} | AUDIENCIA: ${audiences.join(", ")} anos | OBJETIVO: ${goals.join(", ")}
+MERCADO: ${mercado} | PALABRAS DEL CLIENTE: ${palabrasClave.join(", ")}
 
-INVESTIGACION DE MERCADO:
-${perplexityResearch.substring(0, 12000)}
+CONTEXTO DE MERCADO:
+${research}
 
-Crea 3 avatares del cliente ideal. Cada avatar debe ser especifico,
-humano y basado en la investigacion real. No generico.
+Crea 3 avatares del cliente ideal, ESPECIFICOS para ${producto} (tipo: ${offerCtx.label}). NO genéricos.
+Usa nombres reales de personas (no "Perfil A"). El trigger_de_compra debe ser especifico para "${offerCtx.cta_primario}".
 
-Genera SOLO este JSON (sin texto adicional, sin markdown):
-{
-  "seccion_3_avatares": [
-    {
-      "id": "avatar_1",
-      "nombre_edad": "string - nombre ficticio + edad ej: Maria, 28 anos",
-      "situacion_actual": "string - donde esta hoy, que problema tiene",
-      "dolor_principal": "string - el dolor mas profundo y urgente",
-      "deseo_principal": "string - lo que realmente quiere lograr",
-      "objecion_principal": "string - por que dudaria en comprar",
-      "como_habla": ["frase textual 1", "frase textual 2", "frase textual 3"],
-      "trigger_de_compra": "string - que lo haria decidirse a actuar",
-      "nivel_consciencia": "inconsciente_del_problema|consciente_del_problema|consciente_de_la_solucion|consciente_del_producto"
-    },
-    {
-      "id": "avatar_2",
-      "nombre_edad": "string",
-      "situacion_actual": "string",
-      "dolor_principal": "string",
-      "deseo_principal": "string",
-      "objecion_principal": "string",
-      "como_habla": ["string"],
-      "trigger_de_compra": "string",
-      "nivel_consciencia": "string"
-    },
-    {
-      "id": "avatar_3",
-      "nombre_edad": "string",
-      "situacion_actual": "string",
-      "dolor_principal": "string",
-      "deseo_principal": "string",
-      "objecion_principal": "string",
-      "como_habla": ["string"],
-      "trigger_de_compra": "string",
-      "nivel_consciencia": "string"
-    }
-  ]
-}`;
+JSON exacto (sin texto extra):
+{"seccion_3_avatares":[{"id":"avatar_1","nombre_edad":"Nombre real, edad ej: Carlos Ruiz, 38 anos","situacion_actual":"string","dolor_principal":"string","deseo_principal":"string","objecion_principal":"string","como_habla":["frase 1","frase 2","frase 3"],"trigger_de_compra":"string","nivel_consciencia":"consciente_de_la_solucion"},{"id":"avatar_2","nombre_edad":"string","situacion_actual":"string","dolor_principal":"string","deseo_principal":"string","objecion_principal":"string","como_habla":["string"],"trigger_de_compra":"string","nivel_consciencia":"string"},{"id":"avatar_3","nombre_edad":"string","situacion_actual":"string","dolor_principal":"string","deseo_principal":"string","objecion_principal":"string","como_habla":["string"],"trigger_de_compra":"string","nivel_consciencia":"string"}]}`;
 }
 
-// Call 3: Seccion 4 (10 Angulos) + Seccion 5 (10 Ideas)
+// Call 3: Seccion 4 (7 Angulos) + Seccion 5 (7 Ideas)
 function buildCall3Prompt(
   extractedData: Record<string, unknown>,
   perplexityResearch: string,
@@ -961,67 +1575,40 @@ function buildCall3Prompt(
 ): string {
   const goals = (wizardResponses.goals as string[]) || [];
   const platforms = (wizardResponses.platforms as string[]) || [];
-  const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
+  const producto = buildProductContext(extractedData, wizardResponses);
+  const research = buildResearchSummary(perplexityResearch, 2500);
 
-  const pName3 = (wizardResponses.product_name as string | undefined)?.trim();
-  const pCtx3 = (wizardResponses.product_context as string | undefined)?.trim();
-  const productLine3 = pName3
-    ? `${pName3}${pCtx3 ? ` — ${pCtx3}` : ""}`
-    : (extractedData.servicio_exacto as string || "No especificado");
+  // Compact avatar summary (just nombre + dolor)
+  const avatarSummary = (avatares as Array<Record<string, unknown>>)
+    .map((a, i) => `Avatar ${i+1}: ${a.nombre_edad} | Dolor: ${a.dolor_principal}`)
+    .join("\n");
 
-  return `Eres un estratega creativo de contenido digital especialista en UGC,
-copywriting de alto impacto y produccion de contenido para ${platforms.join("/")} en ${mercado}.
+  const offerCtx = getOfferTypeContext((wizardResponses.offer_type as string) || "");
 
-PRODUCTO/SERVICIO: ${productLine3}
-OBJETIVO: ${goals.join(", ")}
-CANAL: ${platforms.join(", ")}
-MERCADO: ${mercado}
-AUDIENCIA: ${audiences.join(", ")} anos
-RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna especificada"}
-TONO EMOCIONAL DEL CLIENTE: ${extractedData.tono_emocional || "neutral"}
+  return `Estratega creativo UGC y copywriting para ${platforms.join("/")} en ${mercado}. Responde SOLO JSON válido.
 
-AVATARES GENERADOS:
-${JSON.stringify(avatares, null, 2)}
+TIPO DE OFERTA: ${offerCtx.label}
+OBJETIVO PRINCIPAL DEL CONTENIDO: ${offerCtx.objetivo_contenido}
+CTA OBLIGATORIO EN TODOS LOS ANGULOS: "${offerCtx.cta_primario}"
+INSTRUCCIONES ESPECIALES: ${offerCtx.instrucciones_especiales}
 
-INVESTIGACION:
-${perplexityResearch.substring(0, 10000)}
+PRODUCTO/OFERTA: ${producto}
+METAS: ${goals.join(", ")} | MERCADO: ${mercado} | TONO: ${extractedData.tono_emocional || "neutral"}
+AVATARES:
+${avatarSummary}
+RESTRICCIONES: ${extractedData.restricciones_creativas || "ninguna"}
 
-Genera SOLO este JSON (sin texto adicional, sin markdown):
-{
-  "seccion_4_angulos": [
-    {
-      "id": 1,
-      "tipo": "educativo|emocional|aspiracional|prueba_social|anti_objecion|transformacion|urgencia|comparativo|testimonial|error_comun",
-      "hook_apertura": "string - primera frase que detiene el scroll",
-      "desarrollo": "string - de que trata el cuerpo del video",
-      "cta": "string - accion especifica al final",
-      "avatar_objetivo": "avatar_1|avatar_2|avatar_3",
-      "fase_esfera": "enganche|solucion|remarketing|fidelizacion",
-      "uso_recomendado": "organico|ads|ambos"
-    }
-  ],
-  "seccion_5_ideas_contenido": [
-    {
-      "id": 1,
-      "titulo": "string",
-      "formato": "testimonial_selfie|antes_despues|tutorial|unboxing|broll|educativo|reto|pov",
-      "hook_variacion_1": "string",
-      "hook_variacion_2": "string",
-      "hook_variacion_3": "string",
-      "desarrollo": "string - estructura del cuerpo del video",
-      "cta": "string",
-      "duracion_recomendada": "string - ej: 15-30 seg, 30-60 seg",
-      "fase_esfera": "enganche|solucion|remarketing|fidelizacion",
-      "uso_recomendado": "organico|ads|ambos"
-    }
-  ]
-}
+CONTEXTO DE MERCADO:
+${research}
 
-IMPORTANTE:
-- Genera EXACTAMENTE 10 angulos en seccion_4_angulos
-- Genera EXACTAMENTE 10 ideas en seccion_5_ideas_contenido
-- Distribuir ideas: 3 enganche, 4 solucion, 2 remarketing, 1 fidelizacion`;
+Genera 7 angulos creativos + 7 ideas de contenido 100% especificas para "${producto}" (${offerCtx.label}).
+Todos los CTAs deben ser variaciones de "${offerCtx.cta_primario}". NO uses CTAs genéricos.
+
+JSON exacto (sin texto extra):
+{"seccion_4_angulos":[{"id":1,"tipo":"educativo|emocional|aspiracional|prueba_social|anti_objecion|transformacion|urgencia","hook_apertura":"string","desarrollo":"string","cta":"${offerCtx.cta_primario}","avatar_objetivo":"avatar_1|avatar_2|avatar_3","fase_esfera":"enganche|solucion|remarketing|fidelizacion","uso_recomendado":"organico|ads|ambos"}],"seccion_5_ideas_contenido":[{"id":1,"titulo":"string","formato":"testimonial_selfie|antes_despues|tutorial|educativo|reto|pov","hook_variacion_1":"string","hook_variacion_2":"string","hook_variacion_3":"string","desarrollo":"string","cta":"string","duracion_recomendada":"string","fase_esfera":"string","uso_recomendado":"string"}]}
+
+Genera EXACTAMENTE 7 angulos y 7 ideas.`;
 }
 
 // Call 4: Seccion 6 (Organico) + Seccion 7 (Ads) + Seccion 8 (Brief)
@@ -1035,87 +1622,39 @@ function buildCall4Prompt(
   const platforms = (wizardResponses.platforms as string[]) || [];
   const audiences = (wizardResponses.audiences as string[]) || [];
   const mercado = getMarketDescription(wizardResponses);
+  const producto = buildProductContext(extractedData, wizardResponses);
+  const research = buildResearchSummary(perplexityResearch, 2000);
 
-  const pName4 = (wizardResponses.product_name as string | undefined)?.trim();
-  const pCtx4 = (wizardResponses.product_context as string | undefined)?.trim();
-  const productLine4 = pName4
-    ? `${pName4}${pCtx4 ? ` — ${pCtx4}` : ""}`
-    : (extractedData.servicio_exacto as string || "No especificado");
+  // Compact angulos summary (solo hooks para referencia)
+  const angulosSummary = (angulos as Array<Record<string, unknown>>)
+    .slice(0, 5)
+    .map((a, i) => `${i+1}. ${a.hook_apertura} [${a.uso_recomendado}]`)
+    .join("\n");
 
-  return `Eres un estratega digital senior especialista en growth de contenido organico
-y performance de campanas pagas en ${platforms.join("/")} para el mercado de ${mercado}.
+  const offerCtx = getOfferTypeContext((wizardResponses.offer_type as string) || "");
 
-PRODUCTO/SERVICIO: ${productLine4}
-OBJETIVO: ${goals.join(", ")}
-CANAL: ${platforms.join(", ")}
-AUDIENCIA: ${audiences.join(", ")} anos
-MERCADO OBJETIVO: ${mercado}
-RESTRICCIONES: ${extractedData.restricciones_creativas || "Ninguna"}
+  return `Estratega digital growth en ${platforms.join("/")} para ${mercado}. Responde SOLO JSON válido.
 
-INVESTIGACION:
-${perplexityResearch.substring(0, 8000)}
+TIPO DE OFERTA: ${offerCtx.label}
+METRICA DE EXITO PRINCIPAL: ${offerCtx.metricas_exito}
+CTA PRINCIPAL: ${offerCtx.cta_primario}
+INSTRUCCIONES ESPECIALES: ${offerCtx.instrucciones_especiales}
 
-ANGULOS E IDEAS GENERADOS:
-${JSON.stringify(angulos, null, 2).substring(0, 4000)}
+PRODUCTO/OFERTA: ${producto}
+OBJETIVO: ${goals.join(", ")} | CANAL: ${platforms.join(", ")} | AUDIENCIA: ${audiences.join(", ")} anos
+MERCADO: ${mercado} | RESTRICCIONES: ${extractedData.restricciones_creativas || "ninguna"}
 
-Genera SOLO este JSON (sin texto adicional, sin markdown):
-{
-  "seccion_6_estrategia_organica": {
-    "objetivo_organico": "string - que construye en el tiempo",
-    "distribucion_contenido": {
-      "viral": 25,
-      "valor": 40,
-      "venta": 25,
-      "personal": 10,
-      "justificacion": "string - por que esa distribucion para este caso"
-    },
-    "frecuencia_publicacion": "string - ej: 5 veces por semana",
-    "tipo_contenido_organico": "string - que formatos funcionan mejor organicamente",
-    "pilares_tematicos": ["pilar 1", "pilar 2", "pilar 3"],
-    "tono_organico": "string",
-    "metricas_organico": {
-      "retencion_objetivo": "string - ej: 50-70% del video",
-      "interacciones_clave": "string - jerarquia de interacciones importantes",
-      "frecuencia_revision": "string - cada cuanto revisar metricas"
-    },
-    "errores_comunes_organico": ["error 1", "error 2", "error 3"]
-  },
-  "seccion_7_estrategia_ads": {
-    "objetivo_campana": "conversiones|trafico|reconocimiento",
-    "estructura_campana": {
-      "frio": "string - como atacar audiencia nueva",
-      "tibio": "string - como atacar audiencia que ya interactuo",
-      "remarketing": "string - como reimpactar a quienes no compraron"
-    },
-    "publico_frio": {
-      "intereses": ["interes 1", "interes 2", "interes 3"],
-      "comportamientos": ["comportamiento 1", "comportamiento 2"],
-      "caracteristicas": "string - descripcion del publico frio ideal"
-    },
-    "publico_remarketing": "string - a quien reimpactar y con que mensaje",
-    "presupuesto_minimo_sugerido": "string - monto base recomendado",
-    "ideas_para_ads": "string - cuales de las 10 ideas son mas recomendadas para pauta y por que",
-    "estructura_creativo_ad": {
-      "hook": "string - duracion y objetivo (3-5 seg)",
-      "problema": "string - duracion y objetivo (5-10 seg)",
-      "solucion": "string - duracion y objetivo (15-30 seg)",
-      "cta": "string - duracion y objetivo (3-5 seg)"
-    },
-    "variaciones_recomendadas": "string - cuantas variaciones de hook probar",
-    "ctr_objetivo": "string - benchmark segun canal: Meta >1% / TikTok >1.5%",
-    "senales_de_escalar": "string - cuando y bajo que metricas escalar el presupuesto",
-    "senales_de_pausar": "string - cuando pausar un creativo"
-  },
-  "seccion_8_brief_creador": {
-    "tono_de_voz": "string",
-    "palabras_usar": ["palabra 1", "palabra 2", "palabra 3", "palabra 4", "palabra 5"],
-    "palabras_evitar": ["palabra 1", "palabra 2", "palabra 3"],
-    "indicaciones_visuales": "string - locacion, vestimenta, iluminacion, encuadre",
-    "especificaciones_tecnicas": "string - duracion, formato 9:16, calidad minima",
-    "cta_recomendado": "string - llamada a la accion exacta segun objetivo",
-    "restricciones_del_cliente": "string - lo que el cliente dijo que no quiere"
-  }
-}`;
+ANGULOS GENERADOS:
+${angulosSummary}
+
+CONTEXTO DE MERCADO:
+${research}
+
+La estrategia organica y de ads debe estar 100% orientada a lograr: "${offerCtx.objetivo_contenido}".
+El cta_recomendado en el brief siempre debe ser una variacion de "${offerCtx.cta_primario}".
+
+JSON exacto (sin texto extra):
+{"seccion_6_estrategia_organica":{"objetivo_organico":"string","distribucion_contenido":{"viral":25,"valor":40,"venta":25,"personal":10,"justificacion":"string"},"frecuencia_publicacion":"string","tipo_contenido_organico":"string","pilares_tematicos":["pilar1","pilar2","pilar3"],"tono_organico":"string","metricas_organico":{"retencion_objetivo":"string","interacciones_clave":"string","frecuencia_revision":"string"},"errores_comunes_organico":["error1","error2","error3"]},"seccion_7_estrategia_ads":{"objetivo_campana":"conversiones|trafico|reconocimiento","estructura_campana":{"frio":"string","tibio":"string","remarketing":"string"},"publico_frio":{"intereses":["interes1","interes2","interes3"],"comportamientos":["comportamiento1","comportamiento2"],"caracteristicas":"string"},"publico_remarketing":"string","presupuesto_minimo_sugerido":"string","ideas_para_ads":"string","estructura_creativo_ad":{"hook":"string","problema":"string","solucion":"string","cta":"${offerCtx.cta_primario}"},"variaciones_recomendadas":"string","ctr_objetivo":"string","senales_de_escalar":"string","senales_de_pausar":"string"},"seccion_8_brief_creador":{"tono_de_voz":"string","palabras_usar":["p1","p2","p3","p4","p5"],"palabras_evitar":["p1","p2","p3"],"indicaciones_visuales":"string","especificaciones_tecnicas":"string","cta_recomendado":"${offerCtx.cta_primario}","restricciones_del_cliente":"string"}}`;
 }
 
 // ── Main handler ────────────────────────────────────────────────────────
@@ -1216,18 +1755,36 @@ Deno.serve(async (req: Request) => {
       console.log(`[generate-product-dna] No product_name, using extracted: "${extractedData.servicio_exacto}"`);
     }
 
-    // ── 4. Research with Perplexity ────────────────────────────────────────
+    // ── 4a. Research con Perplexity sonar-pro ────────────────────────────────
     let perplexityResearch = "";
+    let perplexityCitations: string[] = [];
 
     try {
-      perplexityResearch = await callPerplexityResearch(extractedData, wizardResponses);
-      console.log(`[generate-product-dna] Research completed: ${perplexityResearch.length} chars`);
+      const perplexityResult = await callPerplexityResearch(extractedData, wizardResponses);
+      perplexityResearch = perplexityResult.content;
+      perplexityCitations = perplexityResult.citations;
+      console.log(`[generate-product-dna] Perplexity: ${perplexityResearch.length} chars, ${perplexityCitations.length} citations`);
     } catch (researchError) {
       console.error("[generate-product-dna] Perplexity research failed:", researchError);
       // Continue with fallback - will use extractedData + defaults
     }
 
-    // ── 5. Generate 8 sections with Gemini ─────────────────────────────────
+    // ── 4b. Firecrawl: enriquecimiento con datos reales de competidores ──────
+    let firecrawlContext = "";
+
+    if (perplexityResearch.length > 100) {
+      try {
+        firecrawlContext = await callFirecrawlEnrichment(perplexityResearch, perplexityCitations);
+        if (firecrawlContext) {
+          console.log(`[generate-product-dna] Firecrawl enriquecimiento: ${firecrawlContext.length} chars`);
+        }
+      } catch (fcErr) {
+        const msg = fcErr instanceof Error ? fcErr.message : String(fcErr);
+        console.warn(`[generate-product-dna] Firecrawl enrichment failed (non-fatal): ${msg}`);
+      }
+    }
+
+    // ── 5. Generate 8 sections con Mistral/GPT/Gemini ────────────────────────
     let analysisResult: {
       market_research: Record<string, unknown>;
       competitor_analysis: Record<string, unknown>;
@@ -1235,16 +1792,29 @@ Deno.serve(async (req: Request) => {
       content_brief: Record<string, unknown>;
     };
 
+    let usedFallback = false;
+    let generationErrorMsg: string | null = null;
+
     if (perplexityResearch.length > 100) {
       try {
-        analysisResult = await generateAllSections(extractedData, perplexityResearch, wizardResponses);
-        console.log("[generate-product-dna] All sections generated successfully");
+        analysisResult = await generateAllSections(extractedData, perplexityResearch, wizardResponses, firecrawlContext);
+        console.log("[generate-product-dna] ✅ All sections generated successfully via AI");
+        // Validate that the result has real content
+        const compAnalysis = analysisResult.competitor_analysis as Record<string, unknown>;
+        const strat = analysisResult.strategy_recommendations as Record<string, unknown>;
+        const compArray = compAnalysis?.competidores as unknown[] || [];
+        const avArray = strat?.seccion_3_avatares as unknown[] || [];
+        console.log(`[generate-product-dna] Result validation: competitors=${compArray.length}, avatares=${avArray.length}`);
       } catch (genError) {
-        console.error("[generate-product-dna] Section generation failed:", genError);
+        generationErrorMsg = genError instanceof Error ? genError.message : String(genError);
+        console.error("[generate-product-dna] ⚠️ Section generation FAILED:", generationErrorMsg);
+        console.log("[generate-product-dna] Falling back with Perplexity research available:", perplexityResearch.length, "chars");
+        usedFallback = true;
         analysisResult = generateEnrichedAnalysis(wizardResponses, extractedData, perplexityResearch);
       }
     } else {
-      console.log("[generate-product-dna] Using fallback analysis (no research)");
+      console.log("[generate-product-dna] Using fallback analysis (no research available)");
+      usedFallback = true;
       analysisResult = generateEnrichedAnalysis(wizardResponses, extractedData, "");
     }
 
@@ -1396,6 +1966,13 @@ Deno.serve(async (req: Request) => {
         has_transcription: !!transcription,
         confidence_score: confidenceScore,
         sections: Object.keys(analysisResult),
+        fallback_used: usedFallback,
+        generation_error: generationErrorMsg,
+        research_sources: {
+          perplexity_chars: perplexityResearch.length,
+          perplexity_citations: perplexityCitations.length,
+          firecrawl_chars: firecrawlContext.length,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

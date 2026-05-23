@@ -5,8 +5,10 @@ import { makeAIRequest, corsHeaders } from "../_shared/ai-providers.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 // SECURITY: Rate limiting para proteger APIs costosas
 import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
-const LIVE_SHOPPING_SYSTEM_PROMPT = `Eres un experto en Live Shopping y Social Commerce para Latinoamérica.
+// Fallback: se usa si la BD no está disponible
+const LIVE_SHOPPING_SYSTEM_PROMPT_FALLBACK = `Eres un experto en Live Shopping y Social Commerce para Latinoamérica.
 
 Tu especialidad es crear contenido estratégico para eventos de venta en vivo que:
 1. Generen expectativa y FOMO antes del evento
@@ -104,6 +106,9 @@ ${trendResult.content}
     allowNullOrg: true,
   });
 
+  // Cargar prompt de live shopping desde BD (con fallback a hardcodeado)
+  const liveShoppingConfig = await getPrompt(supabase as any, "streaming", "live_shopping");
+
   const userPrompt = `
 Genera un paquete completo de contenido para este evento de Live Shopping:
 
@@ -154,7 +159,7 @@ Genera el siguiente contenido en JSON:
 
   const result = await makeAIRequest({
     ...aiConfig,
-    systemPrompt: LIVE_SHOPPING_SYSTEM_PROMPT,
+    systemPrompt: liveShoppingConfig.systemPrompt,
     userPrompt,
     temperature: 0.7,
   });

@@ -4,6 +4,7 @@ import { callAIWithFallback, getAPIKey, corsHeaders } from "../_shared/ai-provid
 import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -75,8 +76,10 @@ USA esta información para responder con datos actuales y relevantes.`;
       }
     }
 
-    const systemPrompt = `Eres un experto en copywriting y guiones de video UGC. 
-Tu tarea es ayudar a mejorar y refinar guiones de video basándote en las instrucciones del usuario.
+    // Cargar instrucciones base desde BD (con fallback a hardcodeado)
+    const chatPromptConfig = await getPrompt(supabase as any, "scripts", "chat_refiner");
+
+    const systemPrompt = `${chatPromptConfig.systemPrompt}
 
 CONTEXTO:
 - Producto: ${productName || "No especificado"}

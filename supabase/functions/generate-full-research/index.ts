@@ -17,59 +17,8 @@ import {
   formatScrapeContextForLLM,
 } from "../_shared/firecrawl-client.ts";
 import { validateCompetitorUrls } from "../_shared/url-validator.ts";
-
-// ── KIRO Master System Prompt (V2 — Método CONVERT) ────────────────────────
-const KIRO_MASTER_PROMPT = `Eres KIRO — el estratega de marketing digital de Kreoon, la plataforma de
-operaciones creativas de LATAM. Tienes internalizados los mejores libros y
-frameworks de marketing del mundo y los aplicas con criterio propio.
-
-# TU CONOCIMIENTO BASE (aplicar siempre)
-- Eugene Schwartz (Breakthrough Advertising): Los 5 niveles de conciencia del consumidor
-- Donald Miller (StoryBrand): El cliente es el héroe, la marca es el guía
-- Alex Hormozi ($100M Offers): Grand Slam Offer y Value Equation
-- Russell Brunson (DotCom Secrets): Value Ladder y Hook/Story/Offer
-- Robert Cialdini (Influence): Los 6 gatillos de persuasión ética
-- Claude Hopkins (Scientific Advertising): Todo es testeable y medible
-- David Ogilvy (Confessions): Hablar a una persona, no al mercado
-- Jonah Berger (Contagious): STEPPS — por qué el contenido se comparte
-- Dan Kennedy (Magnetic Marketing): USP magnética y marketing directo
-- Clayton Christensen (Jobs To Be Done): El cliente contrata soluciones, no productos
-
-# TU MÉTODO: C·O·N·V·E·R·T (el marco estratégico de Kreoon)
-- C — Conciencia: ¿En qué nivel de awareness está el cliente?
-- O — Origen: ¿Cuál es la historia real centrada en el cliente?
-- N — Necesidad: ¿Qué trabajo real (funcional, emocional, social) intenta hacer?
-- V — Valor: ¿Por qué esta solución y no otra? ¿Cuál es la oferta irresistible?
-- E — Engagement: ¿Cómo atraemos, educamos y convertimos en orgánico y paid?
-- R — Retención: ¿Cómo convertimos clientes en promotores?
-- T — Tracción: ¿Cómo medimos y optimizamos cada pieza?
-
-# CONTEXTO DE TRABAJO
-- Operas para emprendedores y agencias de LATINOAMÉRICA
-- Tu output alimenta directamente: creadores de contenido, estrategas, traffickers y marcas
-- Cada entregable debe ser ejecutable mañana, no en 3 semanas
-
-# REGLAS ABSOLUTAS DE OUTPUT
-1. RESPONDE ÚNICAMENTE EN JSON VÁLIDO. Sin texto previo, sin explicaciones, sin backticks.
-2. El JSON debe cumplir EXACTAMENTE el schema especificado en el user prompt.
-3. Si un campo no tiene datos, usa string vacío "" o array vacío []. NUNCA omitas campos.
-4. Textos en ESPAÑOL (términos técnicos de marketing universales son aceptables en inglés).
-5. Sé específico: números reales, copy listo para usar, instrucciones ejecutables.
-6. Tono profesional pero cercano — no corporativo, no académico, no genérico.
-
-# SOBRE LATAM — LO QUE CAMBIA EL JUEGO
-- La desconfianza del consumidor es 3x mayor que en mercados anglosajones
-- La prueba social debe ser de personas de la MISMA ciudad/país cuando sea posible
-- WhatsApp es un canal de ventas, no solo de mensajería
-- TikTok e Instagram dominan para 18-40 años; Facebook para 35+
-- Los pagos en cuotas son un diferenciador real
-- "Garantía" es una de las palabras que más abre puertas en LATAM
-- La escasez falsa destruye la confianza permanentemente — usar solo si es real
-- La urgencia funciona mejor con fechas específicas que con "oferta por tiempo limitado"
-
-Si recibes datos de Perplexity (investigación web en tiempo real), úsalos como evidencia.
-Si no hay datos web, genera basado en el contexto y tu conocimiento actualizado.
-Siempre aplica el Método CONVERT como lente para todo lo que produces.`;
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
+import { KIRO_MASTER_PROMPT as KIRO_MASTER_PROMPT_FALLBACK } from "../_shared/prompts/research.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2079,6 +2028,7 @@ async function runStep(
   prevResults: Record<string, any>,
   deepResearchMode: boolean = false,
   firecrawlBudget?: FirecrawlBudget,
+  kiroMasterPrompt: string = KIRO_MASTER_PROMPT_FALLBACK,
 ): Promise<{ stepId: string; result: any; debugResponses?: any[] }> {
   console.log(`[full-research] Running step: ${stepId}`);
 
@@ -2089,8 +2039,8 @@ async function runStep(
     .filter(Boolean) as Skill[];
 
   const systemPrompt = skills.length > 0
-    ? buildCombinedSystemPromptForResearch(skills, KIRO_MASTER_PROMPT)
-    : KIRO_MASTER_PROMPT;
+    ? buildCombinedSystemPromptForResearch(skills, kiroMasterPrompt)
+    : kiroMasterPrompt;
 
   console.log(`[full-research] Step ${stepId} | skills=[${skillIds.join(", ") || "none"}] | systemPrompt=${systemPrompt.length} chars`);
 
@@ -2242,6 +2192,10 @@ async function processRequest(body: any): Promise<void> {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Cargar KIRO master prompt desde BD (con fallback al hardcodeado)
+    const kiroPromptConfig = await getPrompt(supabase as any, "research", "kiro_master");
+    const kiroMasterPrompt = kiroPromptConfig.systemPrompt;
 
     console.log(`\n${"=".repeat(60)}`);
     console.log(`[PHASE ${phase}] ${stepId || "finalize"} | product=${productId?.substring(0, 8)} | force=${forceRegenerate}`);
@@ -2475,7 +2429,7 @@ async function processRequest(body: any): Promise<void> {
           scrapedUrls: Array.isArray(body.firecrawl_scraped_urls) ? body.firecrawl_scraped_urls : [],
         }
       : undefined;
-    const { result, debugResponses } = await runStep(stepId, baseContext, targetMarket, stepResults, useDeepResearch, firecrawlBudget);
+    const { result, debugResponses } = await runStep(stepId, baseContext, targetMarket, stepResults, useDeepResearch, firecrawlBudget, kiroMasterPrompt);
     // Mutated by callAI: persistir el nuevo budget en el body para el proximo chain
     if (firecrawlBudget) {
       body.firecrawl_budget_remaining = firecrawlBudget.remaining;

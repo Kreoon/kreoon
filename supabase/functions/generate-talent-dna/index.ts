@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 // ── JSON repair (from product-research pattern) ───────────────────────
 function repairJsonForParse(str: string): string {
@@ -308,9 +309,12 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id)
       .eq("is_active", true);
 
+    // Load DNA prompt from DB (with fallback to hardcoded)
+    const talentPromptConfig = await getPrompt(supabase as any, "dna", "talent_dna");
+
     // Build system prompt with emotional context
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
-    const systemPrompt = TALENT_DNA_SYSTEM_PROMPT + emotionalContext;
+    const systemPrompt = talentPromptConfig.systemPrompt + emotionalContext;
 
     // Build user prompt
     const userPrompt = `Transcripcion del audio del creador describiendo su perfil profesional:\n\n${transcription}`;

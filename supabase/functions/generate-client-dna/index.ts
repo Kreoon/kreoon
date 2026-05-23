@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 // ── JSON repair (enhanced for array element errors) ───────────────────
 function repairJsonForParse(str: string): string {
@@ -456,9 +457,12 @@ Deno.serve(async (req: Request) => {
       .eq("client_id", client_id)
       .eq("is_active", true);
 
+    // Load DNA prompt from DB (with fallback to hardcoded)
+    const dnaPromptConfig = await getPrompt(supabase as any, "dna", "client_dna");
+
     // Build system prompt with emotional context
     const emotionalContext = formatEmotionalContext(emotionalAnalysis);
-    const systemPrompt = DNA_SYSTEM_PROMPT + emotionalContext;
+    const systemPrompt = dnaPromptConfig.systemPrompt + emotionalContext;
 
     // Build user prompt with product context and locations
     const locationsContext = formatLocations(locations || []);
