@@ -294,6 +294,6 @@ export async function getPerplexityConfig(
   const apiKey = getPerplexityApiKey() || "";
   return {
     apiKey,
-    model: "llama-3.1-sonar-large-128k-online",
+    model: "sonar-pro",
   };
 }

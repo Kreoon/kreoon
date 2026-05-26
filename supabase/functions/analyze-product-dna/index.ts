@@ -327,7 +327,7 @@ Responde en español y sé específico para el mercado latinoamericano.
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
+        model: 'sonar-pro',
         messages: [
           {
             role: 'system',

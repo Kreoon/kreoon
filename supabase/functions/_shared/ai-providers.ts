@@ -104,7 +104,7 @@ export const AI_PROVIDERS: Record<string, AIProviderConfig> = {
       "Content-Type": "application/json",
     }),
     getBody: (model: string, systemPrompt: string, userPrompt: string) => ({
-      model: model || "llama-3.1-sonar-large-128k-online",
+      model: model || "sonar-pro",
       messages: [
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },

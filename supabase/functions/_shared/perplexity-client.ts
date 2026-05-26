@@ -38,7 +38,7 @@ export async function searchWithPerplexity(
   }
 
   const body: Record<string, unknown> = {
-    model: config.model || "llama-3.1-sonar-large-128k-online",
+    model: config.model || "sonar-pro",
     messages: [{ role: "user", content: query }],
     max_tokens: options.maxTokens ?? 4096,
     temperature: options.temperature ?? 0.2,

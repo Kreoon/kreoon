@@ -30,9 +30,12 @@ const TOKEN_COSTS: Record<string, { input: number; output: number }> = {
   "claude-sonnet-4-20250514": { input: 0.003, output: 0.015 },
   "claude-3-5-sonnet": { input: 0.003, output: 0.015 },
   // Perplexity
+  // Perplexity (modelos actuales 2025)
+  "sonar-pro": { input: 0.001, output: 0.001 },
+  "sonar": { input: 0.0002, output: 0.0002 },
+  // Perplexity (nombres legacy - compatibilidad)
   "llama-3.1-sonar-large-128k-online": { input: 0.001, output: 0.001 },
   "llama-3.1-sonar-small-128k-online": { input: 0.0002, output: 0.0002 },
-  "sonar-pro": { input: 0.001, output: 0.001 },
   // FAL (imágenes - por imagen, no por token)
   "flux-pro": { input: 0, output: 0.05 }, // ~$0.05 por imagen
   "flux-2-pro-edit": { input: 0, output: 0.05 },

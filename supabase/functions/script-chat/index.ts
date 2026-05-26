@@ -41,7 +41,7 @@ serve(async (req) => {
       ...(googleKey ? [{ provider: "gemini", model: "gemini-2.5-flash", apiKey: googleKey }] : []),
       ...(openaiKey ? [{ provider: "openai", model: "gpt-4o-mini", apiKey: openaiKey }] : []),
       ...(anthropicKey ? [{ provider: "anthropic", model: "claude-sonnet-4-20250514", apiKey: anthropicKey }] : []),
-      ...(perplexityKey ? [{ provider: "perplexity", model: "llama-3.1-sonar-large-128k-online", apiKey: perplexityKey }] : []),
+      ...(perplexityKey ? [{ provider: "perplexity", model: "sonar-pro", apiKey: perplexityKey }] : []),
     ];
 
     if (configs.length === 0) {

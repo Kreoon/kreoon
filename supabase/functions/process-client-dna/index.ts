@@ -59,7 +59,7 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
   const apiKey = getAPIKey("perplexity");
   if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
 
-  const modelName = "llama-3.1-sonar-large-128k-online";
+  const modelName = "sonar-pro";
   console.log("[process-client-dna] Calling Perplexity for DNA analysis...");
   const startTime = Date.now();
   const response = await fetch("https://api.perplexity.ai/chat/completions", {
