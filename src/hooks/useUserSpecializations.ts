@@ -70,14 +70,14 @@ export function useUserSpecializations(userId?: string): UseUserSpecializationsR
     fetchSpecializations();
   }, [fetchSpecializations]);
 
-  // Update all specializations (replace)
+  // Update all specializations (replace) usando RPC atómica
   const updateSpecializations = useCallback(async (specs: Specialization[]): Promise<boolean> => {
     try {
       setError(null);
 
-      // Validar limite
+      // Validar límite
       if (specs.length > MAX_SPECIALIZATIONS_PER_USER) {
-        setError(`Maximo ${MAX_SPECIALIZATIONS_PER_USER} especializaciones permitidas`);
+        setError(`Máximo ${MAX_SPECIALIZATIONS_PER_USER} especializaciones permitidas`);
         return false;
       }
 
@@ -92,26 +92,15 @@ export function useUserSpecializations(userId?: string): UseUserSpecializationsR
         targetUserId = user.id;
       }
 
-      // Eliminar todas las especializaciones actuales
-      const { error: deleteError } = await supabase
-        .from('user_specializations')
-        .delete()
-        .eq('user_id', targetUserId);
+      // Usar RPC atómica para DELETE + INSERT en una sola transacción
+      const { error: rpcError } = await supabase.rpc('replace_user_specializations', {
+        p_user_id: targetUserId,
+        p_specializations: specs.length > 0 ? specs : null,
+      });
 
-      if (deleteError) throw deleteError;
-
-      // Si hay nuevas especializaciones, insertarlas
-      if (specs.length > 0) {
-        const { error: insertError } = await supabase
-          .from('user_specializations')
-          .insert(
-            specs.map(spec => ({
-              user_id: targetUserId,
-              specialization: spec,
-            }))
-          );
-
-        if (insertError) throw insertError;
+      if (rpcError) {
+        console.error('[useUserSpecializations] RPC error:', rpcError);
+        throw rpcError;
       }
 
       // Actualizar estado local

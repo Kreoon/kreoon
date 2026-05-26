@@ -1,10 +1,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
-import { corsHeaders, getAPIKey } from "../_shared/ai-providers.ts";
+import { corsHeaders, getAPIKey, callAISingle } from "../_shared/ai-providers.ts";
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 
 // ── JSON repair (from product-research pattern) ───────────────────────
 function repairJsonForParse(str: string): string {
-  let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
+  // Eliminar caracteres de control (excepto \t \n \r) y limpiar markdown fences
+  let s = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").trim();
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
 
   try {
@@ -45,71 +46,44 @@ function repairJsonForParse(str: string): string {
   }
 }
 
-// ── Gemini AI call ────────────────────────────────────────────────────
-async function callGemini(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = Deno.env.get("GOOGLE_AI_API_KEY") || Deno.env.get("GEMINI_API_KEY");
-  if (!apiKey) throw new Error("GOOGLE_AI_API_KEY not configured");
+// ── AI call con cadena de fallbacks ─────────────────────────────────
+async function callAIWithChain(systemPrompt: string, userPrompt: string): Promise<string> {
+  // Cadena de fallback: Gemini -> Mistral -> Groq -> OpenAI
+  const providers = [
+    { provider: "gemini", model: "gemini-2.5-flash", apiKey: getAPIKey("gemini") },
+    { provider: "mistral", model: "mistral-large-latest", apiKey: getAPIKey("mistral") },
+    { provider: "groq", model: "llama-3.3-70b-versatile", apiKey: getAPIKey("groq") },
+    { provider: "openai", model: "gpt-4o-mini", apiKey: getAPIKey("openai") },
+  ].filter(p => !!p.apiKey);
 
-  console.log("[generate-talent-dna] Calling Gemini for DNA analysis...");
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        max_tokens: 8192,
-        temperature: 0.3,
-      }),
+  if (providers.length === 0) {
+    throw new Error("No hay proveedores de IA configurados");
+  }
+
+  let lastError: Error | null = null;
+
+  for (const { provider, model, apiKey } of providers) {
+    try {
+      console.log(`[generate-talent-dna] Intentando con ${provider}/${model}...`);
+      const result = await callAISingle(provider, model, apiKey!, systemPrompt, userPrompt);
+      console.log(`[generate-talent-dna] Exito con ${provider}/${model}`);
+      return result;
+    } catch (err: any) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const status = err?.status;
+      if (status === 401) {
+        console.warn(`[generate-talent-dna] ${provider} clave invalida (401), probando siguiente...`);
+      } else if (status === 429) {
+        console.warn(`[generate-talent-dna] ${provider} rate limit (429), probando siguiente...`);
+      } else if (status === 402) {
+        console.warn(`[generate-talent-dna] ${provider} creditos agotados (402), probando siguiente...`);
+      } else {
+        console.warn(`[generate-talent-dna] ${provider} fallo: ${lastError.message}, probando siguiente...`);
+      }
     }
-  );
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("[generate-talent-dna] Gemini error:", errText);
-    throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
-}
-
-// ── Perplexity fallback ───────────────────────────────────────────────
-async function callPerplexityFallback(systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = getAPIKey("perplexity");
-  if (!apiKey) throw new Error("PERPLEXITY_API_KEY not configured");
-
-  console.log("[generate-talent-dna] Falling back to Perplexity for DNA analysis...");
-  const response = await fetch("https://api.perplexity.ai/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "sonar-pro",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      max_tokens: 8192,
-      temperature: 0.3,
-      return_citations: false,
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error("[generate-talent-dna] Perplexity error:", errText);
-    throw new Error(`Perplexity API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
+  throw lastError || new Error("Todos los proveedores de IA fallaron al generar el ADN");
 }
 
 // ── Format emotional context for system prompt injection ──────────────
@@ -195,18 +169,18 @@ Genera un JSON con esta estructura EXACTA:
   "specialization": {
     "niches": ["nicho 1", "nicho 2", "nicho 3"],
     "production_skills": ["habilidad 1", "habilidad 2"],
-    "content_formats": ["Reels", "TikTok", "YouTube", etc.],
+    "content_formats": ["Reels", "TikTok", "YouTube"],
     "specialized_services": ["servicio 1", "servicio 2"]
   },
-  "marketplace_roles": ["ugc_creator", "influencer", "video_editor", etc.],
+  "marketplace_roles": ["ugc_creator", "influencer", "video_editor"],
   "content_style": {
     "primary_style": "minimalista|energetico|educativo|etc",
-    "tone_descriptors": ["cercano", "divertido", "profesional", etc.],
+    "tone_descriptors": ["cercano", "divertido", "profesional"],
     "visual_aesthetic": "descripcion de la estetica visual",
     "editing_style": "descripcion del estilo de edicion"
   },
-  "platforms": ["instagram", "tiktok", "youtube", etc.],
-  "languages": ["espanol", "ingles", etc.],
+  "platforms": ["instagram", "tiktok", "youtube"],
+  "languages": ["espanol", "ingles"],
   "ideal_collaborations": {
     "brand_types": ["tipo de marca 1", "tipo de marca 2"],
     "industries": ["industria 1", "industria 2"],
@@ -319,14 +293,8 @@ Deno.serve(async (req: Request) => {
     // Build user prompt
     const userPrompt = `Transcripcion del audio del creador describiendo su perfil profesional:\n\n${transcription}`;
 
-    // Generate DNA with Gemini (fallback to Perplexity)
-    let aiResponse: string;
-    try {
-      aiResponse = await callGemini(systemPrompt, userPrompt);
-    } catch (err) {
-      console.warn("[generate-talent-dna] Gemini failed, trying Perplexity fallback:", err);
-      aiResponse = await callPerplexityFallback(systemPrompt, userPrompt);
-    }
+    // Generate DNA con cadena de fallbacks (Gemini -> Mistral -> Groq -> OpenAI)
+    const aiResponse = await callAIWithChain(systemPrompt, userPrompt);
 
     // Parse response
     const repaired = repairJsonForParse(aiResponse);
