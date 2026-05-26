@@ -256,7 +256,9 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     userId: string,
     data: RegistrationFormData
   ) => {
-    // Only update profile — org registration and company creation happen post-wizard
+    const KREOON_ORG_ID = 'c8ae6c6d-a15d-46d9-b69e-465f7371595e';
+
+    // 1. Actualizar perfil
     await supabase
       .from('profiles')
       .update({
@@ -265,6 +267,19 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
         active_role: 'client',
       })
       .eq('id', userId);
+
+    // 2. Registrar en KREOON como cliente (sí o sí)
+    const { error: regError } = await supabase.rpc('register_user_to_organization', {
+      p_organization_id: KREOON_ORG_ID,
+      p_user_id: userId,
+      p_role: 'client',
+    });
+
+    if (regError) {
+      console.error('handleClientGeneralSubmit: error al registrar en org', regError);
+    } else {
+      console.log('handleClientGeneralSubmit: cliente registrado en KREOON', userId);
+    }
 
     toast.success('¡Cuenta creada! Completa tu perfil para continuar.');
   }, []);
