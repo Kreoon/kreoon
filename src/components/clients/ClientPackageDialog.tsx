@@ -9,7 +9,7 @@ import { ClientPackage, Product, PaymentStatus } from "@/types/database";
 import {
   Save, Loader2, Handshake, Video, Zap, Users, Package,
   Plus, Minus, DollarSign, Clock, CheckCircle2, CircleDollarSign,
-  StickyNote, ShoppingBag, Check,
+  StickyNote, ShoppingBag, Check, CalendarClock, CalendarCheck, AlertTriangle,
 } from "lucide-react";
 import { CurrencyInput, type CurrencyType } from "@/components/ui/currency-input";
 import { cn } from "@/lib/utils";
@@ -114,6 +114,8 @@ export function ClientPackageDialog({
     product_ids: [] as string[],
     payment_status: "pending" as PaymentStatus,
     paid_amount: 0,
+    paid_at: "",          // fecha real del pago (YYYY-MM-DD)
+    payment_due_date: "", // fecha límite para pagar
     is_barter: false,
     notes: "",
   });
@@ -132,6 +134,8 @@ export function ClientPackageDialog({
         product_ids: package_.product_ids || [],
         payment_status: package_.payment_status || "pending",
         paid_amount: package_.paid_amount || 0,
+        paid_at: package_.paid_at ? new Date(package_.paid_at).toISOString().split('T')[0] : "",
+        payment_due_date: (package_ as any).payment_due_date || "",
         is_barter: package_.is_barter || false,
         notes: package_.notes || "",
       });
@@ -140,7 +144,8 @@ export function ClientPackageDialog({
         name: "", description: "", total_value: 0, currency: "COP",
         content_quantity: 1, hooks_per_video: 1, creators_count: 1,
         products_count: 1, product_ids: [], payment_status: "pending",
-        paid_amount: 0, is_barter: false, notes: "",
+        paid_amount: 0, paid_at: "", payment_due_date: "",
+        is_barter: false, notes: "",
       });
     }
   }, [package_, open]);
@@ -175,6 +180,17 @@ export function ClientPackageDialog({
     setLoading(true);
     try {
       const isBarter = formData.is_barter;
+
+      // Calcular paid_at: usar la fecha manual si existe, si no usar ahora para pagos completos
+      let paid_at: string | null = null;
+      if (isBarter) {
+        paid_at = null;
+      } else if (formData.paid_at) {
+        paid_at = new Date(formData.paid_at + 'T12:00:00').toISOString();
+      } else if (formData.payment_status === 'paid') {
+        paid_at = new Date().toISOString();
+      }
+
       const data = {
         client_id: clientId,
         name: formData.name,
@@ -188,7 +204,8 @@ export function ClientPackageDialog({
         product_ids: formData.product_ids,
         payment_status: isBarter ? 'paid' : formData.payment_status,
         paid_amount: isBarter ? 0 : formData.paid_amount,
-        paid_at: (isBarter || formData.payment_status === 'paid') ? new Date().toISOString() : null,
+        paid_at,
+        payment_due_date: (!isBarter && formData.payment_due_date) ? formData.payment_due_date : null,
         is_barter: isBarter,
         notes: formData.notes || null,
       };
@@ -490,6 +507,76 @@ export function ClientPackageDialog({
                   )}
                 </div>
               )}
+
+              {/* ── Fechas de pago ─────────────────────────────────────── */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                {/* Fecha en que pagó — visible si pagó algo */}
+                {(formData.payment_status === 'paid' || formData.payment_status === 'partial') && (
+                  <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 space-y-2">
+                    <p className="text-xs font-semibold text-green-400 flex items-center gap-1.5">
+                      <CalendarCheck className="h-3.5 w-3.5" />
+                      {formData.payment_status === 'partial' ? 'Fecha del pago parcial' : 'Fecha de pago'}
+                    </p>
+                    <Input
+                      type="date"
+                      value={formData.paid_at}
+                      onChange={(e) => setFormData({ ...formData, paid_at: e.target.value })}
+                      className="text-sm h-8"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      ¿Cuándo recibiste el pago?
+                    </p>
+                  </div>
+                )}
+
+                {/* Fecha límite — visible si aún hay saldo pendiente */}
+                {(formData.payment_status === 'pending' || formData.payment_status === 'partial') && (
+                  <div className={cn(
+                    "rounded-xl border p-3 space-y-2",
+                    formData.payment_due_date && new Date(formData.payment_due_date) < new Date()
+                      ? "border-red-500/30 bg-red-500/5"
+                      : "border-amber-500/20 bg-amber-500/5"
+                  )}>
+                    <p className={cn(
+                      "text-xs font-semibold flex items-center gap-1.5",
+                      formData.payment_due_date && new Date(formData.payment_due_date) < new Date()
+                        ? "text-red-400"
+                        : "text-amber-400"
+                    )}>
+                      {formData.payment_due_date && new Date(formData.payment_due_date) < new Date()
+                        ? <AlertTriangle className="h-3.5 w-3.5" />
+                        : <CalendarClock className="h-3.5 w-3.5" />
+                      }
+                      Fecha límite de pago
+                    </p>
+                    <Input
+                      type="date"
+                      value={formData.payment_due_date}
+                      onChange={(e) => setFormData({ ...formData, payment_due_date: e.target.value })}
+                      className="text-sm h-8"
+                    />
+                    {formData.payment_due_date ? (
+                      <p className="text-[10px] text-muted-foreground">
+                        {(() => {
+                          const due = new Date(formData.payment_due_date + 'T00:00:00');
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const diff = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                          if (diff < 0) return <span className="text-red-400 font-semibold">⚠️ Vencido hace {Math.abs(diff)} días</span>;
+                          if (diff === 0) return <span className="text-red-400 font-semibold">⚠️ Vence hoy</span>;
+                          if (diff <= 3) return <span className="text-amber-400 font-semibold">⚡ Vence en {diff} días</span>;
+                          return <span>Faltan {diff} días</span>;
+                        })()}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-muted-foreground">
+                        Define cuándo debe pagar el cliente
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </section>
           )}
 
