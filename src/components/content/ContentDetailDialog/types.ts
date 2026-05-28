@@ -48,6 +48,8 @@ export interface ContentFormData {
   // Tipo de creador y formato de narración
   creator_type?: string;
   video_pov?: string;
+  // Campaña / paquete de cliente
+  client_package_id?: string | null;
 }
 
 // ============= PERMISSIONS =============

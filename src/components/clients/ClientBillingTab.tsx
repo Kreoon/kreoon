@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale';
 import {
   Plus, Camera, FolderKanban, FileText, Loader2, Trash2,
   CheckCircle2, Clock, Lock, Download, ChevronDown, ChevronUp,
-  DollarSign, Edit2, Check, X,
+  DollarSign, Edit2, Check, X, Package,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/lib/finance-format';
 import { generateClientInvoicePDF } from '@/lib/client-invoice-pdf';
+import { generateAccountStatementPDF } from '@/lib/client-account-statement-pdf';
+import { generateCollectionNoticePDF } from '@/lib/client-collection-notice-pdf';
 import {
   useClientBillingItems,
   useClientClosings,
@@ -24,6 +26,8 @@ import {
   type BillingItem,
   type ClientClosing,
 } from '@/hooks/useClientBilling';
+import { generatePackageInvoicePDF, type PackageForInvoice, type PackagePaymentRow } from '@/lib/client-package-invoice-pdf';
+import { useQuery } from '@tanstack/react-query';
 import { FillmakerDialog } from './FillmakerDialog';
 import { ClientClosingDialog } from './ClientClosingDialog';
 
@@ -285,6 +289,80 @@ function ClosingRow({
   );
 }
 
+// ─── Fila de paquete ──────────────────────────────────────────
+
+const PKG_STATUS_COLOR: Record<string, string> = {
+  pending: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+  partial: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+  paid: 'bg-green-500/15 text-green-400 border-green-500/30',
+  overdue: 'bg-red-500/15 text-red-400 border-red-500/30',
+};
+const PKG_STATUS_LABEL: Record<string, string> = {
+  pending: 'Pendiente',
+  partial: 'Parcial',
+  paid: 'Pagado',
+  overdue: 'Vencido',
+};
+
+function PackageCardRow({ pkg, clientName, orgName }: { pkg: PackageForInvoice; clientName: string; orgName: string }) {
+  const [downloading, setDownloading] = useState(false);
+  const saldo = pkg.total_value - pkg.paid_amount;
+  const pct = pkg.total_value > 0 ? Math.round((pkg.paid_amount / pkg.total_value) * 100) : 0;
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const { data, error } = await supabase
+        .from('client_package_payments')
+        .select('id, amount, currency, payment_date, payment_method, reference_number, notes')
+        .eq('client_package_id', pkg.id)
+        .order('payment_date', { ascending: false });
+      if (error) throw error;
+      generatePackageInvoicePDF({ pkg, payments: (data ?? []) as PackagePaymentRow[], clientName, orgName });
+    } catch (err: any) {
+      toast({ title: 'Error al generar PDF', description: err.message, variant: 'destructive' });
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  return (
+    <div className="rounded border border-white/10 bg-card p-3">
+      <div className="flex items-center gap-3">
+        <Package className="h-4 w-4 text-violet-400 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="font-medium text-sm truncate">{pkg.name}</span>
+            <Badge className={`text-xs ${PKG_STATUS_COLOR[pkg.payment_status] ?? 'bg-white/10 text-white/60'}`}>
+              {PKG_STATUS_LABEL[pkg.payment_status] ?? pkg.payment_status}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+            <span>Total: <span className="text-white/80 font-medium">{formatCurrency(pkg.total_value, pkg.currency)}</span></span>
+            <span>Pagado: <span className="text-green-400 font-medium">{formatCurrency(pkg.paid_amount, pkg.currency)}</span></span>
+            {saldo > 0 && <span>Saldo: <span className="text-red-400 font-medium">{formatCurrency(Math.max(0, saldo), pkg.currency)}</span></span>}
+          </div>
+          {pkg.total_value > 0 && (
+            <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 shrink-0"
+          title="Descargar factura"
+          onClick={handleDownload}
+          disabled={downloading}
+        >
+          {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Componente principal ─────────────────────────────────────
 
 export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props) {
@@ -294,6 +372,28 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
   const { data: allItems = [], isLoading: loadingItems, refetch: refetchItems } = useClientBillingItems(orgId, clientId);
   // CRITICAL 1 — pasar orgId como primer argumento
   const { data: closings = [], isLoading: loadingClosings, refetch: refetchClosings } = useClientClosings(orgId, clientId);
+  const { data: packagesForStatement = [], isLoading: loadingPackages } = useQuery({
+    queryKey: ['client-packages-billing', orgId, clientId],
+    queryFn: async (): Promise<PackageForInvoice[]> => {
+      // Verify client belongs to this org before loading packages (IDOR guard)
+      const { data: clientCheck } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', clientId)
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      if (!clientCheck) return [];
+
+      const { data, error } = await supabase
+        .from('client_packages')
+        .select('id, name, total_value, paid_amount, currency, payment_status, content_quantity, hooks_per_video, created_at')
+        .eq('client_id', clientId);
+      if (error) throw error;
+      return (data ?? []) as PackageForInvoice[];
+    },
+    enabled: !!(orgId && clientId),
+    staleTime: 60_000,
+  });
   const deleteFillmaker = useDeleteFillmaker();
 
   const pendingItems = useMemo(() => allItems.filter(i => i.billing_status === 'pending'), [allItems]);
@@ -306,6 +406,17 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
     return Array.from(map.entries());
   }, [pendingItems]);
   const hasMultiCurrency = pendingByCurrency.length > 1;
+
+  const packagesByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const pkg of packagesForStatement) {
+      if (pkg.payment_status !== 'paid') {
+        const saldo = Math.max(0, pkg.total_value - pkg.paid_amount);
+        if (saldo > 0) map.set(pkg.currency, (map.get(pkg.currency) ?? 0) + saldo);
+      }
+    }
+    return Array.from(map.entries());
+  }, [packagesForStatement]);
 
   async function handleDeleteFillmaker(id: string) {
     try {
@@ -321,11 +432,22 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
     refetchClosings();
   }
 
+  function handleAccountStatement() {
+    generateAccountStatementPDF({ closings, packages: packagesForStatement, clientName, orgName });
+  }
+
+  function handleCollectionNotice() {
+    const pendingPackages = packagesForStatement.filter(p => p.payment_status !== 'paid');
+    generateCollectionNoticePDF({ pendingItems, pendingPackages, clientName, orgName });
+  }
+
+  const hasPending = pendingItems.length > 0 || packagesByCurrency.length > 0;
+
   return (
     <div className="space-y-6">
       {/* ─── KPI Total pendiente ─────────────────────────── */}
       <Card className="bg-gradient-to-br from-violet-500/20 to-violet-600/10 border-violet-500/20 p-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-violet-500/20 rounded">
               <DollarSign className="w-5 h-5 text-violet-400" />
@@ -339,9 +461,28 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
                 : <p className="text-2xl font-bold text-white">{formatCurrency(pendingTotal, pendingByCurrency[0]?.[0] ?? 'COP')}</p>
               }
               <p className="text-violet-400 text-xs mt-0.5">{pendingItems.length} ítem{pendingItems.length !== 1 ? 's' : ''} sin cobrar</p>
+              {packagesByCurrency.map(([cur, amt]) => (
+                <p key={cur} className="text-amber-400 text-xs">
+                  + {formatCurrency(amt, cur)} en paquetes
+                </p>
+              ))}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button size="sm" variant="outline" onClick={handleAccountStatement} className="gap-1.5 h-8">
+              <FileText className="h-3.5 w-3.5" />
+              Estado de cuenta
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleCollectionNotice}
+              disabled={!hasPending}
+              className="gap-1.5 h-8 border-amber-500/40 text-amber-400 hover:text-amber-300 hover:border-amber-400/60 disabled:opacity-40"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Cuenta de cobro
+            </Button>
             <Button size="sm" variant="outline" onClick={() => setFillmakerOpen(true)} className="gap-1.5 h-8">
               <Camera className="h-3.5 w-3.5" />
               Fillmaker
@@ -393,6 +534,36 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
           </div>
         )}
       </Card>
+
+      {/* ─── Campañas / Paquetes ────────────────────────── */}
+      {(loadingPackages || packagesForStatement.length > 0) && (
+        <Card className="bg-white/5 border-white/10 p-4">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+              <Package className="h-4 w-4 text-violet-400" />
+              Campañas / Paquetes
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{packagesForStatement.length} paquete{packagesForStatement.length !== 1 ? 's' : ''} contratado{packagesForStatement.length !== 1 ? 's' : ''}</p>
+          </div>
+
+          {loadingPackages ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {packagesForStatement.map(pkg => (
+                <PackageCardRow
+                  key={pkg.id}
+                  pkg={pkg}
+                  clientName={clientName}
+                  orgName={orgName}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* ─── Cierres anteriores ─────────────────────────── */}
       <Card className="bg-white/5 border-white/10 p-4">

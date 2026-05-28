@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import {
   Video, Calendar, Loader2, User, Scissors, Clock, CheckCircle2,
   AlertTriangle, FileText, FileCheck, Mic, Eye, XCircle, Send,
-  RefreshCw, Archive, UserCheck, Film, CircleDollarSign, ExternalLink, Package, Zap,
+  RefreshCw, Archive, UserCheck, Film, CircleDollarSign, ExternalLink, Package, Zap, Megaphone,
 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BulkGenerationDrawer } from '@/components/content/BulkGenerationDrawer';
 import { format, formatDistanceToNow, isPast, isToday, isTomorrow, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,10 +29,17 @@ interface ContentItem {
   creator_id: string | null;
   editor_id: string | null;
   product_id: string | null;
+  client_package_id: string | null;
   status_changed_at?: string | null;
   creator?: { full_name: string } | null;
   editor?: { full_name: string } | null;
   product?: { id: string; name: string } | null;
+}
+
+interface ClientPackage {
+  id: string;
+  name: string;
+  campaign_number: number;
 }
 
 // ── Mapa de estados ──────────────────────────────────────────────────────────
@@ -140,10 +148,23 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
   const [showBulkDrawer, setShowBulkDrawer] = useState(false);
   const [content, setContent] = useState<ContentItem[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string }[]>([]);
+  const [clientPackages, setClientPackages] = useState<ClientPackage[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterProductId, setFilterProductId] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+
+  const handleCampaignChange = async (contentId: string, packageId: string | null) => {
+    const { error } = await supabase
+      .from('content')
+      .update({ client_package_id: packageId })
+      .eq('id', contentId);
+    if (error) {
+      toast({ title: 'Error', description: 'No se pudo actualizar la campaña', variant: 'destructive' });
+    } else {
+      setContent(prev => prev.map(c => c.id === contentId ? { ...c, client_package_id: packageId } : c));
+    }
+  };
 
   // ── Enriquecer un array de rows con perfiles, productos e historial ──────
   const enrichItems = useCallback(async (rows: any[]): Promise<ContentItem[]> => {
@@ -196,7 +217,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
     setFilterProductId(null);
     const { data } = await supabase
       .from('content')
-      .select('id, title, status, deadline, created_at, updated_at, delivered_at, approved_at, creator_id, editor_id, product_id')
+      .select('id, title, status, deadline, created_at, updated_at, delivered_at, approved_at, creator_id, editor_id, product_id, client_package_id')
       .eq('client_id', clientId)
       .order('created_at', { ascending: false });
 
@@ -210,7 +231,14 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
   useEffect(() => {
     if (!open) return;
     loadAll();
-  }, [open, loadAll]);
+    supabase
+      .from('client_packages')
+      .select('id, name, campaign_number')
+      .eq('client_id', clientId)
+      .eq('is_active', true)
+      .order('campaign_number')
+      .then(({ data }) => setClientPackages((data ?? []) as ClientPackage[]));
+  }, [open, loadAll, clientId]);
 
   // ── Suscripción Realtime ─────────────────────────────────────────────────
   useEffect(() => {
@@ -238,7 +266,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
           // INSERT o UPDATE: enriquecer el item y actualizar estado
           const { data: fresh } = await supabase
             .from('content')
-            .select('id, title, status, deadline, created_at, updated_at, delivered_at, approved_at, creator_id, editor_id, product_id')
+            .select('id, title, status, deadline, created_at, updated_at, delivered_at, approved_at, creator_id, editor_id, product_id, client_package_id')
             .eq('id', newRow.id)
             .single();
 
@@ -459,6 +487,30 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
                                 <span className="font-medium text-foreground">{item.product.name}</span>
                               </div>
                             )}
+                            {/* Selector de campaña */}
+                            <div
+                              className="flex items-center gap-1.5 text-xs"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Megaphone className="h-3 w-3 text-amber-400 shrink-0" />
+                              <span className="text-muted-foreground">Campaña:</span>
+                              <Select
+                                value={item.client_package_id ?? '__none__'}
+                                onValueChange={val => handleCampaignChange(item.id, val === '__none__' ? null : val)}
+                              >
+                                <SelectTrigger className="h-5 border-0 bg-transparent px-1 text-xs font-medium shadow-none focus:ring-0 hover:text-amber-400 transition-colors w-auto min-w-[110px]">
+                                  <SelectValue placeholder="Sin campaña" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__none__">Sin campaña</SelectItem>
+                                  {clientPackages.map(p => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      #{String(p.campaign_number).padStart(4, '0')} {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
 
                           {/* Fechas clave */}
@@ -521,7 +573,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
                               )}
                             </div>
                           </div>
-                          {(item.delivered_at || item.deadline) && (
+                          {(item.delivered_at || item.deadline || item.client_package_id) && (
                             <div className="px-4 py-2 border-t border-teal-500/10 bg-teal-500/5 flex flex-wrap gap-x-4 gap-y-1">
                               {item.deadline && (
                                 <span className="text-[10px] text-muted-foreground flex items-center gap-1">
@@ -535,6 +587,15 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
                                   Entregado: {format(new Date(item.delivered_at), "d 'de' MMM yyyy", { locale: es })}
                                 </span>
                               )}
+                              {item.client_package_id && (() => {
+                                const pkg = clientPackages.find(p => p.id === item.client_package_id);
+                                return pkg ? (
+                                  <span className="text-[10px] text-amber-400 flex items-center gap-1">
+                                    <Megaphone className="h-2.5 w-2.5" />
+                                    #{String(pkg.campaign_number).padStart(4, '0')} {pkg.name}
+                                  </span>
+                                ) : null;
+                              })()}
                             </div>
                           )}
                         </div>
@@ -590,6 +651,15 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
                               <CheckCircle2 className="h-2.5 w-2.5" />
                               Completado {formatDistanceToNow(new Date(finishDate), { addSuffix: true, locale: es })}
                             </span>
+                            {item.client_package_id && (() => {
+                              const pkg = clientPackages.find(p => p.id === item.client_package_id);
+                              return pkg ? (
+                                <span className="text-[10px] text-amber-400 flex items-center gap-1">
+                                  <Megaphone className="h-2.5 w-2.5" />
+                                  #{String(pkg.campaign_number).padStart(4, '0')} {pkg.name}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
                         </div>
                       );

@@ -398,6 +398,7 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
     .filter((c: MarketplaceCreator) => c.portfolio_media.length > 0);
 
   // ── 3. Fallback: Fetch profiles with content (not in creator_profiles) ──
+  // clientUserIds also contains inactive creator user_ids (via get_marketplace_excluded_user_ids)
   const excludeIds = [...creatorUserIds, ...clientUserIds];
   const { data: profileRows } = await supabase
     .from('profiles')

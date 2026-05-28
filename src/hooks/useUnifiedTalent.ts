@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
+import { MARKETPLACE_CREATORS_QUERY_KEY } from '@/hooks/useMarketplaceCreators';
 
 export function useUnifiedTalent(orgId: string | undefined) {
   return useQuery({
@@ -116,6 +117,51 @@ export function useToggleAmbassador(orgId: string | undefined) {
       toast({
         title: 'Error',
         description: `No se pudo actualizar el estado de embajador: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+export function useSetMarketplacePause(orgId: string | undefined) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({
+      creatorProfileId,
+      pausedUntil,
+      permanent,
+    }: {
+      creatorProfileId: string;
+      pausedUntil: string | null;
+      permanent: boolean;
+    }) => {
+      const isActive = !permanent && pausedUntil === null;
+      const { error } = await supabase.rpc('set_creator_marketplace_pause', {
+        p_creator_profile_id: creatorProfileId,
+        p_is_active:          isActive,
+        p_paused_until:       pausedUntil,
+      });
+      if (error) throw error;
+      return { pausedUntil, permanent };
+    },
+    onSuccess: ({ pausedUntil, permanent }) => {
+      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
+      queryClient.invalidateQueries({ queryKey: MARKETPLACE_CREATORS_QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-explore'] });
+      queryClient.invalidateQueries({ queryKey: ['marketplace-search'] });
+      const msg = permanent
+        ? 'Talento desactivado del marketplace permanentemente'
+        : pausedUntil
+        ? `Talento pausado hasta ${new Date(pausedUntil).toLocaleDateString('es-CO')}`
+        : 'Talento reactivado en el marketplace';
+      toast({ description: msg });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
         variant: 'destructive',
       });
     },

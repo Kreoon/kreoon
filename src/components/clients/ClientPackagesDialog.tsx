@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ShoppingBag, Video, CheckCircle2,
   Handshake, Loader2, Users, Package, Zap, Plus, Pencil,
-  ChevronDown, AlertTriangle, Camera, FolderKanban,
+  ChevronDown, AlertTriangle, Camera, FolderKanban, Download,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -16,6 +16,7 @@ import { FillmakerDialog } from '@/components/clients/FillmakerDialog';
 import { useClientBillingItems } from '@/hooks/useClientBilling';
 import { formatCurrency } from '@/lib/finance-format';
 import { cn } from '@/lib/utils';
+import { generatePackageInvoicePDF, type PackageForInvoice, type PackagePaymentRow } from '@/lib/client-package-invoice-pdf';
 
 interface ContentItem {
   id: string;
@@ -235,6 +236,43 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
     setFormOpen(true);
   }
 
+  async function handleDownloadPackageInvoice(pkg: ClientPackage) {
+    // Verify package belongs to a client in this org (IDOR guard)
+    if (orgId) {
+      const { data: ownerCheck } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', pkg.client_id)
+        .eq('organization_id', orgId)
+        .maybeSingle();
+      if (!ownerCheck) return;
+    }
+
+    const { data: payments } = await supabase
+      .from('client_package_payments')
+      .select('id, amount, currency, payment_date, payment_method, reference_number, notes')
+      .eq('client_package_id', pkg.id)
+      .order('payment_date', { ascending: true });
+
+    const pkgForInvoice: PackageForInvoice = {
+      id: pkg.id,
+      name: pkg.name,
+      total_value: pkg.total_value,
+      paid_amount: pkg.paid_amount,
+      currency: pkg.currency ?? 'COP',
+      payment_status: pkg.payment_status,
+      content_quantity: pkg.content_quantity,
+      hooks_per_video: pkg.hooks_per_video,
+      created_at: pkg.created_at,
+    };
+    generatePackageInvoicePDF({
+      pkg: pkgForInvoice,
+      payments: (payments ?? []) as PackagePaymentRow[],
+      clientName,
+      orgName: 'Kreoon',
+    });
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -360,6 +398,15 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
                           }
                           {s.label}
                         </div>
+
+                        {/* Botón descargar factura */}
+                        <button
+                          onClick={() => handleDownloadPackageInvoice(pkg)}
+                          className="h-7 w-7 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+                          title="Descargar factura del paquete"
+                        >
+                          <Download className="h-3 w-3 text-muted-foreground" />
+                        </button>
 
                         {/* Botón editar */}
                         <button

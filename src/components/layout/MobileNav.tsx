@@ -35,6 +35,7 @@ import {
   Dna,
   Package,
   CircleUser,
+  Receipt,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -192,6 +193,7 @@ const clientSections: NavSection[] = [
       { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna },
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
+      { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
       { name: "Mi Plan", href: "/planes", icon: Crown },
       { name: "Configuración", href: "/settings", icon: Settings },

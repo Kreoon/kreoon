@@ -696,6 +696,40 @@ export function ContentDetailDialog({ content, open, onOpenChange, onUpdate, onD
                   <span>{content.client.name}</span>
                 </div>
               )}
+              {/* Selector de campaña / paquete */}
+              {editMode ? (
+                <Select
+                  value={formData.client_package_id ?? "__none__"}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, client_package_id: val === "__none__" ? null : val })
+                  }
+                >
+                  <SelectTrigger className="h-8 text-xs rounded-full bg-background/50 border-white/20 gap-1.5 px-3 w-auto min-w-[160px]">
+                    <Megaphone className="h-3.5 w-3.5 shrink-0 text-violet-400" />
+                    <SelectValue placeholder="Sin campaña" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Sin campaña</SelectItem>
+                    {clientPackages
+                      .filter((pkg) => !formData.client_id || pkg.client_id === formData.client_id)
+                      .map((pkg) => (
+                        <SelectItem key={pkg.id} value={pkg.id}>
+                          #{String(pkg.campaign_number).padStart(4, '0')} {pkg.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                (() => {
+                  const pkg = clientPackages.find((p) => p.id === (content as any).client_package_id);
+                  return pkg ? (
+                    <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                      <Megaphone className="h-4 w-4 text-violet-400" />
+                      <span>#{String(pkg.campaign_number).padStart(4, '0')} {pkg.name}</span>
+                    </div>
+                  ) : null;
+                })()
+              )}
               {selectedProduct?.name && (
                 <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
                   <Target className="h-4 w-4" />

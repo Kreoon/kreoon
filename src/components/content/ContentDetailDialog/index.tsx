@@ -23,10 +23,12 @@ import { BlockKey } from './Config/types';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2, Zap, Lightbulb, RefreshCw, Heart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, Clock, Package, Target, Save, Trash2, Share2, Settings, Lock, Eye, Plus, Loader2, Building2, Zap, Lightbulb, RefreshCw, Heart, ChevronDown, ChevronUp, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ContentDetailDialogProps, ContentFormData, SelectOption } from './types';
 import { useInternalBrandClient } from '@/hooks/useInternalBrandClient';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
+import { useActiveClientPackages } from '@/hooks/useFinance';
 
 // Sphere phase configuration
 const SPHERE_PHASES_CONFIG = [
@@ -82,6 +84,8 @@ export function ContentDetailDialog({
 }: ContentDetailDialogProps) {
   const { isAdmin, isClient, user } = useAuth();
   const { internalBrandClient } = useInternalBrandClient();
+  const { currentOrgId } = useOrgOwner();
+  const { data: allClientPackages = [] } = useActiveClientPackages(currentOrgId ?? undefined);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('scripts');
@@ -459,6 +463,43 @@ export function ContentDetailDialog({
                   </Button>
                 </div>
               ) : null}
+
+              {/* Campaña / Paquete Selector/Badge */}
+              {(() => {
+                const filteredPackages = formData.client_id
+                  ? allClientPackages.filter(p => p.client_id === formData.client_id)
+                  : allClientPackages;
+                const selectedPkg = allClientPackages.find(p => p.id === formData.client_package_id);
+                if (!canEditClientProduct && !selectedPkg) return null;
+                return canEditClientProduct ? (
+                  <div className="flex items-center gap-1.5 bg-background/80 rounded-sm border border-border/50 overflow-hidden">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border-r border-border/50">
+                      <Megaphone className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-muted-foreground">Campaña</span>
+                    </div>
+                    <div className="px-1">
+                      <SearchableSelect
+                        value={formData.client_package_id || ''}
+                        onValueChange={(val) => setFormData((prev: ContentFormData) => ({ ...prev, client_package_id: val || null }))}
+                        options={[
+                          { value: '', label: 'Sin campaña' },
+                          ...filteredPackages.map(p => ({
+                            value: p.id,
+                            label: `#${String(p.campaign_number).padStart(4, '0')} ${p.name}`,
+                          })),
+                        ]}
+                        placeholder="Seleccionar..."
+                        triggerClassName="border-0 bg-transparent h-8 min-w-[160px] text-sm"
+                      />
+                    </div>
+                  </div>
+                ) : selectedPkg ? (
+                  <div className="flex items-center gap-1.5 bg-background/50 px-3 py-1.5 rounded-full">
+                    <Megaphone className="h-4 w-4 text-muted-foreground" />
+                    <span>#{String(selectedPkg.campaign_number).padStart(4, '0')} {selectedPkg.name}</span>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Fecha de Inicio */}
               {editMode ? (

@@ -293,6 +293,129 @@ export function useFillmakerPayroll(orgId: string) {
   });
 }
 
+// ─── Hooks cliente (sin orgId — RLS filtra por user_id) ────────────────────
+
+export function useClientOwnClosings(clientId: string) {
+  return useQuery({
+    queryKey: ['client-own-closings', clientId],
+    queryFn: async (): Promise<ClientClosing[]> => {
+      const { data, error } = await (supabase as any)
+        .from('client_closings')
+        .select('*')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ClientClosing[];
+    },
+    enabled: !!clientId,
+    staleTime: 0,
+  });
+}
+
+export function useClientOwnClosingItems(closingId: string) {
+  return useQuery({
+    queryKey: ['client-own-closing-items', closingId],
+    queryFn: async (): Promise<BillingItem[]> => {
+      const [{ data: content, error: e1 }, { data: fillmaker, error: e2 }] = await Promise.all([
+        (supabase as any)
+          .from('content')
+          .select('id, title, description, created_at, billing_price, billing_currency, billing_status')
+          .eq('client_closing_id', closingId),
+        (supabase as any)
+          .from('fillmaker_services')
+          .select('id, title, description, service_date, price_client, cost_own, currency, billing_status, editor_id')
+          .eq('client_closing_id', closingId),
+      ]);
+      if (e1) throw e1;
+      if (e2) throw e2;
+
+      const items: BillingItem[] = [
+        ...((content ?? []) as any[]).map((c) => ({
+          id: c.id,
+          item_type: 'project' as const,
+          title: c.title,
+          description: c.description ?? null,
+          item_date: c.created_at?.split('T')[0] ?? '',
+          price_client: Number(c.billing_price ?? 0),
+          cost_own: 0,
+          currency: c.billing_currency ?? 'COP',
+          billing_status: c.billing_status ?? 'paid',
+          editor_id: null,
+          closing_id: closingId,
+        })),
+        ...((fillmaker ?? []) as any[]).map((f) => ({
+          id: f.id,
+          item_type: 'fillmaker' as const,
+          title: f.title,
+          description: f.description ?? null,
+          item_date: f.service_date,
+          price_client: Number(f.price_client ?? 0),
+          cost_own: Number(f.cost_own ?? 0),
+          currency: f.currency ?? 'COP',
+          billing_status: f.billing_status ?? 'paid',
+          editor_id: f.editor_id ?? null,
+          closing_id: closingId,
+        })),
+      ];
+      return items;
+    },
+    enabled: !!closingId,
+    staleTime: 0,
+  });
+}
+
+export function useClientOwnPackages(clientId: string) {
+  return useQuery({
+    queryKey: ['client-own-packages', clientId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('client_packages')
+        .select('id, name, total_value, paid_amount, currency, payment_status, content_quantity, hooks_per_video, created_at')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as {
+        id: string;
+        name: string;
+        total_value: number;
+        paid_amount: number;
+        currency: string;
+        payment_status: string;
+        content_quantity: number;
+        hooks_per_video: number;
+        created_at: string;
+      }[];
+    },
+    enabled: !!clientId,
+    staleTime: 0,
+  });
+}
+
+export function useClientOwnPackagePayments(packageId: string) {
+  return useQuery({
+    queryKey: ['client-own-package-payments', packageId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('client_package_payments')
+        .select('id, amount, currency, payment_date, payment_method, reference_number, notes')
+        .eq('client_package_id', packageId)
+        .order('payment_date', { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as {
+        id: string;
+        amount: number;
+        currency: string;
+        payment_date: string;
+        payment_method: string;
+        reference_number: string | null;
+        notes: string | null;
+      }[];
+    },
+    enabled: !!packageId,
+    staleTime: 0,
+  });
+}
+
 // CRITICAL 2 — UPDATE filtra también por organization_id
 export function useUpdateContentBillingPrice() {
   const qc = useQueryClient();

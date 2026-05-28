@@ -19,7 +19,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useToast } from '@/hooks/use-toast';
 import { useTrialGuard } from '@/hooks/useTrialGuard';
-import { useUnifiedTalent, useToggleAmbassador } from '@/hooks/useUnifiedTalent';
+import { useUnifiedTalent, useToggleAmbassador, useSetMarketplacePause } from '@/hooks/useUnifiedTalent';
+import { TalentMarketplacePauseDialog } from '@/components/talent/TalentMarketplacePauseDialog';
 import { useTalentActivityMetrics } from '@/hooks/useTalentActivityMetrics';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
@@ -114,6 +115,7 @@ function TalentoSection() {
   const { guardAction, isReadOnly } = useTrialGuard();
   const { data: members = [], isLoading, refetch } = useUnifiedTalent(currentOrgId);
   const toggleAmbassador = useToggleAmbassador(currentOrgId);
+  const setMarketplacePause = useSetMarketplacePause(currentOrgId);
   const { data: activityMetrics } = useTalentActivityMetrics(currentOrgId);
 
   const canSeeInternal = isAdmin || isTeamLeader;
@@ -123,6 +125,7 @@ function TalentoSection() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [selectedMember, setSelectedMember] = useState<UnifiedTalentMember | null>(null);
+  const [pauseMember, setPauseMember] = useState<UnifiedTalentMember | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({ preset: 'todo', from: null, to: null });
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
 
@@ -588,6 +591,7 @@ function TalentoSection() {
                           currentlyAmbassador: m.is_ambassador,
                         })
                       }
+                      onMarketplacePause={() => setPauseMember(m)}
                       isAdmin={isAdmin}
                       isSelected={activeMember?.id === m.id}
                     />
@@ -677,6 +681,23 @@ function TalentoSection() {
                 </div>
               )}
             </div>
+
+            {pauseMember?.creator_profile_id && (
+              <TalentMarketplacePauseDialog
+                open={!!pauseMember}
+                onClose={() => setPauseMember(null)}
+                memberName={pauseMember.full_name}
+                creatorProfileId={pauseMember.creator_profile_id}
+                currentPausedUntil={pauseMember.marketplace_paused_until}
+                currentIsActive={pauseMember.marketplace_is_active}
+                loading={setMarketplacePause.isPending}
+                onConfirm={(args) => {
+                  setMarketplacePause.mutate(args, {
+                    onSuccess: () => setPauseMember(null),
+                  });
+                }}
+              />
+            )}
 
             <TalentProfileModal
               member={activeMember}

@@ -72,6 +72,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
     sphere_phase: '',
     creator_type: 'ugc',
     video_pov: 'primera_persona',
+    client_package_id: null,
   };
 
   const [formData, setFormData] = useState<ContentFormData>(initialFormData);
@@ -151,6 +152,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
         sphere_phase: (content as any).sphere_phase || '',
         creator_type: (content as any).creator_type || 'ugc',
         video_pov: (content as any).video_pov || 'primera_persona',
+        client_package_id: (content as any).client_package_id || null,
       };
 
       setFormData(newFormData);
@@ -391,6 +393,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
       if (changed('creator_type')) updates.creator_type = data.creator_type || 'ugc';
       if (changed('video_pov')) updates.video_pov = data.video_pov || 'primera_persona';
+      if (changed('client_package_id')) updates.client_package_id = data.client_package_id || null;
       // Script generation blocks
       if (changed('director_output')) updates.director_output = data.director_output || null;
       if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;
@@ -444,6 +447,7 @@ export function useContentDetail({ content, onUpdate }: UseContentDetailOptions)
       if (changed('sphere_phase')) updates.sphere_phase = data.sphere_phase || null;
       if (changed('creator_type')) updates.creator_type = data.creator_type || 'ugc';
       if (changed('video_pov')) updates.video_pov = data.video_pov || 'primera_persona';
+      if (changed('client_package_id')) updates.client_package_id = data.client_package_id || null;
       // Script generation blocks
       if (changed('director_output')) updates.director_output = data.director_output || null;
       if (changed('marketing_output')) updates.marketing_output = data.marketing_output || null;

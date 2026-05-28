@@ -43,6 +43,8 @@ export interface UnifiedTalentMember {
   content_types: string[] | null;
   platforms: string[] | null;
   slug: string | null;
+  marketplace_is_active: boolean | null;
+  marketplace_paused_until: string | null;
   // Origen/Comunidad (de profiles)
   lead_source: string | null;
   community_name: string | null;

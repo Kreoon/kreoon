@@ -41,6 +41,7 @@ import {
   CircleUser,
   Blocks,
   Heart,
+  Receipt,
 } from "lucide-react";
 import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -205,6 +206,7 @@ const clientSections: NavSection[] = [
       { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna, tourId: "sidebar-dna" },
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package, tourId: "sidebar-products" },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText, tourId: "sidebar-portfolio" },
+      { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt, tourId: "sidebar-facturas" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
       { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
       { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },

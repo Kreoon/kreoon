@@ -2,8 +2,10 @@ import type { MouseEvent } from 'react';
 import {
   User, Video, Star, Zap, Clock, TrendingUp, AlertTriangle,
   Crown, Shield, Sparkles, Heart, Ban, Users, MessageCircle, Handshake,
-  DollarSign, Activity, AlertCircle,
+  DollarSign, Activity, AlertCircle, ShieldOff, ShieldCheck,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -17,6 +19,7 @@ interface UnifiedTalentCardProps {
   member: UnifiedTalentMember;
   onClick: () => void;
   onAmbassadorToggle?: (e: MouseEvent) => void;
+  onMarketplacePause?: (e: MouseEvent) => void;
   isAdmin?: boolean;
   isSelected?: boolean;
   activityMetrics?: TalentActivityMetrics;
@@ -64,7 +67,7 @@ function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin, isSelected, activityMetrics }: UnifiedTalentCardProps) {
+export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarketplacePause, isAdmin, isSelected, activityMetrics }: UnifiedTalentCardProps) {
   const hasInternal = member.source !== 'external';
   const hasExternal = member.source !== 'internal';
 
@@ -213,6 +216,23 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin
           </div>
         )}
 
+        {/* Marketplace pause status */}
+        {member.creator_profile_id && member.marketplace_is_active === false && (
+          <div className="mb-2">
+            {member.marketplace_paused_until && new Date(member.marketplace_paused_until) > new Date() ? (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-amber-500/10 text-amber-400 border-amber-500/30">
+                <Clock className="h-2.5 w-2.5" />
+                Pausado hasta {format(new Date(member.marketplace_paused_until), "d MMM", { locale: es })}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border bg-red-500/10 text-red-400 border-red-500/30">
+                <ShieldOff className="h-2.5 w-2.5" />
+                Oculto del marketplace
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Activity metrics */}
         {activityMetrics && member.source !== 'external' && (
           <div className="mb-3 flex flex-wrap gap-1.5">
@@ -280,6 +300,29 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, isAdmin
           </div>
 
           <div className="flex items-center gap-1.5">
+            {isAdmin && onMarketplacePause && member.creator_profile_id && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={(e) => { e.stopPropagation(); onMarketplacePause(e); }}
+                    className={cn(
+                      'flex items-center justify-center h-6 w-6 rounded-sm border transition-all cursor-pointer',
+                      member.marketplace_is_active === false
+                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 hover:bg-amber-500/30'
+                        : 'bg-muted/50 border-border hover:border-amber-500/50 hover:bg-amber-500/10 text-muted-foreground hover:text-amber-400',
+                    )}
+                  >
+                    {member.marketplace_is_active === false
+                      ? <ShieldCheck className="h-3 w-3" />
+                      : <ShieldOff className="h-3 w-3" />
+                    }
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {member.marketplace_is_active === false ? 'Reactivar en marketplace' : 'Ocultar del marketplace'}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {isAdmin && onAmbassadorToggle && hasInternal && (
               <Tooltip>
                 <TooltipTrigger asChild>

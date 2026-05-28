@@ -4,7 +4,7 @@ import { es } from 'date-fns/locale';
 import {
   Plus, Camera, ShoppingBag, FolderKanban, Edit2, Trash2,
   ChevronDown, ChevronUp, DollarSign, CheckCircle, Handshake,
-  Video, Loader2,
+  Video, Loader2, Download,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +21,8 @@ import { formatCurrency } from '@/lib/finance-format';
 import type { ClientPackage, Content } from '@/types/database';
 import type { PaymentStatus } from '@/types/database';
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from '@/types/database';
+import { supabase } from '@/integrations/supabase/client';
+import { generatePackageInvoicePDF, type PackageForInvoice, type PackagePaymentRow } from '@/lib/client-package-invoice-pdf';
 
 interface Props {
   orgId: string;
@@ -111,12 +113,47 @@ function ServiceItemRow({ item }: { item: BillingItem }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function ClientServicesTab({
-  orgId, clientId, isAdmin,
+  orgId, clientId, clientName, isAdmin,
   packages, loadingPackages, assignedContent,
   onCreatePackage, onEditPackage, onDeletePackage,
 }: Props) {
   const [fillmakerOpen, setFillmakerOpen] = useState(false);
   const { data: billingItems = [], isLoading: loadingItems } = useClientBillingItems(orgId, clientId);
+
+  async function handleDownloadPackageInvoice(pkg: ClientPackage) {
+    // Verify the package belongs to a client in this org (IDOR guard)
+    const { data: ownerCheck } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', pkg.client_id)
+      .eq('organization_id', orgId)
+      .maybeSingle();
+    if (!ownerCheck) return;
+
+    const { data: payments } = await supabase
+      .from('client_package_payments')
+      .select('id, amount, currency, payment_date, payment_method, reference_number, notes')
+      .eq('client_package_id', pkg.id)
+      .order('payment_date', { ascending: true });
+
+    const pkgForInvoice: PackageForInvoice = {
+      id: pkg.id,
+      name: pkg.name,
+      total_value: pkg.total_value,
+      paid_amount: pkg.paid_amount,
+      currency: (pkg as any).currency ?? 'COP',
+      payment_status: pkg.payment_status,
+      content_quantity: pkg.content_quantity,
+      hooks_per_video: pkg.hooks_per_video,
+      created_at: pkg.created_at,
+    };
+    generatePackageInvoicePDF({
+      pkg: pkgForInvoice,
+      payments: (payments ?? []) as PackagePaymentRow[],
+      clientName,
+      orgName: 'Kreoon',
+    });
+  }
 
   const fillmakers = useMemo(() => billingItems.filter(i => i.item_type === 'fillmaker'), [billingItems]);
   const projects = useMemo(() => billingItems.filter(i => i.item_type === 'project'), [billingItems]);
@@ -232,6 +269,9 @@ export function ClientServicesTab({
                     </div>
                     {isAdmin && (
                       <div className="flex items-center gap-1 shrink-0">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" title="Descargar factura" onClick={() => handleDownloadPackageInvoice(pkg)}>
+                          <Download className="h-3.5 w-3.5" />
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => onEditPackage(pkg)}>
                           <Edit2 className="h-3.5 w-3.5" />
                         </Button>

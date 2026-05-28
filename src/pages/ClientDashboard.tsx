@@ -45,6 +45,7 @@ import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 // Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
 const ClientDNATab = lazy(() => import('@/components/clients/dna/ClientDNATab').then(m => ({ default: m.ClientDNATab })));
 import { ClientDashboardOverview } from '@/components/client-dashboard';
+import { ClientInvoicesTab } from '@/components/client-dashboard/ClientInvoicesTab';
 import { useClientPaymentStatus } from '@/hooks/useClientPaymentStatus';
 import {
   LogOut,
@@ -83,7 +84,8 @@ import {
   Trash2,
   ShoppingBag,
   Megaphone,
-  Briefcase
+  Briefcase,
+  Receipt
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -1360,6 +1362,15 @@ export default function ClientDashboard() {
             showMetrics={false}
             showKreoonToggle={true}
             onContentUpdate={() => fetchClientData(selectedClientId)}
+          />
+        )}
+
+        {/* Facturas Tab */}
+        {activeTab === 'facturas' && selectedClientId && clientInfo && (
+          <ClientInvoicesTab
+            clientId={selectedClientId}
+            clientName={clientInfo.name}
+            orgName="Kreoon"
           />
         )}
 

@@ -6,6 +6,8 @@ import {
   Star, Upload, FileText, Eye, ChevronDown, ChevronUp,
   X, Check, Briefcase, Search, Download,
 } from 'lucide-react';
+import { generatePaymentReceiptPDF } from '@/lib/talent-payment-receipt-pdf';
+import type { PaymentReceiptContentItem } from '@/lib/talent-payment-receipt-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,6 +48,7 @@ import type {
 } from '@/types/talentPayments.types';
 import { PAYMENT_ACCOUNT_LABELS, PAYMENT_STATUS_LABELS } from '@/types/talentPayments.types';
 import type { PendingContentItem, ContentFinancialItem } from '@/hooks/useTalentPayments';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 interface Props {
   userId: string;
@@ -86,6 +89,8 @@ function PaymentRow({
   payment,
   accounts,
   contentMap,
+  memberName,
+  orgName,
   onStatusChange,
   onDelete,
   onConfirmPaid,
@@ -93,6 +98,8 @@ function PaymentRow({
   payment: TalentPayment;
   accounts: TalentPaymentAccount[];
   contentMap: Map<string, PendingContentItem>;
+  memberName: string;
+  orgName: string;
   onStatusChange: (id: string, status: PaymentStatus) => void;
   onDelete: (id: string) => void;
   onConfirmPaid: (paymentId: string, paymentUserId: string) => void;
@@ -103,6 +110,19 @@ function PaymentRow({
   const linkedProjects = (payment.content_ids ?? [])
     .map((id) => contentMap.get(id))
     .filter(Boolean) as PendingContentItem[];
+
+  function handleDownloadPdf(e: React.MouseEvent) {
+    e.stopPropagation();
+    const items: PaymentReceiptContentItem[] = linkedProjects.map((proj) => ({
+      content_id: proj.id,
+      title: proj.title,
+      sequence_number: proj.sequence_number,
+      client_name: proj.client_name ?? null,
+      amount: proj.payment_amount,
+      currency: payment.currency ?? 'COP',
+    }));
+    generatePaymentReceiptPDF({ payment, contentItems: items, talentName: memberName, orgName });
+  }
 
   return (
     <div className="rounded-lg border border-border bg-card hover:bg-muted/20 transition-colors">
@@ -149,6 +169,15 @@ function PaymentRow({
               </a>
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title="Descargar comprobante PDF"
+            onClick={handleDownloadPdf}
+          >
+            <Download className="h-3.5 w-3.5" />
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -540,6 +569,8 @@ function exportPaymentsToCSV(
 
 export function TalentPaymentsTab({ userId, organizationId, memberName }: Props) {
   const { isAdmin } = useAuth();
+  const { currentOrgName } = useOrgOwner();
+  const orgName = currentOrgName ?? 'Kreoon';
 
   useTalentFinanceRealtime(organizationId, userId);
 
@@ -1168,6 +1199,8 @@ export function TalentPaymentsTab({ userId, organizationId, memberName }: Props)
                 payment={payment}
                 accounts={accounts}
                 contentMap={contentMap}
+                memberName={memberName}
+                orgName={orgName}
                 onStatusChange={handleStatusChange}
                 onDelete={(id) => deletePayment.mutate({ id, userId })}
                 onConfirmPaid={openConfirmPaid}

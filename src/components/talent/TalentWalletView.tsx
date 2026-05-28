@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -7,7 +7,7 @@ import {
   DollarSign, Clock, CheckCircle, Loader2, ChevronDown, ChevronUp,
   FileText, AlertCircle, ExternalLink, Plus, Pencil, Trash2,
   Smartphone, Building2, Globe, Banknote, FolderOpen, Star, CreditCard,
-  Zap, ArrowRight, ShieldCheck,
+  Zap, ArrowRight, ShieldCheck, Download,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,8 @@ import {
 import type { ContentFinancialItem, ClosingContentGroup } from '@/hooks/useTalentPayments';
 import type { TalentPayment, TalentPaymentAccount } from '@/types/talentPayments.types';
 import { TalentReportsSection } from '@/components/talent/TalentReportsSection';
+import { generatePaymentReceiptPDF } from '@/lib/talent-payment-receipt-pdf';
+import type { PaymentReceiptContentItem } from '@/lib/talent-payment-receipt-pdf';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -162,17 +164,67 @@ function usePaymentContentItems(contentIds: string[] | null, userId: string, ena
 
 // ─── Fila de pago colapsible ──────────────────────────────────────────────────
 
-function PaymentRow({ payment, userId }: { payment: TalentPayment; userId: string }) {
+function PaymentRow({ payment, userId, talentName, orgName }: {
+  payment: TalentPayment;
+  userId: string;
+  talentName: string;
+  orgName: string;
+}) {
   const [expanded, setExpanded] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState(false);
 
   const hasItems = !!payment.content_ids && payment.content_ids.length > 0;
   const { data: contentItems = [], isLoading: loadingItems } = usePaymentContentItems(
     payment.content_ids,
     userId,
-    expanded && hasItems,
+    expanded && hasItems || pendingDownload && hasItems,
   );
   const { data: receiptUrl, isLoading: loadingUrl } = useSignedReceiptUrl(showDialog ? payment.receipt_url : null);
+
+  useEffect(() => {
+    if (pendingDownload && !loadingItems) {
+      const items: PaymentReceiptContentItem[] = contentItems.map((item) => {
+        const isCreator = item.creator_id === userId;
+        const amount = isCreator ? (item.creator_payment ?? 0) : (item.editor_payment ?? 0);
+        return {
+          content_id: item.id,
+          title: item.title ?? 'Sin título',
+          sequence_number: item.sequence_number,
+          client_name: item.client_name,
+          amount,
+          currency: payment.currency ?? 'COP',
+        };
+      });
+      generatePaymentReceiptPDF({ payment, contentItems: items, talentName, orgName });
+      setPendingDownload(false);
+    }
+  }, [pendingDownload, loadingItems, contentItems]);
+
+  function handleDownloadPdf(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!hasItems) {
+      generatePaymentReceiptPDF({ payment, contentItems: [], talentName, orgName });
+      return;
+    }
+    if (!loadingItems && (expanded || contentItems.length > 0)) {
+      const items: PaymentReceiptContentItem[] = contentItems.map((item) => {
+        const isCreator = item.creator_id === userId;
+        const amount = isCreator ? (item.creator_payment ?? 0) : (item.editor_payment ?? 0);
+        return {
+          content_id: item.id,
+          title: item.title ?? 'Sin título',
+          sequence_number: item.sequence_number,
+          client_name: item.client_name,
+          amount,
+          currency: payment.currency ?? 'COP',
+        };
+      });
+      generatePaymentReceiptPDF({ payment, contentItems: items, talentName, orgName });
+    } else {
+      setPendingDownload(true);
+    }
+  }
 
   const badge = STATUS_BADGE[payment.status] ?? { label: payment.status, className: 'bg-muted text-muted-foreground' };
 
@@ -215,6 +267,16 @@ function PaymentRow({ payment, userId }: { payment: TalentPayment; userId: strin
               <FileText className="h-3 w-3" />
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            title="Descargar comprobante PDF"
+            onClick={handleDownloadPdf}
+            disabled={pendingDownload}
+          >
+            {pendingDownload ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
+          </Button>
           <span className="font-bold text-sm">{formatCOP(payment.amount)}</span>
         </div>
       </div>
@@ -1207,7 +1269,7 @@ export function TalentWalletView({ userId, organizationId, talentName = 'Mi repo
                     ) : (
                       <div className="rounded-lg border border-border divide-y divide-border overflow-hidden">
                         {payments.map((payment) => (
-                          <PaymentRow key={payment.id} payment={payment} userId={userId} />
+                          <PaymentRow key={payment.id} payment={payment} userId={userId} talentName={talentName} orgName="Kreoon" />
                         ))}
                       </div>
                     )}
