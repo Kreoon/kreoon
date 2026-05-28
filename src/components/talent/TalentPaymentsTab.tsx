@@ -1,4 +1,6 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
@@ -91,6 +93,7 @@ function PaymentRow({
   contentMap,
   memberName,
   orgName,
+  userId,
   onStatusChange,
   onDelete,
   onConfirmPaid,
@@ -100,6 +103,7 @@ function PaymentRow({
   contentMap: Map<string, PendingContentItem>;
   memberName: string;
   orgName: string;
+  userId: string;
   onStatusChange: (id: string, status: PaymentStatus) => void;
   onDelete: (id: string) => void;
   onConfirmPaid: (paymentId: string, paymentUserId: string) => void;
@@ -107,21 +111,53 @@ function PaymentRow({
   const { data: receiptUrl } = useSignedReceiptUrl(payment.receipt_url);
   const account = accounts.find((a) => a.id === payment.payment_account_id);
   const [showProjects, setShowProjects] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState(false);
+
+  // Para display: usa contentMap (items pendientes aún no vinculados a otro pago)
   const linkedProjects = (payment.content_ids ?? [])
     .map((id) => contentMap.get(id))
     .filter(Boolean) as PendingContentItem[];
 
+  const hasContentIds = (payment.content_ids ?? []).length > 0;
+
+  // Para PDF: query directa a content (incluye items ya pagados que no están en contentMap)
+  const { data: pdfItems = [], isLoading: loadingPdfItems } = useQuery({
+    queryKey: ['admin-payment-pdf-items', payment.id, userId],
+    enabled: pendingDownload && hasContentIds,
+    staleTime: 60_000,
+    queryFn: async (): Promise<PaymentReceiptContentItem[]> => {
+      const { data, error } = await (supabase as any)
+        .from('content')
+        .select('id, title, sequence_number, creator_id, editor_id, creator_payment, editor_payment, clients(name)')
+        .in('id', payment.content_ids!);
+      if (error) throw error;
+      return (data ?? []).map((row: any) => ({
+        content_id: row.id,
+        title: row.title ?? 'Sin título',
+        sequence_number: row.sequence_number ?? null,
+        client_name: row.clients?.name ?? null,
+        amount: row.creator_id === userId
+          ? (row.creator_payment != null ? Number(row.creator_payment) : 0)
+          : (row.editor_payment != null ? Number(row.editor_payment) : 0),
+        currency: payment.currency ?? 'COP',
+      }));
+    },
+  });
+
+  useEffect(() => {
+    if (pendingDownload && !loadingPdfItems) {
+      generatePaymentReceiptPDF({ payment, contentItems: pdfItems, talentName: memberName, orgName });
+      setPendingDownload(false);
+    }
+  }, [pendingDownload, loadingPdfItems, pdfItems]);
+
   function handleDownloadPdf(e: React.MouseEvent) {
     e.stopPropagation();
-    const items: PaymentReceiptContentItem[] = linkedProjects.map((proj) => ({
-      content_id: proj.id,
-      title: proj.title,
-      sequence_number: proj.sequence_number,
-      client_name: proj.client_name ?? null,
-      amount: proj.payment_amount,
-      currency: payment.currency ?? 'COP',
-    }));
-    generatePaymentReceiptPDF({ payment, contentItems: items, talentName: memberName, orgName });
+    if (!hasContentIds) {
+      generatePaymentReceiptPDF({ payment, contentItems: [], talentName: memberName, orgName });
+      return;
+    }
+    setPendingDownload(true);
   }
 
   return (
@@ -1201,6 +1237,7 @@ export function TalentPaymentsTab({ userId, organizationId, memberName }: Props)
                 contentMap={contentMap}
                 memberName={memberName}
                 orgName={orgName}
+                userId={userId}
                 onStatusChange={handleStatusChange}
                 onDelete={(id) => deletePayment.mutate({ id, userId })}
                 onConfirmPaid={openConfirmPaid}
