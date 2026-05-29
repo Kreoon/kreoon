@@ -68,7 +68,6 @@ function VideoCard({ video, index, unmuted, onToggleAudio }: VideoCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const embedUrl = React.useMemo(() => buildVideoEmbedUrl(video.video_url), [video.video_url]);
-  if (!embedUrl) return null;
 
   // Control de audio via player.js
   useEffect(() => {
@@ -105,6 +104,8 @@ function VideoCard({ video, index, unmuted, onToggleAudio }: VideoCardProps) {
     e.stopPropagation();
     onToggleAudio();
   };
+
+  if (!embedUrl) return null;
 
   return (
     <motion.div
