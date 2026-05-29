@@ -32,6 +32,23 @@ function forceMaxVolume(iframe: HTMLIFrameElement | null) {
   sendBunnyCommand(iframe, "setVolume", 100);
 }
 
+function buildVideoEmbedUrl(videoUrl: string | null | undefined): string | null {
+  const trimmed = typeof videoUrl === "string" ? videoUrl.trim() : "";
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    url.searchParams.set("autoplay", "true");
+    url.searchParams.set("loop", "true");
+    url.searchParams.set("muted", "true");
+    url.searchParams.set("preload", "true");
+    url.searchParams.set("responsive", "true");
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 interface VideoCardProps {
   video: {
     id: string;
@@ -50,16 +67,8 @@ function VideoCard({ video, index, unmuted, onToggleAudio }: VideoCardProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Construir URL del iframe con parámetros de autoplay
-  const embedUrl = React.useMemo(() => {
-    const url = new URL(video.video_url);
-    url.searchParams.set("autoplay", "true");
-    url.searchParams.set("loop", "true");
-    url.searchParams.set("muted", "true");
-    url.searchParams.set("preload", "true");
-    url.searchParams.set("responsive", "true");
-    return url.toString();
-  }, [video.video_url]);
+  const embedUrl = React.useMemo(() => buildVideoEmbedUrl(video.video_url), [video.video_url]);
+  if (!embedUrl) return null;
 
   // Control de audio via player.js
   useEffect(() => {
@@ -225,7 +234,7 @@ export function VideoShowcase() {
 
         {/* Video Grid - Single Row */}
         <div className="no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory pb-2 lg:overflow-visible lg:grid lg:grid-cols-6 lg:gap-4 lg:pb-0">
-          {videos.map((video, idx) => (
+          {videos.filter(v => buildVideoEmbedUrl(v.video_url) !== null).map((video, idx) => (
             <div
               key={video.id}
               className="snap-start flex-shrink-0 w-[42vw] sm:w-[28vw] md:w-[20vw] lg:w-auto"

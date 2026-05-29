@@ -94,16 +94,18 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
   }, [content.thumbnail_url, content.video_url]);
 
   const embedUrl = useMemo(() => {
-    if (!content.video_url) return "";
+    const trimmed = typeof content.video_url === "string" ? content.video_url.trim() : "";
+    if (!trimmed) return "";
     try {
-      const url = new URL(content.video_url);
+      const url = new URL(trimmed);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return "";
       url.searchParams.set("autoplay", "true");
       url.searchParams.set("loop", "true");
       url.searchParams.set("muted", "true");
       url.searchParams.set("preload", "true");
       return url.toString();
     } catch {
-      return content.video_url;
+      return "";
     }
   }, [content.video_url]);
 
