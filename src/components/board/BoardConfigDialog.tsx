@@ -137,6 +137,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
     updatePermission,
     updateStatusRule,
     reorderStatuses,
+    resetStatusOrder,
     upsertStatePermission,
     kanbanConfigJson,
     updateKanbanConfig,
@@ -402,6 +403,17 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                 onChange={(e) => setNewStatusDescription(e.target.value)}
                 className="max-w-md"
               />
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => { await resetStatusOrder(); onSettingsChange?.(); }}
+                className="text-xs text-muted-foreground border-purple-500/20 hover:border-purple-500/40"
+              >
+                Restaurar orden estándar
+              </Button>
             </div>
 
             <ScrollArea className="h-[300px] border border-purple-500/15 rounded-lg p-2 bg-[#0f0f22]/40">

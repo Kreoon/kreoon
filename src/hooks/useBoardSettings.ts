@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { STATUS_LABELS, STATUS_ORDER } from '@/types/database';
+import { STATUS_LABELS, STATUS_ORDER, ContentStatus } from '@/types/database';
+
+// Devuelve el sort_order canónico de un status_key.
+// Statuses conocidos usan su posición en STATUS_ORDER (0-based).
+// Desconocidos van al final a partir de 1000 para no colisionar.
+function canonicalSortOrder(key: string): number {
+  const idx = STATUS_ORDER.indexOf(key as ContentStatus);
+  return idx >= 0 ? idx : 1000 + key.charCodeAt(0);
+}
 
 const DEFAULT_STATUS_COLORS: Record<string, string> = {
   draft: '#6b7280',
@@ -217,15 +225,15 @@ export function useBoardSettings(organizationId: string | null) {
       // Bootstrap: si organization_statuses está vacío, crear desde content o defaults
       if (statusesData.length === 0) {
         const statusKeysToCreate = uniqueFromContent.length > 0
-          ? uniqueFromContent
+          ? [...uniqueFromContent].sort((a, b) => canonicalSortOrder(a) - canonicalSortOrder(b))
           : STATUS_ORDER;
 
-        const toInsert = statusKeysToCreate.map((key, idx) => ({
+        const toInsert = statusKeysToCreate.map((key) => ({
           organization_id: organizationId,
           status_key: key,
           label: (STATUS_LABELS as Record<string, string>)[key] || key.replace(/_/g, ' '),
           color: DEFAULT_STATUS_COLORS[key] || '#a855f7',
-          sort_order: idx,
+          sort_order: canonicalSortOrder(key),
           is_active: true,
           icon: DEFAULT_STATUS_ICONS[key] ?? null,
           description: null,
@@ -251,13 +259,12 @@ export function useBoardSettings(organizationId: string | null) {
         const existingKeys = new Set(statusesData.map((s: { status_key: string }) => s.status_key));
         const missingKeys = uniqueFromContent.filter((k: string) => !existingKeys.has(k));
         if (missingKeys.length > 0) {
-          const maxOrder = Math.max(0, ...statusesData.map((s: { sort_order: number }) => s.sort_order));
-          const toInsert = missingKeys.map((key: string, idx: number) => ({
+          const toInsert = missingKeys.map((key: string) => ({
             organization_id: organizationId,
             status_key: key,
             label: (STATUS_LABELS as Record<string, string>)[key] || key.replace(/_/g, ' '),
             color: DEFAULT_STATUS_COLORS[key] || '#a855f7',
-            sort_order: maxOrder + idx + 1,
+            sort_order: canonicalSortOrder(key),
             is_active: true,
             icon: DEFAULT_STATUS_ICONS[key] ?? null,
             description: null,
@@ -435,6 +442,23 @@ export function useBoardSettings(organizationId: string | null) {
       toast({ title: 'Error al reordenar', variant: 'destructive' });
     }
   }, [toast]);
+
+  // Restaura el sort_order de todos los estados al orden canónico definido en STATUS_ORDER
+  const resetStatusOrder = useCallback(async () => {
+    if (!organizationId) return;
+    try {
+      const sorted = [...statuses].sort((a, b) => canonicalSortOrder(a.status_key) - canonicalSortOrder(b.status_key));
+      const updates = sorted.map((s, index) =>
+        supabase.from('organization_statuses').update({ sort_order: index }).eq('id', s.id)
+      );
+      await Promise.all(updates);
+      setStatuses(sorted.map((s, i) => ({ ...s, sort_order: i })));
+      toast({ title: 'Orden restaurado', description: 'Las columnas del tablero están en el orden estándar del flujo UGC.' });
+    } catch (error) {
+      console.error('Error resetting status order:', error);
+      toast({ title: 'Error al restaurar orden', variant: 'destructive' });
+    }
+  }, [organizationId, statuses, toast]);
 
   // Update status rule
   const updateStatusRule = useCallback(async (statusId: string, updates: Partial<BoardStatusRule>) => {
@@ -687,6 +711,7 @@ export function useBoardSettings(organizationId: string | null) {
     updateStatus,
     deleteStatus,
     reorderStatuses,
+    resetStatusOrder,
     updateStatusRule,
     createCustomField,
     updateCustomField,
