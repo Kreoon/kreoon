@@ -418,7 +418,8 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
 
       if (commentError) throw commentError;
 
-      const currentRequests = (content as any).change_requests || [];
+      const raw = (content as any).change_requests;
+      const currentRequests = Array.isArray(raw) ? raw : [];
       const { error: updateError } = await supabase
         .from('content')
         .update({
@@ -1047,7 +1048,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                 <InfoCard
                   icon={History}
                   title="Historial de cambios"
-                  items={((content as any).change_requests || []).map((r: any) => 
+                  items={(Array.isArray((content as any).change_requests) ? (content as any).change_requests : []).map((r: any) => 
                     `${format(new Date(r.requestedAt), "d/MM")} - ${r.types?.join(', ') || 'Cambios solicitados'}`
                   )}
                   emptyText="No hay historial de cambios"
