@@ -41,6 +41,7 @@ import {
   Package,
   CircleUser,
   Blocks,
+  GraduationCap,
 } from "lucide-react";
 import { filterDevModuleItems, DEVELOPMENT_MODULES, canAccessDevModule } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -109,6 +110,7 @@ const adminSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -151,6 +153,7 @@ const strategistSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -178,6 +181,7 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -195,6 +199,7 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -229,6 +234,7 @@ const basicTalentInOrgSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -263,6 +269,7 @@ const freelanceSections: NavSection[] = [
     items: [
       { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {

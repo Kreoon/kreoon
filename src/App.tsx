@@ -247,6 +247,15 @@ const PublicReviewPage = lazyWithRetry(() => import("./pages/PublicReviewPage"))
 // Template Library
 const TemplateLibraryPage = lazyWithRetry(() => import("./pages/TemplateLibraryPage"));
 
+// Academia (LMS)
+const AcademiaHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaHomePage"));
+const AcademiaSpacePage = lazyWithRetry(() => import("./pages/academia/AcademiaSpacePage"));
+const AcademiaCoursePage = lazyWithRetry(() => import("./pages/academia/AcademiaCoursePage"));
+const AcademiaPlayerPage = lazyWithRetry(() => import("./pages/academia/AcademiaPlayerPage"));
+const AcademiaCreatePage = lazyWithRetry(() => import("./pages/academia/AcademiaCreatePage"));
+const AcademiaDashboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaDashboardPage"));
+const AcademiaVerifyPage = lazyWithRetry(() => import("./pages/academia/AcademiaVerifyPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -517,6 +526,14 @@ function AppRoutes() {
         <Route path="/preview/:token" element={<ProfilePreviewPage />} />
         {/* Template Library (public) */}
         <Route path="/templates" element={<TemplateLibraryPage />} />
+        {/* Academia - LMS Module */}
+        <Route path="/cert/:certCode" element={<AcademiaVerifyPage />} />
+        <Route path="/academia" element={<AcademiaHomePage />} />
+        <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
+        <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
+        <Route path="/academia/:spaceSlug" element={<AcademiaSpacePage />} />
+        <Route path="/academia/:spaceSlug/:courseSlug" element={<AcademiaCoursePage />} />
+        <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<ProtectedRoute allowNoRoles><AcademiaPlayerPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
