@@ -255,6 +255,14 @@ const AcademiaPlayerPage = lazyWithRetry(() => import("./pages/academia/Academia
 const AcademiaCreatePage = lazyWithRetry(() => import("./pages/academia/AcademiaCreatePage"));
 const AcademiaDashboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaDashboardPage"));
 const AcademiaVerifyPage = lazyWithRetry(() => import("./pages/academia/AcademiaVerifyPage"));
+const AcademiaManagePage = lazyWithRetry(() => import("./pages/academia/AcademiaManagePage"));
+
+// Academia v2 — Community features
+const AcademiaSpaceFeedPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceFeedPage"));
+const AcademiaSpaceAdminPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceAdminPage"));
+const AcademiaSpaceCalendarPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceCalendarPage"));
+const AcademiaLeaderboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaLeaderboardPage"));
+const AcademiaMapPage = lazyWithRetry(() => import("./pages/academia/AcademiaMapPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -532,6 +540,13 @@ function AppRoutes() {
         <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
         <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
         <Route path="/academia/:spaceSlug" element={<AcademiaSpacePage />} />
+        <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
+        {/* Academia v2 — Community features */}
+        <Route path="/academia/:spaceSlug/feed" element={<AcademiaSpaceFeedPage />} />
+        <Route path="/academia/:spaceSlug/calendar" element={<AcademiaSpaceCalendarPage />} />
+        <Route path="/academia/:spaceSlug/leaderboard" element={<AcademiaLeaderboardPage />} />
+        <Route path="/academia/:spaceSlug/map" element={<AcademiaMapPage />} />
+        <Route path="/academia/:spaceSlug/admin" element={<ProtectedRoute allowNoRoles><AcademiaSpaceAdminPage /></ProtectedRoute>} />
         <Route path="/academia/:spaceSlug/:courseSlug" element={<AcademiaCoursePage />} />
         <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<ProtectedRoute allowNoRoles><AcademiaPlayerPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />

@@ -10,6 +10,7 @@ import { useCreateAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { useCreateCourse, useCreateModule, useCreateLesson } from '@/hooks/academy/useAcademyCourse';
 import { useUpdateCertRequirements } from '@/hooks/academy/useAcademyCertificate';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import type {
   AcademySpace,
   AcademyCourse,
@@ -54,6 +55,7 @@ export default function AcademiaCreatePage() {
   const [certTitle, setCertTitle] = useState('Certificado de Finalización');
 
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const createSpace = useCreateAcademySpace();
   const createCourse = useCreateCourse();
@@ -68,12 +70,29 @@ export default function AcademiaCreatePage() {
     return true;
   })();
 
+  async function uniqueSlug(base: string, table: 'academy_spaces' | 'academy_courses', extraFilter?: Record<string, string>): Promise<string> {
+    let slug = base;
+    let attempt = 0;
+    while (attempt < 10) {
+      let query = (supabase as any).from(table).select('id').eq('slug', slug);
+      if (extraFilter) {
+        Object.entries(extraFilter).forEach(([k, v]) => { query = query.eq(k, v); });
+      }
+      const { data } = await query.maybeSingle();
+      if (!data) return slug;
+      attempt++;
+      slug = `${base}-${attempt + 1}`;
+    }
+    return `${base}-${Date.now()}`;
+  }
+
   async function handleFinish() {
     if (!user) return;
     setSubmitting(true);
+    setErrorMsg(null);
     try {
-      // 1) Crear space
-      const spaceSlug = slugify(spaceName);
+      // 1) Crear space con slug único
+      const spaceSlug = await uniqueSlug(slugify(spaceName), 'academy_spaces');
       const space = await createSpace.mutateAsync({
         name: spaceName,
         slug: spaceSlug,
@@ -84,8 +103,8 @@ export default function AcademiaCreatePage() {
         plan_slug: 'hobby',
       } as Partial<AcademySpace>);
 
-      // 2) Crear course
-      const courseSlug = slugify(courseTitle);
+      // 2) Crear course con slug único dentro del space
+      const courseSlug = await uniqueSlug(slugify(courseTitle), 'academy_courses', { space_id: space.id });
       const course = await createCourse.mutateAsync({
         space_id: space.id,
         title: courseTitle,
@@ -133,8 +152,9 @@ export default function AcademiaCreatePage() {
       }
 
       navigate(`/academia/${space.slug}`);
-    } catch (e) {
+    } catch (e: any) {
       console.error('Create wizard error', e);
+      setErrorMsg(e?.message ?? 'Error al crear la academia. Intenta de nuevo.');
       setSubmitting(false);
     }
   }
@@ -341,6 +361,13 @@ export default function AcademiaCreatePage() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* Error */}
+          {errorMsg && (
+            <p className="mt-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">
+              {errorMsg}
+            </p>
           )}
 
           {/* Navigation */}

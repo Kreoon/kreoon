@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GraduationCap, Plus, Users, BookOpen, Award, ClipboardCheck, Trophy } from 'lucide-react';
+import { GraduationCap, Plus, Users, BookOpen, Award, ClipboardCheck, Trophy, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -123,9 +123,13 @@ export default function AcademiaDashboardPage() {
                           : `linear-gradient(135deg, ${s.accent_color}40, transparent)`,
                       }}
                     />
-                    <div className="p-4">
-                      <h3 className="font-semibold text-zinc-100">{s.name}</h3>
-                      <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
+                  </Link>
+                  <div className="p-4">
+                    <Link to={`/academia/${s.slug}`}>
+                      <h3 className="font-semibold text-zinc-100 hover:text-purple-300 transition-colors">{s.name}</h3>
+                    </Link>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs text-zinc-500">
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" /> {s.member_count}
                         </span>
@@ -133,8 +137,14 @@ export default function AcademiaDashboardPage() {
                           {s.plan_slug === 'pro' ? 'Pro' : 'Hobby'}
                         </span>
                       </div>
+                      <Link
+                        to={`/academia/${s.slug}/gestionar`}
+                        className="flex items-center gap-1 text-xs text-zinc-500 hover:text-purple-400 transition-colors"
+                      >
+                        <Settings className="h-3 w-3" /> Gestionar
+                      </Link>
                     </div>
-                  </Link>
+                  </div>
                 </Card>
               ))
             )}

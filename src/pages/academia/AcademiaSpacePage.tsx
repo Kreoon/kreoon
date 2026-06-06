@@ -1,11 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
-import { GraduationCap, Clock, Star, Users, Lock } from 'lucide-react';
+import { GraduationCap, Clock, Star, Users, Lock, Settings } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AcademiaSpacePage() {
   const { spaceSlug } = useParams<{ spaceSlug: string }>();
+  const { user } = useAuth();
   const { data: space, isLoading } = useAcademySpace(spaceSlug);
+  const isOwner = !!user && !!space && (space as any).owner_id === user.id;
 
   if (isLoading) {
     return (
@@ -62,7 +66,16 @@ export default function AcademiaSpacePage() {
             </div>
           )}
           <div className="flex-1 pb-2">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">{space.name}</h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl md:text-4xl font-bold mb-2">{space.name}</h1>
+              {isOwner && (
+                <Link to={`/academia/${spaceSlug}/gestionar`}>
+                  <Button variant="outline" size="sm" className="gap-1.5 border-white/20 text-zinc-300 hover:text-white shrink-0">
+                    <Settings className="h-3.5 w-3.5" /> Gestionar
+                  </Button>
+                </Link>
+              )}
+            </div>
             <div className="flex items-center gap-4 text-sm text-zinc-400">
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
