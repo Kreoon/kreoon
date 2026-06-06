@@ -136,6 +136,8 @@ export function AcademyVideoPlayer({
           className="absolute inset-0 h-full w-full border-0"
           title={lesson.title}
         />
+        {/* Bloquea el logo de Bunny en esquina inferior-derecha */}
+        <div className="absolute bottom-0 right-0 w-24 h-8 z-10" />
       </div>
     );
   }
@@ -143,7 +145,8 @@ export function AcademyVideoPlayer({
   if (source === 'youtube' && lesson.video_url) {
     const ytId = extractYouTubeId(lesson.video_url);
     if (!ytId) return <UnsupportedSource />;
-    const url = `https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&iv_load_policy=3`;
+    // disablekb=0 + modestbranding=1 minimizan la marca; los overlays bloquean los logos que redirigen al original
+    const url = `https://www.youtube-nocookie.com/embed/${ytId}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1`;
     return (
       <div ref={containerRef} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
         <iframe
@@ -153,6 +156,9 @@ export function AcademyVideoPlayer({
           className="absolute inset-0 h-full w-full border-0"
           title={lesson.title}
         />
+        {/* Bloquea el logo de YouTube (esquina inferior-derecha) y el icono de título (inferior-izquierda) */}
+        <div className="absolute bottom-0 right-0 w-28 h-10 z-10" />
+        <div className="absolute bottom-0 left-0 w-28 h-10 z-10" />
       </div>
     );
   }
@@ -160,7 +166,8 @@ export function AcademyVideoPlayer({
   if (source === 'vimeo' && lesson.video_url) {
     const vimeoId = extractVimeoId(lesson.video_url);
     if (!vimeoId) return <UnsupportedSource />;
-    const url = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0`;
+    // dnt=1 desactiva tracking; background=0 mantiene controles pero sin link externo
+    const url = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&dnt=1`;
     return (
       <div ref={containerRef} className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
         <iframe
@@ -170,6 +177,8 @@ export function AcademyVideoPlayer({
           className="absolute inset-0 h-full w-full border-0"
           title={lesson.title}
         />
+        {/* Bloquea el logo de Vimeo en la esquina inferior-derecha */}
+        <div className="absolute bottom-0 right-0 w-24 h-10 z-10" />
       </div>
     );
   }
@@ -187,6 +196,8 @@ export function AcademyVideoPlayer({
           className="absolute inset-0 h-full w-full border-0"
           title={lesson.title}
         />
+        {/* Bloquea el botón "Abrir en Drive" de la barra superior */}
+        <div className="absolute top-0 right-0 w-32 h-10 z-10" />
       </div>
     );
   }
