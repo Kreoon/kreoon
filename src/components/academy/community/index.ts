@@ -12,3 +12,9 @@ export * from './SpaceSettingsPanel';
 export * from './SpaceNotificationsPanel';
 export * from './SpaceCalendar';
 export * from './SpaceMap';
+// v3
+export * from './OnlineIndicator';
+export * from './NotificationBell';
+export * from './MemberCard';
+export * from './MembersGrid';
+export * from './IntroductionPrompt';

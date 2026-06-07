@@ -264,6 +264,11 @@ const AcademiaSpaceCalendarPage = lazyWithRetry(() => import("./pages/academia/A
 const AcademiaLeaderboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaLeaderboardPage"));
 const AcademiaMapPage = lazyWithRetry(() => import("./pages/academia/AcademiaMapPage"));
 
+// Academia v3 — Members + Google Calendar callbacks
+const AcademiaSpaceMembersPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceMembersPage"));
+const AcademiaCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaCalendarCallbackPage"));
+const AcademiaMemberCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaMemberCalendarCallbackPage"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -547,6 +552,10 @@ function AppRoutes() {
         <Route path="/academia/:spaceSlug/leaderboard" element={<AcademiaLeaderboardPage />} />
         <Route path="/academia/:spaceSlug/map" element={<AcademiaMapPage />} />
         <Route path="/academia/:spaceSlug/admin" element={<ProtectedRoute allowNoRoles><AcademiaSpaceAdminPage /></ProtectedRoute>} />
+        {/* Academia v3 — Members + Calendar OAuth callbacks */}
+        <Route path="/academia/:spaceSlug/members" element={<AcademiaSpaceMembersPage />} />
+        <Route path="/academia/calendar/callback" element={<ProtectedRoute allowNoRoles><AcademiaCalendarCallbackPage /></ProtectedRoute>} />
+        <Route path="/academia/calendar/member-callback" element={<ProtectedRoute allowNoRoles><AcademiaMemberCalendarCallbackPage /></ProtectedRoute>} />
         <Route path="/academia/:spaceSlug/:courseSlug" element={<AcademiaCoursePage />} />
         <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<ProtectedRoute allowNoRoles><AcademiaPlayerPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />

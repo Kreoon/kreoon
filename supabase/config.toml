@@ -3,6 +3,9 @@ project_id = "wjkbqcrxwsmvtxmqgiqc"
 [functions.public-showcase]
 verify_jwt = false
 
+[functions.academy-google-calendar]
+verify_jwt = true
+
 [functions.public-registration]
 verify_jwt = false
 

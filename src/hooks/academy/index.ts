@@ -11,3 +11,7 @@ export * from './useSpacePlugins';
 export * from './useSpaceEvents';
 export * from './useSpaceDiscovery';
 export * from './useMemberLocations';
+// v3 community + lesson comments + calendar
+export * from './useAcademyCommunityV3';
+export * from './useAcademyLessonComments';
+export * from './useAcademyCalendar';

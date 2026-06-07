@@ -13,6 +13,8 @@ import {
   Info,
   Settings,
 } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
+import { OnlineIndicator } from './OnlineIndicator';
 
 interface SpaceNavbarProps {
   spaceSlug: string;
@@ -22,7 +24,7 @@ const TABS = [
   { to: 'feed', label: 'Comunidad', icon: MessagesSquare },
   { to: '', label: 'Classroom', icon: BookOpen, end: true },
   { to: 'calendar', label: 'Calendario', icon: Calendar },
-  { to: 'members', label: 'Miembros', icon: Users, hidden: true },
+  { to: 'members', label: 'Miembros', icon: Users },
   { to: 'map', label: 'Mapa', icon: MapIcon },
   { to: 'leaderboard', label: 'Leaderboard', icon: Trophy },
   { to: 'about', label: 'Acerca de', icon: Info, hidden: true },
@@ -36,8 +38,8 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
 
   return (
     <div className="border-b border-white/10 bg-[#0c0c16] sticky top-0 z-20">
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center gap-3">
+        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide flex-1">
           {TABS.filter((t) => !t.hidden).map((t) => (
             <NavLink
               key={t.label}
@@ -73,6 +75,12 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
             </NavLink>
           )}
         </nav>
+        {space && (
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <OnlineIndicator spaceId={space.id} showLabel={false} className="hidden md:inline-flex" />
+            {user && <NotificationBell spaceId={space.id} accentColor={accent} />}
+          </div>
+        )}
       </div>
     </div>
   );

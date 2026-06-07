@@ -10,6 +10,7 @@ import { useAcademyCourseBySlug, useMarkLessonProgress } from '@/hooks/academy/u
 import { useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
 import { useAuth } from '@/hooks/useAuth';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
+import { LessonCommentSection } from '@/components/academy/lesson/LessonCommentSection';
 import type { AcademyLesson, LessonProgress } from '@/types/academy';
 
 export default function AcademiaPlayerPage() {
@@ -21,6 +22,7 @@ export default function AcademiaPlayerPage() {
   const markProgress = useMarkLessonProgress();
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [midlessonQuizId, setMidlessonQuizId] = useState<string | null>(null);
+  const [currentVideoTimestamp, setCurrentVideoTimestamp] = useState<number | undefined>(undefined);
 
   const flatLessons = useMemo<AcademyLesson[]>(() => {
     if (!course?.modules) return [];
@@ -68,6 +70,7 @@ export default function AcademiaPlayerPage() {
   const activeIndex = flatLessons.findIndex((l) => l.id === activeLessonId);
 
   function handleVideoProgress(pct: number, lastPos: number) {
+    setCurrentVideoTimestamp(lastPos);
     if (!activeLesson || !enrollment) return;
     markProgress.mutate({
       lessonId: activeLesson.id,
@@ -239,6 +242,18 @@ export default function AcademiaPlayerPage() {
                 Siguiente lección
               </Button>
             </div>
+
+            {/* Comentarios de la lección */}
+            {activeLesson && course.space && (
+              <LessonCommentSection
+                lessonId={activeLesson.id}
+                courseId={course.id}
+                spaceId={course.space.id!}
+                instructorId={course.instructor_id}
+                currentVideoTimestamp={currentVideoTimestamp}
+                accentColor={accent}
+              />
+            )}
 
             {/* Panel de certificado al final del curso */}
             {course.cert_requirements && (
