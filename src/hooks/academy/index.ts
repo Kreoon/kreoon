@@ -15,3 +15,5 @@ export * from './useMemberLocations';
 export * from './useAcademyCommunityV3';
 export * from './useAcademyLessonComments';
 export * from './useAcademyCalendar';
+// Gamificación (Etapa 3)
+export * from './useAcademyGamification';

@@ -6,6 +6,12 @@ verify_jwt = false
 [functions.academy-google-calendar]
 verify_jwt = true
 
+[functions.academy-course-checkout]
+verify_jwt = true
+
+[functions.academy-trigger-integrations]
+verify_jwt = true
+
 [functions.public-registration]
 verify_jwt = false
 

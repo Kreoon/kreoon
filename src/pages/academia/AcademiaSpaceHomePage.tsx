@@ -29,6 +29,15 @@ import { useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
 import { useAuth } from '@/hooks/useAuth';
 import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { OnlineIndicator } from '@/components/academy/community/OnlineIndicator';
+import { LevelBadge } from '@/components/academy/gamification/LevelBadge';
+import { EnergyMeter } from '@/components/academy/gamification/EnergyMeter';
+import { StreakFlame } from '@/components/academy/gamification/StreakFlame';
+import { BadgesShowcase } from '@/components/academy/gamification/BadgesShowcase';
+import { useMyGamificationState } from '@/hooks/academy/useAcademyGamification';
+import { useSpacePlugins } from '@/hooks/academy/useSpacePlugins';
+import { MetaPixel } from '@/components/academy/integrations/MetaPixel';
+import { KiroMentorWidget } from '@/components/academy/creative/KiroMentorWidget';
+import { VibeScore } from '@/components/academy/creative/VibeScore';
 import type { AcademySpaceEventFull } from '@/types/academy-v3';
 
 export default function AcademiaSpaceHomePage() {
@@ -41,8 +50,10 @@ export default function AcademiaSpaceHomePage() {
 
   const { data: feedPages } = useSpaceFeed(spaceId, null);
   const { data: events = [] } = useSpaceCalendar(spaceId);
+  const { data: plugins } = useSpacePlugins(spaceId);
   const { data: leaderboard = [] } = useSpaceLeaderboard(spaceId, 'week');
   const { data: myPoints } = useMySpacePoints(spaceId);
+  const { data: myGami } = useMyGamificationState(spaceId);
   const { data: members = [] } = useSpaceMembers(spaceId);
   const { data: presence = [] } = useSpacePresence(spaceId);
 
@@ -91,6 +102,12 @@ export default function AcademiaSpaceHomePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+      {/* Meta Pixel del space (si está habilitado) */}
+      <MetaPixel
+        pixelId={plugins?.meta_pixel_id ?? null}
+        enabled={!!plugins?.meta_pixel_enabled}
+      />
+
       {/* HERO */}
       <div
         className="relative h-56 md:h-72 overflow-hidden"
@@ -128,6 +145,7 @@ export default function AcademiaSpaceHomePage() {
                 {space.member_count} miembros
               </span>
               <OnlineIndicator spaceId={(space as any).id} />
+              <VibeScore spaceId={(space as any).id} accentColor={accent} />
               <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-wider">
                 {space.plan_slug === 'pro' ? 'Pro' : 'Hobby'}
               </span>
@@ -166,6 +184,11 @@ export default function AcademiaSpaceHomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* COLUMNA PRINCIPAL */}
           <div className="lg:col-span-2 space-y-6">
+            {/* KIRO Mentor — diferenciador único KREOON */}
+            {user && (
+              <KiroMentorWidget spaceId={(space as any).id} spaceSlug={spaceSlug!} accentColor={accent} />
+            )}
+
             {/* Mi progreso (si está inscrito) */}
             {user && myEnrollmentInFirstCourse.data && (
               <Card className="p-5 bg-gradient-to-br from-purple-500/10 to-cyan-500/5 border-white/10">
@@ -389,17 +412,22 @@ export default function AcademiaSpaceHomePage() {
                 </Link>
               </div>
 
-              {myPoints && (
+              {myGami && (
                 <div
-                  className="rounded p-2 mb-3 flex items-center justify-between"
+                  className="rounded-lg p-3 mb-3"
                   style={{ backgroundColor: `${accent}10`, borderLeft: `2px solid ${accent}` }}
                 >
-                  <div>
-                    <div className="text-[10px] text-zinc-500 uppercase">Tu nivel</div>
-                    <div className="text-sm font-bold flex items-center gap-1">
-                      <Award className="h-3.5 w-3.5" style={{ color: accent }} />
-                      Nivel {myPoints.level} · {myPoints.current_week_points} pts esta semana
-                    </div>
+                  <LevelBadge
+                    level={myGami.level}
+                    title={myGami.title}
+                    xp={myGami.total_points}
+                    showProgress
+                    accentColor={accent}
+                    size="md"
+                  />
+                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
+                    <EnergyMeter energy={myGami.energy ?? 100} size="sm" />
+                    <StreakFlame days={myGami.streak_days ?? 0} size="sm" />
                   </div>
                 </div>
               )}
@@ -459,6 +487,16 @@ export default function AcademiaSpaceHomePage() {
                 ))}
               </div>
             </Card>
+
+            {/* Mis insignias */}
+            {user && (
+              <Card className="p-4 bg-white/5 border-white/10">
+                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2 mb-3">
+                  <Award className="h-3.5 w-3.5" /> Mis insignias
+                </h2>
+                <BadgesShowcase spaceId={(space as any).id} accentColor={accent} compact />
+              </Card>
+            )}
 
             {/* Online ahora — sutil */}
             {onlineCount > 0 && (

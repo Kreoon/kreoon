@@ -90,20 +90,16 @@ export function useSubmitQuizAttempt() {
       answers: NewAttemptAnswer[];
       timeSpentSeconds?: number;
     }): Promise<GradingResult> => {
-      // 1) Persistir respuestas
-      const { error: ansErr } = await (supabase as any)
-        .from('academy_attempt_answers')
-        .insert(args.answers.map((a) => ({ ...a, attempt_id: args.attemptId })));
-      if (ansErr) throw ansErr;
+      // A-04 fix: persistencia atómica via RPC. Si falla, no quedan respuestas huérfanas.
+      const { error: rpcErr } = await (supabase as any).rpc('submit_quiz_attempt_atomic', {
+        p_attempt_id: args.attemptId,
+        p_quiz_id: args.quizId,
+        p_answers: args.answers,
+        p_time_spent_seconds: args.timeSpentSeconds ?? 0,
+      });
+      if (rpcErr) throw rpcErr;
 
-      if (args.timeSpentSeconds != null) {
-        await (supabase as any)
-          .from('academy_quiz_attempts')
-          .update({ time_spent_seconds: args.timeSpentSeconds })
-          .eq('id', args.attemptId);
-      }
-
-      // 2) Disparar grading engine
+      // Disparar grading engine (auto + cola manual)
       const { data, error } = await (supabase.functions as any).invoke('academy-grade-attempt', {
         body: { attempt_id: args.attemptId, quiz_id: args.quizId },
       });

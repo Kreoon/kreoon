@@ -77,6 +77,8 @@ serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.metadata?.type?.startsWith("campaign_")) {
           await handleCampaignCheckoutCompleted(supabase, session);
+        } else if (session.metadata?.type === "academy_course_purchase") {
+          await handleAcademyCoursePurchase(supabase, session);
         }
         break;
       }
@@ -478,6 +480,63 @@ async function handleRefund(supabase: any, charge: Stripe.Charge) {
         .eq("id", transaction.escrow_id);
     }
   }
+}
+
+// ============================================================================
+// HANDLERS DE ACADEMY (compra de cursos)
+// ============================================================================
+
+async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checkout.Session) {
+  const courseId = session.metadata?.course_id;
+  const userId = session.metadata?.user_id;
+  const amount = (session.amount_total ?? 0) / 100;
+
+  if (!courseId || !userId) {
+    console.warn('[academy_course_purchase] Missing metadata', session.id);
+    return;
+  }
+
+  // Crear inscripción si no existe
+  const { data: existing } = await supabase
+    .from('academy_enrollments')
+    .select('id')
+    .eq('course_id', courseId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing) {
+    console.log(`[academy_course_purchase] User ${userId} already enrolled in ${courseId}`);
+    return;
+  }
+
+  await supabase.from('academy_enrollments').insert({
+    course_id: courseId,
+    user_id: userId,
+    enrolled_at: new Date().toISOString(),
+    last_accessed_at: new Date().toISOString(),
+    amount_paid_usd: amount,
+    stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+  });
+
+  // Incrementar contador de inscritos
+  await supabase.rpc('exec_sql_unsafe', { sql: '' }).catch(() => null); // no-op fallback
+  try {
+    const { data: courseRow } = await supabase
+      .from('academy_courses')
+      .select('enrolled_count')
+      .eq('id', courseId)
+      .single();
+    if (courseRow) {
+      await supabase
+        .from('academy_courses')
+        .update({ enrolled_count: (courseRow.enrolled_count ?? 0) + 1 })
+        .eq('id', courseId);
+    }
+  } catch (e) {
+    console.warn('[academy_course_purchase] Could not increment enrolled_count', e);
+  }
+
+  console.log(`[academy_course_purchase] ✓ Enrolled user ${userId} in course ${courseId} ($${amount})`);
 }
 
 // ============================================================================

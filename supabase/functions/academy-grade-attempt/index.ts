@@ -156,18 +156,28 @@ Deno.serve(async (req) => {
         .eq('id', answer.id);
     }
 
-    // 4) Calcular score (sólo sobre auto-graded para feedback inmediato)
-    const scorePct = autoTotalPoints > 0 ? (earnedPoints / autoTotalPoints) * 100 : 0;
-    const roundedScore = Math.round(scorePct * 100) / 100;
-    const passed =
-      !hasPendingManual && roundedScore >= (quiz as any).passing_score_pct;
-    const status = hasPendingManual ? 'pending_review' : passed ? 'passed' : 'failed';
+    // A-07 fix: si el quiz solo tiene preguntas manuales (auto_total_points = 0),
+    // queda pending_review en lugar de marcarlo como failed con score 0%.
+    // Si tiene mezcla auto+manual, calculamos score sobre las auto.
+    let scorePct: number | null = null;
+    let status: 'passed' | 'failed' | 'pending_review';
+    let passed = false;
+
+    if (autoTotalPoints === 0) {
+      // Todo el quiz es manual → siempre pending_review hasta calificación humana
+      status = 'pending_review';
+      scorePct = null;
+    } else {
+      scorePct = Math.round((earnedPoints / autoTotalPoints) * 10000) / 100;
+      passed = !hasPendingManual && scorePct >= (quiz as any).passing_score_pct;
+      status = hasPendingManual ? 'pending_review' : passed ? 'passed' : 'failed';
+    }
 
     await supabase
       .from('academy_quiz_attempts')
       .update({
         status,
-        score_pct: roundedScore,
+        score_pct: scorePct,
         total_points_possible: totalPoints,
         points_earned: earnedPoints,
         submitted_at: new Date().toISOString(),

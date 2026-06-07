@@ -26,6 +26,7 @@ import { SpaceDiscoveryPanel } from '@/components/academy/community/SpaceDiscove
 import { SpacePluginsPanel } from '@/components/academy/community/SpacePluginsPanel';
 import { SpaceNotificationsPanel } from '@/components/academy/community/SpaceNotificationsPanel';
 import { SpaceSettingsPanel } from '@/components/academy/community/SpaceSettingsPanel';
+import { MembersAdminTab } from '@/components/academy/community/admin/MembersAdminTab';
 
 type AdminTab =
   | 'overview'
@@ -171,14 +172,7 @@ function ComunidadTab() {
 }
 
 function MiembrosTab({ spaceId }: { spaceId: string }) {
-  void spaceId;
-  return (
-    <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
-      <Users className="h-10 w-10 mx-auto mb-3 text-purple-400" />
-      <p>Lista de miembros con filtros Active/Cancelling/Churned/Banned y export CSV.</p>
-      <p className="text-xs text-zinc-500 mt-2">Próximamente.</p>
-    </Card>
-  );
+  return <MembersAdminTab spaceId={spaceId} />;
 }
 
 function PayoutsTab() {
