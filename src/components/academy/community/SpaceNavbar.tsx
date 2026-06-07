@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { cn } from '@/lib/utils';
 import {
+  Home,
   MessagesSquare,
   BookOpen,
   Calendar,
@@ -21,8 +22,9 @@ interface SpaceNavbarProps {
 }
 
 const TABS = [
+  { to: '', label: 'Inicio', icon: Home, end: true },
   { to: 'feed', label: 'Comunidad', icon: MessagesSquare },
-  { to: '', label: 'Classroom', icon: BookOpen, end: true },
+  { to: 'classroom', label: 'Classroom', icon: BookOpen },
   { to: 'calendar', label: 'Calendario', icon: Calendar },
   { to: 'members', label: 'Miembros', icon: Users },
   { to: 'map', label: 'Mapa', icon: MapIcon },

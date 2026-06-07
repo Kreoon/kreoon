@@ -249,7 +249,8 @@ const TemplateLibraryPage = lazyWithRetry(() => import("./pages/TemplateLibraryP
 
 // Academia (LMS)
 const AcademiaHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaHomePage"));
-const AcademiaSpacePage = lazyWithRetry(() => import("./pages/academia/AcademiaSpacePage"));
+// AcademiaSpacePage reemplazado por AcademiaSpaceHomePage (home dashboard)
+// + AcademiaSpaceClassroomPage (catálogo de cursos)
 const AcademiaCoursePage = lazyWithRetry(() => import("./pages/academia/AcademiaCoursePage"));
 const AcademiaPlayerPage = lazyWithRetry(() => import("./pages/academia/AcademiaPlayerPage"));
 const AcademiaCreatePage = lazyWithRetry(() => import("./pages/academia/AcademiaCreatePage"));
@@ -268,6 +269,10 @@ const AcademiaMapPage = lazyWithRetry(() => import("./pages/academia/AcademiaMap
 const AcademiaSpaceMembersPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceMembersPage"));
 const AcademiaCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaCalendarCallbackPage"));
 const AcademiaMemberCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaMemberCalendarCallbackPage"));
+
+// Academia — Home dashboard + Classroom (catálogo de cursos)
+const AcademiaSpaceHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceHomePage"));
+const AcademiaSpaceClassroomPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceClassroomPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -544,7 +549,8 @@ function AppRoutes() {
         <Route path="/academia" element={<AcademiaHomePage />} />
         <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
         <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
-        <Route path="/academia/:spaceSlug" element={<AcademiaSpacePage />} />
+        <Route path="/academia/:spaceSlug" element={<AcademiaSpaceHomePage />} />
+        <Route path="/academia/:spaceSlug/classroom" element={<AcademiaSpaceClassroomPage />} />
         <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
         {/* Academia v2 — Community features */}
         <Route path="/academia/:spaceSlug/feed" element={<AcademiaSpaceFeedPage />} />
