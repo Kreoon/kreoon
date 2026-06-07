@@ -4,6 +4,7 @@ import { Check, Clock, ExternalLink, Video, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { safeUrl } from '@/lib/safeUrl';
 import { useRespondToInvitation, useMyMemberCalendarStatus, useConnectMemberCalendar } from '@/hooks/academy/useAcademyCalendar';
 import type { AcademySpaceEventFull, EventInvitationStatus } from '@/types/academy-v3';
 
@@ -78,17 +79,22 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
             </span>
             <span>· {event.rsvp_count} invitados</span>
           </div>
-          {(event.meeting_url ?? event.google_meet_link) && (
-            <a
-              href={event.meeting_url ?? event.google_meet_link!}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
-              style={{ color: accentColor }}
-            >
-              <Video className="h-3 w-3" /> Unirse <ExternalLink className="h-2.5 w-2.5" />
-            </a>
-          )}
+          {(() => {
+            // safeUrl bloquea javascript: y data: URIs (prevención XSS via meeting_url)
+            const meetingHref = safeUrl(event.meeting_url ?? event.google_meet_link);
+            if (!meetingHref) return null;
+            return (
+              <a
+                href={meetingHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1 text-xs hover:underline"
+                style={{ color: accentColor }}
+              >
+                <Video className="h-3 w-3" /> Unirse <ExternalLink className="h-2.5 w-2.5" />
+              </a>
+            );
+          })()}
         </div>
 
         <div className="flex flex-col gap-1.5 flex-shrink-0">

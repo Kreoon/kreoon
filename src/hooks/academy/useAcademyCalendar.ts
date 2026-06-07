@@ -75,9 +75,14 @@ export function useConnectGoogleCalendar() {
 export function useExchangeGoogleCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (args: { code: string; spaceId: string }) => {
+    mutationFn: async (args: { code: string; spaceId: string; state?: string }) => {
       const { data, error } = await (supabase.functions as any).invoke('academy-google-calendar', {
-        body: { action: 'exchange_code', code: args.code, space_id: args.spaceId },
+        body: {
+          action: 'exchange_code',
+          code: args.code,
+          space_id: args.spaceId,
+          state: args.state,
+        },
       });
       if (error) throw error;
       return data;
@@ -237,9 +242,9 @@ export function useConnectMemberCalendar() {
 export function useExchangeMemberCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (code: string) => {
+    mutationFn: async (args: { code: string; state?: string }) => {
       const { data, error } = await (supabase.functions as any).invoke('academy-google-calendar', {
-        body: { action: 'member_exchange_code', code },
+        body: { action: 'member_exchange_code', code: args.code, state: args.state },
       });
       if (error) throw error;
       return data;

@@ -28,31 +28,36 @@ export default function AcademiaCalendarCallbackPage() {
       return;
     }
 
-    let state: { space_id?: string; type?: string } = {};
+    // El state ahora viene firmado con HMAC. Extraemos solo el payload (1er
+    // segmento base64url) para conocer space_id; la verificación real ocurre
+    // en la edge function que requiere el state completo.
+    let payload: { space_id?: string; type?: string } = {};
     try {
-      state = JSON.parse(atob(stateRaw));
+      const firstSegment = stateRaw.split('.')[0];
+      const padded = firstSegment + '='.repeat((4 - (firstSegment.length % 4)) % 4);
+      const b64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+      payload = JSON.parse(atob(b64));
     } catch {
       setStatus('error');
       setErrorMsg('State inválido');
       return;
     }
 
-    if (!state.space_id) {
+    if (!payload.space_id) {
       setStatus('error');
       setErrorMsg('space_id no presente en state');
       return;
     }
 
     exchange
-      .mutateAsync({ code, spaceId: state.space_id })
+      .mutateAsync({ code, spaceId: payload.space_id, state: stateRaw })
       .then(async () => {
-        // Buscar slug del space para redirigir
         try {
           const { supabase } = await import('@/integrations/supabase/client');
           const { data } = await (supabase as any)
             .from('academy_spaces')
             .select('slug')
-            .eq('id', state.space_id)
+            .eq('id', payload.space_id)
             .single();
           setSpaceSlug(data?.slug ?? null);
         } catch {

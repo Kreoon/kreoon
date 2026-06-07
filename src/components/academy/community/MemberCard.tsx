@@ -2,6 +2,7 @@ import { Crown, Award, Globe, Instagram, Linkedin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { safeUrl } from '@/lib/safeUrl';
 import { useToggleFollow } from '@/hooks/academy/useAcademyCommunityV3';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -81,22 +82,20 @@ export function MemberCard({
         <span>{totalPoints.toLocaleString()} pts</span>
       </div>
 
-      {/* Social links */}
-      {(spaceProfile?.instagram_url ||
-        spaceProfile?.linkedin_url ||
-        spaceProfile?.website_url) && (
-        <div className="flex items-center gap-2 mb-3">
-          {spaceProfile.website_url && (
-            <SocialLink href={spaceProfile.website_url} icon={Globe} />
-          )}
-          {spaceProfile.instagram_url && (
-            <SocialLink href={spaceProfile.instagram_url} icon={Instagram} />
-          )}
-          {spaceProfile.linkedin_url && (
-            <SocialLink href={spaceProfile.linkedin_url} icon={Linkedin} />
-          )}
-        </div>
-      )}
+      {/* Social links — todas las URLs pasan por safeUrl para bloquear javascript:/data: */}
+      {(() => {
+        const website = safeUrl(spaceProfile?.website_url);
+        const instagram = safeUrl(spaceProfile?.instagram_url);
+        const linkedin = safeUrl(spaceProfile?.linkedin_url);
+        if (!website && !instagram && !linkedin) return null;
+        return (
+          <div className="flex items-center gap-2 mb-3">
+            {website && <SocialLink href={website} icon={Globe} />}
+            {instagram && <SocialLink href={instagram} icon={Instagram} />}
+            {linkedin && <SocialLink href={linkedin} icon={Linkedin} />}
+          </div>
+        );
+      })()}
 
       {/* Follow button */}
       {!isMe && (

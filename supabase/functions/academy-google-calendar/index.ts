@@ -4,6 +4,12 @@ import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID') ?? '';
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET') ?? '';
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://kreoon.com';
+// Secreto para firmar el state OAuth (HMAC anti-CSRF). Fallback a SERVICE_ROLE_KEY,
+// pero recomendamos configurar OAUTH_STATE_SECRET dedicado.
+const STATE_SECRET =
+  Deno.env.get('OAUTH_STATE_SECRET') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+// El state expira en 10 minutos
+const STATE_TTL_MS = 10 * 60 * 1000;
 
 type Action =
   | 'get_auth_url'
@@ -63,7 +69,7 @@ Deno.serve(async (req) => {
 
       const redirectUri = `${FRONTEND_URL}/academia/calendar/callback`;
       const scope = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
-      const state = btoa(JSON.stringify({ space_id, type: 'owner', uid: callerId }));
+      const state = await signState({ space_id, type: 'owner', uid: callerId });
 
       const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       url.searchParams.set('client_id', GOOGLE_CLIENT_ID);
@@ -79,9 +85,24 @@ Deno.serve(async (req) => {
 
     // ─────────────── EXCHANGE_CODE (owner) ───────────────
     if (action === 'exchange_code') {
-      const { code, space_id } = body;
+      const { code, space_id, state: stateParam } = body;
       if (!code || !space_id) {
         return corsJsonResponse(req, { error: 'code y space_id requeridos' }, 400);
+      }
+
+      // Anti-CSRF: validar HMAC del state recibido (si viene) contra (space_id, uid, type=owner)
+      if (stateParam) {
+        const verified = await verifyState(stateParam);
+        if (!verified.ok) {
+          return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
+        }
+        if (
+          verified.payload.type !== 'owner' ||
+          verified.payload.space_id !== space_id ||
+          verified.payload.uid !== callerId
+        ) {
+          return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
+        }
       }
 
       const { data: space } = await supabase
@@ -342,7 +363,7 @@ Deno.serve(async (req) => {
     if (action === 'get_member_auth_url') {
       const redirectUri = `${FRONTEND_URL}/academia/calendar/member-callback`;
       const scope = 'https://www.googleapis.com/auth/calendar.events';
-      const state = btoa(JSON.stringify({ user_id: callerId, type: 'member' }));
+      const state = await signState({ user_id: callerId, type: 'member' });
 
       const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
       url.searchParams.set('client_id', GOOGLE_CLIENT_ID);
@@ -358,8 +379,19 @@ Deno.serve(async (req) => {
 
     // ─────────────── MEMBER_EXCHANGE_CODE ───────────────
     if (action === 'member_exchange_code') {
-      const { code } = body;
+      const { code, state: stateParam } = body;
       if (!code) return corsJsonResponse(req, { error: 'code_required' }, 400);
+
+      // Anti-CSRF state validation (mismo callerId)
+      if (stateParam) {
+        const verified = await verifyState(stateParam);
+        if (!verified.ok) {
+          return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
+        }
+        if (verified.payload.type !== 'member' || verified.payload.user_id !== callerId) {
+          return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
+        }
+      }
 
       const redirectUri = `${FRONTEND_URL}/academia/calendar/member-callback`;
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -508,6 +540,79 @@ async function getValidAccessToken(supabase: any, spaceId: string): Promise<stri
     return refreshed.access_token;
   }
   return data.access_token;
+}
+
+// ─── OAuth state HMAC helpers (anti-CSRF) ───
+function b64urlEncode(bytes: Uint8Array): string {
+  let s = '';
+  for (const b of bytes) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str: string): Uint8Array {
+  const pad = str.length % 4 === 0 ? '' : '='.repeat(4 - (str.length % 4));
+  const b64 = (str + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function hmacSha256(secret: string, data: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign', 'verify']
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data));
+  return b64urlEncode(new Uint8Array(sig));
+}
+
+/**
+ * Firma el payload del state OAuth con HMAC-SHA256.
+ * Estructura: base64url(payload).base64url(timestamp_ms).base64url(nonce).base64url(hmac)
+ */
+async function signState(payload: Record<string, unknown>): Promise<string> {
+  if (!STATE_SECRET) {
+    throw new Error('OAUTH_STATE_SECRET no configurado');
+  }
+  const ts = Date.now().toString();
+  const nonce = b64urlEncode(crypto.getRandomValues(new Uint8Array(16)));
+  const payloadB64 = b64urlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const data = `${payloadB64}.${ts}.${nonce}`;
+  const mac = await hmacSha256(STATE_SECRET, data);
+  return `${data}.${mac}`;
+}
+
+async function verifyState(state: string): Promise<
+  | { ok: true; payload: any }
+  | { ok: false; reason: string }
+> {
+  if (!STATE_SECRET) return { ok: false, reason: 'no_secret' };
+  const parts = state.split('.');
+  if (parts.length !== 4) return { ok: false, reason: 'malformed' };
+  const [payloadB64, ts, nonce, sig] = parts;
+  const data = `${payloadB64}.${ts}.${nonce}`;
+  const expected = await hmacSha256(STATE_SECRET, data);
+  // Comparación constante: usamos longitud + XOR acumulado
+  if (expected.length !== sig.length) return { ok: false, reason: 'sig_length' };
+  let diff = 0;
+  for (let i = 0; i < expected.length; i++) {
+    diff |= expected.charCodeAt(i) ^ sig.charCodeAt(i);
+  }
+  if (diff !== 0) return { ok: false, reason: 'sig_mismatch' };
+
+  const ageMs = Date.now() - Number(ts);
+  if (!Number.isFinite(ageMs) || ageMs < 0 || ageMs > STATE_TTL_MS) {
+    return { ok: false, reason: 'expired' };
+  }
+  try {
+    const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadB64)));
+    return { ok: true, payload };
+  } catch {
+    return { ok: false, reason: 'payload_decode' };
+  }
 }
 
 async function refreshMemberTokenIfNeeded(supabase: any, tokenData: any): Promise<string> {

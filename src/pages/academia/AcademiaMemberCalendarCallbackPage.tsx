@@ -13,6 +13,7 @@ export default function AcademiaMemberCalendarCallbackPage() {
 
   useEffect(() => {
     const code = params.get('code');
+    const stateRaw = params.get('state') ?? undefined;
     const oauthError = params.get('error');
     if (oauthError) {
       setStatus('error');
@@ -25,7 +26,7 @@ export default function AcademiaMemberCalendarCallbackPage() {
       return;
     }
     exchange
-      .mutateAsync(code)
+      .mutateAsync({ code, state: stateRaw })
       .then(() => setStatus('success'))
       .catch((e) => {
         setStatus('error');
