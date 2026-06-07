@@ -217,26 +217,47 @@ export function useMarkNotificationsRead() {
 }
 
 // ── MIEMBROS DEL SPACE ──
+// academy_memberships no tiene FK hacia academy_space_profiles ni academy_space_points
+// (la relación es por par compuesto space_id+user_id sin FK).
+// PostgREST no puede inferir esos joins, así que hacemos 3 queries en paralelo
+// y unimos en cliente por user_id.
 export function useSpaceMembers(spaceId: string | undefined) {
   return useQuery({
     queryKey: ['academy', 'members', spaceId],
     queryFn: async () => {
       if (!spaceId) return [];
-      const { data, error } = await (supabase as any)
-        .from('academy_memberships')
-        .select(
-          `
-          *,
-          user:profiles!user_id(full_name, avatar_url, email),
-          space_profile:academy_space_profiles(bio, title, intro_completed, instagram_url, tiktok_url, linkedin_url, website_url),
-          points:academy_space_points(total_points, level, current_week_points)
-        `
-        )
-        .eq('space_id', spaceId)
-        .eq('is_active', true)
-        .order('joined_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
+
+      const [membershipsRes, profilesRes, pointsRes] = await Promise.all([
+        (supabase as any)
+          .from('academy_memberships')
+          .select('*, user:profiles!user_id(full_name, avatar_url, email)')
+          .eq('space_id', spaceId)
+          .eq('is_active', true)
+          .order('joined_at', { ascending: false }),
+        (supabase as any)
+          .from('academy_space_profiles')
+          .select('user_id, bio, title, intro_completed, instagram_url, tiktok_url, linkedin_url, website_url')
+          .eq('space_id', spaceId),
+        (supabase as any)
+          .from('academy_space_points')
+          .select('user_id, total_points, level, current_week_points')
+          .eq('space_id', spaceId),
+      ]);
+
+      if (membershipsRes.error) throw membershipsRes.error;
+      // Los otros dos son nice-to-have: si fallan, devolvemos arrays vacíos sin romper
+      const profilesByUser = new Map<string, any>(
+        (profilesRes.data ?? []).map((p: any) => [p.user_id, p])
+      );
+      const pointsByUser = new Map<string, any>(
+        (pointsRes.data ?? []).map((p: any) => [p.user_id, p])
+      );
+
+      return (membershipsRes.data ?? []).map((m: any) => ({
+        ...m,
+        space_profile: profilesByUser.get(m.user_id) ?? null,
+        points: pointsByUser.get(m.user_id) ?? null,
+      }));
     },
     enabled: !!spaceId,
     staleTime: 5 * 60 * 1000,
