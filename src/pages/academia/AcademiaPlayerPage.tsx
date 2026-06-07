@@ -72,6 +72,8 @@ export default function AcademiaPlayerPage() {
   function handleVideoProgress(pct: number, lastPos: number) {
     setCurrentVideoTimestamp(lastPos);
     if (!activeLesson || !enrollment) return;
+    // No bajar de 'completed' a 'in_progress' si la lección ya fue terminada
+    if (getProgress(activeLesson)?.status === 'completed') return;
     markProgress.mutate({
       lessonId: activeLesson.id,
       enrollmentId: enrollment.id,

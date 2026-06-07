@@ -90,19 +90,18 @@ Deno.serve(async (req) => {
         return corsJsonResponse(req, { error: 'code y space_id requeridos' }, 400);
       }
 
-      // Anti-CSRF: validar HMAC del state recibido (si viene) contra (space_id, uid, type=owner)
-      if (stateParam) {
-        const verified = await verifyState(stateParam);
-        if (!verified.ok) {
-          return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
-        }
-        if (
-          verified.payload.type !== 'owner' ||
-          verified.payload.space_id !== space_id ||
-          verified.payload.uid !== callerId
-        ) {
-          return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
-        }
+      // Anti-CSRF: state es obligatorio
+      if (!stateParam) return corsJsonResponse(req, { error: 'state_required' }, 400);
+      const verified = await verifyState(stateParam);
+      if (!verified.ok) {
+        return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
+      }
+      if (
+        verified.payload.type !== 'owner' ||
+        verified.payload.space_id !== space_id ||
+        verified.payload.uid !== callerId
+      ) {
+        return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
       }
 
       const { data: space } = await supabase
@@ -382,15 +381,14 @@ Deno.serve(async (req) => {
       const { code, state: stateParam } = body;
       if (!code) return corsJsonResponse(req, { error: 'code_required' }, 400);
 
-      // Anti-CSRF state validation (mismo callerId)
-      if (stateParam) {
-        const verified = await verifyState(stateParam);
-        if (!verified.ok) {
-          return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
-        }
-        if (verified.payload.type !== 'member' || verified.payload.user_id !== callerId) {
-          return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
-        }
+      // Anti-CSRF state validation (obligatorio)
+      if (!stateParam) return corsJsonResponse(req, { error: 'state_required' }, 400);
+      const verified = await verifyState(stateParam);
+      if (!verified.ok) {
+        return corsJsonResponse(req, { error: 'invalid_state', reason: verified.reason }, 400);
+      }
+      if (verified.payload.type !== 'member' || verified.payload.user_id !== callerId) {
+        return corsJsonResponse(req, { error: 'state_mismatch' }, 400);
       }
 
       const redirectUri = `${FRONTEND_URL}/academia/calendar/member-callback`;
