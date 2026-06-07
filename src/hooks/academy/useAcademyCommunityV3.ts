@@ -8,6 +8,25 @@ import type {
   AcademyNotification,
 } from '@/types/academy-v3';
 
+/**
+ * Crea un channel realtime de forma idempotente y segura para StrictMode.
+ * Devuelve cleanup que llama removeChannel.
+ * Usa Math.random + Date.now en el nombre para garantizar unicidad por mount,
+ * evitando el error "cannot add postgres_changes callbacks after subscribe()".
+ */
+function createRealtimeChannel(
+  baseName: string,
+  configure: (channel: any) => any
+): () => void {
+  const uniqueName = `${baseName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const channel = (supabase as any).channel(uniqueName);
+  configure(channel);
+  channel.subscribe();
+  return () => {
+    (supabase as any).removeChannel(channel);
+  };
+}
+
 // ── PRESENCE REALTIME ──
 export function useSpacePresence(spaceId: string | undefined) {
   const { user } = useAuth();
@@ -31,9 +50,8 @@ export function useSpacePresence(spaceId: string | undefined) {
     update();
     const interval = setInterval(update, 30_000);
 
-    const channel = (supabase as any)
-      .channel(`presence-${spaceId}`)
-      .on(
+    const cleanup = createRealtimeChannel(`presence-${spaceId}`, (channel) => {
+      channel.on(
         'postgres_changes',
         {
           event: '*',
@@ -42,12 +60,12 @@ export function useSpacePresence(spaceId: string | undefined) {
           filter: `space_id=eq.${spaceId}`,
         },
         () => qc.invalidateQueries({ queryKey: ['academy', 'presence', spaceId] })
-      )
-      .subscribe();
+      );
+    });
 
     return () => {
       clearInterval(interval);
-      (supabase as any).removeChannel(channel);
+      cleanup();
     };
   }, [spaceId, user, qc]);
 
@@ -125,9 +143,8 @@ export function useAcademyNotifications(spaceId: string | undefined) {
 
   useEffect(() => {
     if (!spaceId || !user) return;
-    const channel = (supabase as any)
-      .channel(`notif-${spaceId}-${user.id}`)
-      .on(
+    return createRealtimeChannel(`notif-${spaceId}-${user.id}`, (channel) => {
+      channel.on(
         'postgres_changes',
         {
           event: 'INSERT',
@@ -136,11 +153,8 @@ export function useAcademyNotifications(spaceId: string | undefined) {
           filter: `recipient_id=eq.${user.id}`,
         },
         () => qc.invalidateQueries({ queryKey: ['academy', 'notifications', spaceId] })
-      )
-      .subscribe();
-    return () => {
-      (supabase as any).removeChannel(channel);
-    };
+      );
+    });
   }, [spaceId, user, qc]);
 
   return useQuery({

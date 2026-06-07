@@ -16,19 +16,20 @@ export function useLessonComments(lessonId: string | undefined, courseId: string
 
   useEffect(() => {
     if (!lessonId) return;
-    const channel = (supabase as any)
-      .channel(`lesson-comments-${lessonId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'academy_lesson_comments',
-          filter: `lesson_id=eq.${lessonId}`,
-        },
-        () => qc.invalidateQueries({ queryKey: ['academy', 'lesson-comments', lessonId] })
-      )
-      .subscribe();
+    // Nombre único por mount para evitar conflicto en StrictMode dev
+    const uniqueName = `lesson-comments-${lessonId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const channel = (supabase as any).channel(uniqueName);
+    channel.on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'academy_lesson_comments',
+        filter: `lesson_id=eq.${lessonId}`,
+      },
+      () => qc.invalidateQueries({ queryKey: ['academy', 'lesson-comments', lessonId] })
+    );
+    channel.subscribe();
     return () => {
       (supabase as any).removeChannel(channel);
     };
