@@ -27,6 +27,7 @@ import { useSpaceLeaderboard, useMySpacePoints } from '@/hooks/academy/useSpaceL
 import { useSpaceMembers, useSpacePresence } from '@/hooks/academy/useAcademyCommunityV3';
 import { useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
 import { useAuth } from '@/hooks/useAuth';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
 import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { OnlineIndicator } from '@/components/academy/community/OnlineIndicator';
 import { LevelBadge } from '@/components/academy/gamification/LevelBadge';
@@ -79,15 +80,35 @@ export default function AcademiaSpaceHomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
-        Cargando academia...
+      <div className="min-h-screen bg-kreoon-bg-primary">
+        <KreoonSkeleton variant="rectangular" width="100%" height={240} />
+        <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-16 relative space-y-6">
+          <div className="flex items-end gap-4">
+            <KreoonSkeleton variant="circular" width={96} height={96} />
+            <div className="space-y-2 flex-1">
+              <KreoonSkeleton variant="text" width="60%" height={32} />
+              <KreoonSkeleton variant="text" width="40%" height={16} />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+            <div className="lg:col-span-2 space-y-3">
+              <KreoonSkeleton variant="card" height={120} />
+              <KreoonSkeleton variant="card" height={160} />
+              <KreoonSkeleton variant="card" height={160} />
+            </div>
+            <div className="space-y-3">
+              <KreoonSkeleton variant="card" height={140} />
+              <KreoonSkeleton variant="card" height={120} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-purple-400 hover:text-purple-300">
@@ -101,7 +122,7 @@ export default function AcademiaSpaceHomePage() {
   const featuredCourses = courses.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
       {/* Meta Pixel del space (si está habilitado) */}
       <MetaPixel
         pixelId={plugins?.meta_pixel_id ?? null}

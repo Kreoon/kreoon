@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { GraduationCap, Clock, Star, Lock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
 import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 
@@ -10,15 +11,23 @@ export default function AcademiaSpaceClassroomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
-        Cargando classroom...
+      <div className="min-h-screen bg-kreoon-bg-primary">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-6">
+          <KreoonSkeleton variant="text" width="40%" height={32} />
+          <KreoonSkeleton variant="text" width="25%" height={14} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <KreoonSkeleton key={i} variant="card" height={280} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-purple-400 hover:text-purple-300">
@@ -33,7 +42,7 @@ export default function AcademiaSpaceClassroomPage() {
   const publishedCourses = courses.filter((c: any) => c.status === 'published');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">

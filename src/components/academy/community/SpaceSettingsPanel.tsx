@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { BunnyImageUploader } from '@/components/marketplace/BunnyImageUploader';
+import { marketplaceStoragePath } from '@/hooks/useBunnyImageUpload';
 import { useUpdateAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import type { AcademySpace } from '@/types/academy';
 
@@ -70,36 +72,32 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
 
         <div>
           <Label>Imagen de portada</Label>
-          <Input
+          <BunnyImageUploader
+            mode="single"
             value={draft.cover_image_url ?? ''}
-            onChange={(e) => set('cover_image_url', e.target.value)}
-            placeholder="URL de la imagen"
-            className="bg-black/30 border-white/10"
+            onChange={(url) => set('cover_image_url', url)}
+            getStoragePath={(file) =>
+              marketplaceStoragePath('academy-space-cover', space.id, file)
+            }
+            aspectRatio="video"
+            height="h-32"
+            maxSizeMB={5}
           />
-          {draft.cover_image_url && (
-            <img
-              src={draft.cover_image_url}
-              alt=""
-              className="mt-2 h-32 w-full object-cover rounded-lg border border-white/10"
-            />
-          )}
         </div>
 
         <div>
           <Label>Logo</Label>
-          <Input
+          <BunnyImageUploader
+            mode="single"
             value={draft.logo_url ?? ''}
-            onChange={(e) => set('logo_url', e.target.value)}
-            placeholder="URL del logo cuadrado"
-            className="bg-black/30 border-white/10"
+            onChange={(url) => set('logo_url', url)}
+            getStoragePath={(file) =>
+              marketplaceStoragePath('academy-space-logo', space.id, file)
+            }
+            aspectRatio="square"
+            height="h-28"
+            maxSizeMB={3}
           />
-          {draft.logo_url && (
-            <img
-              src={draft.logo_url}
-              alt=""
-              className="mt-2 h-16 w-16 object-cover rounded-lg border border-white/10"
-            />
-          )}
         </div>
 
         <div>

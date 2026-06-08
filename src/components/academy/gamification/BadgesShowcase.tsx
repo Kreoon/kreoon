@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { useMyBadges, useAllBadges, type Badge } from '@/hooks/academy/useAcademyGamification';
 
@@ -37,22 +44,24 @@ export function BadgesShowcase({ spaceId, accentColor = '#8B5CF6', compact = fal
           <button
             key={mb.id}
             onClick={() => setSelected(mb.badge ?? null)}
+            aria-label={`Insignia ${mb.badge?.name ?? ''}: ${mb.badge?.description ?? ''}`}
             className={cn(
-              'h-9 w-9 rounded-lg flex items-center justify-center text-lg border-2 transition-transform hover:scale-110',
+              'h-9 w-9 rounded-lg flex items-center justify-center text-lg border-2 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
               RARITY_BORDER[mb.badge?.rarity ?? 'common']
             )}
             style={{ backgroundColor: `${mb.badge?.color ?? accentColor}20` }}
-            title={mb.badge?.name}
           >
-            {mb.badge?.emoji}
+            <span aria-hidden="true">{mb.badge?.emoji}</span>
           </button>
         ))}
         {earned.length > 8 && (
-          <span className="self-center text-xs text-zinc-500">+{earned.length - 8}</span>
+          <span className="self-center text-xs text-zinc-400">+{earned.length - 8}</span>
         )}
-        {selected && (
-          <BadgeDetailModal badge={selected} earned onClose={() => setSelected(null)} />
-        )}
+        <BadgeDetailDialog
+          badge={selected}
+          earned={selected ? earnedIds.has(selected.id) : false}
+          onClose={() => setSelected(null)}
+        />
       </div>
     );
   }
@@ -68,81 +77,95 @@ export function BadgesShowcase({ spaceId, accentColor = '#8B5CF6', compact = fal
         </span>
       </div>
 
-      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-6 md:grid-cols-8 gap-2">
         {catalog.map((b) => {
           const isEarned = earnedIds.has(b.id);
           return (
             <button
               key={b.id}
               onClick={() => setSelected(b)}
+              aria-label={
+                isEarned
+                  ? `Insignia ${b.name}: ${b.description}`
+                  : `Insignia bloqueada ${b.name}`
+              }
               className={cn(
                 'aspect-square rounded-xl flex items-center justify-center text-2xl border-2 transition-all',
                 isEarned ? RARITY_BORDER[b.rarity] : 'border-white/5 grayscale opacity-30',
-                'hover:scale-110'
+                'hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50'
               )}
               style={isEarned ? { backgroundColor: `${b.color}20` } : { backgroundColor: 'rgba(255,255,255,0.02)' }}
-              title={b.name}
             >
-              {isEarned ? b.emoji : <Lock className="h-4 w-4 text-zinc-600" />}
+              <span aria-hidden="true">
+                {isEarned ? b.emoji : <Lock className="h-4 w-4 text-zinc-500" />}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {selected && (
-        <BadgeDetailModal
-          badge={selected}
-          earned={earnedIds.has(selected.id)}
-          onClose={() => setSelected(null)}
-        />
-      )}
+      <BadgeDetailDialog
+        badge={selected}
+        earned={selected ? earnedIds.has(selected.id) : false}
+        onClose={() => setSelected(null)}
+      />
     </Card>
   );
 }
 
-function BadgeDetailModal({
+/**
+ * Dialog accesible (Radix UI): incluye role="dialog", aria-modal, focus trap,
+ * cierre con Escape y click-outside por defecto del componente base.
+ */
+function BadgeDetailDialog({
   badge,
   earned,
   onClose,
 }: {
-  badge: Badge;
+  badge: Badge | null;
   earned: boolean;
   onClose: () => void;
 }) {
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-      onClick={onClose}
-    >
-      <div
-        className={cn(
-          'max-w-sm w-full rounded-2xl p-6 border-2 bg-[#0c0c16] text-center',
-          RARITY_BORDER[badge.rarity]
-        )}
-        style={{ backgroundColor: earned ? `${badge.color}15` : '#0c0c16' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="text-6xl mb-3">{earned ? badge.emoji : '🔒'}</div>
-        <h2 className="text-xl font-bold mb-1">{badge.name}</h2>
-        <span
+    <Dialog open={!!badge} onOpenChange={(open) => !open && onClose()}>
+      {badge && (
+        <DialogContent
           className={cn(
-            'inline-block text-[10px] uppercase px-2 py-0.5 rounded-full mb-3',
-            badge.rarity === 'legendary' && 'bg-amber-500/20 text-amber-300',
-            badge.rarity === 'epic' && 'bg-purple-500/20 text-purple-300',
-            badge.rarity === 'rare' && 'bg-cyan-500/20 text-cyan-300',
-            badge.rarity === 'common' && 'bg-zinc-500/20 text-zinc-400'
+            'max-w-sm border-2 bg-kreoon-bg-secondary text-center',
+            RARITY_BORDER[badge.rarity]
           )}
+          style={{ backgroundColor: earned ? `${badge.color}15` : undefined }}
         >
-          {badge.rarity}
-        </span>
-        <p className="text-sm text-zinc-300">{badge.description}</p>
-        <div className="mt-4 text-xs text-zinc-500">
-          Recompensa: <span style={{ color: badge.color }}>+{badge.xp_reward} XP</span>
-        </div>
-        {!earned && (
-          <p className="mt-3 text-[10px] text-zinc-600 italic">Aún no la has desbloqueado</p>
-        )}
-      </div>
-    </div>
+          <DialogHeader>
+            <div className="text-6xl text-center mb-2" aria-hidden="true">
+              {earned ? badge.emoji : '🔒'}
+            </div>
+            <DialogTitle className="text-xl font-bold text-center">{badge.name}</DialogTitle>
+            <div className="text-center">
+              <span
+                className={cn(
+                  'inline-block text-[10px] uppercase px-2 py-0.5 rounded-full',
+                  badge.rarity === 'legendary' && 'bg-amber-500/20 text-amber-300',
+                  badge.rarity === 'epic' && 'bg-purple-500/20 text-purple-300',
+                  badge.rarity === 'rare' && 'bg-cyan-500/20 text-cyan-300',
+                  badge.rarity === 'common' && 'bg-zinc-500/20 text-zinc-300'
+                )}
+              >
+                {badge.rarity}
+              </span>
+            </div>
+            <DialogDescription className="text-sm text-zinc-300 mt-2">
+              {badge.description}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-2 text-xs text-zinc-400">
+            Recompensa: <span style={{ color: badge.color }}>+{badge.xp_reward} XP</span>
+          </div>
+          {!earned && (
+            <p className="text-[10px] text-zinc-500 italic">Aún no la has desbloqueado</p>
+          )}
+        </DialogContent>
+      )}
+    </Dialog>
   );
 }

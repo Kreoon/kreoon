@@ -25,13 +25,15 @@ export function StreakFlame({ days, showLabel = true, size = 'md' }: StreakFlame
     <div
       className={cn(
         'inline-flex items-center gap-1.5',
-        days >= 7 && 'animate-pulse'
+        days >= 7 && 'motion-safe:animate-pulse'
       )}
       title={`${days} días seguidos aprendiendo`}
+      aria-label={`Racha de ${days} ${days === 1 ? 'día' : 'días'} aprendiendo`}
     >
       <Flame
         className={cn(sizes[size].icon, days > 0 && 'fill-current')}
         style={{ color }}
+        aria-hidden="true"
       />
       {showLabel && (
         <span className={cn(sizes[size].text, 'font-bold')} style={{ color }}>

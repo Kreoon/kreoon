@@ -28,8 +28,20 @@ export function EnergyMeter({ energy, size = 'md', showLabel = true }: EnergyMet
   };
 
   return (
-    <div className="inline-flex items-center gap-1.5" title={`Energy: ${energy}/100 — ${label}`}>
-      <Zap className={cn(sizes[size].icon, 'flex-shrink-0')} style={{ color }} />
+    <div
+      className="inline-flex items-center gap-1.5"
+      title={`Energy: ${energy}/100 — ${label}`}
+      role="progressbar"
+      aria-valuenow={energy}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={`Energía ${energy} de 100, estado ${label}`}
+    >
+      <Zap
+        className={cn(sizes[size].icon, 'flex-shrink-0')}
+        style={{ color }}
+        aria-hidden="true"
+      />
       <div className={cn('relative bg-white/5 rounded-full overflow-hidden', sizes[size].bar)}>
         <div
           className="h-full transition-all duration-500"
@@ -37,7 +49,7 @@ export function EnergyMeter({ energy, size = 'md', showLabel = true }: EnergyMet
         />
       </div>
       {showLabel && (
-        <span className={cn(sizes[size].text, 'text-zinc-400 font-mono')}>{energy}</span>
+        <span className={cn(sizes[size].text, 'text-zinc-300 font-mono')}>{energy}</span>
       )}
     </div>
   );

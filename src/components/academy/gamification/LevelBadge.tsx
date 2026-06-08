@@ -48,8 +48,12 @@ export function LevelBadge({
       ? Math.min(100, ((xp - tier.min_xp) / (nextTier.min_xp - tier.min_xp)) * 100)
       : 0;
 
+  const accessibleLabel = `Nivel ${level}: ${displayTitle}${
+    showProgress && xp != null ? ` con ${xp} puntos de experiencia` : ''
+  }`;
+
   return (
-    <div className="inline-flex items-center gap-2">
+    <div className="inline-flex items-center gap-2" aria-label={accessibleLabel}>
       <div
         className={cn(
           'rounded-xl flex items-center justify-center font-bold flex-shrink-0',
@@ -62,6 +66,7 @@ export function LevelBadge({
           border: `1.5px solid ${accentColor}50`,
         }}
         title={tier?.perk_description ?? ''}
+        aria-hidden="true"
       >
         {emoji}
       </div>
@@ -69,13 +74,20 @@ export function LevelBadge({
         <div className={cn('font-semibold leading-tight', sizes[size].text)}>{displayTitle}</div>
         {showProgress && nextTier && xp != null && (
           <div className="mt-1">
-            <div className="h-1 w-24 bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-1 w-24 bg-white/5 rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={Math.round(progressPct)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Progreso al siguiente nivel: ${Math.round(progressPct)}%`}
+            >
               <div
                 className="h-full transition-all"
                 style={{ width: `${progressPct}%`, backgroundColor: accentColor }}
               />
             </div>
-            <div className="text-[9px] text-zinc-500 mt-0.5">
+            <div className="text-[10px] text-zinc-300 mt-0.5 font-mono">
               {xp} / {nextTier.min_xp} XP
             </div>
           </div>

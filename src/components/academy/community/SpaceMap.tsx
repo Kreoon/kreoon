@@ -71,8 +71,9 @@ export function SpaceMap({ spaceId, accentColor = '#8B5CF6' }: SpaceMapProps) {
             <MapContainer
               center={[10, -50]}
               zoom={2}
-              style={{ height: '100%', width: '100%', background: '#0c0c16' }}
-              scrollWheelZoom
+              style={{ height: '100%', width: '100%', background: '#12121a' }}
+              // En mobile NO zoom-on-scroll (rompe scroll de página); en desktop OK
+              scrollWheelZoom={typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches}
             >
               {/* Dark tile layer (Carto) */}
               <TileLayer

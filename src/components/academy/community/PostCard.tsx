@@ -114,7 +114,7 @@ export function PostCard({
               <MoreHorizontal className="h-4 w-4" />
             </button>
             {showActions && (
-              <div className="absolute right-0 top-7 z-10 bg-[#0c0c16] border border-white/10 rounded-lg overflow-hidden min-w-[140px]">
+              <div className="absolute right-0 top-7 z-10 bg-kreoon-bg-secondary border border-white/10 rounded-lg overflow-hidden min-w-[140px]">
                 <button
                   onClick={handleDelete}
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-300 hover:bg-rose-500/10"

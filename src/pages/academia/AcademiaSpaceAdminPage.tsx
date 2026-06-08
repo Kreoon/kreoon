@@ -16,6 +16,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
 import { cn } from '@/lib/utils';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,15 +73,29 @@ export default function AcademiaSpaceAdminPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
-        Cargando...
+      <div className="min-h-screen bg-kreoon-bg-primary">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-4">
+          <KreoonSkeleton variant="text" width="35%" height={28} />
+          <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 pt-4">
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <KreoonSkeleton key={i} variant="rectangular" height={32} />
+              ))}
+            </div>
+            <div className="space-y-3">
+              <KreoonSkeleton variant="card" height={120} />
+              <KreoonSkeleton variant="card" height={200} />
+              <KreoonSkeleton variant="card" height={200} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
         Academia no encontrada
       </div>
     );
@@ -88,7 +103,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (!user || space.owner_id !== user.id) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
         <Lock className="h-10 w-10" />
         <p>Solo el owner puede acceder al admin del space.</p>
       </div>
@@ -99,7 +114,7 @@ export default function AcademiaSpaceAdminPage() {
   const isPro = space.plan_slug === 'pro';
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>

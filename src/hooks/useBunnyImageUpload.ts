@@ -131,7 +131,7 @@ export function useBunnyImageUpload() {
 
 /** Helper to generate consistent Bunny Storage paths for marketplace images */
 export function marketplaceStoragePath(
-  type: 'org-cover' | 'org-gallery' | 'brand-logo' | 'portfolio-image' | 'proposal-attachment',
+  type: 'org-cover' | 'org-gallery' | 'brand-logo' | 'portfolio-image' | 'proposal-attachment' | 'academy-space-cover' | 'academy-space-logo',
   entityId: string,
   file?: File
 ): string {
@@ -149,6 +149,10 @@ export function marketplaceStoragePath(
       return `marketplace/portfolio/${entityId}/${uniqueSuffix}.${ext}`;
     case 'proposal-attachment':
       return `marketplace/proposals/${entityId}/${uniqueSuffix}.${ext}`;
+    case 'academy-space-cover':
+      return `academy/spaces/${entityId}/cover_${uniqueSuffix}.${ext}`;
+    case 'academy-space-logo':
+      return `academy/spaces/${entityId}/logo_${uniqueSuffix}.${ext}`;
   }
 }
 

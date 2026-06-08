@@ -1,3 +1,4 @@
+import React from 'react';
 import { Users, DollarSign, TrendingUp, Heart, ArrowUpRight, Activity } from 'lucide-react';
 import {
   LineChart,
@@ -217,8 +218,8 @@ function Heatmap({
           </div>
         ))}
         {days.map((d, dayIdx) => (
-          <>
-            <div key={`d-${dayIdx}`} className="text-[10px] text-zinc-500 pr-2 self-center">
+          <React.Fragment key={`row-${dayIdx}`}>
+            <div className="text-[10px] text-zinc-500 pr-2 self-center">
               {d}
             </div>
             {hours.map((h) => (
@@ -232,7 +233,7 @@ function Heatmap({
                 title={`${d} ${h}h`}
               />
             ))}
-          </>
+          </React.Fragment>
         ))}
       </div>
     </div>

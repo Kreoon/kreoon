@@ -79,13 +79,23 @@ export function useCreateAcademySpace() {
   });
 }
 
+const SPACE_COLUMNS: (keyof AcademySpace)[] = [
+  'name', 'slug', 'description', 'cover_image_url', 'logo_url',
+  'accent_color', 'is_public', 'membership_price_usd', 'plan_slug',
+  'status', 'custom_domain', 'metadata',
+];
+
 export function useUpdateAcademySpace() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<AcademySpace> }) => {
+      // Strip joined/computed fields before sending to PostgREST
+      const payload = Object.fromEntries(
+        SPACE_COLUMNS.filter((k) => k in updates).map((k) => [k, (updates as any)[k]])
+      );
       const { data, error } = await (supabase as any)
         .from('academy_spaces')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...payload, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();
