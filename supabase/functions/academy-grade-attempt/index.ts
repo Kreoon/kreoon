@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
     return corsJsonResponse(req, {
       success: true,
       status,
-      score_pct: roundedScore,
+      score_pct: scorePct,
       passed,
       has_pending_manual: hasPendingManual,
       earned_points: earnedPoints,

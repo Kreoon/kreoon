@@ -49,6 +49,18 @@ Deno.serve(async (req) => {
       .single();
     if (!space) return corsJsonResponse(req, { error: 'space_not_found' }, 404);
 
+    // Solo owner o miembro activo del space puede disparar plugins (NAL-02)
+    if (space.owner_id !== callerId) {
+      const { data: membership } = await supabase
+        .from('academy_memberships')
+        .select('id')
+        .eq('space_id', space_id)
+        .eq('user_id', callerId)
+        .eq('is_active', true)
+        .maybeSingle();
+      if (!membership) return corsJsonResponse(req, { error: 'forbidden' }, 403);
+    }
+
     const fired: string[] = [];
     const errors: Array<{ plugin: string; error: string }> = [];
 
