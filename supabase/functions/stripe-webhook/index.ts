@@ -518,8 +518,7 @@ async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checko
     stripe_payment_intent_id: typeof session.payment_intent === 'string' ? session.payment_intent : null,
   });
 
-  // Incrementar contador de inscritos
-  await supabase.rpc('exec_sql_unsafe', { sql: '' }).catch(() => null); // no-op fallback
+  // Incrementar contador de inscritos (read+write, suficiente para pocos eventos por minuto)
   try {
     const { data: courseRow } = await supabase
       .from('academy_courses')

@@ -1,8 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useMemo, useEffect } from 'react';
-import { Play, CheckCircle2, Lock, ChevronLeft } from 'lucide-react';
+import { Play, CheckCircle2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { AcademyVideoPlayer } from '@/components/academy/AcademyVideoPlayer';
 import { QuizEngine } from '@/components/academy/QuizEngine';
 import { CertificateProgressPanel } from '@/components/academy/CertificateProgressPanel';
@@ -100,16 +101,12 @@ export default function AcademiaPlayerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex flex-col lg:flex-row">
+    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex flex-col">
+      <SpaceNavbar spaceSlug={spaceSlug!} />
+      <div className="flex flex-col lg:flex-row flex-1">
       {/* Sidebar lecciones */}
       <aside className="lg:w-80 border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0c0c16] flex-shrink-0">
         <div className="p-4 border-b border-white/5">
-          <button
-            onClick={() => navigate(`/academia/${spaceSlug}`)}
-            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 mb-3"
-          >
-            <ChevronLeft className="h-3 w-3" /> {course.space?.name}
-          </button>
           <h2 className="font-bold text-zinc-100">{course.title}</h2>
           <div className="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
             <div
@@ -284,6 +281,7 @@ export default function AcademiaPlayerPage() {
           onClose={() => setMidlessonQuizId(null)}
         />
       )}
+      </div>
     </div>
   );
 }

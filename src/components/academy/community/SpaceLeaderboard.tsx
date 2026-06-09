@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { useSpaceLeaderboard, useMySpacePoints } from '@/hooks/academy/useSpaceLeaderboard';
 import { useAuth } from '@/hooks/useAuth';
+import { LeaderboardPodium } from './LeaderboardPodium';
 import type { LeaderboardPeriod, SpaceMemberPoints } from '@/types/academy-community';
 
 interface SpaceLeaderboardProps {
@@ -61,19 +62,9 @@ export function SpaceLeaderboard({ spaceId, accentColor = '#8B5CF6' }: SpaceLead
         </Card>
       ) : (
         <>
-          {/* Top 3 */}
+          {/* Top 3 — Podio animado (diferenciador KREOON vs Skool) */}
           {top3.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {top3.map((r, i) => (
-                <TopCard
-                  key={r.id}
-                  row={r}
-                  rank={i + 1}
-                  points={pointsValue(r)}
-                  accentColor={accentColor}
-                />
-              ))}
-            </div>
+            <LeaderboardPodium top3={top3} period={period} accentColor={accentColor} />
           )}
 
           {/* Resto */}

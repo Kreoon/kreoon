@@ -23,11 +23,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { SpaceDashboard } from '@/components/academy/community/SpaceDashboard';
 import { SpaceLeaderboard } from '@/components/academy/community/SpaceLeaderboard';
 import { SpaceCalendar } from '@/components/academy/community/SpaceCalendar';
+import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { SpaceDiscoveryPanel } from '@/components/academy/community/SpaceDiscoveryPanel';
 import { SpacePluginsPanel } from '@/components/academy/community/SpacePluginsPanel';
 import { SpaceNotificationsPanel } from '@/components/academy/community/SpaceNotificationsPanel';
 import { SpaceSettingsPanel } from '@/components/academy/community/SpaceSettingsPanel';
 import { MembersAdminTab } from '@/components/academy/community/admin/MembersAdminTab';
+import { PayoutsAdminTab } from '@/components/academy/community/admin/PayoutsAdminTab';
+import { AffiliatesAdminTab } from '@/components/academy/community/admin/AffiliatesAdminTab';
+import { BillingAdminTab } from '@/components/academy/community/admin/BillingAdminTab';
+import { CommunityAdminTab } from '@/components/academy/community/admin/CommunityAdminTab';
 
 type AdminTab =
   | 'overview'
@@ -115,6 +120,7 @@ export default function AcademiaSpaceAdminPage() {
 
   return (
     <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+      <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -146,8 +152,8 @@ export default function AcademiaSpaceAdminPage() {
           {/* Content */}
           <main>
             {tab === 'overview' && <SpaceDashboard spaceId={space.id} accentColor={accent} />}
-            {tab === 'comunidad' && <ComunidadTab />}
-            {tab === 'miembros' && <MiembrosTab spaceId={space.id} />}
+            {tab === 'comunidad' && <CommunityAdminTab spaceId={space.id} accentColor={accent} />}
+            {tab === 'miembros' && <MembersAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'leaderboard' && (
               <SpaceLeaderboard spaceId={space.id} accentColor={accent} />
             )}
@@ -164,9 +170,11 @@ export default function AcademiaSpaceAdminPage() {
               <SpaceNotificationsPanel spaceId={space.id} isOwner />
             )}
             {tab === 'settings' && <SpaceSettingsPanel space={space} />}
-            {tab === 'payouts' && <PayoutsTab />}
-            {tab === 'afiliados' && <AfiliadosTab />}
-            {tab === 'facturacion' && <FacturacionTab isPro={isPro} />}
+            {tab === 'payouts' && <PayoutsAdminTab spaceId={space.id} accentColor={accent} />}
+            {tab === 'afiliados' && (
+              <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
+            )}
+            {tab === 'facturacion' && <BillingAdminTab isPro={isPro} accentColor={accent} />}
           </main>
         </div>
       </div>

@@ -34,6 +34,7 @@ import { LevelBadge } from '@/components/academy/gamification/LevelBadge';
 import { EnergyMeter } from '@/components/academy/gamification/EnergyMeter';
 import { StreakFlame } from '@/components/academy/gamification/StreakFlame';
 import { BadgesShowcase } from '@/components/academy/gamification/BadgesShowcase';
+import { MissionsCard } from '@/components/academy/gamification/MissionsCard';
 import { useMyGamificationState } from '@/hooks/academy/useAcademyGamification';
 import { useSpacePlugins } from '@/hooks/academy/useSpacePlugins';
 import { MetaPixel } from '@/components/academy/integrations/MetaPixel';
@@ -509,11 +510,16 @@ export default function AcademiaSpaceHomePage() {
               </div>
             </Card>
 
+            {/* Misiones semanales — diferenciador */}
+            {user && (
+              <MissionsCard spaceId={(space as any).id} accentColor={accent} />
+            )}
+
             {/* Mis insignias */}
             {user && (
-              <Card className="p-4 bg-white/5 border-white/10">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2 mb-3">
-                  <Award className="h-3.5 w-3.5" /> Mis insignias
+              <Card className="p-4 bg-kreoon-bg-card border-white/10">
+                <h2 className="text-sm uppercase tracking-wider text-zinc-300 flex items-center gap-2 mb-3">
+                  <Award className="h-3.5 w-3.5" aria-hidden="true" /> Mis insignias
                 </h2>
                 <BadgesShowcase spaceId={(space as any).id} accentColor={accent} compact />
               </Card>

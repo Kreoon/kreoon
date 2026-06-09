@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Clock, BarChart3, Award, Play, Lock, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { useAcademyCourseBySlug } from '@/hooks/academy/useAcademyCourse';
 import { useEnrollInCourse, useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
 import { useAuth } from '@/hooks/useAuth';
@@ -62,6 +63,7 @@ export default function AcademiaCoursePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+      <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main */}
