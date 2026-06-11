@@ -19,17 +19,37 @@ export function useMyMembership(spaceId: string | undefined) {
     queryKey: ['academy', 'my-membership', spaceId, user?.id],
     queryFn: async (): Promise<MyMembership | null> => {
       if (!spaceId || !user) return null;
+
+      // Intento 1: con columnas nuevas (post-migración 20260610200000)
       const { data, error } = await (supabase as any)
         .from('academy_memberships')
-        .select('id, space_id, role, is_active, marketing_consent, onboarding_completed_at, joined_at')
+        .select(
+          'id, space_id, role, is_active, marketing_consent, onboarding_completed_at, joined_at'
+        )
         .eq('space_id', spaceId)
         .eq('user_id', user.id)
         .maybeSingle();
-      if (error) throw error;
-      return (data as MyMembership) ?? null;
+
+      if (!error) return (data as MyMembership) ?? null;
+
+      // Fallback: migración no aplicada aún, lee solo columnas base
+      const { data: dataFallback, error: errFallback } = await (supabase as any)
+        .from('academy_memberships')
+        .select('id, space_id, role, is_active, joined_at')
+        .eq('space_id', spaceId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (errFallback) throw errFallback;
+      if (!dataFallback) return null;
+      return {
+        ...dataFallback,
+        marketing_consent: false,
+        onboarding_completed_at: null,
+      } as MyMembership;
     },
     enabled: !!spaceId && !!user,
     staleTime: 30_000,
+    retry: false,
   });
 }
 

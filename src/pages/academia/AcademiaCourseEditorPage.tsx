@@ -417,7 +417,9 @@ function CourseMetaPanel({ course, onSaved }: { course: any; onSaved: () => void
   async function handleSave() {
     setSaveState('saving');
     try {
-      await updateCourse.mutateAsync({ id: course.id, updates: form as any });
+      // is_free es columna GENERATED (calculada de price_usd), no se puede enviar al UPDATE
+      const { is_free: _ignored, ...updates } = form;
+      await updateCourse.mutateAsync({ id: course.id, updates: updates as any });
       setSaveState('saved');
       onSaved();
       setTimeout(() => setSaveState('idle'), 2500);

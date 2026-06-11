@@ -125,9 +125,11 @@ export function useUpdateCourse() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<AcademyCourse> }) => {
+      // is_free es columna GENERATED (price_usd = 0). PostgREST devuelve 400 si se intenta UPDATE.
+      const { is_free: _drop, ...safeUpdates } = updates as any;
       const { data, error } = await (supabase as any)
         .from('academy_courses')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...safeUpdates, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();

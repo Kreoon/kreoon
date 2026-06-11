@@ -78,29 +78,38 @@ export function PostCard({
   }
 
   return (
-    <article className="rounded-2xl bg-white/[0.04] border border-white/10 p-5 hover:border-white/20 transition-colors">
+    <article
+      className={cn(
+        'rounded-3xl bg-kreoon-bg-card border-2 border-white/10 p-5 md:p-6',
+        'motion-safe:hover:border-white/20 motion-safe:hover:-translate-y-0.5 transition-all duration-300',
+        post.is_pinned && 'border-l-4'
+      )}
+      style={post.is_pinned ? { borderLeftColor: '#7c3aed' } : undefined}
+    >
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         <Avatar profile={post.author} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-sm">{post.author?.full_name ?? 'Usuario'}</span>
+            <span className="font-bold text-base text-zinc-100">
+              {post.author?.full_name ?? 'Usuario'}
+            </span>
             {post.is_pinned && (
-              <span className="text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/20">
+              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7c3aed]/20 text-[#c084fc] border border-[#7c3aed]/40">
                 <Pin className="h-2.5 w-2.5" /> Fijado
               </span>
             )}
             {post.is_announcement && (
-              <span className="text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/20">
+              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
                 <Megaphone className="h-2.5 w-2.5" /> Anuncio
               </span>
             )}
             {post.category && (
               <span
-                className="text-[10px] px-1.5 py-0.5 rounded border"
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full border"
                 style={{
                   borderColor: `${post.category.color}40`,
-                  backgroundColor: `${post.category.color}1a`,
+                  backgroundColor: `${post.category.color}20`,
                   color: post.category.color,
                 }}
               >
@@ -317,10 +326,21 @@ function PollDisplay({
 
 function Avatar({ profile }: { profile: any }) {
   if (profile?.avatar_url) {
-    return <img src={profile.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />;
+    return (
+      <img
+        src={profile.avatar_url}
+        alt=""
+        className="h-12 w-12 rounded-2xl object-cover border-2 border-white/10 shadow-lg flex-shrink-0"
+      />
+    );
   }
   return (
-    <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 font-semibold text-sm">
+    <div
+      className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-base border-2 border-white/10 shadow-lg flex-shrink-0"
+      style={{
+        background: 'linear-gradient(135deg, #7c3aed80, #7c3aed30)',
+      }}
+    >
       {(profile?.full_name ?? '?').charAt(0).toUpperCase()}
     </div>
   );

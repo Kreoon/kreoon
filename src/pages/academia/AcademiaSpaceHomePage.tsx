@@ -47,7 +47,9 @@ import { ContinueLearningBigCard } from '@/components/academy/big-cards/Continue
 import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
 import { JoinSpaceModal } from '@/components/academy/join/JoinSpaceModal';
 import { OnboardingWizard } from '@/components/academy/join/OnboardingWizard';
+import { ShareLinkDialog } from '@/components/academy/community/ShareLinkDialog';
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
+import { Share2 } from 'lucide-react';
 import type { AcademySpaceEventFull } from '@/types/academy-v3';
 
 export default function AcademiaSpaceHomePage() {
@@ -98,6 +100,7 @@ export default function AcademiaSpaceHomePage() {
   const needsOnboarding = isMember && !myMembership?.onboarding_completed_at;
   const [joinOpen, setJoinOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (needsOnboarding) {
@@ -240,6 +243,14 @@ export default function AcademiaSpaceHomePage() {
                 </Button>
               </Link>
             )}
+            <Button
+              onClick={() => setShareOpen(true)}
+              variant="outline"
+              title="Compartir esta academia (+100 XP por referido)"
+              className="border-2 border-white/15 rounded-2xl px-5 py-5 hover:bg-white/5 font-bold"
+            >
+              <Share2 className="h-4 w-4 mr-2" /> Compartir
+            </Button>
             <Link to={`/academia/${spaceSlug}/classroom`}>
               <Button
                 variant="outline"
@@ -577,6 +588,16 @@ export default function AcademiaSpaceHomePage() {
         spaceDescription={space.description}
         spaceLogoUrl={space.logo_url}
         onJoined={() => setWizardOpen(true)}
+      />
+
+      <ShareLinkDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        path={`/academia/${spaceSlug}`}
+        title={`Únete a ${space.name} en KREOON`}
+        rewardCopy="+100 XP por cada amigo que se una"
+        withReferral={!isOwner}
+        utmSource="share_space"
       />
 
       {spaceId && (

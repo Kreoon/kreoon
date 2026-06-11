@@ -167,9 +167,14 @@ export default function AcademiaCoursePage() {
                 {course.title}
               </h1>
               {course.description && (
-                <p className="text-base md:text-lg text-zinc-300 leading-relaxed max-w-3xl">
-                  {course.description}
-                </p>
+                <div
+                  className="prose prose-invert prose-base md:prose-lg max-w-3xl text-zinc-300 leading-relaxed
+                    prose-p:my-2 prose-strong:text-white prose-headings:text-white
+                    prose-a:text-purple-400 hover:prose-a:text-purple-300
+                    prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
+                    prose-img:rounded-2xl prose-blockquote:border-l-purple-500"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHTML(course.description) }}
+                />
               )}
 
               {/* Stats inline */}

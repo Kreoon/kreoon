@@ -3,6 +3,25 @@ import { Play, Users, Clock, Sparkles, Star } from 'lucide-react';
 import { BigCard } from './BigCard';
 import { cn } from '@/lib/utils';
 
+/**
+ * Convierte HTML a texto plano para preview line-clamp.
+ * Solo regex — no toca el DOM, no riesgo XSS porque el resultado es texto plano.
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 interface CourseLike {
   id: string;
   slug: string;
@@ -150,7 +169,7 @@ export function CourseBigCard({
         <div className="p-5 md:p-6 flex-1 flex flex-col gap-3">
           {course.description && (
             <p className="text-sm text-zinc-400 line-clamp-2 leading-relaxed">
-              {course.description}
+              {stripHtml(course.description)}
             </p>
           )}
 
