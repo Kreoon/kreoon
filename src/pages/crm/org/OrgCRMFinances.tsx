@@ -31,6 +31,7 @@ import type {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '@/types/finance.types';
+import { TalentPayrollPanel } from '@/components/finance/TalentPayrollPanel';
 
 // ============================================
 // HELPERS
@@ -357,6 +358,20 @@ function FinancesContent({ orgId }: { orgId: string }) {
             </Card>
           </div>
         </div>
+
+        {/* ── Nómina de Talento ── */}
+        <div className="pt-2">
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold text-white">Nómina de Talento</h2>
+            <p className="text-white/50 text-sm mt-0.5">
+              Pagos por corte quincenal pendientes de liquidar y historial reciente
+            </p>
+          </div>
+          <Card className="bg-white/5 border-white/10 p-6">
+            <TalentPayrollPanel orgId={orgId} />
+          </Card>
+        </div>
+
       </div>
     </div>
   );
