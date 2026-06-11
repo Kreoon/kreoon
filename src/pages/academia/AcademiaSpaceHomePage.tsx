@@ -456,7 +456,7 @@ export default function AcademiaSpaceHomePage() {
               ) : (
                 <ul className="space-y-2">
                   {leaderboard.slice(0, 5).map((row, i) => {
-                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
+                    const medal = i === 0 ? '👑' : i === 1 ? '⭐' : i === 2 ? '✨' : null;
                     return (
                       <li
                         key={row.id}

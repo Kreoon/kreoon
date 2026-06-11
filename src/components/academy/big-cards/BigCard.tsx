@@ -12,11 +12,11 @@ export interface BigCardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const GRADIENT_MAP = {
-  purple: 'bg-gradient-to-br from-purple-500/15 via-purple-500/5 to-transparent',
-  cyan: 'bg-gradient-to-br from-cyan-500/15 via-cyan-500/5 to-transparent',
-  amber: 'bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent',
-  rose: 'bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent',
-  emerald: 'bg-gradient-to-br from-emerald-500/15 via-emerald-500/5 to-transparent',
+  purple: 'bg-gradient-to-br from-[#7c3aed]/15 via-[#7c3aed]/5 to-transparent',
+  cyan: 'bg-gradient-to-br from-[#06b6d4]/12 via-[#7c3aed]/5 to-transparent',
+  amber: 'bg-gradient-to-br from-[#f59e0b]/10 via-[#7c3aed]/5 to-transparent',
+  rose: 'bg-gradient-to-br from-[#db2777]/12 via-[#7c3aed]/5 to-transparent',
+  emerald: 'bg-gradient-to-br from-[#10b981]/10 via-[#7c3aed]/5 to-transparent',
   none: '',
 } as const;
 

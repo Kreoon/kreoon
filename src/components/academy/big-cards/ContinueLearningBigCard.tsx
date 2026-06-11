@@ -68,8 +68,8 @@ export function ContinueLearningBigCard({
           {pct >= 80 && (
             <div className="absolute top-3 right-3 motion-safe:animate-bounce">
               <div
-                className="h-10 w-10 rounded-full flex items-center justify-center shadow-xl"
-                style={{ backgroundColor: '#fbbf24' }}
+                className="h-10 w-10 rounded-full flex items-center justify-center shadow-xl border-2"
+                style={{ backgroundColor: accentColor, borderColor: `${accentColor}80` }}
               >
                 <Trophy className="h-5 w-5 text-white" aria-hidden="true" />
               </div>
@@ -102,7 +102,7 @@ export function ContinueLearningBigCard({
                 className="h-full rounded-full transition-all duration-1000 motion-safe:animate-in motion-safe:slide-in-from-left"
                 style={{
                   width: `${pct}%`,
-                  background: `linear-gradient(90deg, ${accentColor}, #ec4899)`,
+                  background: `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)`,
                   boxShadow: `0 0 12px ${accentColor}80`,
                 }}
               />

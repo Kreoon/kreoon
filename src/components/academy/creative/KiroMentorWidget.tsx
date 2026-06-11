@@ -26,7 +26,7 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
         title: '¡Hola, soy KIRO!',
         body: 'Tu mentor en este viaje. Te voy a acompañar paso a paso.',
         cta: { label: '🚀 Empezar', to: `/academia/${spaceSlug}/classroom` },
-        mood: 'amber' as const,
+        mood: 'purple' as const,
       };
     }
 
@@ -55,7 +55,7 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
         title: `¡Tu racha de ${state.streak_days} días peligra!`,
         body: 'Una lección o un comentario hoy mantiene la llama encendida.',
         cta: { label: '⚡ Mantener racha', to: `/academia/${spaceSlug}/feed` },
-        mood: 'rose' as const,
+        mood: 'purple' as const,
       };
     }
 
@@ -65,7 +65,7 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
         title: 'Tu energía está baja',
         body: 'Comenta o reacciona en la comunidad — recargas 5 puntos por interacción.',
         cta: { label: '💬 Ir al feed', to: `/academia/${spaceSlug}/feed` },
-        mood: 'cyan' as const,
+        mood: 'purple' as const,
       };
     }
 
@@ -75,7 +75,7 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
         title: `¡Estás a un paso del nivel ${state.level + 1}!`,
         body: `Como ${state.title}, ya dominas lo básico. Completa una lección para subir.`,
         cta: { label: '🎯 Ver classroom', to: `/academia/${spaceSlug}/classroom` },
-        mood: 'amber' as const,
+        mood: 'purple' as const,
       };
     }
 
@@ -84,7 +84,7 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
       title: '¡Sigue así, leyenda!',
       body: 'Has llegado al máximo nivel. Inspira publicando tu próximo aprendizaje.',
       cta: { label: '✍ Publicar', to: `/academia/${spaceSlug}/feed` },
-      mood: 'emerald' as const,
+      mood: 'purple' as const,
     };
   }, [state, enrollments, spaceSlug]);
 

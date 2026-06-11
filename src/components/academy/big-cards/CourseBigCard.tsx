@@ -90,7 +90,7 @@ export function CourseBigCard({
           <div
             className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm"
             style={{
-              backgroundColor: course.is_free ? 'rgba(16,185,129,0.95)' : `${accentColor}f0`,
+              backgroundColor: `${accentColor}f0`,
               color: 'white',
             }}
           >

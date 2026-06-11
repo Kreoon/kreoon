@@ -75,7 +75,14 @@ export function EventBigCard({ event, accentColor = '#8B5CF6', compact = false }
             )}
           </div>
           {isToday && (
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 motion-safe:animate-pulse">
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full motion-safe:animate-pulse border"
+              style={{
+                backgroundColor: `${accentColor}25`,
+                borderColor: `${accentColor}60`,
+                color: accentColor,
+              }}
+            >
               HOY
             </span>
           )}
@@ -121,7 +128,10 @@ export function EventBigCard({ event, accentColor = '#8B5CF6', compact = false }
         </div>
 
         {isToday && (
-          <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-rose-500 text-white text-xs font-extrabold shadow-lg motion-safe:animate-pulse">
+          <div
+            className="absolute top-4 right-4 px-3 py-1 rounded-full text-white text-xs font-extrabold shadow-lg motion-safe:animate-pulse"
+            style={{ backgroundColor: accentColor, boxShadow: `0 4px 16px ${accentColor}80` }}
+          >
             🔴 HOY
           </div>
         )}

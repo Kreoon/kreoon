@@ -111,7 +111,7 @@ export function MissionsCard({ spaceId, accentColor = '#8B5CF6' }: MissionsCardP
                         width: `${pct}%`,
                         background: m.completed
                           ? 'linear-gradient(90deg, #10b981, #34d399)'
-                          : `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)`,
+                          : `linear-gradient(90deg, #7c3aed, ${accentColor})`,
                       }}
                     />
                   </div>
@@ -119,8 +119,8 @@ export function MissionsCard({ spaceId, accentColor = '#8B5CF6' }: MissionsCardP
                     <span
                       className="px-2 py-0.5 rounded-full font-bold"
                       style={{
-                        backgroundColor: 'rgba(251,191,36,0.15)',
-                        color: '#fbbf24',
+                        backgroundColor: `${accentColor}25`,
+                        color: accentColor,
                       }}
                     >
                       ⭐ +{m.xp_reward} XP
@@ -128,8 +128,8 @@ export function MissionsCard({ spaceId, accentColor = '#8B5CF6' }: MissionsCardP
                     <span
                       className="px-2 py-0.5 rounded-full font-bold"
                       style={{
-                        backgroundColor: 'rgba(34,211,238,0.15)',
-                        color: '#22d3ee',
+                        backgroundColor: 'rgba(6,182,212,0.15)',
+                        color: '#06b6d4',
                       }}
                     >
                       ⚡ +{m.energy_reward}

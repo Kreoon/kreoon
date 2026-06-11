@@ -22,32 +22,32 @@ const RARITY_STYLES: Record<
   { border: string; shine: string; glowColor: string; label: string; pill: string }
 > = {
   common: {
-    border: 'border-zinc-600',
+    border: 'border-zinc-700',
     shine: '',
     glowColor: '#52525b',
     label: 'Común',
     pill: 'bg-zinc-500/20 text-zinc-300',
   },
   rare: {
-    border: 'border-cyan-400/70',
-    shine: 'shadow-[0_0_20px_rgba(34,211,238,0.45)]',
-    glowColor: '#22d3ee',
+    border: 'border-[#06b6d4]/70',
+    shine: 'shadow-[0_0_20px_rgba(6,182,212,0.45)]',
+    glowColor: '#06b6d4',
     label: 'Rara',
-    pill: 'bg-cyan-500/20 text-cyan-300',
+    pill: 'bg-[#06b6d4]/20 text-[#67e8f9]',
   },
   epic: {
-    border: 'border-purple-400/80',
-    shine: 'shadow-[0_0_24px_rgba(168,85,247,0.55)]',
-    glowColor: '#a855f7',
+    border: 'border-[#a855f7]/80',
+    shine: 'shadow-[0_0_24px_rgba(124,58,237,0.55)]',
+    glowColor: '#7c3aed',
     label: 'Épica',
-    pill: 'bg-purple-500/20 text-purple-300',
+    pill: 'bg-[#7c3aed]/20 text-[#c084fc]',
   },
   legendary: {
-    border: 'border-amber-300/90',
-    shine: 'shadow-[0_0_28px_rgba(251,191,36,0.7)]',
-    glowColor: '#fbbf24',
+    border: 'border-[#db2777]/80',
+    shine: 'shadow-[0_0_28px_rgba(219,39,119,0.55)]',
+    glowColor: '#db2777',
     label: 'Legendaria',
-    pill: 'bg-amber-500/20 text-amber-300',
+    pill: 'bg-[#db2777]/20 text-[#f9a8d4]',
   },
 };
 
