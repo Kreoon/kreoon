@@ -79,6 +79,8 @@ serve(async (req) => {
           await handleCampaignCheckoutCompleted(supabase, session);
         } else if (session.metadata?.type === "academy_course_purchase") {
           await handleAcademyCoursePurchase(supabase, session);
+        } else if (session.metadata?.type === "org_access_purchase") {
+          await handleOrgAccessPurchase(supabase, session);
         }
         break;
       }
@@ -536,6 +538,229 @@ async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checko
   }
 
   console.log(`[academy_course_purchase] ✓ Enrolled user ${userId} in course ${courseId} ($${amount})`);
+}
+
+// ============================================================================
+// HANDLER: COMPRA DE PLAN AGENCIA (pago único, no recurrente)
+// ============================================================================
+
+async function handleOrgAccessPurchase(supabase: any, session: Stripe.Checkout.Session) {
+  const metadata = session.metadata || {};
+  const tier = metadata.tier;
+  const userId = metadata.user_id || null;
+  const organizationId = metadata.organization_id || null;
+  const walletId = metadata.wallet_id;
+  const amount = (session.amount_total ?? 0) / 100;
+  const paymentIntentId = typeof session.payment_intent === "string" ? session.payment_intent : null;
+
+  if (!tier || !walletId || (!userId && !organizationId)) {
+    console.warn("[org_access_purchase] Missing metadata (tier/wallet/owner)", session.id);
+    return;
+  }
+
+  // Idempotencia: si ya procesamos este payment_intent, salir
+  if (paymentIntentId) {
+    const { data: existingTx } = await supabase
+      .from("unified_transactions")
+      .select("id")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .eq("transaction_type", "subscription_payment")
+      .limit(1)
+      .maybeSingle();
+    if (existingTx) {
+      console.log(`[org_access_purchase] Payment ${paymentIntentId} already processed, skipping`);
+      return;
+    }
+  }
+
+  const planConfig = await getPlanConfig(supabase, tier);
+  const now = new Date();
+  // Pago único = acceso permanente (sin renovación)
+  const accessEnd = new Date("2099-12-31T23:59:59Z");
+
+  // Buscar suscripción existente del mismo dueño (org o usuario personal)
+  let existingQuery = supabase
+    .from("platform_subscriptions")
+    .select("id")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  if (organizationId) {
+    existingQuery = existingQuery.eq("organization_id", organizationId);
+  } else {
+    existingQuery = existingQuery.eq("user_id", userId).is("organization_id", null);
+  }
+  const { data: existingSub } = await existingQuery.maybeSingle();
+
+  const subscriptionData = {
+    user_id: organizationId ? null : userId,
+    organization_id: organizationId,
+    wallet_id: walletId,
+    tier,
+    status: "active",
+    stripe_subscription_id: null,
+    stripe_price_id: null,
+    stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+    billing_cycle: "one_time",
+    current_price: amount,
+    price_monthly: planConfig.price_monthly,
+    price_annual: planConfig.price_annual,
+    current_period_start: now.toISOString(),
+    current_period_end: accessEnd.toISOString(),
+    trial_ends_at: null,
+    cancel_at_period_end: false,
+    plan_limits: planConfig.limits,
+    metadata: {
+      source: "one_time_purchase",
+      stripe_checkout_session_id: session.id,
+      stripe_payment_intent_id: paymentIntentId,
+      purchased_at: now.toISOString(),
+    },
+    updated_at: now.toISOString(),
+  };
+
+  if (existingSub) {
+    const { error } = await supabase
+      .from("platform_subscriptions")
+      .update(subscriptionData)
+      .eq("id", existingSub.id);
+    if (error) {
+      console.error("[org_access_purchase] Error updating subscription:", error);
+      return;
+    }
+  } else {
+    const { error } = await supabase
+      .from("platform_subscriptions")
+      .insert(subscriptionData);
+    if (error) {
+      console.error("[org_access_purchase] Error inserting subscription:", error);
+      return;
+    }
+  }
+
+  // Tokens IA: la asignación mensual se renueva vía cron (reset_expired_token_balances)
+  // usando next_reset_at — anclar el primer reset a +30 días
+  const nextResetUnix = Math.floor(now.getTime() / 1000) + 30 * 24 * 60 * 60;
+  await updateTokenAllowance(
+    supabase,
+    { user_id: organizationId ? null : userId, organization_id: organizationId },
+    planConfig.ai_tokens_monthly,
+    tier,
+    nextResetUnix
+  );
+
+  // Registrar transacción
+  await supabase.from("unified_transactions").insert({
+    wallet_id: walletId,
+    transaction_type: "subscription_payment",
+    status: "completed",
+    amount,
+    currency: (session.currency || "usd").toUpperCase(),
+    stripe_payment_intent_id: paymentIntentId,
+    description: `Compra única plan agencia: ${tier}`,
+    processed_at: now.toISOString(),
+  });
+
+  // Sync organizations (backward compat)
+  if (organizationId) {
+    await supabase
+      .from("organizations")
+      .update({
+        trial_active: false,
+        subscription_status: "active",
+        selected_plan: tier,
+      })
+      .eq("id", organizationId);
+  }
+
+  // Comisión de referido: una sola vez (no hay renovaciones)
+  await processReferralOneTimeCommission(supabase, {
+    user_id: organizationId ? null : userId,
+    organization_id: organizationId,
+  }, {
+    tier,
+    amount,
+    session_id: session.id,
+  });
+
+  console.log(`[org_access_purchase] ✓ Plan ${tier} activado (pago único $${amount}) para ${organizationId || userId}`);
+}
+
+async function processReferralOneTimeCommission(
+  supabase: any,
+  wallet: { user_id: string | null; organization_id: string | null },
+  purchase: { tier: string; amount: number; session_id: string }
+) {
+  const referredId = wallet.user_id || wallet.organization_id;
+  if (!referredId) return;
+
+  const { data: referral } = await supabase
+    .from("referral_relationships")
+    .select("id, referrer_id, referrer_wallet_id, subscription_rate, status")
+    .eq("referred_id", referredId)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  if (!referral) return;
+
+  // Deduplicación por sesión de checkout (la compra es única)
+  const sourceKey = `onetime_${purchase.session_id}`;
+  const { data: existingEarning } = await supabase
+    .from("referral_earnings")
+    .select("id")
+    .eq("relationship_id", referral.id)
+    .eq("source_type", "subscription")
+    .eq("source_id", sourceKey)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingEarning) return;
+
+  const rate = referral.subscription_rate || 0.20;
+  const commissionAmount = purchase.amount * rate;
+  if (commissionAmount <= 0) return;
+
+  const now = new Date();
+
+  await supabase.from("referral_earnings").insert({
+    relationship_id: referral.id,
+    referrer_id: referral.referrer_id,
+    referrer_wallet_id: referral.referrer_wallet_id,
+    source_type: "subscription",
+    source_id: sourceKey,
+    gross_amount: purchase.amount,
+    commission_rate: referral.subscription_rate,
+    commission_amount: commissionAmount,
+    status: "credited",
+    credited_at: now.toISOString(),
+  });
+
+  if (referral.referrer_wallet_id) {
+    await supabase.rpc("update_wallet_balance", {
+      p_wallet_id: referral.referrer_wallet_id,
+      p_available_delta: commissionAmount,
+      p_earned_delta: commissionAmount,
+    });
+
+    await supabase.from("unified_transactions").insert({
+      wallet_id: referral.referrer_wallet_id,
+      transaction_type: "referral_commission",
+      status: "completed",
+      amount: commissionAmount,
+      referral_id: referral.id,
+      description: `Comisión referido: compra única plan ${purchase.tier}`,
+      processed_at: now.toISOString(),
+    });
+  }
+
+  await supabase.rpc("increment_column", {
+    p_table: "referral_relationships",
+    p_column: "total_subscription_earned",
+    p_amount: commissionAmount,
+    p_id: referral.id,
+  });
+
+  console.log(`[org_access_purchase] Comisión referido $${commissionAmount} acreditada a ${referral.referrer_id}`);
 }
 
 // ============================================================================

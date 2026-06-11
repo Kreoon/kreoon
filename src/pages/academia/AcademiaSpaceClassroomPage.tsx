@@ -203,7 +203,7 @@ function OwnerClassroomView({
                       size="sm"
                       variant="ghost"
                       className="h-8 text-xs text-zinc-400 hover:text-zinc-100"
-                      onClick={() => navigate(`/academia/${spaceSlug}/gestionar`)}
+                      onClick={() => navigate(`/academia/${spaceSlug}/${course.slug}/edit`)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -295,7 +295,7 @@ function StudentClassroomView({
               <Link to={`/academia/${space.slug}/${course.slug}`} key={course.id}>
                 <Card className="overflow-hidden bg-white/5 border-white/10 hover:border-purple-500/40 transition-colors h-full">
                   {course.cover_image_url ? (
-                    <img src={course.cover_image_url} alt="" className="h-40 w-full object-cover" />
+                    <img src={course.cover_image_url} alt={course.title} className="h-40 w-full object-cover" />
                   ) : (
                     <div
                       className="h-40 w-full"

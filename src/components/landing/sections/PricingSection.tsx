@@ -25,6 +25,8 @@ export interface PricingPlan {
   ctaVariant: "primary" | "secondary" | "outline";
   highlighted?: boolean;
   icon?: React.ReactNode;
+  /** Plan de pago único (no recurrente) — ej. planes de agencia */
+  oneTime?: boolean;
 }
 
 export interface PricingSectionProps {
@@ -67,7 +69,7 @@ const PLANS_MARCAS: PricingPlan[] = [
       "Soporte por email",
     ],
     limitations: ["Sin analytics avanzados"],
-    ctaLabel: "Empezar prueba gratis",
+    ctaLabel: "Empezar ahora",
     ctaVariant: "primary",
     highlighted: true,
   },
@@ -88,7 +90,7 @@ const PLANS_MARCAS: PricingPlan[] = [
       "Soporte prioritario",
       "Reportes de performance",
     ],
-    ctaLabel: "Empezar prueba gratis",
+    ctaLabel: "Empezar ahora",
     ctaVariant: "outline",
   },
   {
@@ -149,7 +151,7 @@ const PLANS_CREADORES: PricingPlan[] = [
       "Analytics de perfil",
       "Soporte prioritario",
     ],
-    ctaLabel: "Probar 14 días gratis",
+    ctaLabel: "Hazte Pro",
     ctaVariant: "primary",
     highlighted: true,
   },
@@ -161,8 +163,8 @@ const PLANS_AGENCIAS: PricingPlan[] = [
     name: "Agency Starter",
     description: "Para agencias pequeñas y freelancers con clientes",
     priceMonthly: "249",
-    priceAnnual: "208",
     priceCustom: false,
+    oneTime: true,
     aiTokens: "20,000 tokens IA/mes",
     features: [
       "Hasta 5 clientes/marcas",
@@ -173,7 +175,7 @@ const PLANS_AGENCIAS: PricingPlan[] = [
       "Acceso a red de creadores",
       "Soporte por email",
     ],
-    ctaLabel: "Comenzar prueba",
+    ctaLabel: "Comprar acceso",
     ctaVariant: "secondary",
   },
   {
@@ -182,8 +184,8 @@ const PLANS_AGENCIAS: PricingPlan[] = [
     badge: "Más popular para agencias",
     description: "Para agencias en crecimiento",
     priceMonthly: "599",
-    priceAnnual: "499",
     priceCustom: false,
+    oneTime: true,
     aiTokens: "60,000 tokens IA/mes",
     customApiIncluded: true,
     features: [
@@ -196,7 +198,7 @@ const PLANS_AGENCIAS: PricingPlan[] = [
       "Integraciones de marketing",
       "Soporte prioritario",
     ],
-    ctaLabel: "Comenzar prueba gratis",
+    ctaLabel: "Comprar acceso",
     ctaVariant: "primary",
     highlighted: true,
   },
@@ -238,7 +240,7 @@ const SEGMENT_CONFIG: Record<PricingSegment, { label: string; icon: React.Elemen
 };
 
 const TRUST_ITEMS = [
-  "14 días de prueba gratis",
+  "Plan gratis para siempre",
   "Sin tarjeta requerida",
   "Cancela cuando quieras",
   "Garantía de satisfacción",
@@ -423,7 +425,9 @@ export function PricingSection({
             const period =
               plan.priceCustom || plan.priceMonthly === "0"
                 ? ""
-                : "/mes";
+                : plan.oneTime
+                  ? " pago único"
+                  : "/mes";
 
             return (
               <motion.div

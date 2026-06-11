@@ -79,6 +79,14 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
         </nav>
         {space && (
           <div className="flex items-center gap-3 flex-shrink-0">
+            {isOwner && (
+              <span
+                className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
+                style={{ color: accent, borderColor: `${accent}40`, backgroundColor: `${accent}15` }}
+              >
+                Owner
+              </span>
+            )}
             <OnlineIndicator spaceId={space.id} showLabel={false} className="hidden md:inline-flex" />
             {user && <NotificationBell spaceId={space.id} accentColor={accent} />}
           </div>

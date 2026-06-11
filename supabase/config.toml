@@ -194,9 +194,11 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.admin-users]
-# JWT verification handled internally by the function (supabase.auth.getUser)
-# Gateway verify_jwt caused 401 because supabase.functions.invoke header merging is inconsistent
-verify_jwt = false
+# Security fix: activado verify_jwt = true en gateway como defensa extra.
+# La función también valida JWT internamente con supabaseAdmin.auth.getUser.
+# Si reaparece el 401 por header-merging con supabase.functions.invoke,
+# revertir a false y documentar el caso concreto.
+verify_jwt = true
 
 [functions.admin-reset-password]
 verify_jwt = true
@@ -208,7 +210,11 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-delete-v2]
-verify_jwt = false
+# Security fix: cambiado a verify_jwt = true.
+# Esta función es invocada exclusivamente desde el frontend via
+# supabase.functions.invoke (useBunnyStorage.ts, usePortfolioItems.ts),
+# que adjunta el JWT automáticamente. No es un webhook externo.
+verify_jwt = true
 
 [functions.bunny-status-v2]
 verify_jwt = true
@@ -226,6 +232,8 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.kreoon-sql]
+# verify_jwt = false: se invoca externamente con secret propio (KREOON_SQL_EXEC_SECRET).
+# La función valida JWT + admin role internamente antes de ejecutar cualquier operación.
 verify_jwt = false
 
 [functions.notify-new-member]

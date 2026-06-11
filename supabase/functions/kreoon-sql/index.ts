@@ -49,10 +49,19 @@ serve(async (req) => {
     const callerId = userData.user.id as string;
 
     // Check if caller is admin (ROOT or platform admin)
-    const ROOT_EMAILS = (Deno.env.get("ROOT_ADMIN_EMAILS") ||
-      "jacsolucionesgraficas@gmail.com,kairosgp.sas@gmail.com")
-      .split(",").map(e => e.trim());
+    // ROOT_ADMIN_EMAILS must be explicitly configured — no hardcoded fallback
+    const rootEmailsEnv = Deno.env.get("ROOT_ADMIN_EMAILS");
+    if (!rootEmailsEnv) {
+      console.error("SECURITY: ROOT_ADMIN_EMAILS env var is not configured");
+      return new Response(JSON.stringify({
+        error: "Server misconfiguration: ROOT_ADMIN_EMAILS is not set. Contact a system administrator."
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
+    const ROOT_EMAILS = rootEmailsEnv.split(",").map(e => e.trim()).filter(Boolean);
     const isRootUser = ROOT_EMAILS.includes(callerEmail);
 
     if (!isRootUser) {
@@ -152,7 +161,7 @@ serve(async (req) => {
       const { data, error, count } = await supabaseAdmin
         .from(table)
         .select('*', { count: 'exact', head: true });
-      
+
       testResults[table] = {
         accessible: !error,
         count: count || 0,
@@ -160,7 +169,7 @@ serve(async (req) => {
       };
     }
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       message: 'SQL execution via REST API is limited. Use Supabase Dashboard for raw SQL.',
       testResults,
       note: 'All tables are accessible with service role. The issue is RLS policies for authenticated users.',
@@ -170,7 +179,7 @@ serve(async (req) => {
 
   } catch (error: unknown) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       error: error instanceof Error ? error.message : "Unknown error",
     }), {
       status: 500,

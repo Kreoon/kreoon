@@ -259,7 +259,16 @@ export function useReputationSeasons(organizationId?: string) {
   return { seasons, activeSeason, loading, createSeason };
 }
 
-// ─── logReputationEvent: insert event into reputation_events ─
+// ─── logReputationEvent: RPC SECURITY DEFINER (anti-fraude) ──
+//
+// Migrado de insert directo en 'reputation_events' a RPC
+// award_reputation_event. El servidor valida:
+//   - p_user_id == auth.uid() (no se pueden falsificar eventos de otro)
+//   - membresía en la org
+//   - base_points en [-500, 500]
+//   - multiplier en [0.1, 5.0]
+//   - dedup graceful (unique_violation → duplicate: true)
+//   - side-effect sync_marketplace_reputation dentro de la RPC
 
 export async function logReputationEvent(params: {
   organizationId: string;
@@ -274,36 +283,35 @@ export async function logReputationEvent(params: {
   breakdown?: Record<string, any>;
   seasonId?: string;
 }) {
-  const { data, error } = await supabase
-    .from('reputation_events')
-    .insert({
-      organization_id: params.organizationId,
-      user_id: params.userId,
-      role_key: params.roleKey,
-      reference_type: params.referenceType,
-      reference_id: params.referenceId,
-      event_type: params.eventType,
-      event_subtype: params.eventSubtype ?? null,
-      base_points: params.basePoints,
-      multiplier: params.multiplier ?? 1.0,
-      calculation_breakdown: params.breakdown ?? null,
-      season_id: params.seasonId ?? null,
-    } as any)
-    .select()
-    .single();
+  const { data, error } = await (supabase as any).rpc('award_reputation_event', {
+    p_organization_id: params.organizationId,
+    p_user_id:         params.userId,
+    p_role_key:        params.roleKey,
+    p_reference_type:  params.referenceType,
+    p_reference_id:    params.referenceId,
+    p_event_type:      params.eventType,
+    p_event_subtype:   params.eventSubtype ?? null,
+    p_base_points:     params.basePoints,
+    p_multiplier:      params.multiplier ?? 1.0,
+    p_breakdown:       params.breakdown ?? null,
+    p_season_id:       params.seasonId ?? null,
+  });
 
   if (error) {
-    // Dedup constraint — not an error, just already exists
-    if (error.code === '23505') {
-      console.log('[Reputation] Event already exists, skipping duplicate');
-      return { data: null, error: null, duplicate: true };
-    }
-    console.error('[Reputation] Error logging event:', error);
+    console.error('[Reputation] Error logging event via RPC:', error);
     return { data: null, error, duplicate: false };
   }
 
-  // Async: sync marketplace reputation (fire and forget)
-  supabase.rpc('sync_marketplace_reputation', { p_user_id: params.userId }).then(() => {});
+  // La RPC devuelve un objeto JSONB con { data, error, duplicate }
+  const result = data as { data: { id: string } | null; error: null; duplicate: boolean };
 
-  return { data, error: null, duplicate: false };
+  if (result?.duplicate) {
+    console.log('[Reputation] Event already exists, skipping duplicate');
+    return { data: null, error: null, duplicate: true };
+  }
+
+  // sync_marketplace_reputation ya se invoca dentro de la RPC.
+  // No es necesario el fire-and-forget adicional del cliente.
+
+  return { data: result?.data ?? null, error: null, duplicate: false };
 }

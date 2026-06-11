@@ -146,7 +146,7 @@ export function OrgDetailsStep({ data, onChange, onNext, onBack, mode }: StepCom
 
       {/* Plan selection */}
       <div className="mb-4">
-        <label className="block text-xs font-medium text-foreground/80 mb-2">Plan (30 días gratis)</label>
+        <label className="block text-xs font-medium text-foreground/80 mb-2">Plan</label>
         <div className="space-y-2">
           {PLAN_OPTIONS.map(plan => {
             const selected = data.selectedPlan === plan.id;

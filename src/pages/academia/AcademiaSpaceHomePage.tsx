@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
   Lock,
@@ -10,20 +10,17 @@ import {
   Trophy,
   MessagesSquare,
   ChevronRight,
-  Sparkles,
   Pin,
-  Award,
-  Video,
   Settings,
   Plus,
   BarChart2,
   Eye,
+  Sparkles,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
-import { safeUrl } from '@/lib/safeUrl';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { useSpaceFeed } from '@/hooks/academy/useAcademyCommunity';
 import { useSpaceCalendar } from '@/hooks/academy/useAcademyCalendar';
@@ -44,11 +41,16 @@ import { useSpacePlugins } from '@/hooks/academy/useSpacePlugins';
 import { MetaPixel } from '@/components/academy/integrations/MetaPixel';
 import { KiroMentorWidget } from '@/components/academy/creative/KiroMentorWidget';
 import { VibeScore } from '@/components/academy/creative/VibeScore';
+import { BigCard } from '@/components/academy/big-cards/BigCard';
+import { CourseBigCard } from '@/components/academy/big-cards/CourseBigCard';
+import { ContinueLearningBigCard } from '@/components/academy/big-cards/ContinueLearningBigCard';
+import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
 import type { AcademySpaceEventFull } from '@/types/academy-v3';
 
 export default function AcademiaSpaceHomePage() {
   const { spaceSlug } = useParams<{ spaceSlug: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { data: space, isLoading } = useAcademySpace(spaceSlug);
 
   const spaceId = (space as any)?.id;
@@ -81,7 +83,8 @@ export default function AcademiaSpaceHomePage() {
   const newMembers = useMemo(() => (members as any[]).slice(0, 8), [members]);
   const onlineCount = presence.length;
 
-  const myEnrollmentInFirstCourse = useMyEnrollment(((space as any)?.courses ?? [])[0]?.id);
+  const firstCourse = ((space as any)?.courses ?? [])[0];
+  const myEnrollmentInFirstCourse = useMyEnrollment(firstCourse?.id);
 
   if (isLoading) {
     return (
@@ -123,12 +126,13 @@ export default function AcademiaSpaceHomePage() {
     );
   }
 
-  const courses = ((space as any).courses ?? []).filter((c: any) => c.status === 'published');
+  const isOwner = !!user && (space as any).owner_id === user.id;
+  const allCourses = (space as any).courses ?? [];
+  const courses = allCourses.filter((c: any) => c.status === 'published');
   const featuredCourses = courses.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
-      {/* Meta Pixel del space (si está habilitado) */}
       <MetaPixel
         pixelId={plugins?.meta_pixel_id ?? null}
         enabled={!!plugins?.meta_pixel_enabled}
@@ -136,48 +140,57 @@ export default function AcademiaSpaceHomePage() {
 
       {/* HERO */}
       <div
-        className="relative h-56 md:h-72 overflow-hidden"
+        className="relative h-64 md:h-80 overflow-hidden"
         style={{
           background: space.cover_image_url
             ? `url(${space.cover_image_url}) center/cover`
-            : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
+            : `linear-gradient(135deg, ${accent}60, ${accent}20 50%, #0a0a0f)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent" />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-16 relative">
-        {/* Card de identidad */}
-        <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6 mb-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20 relative">
+        {/* Identidad — agrandada */}
+        <div className="flex flex-col md:flex-row items-start md:items-end gap-4 md:gap-6 mb-6">
           {space.logo_url ? (
             <img
               src={space.logo_url}
               alt={space.name}
-              className="h-20 w-20 md:h-28 md:w-28 rounded-2xl object-cover border-4 border-[#0a0a0f] shadow-xl flex-shrink-0"
+              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl object-cover border-4 border-[#0a0a0f] shadow-2xl flex-shrink-0"
             />
           ) : (
             <div
-              className="h-20 w-20 md:h-28 md:w-28 rounded-2xl border-4 border-[#0a0a0f] shadow-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: `${accent}30` }}
+              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl border-4 border-[#0a0a0f] shadow-2xl flex items-center justify-center flex-shrink-0 text-5xl"
+              style={{ backgroundColor: `${accent}40` }}
+              aria-hidden="true"
             >
-              <GraduationCap className="h-10 w-10" style={{ color: accent }} />
+              🎓
             </div>
           )}
           <div className="flex-1 min-w-0 pb-1">
-            <h1 className="text-2xl md:text-4xl font-bold mb-1 truncate">{space.name}</h1>
-            <div className="flex items-center gap-3 text-sm text-zinc-400 flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <Users className="h-4 w-4" />
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-2 truncate text-white">
+              {space.name}
+            </h1>
+            <div className="flex items-center gap-2 text-sm text-zinc-300 flex-wrap">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+                <Users className="h-3.5 w-3.5" />
                 {space.member_count} miembros
               </span>
               <OnlineIndicator spaceId={(space as any).id} />
               <VibeScore spaceId={(space as any).id} accentColor={accent} />
-              <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs uppercase tracking-wider">
-                {space.plan_slug === 'pro' ? 'Pro' : 'Hobby'}
+              <span
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: space.plan_slug === 'pro' ? `${accent}30` : 'rgba(255,255,255,0.05)',
+                  color: space.plan_slug === 'pro' ? accent : '#a1a1aa',
+                }}
+              >
+                {space.plan_slug === 'pro' ? '✨ Pro' : 'Hobby'}
               </span>
             </div>
             {space.description && (
-              <p className="text-sm text-zinc-400 mt-2 max-w-2xl line-clamp-2">
+              <p className="text-sm md:text-base text-zinc-300 mt-3 max-w-2xl line-clamp-2 leading-relaxed">
                 {space.description}
               </p>
             )}
@@ -185,14 +198,20 @@ export default function AcademiaSpaceHomePage() {
           <div className="flex gap-2 flex-shrink-0">
             <Link to={`/academia/${spaceSlug}/feed`}>
               <Button
-                className="text-white"
-                style={{ backgroundColor: accent }}
+                className="text-white font-bold rounded-2xl px-5 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
+                style={{
+                  background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                  boxShadow: `0 6px 20px -4px ${accent}80`,
+                }}
               >
                 <MessagesSquare className="h-4 w-4 mr-2" /> Ir al feed
               </Button>
             </Link>
             <Link to={`/academia/${spaceSlug}/classroom`}>
-              <Button variant="outline" className="border-white/10">
+              <Button
+                variant="outline"
+                className="border-2 border-white/15 rounded-2xl px-5 py-5 hover:bg-white/5 font-bold"
+              >
                 <GraduationCap className="h-4 w-4 mr-2" /> Ver cursos
               </Button>
             </Link>
@@ -200,62 +219,105 @@ export default function AcademiaSpaceHomePage() {
         </div>
       </div>
 
-      {/* Nav del space */}
       <div className="mt-6">
         <SpaceNavbar spaceSlug={spaceSlug!} />
       </div>
 
-      {/* GRID HOME */}
+      {/* Owner quick-actions */}
+      {isOwner && (
+        <div
+          className="border-b border-white/10 sticky top-[49px] z-10 backdrop-blur-sm"
+          style={{ backgroundColor: `${accent}12` }}
+        >
+          <div className="max-w-7xl mx-auto px-4 md:px-8 h-11 flex items-center justify-between gap-3">
+            <span className="text-xs font-bold flex items-center gap-1.5" style={{ color: accent }}>
+              <Eye className="h-3 w-3" /> Modo propietario
+            </span>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm" variant="ghost"
+                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                onClick={() => navigate(`/academia/${spaceSlug}/gestionar`)}
+              >
+                <Plus className="h-3 w-3" /> Crear curso
+              </Button>
+              <Button
+                size="sm" variant="ghost"
+                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                onClick={() => navigate(`/academia/${spaceSlug}/admin?tab=settings`)}
+              >
+                <Settings className="h-3 w-3" /> Editar space
+              </Button>
+              <Button
+                size="sm" variant="ghost"
+                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                onClick={() => navigate(`/academia/${spaceSlug}/admin`)}
+              >
+                <BarChart2 className="h-3 w-3" /> Panel admin
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GRID */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* COLUMNA PRINCIPAL */}
           <div className="lg:col-span-2 space-y-6">
-            {/* KIRO Mentor — diferenciador único KREOON */}
+            {/* KIRO Mentor */}
             {user && (
               <KiroMentorWidget spaceId={(space as any).id} spaceSlug={spaceSlug!} accentColor={accent} />
             )}
 
-            {/* Mi progreso (si está inscrito) */}
-            {user && myEnrollmentInFirstCourse.data && (
-              <Card className="p-5 bg-gradient-to-br from-purple-500/10 to-cyan-500/5 border-white/10">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <div className="text-xs uppercase tracking-wide text-zinc-500">
-                      Continúa aprendiendo
-                    </div>
-                    <h3 className="font-bold text-lg mt-1">
-                      {((space as any).courses ?? [])[0]?.title}
-                    </h3>
-                  </div>
-                  <Link
-                    to={`/academia/${spaceSlug}/${((space as any).courses ?? [])[0]?.slug}/learn`}
-                  >
-                    <Button size="sm" className="text-white" style={{ backgroundColor: accent }}>
-                      <Video className="h-3.5 w-3.5 mr-1" /> Continuar
-                    </Button>
-                  </Link>
-                </div>
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                  <div
-                    className="h-full transition-all"
-                    style={{
-                      width: `${myEnrollmentInFirstCourse.data.completion_pct}%`,
-                      backgroundColor: accent,
-                    }}
-                  />
-                </div>
-                <div className="mt-1 text-xs text-zinc-500">
-                  {Math.round(myEnrollmentInFirstCourse.data.completion_pct)}% completado
-                </div>
-              </Card>
+            {/* Continúa aprendiendo — banner XL */}
+            {user && myEnrollmentInFirstCourse.data && firstCourse && (
+              <ContinueLearningBigCard
+                spaceSlug={spaceSlug!}
+                courseTitle={firstCourse.title}
+                courseSlug={firstCourse.slug}
+                coverImageUrl={firstCourse.cover_image_url}
+                progress={myEnrollmentInFirstCourse.data.completion_pct}
+                accentColor={accent}
+              />
             )}
+
+            {/* Cursos destacados */}
+            <section>
+              <SectionHeader
+                emoji="🎬"
+                title="Cursos"
+                accentColor={accent}
+                action={
+                  <Link
+                    to={`/academia/${spaceSlug}/classroom`}
+                    className="text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
+                    style={{ color: accent }}
+                  >
+                    Ver todos <ChevronRight className="h-4 w-4" />
+                  </Link>
+                }
+              />
+              {featuredCourses.length === 0 ? (
+                <EmptyState emoji="🎬" message="Aún no hay cursos publicados." />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {featuredCourses.map((course: any) => (
+                    <CourseBigCard
+                      key={course.id}
+                      course={course}
+                      spaceSlug={spaceSlug!}
+                      accentColor={accent}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
 
             {/* Posts fijados */}
             {pinnedPosts.length > 0 && (
               <section>
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-2">
-                  <Pin className="h-3.5 w-3.5" /> Anclados
-                </h2>
+                <SectionHeader emoji="📌" title="Anclados" accentColor={accent} />
                 <div className="space-y-3">
                   {pinnedPosts.map((post: any) => (
                     <MiniPostCard
@@ -271,21 +333,22 @@ export default function AcademiaSpaceHomePage() {
 
             {/* Posts recientes */}
             <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <MessagesSquare className="h-3.5 w-3.5" /> Recientes en la comunidad
-                </h2>
-                <Link
-                  to={`/academia/${spaceSlug}/feed`}
-                  className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                >
-                  Ver feed completo <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
+              <SectionHeader
+                emoji="💬"
+                title="Recientes en la comunidad"
+                accentColor={accent}
+                action={
+                  <Link
+                    to={`/academia/${spaceSlug}/feed`}
+                    className="text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
+                    style={{ color: accent }}
+                  >
+                    Ver feed <ChevronRight className="h-4 w-4" />
+                  </Link>
+                }
+              />
               {recentPosts.length === 0 ? (
-                <Card className="p-6 text-center text-sm text-zinc-500 bg-white/5 border-white/10">
-                  Aún no hay posts. ¡Sé el primero!
-                </Card>
+                <EmptyState emoji="✍️" message="Aún no hay posts. ¡Sé el primero!" />
               ) : (
                 <div className="space-y-3">
                   {recentPosts.map((post: any) => (
@@ -299,253 +362,216 @@ export default function AcademiaSpaceHomePage() {
                 </div>
               )}
             </section>
-
-            {/* Cursos destacados */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <GraduationCap className="h-3.5 w-3.5" /> Cursos
-                </h2>
-                <Link
-                  to={`/academia/${spaceSlug}/classroom`}
-                  className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
-                >
-                  Ver todos <ChevronRight className="h-3 w-3" />
-                </Link>
-              </div>
-              {featuredCourses.length === 0 ? (
-                <Card className="p-6 text-center text-sm text-zinc-500 bg-white/5 border-white/10">
-                  Aún no hay cursos publicados.
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {featuredCourses.map((course: any) => (
-                    <Link
-                      to={`/academia/${spaceSlug}/${course.slug}`}
-                      key={course.id}
-                    >
-                      <Card className="overflow-hidden bg-white/5 border-white/10 hover:border-purple-500/40 transition-colors h-full">
-                        {course.cover_image_url ? (
-                          <img
-                            src={course.cover_image_url}
-                            alt=""
-                            className="h-28 w-full object-cover"
-                          />
-                        ) : (
-                          <div
-                            className="h-28 w-full"
-                            style={{
-                              background: `linear-gradient(135deg, ${accent}40, transparent)`,
-                            }}
-                          />
-                        )}
-                        <div className="p-3">
-                          <h3 className="font-semibold text-zinc-100 text-sm line-clamp-2">
-                            {course.title}
-                          </h3>
-                          <div className="mt-2 flex items-center justify-between text-xs">
-                            <span className="text-zinc-500">
-                              {course.enrolled_count ?? 0} estudiantes
-                            </span>
-                            <span className="font-semibold" style={{ color: accent }}>
-                              {course.is_free ? 'Gratis' : `US$${course.price_usd}`}
-                            </span>
-                          </div>
-                        </div>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
           </div>
 
           {/* SIDEBAR */}
-          <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+          <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
+            {/* Mi nivel — Tarjeta hero gamification */}
+            {myGami && (
+              <BigCard
+                accentColor={accent}
+                glow
+                gradient="purple"
+                className="p-5"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="text-3xl" aria-hidden="true">⚔️</div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accent }}>
+                      Tu nivel
+                    </div>
+                    <div className="font-extrabold text-base text-white">{myGami.title}</div>
+                  </div>
+                </div>
+                <LevelBadge
+                  level={myGami.level}
+                  title={myGami.title}
+                  xp={myGami.total_points}
+                  showProgress
+                  accentColor={accent}
+                  size="md"
+                />
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
+                  <EnergyMeter energy={myGami.energy ?? 100} size="sm" />
+                  <StreakFlame days={myGami.streak_days ?? 0} size="sm" />
+                </div>
+              </BigCard>
+            )}
+
             {/* Próximos eventos */}
-            <Card className="p-4 bg-white/5 border-white/10">
+            <BigCard className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" /> Próximos eventos
-                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden="true">📅</span>
+                  <h2 className="font-extrabold text-base text-zinc-100">Próximos eventos</h2>
+                </div>
                 <Link
                   to={`/academia/${spaceSlug}/calendar`}
-                  className="text-xs text-purple-400 hover:text-purple-300"
+                  className="text-xs font-bold hover:underline"
+                  style={{ color: accent }}
                 >
                   Ver todo
                 </Link>
               </div>
               {upcomingEvents.length === 0 ? (
-                <p className="text-xs text-zinc-500 italic">Sin eventos próximos</p>
+                <div className="flex items-center gap-3 py-3">
+                  <div className="text-3xl opacity-60" aria-hidden="true">🌙</div>
+                  <div className="text-sm text-zinc-400">Sin eventos próximos</div>
+                </div>
               ) : (
-                <ul className="space-y-2">
-                  {upcomingEvents.map((ev) => {
-                    const dt = new Date(ev.starts_at);
-                    const meet = safeUrl(ev.meeting_url ?? ev.google_meet_link);
-                    return (
-                      <li
-                        key={ev.id}
-                        className="flex items-start gap-2 p-2 rounded hover:bg-white/5"
-                      >
-                        <div
-                          className="rounded p-1.5 text-center flex-shrink-0"
-                          style={{
-                            backgroundColor: `${accent}20`,
-                            color: accent,
-                            minWidth: 38,
-                          }}
-                        >
-                          <div className="text-[9px] uppercase">
-                            {format(dt, 'MMM', { locale: es })}
-                          </div>
-                          <div className="text-sm font-bold leading-none">{format(dt, 'd')}</div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm truncate">{ev.title}</div>
-                          <div className="text-[10px] text-zinc-500">
-                            {format(dt, 'HH:mm')} · {ev.rsvp_count} invitados
-                          </div>
-                          {meet && (
-                            <a
-                              href={meet}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] hover:underline"
-                              style={{ color: accent }}
-                            >
-                              Unirse
-                            </a>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div className="space-y-2">
+                  {upcomingEvents.map((ev) => (
+                    <EventBigCard
+                      key={ev.id}
+                      event={ev as any}
+                      accentColor={accent}
+                      compact
+                    />
+                  ))}
+                </div>
               )}
-            </Card>
+            </BigCard>
 
-            {/* Mi posición + Leaderboard mini */}
-            <Card className="p-4 bg-white/5 border-white/10">
+            {/* Leaderboard */}
+            <BigCard accentColor={accent} className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <Trophy className="h-3.5 w-3.5" /> Leaderboard · semana
-                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden="true">🏆</span>
+                  <h2 className="font-extrabold text-base text-zinc-100">Top semana</h2>
+                </div>
                 <Link
                   to={`/academia/${spaceSlug}/leaderboard`}
-                  className="text-xs text-purple-400 hover:text-purple-300"
+                  className="text-xs font-bold hover:underline"
+                  style={{ color: accent }}
                 >
                   Ver todo
                 </Link>
               </div>
 
-              {myGami && (
-                <div
-                  className="rounded-lg p-3 mb-3"
-                  style={{ backgroundColor: `${accent}10`, borderLeft: `2px solid ${accent}` }}
-                >
-                  <LevelBadge
-                    level={myGami.level}
-                    title={myGami.title}
-                    xp={myGami.total_points}
-                    showProgress
-                    accentColor={accent}
-                    size="md"
-                  />
-                  <div className="flex items-center justify-between mt-3 pt-2 border-t border-white/5">
-                    <EnergyMeter energy={myGami.energy ?? 100} size="sm" />
-                    <StreakFlame days={myGami.streak_days ?? 0} size="sm" />
-                  </div>
-                </div>
-              )}
-
               {leaderboard.length === 0 ? (
-                <p className="text-xs text-zinc-500 italic">Sin actividad esta semana</p>
+                <div className="flex items-center gap-3 py-3">
+                  <div className="text-3xl opacity-60" aria-hidden="true">😴</div>
+                  <div className="text-sm text-zinc-400">Sin actividad esta semana</div>
+                </div>
               ) : (
-                <ul className="space-y-1.5">
-                  {leaderboard.slice(0, 5).map((row, i) => (
-                    <li key={row.id} className="flex items-center gap-2 text-sm">
-                      <span
-                        className="text-xs w-5 text-center font-bold"
-                        style={{
-                          color: i === 0 ? '#fbbf24' : i === 1 ? '#a3a3a3' : i === 2 ? '#cd7f32' : '#71717a',
-                        }}
+                <ul className="space-y-2">
+                  {leaderboard.slice(0, 5).map((row, i) => {
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null;
+                    return (
+                      <li
+                        key={row.id}
+                        className={cn(
+                          'flex items-center gap-3 rounded-2xl p-2.5 transition-all',
+                          i < 3 ? 'bg-white/5' : 'hover:bg-white/[0.02]'
+                        )}
                       >
-                        {i + 1}
-                      </span>
-                      <MiniAvatar profile={row.user} accentColor={accent} />
-                      <span className="flex-1 truncate text-xs">
-                        {row.user?.full_name ?? 'Usuario'}
-                      </span>
-                      <span className="text-xs font-semibold" style={{ color: accent }}>
-                        {row.current_week_points}
-                      </span>
-                    </li>
-                  ))}
+                        <span className="text-xl w-7 text-center" aria-hidden="true">
+                          {medal ?? <span className="text-sm font-bold text-zinc-500">{i + 1}</span>}
+                        </span>
+                        <MiniAvatar profile={row.user} accentColor={accent} size={36} />
+                        <span className="flex-1 truncate text-sm font-semibold text-zinc-200">
+                          {row.user?.full_name ?? 'Usuario'}
+                        </span>
+                        <span
+                          className="text-sm font-extrabold tabular-nums"
+                          style={{ color: i < 3 ? accent : '#a1a1aa' }}
+                        >
+                          {row.current_week_points}
+                        </span>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
-            </Card>
+            </BigCard>
 
-            {/* Nuevos miembros */}
-            <Card className="p-4 bg-white/5 border-white/10">
+            {/* Misiones */}
+            {user && <MissionsCard spaceId={(space as any).id} accentColor={accent} />}
+
+            {/* Mis insignias */}
+            {user && (
+              <BigCard className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl" aria-hidden="true">🏅</span>
+                  <h2 className="font-extrabold text-base text-zinc-100">Mis insignias</h2>
+                </div>
+                <BadgesShowcase spaceId={(space as any).id} accentColor={accent} compact />
+              </BigCard>
+            )}
+
+            {/* Miembros */}
+            <BigCard className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-500 flex items-center gap-2">
-                  <Users className="h-3.5 w-3.5" /> Miembros
-                </h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl" aria-hidden="true">👥</span>
+                  <h2 className="font-extrabold text-base text-zinc-100">Miembros</h2>
+                </div>
                 <Link
                   to={`/academia/${spaceSlug}/members`}
-                  className="text-xs text-purple-400 hover:text-purple-300"
+                  className="text-xs font-bold hover:underline"
+                  style={{ color: accent }}
                 >
                   Ver todos
                 </Link>
               </div>
-              <div className="text-xs text-zinc-500 mb-2">
-                {space.member_count} totales · {onlineCount} en línea ahora
+              <div className="text-xs text-zinc-400 mb-3">
+                {space.member_count} totales · <span className="text-emerald-400 font-bold">{onlineCount} en línea</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {newMembers.map((m: any) => (
                   <Link
                     key={m.id}
                     to={`/academia/${spaceSlug}/members`}
                     title={m.user?.full_name ?? 'Miembro'}
+                    className="motion-safe:hover:scale-110 transition-transform"
                   >
-                    <MiniAvatar profile={m.user} accentColor={accent} size={32} />
+                    <MiniAvatar profile={m.user} accentColor={accent} size={40} />
                   </Link>
                 ))}
               </div>
-            </Card>
-
-            {/* Misiones semanales — diferenciador */}
-            {user && (
-              <MissionsCard spaceId={(space as any).id} accentColor={accent} />
-            )}
-
-            {/* Mis insignias */}
-            {user && (
-              <Card className="p-4 bg-kreoon-bg-card border-white/10">
-                <h2 className="text-sm uppercase tracking-wider text-zinc-300 flex items-center gap-2 mb-3">
-                  <Award className="h-3.5 w-3.5" aria-hidden="true" /> Mis insignias
-                </h2>
-                <BadgesShowcase spaceId={(space as any).id} accentColor={accent} compact />
-              </Card>
-            )}
-
-            {/* Online ahora — sutil */}
-            {onlineCount > 0 && (
-              <Card className="p-3 bg-emerald-500/5 border-emerald-500/20">
-                <OnlineIndicator spaceId={(space as any).id} />
-                <div className="text-[10px] text-zinc-500 mt-1">
-                  Conéctate con la comunidad ahora mismo
-                </div>
-              </Card>
-            )}
+            </BigCard>
           </aside>
         </div>
       </div>
+      {/* keep myPoints reference */}
+      <span className="hidden" aria-hidden="true">{myPoints?.total_points ?? 0}</span>
+      <Sparkles className="hidden" aria-hidden="true" />
     </div>
   );
 }
 
-// ── Mini componentes ──
+// ─── helpers ───
+
+function SectionHeader({
+  emoji,
+  title,
+  accentColor,
+  action,
+}: {
+  emoji: string;
+  title: string;
+  accentColor: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2.5">
+        <span className="text-2xl" aria-hidden="true">{emoji}</span>
+        <h2 className="font-extrabold text-lg text-zinc-100">{title}</h2>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function EmptyState({ emoji, message }: { emoji: string; message: string }) {
+  return (
+    <Card className="rounded-2xl p-8 text-center bg-white/[0.02] border-2 border-dashed border-white/10">
+      <div className="text-5xl mb-2" aria-hidden="true">{emoji}</div>
+      <div className="text-sm text-zinc-400">{message}</div>
+    </Card>
+  );
+}
 
 function MiniPostCard({
   post,
@@ -566,26 +592,23 @@ function MiniPostCard({
   const html = sanitizeHTML(post.body_html ?? post.body.replace(/\n/g, '<br>'));
   return (
     <Link to={`/academia/${spaceSlug}/feed`}>
-      <Card
-        className={cn(
-          'p-4 bg-white/5 border-white/10 hover:border-white/20 transition-colors cursor-pointer',
-          post.is_pinned && 'border-l-2'
-        )}
+      <BigCard
+        className={cn('p-4 cursor-pointer', post.is_pinned && 'border-l-4')}
         style={post.is_pinned ? { borderLeftColor: accentColor } : undefined}
       >
         <div className="flex items-start gap-3 mb-2">
-          <MiniAvatar profile={post.author} accentColor={accentColor} />
+          <MiniAvatar profile={post.author} accentColor={accentColor} size={36} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-semibold text-sm truncate">
+              <span className="font-bold text-sm truncate text-zinc-100">
                 {post.author?.full_name ?? 'Usuario'}
               </span>
               {post.category && (
                 <span
-                  className="text-[10px] px-1.5 py-0.5 rounded"
+                  className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                   style={{
                     color: post.category.color,
-                    backgroundColor: `${post.category.color}15`,
+                    backgroundColor: `${post.category.color}20`,
                   }}
                 >
                   {post.category.emoji} {post.category.name}
@@ -594,17 +617,28 @@ function MiniPostCard({
               <span className="text-[10px] text-zinc-500">· {timeAgo}</span>
             </div>
           </div>
+          {post.is_pinned && <Pin className="h-3.5 w-3.5" style={{ color: accentColor }} />}
         </div>
-        {post.title && <h3 className="font-bold mb-1 leading-snug">{post.title}</h3>}
+        {post.title && <h3 className="font-bold mb-1 leading-snug text-zinc-100">{post.title}</h3>}
         <div
           className="prose prose-invert prose-sm max-w-none text-sm text-zinc-300 line-clamp-3"
           dangerouslySetInnerHTML={{ __html: html }}
         />
-        <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
-          {post.like_count > 0 && <span>{post.like_count} reacciones</span>}
-          {post.comment_count > 0 && <span>{post.comment_count} comentarios</span>}
-        </div>
-      </Card>
+        {(post.like_count > 0 || post.comment_count > 0) && (
+          <div className="mt-2 flex items-center gap-3 text-xs">
+            {post.like_count > 0 && (
+              <span className="flex items-center gap-1 text-rose-300">
+                ❤️ {post.like_count}
+              </span>
+            )}
+            {post.comment_count > 0 && (
+              <span className="flex items-center gap-1 text-zinc-400">
+                💬 {post.comment_count}
+              </span>
+            )}
+          </div>
+        )}
+      </BigCard>
     </Link>
   );
 }
@@ -612,7 +646,7 @@ function MiniPostCard({
 function MiniAvatar({
   profile,
   accentColor,
-  size = 28,
+  size = 32,
 }: {
   profile: any;
   accentColor: string;
@@ -623,18 +657,18 @@ function MiniAvatar({
       <img
         src={profile.avatar_url}
         alt=""
-        className="rounded-full object-cover flex-shrink-0"
+        className="rounded-full object-cover flex-shrink-0 border-2 border-white/10"
         style={{ height: size, width: size }}
       />
     );
   }
   return (
     <div
-      className="rounded-full flex items-center justify-center font-semibold text-white flex-shrink-0"
+      className="rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 border-2 border-white/10"
       style={{
         height: size,
         width: size,
-        backgroundColor: `${accentColor}40`,
+        background: `linear-gradient(135deg, ${accentColor}80, ${accentColor}40)`,
         fontSize: size * 0.4,
       }}
     >
@@ -643,5 +677,5 @@ function MiniAvatar({
   );
 }
 
-// Suprimir warning de Sparkles import sin uso
-void Sparkles;
+// suprimir warning Trophy/Calendar imports
+void Trophy; void Calendar;

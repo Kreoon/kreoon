@@ -202,7 +202,14 @@ function CoursesTab({
       {courses.length === 0 && !showNewCourse ? (
         <Card className="p-12 text-center bg-white/5 border-white/10 text-zinc-500">
           <BookOpen className="h-8 w-8 mx-auto mb-3 opacity-40" />
-          <p>No hay cursos aún. Crea el primero.</p>
+          <p className="mb-4">No hay cursos aún. Crea el primero.</p>
+          <Button
+            size="sm"
+            onClick={() => setShowNewCourse(true)}
+            className="bg-purple-500 hover:bg-purple-600 text-white gap-1.5"
+          >
+            <Plus className="h-4 w-4" /> Crear primer curso
+          </Button>
         </Card>
       ) : (
         <div className="space-y-3">
@@ -273,11 +280,11 @@ function CoursesTab({
                     <button
                       onClick={() => {
                         setOpenMenu(null);
-                        navigate(`/academia/${spaceSlug}/${course.slug}`);
+                        navigate(`/academia/${spaceSlug}/${course.slug}/edit`);
                       }}
                       className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5"
                     >
-                      <Pencil className="h-3.5 w-3.5" /> Ver / editar
+                      <Pencil className="h-3.5 w-3.5" /> Editar curso
                     </button>
                   </div>
                 )}
@@ -428,7 +435,7 @@ function NewCourseForm({
             min={0}
             step={1}
             value={price}
-            onChange={(e) => setPrice(Number(e.target.value))}
+            onChange={(e) => setPrice(Math.min(10000, Math.max(0, Number(e.target.value))))}
             className="bg-white/5 border-white/10"
           />
         </div>

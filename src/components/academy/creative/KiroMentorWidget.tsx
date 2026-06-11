@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Trophy, BookOpen, Flame } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { BigCard } from '@/components/academy/big-cards/BigCard';
 import { useMyGamificationState } from '@/hooks/academy/useAcademyGamification';
 import { useMyEnrollments } from '@/hooks/academy/useAcademyEnrollment';
 
@@ -15,8 +13,7 @@ interface KiroMentorWidgetProps {
 /**
  * Diferenciador KREOON vs Skool: KIRO Mentor.
  * Lee tu estado de gamificación + tu progreso y te sugiere UN próximo paso
- * concreto en lenguaje motivacional. No es una caja de chat con IA, es un
- * widget proactivo que actúa como mentor silencioso.
+ * concreto en lenguaje motivacional, como un NPC mentor de videojuego.
  */
 export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }: KiroMentorWidgetProps) {
   const { data: state } = useMyGamificationState(spaceId);
@@ -25,14 +22,14 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
   const suggestion = useMemo(() => {
     if (!state) {
       return {
-        icon: Sparkles,
-        title: 'Hola, soy KIRO',
-        body: 'Tu mentor silencioso. Voy a guiarte mientras aprendes.',
-        cta: { label: 'Explorar cursos', to: `/academia/${spaceSlug}/classroom` },
+        emoji: '👋',
+        title: '¡Hola, soy KIRO!',
+        body: 'Tu mentor en este viaje. Te voy a acompañar paso a paso.',
+        cta: { label: '🚀 Empezar', to: `/academia/${spaceSlug}/classroom` },
+        mood: 'amber' as const,
       };
     }
 
-    // 1) ¿Hay curso en progreso?
     const inProgress = enrollments.find(
       (e) =>
         e.completion_pct > 0 &&
@@ -43,92 +40,112 @@ export function KiroMentorWidget({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
       const courseTitle = (inProgress.course as any)?.title ?? 'tu curso';
       const courseSlug = (inProgress.course as any)?.slug ?? '';
       return {
-        icon: BookOpen,
-        title: `Sigamos con "${courseTitle}"`,
-        body: `Vas en el ${Math.round(inProgress.completion_pct)}%. Cinco minutos hoy te acercan al certificado.`,
-        cta: { label: 'Reanudar', to: `/academia/${spaceSlug}/${courseSlug}/learn` },
+        emoji: '📚',
+        title: `¡Sigamos con "${courseTitle}"!`,
+        body: `Vas en el ${Math.round(inProgress.completion_pct)}%. 5 minutos hoy te acercan al certificado.`,
+        cta: { label: '▶ Reanudar', to: `/academia/${spaceSlug}/${courseSlug}/learn` },
+        mood: 'purple' as const,
       };
     }
 
-    // 2) ¿Streak en riesgo? (último activo no es hoy)
     const lastActive = state.last_active_date;
     if (lastActive && lastActive !== new Date().toISOString().split('T')[0] && state.streak_days >= 3) {
       return {
-        icon: Flame,
-        title: `Tu racha de ${state.streak_days} días peligra`,
-        body: 'Una sola lección o un comentario hoy mantiene la llama encendida.',
-        cta: { label: 'Mantener racha', to: `/academia/${spaceSlug}/feed` },
+        emoji: '🔥',
+        title: `¡Tu racha de ${state.streak_days} días peligra!`,
+        body: 'Una lección o un comentario hoy mantiene la llama encendida.',
+        cta: { label: '⚡ Mantener racha', to: `/academia/${spaceSlug}/feed` },
+        mood: 'rose' as const,
       };
     }
 
-    // 3) ¿Energy baja?
     if (state.energy < 30) {
       return {
-        icon: Sparkles,
-        title: 'Tu Energy está apagada',
+        emoji: '🔋',
+        title: 'Tu energía está baja',
         body: 'Comenta o reacciona en la comunidad — recargas 5 puntos por interacción.',
-        cta: { label: 'Ir al feed', to: `/academia/${spaceSlug}/feed` },
+        cta: { label: '💬 Ir al feed', to: `/academia/${spaceSlug}/feed` },
+        mood: 'cyan' as const,
       };
     }
 
-    // 4) ¿Cerca del próximo nivel?
     if (state.level < 10) {
       return {
-        icon: Trophy,
-        title: `Estás a un paso del nivel ${state.level + 1}`,
+        emoji: '🏆',
+        title: `¡Estás a un paso del nivel ${state.level + 1}!`,
         body: `Como ${state.title}, ya dominas lo básico. Completa una lección para subir.`,
-        cta: { label: 'Ver classroom', to: `/academia/${spaceSlug}/classroom` },
+        cta: { label: '🎯 Ver classroom', to: `/academia/${spaceSlug}/classroom` },
+        mood: 'amber' as const,
       };
     }
 
-    // 5) Default
     return {
-      icon: Sparkles,
+      emoji: '🌟',
       title: '¡Sigue así, leyenda!',
-      body: 'Has llegado al máximo nivel. Inspira a la comunidad publicando tu próximo aprendizaje.',
-      cta: { label: 'Publicar', to: `/academia/${spaceSlug}/feed` },
+      body: 'Has llegado al máximo nivel. Inspira publicando tu próximo aprendizaje.',
+      cta: { label: '✍ Publicar', to: `/academia/${spaceSlug}/feed` },
+      mood: 'emerald' as const,
     };
   }, [state, enrollments, spaceSlug]);
 
-  const Icon = suggestion.icon;
-
   return (
-    <Card
-      className={cn(
-        'p-4 border-2 relative overflow-hidden',
-        'bg-gradient-to-br from-purple-500/10 via-cyan-500/5 to-transparent'
-      )}
-      style={{ borderColor: `${accentColor}30` }}
+    <BigCard
+      accentColor={accentColor}
+      glow
+      gradient={suggestion.mood}
+      className="p-5 md:p-6"
     >
-      {/* Aura decorativa */}
-      <div
-        className="absolute -top-6 -right-6 h-24 w-24 rounded-full blur-2xl pointer-events-none"
-        style={{ backgroundColor: `${accentColor}30` }}
-      />
-      <div className="relative">
-        <div className="flex items-start gap-3">
+      <div className="flex items-start gap-4 md:gap-5">
+        {/* Avatar KIRO XL con halo animado */}
+        <div className="relative flex-shrink-0">
           <div
-            className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: `${accentColor}30` }}
+            className="absolute inset-0 rounded-full blur-xl opacity-60 motion-safe:animate-pulse"
+            style={{ backgroundColor: accentColor }}
+            aria-hidden="true"
+          />
+          <div
+            className="relative h-20 w-20 md:h-24 md:w-24 rounded-full flex items-center justify-center border-4 shadow-2xl"
+            style={{
+              borderColor: accentColor,
+              background: `radial-gradient(circle at 30% 30%, ${accentColor}80, ${accentColor}30)`,
+            }}
           >
-            <Icon className="h-5 w-5" style={{ color: accentColor }} />
+            <span className="text-4xl md:text-5xl motion-safe:animate-bounce" aria-hidden="true">
+              {suggestion.emoji}
+            </span>
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">
-              KIRO Mentor
-            </div>
-            <h3 className="font-bold text-sm leading-tight">{suggestion.title}</h3>
-            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">{suggestion.body}</p>
-          </div>
+          {/* Indicador "online" */}
+          <div
+            className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-2 border-kreoon-bg-card"
+            style={{ backgroundColor: '#10b981' }}
+            aria-label="KIRO online"
+          />
         </div>
-        <Link
-          to={suggestion.cta.to}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-semibold hover:underline"
-          style={{ color: accentColor }}
-        >
-          {suggestion.cta.label} →
-        </Link>
+
+        {/* Bocadillo */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: accentColor }}>
+            🤖 KIRO Mentor
+          </div>
+          <h3 className="font-extrabold text-lg md:text-xl leading-tight text-white mb-1.5">
+            {suggestion.title}
+          </h3>
+          <p className="text-sm text-zinc-300 leading-relaxed mb-3">
+            {suggestion.body}
+          </p>
+
+          <Link
+            to={suggestion.cta.to}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm text-white shadow-lg motion-safe:hover:scale-105 active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            style={{
+              background: `linear-gradient(135deg, ${accentColor}, ${accentColor}cc)`,
+              boxShadow: `0 6px 20px -4px ${accentColor}80`,
+            }}
+          >
+            {suggestion.cta.label}
+          </Link>
+        </div>
       </div>
-    </Card>
+    </BigCard>
   );
 }

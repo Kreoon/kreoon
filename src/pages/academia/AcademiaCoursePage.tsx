@@ -1,8 +1,10 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
-import { Clock, BarChart3, Award, Play, Lock, CheckCircle2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Clock, BarChart3, Award, Play, Lock, CheckCircle2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
 import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { useAcademyCourseBySlug } from '@/hooks/academy/useAcademyCourse';
 import { useEnrollInCourse, useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
@@ -17,10 +19,24 @@ export default function AcademiaCoursePage() {
   const enroll = useEnrollInCourse();
   const [enrolling, setEnrolling] = useState(false);
 
+  // Fix 3c: skeleton consistente con el resto de la academia mientras carga
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
-        Cargando curso...
+      <div className="min-h-screen bg-[#0a0a0f]">
+        <div className="max-w-6xl mx-auto px-4 md:px-8 py-10">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
+              <KreoonSkeleton variant="rectangular" width="100%" height={320} />
+              <KreoonSkeleton variant="text" width="70%" height={40} />
+              <KreoonSkeleton variant="text" width="90%" height={16} />
+              <KreoonSkeleton variant="text" width="80%" height={16} />
+              <KreoonSkeleton variant="card" height={80} />
+            </div>
+            <div className="space-y-4">
+              <KreoonSkeleton variant="card" height={280} />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -41,6 +57,7 @@ export default function AcademiaCoursePage() {
   const modules = course.modules ?? [];
   const lessonsCount = modules.reduce((sum, m) => sum + (m.lessons?.length ?? 0), 0);
 
+  // Fix 3b: try/catch con toast.error en caso de fallo
   async function handleEnroll() {
     if (!user) {
       navigate('/auth');
@@ -54,16 +71,41 @@ export default function AcademiaCoursePage() {
       } else if (res.type === 'checkout' && res.url) {
         window.location.href = res.url;
       }
+    } catch {
+      toast.error('No se pudo procesar la inscripción. Intenta de nuevo.');
     } finally {
       setEnrolling(false);
     }
   }
 
   const isEnrolled = !!enrollment;
+  const isOwner = !!user && (course.instructor_id === user.id || course.space?.owner_id === user.id);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
       <SpaceNavbar spaceSlug={spaceSlug!} />
+
+      {/* Owner edit bar */}
+      {isOwner && (
+        <div
+          className="border-b border-white/10 sticky top-[49px] z-10 backdrop-blur-sm"
+          style={{ backgroundColor: `${accent}12` }}
+        >
+          <div className="max-w-6xl mx-auto px-4 md:px-8 h-11 flex items-center justify-between">
+            <span className="text-xs font-semibold" style={{ color: accent }}>
+              Modo propietario
+            </span>
+            <Button
+              size="sm"
+              className="h-7 text-xs gap-1"
+              style={{ backgroundColor: accent }}
+              onClick={() => navigate(`/academia/${spaceSlug}/${courseSlug}/edit`)}
+            >
+              <Pencil className="h-3 w-3" /> Editar curso
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main */}
@@ -91,8 +133,13 @@ export default function AcademiaCoursePage() {
 
             {course.instructor && (
               <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
+                {/* Fix 3a: alt descriptivo con el nombre del instructor */}
                 {course.instructor.avatar_url ? (
-                  <img src={course.instructor.avatar_url} alt="" className="h-12 w-12 rounded-full" />
+                  <img
+                    src={course.instructor.avatar_url}
+                    alt={`Avatar de ${course.instructor.full_name ?? 'instructor'}`}
+                    className="h-12 w-12 rounded-full"
+                  />
                 ) : (
                   <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center">
                     <span className="text-lg font-semibold">

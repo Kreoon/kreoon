@@ -243,6 +243,15 @@ export function useGlobalRanking(filters?: RankingFilters) {
 }
 
 // Hook para actualizar stats globales del usuario actual
+// ─────────────────────────────────────────────────────────────────────────────
+// SEGURIDAD: el upsert directo en 'user_global_stats' fue reemplazado por
+// la RPC sync_user_global_stats (SECURITY DEFINER). El servidor fuerza
+// user_id = auth.uid() independientemente de los valores que el cliente envíe,
+// impidiendo que un usuario escriba stats de otro usuario.
+// El cálculo de los valores (completeness, badges, projects) sigue ocurriendo
+// en el cliente con las mismas queries de antes; solo el punto de escritura
+// se movió al servidor.
+// ─────────────────────────────────────────────────────────────────────────────
 export function useUpdateGlobalStats() {
   const { user } = useAuth();
   const [updating, setUpdating] = useState(false);
@@ -313,33 +322,28 @@ export function useUpdateGlobalStats() {
         return sum + points;
       }, 0);
 
-      // Upsert stats
-      const { error: upsertError } = await supabase
-        .from('user_global_stats')
-        .upsert({
-          user_id: user.id,
-          profile_completeness: completeness,
-          has_avatar: !!profile?.avatar_url,
-          has_bio: !!profile?.bio,
-          bio_length: profile?.bio?.length || 0,
-          social_networks_count: socialNetworks,
-          total_projects_completed: aggregated.total_projects,
-          early_deliveries_count: aggregated.early_deliveries,
-          late_deliveries_count: aggregated.late_deliveries,
-          on_time_deliveries_count: aggregated.total_projects - aggregated.late_deliveries,
-          days_since_signup: daysSinceSignup,
-          badges_completed_count: badgeCount || 0,
-          total_badge_points: totalBadgePoints,
-          last_active_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
+      // Upsert via RPC SECURITY DEFINER (reemplaza el upsert directo anterior)
+      // El servidor fuerza user_id = auth.uid(); nunca acepta otro user_id.
+      const { error: rpcError } = await (supabase as any).rpc('sync_user_global_stats', {
+        p_profile_completeness:     completeness,
+        p_has_avatar:               !!profile?.avatar_url,
+        p_has_bio:                  !!profile?.bio,
+        p_bio_length:               profile?.bio?.length || 0,
+        p_social_networks_count:    socialNetworks,
+        p_total_projects_completed: aggregated.total_projects,
+        p_early_deliveries_count:   aggregated.early_deliveries,
+        p_late_deliveries_count:    aggregated.late_deliveries,
+        p_on_time_deliveries_count: aggregated.total_projects - aggregated.late_deliveries,
+        p_days_since_signup:        daysSinceSignup,
+        p_badges_completed_count:   badgeCount || 0,
+        p_total_badge_points:       totalBadgePoints,
+        p_last_active_at:           new Date().toISOString(),
+      });
 
-      if (upsertError) throw upsertError;
+      if (rpcError) throw rpcError;
 
-      // Verificar nuevos badges
-      await supabase.rpc('check_and_award_global_badges', { p_user_id: user.id });
+      // check_and_award_global_badges ya se invoca dentro de la RPC.
+      // No es necesario llamarlo de nuevo aquí.
 
       return true;
     } catch (err) {

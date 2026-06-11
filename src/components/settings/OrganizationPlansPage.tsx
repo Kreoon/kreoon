@@ -635,24 +635,26 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
         </Tabs>
       )}
 
-      {/* Billing Cycle Toggle */}
-      <div className="flex items-center justify-center gap-4">
-        <Button
-          variant={billingCycle === 'monthly' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setBillingCycle('monthly')}
-        >
-          Mensual
-        </Button>
-        <Button
-          variant={billingCycle === 'annual' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setBillingCycle('annual')}
-        >
-          Anual
-          <Badge variant="secondary" className="ml-2 text-xs">-17%</Badge>
-        </Button>
-      </div>
+      {/* Billing Cycle Toggle — los planes de agencia son de pago único, sin ciclo */}
+      {segment !== 'agencias' && (
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant={billingCycle === 'monthly' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBillingCycle('monthly')}
+          >
+            Mensual
+          </Button>
+          <Button
+            variant={billingCycle === 'annual' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBillingCycle('annual')}
+          >
+            Anual
+            <Badge variant="secondary" className="ml-2 text-xs">-17%</Badge>
+          </Button>
+        </div>
+      )}
 
       {/* Plans Grid */}
       <div>
@@ -670,7 +672,9 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
             const isCurrentPlan = currentTier === tier;
             const isFreeplan = plan.priceMonthly === 0 && plan.id !== 'agencias-enterprise';
             const isEnterprise = plan.id === 'agencias-enterprise';
-            const price = billingCycle === 'annual' && plan.priceAnnual
+            // Planes de agencia: pago único (no recurrente)
+            const isOneTime = segment === 'agencias' && !isEnterprise && !isFreeplan;
+            const price = !isOneTime && billingCycle === 'annual' && plan.priceAnnual
               ? Math.round(plan.priceAnnual / 12)
               : plan.priceMonthly;
             const isPopular = plan.id === popularPlanId;
@@ -714,6 +718,14 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
                         <span className="text-4xl font-bold">Gratis</span>
                         <p className="text-xs text-muted-foreground mt-1">
                           Sin tarjeta de credito
+                        </p>
+                      </>
+                    ) : isOneTime ? (
+                      <>
+                        <span className="text-4xl font-bold">${price}</span>
+                        <span className="text-muted-foreground"> pago único</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Un solo pago, sin renovaciones
                         </p>
                       </>
                     ) : (
