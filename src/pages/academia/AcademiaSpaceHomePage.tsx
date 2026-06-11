@@ -54,7 +54,10 @@ export default function AcademiaSpaceHomePage() {
   const { data: space, isLoading } = useAcademySpace(spaceSlug);
 
   const spaceId = (space as any)?.id;
-  const accent = space?.accent_color || '#8B5CF6';
+  // Accent del space (solo para hero cover + identidad).
+  const spaceAccent = space?.accent_color || '#8B5CF6';
+  // Brand voice Kreoon (todo lo demás).
+  const accent = '#7c3aed';
 
   const { data: feedPages } = useSpaceFeed(spaceId, null);
   const { data: events = [] } = useSpaceCalendar(spaceId);
@@ -144,7 +147,7 @@ export default function AcademiaSpaceHomePage() {
         style={{
           background: space.cover_image_url
             ? `url(${space.cover_image_url}) center/cover`
-            : `linear-gradient(135deg, ${accent}60, ${accent}20 50%, #0a0a0f)`,
+            : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, #0a0a0f)`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent" />
@@ -162,7 +165,7 @@ export default function AcademiaSpaceHomePage() {
           ) : (
             <div
               className="h-24 w-24 md:h-32 md:w-32 rounded-3xl border-4 border-[#0a0a0f] shadow-2xl flex items-center justify-center flex-shrink-0 text-5xl"
-              style={{ backgroundColor: `${accent}40` }}
+              style={{ backgroundColor: `${spaceAccent}40` }}
               aria-hidden="true"
             >
               🎓
@@ -182,8 +185,8 @@ export default function AcademiaSpaceHomePage() {
               <span
                 className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
                 style={{
-                  backgroundColor: space.plan_slug === 'pro' ? `${accent}30` : 'rgba(255,255,255,0.05)',
-                  color: space.plan_slug === 'pro' ? accent : '#a1a1aa',
+                  backgroundColor: space.plan_slug === 'pro' ? `${spaceAccent}30` : 'rgba(255,255,255,0.05)',
+                  color: space.plan_slug === 'pro' ? spaceAccent : '#a1a1aa',
                 }}
               >
                 {space.plan_slug === 'pro' ? '✨ Pro' : 'Hobby'}
@@ -230,7 +233,7 @@ export default function AcademiaSpaceHomePage() {
           style={{ backgroundColor: `${accent}12` }}
         >
           <div className="max-w-7xl mx-auto px-4 md:px-8 h-11 flex items-center justify-between gap-3">
-            <span className="text-xs font-bold flex items-center gap-1.5" style={{ color: accent }}>
+            <span className="text-xs font-bold flex items-center gap-1.5" style={{ color: '#a855f7' }}>
               <Eye className="h-3 w-3" /> Modo propietario
             </span>
             <div className="flex items-center gap-1">
@@ -292,7 +295,7 @@ export default function AcademiaSpaceHomePage() {
                   <Link
                     to={`/academia/${spaceSlug}/classroom`}
                     className="text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
-                    style={{ color: accent }}
+                    style={{ color: '#a855f7' }}
                   >
                     Ver todos <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -341,7 +344,7 @@ export default function AcademiaSpaceHomePage() {
                   <Link
                     to={`/academia/${spaceSlug}/feed`}
                     className="text-sm font-bold flex items-center gap-1 hover:gap-2 transition-all"
-                    style={{ color: accent }}
+                    style={{ color: '#a855f7' }}
                   >
                     Ver feed <ChevronRight className="h-4 w-4" />
                   </Link>
@@ -377,7 +380,7 @@ export default function AcademiaSpaceHomePage() {
                 <div className="flex items-center gap-3 mb-4">
                   <div className="text-3xl" aria-hidden="true">⚔️</div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accent }}>
+                    <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#a855f7' }}>
                       Tu nivel
                     </div>
                     <div className="font-extrabold text-base text-white">{myGami.title}</div>
@@ -408,7 +411,7 @@ export default function AcademiaSpaceHomePage() {
                 <Link
                   to={`/academia/${spaceSlug}/calendar`}
                   className="text-xs font-bold hover:underline"
-                  style={{ color: accent }}
+                  style={{ color: '#a855f7' }}
                 >
                   Ver todo
                 </Link>
@@ -442,7 +445,7 @@ export default function AcademiaSpaceHomePage() {
                 <Link
                   to={`/academia/${spaceSlug}/leaderboard`}
                   className="text-xs font-bold hover:underline"
-                  style={{ color: accent }}
+                  style={{ color: '#a855f7' }}
                 >
                   Ver todo
                 </Link>
@@ -509,7 +512,7 @@ export default function AcademiaSpaceHomePage() {
                 <Link
                   to={`/academia/${spaceSlug}/members`}
                   className="text-xs font-bold hover:underline"
-                  style={{ color: accent }}
+                  style={{ color: '#a855f7' }}
                 >
                   Ver todos
                 </Link>

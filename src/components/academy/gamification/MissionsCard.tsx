@@ -5,17 +5,21 @@ import { useMyWeeklyMissions } from '@/hooks/academy/useAcademyGamification';
 
 interface MissionsCardProps {
   spaceId: string;
+  /** Ignorado — Misiones es brand Kreoon. */
   accentColor?: string;
 }
 
-export function MissionsCard({ spaceId, accentColor = '#8B5CF6' }: MissionsCardProps) {
+const KREOON_PURPLE = '#7c3aed';
+
+export function MissionsCard({ spaceId }: MissionsCardProps) {
+  const accentColor = KREOON_PURPLE;
   const { data: missions = [], isLoading } = useMyWeeklyMissions(spaceId);
 
   if (isLoading) return null;
 
   if (missions.length === 0) {
     return (
-      <BigCard gradient="amber" className="p-5">
+      <BigCard gradient="purple" className="p-5">
         <div className="flex items-start gap-3">
           <div className="text-4xl" aria-hidden="true">🎯</div>
           <div className="flex-1">
@@ -36,7 +40,7 @@ export function MissionsCard({ spaceId, accentColor = '#8B5CF6' }: MissionsCardP
   const allDone = completed === total;
 
   return (
-    <BigCard gradient={allDone ? 'emerald' : 'amber'} className="p-5">
+    <BigCard gradient={allDone ? 'emerald' : 'purple'} className="p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
           <div className="text-3xl" aria-hidden="true">{allDone ? '🏆' : '🎯'}</div>

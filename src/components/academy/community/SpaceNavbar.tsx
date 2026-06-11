@@ -4,13 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { cn } from '@/lib/utils';
 import {
-  Home,
+  Sparkles,
   MessagesSquare,
-  BookOpen,
-  Calendar,
+  GraduationCap,
+  Video,
   Users,
-  Map as MapIcon,
-  Trophy,
+  Globe2,
+  Crown,
   Info,
   Settings,
 } from 'lucide-react';
@@ -21,27 +21,28 @@ interface SpaceNavbarProps {
   spaceSlug: string;
 }
 
+const KREOON_PURPLE = '#7c3aed';
+
 const TABS = [
-  { to: '', label: 'Inicio', icon: Home, end: true },
-  { to: 'feed', label: 'Comunidad', icon: MessagesSquare },
-  { to: 'classroom', label: 'Classroom', icon: BookOpen },
-  { to: 'calendar', label: 'Calendario', icon: Calendar },
-  { to: 'members', label: 'Miembros', icon: Users },
-  { to: 'map', label: 'Mapa', icon: MapIcon },
-  { to: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+  { to: '', label: 'Inicio', icon: Sparkles, end: true },
+  { to: 'feed', label: 'Feed', icon: MessagesSquare },
+  { to: 'classroom', label: 'Cursos', icon: GraduationCap },
+  { to: 'calendar', label: 'Lives', icon: Video },
+  { to: 'members', label: 'Creadores', icon: Users },
+  { to: 'map', label: 'Mundo', icon: Globe2 },
+  { to: 'leaderboard', label: 'Ranking', icon: Crown },
   { to: 'about', label: 'Acerca de', icon: Info, hidden: true },
 ];
 
 export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
   const { user } = useAuth();
   const { data: space } = useAcademySpace(spaceSlug);
-  const accent = space?.accent_color || '#8B5CF6';
   const isOwner = useMemo(() => !!user && space?.owner_id === user.id, [user, space]);
 
   return (
-    <div className="border-b border-white/10 bg-kreoon-bg-secondary sticky top-0 z-20">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 flex items-center gap-3">
-        <nav className="flex items-center gap-1 overflow-x-auto scrollbar-hide flex-1">
+    <div className="border-b border-white/5 bg-kreoon-bg-secondary/95 backdrop-blur-md sticky top-0 z-20">
+      <div className="max-w-7xl mx-auto px-3 md:px-8 flex items-center gap-3">
+        <nav className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-2.5">
           {TABS.filter((t) => !t.hidden).map((t) => (
             <NavLink
               key={t.label}
@@ -49,13 +50,20 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
               end={(t as any).end ?? false}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors',
+                  'flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-2xl whitespace-nowrap transition-all',
                   isActive
-                    ? 'text-zinc-100'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    ? 'text-white shadow-lg'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
                 )
               }
-              style={({ isActive }) => (isActive ? { borderColor: accent } : undefined)}
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      backgroundColor: KREOON_PURPLE,
+                      boxShadow: `0 6px 20px -6px ${KREOON_PURPLE}80`,
+                    }
+                  : undefined
+              }
             >
               <t.icon className="h-4 w-4" /> {t.label}
             </NavLink>
@@ -65,13 +73,20 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
               to={`/academia/${spaceSlug}/admin`}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap border-b-2 transition-colors ml-auto',
+                  'flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-2xl whitespace-nowrap transition-all ml-auto',
                   isActive
-                    ? 'text-zinc-100'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                    ? 'text-white shadow-lg'
+                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
                 )
               }
-              style={({ isActive }) => (isActive ? { borderColor: accent } : undefined)}
+              style={({ isActive }) =>
+                isActive
+                  ? {
+                      backgroundColor: KREOON_PURPLE,
+                      boxShadow: `0 6px 20px -6px ${KREOON_PURPLE}80`,
+                    }
+                  : undefined
+              }
             >
               <Settings className="h-4 w-4" /> Admin
             </NavLink>
@@ -81,14 +96,18 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
           <div className="flex items-center gap-3 flex-shrink-0">
             {isOwner && (
               <span
-                className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border"
-                style={{ color: accent, borderColor: `${accent}40`, backgroundColor: `${accent}15` }}
+                className="hidden md:inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full border"
+                style={{
+                  color: KREOON_PURPLE,
+                  borderColor: `${KREOON_PURPLE}40`,
+                  backgroundColor: `${KREOON_PURPLE}15`,
+                }}
               >
                 Owner
               </span>
             )}
             <OnlineIndicator spaceId={space.id} showLabel={false} className="hidden md:inline-flex" />
-            {user && <NotificationBell spaceId={space.id} accentColor={accent} />}
+            {user && <NotificationBell spaceId={space.id} accentColor={KREOON_PURPLE} />}
           </div>
         )}
       </div>

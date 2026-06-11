@@ -20,10 +20,13 @@ interface CourseLike {
 interface CourseBigCardProps {
   course: CourseLike;
   spaceSlug: string;
+  /** Solo decorativo del space — internamente forzamos brand Kreoon. */
   accentColor?: string;
   progress?: number;
   variant?: 'default' | 'wide';
 }
+
+const KREOON_PURPLE = '#7c3aed';
 
 const LEVEL_LABEL: Record<string, string> = {
   beginner: '🌱 Principiante',
@@ -38,10 +41,10 @@ const LEVEL_LABEL: Record<string, string> = {
 export function CourseBigCard({
   course,
   spaceSlug,
-  accentColor = '#8B5CF6',
   progress,
   variant = 'default',
 }: CourseBigCardProps) {
+  const accent = KREOON_PURPLE;
   const priceLabel = course.is_free
     ? '✨ Gratis'
     : course.price_usd
@@ -56,14 +59,14 @@ export function CourseBigCard({
       className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-3xl"
       aria-label={`Curso ${course.title}`}
     >
-      <BigCard accentColor={accentColor} glow className="h-full flex flex-col">
+      <BigCard accent={accent} glow className="h-full flex flex-col">
         {/* Cover 16:9 */}
         <div
           className="relative aspect-video w-full overflow-hidden"
           style={
             !course.cover_image_url
               ? {
-                  background: `linear-gradient(135deg, ${accentColor}50 0%, ${accentColor}10 50%, transparent 100%)`,
+                  background: `linear-gradient(135deg, ${accent}50 0%, ${accent}10 50%, transparent 100%)`,
                 }
               : undefined
           }
@@ -90,7 +93,7 @@ export function CourseBigCard({
           <div
             className="absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm"
             style={{
-              backgroundColor: `${accentColor}f0`,
+              backgroundColor: `${accent}f0`,
               color: 'white',
             }}
           >
@@ -108,7 +111,7 @@ export function CourseBigCard({
           <div className="absolute inset-0 flex items-center justify-center opacity-0 motion-safe:group-hover:opacity-100 transition-opacity duration-300">
             <div
               className="h-16 w-16 rounded-full flex items-center justify-center shadow-2xl"
-              style={{ backgroundColor: accentColor }}
+              style={{ backgroundColor: accent }}
             >
               <Play className="h-7 w-7 text-white fill-white ml-1" />
             </div>
@@ -132,14 +135,14 @@ export function CourseBigCard({
             <div className="mt-1">
               <div className="flex items-center justify-between text-[11px] font-semibold mb-1.5">
                 <span className="text-zinc-300">📚 Tu progreso</span>
-                <span style={{ color: accentColor }}>{Math.round(progress!)}%</span>
+                <span style={{ color: accent }}>{Math.round(progress!)}%</span>
               </div>
               <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700 motion-safe:animate-in motion-safe:slide-in-from-left"
                   style={{
                     width: `${progress}%`,
-                    background: `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)`,
+                    background: `linear-gradient(90deg, ${accent}, ${accent}cc)`,
                   }}
                 />
               </div>
@@ -160,7 +163,7 @@ export function CourseBigCard({
             )}
             <span
               className="ml-auto flex items-center gap-1 font-bold text-sm group-hover:gap-2 transition-all"
-              style={{ color: accentColor }}
+              style={{ color: accent }}
             >
               {hasProgress ? 'Continuar' : 'Empezar'}
               <Sparkles className="h-4 w-4" aria-hidden="true" />
