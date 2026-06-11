@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { BunnyImageUploader } from '@/components/marketplace/BunnyImageUploader';
 import { marketplaceStoragePath } from '@/hooks/useBunnyImageUpload';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -450,12 +451,14 @@ function CourseMetaPanel({ course, onSaved }: { course: any; onSaved: () => void
 
         <div className="space-y-1">
           <Label>Descripción</Label>
-          <textarea
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
-            rows={3}
-            className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500 resize-none text-zinc-100"
+          <RichTextEditor
+            content={form.description}
+            onChange={(html) => set('description', html)}
+            placeholder="Describe el curso en detalle: a quién va dirigido, qué van a aprender, requisitos previos..."
           />
+          <p className="text-[11px] text-zinc-500">
+            Soporta formato, listas, enlaces, imágenes, tablas y modo HTML.
+          </p>
         </div>
 
         <div className="space-y-1">
@@ -662,12 +665,25 @@ function LessonEditorPanel({ lesson: initialLesson, onSaved }: { lesson: Academy
 
         <div className="space-y-1">
           <Label>Descripción corta (opcional)</Label>
-          <textarea
-            value={form.description}
-            onChange={(e) => set('description', e.target.value)}
-            rows={2}
+          <RichTextEditor
+            content={form.description}
+            onChange={(html) => set('description', html)}
             placeholder="Una frase introductoria que el alumno ve antes de entrar a la lección"
-            className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none resize-none"
+            features={{
+              headings: false,
+              bold: true,
+              italic: true,
+              lists: true,
+              quotes: false,
+              code: false,
+              highlight: false,
+              emojis: true,
+              history: true,
+              links: true,
+              tables: false,
+              checklist: false,
+              images: false,
+            }}
           />
         </div>
       </section>
@@ -763,16 +779,19 @@ function LessonEditorPanel({ lesson: initialLesson, onSaved }: { lesson: Academy
       {/* ── Contenido ── */}
       {form.type === 'text' && (
         <section className="space-y-4 pt-4 border-t border-white/5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Contenido</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+            Contenido de la lección
+          </h3>
           <div className="space-y-1">
-            <Label>Contenido de la lección (HTML o Markdown)</Label>
-            <textarea
-              value={form.content}
-              onChange={(e) => set('content', e.target.value)}
-              rows={10}
-              className="w-full rounded-md bg-white/5 border border-white/10 p-3 text-sm text-zinc-100 font-mono focus:outline-none resize-y"
-              placeholder="<p>Escribe aquí el contenido de la lección...</p>"
+            <Label>Editor con formato completo</Label>
+            <RichTextEditor
+              content={form.content}
+              onChange={(html) => set('content', html)}
+              placeholder="Escribe aquí el contenido completo de la lección..."
             />
+            <p className="text-[11px] text-zinc-500">
+              Encabezados, negrita, listas, enlaces, imágenes, tablas, código y modo HTML. Toggle el ícono del ojo para editar HTML directo.
+            </p>
           </div>
         </section>
       )}

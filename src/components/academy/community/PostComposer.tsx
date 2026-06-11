@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePost } from '@/hooks/academy/useAcademyCommunity';
@@ -63,7 +64,8 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
 
   async function handleSubmit() {
     if (!body.trim() || !user) return;
-    const cleanBodyHtml = sanitizeHTML(body.replace(/\n/g, '<br>'));
+    // RichTextEditor ya emite HTML; sanitizamos doble por defensa en profundidad
+    const cleanBodyHtml = sanitizeHTML(body);
     const validPollOptions = pollOptions.map((t) => t.trim()).filter(Boolean);
 
     const post = await createPost.mutateAsync({
@@ -134,11 +136,25 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
             />
           )}
 
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="Escribe algo..."
-            className="w-full bg-transparent border border-white/10 rounded-lg p-3 text-sm h-32 resize-none focus:outline-none focus:border-purple-500/50"
+          <RichTextEditor
+            content={body}
+            onChange={setBody}
+            placeholder="Comparte algo con la comunidad..."
+            features={{
+              headings: true,
+              bold: true,
+              italic: true,
+              lists: true,
+              quotes: true,
+              code: true,
+              highlight: false,
+              emojis: true,
+              history: true,
+              links: true,
+              tables: false,
+              checklist: true,
+              images: true,
+            }}
           />
 
           {kind === 'poll' && (
