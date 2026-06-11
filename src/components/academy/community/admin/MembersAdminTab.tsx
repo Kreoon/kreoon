@@ -78,12 +78,28 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
     };
 
     const rows = [
-      ['Nombre', 'Email', 'Rol', 'Activo', 'Joined'],
+      [
+        'Nombre',
+        'Email',
+        'Rol',
+        'Activo',
+        'País',
+        'Origen',
+        'Consent marketing',
+        'Onboarding',
+        'Referrer',
+        'Joined',
+      ],
       ...(filtered as any[]).map((m) => [
         m.user?.full_name ?? '',
         m.user?.email ?? '',
         m.role,
         m.is_active ? 'Sí' : 'No',
+        m.country ?? '',
+        m.lead_source ?? '',
+        m.marketing_consent ? 'Sí' : 'No',
+        m.onboarding_completed_at ? 'Completado' : 'Pendiente',
+        m.referrer_user_id ?? '',
         new Date(m.joined_at).toISOString(),
       ]),
     ];

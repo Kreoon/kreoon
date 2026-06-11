@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -45,6 +45,9 @@ import { BigCard } from '@/components/academy/big-cards/BigCard';
 import { CourseBigCard } from '@/components/academy/big-cards/CourseBigCard';
 import { ContinueLearningBigCard } from '@/components/academy/big-cards/ContinueLearningBigCard';
 import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
+import { JoinSpaceModal } from '@/components/academy/join/JoinSpaceModal';
+import { OnboardingWizard } from '@/components/academy/join/OnboardingWizard';
+import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
 import type { AcademySpaceEventFull } from '@/types/academy-v3';
 
 export default function AcademiaSpaceHomePage() {
@@ -88,6 +91,20 @@ export default function AcademiaSpaceHomePage() {
 
   const firstCourse = ((space as any)?.courses ?? [])[0];
   const myEnrollmentInFirstCourse = useMyEnrollment(firstCourse?.id);
+
+  // Membresía + onboarding
+  const { data: myMembership } = useMyMembership(spaceId);
+  const isMember = !!myMembership?.is_active;
+  const needsOnboarding = isMember && !myMembership?.onboarding_completed_at;
+  const [joinOpen, setJoinOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  useEffect(() => {
+    if (needsOnboarding) {
+      const dismissed = sessionStorage.getItem(`academy_wizard_dismissed_${spaceId}`);
+      if (!dismissed) setWizardOpen(true);
+    }
+  }, [needsOnboarding, spaceId]);
 
   if (isLoading) {
     return (
@@ -199,17 +216,30 @@ export default function AcademiaSpaceHomePage() {
             )}
           </div>
           <div className="flex gap-2 flex-shrink-0">
-            <Link to={`/academia/${spaceSlug}/feed`}>
+            {!isOwner && !isMember ? (
               <Button
-                className="text-white font-bold rounded-2xl px-5 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
+                onClick={() => setJoinOpen(true)}
+                className="text-white font-bold rounded-2xl px-6 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
                 style={{
-                  background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                  background: `linear-gradient(135deg, ${accent}, #a855f7)`,
                   boxShadow: `0 6px 20px -4px ${accent}80`,
                 }}
               >
-                <MessagesSquare className="h-4 w-4 mr-2" /> Ir al feed
+                <Sparkles className="h-4 w-4 mr-2" /> Unirme gratis
               </Button>
-            </Link>
+            ) : (
+              <Link to={`/academia/${spaceSlug}/feed`}>
+                <Button
+                  className="text-white font-bold rounded-2xl px-5 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
+                  style={{
+                    background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                    boxShadow: `0 6px 20px -4px ${accent}80`,
+                  }}
+                >
+                  <MessagesSquare className="h-4 w-4 mr-2" /> Ir al feed
+                </Button>
+              </Link>
+            )}
             <Link to={`/academia/${spaceSlug}/classroom`}>
               <Button
                 variant="outline"
@@ -538,7 +568,29 @@ export default function AcademiaSpaceHomePage() {
       </div>
       {/* keep myPoints reference */}
       <span className="hidden" aria-hidden="true">{myPoints?.total_points ?? 0}</span>
-      <Sparkles className="hidden" aria-hidden="true" />
+
+      <JoinSpaceModal
+        open={joinOpen}
+        onOpenChange={setJoinOpen}
+        spaceSlug={spaceSlug!}
+        spaceName={space.name}
+        spaceDescription={space.description}
+        spaceLogoUrl={space.logo_url}
+        onJoined={() => setWizardOpen(true)}
+      />
+
+      {spaceId && (
+        <OnboardingWizard
+          spaceId={spaceId}
+          spaceSlug={spaceSlug!}
+          spaceName={space.name}
+          open={wizardOpen}
+          onClose={() => {
+            sessionStorage.setItem(`academy_wizard_dismissed_${spaceId}`, '1');
+            setWizardOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
