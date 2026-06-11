@@ -12,7 +12,10 @@ import {
   Hand,
   Lightbulb,
   ThumbsUp,
+  Share2,
 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { ShareDialog } from './ShareDialog';
 import { cn } from '@/lib/utils';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import {
@@ -50,8 +53,10 @@ export function PostCard({
   const react = useReactToPost();
   const del = useDeletePost();
   const vote = useVotePoll();
+  const { spaceSlug } = useParams<{ spaceSlug: string }>();
   const [showFull, setShowFull] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const isAuthor = currentUserId === post.author_id;
   const canDelete = isAuthor || isOwner;
@@ -202,14 +207,35 @@ export function PostCard({
           )}
         </div>
 
-        <button
-          onClick={() => onCommentClick?.(post.id)}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200"
-        >
-          <MessageCircle className="h-3.5 w-3.5" />
-          {post.comment_count > 0 ? `${post.comment_count} comentarios` : 'Comentar'}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onCommentClick?.(post.id)}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            {post.comment_count > 0 ? `${post.comment_count} comentarios` : 'Comentar'}
+          </button>
+          <button
+            onClick={() => setShareOpen(true)}
+            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            title="Compartir (+5 XP)"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            Compartir
+          </button>
+        </div>
       </div>
+
+      {spaceSlug && (
+        <ShareDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          postId={post.id}
+          postTitle={post.title}
+          postSummary={post.body.slice(0, 120)}
+          spaceSlug={spaceSlug}
+        />
+      )}
     </article>
   );
 }

@@ -49,6 +49,7 @@ interface JoinSpaceResult {
 
 export function useJoinSpace() {
   const qc = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
     mutationFn: async (input: JoinSpaceInput): Promise<JoinSpaceResult> => {
       const { data, error } = await (supabase as any).rpc('academy_join_space', {
@@ -59,6 +60,13 @@ export function useJoinSpace() {
         p_source: input.source ?? null,
       });
       if (error) throw error;
+
+      // Sync a Pancake CRM en background (no bloquea ni hace fail)
+      if (user?.id && data?.status === 'joined') {
+        (supabase as any).functions
+          .invoke('pancake-sync-user', { body: { user_id: user.id } })
+          .catch(() => {});
+      }
       return data as JoinSpaceResult;
     },
     onSuccess: () => {

@@ -1,11 +1,17 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Check, Clock, ExternalLink, Video, X } from 'lucide-react';
+import { Check, Clock, ExternalLink, Video, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { safeUrl } from '@/lib/safeUrl';
-import { useRespondToInvitation, useMyMemberCalendarStatus, useConnectMemberCalendar } from '@/hooks/academy/useAcademyCalendar';
+import {
+  useRespondToInvitation,
+  useMyMemberCalendarStatus,
+  useConnectMemberCalendar,
+} from '@/hooks/academy/useAcademyCalendar';
+import { useEventCheckin } from '@/hooks/academy/useAcademyJoinSpace';
+import { useToast } from '@/hooks/use-toast';
 import type { AcademySpaceEventFull, EventInvitationStatus } from '@/types/academy-v3';
 
 interface EventCardProps {
@@ -20,14 +26,40 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
   const rsvp = useRespondToInvitation();
   const { data: memberCalStatus } = useMyMemberCalendarStatus();
   const connectMemberCal = useConnectMemberCalendar();
+  const checkin = useEventCheckin();
+  const { toast } = useToast();
 
   const dt = new Date(event.starts_at);
+  const endDt = event.ends_at ? new Date(event.ends_at) : null;
   const myInv = (() => {
     if (!event.my_invitation) return null;
     if (Array.isArray(event.my_invitation)) return event.my_invitation[0] ?? null;
     return event.my_invitation;
   })();
   const myStatus = myInv?.status ?? null;
+  const myAttended = (myInv as any)?.attended === true || (event as any).my_attended === true;
+
+  // Check-in habilitado: 15 min antes del inicio hasta 30 min después del fin
+  const now = Date.now();
+  const checkinStart = dt.getTime() - 15 * 60_000;
+  const checkinEnd = (endDt?.getTime() ?? dt.getTime() + 60 * 60_000) + 30 * 60_000;
+  const canCheckin = !isOwner && !myAttended && now >= checkinStart && now <= checkinEnd;
+
+  async function handleCheckin() {
+    try {
+      await checkin.mutateAsync(event.id);
+      toast({
+        title: '🎥 ¡Asistencia registrada!',
+        description: '+20 XP. Sigue así para desbloquear "Asiduo".',
+      });
+    } catch (e: any) {
+      toast({
+        title: 'No pudimos registrar tu asistencia',
+        description: e?.message ?? 'Intenta de nuevo',
+        variant: 'destructive',
+      });
+    }
+  }
 
   function respond(status: EventInvitationStatus) {
     rsvp.mutate({
@@ -109,6 +141,25 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
             </Button>
           ) : (
             <>
+              {canCheckin && (
+                <Button
+                  onClick={handleCheckin}
+                  disabled={checkin.isPending}
+                  size="sm"
+                  className="text-white font-bold rounded-xl shadow-lg motion-safe:animate-pulse"
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                    boxShadow: '0 4px 12px -2px rgba(124,58,237,0.6)',
+                  }}
+                >
+                  <Sparkles className="h-3 w-3 mr-1" /> Check-in +20 XP
+                </Button>
+              )}
+              {myAttended && (
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <Check className="h-2.5 w-2.5" /> Asististe
+                </span>
+              )}
               {(['accepted', 'tentative', 'declined'] as EventInvitationStatus[]).map((s) => (
                 <button
                   key={s}
