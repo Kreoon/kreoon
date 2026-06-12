@@ -6,14 +6,31 @@
 // ============================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import Stripe from 'https://esm.sh/stripe@14.14.0';
+import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
 import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
-  apiVersion: '2023-10-16',
-});
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
 
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://kreoon.com';
+
+function platformFeePercent(planSlug: string | null | undefined): number {
+  return planSlug === 'pro' ? 2.9 : 10;
+}
+
+async function ownerCanReceive(stripeAccountId: string): Promise<boolean> {
+  try {
+    const account = await stripe.v2.core.accounts.retrieve(stripeAccountId, {
+      include: ['configuration.recipient'],
+    });
+    return (
+      (account as any)?.configuration?.recipient?.capabilities?.stripe_balance
+        ?.stripe_transfers?.status === 'active'
+    );
+  } catch (e) {
+    console.warn('ownerCanReceive lookup failed', e);
+    return false;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return handleCorsOptions(req);
@@ -40,10 +57,10 @@ Deno.serve(async (req) => {
     const { course_id } = await req.json();
     if (!course_id) return corsJsonResponse(req, { error: 'course_id_required' }, 400);
 
-    // Cargar curso + space
+    // Cargar curso + space (con owner y plan para Connect)
     const { data: course } = await supabase
       .from('academy_courses')
-      .select('id, title, price_usd, is_free, slug, cover_image_url, space:academy_spaces(slug, name)')
+      .select('id, title, price_usd, is_free, slug, cover_image_url, space:academy_spaces(id, slug, name, owner_id, plan_slug)')
       .eq('id', course_id)
       .single();
 
@@ -64,9 +81,31 @@ Deno.serve(async (req) => {
       return corsJsonResponse(req, { error: 'already_enrolled' }, 409);
     }
 
-    const spaceSlug = (course.space as any)?.slug ?? '';
+    const space = (course.space as any);
+    const spaceSlug = space?.slug ?? '';
 
-    // Crear Checkout Session
+    // ─── Connect gate ───
+    // El cobro one-time también va a la cuenta del owner; KREOON
+    // descuenta application_fee_amount calculado por plan_slug.
+    const { data: connect } = await (supabase as any)
+      .from('stripe_connected_accounts')
+      .select('stripe_account_id')
+      .eq('user_id', space?.owner_id)
+      .maybeSingle();
+    const ownerAccountId = connect?.stripe_account_id as string | undefined;
+    if (!ownerAccountId) {
+      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
+    }
+    const canReceive = await ownerCanReceive(ownerAccountId);
+    if (!canReceive) {
+      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
+    }
+
+    const unitAmount = Math.round(Number(course.price_usd) * 100);
+    const feePercent = platformFeePercent(space?.plan_slug);
+    const applicationFeeAmount = Math.round((unitAmount * feePercent) / 100);
+
+    // Crear Checkout Session con destination charge
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       payment_method_types: ['card'],
@@ -75,10 +114,10 @@ Deno.serve(async (req) => {
         {
           price_data: {
             currency: 'usd',
-            unit_amount: Math.round(course.price_usd * 100),
+            unit_amount: unitAmount,
             product_data: {
               name: course.title,
-              description: `Acceso al curso "${course.title}" en ${(course.space as any)?.name ?? 'Kreoon Academia'}`,
+              description: `Acceso al curso "${course.title}" en ${space?.name ?? 'Kreoon Academia'}`,
               images: course.cover_image_url ? [course.cover_image_url] : undefined,
             },
           },
@@ -90,6 +129,12 @@ Deno.serve(async (req) => {
         type: 'academy_course_purchase',
         course_id,
         user_id: callerId,
+      },
+      payment_intent_data: {
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: {
+          destination: ownerAccountId,
+        },
       },
       success_url: `${FRONTEND_URL}/academia/${spaceSlug}/${course.slug}/learn?paid=success`,
       cancel_url: `${FRONTEND_URL}/academia/${spaceSlug}/${course.slug}?paid=cancel`,

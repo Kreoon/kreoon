@@ -33,6 +33,7 @@ import { PayoutsAdminTab } from '@/components/academy/community/admin/PayoutsAdm
 import { AffiliatesAdminTab } from '@/components/academy/community/admin/AffiliatesAdminTab';
 import { BillingAdminTab } from '@/components/academy/community/admin/BillingAdminTab';
 import { CommunityAdminTab } from '@/components/academy/community/admin/CommunityAdminTab';
+import { ConnectOnboardingTab } from '@/components/academy/community/admin/ConnectOnboardingTab';
 
 type AdminTab =
   | 'overview'
@@ -44,6 +45,7 @@ type AdminTab =
   | 'plugins'
   | 'notificaciones'
   | 'settings'
+  | 'pagos'
   | 'payouts'
   | 'afiliados'
   | 'facturacion';
@@ -58,6 +60,7 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'plugins', label: 'Plugins', icon: Plug },
   { id: 'notificaciones', label: 'Notificaciones', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'pagos', label: 'Pagos', icon: CreditCard },
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'afiliados', label: 'Afiliados', icon: Handshake },
   { id: 'facturacion', label: 'Facturación', icon: CreditCard },
@@ -170,6 +173,7 @@ export default function AcademiaSpaceAdminPage() {
               <SpaceNotificationsPanel spaceId={space.id} isOwner />
             )}
             {tab === 'settings' && <SpaceSettingsPanel space={space} />}
+            {tab === 'pagos' && <ConnectOnboardingTab accentColor={accent} planSlug={space.plan_slug} />}
             {tab === 'payouts' && <PayoutsAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'afiliados' && (
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />

@@ -1,0 +1,186 @@
+// ============================================================
+// STRIPE CONNECT — Create account (if not exists) + Onboard link
+// ============================================================
+//
+// Esta edge function combina dos pasos del flujo de Connect V2:
+//
+//   1. Crea una `connected account` para el usuario si todavía no
+//      tiene una asociada (1 cuenta Connect por user, aunque sea
+//      owner de varias academias).
+//   2. Genera un Account Link V2 (use_case: account_onboarding) y
+//      devuelve la URL hosteada por Stripe a la que el owner debe
+//      ir a completar su KYC y conectar su banco.
+//
+// El owner llega desde el panel admin de su academia con el JWT
+// de su sesión Supabase. Validamos que sea owner de ALGUNA academia
+// (no exigimos space_id específico porque la cuenta es por user).
+//
+// La URL del link es de un solo uso. Por eso siempre creamos uno
+// nuevo en cada click del owner ("Conectar mi cuenta" / "Continuar
+// onboarding").
+//
+// === ENV VARS REQUERIDAS ===
+//   STRIPE_SECRET_KEY    Stripe secret key (modo TEST o LIVE).
+//   FRONTEND_URL         Dominio público de KREOON (ej: https://kreoon.com).
+//   SUPABASE_URL         Auto-inyectado por el runtime de edge functions.
+//   SUPABASE_ANON_KEY    Auto-inyectado. Usado para auth.getUser(jwt).
+//   STRIPE_SYNC_SECRET   Compartido con vault.stripe_sync_secret; pasamos
+//                        este valor a los RPCs SECURITY DEFINER para
+//                        que validen al caller.
+// ============================================================
+
+import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
+
+// La SDK toma la API preview activa automáticamente cuando no fijamos
+// apiVersion. Así soportamos la versión latest (2026-05-27.dahlia) sin
+// re-deployar cada vez que Stripe la actualice.
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
+
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const STRIPE_SYNC_SECRET = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
+const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://kreoon.com';
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return handleCorsOptions(req);
+
+  // Validación de env vars: si falta alguno, retornamos un error explícito
+  // (no inventamos defaults silenciosos).
+  if (!Deno.env.get('STRIPE_SECRET_KEY')) {
+    return corsJsonResponse(req, { error: 'stripe_not_configured' }, 500);
+  }
+  if (!STRIPE_SYNC_SECRET) {
+    return corsJsonResponse(req, { error: 'sync_secret_not_configured' }, 500);
+  }
+
+  try {
+    // ─── 1. Autenticación: tomamos el user del JWT entrante. ───
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!jwt) return corsJsonResponse(req, { error: 'unauthorized' }, 401);
+
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data: userData, error: userErr } = await authClient.auth.getUser(jwt);
+    if (userErr || !userData?.user) return corsJsonResponse(req, { error: 'unauthorized' }, 401);
+    const user = userData.user;
+
+    // Body opcional: el owner puede pasar `space_slug` para redirigir
+    // de vuelta al admin de su academia tras el onboarding.
+    const body = await req.json().catch(() => ({})) as { space_slug?: string };
+    const spaceSlug = body.space_slug ?? null;
+
+    // ─── 2. ¿Ya existe una cuenta Connect para este user? ───
+    // Hacemos lookup directo en la tabla (RLS permite al user leer
+    // su propio registro).
+    const { data: existing } = await authClient
+      .from('stripe_connected_accounts')
+      .select('stripe_account_id')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    let accountId = existing?.stripe_account_id as string | undefined;
+
+    // ─── 3. Si no existe, la creamos con la V2 API. ───
+    // Reglas del platform (definidas por el spec del usuario):
+    //   - dashboard: 'express'  → el owner accede a un dashboard hosteado.
+    //   - fees_collector: 'application'   → KREOON cobra los fees de Stripe.
+    //   - losses_collector: 'application' → KREOON asume las pérdidas (disputes).
+    //   - capability stripe_balance.stripe_transfers: para recibir destination charges.
+    if (!accountId) {
+      // País por defecto = 'CO'. Si el profile del user tiene un país
+      // distinto registrado, lo usamos. (Connect Express tiene restricciones
+      // por país; si el owner falla aquí, debe migrar a otra residencia
+      // en su profile antes de retomar el onboarding.)
+      const { data: profile } = await authClient
+        .from('profiles')
+        .select('country, full_name')
+        .eq('id', user.id)
+        .maybeSingle();
+      const country = (profile?.country as string | undefined)?.toUpperCase() || 'CO';
+      const displayName = (profile?.full_name as string | undefined) || user.email || `KREOON ${user.id.slice(0, 8)}`;
+
+      const account = await stripe.v2.core.accounts.create({
+        display_name: displayName,
+        contact_email: user.email ?? undefined,
+        identity: {
+          country,
+        },
+        dashboard: 'express',
+        defaults: {
+          responsibilities: {
+            fees_collector: 'application',
+            losses_collector: 'application',
+          },
+        },
+        configuration: {
+          recipient: {
+            capabilities: {
+              stripe_balance: {
+                stripe_transfers: { requested: true },
+              },
+            },
+          },
+        },
+      });
+
+      accountId = account.id;
+
+      // Persistimos el mapping vía RPC SECURITY DEFINER (la tabla no
+      // permite INSERT directo desde el cliente — solo el RPC valida
+      // formato `acct_*` y hace upsert).
+      const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/upsert_stripe_connect_account`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          p_caller_secret: STRIPE_SYNC_SECRET,
+          p_user_id: user.id,
+          p_stripe_account_id: accountId,
+        }),
+      });
+      if (!rpcRes.ok) {
+        const txt = await rpcRes.text();
+        throw new Error(`rpc upsert_stripe_connect_account failed: ${txt.slice(0, 200)}`);
+      }
+    }
+
+    // ─── 4. URLs de retorno y refresh. ───
+    // Si nos pasaron space_slug, volvemos al panel admin con ?stripe_connect=done.
+    // Si no, vamos al perfil del owner.
+    const returnUrl = spaceSlug
+      ? `${FRONTEND_URL}/academia/${spaceSlug}/admin?stripe_connect=done`
+      : `${FRONTEND_URL}/settings?section=profile&stripe_connect=done`;
+    const refreshUrl = spaceSlug
+      ? `${FRONTEND_URL}/academia/${spaceSlug}/admin?stripe_connect=refresh`
+      : `${FRONTEND_URL}/settings?section=profile&stripe_connect=refresh`;
+
+    // ─── 5. Generamos el Account Link V2 de onboarding. ───
+    const accountLink = await stripe.v2.core.accountLinks.create({
+      account: accountId,
+      use_case: {
+        type: 'account_onboarding',
+        account_onboarding: {
+          configurations: ['recipient'],
+          refresh_url: refreshUrl,
+          return_url: returnUrl,
+        },
+      },
+    });
+
+    return corsJsonResponse(req, {
+      account_id: accountId,
+      url: accountLink.url,
+    });
+  } catch (err: any) {
+    console.error('stripe-connect-account-link error', err);
+    return new Response(JSON.stringify({ error: err?.message ?? 'internal_error' }), {
+      status: 500,
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+    });
+  }
+});

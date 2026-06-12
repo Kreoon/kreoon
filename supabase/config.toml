@@ -18,6 +18,15 @@ verify_jwt = false
 [functions.stripe-academy-portal]
 verify_jwt = true
 
+[functions.stripe-connect-account-link]
+verify_jwt = true
+
+[functions.stripe-connect-account-status]
+verify_jwt = true
+
+[functions.stripe-connect-webhook]
+verify_jwt = false
+
 [functions.academy-trigger-integrations]
 verify_jwt = true
 
