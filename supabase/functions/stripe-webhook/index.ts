@@ -564,6 +564,7 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
   const userId = session.metadata?.user_id;
   const spaceId = session.metadata?.space_id;
   const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
+  const customerId = typeof session.customer === "string" ? session.customer : null;
 
   if (!userId || !spaceId) {
     console.warn("[academy_membership_subscription] Missing metadata", session.id);
@@ -573,7 +574,7 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
   // Idempotencia: si ya existe membresía activa con la misma subscription, salimos.
   const { data: existing } = await supabase
     .from("academy_memberships")
-    .select("id, is_active, stripe_subscription_id")
+    .select("id, is_active, stripe_subscription_id, role")
     .eq("space_id", spaceId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -591,6 +592,7 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
         is_active: true,
         role: existing.role && existing.role !== "owner" ? existing.role : "student",
         stripe_subscription_id: subscriptionId,
+        stripe_customer_id: customerId,
       })
       .eq("id", existing.id);
   } else {
@@ -600,6 +602,7 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
       role: "student",
       is_active: true,
       stripe_subscription_id: subscriptionId,
+      stripe_customer_id: customerId,
       joined_at: new Date().toISOString(),
     });
 

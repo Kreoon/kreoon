@@ -12,6 +12,12 @@ verify_jwt = true
 [functions.stripe-academy-subscribe]
 verify_jwt = true
 
+[functions.stripe-sync-product]
+verify_jwt = false
+
+[functions.stripe-academy-portal]
+verify_jwt = true
+
 [functions.academy-trigger-integrations]
 verify_jwt = true
 

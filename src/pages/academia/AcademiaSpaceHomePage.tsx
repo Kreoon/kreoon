@@ -48,6 +48,7 @@ import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
 import { JoinSpaceModal } from '@/components/academy/join/JoinSpaceModal';
 import { SpaceJoinGate } from '@/components/academy/join/SpaceJoinGate';
 import { OnboardingWizard } from '@/components/academy/join/OnboardingWizard';
+import { ManageSubscriptionButton } from '@/components/academy/billing/ManageSubscriptionButton';
 import { ShareLinkDialog } from '@/components/academy/community/ShareLinkDialog';
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
 import { Share2 } from 'lucide-react';
@@ -239,17 +240,25 @@ export default function AcademiaSpaceHomePage() {
                 <Sparkles className="h-4 w-4 mr-2" /> Unirme gratis
               </Button>
             ) : (
-              <Link to={`/academia/${spaceSlug}/feed`}>
-                <Button
-                  className="text-white font-bold rounded-2xl px-5 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
-                  style={{
-                    background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
-                    boxShadow: `0 6px 20px -4px ${accent}80`,
-                  }}
-                >
-                  <MessagesSquare className="h-4 w-4 mr-2" /> Ir al feed
-                </Button>
-              </Link>
+              <>
+                <Link to={`/academia/${spaceSlug}/feed`}>
+                  <Button
+                    className="text-white font-bold rounded-2xl px-5 py-5 shadow-lg motion-safe:hover:scale-105 transition-transform"
+                    style={{
+                      background: `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                      boxShadow: `0 6px 20px -4px ${accent}80`,
+                    }}
+                  >
+                    <MessagesSquare className="h-4 w-4 mr-2" /> Ir al feed
+                  </Button>
+                </Link>
+                {myMembership?.stripe_subscription_id && (
+                  <ManageSubscriptionButton
+                    spaceSlug={spaceSlug!}
+                    className="border border-white/10 rounded-2xl px-4 py-5 text-zinc-300 hover:bg-white/5"
+                  />
+                )}
+              </>
             )}
             <Button
               onClick={() => setShareOpen(true)}

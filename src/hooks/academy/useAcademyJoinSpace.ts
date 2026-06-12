@@ -10,6 +10,8 @@ export interface MyMembership {
   marketing_consent: boolean;
   onboarding_completed_at: string | null;
   joined_at: string;
+  stripe_subscription_id?: string | null;
+  stripe_customer_id?: string | null;
 }
 
 /** Membresía del user actual en un space dado. null = no es member. */
@@ -20,11 +22,11 @@ export function useMyMembership(spaceId: string | undefined) {
     queryFn: async (): Promise<MyMembership | null> => {
       if (!spaceId || !user) return null;
 
-      // Intento 1: con columnas nuevas (post-migración 20260610200000)
+      // Intento 1: con columnas nuevas (post-migración 20260610200000 + Stripe)
       const { data, error } = await (supabase as any)
         .from('academy_memberships')
         .select(
-          'id, space_id, role, is_active, marketing_consent, onboarding_completed_at, joined_at'
+          'id, space_id, role, is_active, marketing_consent, onboarding_completed_at, joined_at, stripe_subscription_id, stripe_customer_id'
         )
         .eq('space_id', spaceId)
         .eq('user_id', user.id)
