@@ -11,11 +11,13 @@ import {
   Palette,
   Users,
   Building2,
+  GraduationCap,
   LucideIcon
 } from 'lucide-react';
 
-// ============= 7 BASE ROLES =============
-// Simplified role system with 7 core roles
+// ============= 8 BASE ROLES =============
+// Simplified role system with 8 core roles
+// 'student' is global: only access to Academia module, no organization required.
 export type BaseRole =
   | 'admin'
   | 'content_creator'
@@ -23,7 +25,8 @@ export type BaseRole =
   | 'digital_strategist'
   | 'creative_strategist'
   | 'community_manager'
-  | 'client';
+  | 'client'
+  | 'student';
 
 // Primary role labels in Spanish (apuntan al diccionario LATAM)
 const BASE_ROLE_LABELS: Record<BaseRole, string> = {
@@ -34,6 +37,7 @@ const BASE_ROLE_LABELS: Record<BaseRole, string> = {
   creative_strategist: ROLES_LATAM.creative_strategist,
   community_manager: ROLES_LATAM.community_manager,
   client: ROLES_LATAM.client,
+  student: ROLES_LATAM.student,
 };
 
 // Short labels for badges and compact UI
@@ -45,6 +49,7 @@ const BASE_ROLE_LABELS_SHORT: Record<BaseRole, string> = {
   creative_strategist: 'Estratega Creativo',
   community_manager: 'CM',
   client: 'Cliente',
+  student: 'Estudiante',
 };
 
 // Descriptive text for each role
@@ -56,6 +61,7 @@ const BASE_ROLE_DESCRIPTIONS: Record<BaseRole, string> = {
   creative_strategist: 'Dirección creativa y concepto de marca',
   community_manager: 'Gestión de comunidad y redes sociales',
   client: 'Acceso de cliente para revisar contenido y aprobar entregas',
+  student: 'Acceso solo al módulo educativo (Academia)',
 };
 
 // Role colors (bg/text classes for badges)
@@ -67,6 +73,7 @@ const BASE_ROLE_COLORS: Record<BaseRole, string> = {
   creative_strategist: 'bg-orange-500/20 text-orange-500',
   community_manager: 'bg-teal-500/20 text-teal-500',
   client: 'bg-amber-500/20 text-amber-500',
+  student: 'bg-violet-500/20 text-violet-500',
 };
 
 // Badge colors with border
@@ -78,6 +85,7 @@ const BASE_ROLE_BADGE_COLORS: Record<BaseRole, string> = {
   creative_strategist: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   community_manager: 'bg-teal-500/10 text-teal-500 border-teal-500/20',
   client: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+  student: 'bg-violet-500/10 text-violet-500 border-violet-500/20',
 };
 
 // Solid background colors
@@ -89,6 +97,7 @@ const BASE_ROLE_SOLID_COLORS: Record<BaseRole, string> = {
   creative_strategist: 'bg-orange-500',
   community_manager: 'bg-teal-500',
   client: 'bg-amber-500',
+  student: 'bg-violet-500',
 };
 
 // Lucide icons for each role
@@ -100,6 +109,7 @@ const BASE_ROLE_ICONS: Record<BaseRole, LucideIcon> = {
   creative_strategist: Palette,
   community_manager: Users,
   client: Building2,
+  student: GraduationCap,
 };
 
 // ============= LEGACY ROLE MAPPING =============
@@ -108,6 +118,7 @@ const LEGACY_TO_BASE_ROLE: Record<string, BaseRole> = {
   // Direct mappings
   admin: 'admin',
   client: 'client',
+  student: 'student',
 
   // Old creator roles → content_creator
   creator: 'content_creator',
@@ -187,6 +198,7 @@ const GLOBAL_ROLE_LABELS: Record<string, string> = {
   digital_strategist: ROLES_LATAM.digital_strategist,
   creative_strategist: ROLES_LATAM.creative_strategist,
   community_manager: ROLES_LATAM.community_manager,
+  student: ROLES_LATAM.student,
 };
 
 // ============= PERMISSION GROUP-BASED LABELS =============
@@ -337,7 +349,7 @@ export function getRoleIcon(role: AppRole | string): LucideIcon {
   return BASE_ROLE_ICONS[baseRole];
 }
 
-// ============= 7 BASE ROLES ARRAY =============
+// ============= 8 BASE ROLES ARRAY =============
 export const BASE_ROLES: BaseRole[] = [
   'admin',
   'content_creator',
@@ -346,9 +358,10 @@ export const BASE_ROLES: BaseRole[] = [
   'creative_strategist',
   'community_manager',
   'client',
+  'student',
 ];
 
-// Roles that can be assigned to team members (excludes admin)
+// Roles that can be assigned to team members (excludes admin + student which is global only)
 export const ASSIGNABLE_BASE_ROLES: BaseRole[] = [
   'content_creator',
   'editor',
@@ -362,7 +375,7 @@ export const ASSIGNABLE_BASE_ROLES: BaseRole[] = [
 export const FUNCTIONAL_ROLES: AppRole[] = [
   'admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client',
   // New base roles
-  'content_creator', 'digital_strategist', 'creative_strategist', 'community_manager',
+  'content_creator', 'digital_strategist', 'creative_strategist', 'community_manager', 'student',
 ] as AppRole[];
 
 // Check if a role is a functional role (can be used as active_role)
@@ -417,9 +430,9 @@ export function isAdminRole(roles: AppRole[]): boolean {
 
 // ============= ROLE ARRAYS =============
 
-// The 7 base roles (new simplified role system)
+// The 8 base roles (new simplified role system)
 export const GLOBAL_NICHE_ROLES: AppRole[] = [
-  'admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager', 'client',
+  'admin', 'content_creator', 'editor', 'digital_strategist', 'creative_strategist', 'community_manager', 'client', 'student',
 ] as AppRole[];
 
 // Legacy roles kept for backward compatibility
@@ -453,7 +466,7 @@ export const AMBASSADOR_LEVELS: AmbassadorLevel[] = ['bronze', 'silver', 'gold']
 // They use Partial<Record> to avoid exhaustive key requirements.
 
 export const ROLE_LABELS: Partial<Record<AppRole, string>> = {
-  // 7 new base roles
+  // 8 new base roles
   admin: ROLES_LATAM.admin,
   content_creator: ROLES_LATAM.content_creator,
   editor: ROLES_LATAM.editor,
@@ -461,6 +474,7 @@ export const ROLE_LABELS: Partial<Record<AppRole, string>> = {
   creative_strategist: ROLES_LATAM.creative_strategist,
   community_manager: ROLES_LATAM.community_manager,
   client: ROLES_LATAM.client,
+  student: ROLES_LATAM.student,
   // Legacy roles (for backward compatibility)
   team_leader: ROLES_LATAM.admin,
   creator: ROLES_LATAM.content_creator,
@@ -472,7 +486,7 @@ export const ROLE_LABELS: Partial<Record<AppRole, string>> = {
 };
 
 export const ROLE_LABELS_SHORT: Partial<Record<AppRole, string>> = {
-  // 7 new base roles
+  // 8 new base roles
   admin: 'Admin',
   content_creator: 'Creador',
   editor: 'Editor',
@@ -480,6 +494,7 @@ export const ROLE_LABELS_SHORT: Partial<Record<AppRole, string>> = {
   creative_strategist: 'Estratega Creativo',
   community_manager: 'CM',
   client: 'Cliente',
+  student: 'Estudiante',
   // Legacy roles
   team_leader: 'Admin',
   creator: 'Creador',
@@ -491,7 +506,7 @@ export const ROLE_LABELS_SHORT: Partial<Record<AppRole, string>> = {
 };
 
 export const ROLE_COLORS: Partial<Record<AppRole, string>> = {
-  // 7 new base roles
+  // 8 new base roles
   admin: 'bg-purple-500/20 text-purple-500',
   content_creator: 'bg-pink-500/20 text-pink-500',
   editor: 'bg-blue-500/20 text-blue-500',
@@ -499,6 +514,7 @@ export const ROLE_COLORS: Partial<Record<AppRole, string>> = {
   creative_strategist: 'bg-orange-500/20 text-orange-500',
   community_manager: 'bg-teal-500/20 text-teal-500',
   client: 'bg-amber-500/20 text-amber-500',
+  student: 'bg-violet-500/20 text-violet-500',
   // Legacy roles (mapped to new colors)
   team_leader: 'bg-purple-500/20 text-purple-500',
   creator: 'bg-pink-500/20 text-pink-500',
@@ -510,7 +526,7 @@ export const ROLE_COLORS: Partial<Record<AppRole, string>> = {
 };
 
 export const ROLE_BADGE_COLORS: Partial<Record<AppRole, string>> = {
-  // 7 new base roles
+  // 8 new base roles
   admin: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
   content_creator: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
   editor: 'bg-blue-500/10 text-blue-500 border-blue-500/20',
@@ -518,6 +534,7 @@ export const ROLE_BADGE_COLORS: Partial<Record<AppRole, string>> = {
   creative_strategist: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
   community_manager: 'bg-teal-500/10 text-teal-500 border-teal-500/20',
   client: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+  student: 'bg-violet-500/10 text-violet-500 border-violet-500/20',
   // Legacy roles
   team_leader: 'bg-purple-500/10 text-purple-500 border-purple-500/20',
   creator: 'bg-pink-500/10 text-pink-500 border-pink-500/20',
@@ -529,7 +546,7 @@ export const ROLE_BADGE_COLORS: Partial<Record<AppRole, string>> = {
 };
 
 export const ROLE_SOLID_COLORS: Partial<Record<AppRole, string>> = {
-  // 7 new base roles
+  // 8 new base roles
   admin: 'bg-purple-500',
   content_creator: 'bg-pink-500',
   editor: 'bg-blue-500',
@@ -537,6 +554,7 @@ export const ROLE_SOLID_COLORS: Partial<Record<AppRole, string>> = {
   creative_strategist: 'bg-orange-500',
   community_manager: 'bg-teal-500',
   client: 'bg-amber-500',
+  student: 'bg-violet-500',
   // Legacy roles
   team_leader: 'bg-purple-500',
   creator: 'bg-pink-500',
@@ -557,6 +575,7 @@ export const ROLE_ICONS: Partial<Record<AppRole, LucideIcon>> = {
   creative_strategist: Palette,
   community_manager: Users,
   client: Building2,
+  student: GraduationCap,
   // Legacy mappings
   team_leader: Shield,
   creator: Camera,

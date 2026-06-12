@@ -23,13 +23,14 @@ export type AppRole =
   | 'digital_strategist'
   | 'creative_strategist'
   | 'community_manager'
-  | 'client';
+  | 'client'
+  | 'student';
 
 /** Roles de talento (combinables entre sí) */
-export type TalentRole = Exclude<AppRole, 'admin' | 'client'>;
+export type TalentRole = Exclude<AppRole, 'admin' | 'client' | 'student'>;
 
-/** Tipo de usuario: talento busca trabajo, cliente contrata */
-export type UserType = 'talent' | 'client' | 'admin';
+/** Tipo de usuario: talento busca trabajo, cliente contrata, estudiante consume educación */
+export type UserType = 'talent' | 'client' | 'admin' | 'student';
 
 /**
  * Tipo de cuenta - define la version de plataforma que ve el usuario

@@ -46,6 +46,7 @@ import { CourseBigCard } from '@/components/academy/big-cards/CourseBigCard';
 import { ContinueLearningBigCard } from '@/components/academy/big-cards/ContinueLearningBigCard';
 import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
 import { JoinSpaceModal } from '@/components/academy/join/JoinSpaceModal';
+import { SpaceJoinGate } from '@/components/academy/join/SpaceJoinGate';
 import { OnboardingWizard } from '@/components/academy/join/OnboardingWizard';
 import { ShareLinkDialog } from '@/components/academy/community/ShareLinkDialog';
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
@@ -150,6 +151,13 @@ export default function AcademiaSpaceHomePage() {
   }
 
   const isOwner = !!user && (space as any).owner_id === user.id;
+
+  // Gate de inscripción: si no es owner ni miembro activo, mostramos preview con CTA
+  // adaptado (registro / unirme gratis / suscribirme con Stripe).
+  if (!isOwner && !isMember) {
+    return <SpaceJoinGate space={space} />;
+  }
+
   const allCourses = (space as any).courses ?? [];
   const courses = allCourses.filter((c: any) => c.status === 'published');
   const featuredCourses = courses.slice(0, 4);

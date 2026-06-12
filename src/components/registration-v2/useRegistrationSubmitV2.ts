@@ -2,44 +2,8 @@ import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { RegistrationFormData, UserType, RegistrationV2State } from './types';
+import { recordLegalConsents } from './shared/recordLegalConsents';
 import { triggerUserSyncSilent, triggerOrgSyncSilent } from '@/services/pancakeCrmService';
-
-/**
- * Registra los consentimientos legales del usuario después del registro
- */
-async function recordLegalConsents(userId: string): Promise<void> {
-  try {
-    // 1. Registrar verificación de edad
-    await supabase.rpc('record_age_verification', {
-      p_user_id: userId,
-      p_declared_age_18_plus: true,
-      p_ip_address: null,
-      p_user_agent: navigator.userAgent,
-    });
-
-    // 2. Obtener documentos legales vigentes
-    const { data: documents } = await supabase
-      .from('legal_documents')
-      .select('id')
-      .eq('is_current', true)
-      .eq('is_required', true);
-
-    if (documents && documents.length > 0) {
-      // 3. Registrar consentimiento para cada documento
-      for (const doc of documents) {
-        await supabase.rpc('record_consent', {
-          p_user_id: userId,
-          p_document_id: doc.id,
-          p_ip_address: null,
-          p_user_agent: navigator.userAgent,
-        });
-      }
-    }
-  } catch (error) {
-    console.warn('Error recording legal consents:', error);
-    // No falla el registro si hay error en consentimientos
-  }
-}
 
 interface UseRegistrationSubmitV2Options {
   state: RegistrationV2State;
@@ -313,6 +277,53 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     toast.success(`¡Te has unido a ${state.orgName || 'la organización'}!`);
   }, [state.orgId, state.orgName]);
 
+  /**
+   * Handler para registro EXPRESS de estudiante.
+   * - Sin organization, sin creator_profile, sin brand.
+   * - Sin checkboxes legales ni consentimientos registrados.
+   * - Si state.redirectTo apunta a /academia/:slug, hace join automático.
+   */
+  const handleStudentSubmit = useCallback(async (
+    userId: string,
+    data: RegistrationFormData
+  ) => {
+    // 1. Actualizar perfil con nombre y rol activo 'student'
+    await supabase
+      .from('profiles')
+      .update({
+        full_name: data.fullName,
+        active_role: 'student',
+      } as any)
+      .eq('id', userId);
+
+    // 2. Asignar el rol global 'student' en user_roles para que ProtectedRoute
+    //    pueda reconocerlo (sin esto, el user queda como "talent sin keys").
+    await (supabase as any).from('user_roles').insert({
+      user_id: userId,
+      role: 'student',
+    });
+
+    // 3. Si venimos desde una academia (?redirect=/academia/:slug), hacer join automático.
+    const redirectTo = state.redirectTo;
+    const academiaMatch = redirectTo?.match(/^\/academia\/([^/?#]+)/);
+    if (academiaMatch) {
+      const spaceSlug = academiaMatch[1];
+      try {
+        await (supabase as any).rpc('academy_join_space', {
+          p_space_slug: spaceSlug,
+          p_consent: true,
+          p_country: null,
+          p_referrer_id: null,
+          p_source: 'register-student',
+        });
+      } catch (e) {
+        console.warn('Auto-join to academia failed (non-blocking):', e);
+      }
+    }
+
+    toast.success('¡Tu cuenta de estudiante está lista!');
+  }, [state.redirectTo]);
+
   // ============================================
   // SUBMIT PRINCIPAL
   // ============================================
@@ -321,12 +332,24 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     setSubmitting(true);
     setSubmitError(undefined);
 
+    const isStudent = state.userType === 'student';
+
     try {
       // 1. Crear usuario en Supabase Auth
       // Build the redirect URL for email confirmation
-      const emailRedirectTo = state.flow === 'org' && state.orgSlug
-        ? `${window.location.origin}/register/${state.orgSlug}?confirmed=true`
-        : `${window.location.origin}/`;
+      let emailRedirectTo: string;
+      if (isStudent && state.redirectTo) {
+        emailRedirectTo = `${window.location.origin}${state.redirectTo}`;
+      } else if (state.flow === 'org' && state.orgSlug) {
+        emailRedirectTo = `${window.location.origin}/register/${state.orgSlug}?confirmed=true`;
+      } else {
+        emailRedirectTo = `${window.location.origin}/`;
+      }
+
+      // Para student no tenemos phone — usamos string vacío para no romper el shape.
+      const fullPhone = isStudent
+        ? ''
+        : `${data.phoneCountryCode} ${data.phone}`;
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
@@ -335,10 +358,12 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
           emailRedirectTo,
           data: {
             full_name: data.fullName,
-            phone: `${data.phoneCountryCode} ${data.phone}`,
+            phone: fullPhone,
             user_type: state.userType,
             partner_community: state.partnerCommunity,
             referral_code: state.referralCode,
+            // Para student, guardamos el redirect para hacer join post-confirmación
+            ...(isStudent && state.redirectTo ? { pending_redirect: state.redirectTo } : {}),
             // Store org info in user_metadata so OrgRegister can read it after email confirmation
             ...(state.flow === 'org' && state.orgId ? {
               pending_org_id: state.orgId,
@@ -380,11 +405,15 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
               await handleBrandSubmit(userId, data);
             } else if (state.userType === 'organization') {
               await handleOrganizationSubmit(userId, data);
+            } else if (state.userType === 'student') {
+              await handleStudentSubmit(userId, data);
             }
           }
 
-          // 4. Registrar consentimientos legales
-          await recordLegalConsents(userId);
+          // 4. Registrar consentimientos legales (NO aplica para student — registro express)
+          if (!isStudent) {
+            await recordLegalConsents(userId);
+          }
 
           // 5. Aplicar código de referido si existe
           if (state.referralCode) {
@@ -470,6 +499,7 @@ export function useRegistrationSubmitV2(options: UseRegistrationSubmitV2Options)
     handleOrganizationSubmit,
     handleClientJoinOrg,
     handleFreelancerJoinOrg,
+    handleStudentSubmit,
   ]);
 
   return { submit };

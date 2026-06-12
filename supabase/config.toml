@@ -9,6 +9,9 @@ verify_jwt = true
 [functions.academy-course-checkout]
 verify_jwt = true
 
+[functions.stripe-academy-subscribe]
+verify_jwt = true
+
 [functions.academy-trigger-integrations]
 verify_jwt = true
 

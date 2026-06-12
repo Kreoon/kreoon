@@ -79,6 +79,8 @@ serve(async (req) => {
           await handleCampaignCheckoutCompleted(supabase, session);
         } else if (session.metadata?.type === "academy_course_purchase") {
           await handleAcademyCoursePurchase(supabase, session);
+        } else if (session.metadata?.type === "academy_membership_subscription") {
+          await handleAcademyMembershipPurchase(supabase, session);
         } else if (session.metadata?.type === "org_access_purchase") {
           await handleOrgAccessPurchase(supabase, session);
         }
@@ -245,6 +247,19 @@ async function handleSubscriptionCancelled(supabase: any, subscription: Stripe.S
 
   if (error) {
     console.error("Error cancelling subscription:", error);
+  }
+
+  // Desactivar membresía de academia si la subscripción era de tipo academia.
+  if ((subscription.metadata as any)?.type === "academy_membership_subscription") {
+    const { error: memErr } = await supabase
+      .from("academy_memberships")
+      .update({ is_active: false })
+      .eq("stripe_subscription_id", subscription.id);
+    if (memErr) {
+      console.error("Error deactivating academy membership:", memErr);
+    } else {
+      console.log(`[academy_membership] Deactivated by subscription ${subscription.id}`);
+    }
   }
 }
 
@@ -538,6 +553,75 @@ async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checko
   }
 
   console.log(`[academy_course_purchase] ✓ Enrolled user ${userId} in course ${courseId} ($${amount})`);
+}
+
+// ============================================================================
+// HANDLER: SUSCRIPCIÓN A ACADEMIA DE PAGO (recurrente)
+// Crea/activa academy_memberships con role='student' y guarda stripe_subscription_id.
+// ============================================================================
+
+async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Checkout.Session) {
+  const userId = session.metadata?.user_id;
+  const spaceId = session.metadata?.space_id;
+  const subscriptionId = typeof session.subscription === "string" ? session.subscription : null;
+
+  if (!userId || !spaceId) {
+    console.warn("[academy_membership_subscription] Missing metadata", session.id);
+    return;
+  }
+
+  // Idempotencia: si ya existe membresía activa con la misma subscription, salimos.
+  const { data: existing } = await supabase
+    .from("academy_memberships")
+    .select("id, is_active, stripe_subscription_id")
+    .eq("space_id", spaceId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing && existing.is_active && existing.stripe_subscription_id === subscriptionId) {
+    console.log(`[academy_membership_subscription] Already active: user ${userId} space ${spaceId}`);
+    return;
+  }
+
+  if (existing) {
+    // Reactivar (e.g. el user había cancelado y vuelve a suscribirse).
+    await supabase
+      .from("academy_memberships")
+      .update({
+        is_active: true,
+        role: existing.role && existing.role !== "owner" ? existing.role : "student",
+        stripe_subscription_id: subscriptionId,
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("academy_memberships").insert({
+      space_id: spaceId,
+      user_id: userId,
+      role: "student",
+      is_active: true,
+      stripe_subscription_id: subscriptionId,
+      joined_at: new Date().toISOString(),
+    });
+
+    // Incrementar member_count del space.
+    try {
+      const { data: spaceRow } = await supabase
+        .from("academy_spaces")
+        .select("member_count")
+        .eq("id", spaceId)
+        .single();
+      if (spaceRow) {
+        await supabase
+          .from("academy_spaces")
+          .update({ member_count: (spaceRow.member_count ?? 0) + 1 })
+          .eq("id", spaceId);
+      }
+    } catch (e) {
+      console.warn("[academy_membership_subscription] Could not bump member_count", e);
+    }
+  }
+
+  console.log(`[academy_membership_subscription] ✓ User ${userId} subscribed to space ${spaceId} (sub ${subscriptionId})`);
 }
 
 // ============================================================================

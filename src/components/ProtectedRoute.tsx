@@ -1,5 +1,6 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
@@ -9,6 +10,19 @@ import { AppRole } from '@/types/database';
 import { getPermissionGroup, getDashboardForRole, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+// Rutas permitidas para usuarios con rol único 'student' (Academia + gestión de cuenta)
+const STUDENT_ALLOWED_ROUTE_PREFIXES = [
+  '/academia',
+  '/profile',
+  '/settings',
+  '/auth',
+  '/logout',
+];
+
+function isStudentAllowedRoute(pathname: string): boolean {
+  return STUDENT_ALLOWED_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -94,6 +108,13 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
   const [checkingCompany, setCheckingCompany] = useState(false);
+
+  // Throttle del toast de "ruta no permitida para estudiante" para que no se
+  // dispare en cada render dentro del mismo intento de navegación.
+  const studentRedirectToastRef = useRef<boolean | null>(null);
+  useEffect(() => {
+    studentRedirectToastRef.current = null;
+  }, [location.pathname]);
 
   // Use effective roles when impersonating, otherwise real roles
   const rolesToCheck = isImpersonating ? effectiveRoles : realRoles;
@@ -183,6 +204,22 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // ─── STUDENT GUARD ───────────────────────────────────────────────────
+  // Si el usuario es "solo estudiante" (rol único 'student', sin otros roles
+  // funcionales), redirigir a /academia con toast cuando intente acceder a
+  // rutas fuera del módulo educativo y de su propio perfil.
+  const hasStudentRole = rolesToCheck.includes('student' as AppRole);
+  const hasNonStudentRole = rolesToCheck.some((r) => getPermissionGroup(r) !== 'student');
+  const isStudentOnly = hasStudentRole && !hasNonStudentRole && !isPlatformAdmin && !isPlatformRoot;
+
+  if (isStudentOnly && !isStudentAllowedRoute(location.pathname)) {
+    studentRedirectToastRef.current ??= (() => {
+      toast.info('Esta sección requiere activar tu cuenta como creador o empresa.');
+      return true;
+    })();
+    return <Navigate to="/academia" replace />;
   }
 
   // Platform root without org selected trying to access org-required routes

@@ -6,8 +6,10 @@ import {
   RegistrationFormData,
   registrationFormSchema,
   registrationFormSchemaWithCompany,
+  registrationStudentSchema,
   UserType,
   requiresCompanyName,
+  isStudentType,
 } from '../types';
 import { PhoneInput } from '../shared/PhoneInput';
 import { PasswordField } from '../shared/PasswordField';
@@ -28,8 +30,13 @@ export function RegistrationFormStep({
   isSubmitting,
   submitError,
 }: RegistrationFormStepProps) {
-  const needsCompany = requiresCompanyName(userType);
-  const schema = needsCompany ? registrationFormSchemaWithCompany : registrationFormSchema;
+  const isStudent = isStudentType(userType);
+  const needsCompany = !isStudent && requiresCompanyName(userType);
+  const schema = isStudent
+    ? registrationStudentSchema
+    : needsCompany
+      ? registrationFormSchemaWithCompany
+      : registrationFormSchema;
 
   const {
     register,
@@ -79,10 +86,12 @@ export function RegistrationFormStep({
       {/* Header */}
       <div className="text-center space-y-1 mb-6">
         <h1 className="text-2xl font-bold text-white">
-          Completa tu registro
+          {isStudent ? 'Crea tu cuenta' : 'Completa tu registro'}
         </h1>
         <p className="text-white/60 text-sm">
-          Ingresa tus datos para crear tu cuenta
+          {isStudent
+            ? 'Solo necesitamos tu nombre, email y una contraseña.'
+            : 'Ingresa tus datos para crear tu cuenta'}
         </p>
       </div>
 
@@ -175,15 +184,17 @@ export function RegistrationFormStep({
         </div>
       )}
 
-      {/* Teléfono */}
-      <PhoneInput
-        value={phone}
-        countryCode={phoneCountryCode}
-        onChange={(v) => setValue('phone', v)}
-        onCountryChange={(c) => setValue('phoneCountryCode', c)}
-        error={errors.phone?.message}
-        disabled={isSubmitting}
-      />
+      {/* Teléfono (oculto para estudiante) */}
+      {!isStudent && (
+        <PhoneInput
+          value={phone}
+          countryCode={phoneCountryCode}
+          onChange={(v) => setValue('phone', v)}
+          onCountryChange={(c) => setValue('phoneCountryCode', c)}
+          error={errors.phone?.message}
+          disabled={isSubmitting}
+        />
+      )}
 
       {/* Contraseña */}
       <PasswordField
@@ -207,24 +218,26 @@ export function RegistrationFormStep({
         disabled={isSubmitting}
       />
 
-      {/* Checkboxes legales */}
-      <LegalCheckboxes
-        acceptAge18Plus={acceptAge18Plus}
-        acceptTerms={acceptTerms}
-        acceptPrivacy={acceptPrivacy}
-        acceptDataTreatment={acceptDataTreatment}
-        onAge18PlusChange={(v) => setValue('acceptAge18Plus', v as true)}
-        onTermsChange={(v) => setValue('acceptTerms', v as true)}
-        onPrivacyChange={(v) => setValue('acceptPrivacy', v as true)}
-        onDataTreatmentChange={(v) => setValue('acceptDataTreatment', v as true)}
-        errors={{
-          acceptAge18Plus: errors.acceptAge18Plus?.message,
-          acceptTerms: errors.acceptTerms?.message,
-          acceptPrivacy: errors.acceptPrivacy?.message,
-          acceptDataTreatment: errors.acceptDataTreatment?.message,
-        }}
-        disabled={isSubmitting}
-      />
+      {/* Checkboxes legales (ocultos para estudiante) */}
+      {!isStudent && (
+        <LegalCheckboxes
+          acceptAge18Plus={acceptAge18Plus}
+          acceptTerms={acceptTerms}
+          acceptPrivacy={acceptPrivacy}
+          acceptDataTreatment={acceptDataTreatment}
+          onAge18PlusChange={(v) => setValue('acceptAge18Plus', v as true)}
+          onTermsChange={(v) => setValue('acceptTerms', v as true)}
+          onPrivacyChange={(v) => setValue('acceptPrivacy', v as true)}
+          onDataTreatmentChange={(v) => setValue('acceptDataTreatment', v as true)}
+          errors={{
+            acceptAge18Plus: errors.acceptAge18Plus?.message,
+            acceptTerms: errors.acceptTerms?.message,
+            acceptPrivacy: errors.acceptPrivacy?.message,
+            acceptDataTreatment: errors.acceptDataTreatment?.message,
+          }}
+          disabled={isSubmitting}
+        />
+      )}
 
       {/* Error de submit */}
       {submitError && (

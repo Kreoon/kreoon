@@ -23,8 +23,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsStudent } from '@/hooks/useIsStudent';
 import { useProfile } from '@/hooks/useProfile';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
+import { StudentProfilePanel } from '@/components/settings/StudentProfilePanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -56,6 +58,7 @@ const COUNTRIES = [
 
 export default function ProfileSection() {
   const { activeRole, profile } = useAuth();
+  const isStudentOnly = useIsStudent();
 
   // Detect brand members: by active_brand_id, active_role='client', or actual client role
   const isBrandMember = !!(profile as any)?.active_brand_id ||
@@ -69,13 +72,26 @@ export default function ProfileSection() {
   const { exists, createProfile, loading: cpLoading } = useCreatorProfile();
   const [creatingProfile, setCreatingProfile] = useState(false);
 
-  // Auto-create creator_profile if not exists (for non-brand users)
+  // Auto-create creator_profile if not exists
+  // (NO crear para brand ni para estudiantes — student no necesita creator_profile)
   useEffect(() => {
-    if (userProfile && !exists && !cpLoading && !creatingProfile && !isBrand) {
+    if (userProfile && !exists && !cpLoading && !creatingProfile && !isBrand && !isStudentOnly) {
       setCreatingProfile(true);
       createProfile().finally(() => setCreatingProfile(false));
     }
-  }, [userProfile, exists, cpLoading, createProfile, creatingProfile, isBrand]);
+  }, [userProfile, exists, cpLoading, createProfile, creatingProfile, isBrand, isStudentOnly]);
+
+  // Estudiante "solo academia": vista simplificada con cards de upgrade.
+  if (isStudentOnly) {
+    if (profileLoading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+    }
+    return <StudentProfilePanel />;
+  }
 
   if (profileLoading || cpLoading || creatingProfile) {
     return (

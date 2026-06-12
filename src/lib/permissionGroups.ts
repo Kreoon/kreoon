@@ -1,10 +1,11 @@
 /**
  * Permission Groups - Simplified Role System
  *
- * Maps 7 base roles to 3 permission levels: admin, talent, client.
+ * Maps 8 base roles to 4 permission levels: admin, talent, client, student.
  * - admin: Full system access
  * - talent: All creative/operational roles (content_creator, editor, digital_strategist, creative_strategist, community_manager)
  * - client: External client access
+ * - student: Academia-only access (no organization required)
  *
  * Every permission check in the platform should use getPermissionGroup()
  * instead of checking individual role strings.
@@ -12,9 +13,9 @@
 
 import type { AccountType } from '@/types/database';
 
-export type PermissionGroup = 'admin' | 'talent' | 'client';
+export type PermissionGroup = 'admin' | 'talent' | 'client' | 'student';
 
-// 7 base roles mapped to 3 permission levels
+// 8 base roles mapped to 4 permission levels
 const ROLE_TO_PERMISSION_GROUP: Record<string, PermissionGroup> = {
   // Admin - Full access
   admin: 'admin',
@@ -28,6 +29,9 @@ const ROLE_TO_PERMISSION_GROUP: Record<string, PermissionGroup> = {
 
   // Client - External access
   client: 'client',
+
+  // Student - Academia-only access
+  student: 'student',
 
   // ─── Legacy Role Mappings (backwards compatibility) ─────────────────────
   // These roles are deprecated but still supported for existing data
@@ -114,7 +118,7 @@ export function getRolesForGroup(group: PermissionGroup): string[] {
     .map(([role]) => role);
 }
 
-/** The 7 base roles in the simplified system */
+/** The 8 base roles in the simplified system */
 export const BASE_ROLES = [
   'admin',
   'content_creator',
@@ -123,6 +127,7 @@ export const BASE_ROLES = [
   'creative_strategist',
   'community_manager',
   'client',
+  'student',
 ] as const;
 
 export type BaseRole = (typeof BASE_ROLES)[number];
@@ -220,6 +225,11 @@ export function isClient(role: string | null | undefined): boolean {
   return getPermissionGroup(role) === 'client';
 }
 
+/** Check if a role has student permissions (Academia-only) */
+export function isStudent(role: string | null | undefined): boolean {
+  return getPermissionGroup(role) === 'student';
+}
+
 // ─── Permission Group Labels ─────────────────────────────────────────────
 // Human-readable labels for permission groups
 
@@ -228,6 +238,7 @@ export const PERMISSION_GROUP_LABELS: Record<PermissionGroup, string> = {
   admin: 'Administración',
   talent: 'Talento',
   client: 'Cliente',
+  student: 'Estudiante',
 };
 
 /** Dashboard path for each permission group */
@@ -235,6 +246,7 @@ export const GROUP_DASHBOARD_PATHS: Record<PermissionGroup, string> = {
   admin: '/dashboard',
   talent: '/creator-dashboard',  // Consolidado con CreatorDashboard adaptativo
   client: '/client-dashboard',
+  student: '/academia',  // Students land on Academia home
 };
 
 /** Get the dashboard path for a role based on its permission group */
@@ -261,7 +273,7 @@ export function getDashboardForAccountType(accountType: AccountType | string | n
 
 // ─── Role Labels (for UI display) ────────────────────────────────────────
 
-/** Human-readable labels for the 7 base roles */
+/** Human-readable labels for the 8 base roles */
 export const BASE_ROLE_LABELS: Record<BaseRole, string> = {
   admin: 'Administrador',
   content_creator: 'Creador de Contenido',
@@ -270,6 +282,7 @@ export const BASE_ROLE_LABELS: Record<BaseRole, string> = {
   creative_strategist: 'Estratega Creativo',
   community_manager: 'Community Manager',
   client: 'Cliente',
+  student: 'Estudiante',
 };
 
 /** Get human-readable label for any role */
@@ -297,6 +310,7 @@ export type RoleArea =
   | 'technology'
   | 'education'
   | 'client'
+  | 'student'
   | 'system';
 
 /** @deprecated Maps roles to legacy RoleArea for backwards compatibility */
@@ -361,6 +375,9 @@ const ROLE_TO_AREA: Record<string, RoleArea> = {
   client: 'client',
   brand_manager: 'client',
   marketing_director: 'client',
+
+  // Student
+  student: 'student',
 };
 
 /** @deprecated Use getPermissionGroup() instead. Kept for backwards compatibility. */
@@ -377,5 +394,6 @@ export const ROLE_AREA_LABELS: Record<RoleArea, string> = {
   technology: 'Tecnología',
   education: 'Educación',
   client: 'Cliente',
+  student: 'Estudiante',
   system: 'Administración',
 };

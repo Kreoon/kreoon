@@ -52,7 +52,7 @@ export function JoinSpaceModal({
   async function handleJoin() {
     if (!user) {
       const redirectTo = `/academia/${spaceSlug}`;
-      navigate(`/auth?role=student&redirect=${encodeURIComponent(redirectTo)}`);
+      navigate(`/register?role=student&redirect=${encodeURIComponent(redirectTo)}`);
       return;
     }
 

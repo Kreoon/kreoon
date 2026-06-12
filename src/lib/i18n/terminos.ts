@@ -46,6 +46,9 @@ export const ROLES = {
   community_manager:     'Community Manager',
   client:                'Cliente / Marca',
 
+  // ─── ROL GLOBAL ESTUDIANTE (acceso solo a Academia) ─────────────────
+  student:               'Estudiante',
+
   // ─── ROLES LEGACY (backward compatibility) ──────────────────────────
   team_leader:           'Líder de Equipo',
   strategist:            'Estratega',

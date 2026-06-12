@@ -1,10 +1,11 @@
-import { Building2, Users, Sparkles, User, ChevronRight } from 'lucide-react';
+import { Building2, Users, Sparkles, User, GraduationCap, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   UserType,
   UserTypeOption,
   ORG_USER_TYPE_OPTIONS,
   GENERAL_USER_TYPE_OPTIONS,
+  STUDENT_USER_TYPE_OPTION,
   RegistrationFlow,
 } from '../types';
 
@@ -13,6 +14,8 @@ interface TypeSelectorStepProps {
   selectedType?: UserType;
   onSelect: (type: UserType) => void;
   orgName?: string;
+  /** Si llega un tipo forzado vía query (ej. ?role=student), se muestra ÚNICAMENTE esa opción */
+  forcedUserType?: UserType;
 }
 
 const ICONS = {
@@ -20,6 +23,7 @@ const ICONS = {
   Users,
   Sparkles,
   User,
+  GraduationCap,
 };
 
 export function TypeSelectorStep({
@@ -27,22 +31,33 @@ export function TypeSelectorStep({
   selectedType,
   onSelect,
   orgName,
+  forcedUserType,
 }: TypeSelectorStepProps) {
-  const options = flow === 'org' ? ORG_USER_TYPE_OPTIONS : GENERAL_USER_TYPE_OPTIONS;
+  let options: UserTypeOption[];
+  if (forcedUserType === 'student') {
+    options = [STUDENT_USER_TYPE_OPTION];
+  } else {
+    options = flow === 'org' ? ORG_USER_TYPE_OPTIONS : GENERAL_USER_TYPE_OPTIONS;
+  }
+  const isStudentOnly = forcedUserType === 'student';
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-white">
-          {flow === 'org' ? (
+          {isStudentOnly ? (
+            <>Crea tu cuenta para entrar a la academia</>
+          ) : flow === 'org' ? (
             <>¿Cómo te unirás a {orgName || 'la organización'}?</>
           ) : (
             <>¿Qué tipo de cuenta necesitas?</>
           )}
         </h1>
         <p className="text-white/60">
-          Selecciona la opción que mejor describe tu perfil
+          {isStudentOnly
+            ? 'Registro rápido. Solo necesitas tu email y una contraseña.'
+            : 'Selecciona la opción que mejor describe tu perfil'}
         </p>
       </div>
 

@@ -14,9 +14,13 @@ export type RegistrationFlow = 'org' | 'general';
 /**
  * Tipo de usuario seleccionado
  * - Flujo org: client | freelancer
- * - Flujo general: brand | organization | freelancer
+ * - Flujo general: brand | organization | freelancer | student
+ *
+ * 'student' es el único tipo que NO requiere datos legales en el registro:
+ * solo nombre, email y contraseña. Los legales se piden únicamente cuando
+ * el estudiante hace upgrade a creador o empresa desde su perfil.
  */
-export type UserType = 'client' | 'freelancer' | 'brand' | 'organization';
+export type UserType = 'client' | 'freelancer' | 'brand' | 'organization' | 'student';
 
 /**
  * Paso actual del wizard
@@ -119,6 +123,39 @@ export const registrationFormSchemaWithCompany = registrationFormSchema.refine(
   }
 );
 
+/**
+ * Schema EXPRESS para 'student'.
+ * Sin teléfono, sin empresa, sin checkboxes legales.
+ * Solo nombre completo + email + contraseña.
+ */
+export const registrationStudentSchema = z.object({
+  fullName: z.string()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(100, 'El nombre no puede exceder 100 caracteres'),
+
+  email: z.string()
+    .email('Email inválido')
+    .max(255, 'El email no puede exceder 255 caracteres'),
+
+  password: z.string()
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
+    .max(72, 'La contraseña no puede exceder 72 caracteres'),
+
+  confirmPassword: z.string(),
+
+  // Campos sin uso pero permitidos para mantener el tipo compatible con RegistrationFormData
+  phone: z.string().optional(),
+  phoneCountryCode: z.string().optional(),
+  companyName: z.string().optional(),
+  acceptAge18Plus: z.boolean().optional(),
+  acceptTerms: z.boolean().optional(),
+  acceptPrivacy: z.boolean().optional(),
+  acceptDataTreatment: z.boolean().optional(),
+}).refine(data => data.password === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword'],
+});
+
 export type RegistrationFormData = z.infer<typeof registrationFormSchema>;
 
 // ============================================
@@ -150,6 +187,12 @@ export interface RegistrationV2State {
 
   // Partner community
   partnerCommunity?: string;
+
+  // Tipo forzado vía query (ej. ?role=student desde /academia/:slug)
+  forcedUserType?: UserType;
+
+  // URL a la que redirigir tras el éxito (ej. /academia/:slug)
+  redirectTo?: string;
 
   // Estado de submit
   isSubmitting: boolean;
@@ -219,7 +262,21 @@ export const GENERAL_USER_TYPE_OPTIONS: UserTypeOption[] = [
     description: 'Soy creador de contenido independiente',
     icon: 'Sparkles',
   },
+  {
+    type: 'student',
+    title: 'Solo quiero educarme',
+    description: 'Acceso a la academia y sus cursos. Puedes activar otras funciones después.',
+    icon: 'GraduationCap',
+  },
 ];
+
+/** Opción aislada para mostrar cuando se llega con ?role=student desde la academia */
+export const STUDENT_USER_TYPE_OPTION: UserTypeOption = {
+  type: 'student',
+  title: 'Solo quiero educarme',
+  description: 'Acceso a la academia. Más adelante puedes activar tu cuenta como creador o empresa.',
+  icon: 'GraduationCap',
+};
 
 // ============================================
 // HELPERS
@@ -232,16 +289,34 @@ export function requiresCompanyName(userType: UserType | undefined): boolean {
   return userType === 'client' || userType === 'brand' || userType === 'organization';
 }
 
+/** Estudiante (registro express, sin legales) */
+export function isStudentType(userType: UserType | undefined): boolean {
+  return userType === 'student';
+}
+
 /**
- * Obtiene los pasos del wizard según el flujo
+ * Obtiene los pasos del wizard según el flujo.
+ * `skipTypeSelector=true` cuando el tipo ya viene predeterminado (ej. ?role=student
+ * desde la academia) y no tiene sentido pedir confirmación al usuario.
  */
-export function getWizardSteps(flow: RegistrationFlow, requiresInviteCode: boolean): WizardStep[] {
+export function getWizardSteps(
+  flow: RegistrationFlow,
+  requiresInviteCode: boolean,
+  skipTypeSelector: boolean = false,
+): WizardStep[] {
   if (flow === 'org') {
-    return requiresInviteCode
-      ? ['invite-code', 'type-selector', 'form', 'success']
+    if (requiresInviteCode) {
+      return skipTypeSelector
+        ? ['invite-code', 'form', 'success']
+        : ['invite-code', 'type-selector', 'form', 'success'];
+    }
+    return skipTypeSelector
+      ? ['form', 'success']
       : ['type-selector', 'form', 'success'];
   }
-  return ['type-selector', 'form', 'success'];
+  return skipTypeSelector
+    ? ['form', 'success']
+    : ['type-selector', 'form', 'success'];
 }
 
 /**
