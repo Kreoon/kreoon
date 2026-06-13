@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Image as ImageIcon, ListChecks, MessageCircle, Send, Sparkles, X, HelpCircle } from 'lucide-react';
+import { useState, useRef, lazy, Suspense } from 'react';
+import { Image as ImageIcon, ListChecks, MessageCircle, Send, Sparkles, X, HelpCircle, Smile, Sticker } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePost } from '@/hooks/academy/useAcademyCommunity';
 import { KiroAssistDialog } from './KiroAssistDialog';
+import { GifPicker } from './GifPicker';
+
+// emoji-picker-react pesa ~120KB; lazy load para no impactar bundle inicial.
+const EmojiPicker = lazy(() => import('emoji-picker-react').then((m) => ({ default: m.default })));
 import type { AcademyPostCategory, AcademyPost } from '@/types/academy-community';
 
 interface PostComposerProps {
@@ -32,6 +36,17 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [showKiro, setShowKiro] = useState(false);
+  const [showEmoji, setShowEmoji] = useState(false);
+  const [showGif, setShowGif] = useState(false);
+  const editorAppendRef = useRef<((text: string) => void) | null>(null);
+
+  function appendToBody(text: string) {
+    if (editorAppendRef.current) {
+      editorAppendRef.current(text);
+    } else {
+      setBody((b) => b + text);
+    }
+  }
 
   function reset() {
     setExpanded(false);
@@ -213,7 +228,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               <KindButton active={kind === 'poll'} onClick={() => setKind('poll')} icon={ListChecks} label="Poll" />
               <label
                 className="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer"
-                title="Imagen, GIF, sticker, video o audio"
+                title="Imagen, sticker, video o audio"
               >
                 <ImageIcon className="h-4 w-4" />
                 <input
@@ -224,15 +239,63 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) uploadImage(f);
-                    // Reset value para permitir subir el mismo archivo otra vez
                     e.target.value = '';
                   }}
                 />
                 {uploading ? 'Subiendo...' : 'Media'}
               </label>
+
+              {/* GIF picker */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowGif((v) => !v); setShowEmoji(false); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200"
+                  title="Buscar GIF"
+                  type="button"
+                >
+                  <Sticker className="h-4 w-4" /> GIF
+                </button>
+                {showGif && (
+                  <GifPicker
+                    onSelect={(url) => setMediaUrls((arr) => [...arr, url])}
+                    onClose={() => setShowGif(false)}
+                  />
+                )}
+              </div>
+
+              {/* Emoji picker */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowEmoji((v) => !v); setShowGif(false); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200"
+                  title="Insertar emoji"
+                  type="button"
+                >
+                  <Smile className="h-4 w-4" />
+                </button>
+                {showEmoji && (
+                  <div className="absolute z-50 mt-2">
+                    <Suspense fallback={<div className="bg-zinc-950 rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando emojis...</div>}>
+                      <EmojiPicker
+                        onEmojiClick={(e: any) => {
+                          appendToBody(e.emoji);
+                          setShowEmoji(false);
+                        }}
+                        theme={'dark' as any}
+                        searchPlaceHolder="Buscar emoji..."
+                        width={320}
+                        height={400}
+                        lazyLoadEmojis
+                      />
+                    </Suspense>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => setShowKiro(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-purple-400 hover:text-purple-300"
+                type="button"
               >
                 <Sparkles className="h-3.5 w-3.5" /> KIRO
               </button>
