@@ -38,7 +38,25 @@ export function ManageSubscriptionButton({
       window.location.href = data.url as string;
     } catch (e: any) {
       console.error('billing portal failed', e);
-      const msg = e?.message ?? 'No pudimos abrir el portal. Intenta de nuevo.';
+      // El FunctionsHttpError de supabase-js no expone el body en e.message
+      // (queda como "non-2xx status code"). Leemos el JSON de la respuesta
+      // para traducir códigos conocidos a mensajes claros.
+      let code: string | undefined;
+      try {
+        if (e?.context && typeof e.context.json === 'function') {
+          code = (await e.context.json())?.error;
+        }
+      } catch {
+        /* respuesta sin JSON */
+      }
+      const msg =
+        code === 'no_paid_membership'
+          ? 'No tienes una suscripción activa en esta academia.'
+          : code === 'stripe_not_configured'
+            ? 'El portal de pagos no está disponible por ahora. Contacta a soporte.'
+            : code === 'unauthorized'
+              ? 'Tu sesión expiró. Vuelve a iniciar sesión.'
+              : 'No pudimos abrir el portal. Intenta de nuevo.';
       toast.error(msg);
       setLoading(false);
     }

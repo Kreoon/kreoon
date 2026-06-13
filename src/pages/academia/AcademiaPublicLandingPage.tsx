@@ -240,15 +240,16 @@ export default function AcademiaPublicLandingPage() {
               {landing.landing_instructors.map((i: any, idx: number) => {
                 const safeAvatar = safeUrl(i.avatar_url);
                 return (
-                <Card key={idx} className="bg-white/5 border-white/10 p-4 text-center">
-                  {safeAvatar && (
-                    <img src={safeAvatar} alt={i.name}
-                         className="h-20 w-20 rounded-full mx-auto object-cover mb-3" />
-                  )}
-                  <h3 className="font-semibold">{i.name}</h3>
-                  <p className="text-xs text-zinc-400 mt-1">{i.title}</p>
-                </Card>
-              ))}
+                  <Card key={idx} className="bg-white/5 border-white/10 p-4 text-center">
+                    {safeAvatar && (
+                      <img src={safeAvatar} alt={i.name}
+                           className="h-20 w-20 rounded-full mx-auto object-cover mb-3" />
+                    )}
+                    <h3 className="font-semibold">{i.name}</h3>
+                    <p className="text-xs text-zinc-400 mt-1">{i.title}</p>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </section>
