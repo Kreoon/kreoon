@@ -277,26 +277,49 @@ export function useToggleFollow() {
       targetUserId: string;
     }) => {
       if (!user) throw new Error('No user');
-      const { data: existing } = await (supabase as any)
+      const { data: existing, error: selErr } = await (supabase as any)
         .from('academy_member_follows')
         .select('id')
         .eq('space_id', spaceId)
         .eq('follower_id', user.id)
         .eq('following_id', targetUserId)
         .maybeSingle();
+      if (selErr) throw selErr;
 
       if (existing) {
-        await (supabase as any).from('academy_member_follows').delete().eq('id', existing.id);
+        const { error: delErr } = await (supabase as any)
+          .from('academy_member_follows')
+          .delete()
+          .eq('id', existing.id);
+        if (delErr) throw delErr;
         return { following: false };
       }
 
-      await (supabase as any)
+      const { error: insErr } = await (supabase as any)
         .from('academy_member_follows')
         .insert({ space_id: spaceId, follower_id: user.id, following_id: targetUserId });
+      if (insErr) throw insErr;
       return { following: true };
     },
-    onSuccess: (_, { spaceId }) =>
-      qc.invalidateQueries({ queryKey: ['academy', 'members', spaceId] }),
+    // Optimistic update: el botón cambia instantáneamente. Si falla, se revierte.
+    onMutate: async ({ spaceId, targetUserId }) => {
+      const key = ['academy', 'my-follows', spaceId, user?.id];
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<string[]>(key) ?? [];
+      const next = prev.includes(targetUserId)
+        ? prev.filter((id) => id !== targetUserId)
+        : [...prev, targetUserId];
+      qc.setQueryData(key, next);
+      return { prev, key };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.key) qc.setQueryData(ctx.key, ctx.prev);
+      console.error('[useToggleFollow] error:', err);
+    },
+    onSettled: (_, __, { spaceId }) => {
+      qc.invalidateQueries({ queryKey: ['academy', 'my-follows', spaceId, user?.id] });
+      qc.invalidateQueries({ queryKey: ['academy', 'members', spaceId] });
+    },
   });
 }
 
