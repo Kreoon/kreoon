@@ -4,7 +4,7 @@
 // salud financiera (MRR efectivo, dilución).
 // ============================================================================
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -72,6 +72,7 @@ export interface AcademyNotification {
 export function useAcademyNotifications(opts?: { onNew?: (n: AcademyNotification) => void }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const instanceId = useId();
 
   const query = useQuery({
     queryKey: ['academy', 'notifications', user?.id],
@@ -93,7 +94,7 @@ export function useAcademyNotifications(opts?: { onNew?: (n: AcademyNotification
   useEffect(() => {
     if (!user) return;
     const channel = (supabase as any)
-      .channel(`academy-notif-${user.id}`)
+      .channel(`academy-notif-${user.id}-${instanceId}`)
       .on(
         'postgres_changes',
         {
@@ -170,6 +171,7 @@ export interface FinancialHealth {
 
 export function useAcademyFinancialHealth(spaceId: string | null | undefined) {
   const qc = useQueryClient();
+  const instanceId = useId();
 
   const query = useQuery<FinancialHealth | null>({
     queryKey: ['academy', 'financial-health', spaceId],
@@ -190,7 +192,7 @@ export function useAcademyFinancialHealth(spaceId: string | null | undefined) {
   useEffect(() => {
     if (!spaceId) return;
     const channel = (supabase as any)
-      .channel(`academy-finance-${spaceId}`)
+      .channel(`academy-finance-${spaceId}-${instanceId}`)
       .on(
         'postgres_changes',
         {
@@ -226,6 +228,7 @@ export function useAcademyFinancialHealth(spaceId: string | null | undefined) {
 export function useAcademyActivityFeed(spaceId: string | null | undefined) {
   const qc = useQueryClient();
   const { user } = useAuth();
+  const instanceId = useId();
 
   const query = useQuery({
     queryKey: ['academy', 'activity', spaceId, user?.id],
@@ -248,7 +251,7 @@ export function useAcademyActivityFeed(spaceId: string | null | undefined) {
   useEffect(() => {
     if (!spaceId || !user) return;
     const channel = (supabase as any)
-      .channel(`academy-activity-${spaceId}-${user.id}`)
+      .channel(`academy-activity-${spaceId}-${user.id}-${instanceId}`)
       .on(
         'postgres_changes',
         {
@@ -272,11 +275,12 @@ export function useAcademyActivityFeed(spaceId: string | null | undefined) {
 // ────────────────────────────────────────────────────────────────────────────
 export function useAcademyLiveContent(spaceId: string | null | undefined) {
   const qc = useQueryClient();
+  const instanceId = useId();
 
   useEffect(() => {
     if (!spaceId) return;
     const channel = (supabase as any)
-      .channel(`academy-content-${spaceId}`)
+      .channel(`academy-content-${spaceId}-${instanceId}`)
       .on(
         'postgres_changes',
         {
