@@ -172,6 +172,68 @@ async function ensureRecurringPrice(
   return newPrice.id;
 }
 
+// ─── IMAGE UPLOAD A STRIPE FILES API ──────────────────────────────────
+//
+// El Customer Portal de Stripe tiene una CSP que solo permite imágenes
+// desde files.stripe.com, s3.amazonaws.com/stripe-uploads/ y un par de
+// CDNs propios. URLs externas (ej. cdn.kreoon.com) quedan guardadas en el
+// Product pero el browser las bloquea al renderizar.
+//
+// Solución: descargar la imagen del CDN externo, uploadearla via Files API
+// (purpose=business_logo es el único compatible con product images),
+// crear un FileLink público y devolver esa URL `files.stripe.com/links/...`.
+//
+// Cache: guardamos el `stripe_image_url` resultante en metadata del Product
+// con key `kreoon_image_src` = URL fuente. Si la URL del CDN no cambió,
+// reusamos sin re-uploadear (ahorra tiempo y file count).
+
+async function uploadImageToStripe(externalUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(externalUrl);
+    if (!res.ok) {
+      console.warn('image fetch failed', externalUrl, res.status);
+      return null;
+    }
+    const blob = await res.blob();
+    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    const ext = contentType.includes('png') ? 'png' : contentType.includes('webp') ? 'webp' : 'jpg';
+
+    const file = await (stripe.files.create as any)({
+      file: {
+        data: new Uint8Array(await blob.arrayBuffer()),
+        name: `kreoon-cover.${ext}`,
+        type: contentType,
+      },
+      purpose: 'business_logo',
+    });
+
+    const link = await stripe.fileLinks.create({ file: file.id });
+    return link.url;
+  } catch (e) {
+    console.warn('uploadImageToStripe failed', e);
+    return null;
+  }
+}
+
+/**
+ * Devuelve un array de URLs de imágenes hosteadas en Stripe, listas para
+ * pasar a `products.create/update`. Reutiliza la URL ya guardada si la
+ * fuente no cambió.
+ */
+async function buildStripeImages(
+  sourceUrl: string | null | undefined,
+  cachedStripeUrl: string | null | undefined,
+  cachedSourceUrl: string | null | undefined,
+): Promise<{ images: string[] | undefined; metadata_extra: Record<string, string> }> {
+  if (!sourceUrl) return { images: undefined, metadata_extra: {} };
+  if (cachedStripeUrl && cachedSourceUrl === sourceUrl) {
+    return { images: [cachedStripeUrl], metadata_extra: { kreoon_image_src: sourceUrl, kreoon_image_stripe: cachedStripeUrl } };
+  }
+  const uploaded = await uploadImageToStripe(sourceUrl);
+  if (!uploaded) return { images: undefined, metadata_extra: {} };
+  return { images: [uploaded], metadata_extra: { kreoon_image_src: sourceUrl, kreoon_image_stripe: uploaded } };
+}
+
 // ─── ACADEMY SPACE (mensual + anual opcional) ──────────────────────────
 
 async function syncAcademySpace(space: any, req: Request) {
@@ -193,18 +255,35 @@ async function syncAcademySpace(space: any, req: Request) {
 
   let productId = space.stripe_product_id as string | null;
   const description = stripText(space.description) || `Suscripción a la academia "${space.name}" en KREOON`;
-  const images = space.cover_image_url ? [space.cover_image_url] : space.logo_url ? [space.logo_url] : undefined;
+  const sourceImage = space.cover_image_url || space.logo_url || null;
+
+  let cachedStripeUrl: string | null = null;
+  let cachedSourceUrl: string | null = null;
+  if (productId) {
+    try {
+      const existing = await stripe.products.retrieve(productId);
+      cachedStripeUrl = (existing.metadata as any)?.kreoon_image_stripe ?? null;
+      cachedSourceUrl = (existing.metadata as any)?.kreoon_image_src ?? null;
+    } catch (e) {
+      console.warn('Could not retrieve existing product metadata', e);
+    }
+  }
+
+  const { images, metadata_extra } = await buildStripeImages(sourceImage, cachedStripeUrl, cachedSourceUrl);
+
+  const baseMetadata = {
+    kreoon_entity: 'academy_space',
+    kreoon_entity_id: space.id,
+    kreoon_slug: space.slug,
+    ...metadata_extra,
+  };
 
   if (!productId) {
     const product = await stripe.products.create({
       name: space.name,
       description,
       images,
-      metadata: {
-        kreoon_entity: 'academy_space',
-        kreoon_entity_id: space.id,
-        kreoon_slug: space.slug,
-      },
+      metadata: baseMetadata,
     });
     productId = product.id;
   } else {
@@ -214,11 +293,7 @@ async function syncAcademySpace(space: any, req: Request) {
         description,
         ...(images ? { images } : {}),
         active: true,
-        metadata: {
-          kreoon_entity: 'academy_space',
-          kreoon_entity_id: space.id,
-          kreoon_slug: space.slug,
-        },
+        metadata: baseMetadata,
       });
     } catch (e) {
       console.warn('Recreating product (could not update)', e);
@@ -301,19 +376,38 @@ async function syncAcademyCourse(course: any, req: Request) {
   const baseName = `Curso · ${course.title}`;
   const baseDesc = stripText(course.description) || `Acceso al curso "${course.title}" en KREOON Academia`;
 
-  const courseImages = course.cover_image_url ? [course.cover_image_url] : undefined;
+  let courseCachedStripeUrl: string | null = null;
+  let courseCachedSourceUrl: string | null = null;
+  if (productId) {
+    try {
+      const existing = await stripe.products.retrieve(productId);
+      courseCachedStripeUrl = (existing.metadata as any)?.kreoon_image_stripe ?? null;
+      courseCachedSourceUrl = (existing.metadata as any)?.kreoon_image_src ?? null;
+    } catch (e) {
+      console.warn('Could not retrieve existing course product metadata', e);
+    }
+  }
+
+  const { images: courseImages, metadata_extra: courseMetaExtra } = await buildStripeImages(
+    course.cover_image_url ?? null,
+    courseCachedStripeUrl,
+    courseCachedSourceUrl,
+  );
+
+  const courseBaseMetadata = {
+    kreoon_entity: 'academy_course',
+    kreoon_entity_id: course.id,
+    kreoon_space_id: course.space_id,
+    kreoon_slug: course.slug,
+    ...courseMetaExtra,
+  };
 
   if (!productId) {
     const product = await stripe.products.create({
       name: baseName,
       description: baseDesc,
       images: courseImages,
-      metadata: {
-        kreoon_entity: 'academy_course',
-        kreoon_entity_id: course.id,
-        kreoon_space_id: course.space_id,
-        kreoon_slug: course.slug,
-      },
+      metadata: courseBaseMetadata,
     });
     productId = product.id;
   } else {
@@ -323,11 +417,7 @@ async function syncAcademyCourse(course: any, req: Request) {
         description: baseDesc,
         ...(courseImages ? { images: courseImages } : {}),
         active: true,
-        metadata: {
-          kreoon_entity: 'academy_course',
-          kreoon_entity_id: course.id,
-          kreoon_space_id: course.space_id,
-        },
+        metadata: courseBaseMetadata,
       });
     } catch (e) {
       console.warn('Recreating course product', e);
