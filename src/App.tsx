@@ -28,6 +28,7 @@ import { KiroProvider } from "@/contexts/KiroContext";
 import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
+import { AcademyLiveToaster } from "@/components/academy/live/AcademyLiveToaster";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { PageLoader } from "./components/PageLoader";
@@ -596,6 +597,7 @@ function AppContent() {
                               <ImpersonationBanner />
                               <Toaster />
                               <Sonner />
+                              <AcademyLiveToaster />
                               <UpdatePrompt />
                               <PageLoader />
                               <MarketplaceReadinessPopup />

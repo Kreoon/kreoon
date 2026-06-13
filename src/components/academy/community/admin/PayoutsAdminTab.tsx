@@ -1,10 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Users, AlertCircle, ExternalLink, Tag } from 'lucide-react';
+import { Wallet, TrendingUp, Users, ExternalLink, AlertTriangle, Tag, ArrowDownRight, ArrowUpRight, Sparkles } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { useStripeConnectStatus } from '@/hooks/academy/useStripeConnectStatus';
+import { useAcademyFinancialHealth } from '@/hooks/academy/useAcademyLive';
 
 interface PayoutsAdminTabProps {
   spaceId: string;
@@ -12,150 +10,139 @@ interface PayoutsAdminTabProps {
 }
 
 /**
- * Resumen de ingresos del owner.
+ * Panel financiero con métricas REALES (no potenciales).
  *
- * Combina:
- *  - Compras de cursos (academy_enrollments con amount_paid_usd).
- *  - Suscripciones activas a la academia (academy_memberships con
- *    stripe_subscription_id).
- *
- * NOTA: este panel no incluye descuentos/cupones aplicados en
- * Stripe Checkout — esos solo se ven en el Stripe Express
- * Dashboard del owner. El botón "Ver en Stripe" lleva allá.
+ * MRR efectivo = lo que realmente entra cada mes después de aplicar cupones.
+ * Distinguir de MRR bruto evita engañarse cuando hay descuentos forever.
+ * Actualiza vía realtime cuando llega un pago o cambia una membresía.
  */
 export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdminTabProps) {
-  const { user } = useAuth();
   const { data: connectStatus } = useStripeConnectStatus();
+  const { data: health, isLoading } = useAcademyFinancialHealth(spaceId);
 
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['academy', 'admin-payouts', spaceId],
-    queryFn: async () => {
-      const [enrollmentsRes, membershipsRes, spaceRes] = await Promise.all([
-        (supabase as any)
-          .from('academy_enrollments')
-          .select('amount_paid_usd, enrolled_at, course_id, academy_courses!inner(space_id, title)')
-          .eq('academy_courses.space_id', spaceId),
-        (supabase as any)
-          .from('academy_memberships')
-          .select(
-            'id, user_id, joined_at, is_active, stripe_subscription_id, stripe_customer_id, role, user:profiles!fk_academy_memberships_user_profile(full_name, email)',
-          )
-          .eq('space_id', spaceId)
-          .neq('role', 'owner')
-          .order('joined_at', { ascending: false }),
-        (supabase as any)
-          .from('academy_spaces')
-          .select('membership_price_usd, plan_slug, member_count')
-          .eq('id', spaceId)
-          .single(),
-      ]);
-
-      const enrollments = enrollmentsRes.data ?? [];
-      const memberships = membershipsRes.data ?? [];
-      const space = spaceRes.data ?? {};
-
-      const totalCourses =
-        enrollments.reduce((sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0), 0) || 0;
-
-      const sinceISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const last30Courses =
-        enrollments
-          .filter((e: any) => e.enrolled_at >= sinceISO)
-          .reduce((sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0), 0) || 0;
-
-      const activeMemberships = memberships.filter((m: any) => m.is_active);
-      const paidMemberships = activeMemberships.filter((m: any) => !!m.stripe_subscription_id);
-      const monthlyPrice = Number(space.membership_price_usd ?? 0);
-      const projectedMrr = monthlyPrice * activeMemberships.length;
-
-      const feePct = space.plan_slug === 'pro' ? 0.029 : 0.10;
-      const totalGross = totalCourses;
-      const platformFee = totalGross * feePct;
-      const netEarnings = totalGross - platformFee;
-
-      const newMembersLast30 = activeMemberships.filter(
-        (m: any) => m.joined_at && m.joined_at >= sinceISO,
-      ).length;
-
-      return {
-        totalGross,
-        netEarnings,
-        platformFee,
-        feePct,
-        last30Courses,
-        projectedMrr,
-        monthlyPrice,
-        activeMembershipsCount: activeMemberships.length,
-        paidMembershipsCount: paidMemberships.length,
-        newMembersLast30,
-        enrollments,
-        memberships: activeMemberships,
-      };
-    },
-    enabled: !!spaceId && !!user,
-  });
-
-  if (isLoading || !stats) {
-    return <div className="text-zinc-400 text-sm py-8 text-center">Calculando earnings...</div>;
+  if (isLoading || !health) {
+    return <div className="text-zinc-400 text-sm py-8 text-center">Calculando métricas en vivo...</div>;
   }
 
   const dashboardLink = connectStatus?.dashboard_link;
+  const isHealthy = health.mrr_effective > 0;
+  const conversionRate =
+    health.total_redemptions > 0
+      ? Math.round((health.active_members / health.total_redemptions) * 100)
+      : 0;
 
   return (
     <div className="space-y-4">
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat
-          icon={Users}
-          label="Miembros activos"
-          value={stats.activeMembershipsCount.toLocaleString()}
-          subtext={`${stats.paidMembershipsCount} con suscripción de pago`}
-          accent={accentColor}
-        />
-        <Stat
-          icon={TrendingUp}
-          label="Nuevos últimos 30d"
-          value={stats.newMembersLast30.toLocaleString()}
-          subtext="se inscribieron a la academia"
-          accent={accentColor}
-        />
-        <Stat
+      {/* 3 tarjetas de MRR contando la historia real */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <BigStat
+          label="MRR efectivo"
+          value={`$${health.mrr_effective.toFixed(2)}`}
+          subtext="lo que realmente entra cada mes"
+          color={isHealthy ? '#10b981' : '#71717a'}
           icon={Wallet}
-          label="MRR potencial"
-          value={`$${Math.round(stats.projectedMrr).toLocaleString()}`}
-          subtext={`USD ${stats.monthlyPrice.toFixed(0)}/mes × ${stats.activeMembershipsCount}`}
-          accent={accentColor}
+          primary
         />
-        <Stat
-          icon={AlertCircle}
-          label="Comisión KREOON"
-          value={`${(stats.feePct * 100).toFixed(1)}%`}
-          subtext="aplicada a cada cobro"
-          accent="#f97316"
+        <BigStat
+          label="MRR bruto"
+          value={`$${health.mrr_gross.toFixed(2)}`}
+          subtext="techo sin descuentos"
+          color="#a78bfa"
+          icon={TrendingUp}
+        />
+        <BigStat
+          label={
+            health.dilution_percent > 0
+              ? `Dilución −${health.dilution_percent}%`
+              : 'Sin dilución'
+          }
+          value={`-$${health.mrr_lost_to_coupons.toFixed(2)}`}
+          subtext="sacrificas/mes en cupones"
+          color="#f59e0b"
+          icon={Tag}
         />
       </div>
 
-      {/* Aviso de descuentos */}
-      <Card className="p-4 bg-amber-500/5 border-amber-500/20">
-        <div className="flex items-start gap-3">
-          <Tag className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
-          <div className="text-sm">
-            <p className="font-medium text-amber-200">El MRR es el potencial bruto, no el cobrado real.</p>
-            <p className="text-xs text-zinc-300 mt-1">
-              Si aplicaste cupones (ej. <code className="bg-black/30 px-1 rounded">100% off</code>),
-              el monto real cobrado se ve solo en tu <strong>Stripe Express Dashboard</strong> →
-              Pagos / Suscripciones.
-            </p>
-          </div>
+      {/* Salud financiera ampliada */}
+      <Card className="p-5 bg-kreoon-bg-card border-white/10 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-violet-400" />
+            Salud financiera (últimos 30 días)
+          </h3>
+          <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            </span>
+            EN VIVO
+          </span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <Mini label="Ingresos cobrados" value={`$${health.collected_30d_usd.toFixed(2)}`} />
+          <Mini label="Tu comisión proyectada" value={`$${health.projected_commission_mrr.toFixed(2)} / mes`} />
+          <Mini
+            label="Nuevos miembros"
+            value={`+${health.new_members_30d}`}
+            iconRight={<ArrowUpRight className="h-3 w-3 text-emerald-400" />}
+          />
+          <Mini
+            label="Cancelaciones"
+            value={`${health.churned_30d}`}
+            iconRight={
+              health.churned_30d > 0 ? (
+                <ArrowDownRight className="h-3 w-3 text-rose-400" />
+              ) : undefined
+            }
+          />
+          <Mini label="ARR efectivo" value={`$${health.arr_effective_usd.toFixed(2)}`} />
+          <Mini label="Comisión KREOON" value={`${health.platform_fee_percent}%`} />
+          <Mini
+            label="Cupones activos"
+            value={`${health.active_coupons}`}
+            subtext={
+              health.total_redemptions > 0
+                ? `${health.total_redemptions} canjes totales`
+                : 'ninguno canjeado'
+            }
+          />
+          <Mini
+            label="Conversión cupón→pago"
+            value={
+              health.total_redemptions > 0
+                ? `${conversionRate}%`
+                : '—'
+            }
+            subtext="suscritos vs canjes"
+          />
         </div>
       </Card>
+
+      {/* Aviso si dilución >50% */}
+      {health.dilution_percent >= 50 && health.mrr_gross > 0 && (
+        <Card className="p-4 bg-amber-500/5 border-amber-500/20">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium text-amber-200">
+                Estás sacrificando {health.dilution_percent}% del MRR en cupones
+              </p>
+              <p className="text-xs text-zinc-300 mt-1">
+                Si los descuentos son por lanzamiento, revisá que tengan fecha de expiración
+                (no "forever"). Sino, considerá bajar el precio de lista para que el MRR
+                bruto refleje lo que realmente cobrás.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Link al Stripe Dashboard del owner */}
       {dashboardLink && (
         <Card className="p-4 bg-kreoon-bg-card border-white/10">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <p className="font-semibold text-sm">Ver ingresos reales en Stripe</p>
+              <p className="font-semibold text-sm">Ver detalle en Stripe</p>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Cobros, próximos pagos, descuentos aplicados, balance.
               </p>
@@ -170,101 +157,90 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
         </Card>
       )}
 
-      {/* Suscripciones activas */}
-      {stats.memberships.length > 0 && (
-        <Card className="p-5 bg-kreoon-bg-card border-white/10">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold">Suscripciones activas a la academia</h3>
-            <span className="text-xs text-zinc-400">{stats.activeMembershipsCount} en total</span>
-          </div>
-          <ul className="divide-y divide-white/5">
-            {stats.memberships.slice(0, 10).map((m: any) => (
-              <li key={m.id} className="flex items-center justify-between py-2 text-sm gap-3">
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-zinc-200 truncate">
-                    {m.user?.full_name || m.user?.email || 'Miembro'}
-                  </div>
-                  <div className="text-xs text-zinc-500 truncate">
-                    {m.user?.email}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 text-xs">
-                  <span className="text-zinc-400">
-                    {m.joined_at ? new Date(m.joined_at).toLocaleDateString('es-ES') : '-'}
-                  </span>
-                  {m.stripe_subscription_id ? (
-                    <span className="text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10">
-                      Suscrito
-                    </span>
-                  ) : (
-                    <span className="text-zinc-500 px-2 py-0.5 rounded bg-white/5">
-                      Manual / Free
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* Ventas de cursos (si hay) */}
-      {stats.enrollments.length > 0 && (
-        <Card className="p-5 bg-kreoon-bg-card border-white/10">
-          <h3 className="font-semibold mb-3">Compras de cursos</h3>
-          <ul className="divide-y divide-white/5">
-            {stats.enrollments
-              .filter((e: any) => Number(e.amount_paid_usd ?? 0) > 0)
-              .slice(0, 8)
-              .map((e: any) => (
-                <li
-                  key={`${e.course_id}-${e.enrolled_at}`}
-                  className="flex items-center justify-between py-2 text-sm"
-                >
-                  <span className="truncate text-zinc-200">
-                    {(e as any).academy_courses?.title ?? 'Curso'}
-                  </span>
-                  <div className="flex items-center gap-3 text-xs">
-                    <span className="text-zinc-400">
-                      {new Date(e.enrolled_at).toLocaleDateString('es-ES')}
-                    </span>
-                    <span className="font-mono font-semibold" style={{ color: accentColor }}>
-                      ${Number(e.amount_paid_usd ?? 0).toFixed(2)}
-                    </span>
-                  </div>
-                </li>
-              ))}
-          </ul>
-        </Card>
-      )}
+      {/* Estado de miembros */}
+      <Card className="p-5 bg-kreoon-bg-card border-white/10">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold flex items-center gap-2">
+            <Users className="h-4 w-4" style={{ color: accentColor }} />
+            Miembros activos
+          </h3>
+          <span className="text-xs text-zinc-400">{health.active_members} en total</span>
+        </div>
+        <p className="text-sm text-zinc-400">
+          {health.active_members === 0
+            ? 'Aún no hay miembros activos en la academia.'
+            : `Tenés ${health.active_members} ${
+                health.active_members === 1 ? 'miembro activo' : 'miembros activos'
+              } pagando un promedio efectivo de $${(
+                health.mrr_effective / Math.max(health.active_members, 1)
+              ).toFixed(2)}/mes.`}
+        </p>
+      </Card>
     </div>
   );
 }
 
-function Stat({
-  icon: Icon,
+function BigStat({
   label,
   value,
   subtext,
-  accent,
+  color,
+  icon: Icon,
+  primary,
 }: {
-  icon: any;
   label: string;
   value: string;
   subtext: string;
-  accent: string;
+  color: string;
+  icon: any;
+  primary?: boolean;
 }) {
   return (
-    <Card className="p-4 bg-kreoon-bg-card border-white/10">
-      <div
-        className="h-8 w-8 rounded-lg flex items-center justify-center mb-2"
-        style={{ backgroundColor: `${accent}26` }}
-      >
-        <Icon className="h-4 w-4" style={{ color: accent }} aria-hidden="true" />
+    <Card
+      className={`p-5 ${primary ? 'border-2' : 'border'} bg-kreoon-bg-card`}
+      style={primary ? { borderColor: `${color}50` } : { borderColor: 'rgba(255,255,255,.1)' }}
+    >
+      <div className="flex items-start justify-between mb-2">
+        <div
+          className="h-9 w-9 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: `${color}26` }}
+        >
+          <Icon className="h-4 w-4" style={{ color }} />
+        </div>
+        {primary && (
+          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5">
+            real
+          </span>
+        )}
       </div>
-      <div className="text-xl font-bold">{value}</div>
+      <div className="text-3xl font-bold" style={{ color: primary ? color : undefined }}>
+        {value}
+      </div>
       <div className="text-[10px] text-zinc-300 uppercase tracking-wide mt-1">{label}</div>
-      <div className="text-[10px] text-zinc-400 mt-0.5">{subtext}</div>
+      <div className="text-[11px] text-zinc-400 mt-0.5">{subtext}</div>
     </Card>
+  );
+}
+
+function Mini({
+  label,
+  value,
+  subtext,
+  iconRight,
+}: {
+  label: string;
+  value: string;
+  subtext?: string;
+  iconRight?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg bg-black/30 border border-white/5 p-3">
+      <div className="flex items-baseline justify-between gap-1">
+        <span className="text-lg font-bold text-zinc-100">{value}</span>
+        {iconRight}
+      </div>
+      <div className="text-[10px] text-zinc-400 mt-1">{label}</div>
+      {subtext && <div className="text-[10px] text-zinc-500">{subtext}</div>}
+    </div>
   );
 }

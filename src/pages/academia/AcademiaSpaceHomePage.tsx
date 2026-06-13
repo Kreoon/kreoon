@@ -53,6 +53,7 @@ import { ShareLinkDialog } from '@/components/academy/community/ShareLinkDialog'
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
 import { Share2 } from 'lucide-react';
 import type { AcademySpaceEventFull } from '@/types/academy-v3';
+import { useAcademyPresence, useAcademyLiveContent } from '@/hooks/academy/useAcademyLive';
 
 export default function AcademiaSpaceHomePage() {
   const { spaceSlug } = useParams<{ spaceSlug: string }>();
@@ -74,6 +75,10 @@ export default function AcademiaSpaceHomePage() {
   const { data: myGami } = useMyGamificationState(spaceId);
   const { data: members = [] } = useSpaceMembers(spaceId);
   const { data: presence = [] } = useSpacePresence(spaceId);
+
+  // Streaming layer: heartbeat de presencia + invalidación realtime de posts/points
+  useAcademyPresence(spaceId);
+  useAcademyLiveContent(spaceId);
 
   const pinnedPosts = useMemo(() => {
     const posts = feedPages?.pages.flat() ?? [];

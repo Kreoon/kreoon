@@ -35,6 +35,7 @@ import { BillingAdminTab } from '@/components/academy/community/admin/BillingAdm
 import { CommunityAdminTab } from '@/components/academy/community/admin/CommunityAdminTab';
 import { ConnectOnboardingTab } from '@/components/academy/community/admin/ConnectOnboardingTab';
 import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdminTab';
+import { NotificationPreferencesPanel } from '@/components/academy/community/admin/NotificationPreferencesPanel';
 
 type AdminTab =
   | 'overview'
@@ -45,6 +46,7 @@ type AdminTab =
   | 'discovery'
   | 'plugins'
   | 'notificaciones'
+  | 'mis-notificaciones'
   | 'settings'
   | 'pagos'
   | 'cupones'
@@ -61,6 +63,7 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'discovery', label: 'Discovery', icon: Globe },
   { id: 'plugins', label: 'Plugins', icon: Plug },
   { id: 'notificaciones', label: 'Notificaciones', icon: Bell },
+  { id: 'mis-notificaciones', label: 'Mis preferencias', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'pagos', label: 'Pagos', icon: CreditCard },
   { id: 'cupones', label: 'Cupones', icon: CreditCard },
@@ -174,6 +177,9 @@ export default function AcademiaSpaceAdminPage() {
             )}
             {tab === 'notificaciones' && (
               <SpaceNotificationsPanel spaceId={space.id} isOwner />
+            )}
+            {tab === 'mis-notificaciones' && (
+              <NotificationPreferencesPanel spaceId={space.id} />
             )}
             {tab === 'settings' && <SpaceSettingsPanel space={space} />}
             {tab === 'pagos' && <ConnectOnboardingTab accentColor={accent} planSlug={space.plan_slug} />}
