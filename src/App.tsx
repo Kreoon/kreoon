@@ -160,6 +160,7 @@ const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
 const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaciones"));
 // CRM Platform
 const PlatformAdminDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformAdminDashboard"));
+const AdminPayoutsPage = lazyWithRetry(() => import("./pages/admin/AdminPayoutsPage"));
 const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
 const PlatformCRMLeads = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMLeads"));
 const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
@@ -485,6 +486,7 @@ function AppRoutes() {
         <Route path="/marketing" element={<RootOnlyRoute><ProtectedRoute allowedRoles={['admin', 'strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* CRM Plataforma */}
         <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/payouts" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdminPayoutsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/overview" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />

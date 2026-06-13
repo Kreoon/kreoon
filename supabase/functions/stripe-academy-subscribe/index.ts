@@ -21,7 +21,7 @@
 // ============================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
+import Stripe from 'npm:stripe@20.1.0';
 import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
@@ -104,26 +104,21 @@ Deno.serve(async (req) => {
       return corsJsonResponse(req, { error: 'already_member' }, 409);
     }
 
-    // ─── Connect gate ───
-    // Buscamos la cuenta Connect del owner. Si no existe o no tiene la
-    // capability activa, bloqueamos el cobro (decisión de producto: el
-    // platform NO cobra a nombre propio cuando el owner aún no completó
-    // su KYC, para no generar deuda contable).
+    // ─── Connect detection (NO bloqueamos) ───
+    // Si el owner YA terminó Connect y la capability está activa, usamos
+    // destination charge (el cobro va directo a su cuenta, KREOON queda
+    // con application_fee_percent).
+    //
+    // Si NO, hacemos cobro CENTRAL: todo entra a la cuenta de KREOON y
+    // el webhook registra la deuda en `pending_owner_payouts`. KREOON
+    // liquida manualmente una vez al mes.
     const { data: connect } = await (supabase as any)
       .from('stripe_connected_accounts')
       .select('stripe_account_id')
       .eq('user_id', space.owner_id)
       .maybeSingle();
-
     const ownerAccountId = connect?.stripe_account_id as string | undefined;
-    if (!ownerAccountId) {
-      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
-    }
-    const canReceive = await ownerCanReceive(ownerAccountId);
-    if (!canReceive) {
-      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
-    }
-
+    const useConnect = ownerAccountId ? await ownerCanReceive(ownerAccountId) : false;
     const feePercent = platformFeePercent(space.plan_slug as any);
 
     const metadata = {
@@ -131,31 +126,29 @@ Deno.serve(async (req) => {
       space_id: space.id,
       user_id: callerId,
       space_slug: space.slug,
+      // Info para el webhook: modo + datos para registrar deuda si es central.
+      collection_mode: useConnect ? 'destination' : 'central',
+      owner_user_id: space.owner_id ?? '',
+      platform_fee_percent: String(feePercent),
     };
 
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       mode: 'subscription',
       payment_method_types: ['card'],
       customer_email: callerEmail ?? undefined,
-      line_items: [
-        {
-          price: space.stripe_price_id,
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: space.stripe_price_id, quantity: 1 }],
       metadata,
-      subscription_data: {
-        metadata,
-        // KREOON cobra su comisión sobre cada renovación.
-        application_fee_percent: feePercent,
-        // El cobro neto entra a la cuenta del owner.
-        transfer_data: {
-          destination: ownerAccountId,
-        },
-      },
+      subscription_data: { metadata },
       success_url: `${FRONTEND_URL}/academia/${space.slug}?paid=success`,
       cancel_url: `${FRONTEND_URL}/academia/${space.slug}?paid=cancel`,
-    });
+    };
+
+    if (useConnect && ownerAccountId) {
+      sessionParams.subscription_data.application_fee_percent = feePercent;
+      sessionParams.subscription_data.transfer_data = { destination: ownerAccountId };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return corsJsonResponse(req, { url: session.url, session_id: session.id });
   } catch (err: any) {

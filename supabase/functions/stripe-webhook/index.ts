@@ -500,6 +500,78 @@ async function handleRefund(supabase: any, charge: Stripe.Charge) {
 }
 
 // ============================================================================
+// HELPER: registrar deuda al owner cuando el cobro fue en modo central
+// (sin Stripe Connect). KREOON liquida manualmente y marca como pagado
+// en pending_owner_payouts vía el panel admin.
+// ============================================================================
+
+async function recordOwnerPayoutDebtIfCentral(
+  session: Stripe.Checkout.Session,
+  invoiceId: string | null,
+  sourceType: 'academy_membership_subscription' | 'academy_course_purchase',
+  sourceId: string | null,
+  ownerUserIdFallback: string | null,
+  spaceIdFallback: string | null,
+): Promise<void> {
+  if (session.metadata?.collection_mode !== 'central') {
+    return; // Modo destination → ya hay transfer_data, KREOON solo cobra la fee.
+  }
+
+  const ownerUserId = session.metadata?.owner_user_id || ownerUserIdFallback;
+  const spaceId = session.metadata?.space_id || spaceIdFallback;
+  const feePercent = Number(session.metadata?.platform_fee_percent ?? 10);
+  const grossUsd = (session.amount_total ?? 0) / 100;
+  const chargeId = session.metadata?.stripe_charge_id ?? null;
+  const sessionId = session.id ?? null;
+  const currency = (session.currency ?? 'usd').toLowerCase();
+
+  if (!ownerUserId || grossUsd <= 0) {
+    console.warn('[record_owner_payout] missing owner or amount', { sessionId, ownerUserId, grossUsd });
+    return;
+  }
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const callerSecret = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
+  if (!supabaseUrl || !anonKey || !callerSecret) {
+    console.warn('[record_owner_payout] missing env (url/anon/secret)');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/record_owner_payout`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_caller_secret: callerSecret,
+        p_owner_user_id: ownerUserId,
+        p_space_id: spaceId,
+        p_source_type: sourceType,
+        p_source_id: sourceId,
+        p_stripe_session_id: sessionId,
+        p_stripe_charge_id: chargeId,
+        p_stripe_invoice_id: invoiceId,
+        p_gross_amount_usd: grossUsd,
+        p_platform_fee_percent: feePercent,
+        p_currency: currency,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error('[record_owner_payout] RPC failed', res.status, txt.slice(0, 300));
+    } else {
+      console.log(`[record_owner_payout] ✓ registered ${sourceType} for owner ${ownerUserId} (gross $${grossUsd})`);
+    }
+  } catch (e) {
+    console.error('[record_owner_payout] error', e);
+  }
+}
+
+// ============================================================================
 // HANDLERS DE ACADEMY (compra de cursos)
 // ============================================================================
 
@@ -553,6 +625,16 @@ async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checko
   }
 
   console.log(`[academy_course_purchase] ✓ Enrolled user ${userId} in course ${courseId} ($${amount})`);
+
+  // Si fue cobro central, registrar deuda al owner.
+  await recordOwnerPayoutDebtIfCentral(
+    session,
+    null,                              // sin invoice (es one-time)
+    'academy_course_purchase',
+    courseId,
+    null,                              // owner_user_id viene de metadata
+    null,                              // space_id viene de metadata
+  );
 }
 
 // ============================================================================
@@ -625,6 +707,18 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
   }
 
   console.log(`[academy_membership_subscription] ✓ User ${userId} subscribed to space ${spaceId} (sub ${subscriptionId})`);
+
+  // Si fue cobro central (sin Connect del owner), registrar deuda
+  // del primer cobro. Las renovaciones posteriores también deberían
+  // registrar deuda — eso lo manejamos en invoice.payment_succeeded más adelante.
+  await recordOwnerPayoutDebtIfCentral(
+    session,
+    typeof session.invoice === 'string' ? session.invoice : null,
+    'academy_membership_subscription',
+    subscriptionId,
+    null,
+    spaceId,
+  );
 }
 
 // ============================================================================

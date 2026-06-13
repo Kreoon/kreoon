@@ -6,7 +6,7 @@
 // ============================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
+import Stripe from 'npm:stripe@20.1.0';
 import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
@@ -84,29 +84,22 @@ Deno.serve(async (req) => {
     const space = (course.space as any);
     const spaceSlug = space?.slug ?? '';
 
-    // ─── Connect gate ───
-    // El cobro one-time también va a la cuenta del owner; KREOON
-    // descuenta application_fee_amount calculado por plan_slug.
+    // ─── Connect detection (NO bloqueamos) ───
+    // Si el owner tiene Connect activo → destination charge.
+    // Si no → cobro central a KREOON; el webhook registra deuda al owner.
     const { data: connect } = await (supabase as any)
       .from('stripe_connected_accounts')
       .select('stripe_account_id')
       .eq('user_id', space?.owner_id)
       .maybeSingle();
     const ownerAccountId = connect?.stripe_account_id as string | undefined;
-    if (!ownerAccountId) {
-      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
-    }
-    const canReceive = await ownerCanReceive(ownerAccountId);
-    if (!canReceive) {
-      return corsJsonResponse(req, { error: 'connect_pending' }, 503);
-    }
+    const useConnect = ownerAccountId ? await ownerCanReceive(ownerAccountId) : false;
 
     const unitAmount = Math.round(Number(course.price_usd) * 100);
     const feePercent = platformFeePercent(space?.plan_slug);
     const applicationFeeAmount = Math.round((unitAmount * feePercent) / 100);
 
-    // Crear Checkout Session con destination charge
-    const session = await stripe.checkout.sessions.create({
+    const sessionParams: any = {
       mode: 'payment',
       payment_method_types: ['card'],
       customer_email: callerEmail ?? undefined,
@@ -124,21 +117,28 @@ Deno.serve(async (req) => {
           quantity: 1,
         },
       ],
-      // Metadatos: usados por el webhook para crear la inscripción
       metadata: {
         type: 'academy_course_purchase',
         course_id,
         user_id: callerId,
-      },
-      payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
-        transfer_data: {
-          destination: ownerAccountId,
-        },
+        // Info para el webhook: modo + datos para registrar deuda si es central.
+        collection_mode: useConnect ? 'destination' : 'central',
+        owner_user_id: space?.owner_id ?? '',
+        space_id: space?.id ?? '',
+        platform_fee_percent: String(feePercent),
       },
       success_url: `${FRONTEND_URL}/academia/${spaceSlug}/${course.slug}/learn?paid=success`,
       cancel_url: `${FRONTEND_URL}/academia/${spaceSlug}/${course.slug}?paid=cancel`,
-    });
+    };
+
+    if (useConnect && ownerAccountId) {
+      sessionParams.payment_intent_data = {
+        application_fee_amount: applicationFeeAmount,
+        transfer_data: { destination: ownerAccountId },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     return corsJsonResponse(req, { url: session.url, session_id: session.id });
   } catch (err: any) {

@@ -24,7 +24,7 @@
 //                                   y v2.account[recipient].capability_status_updated.
 // ============================================================
 
-import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
+import Stripe from 'npm:stripe@20.1.0';
 import { getCorsHeaders, handleCorsOptions } from '../_shared/cors.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');

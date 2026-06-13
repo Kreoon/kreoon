@@ -75,28 +75,11 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
         { body: { space_slug: spaceSlug } }
       );
       if (error) throw error;
-      // Caso especial: el owner aún no completó Stripe Connect.
-      if (data?.error === 'connect_pending') {
-        toast.info(
-          'Esta academia está verificando su cuenta de pagos. Vuelve pronto.',
-          { duration: 6000 }
-        );
-        setCheckoutLoading(false);
-        return;
-      }
       if (!data?.url) throw new Error('No recibimos URL de pago.');
       window.location.href = data.url as string;
     } catch (e: any) {
       console.error('Stripe academy subscribe failed:', e);
-      const msg = typeof e?.message === 'string' ? e.message : '';
-      if (msg.includes('connect_pending')) {
-        toast.info(
-          'Esta academia está verificando su cuenta de pagos. Vuelve pronto.',
-          { duration: 6000 }
-        );
-      } else {
-        toast.error(msg || 'No pudimos iniciar el pago. Intenta de nuevo.');
-      }
+      toast.error(e?.message ?? 'No pudimos iniciar el pago. Intenta de nuevo.');
       setCheckoutLoading(false);
     }
   };

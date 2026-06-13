@@ -35,9 +35,12 @@ export function useStartStripeConnectOnboarding() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ spaceSlug }: { spaceSlug?: string }) => {
+      // Pasamos el origin actual para que Stripe nos devuelva al mismo
+      // dominio donde el user comenzó (localhost en dev, kreoon.com en prod).
+      const returnOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
       const { data, error } = await (supabase as any).functions.invoke(
         'stripe-connect-account-link',
-        { body: { space_slug: spaceSlug } }
+        { body: { space_slug: spaceSlug, return_origin: returnOrigin } }
       );
       if (error) throw error;
       if (!data?.url) throw new Error('No recibimos URL de onboarding.');

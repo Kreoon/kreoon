@@ -18,7 +18,7 @@
 //   }
 // ============================================================
 
-import Stripe from 'https://esm.sh/stripe@20.1.0?target=deno';
+import Stripe from 'npm:stripe@20.1.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
 
