@@ -103,7 +103,7 @@ export default function AcademiaSpaceHomePage() {
   const myEnrollmentInFirstCourse = useMyEnrollment(firstCourse?.id);
 
   // Membresía + onboarding
-  const { data: myMembership } = useMyMembership(spaceId);
+  const { data: myMembership, isLoading: membershipLoading } = useMyMembership(spaceId);
   const isMember = !!myMembership?.is_active;
   const needsOnboarding = isMember && !myMembership?.onboarding_completed_at;
   const [joinOpen, setJoinOpen] = useState(false);
@@ -117,7 +117,10 @@ export default function AcademiaSpaceHomePage() {
     }
   }, [needsOnboarding, spaceId]);
 
-  if (isLoading) {
+  // Mostrar skeleton también mientras carga la membresía (sin esto, el primer
+  // render con myMembership=undefined haría que isMember=false y el SpaceJoinGate
+  // aparece falsamente para users que sí están suscritos).
+  if (isLoading || (!!user && spaceId && membershipLoading)) {
     return (
       <div className="min-h-screen bg-kreoon-bg-primary">
         <KreoonSkeleton variant="rectangular" width="100%" height={240} />
