@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, DollarSign, TrendingUp, Heart, ArrowUpRight, Activity } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Heart, ArrowUpRight, Activity, Tag } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { useSpaceAnalytics } from '@/hooks/academy/useSpaceAnalytics';
+import { useAcademyFinancialHealth } from '@/hooks/academy/useAcademyLive';
 import { cn } from '@/lib/utils';
 
 interface SpaceDashboardProps {
@@ -20,10 +21,17 @@ interface SpaceDashboardProps {
 
 export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashboardProps) {
   const { data, isLoading } = useSpaceAnalytics(spaceId, 30);
+  const { data: health } = useAcademyFinancialHealth(spaceId);
 
   if (isLoading || !data) {
     return <div className="text-zinc-500 p-8 text-center">Cargando analytics...</div>;
   }
+
+  // MRR efectivo (real cobrado) si está disponible, sino caer al bruto legacy.
+  const mrrEffective = health?.mrr_effective ?? data.mrr_usd;
+  const mrrGross = health?.mrr_gross ?? data.mrr_usd;
+  const dilution = health?.dilution_percent ?? 0;
+  const collected30d = health?.collected_30d_usd ?? 0;
 
   return (
     <div className="space-y-6">
@@ -37,9 +45,10 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
         />
         <Stat
           icon={DollarSign}
-          label="MRR"
-          value={`$${Math.round(data.mrr_usd).toLocaleString()}`}
-          accent={accentColor}
+          label="MRR efectivo"
+          value={`$${mrrEffective.toFixed(2)}`}
+          subtext={mrrGross !== mrrEffective ? `bruto $${mrrGross.toFixed(2)}` : 'real cobrado/mes'}
+          accent={mrrEffective > 0 ? '#10b981' : '#71717a'}
         />
         <Stat
           icon={Heart}
@@ -62,8 +71,20 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
           <MiniMetric label="Visitantes" value={data.visitors_30d.toLocaleString()} />
           <MiniMetric label="Inscripciones" value={data.signups_30d.toLocaleString()} />
           <MiniMetric label="Conversión" value={`${data.conversion_rate}%`} />
-          <MiniMetric label="Nuevo MRR" value={`$${Math.round(data.new_mrr_30d).toLocaleString()}`} />
+          <MiniMetric
+            label="Cobrado real"
+            value={`$${collected30d.toFixed(2)}`}
+          />
         </div>
+        {dilution >= 50 && mrrGross > 0 && (
+          <div className="mt-4 flex items-start gap-2 text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-md p-3">
+            <Tag className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+            <span>
+              Estás sacrificando <strong>{dilution}%</strong> del MRR en cupones
+              (${(mrrGross - mrrEffective).toFixed(2)}/mes). Revisá la pestaña Payouts.
+            </span>
+          </div>
+        )}
       </Card>
 
       {/* Chart visitantes */}
@@ -168,7 +189,9 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
   );
 }
 
-function Stat({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: string }) {
+function Stat({
+  icon: Icon, label, value, accent, subtext,
+}: { icon: any; label: string; value: string; accent: string; subtext?: string }) {
   return (
     <Card className="p-4 bg-white/5 border-white/10">
       <div
@@ -177,8 +200,9 @@ function Stat({ icon: Icon, label, value, accent }: { icon: any; label: string; 
       >
         <Icon className="h-4 w-4" style={{ color: accent }} />
       </div>
-      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-2xl font-bold" style={{ color: accent }}>{value}</div>
       <div className="text-xs text-zinc-500 uppercase tracking-wide mt-0.5">{label}</div>
+      {subtext && <div className="text-[10px] text-zinc-500 mt-0.5">{subtext}</div>}
     </Card>
   );
 }
