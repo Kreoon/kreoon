@@ -46,11 +46,12 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         await handleSubscriptionChange(supabase, subscription);
-        // Fallback: si es una suscripción a una academia, también
-        // creamos la membresía (por si checkout.session.completed no
-        // llegó o no tenía la metadata). Idempotente.
+        // Si es suscripción a una academia: además de crear la
+        // membresía si falta, sincronizamos su estado activo según
+        // el status real de Stripe (past_due, paused, etc → inactivo).
         if ((subscription.metadata as any)?.type === "academy_membership_subscription") {
           await handleAcademyMembershipFromSubscription(supabase, subscription);
+          await syncAcademyMembershipStatus(supabase, subscription);
         }
         break;
       }
@@ -72,6 +73,7 @@ serve(async (req) => {
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         await handleInvoiceFailed(supabase, invoice);
+        await handleAcademyInvoiceFailed(supabase, invoice);
         break;
       }
 
@@ -145,6 +147,23 @@ serve(async (req) => {
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
         await handleRefund(supabase, charge);
+        await handleAcademyChargeRefunded(supabase, charge);
+        break;
+      }
+
+      // Owner desautoriza su cuenta Connect desde Stripe Dashboard.
+      // Limpiamos el mapping para que el código caiga a "modo central".
+      case "account.application.deauthorized": {
+        const account = event.data.object as Stripe.Account;
+        await handleConnectAccountDeauthorized(supabase, account);
+        break;
+      }
+
+      // Customer eliminado en Stripe (caso raro, solo si lo borran
+      // a mano). Limpiamos referencias en academy_memberships.
+      case "customer.deleted": {
+        const customer = event.data.object as Stripe.Customer;
+        await handleAcademyCustomerDeleted(supabase, customer);
         break;
       }
 
@@ -819,6 +838,142 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
     (session.metadata?.plan as 'monthly' | 'yearly' | undefined) ?? 'monthly',
     subscriptionId,
   );
+}
+
+// ============================================================================
+// HANDLERS: sincronización del estado activo según ciclo de Stripe.
+// Cubrir todos los casos en que la suscripción ya no debería dar acceso:
+//   - subscription.updated con status past_due / paused / unpaid / canceled
+//   - invoice.payment_failed
+//   - charge.refunded total
+//   - account.application.deauthorized (cuenta Connect del owner)
+//   - customer.deleted (cliente Stripe)
+// ============================================================================
+
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing']);
+
+/**
+ * Refleja el estado real de la suscripción en academy_memberships.
+ * Si Stripe dice past_due / paused / unpaid → desactivamos.
+ * Si vuelve a active → reactivamos.
+ */
+async function syncAcademyMembershipStatus(supabase: any, subscription: Stripe.Subscription) {
+  const shouldBeActive = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status);
+
+  const { error } = await supabase
+    .from('academy_memberships')
+    .update({ is_active: shouldBeActive })
+    .eq('stripe_subscription_id', subscription.id);
+
+  if (error) {
+    console.error('[academy_sub_status] update failed', error);
+  } else {
+    console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → is_active=${shouldBeActive}`);
+  }
+}
+
+/**
+ * Pago fallido de una factura de academia → desactivar.
+ * El user puede actualizar tarjeta desde el portal; cuando se cobre,
+ * `invoice.payment_succeeded` reactivará si la suscripción vuelve a active.
+ */
+async function handleAcademyInvoiceFailed(supabase: any, invoice: Stripe.Invoice) {
+  const subscriptionId = invoice.subscription as string | null;
+  if (!subscriptionId) return;
+
+  try {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if ((subscription.metadata as any)?.type !== 'academy_membership_subscription') return;
+
+    const { error } = await supabase
+      .from('academy_memberships')
+      .update({ is_active: false })
+      .eq('stripe_subscription_id', subscriptionId);
+    if (error) {
+      console.error('[academy_invoice_failed] update failed', error);
+    } else {
+      console.log(`[academy_invoice_failed] Deactivated membership for sub ${subscriptionId}`);
+    }
+  } catch (e) {
+    console.error('[academy_invoice_failed] error', e);
+  }
+}
+
+/**
+ * Refund total de un charge de academia → desactivar la membresía
+ * y opcionalmente cancelar la subscription para que no siga cobrando.
+ */
+async function handleAcademyChargeRefunded(supabase: any, charge: Stripe.Charge) {
+  // Reembolso parcial: no desactivamos (el user pagó algo todavía).
+  const fullyRefunded = charge.refunded || (charge.amount_refunded ?? 0) >= (charge.amount ?? 0);
+  if (!fullyRefunded) return;
+
+  const invoiceId = typeof charge.invoice === 'string' ? charge.invoice : null;
+  if (!invoiceId) return;
+
+  try {
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+    const subscriptionId = typeof invoice.subscription === 'string' ? invoice.subscription : null;
+    if (!subscriptionId) return;
+
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if ((subscription.metadata as any)?.type !== 'academy_membership_subscription') return;
+
+    const { error } = await supabase
+      .from('academy_memberships')
+      .update({ is_active: false })
+      .eq('stripe_subscription_id', subscriptionId);
+    if (error) {
+      console.error('[academy_refund] deactivate failed', error);
+    } else {
+      console.log(`[academy_refund] Deactivated membership for sub ${subscriptionId}`);
+    }
+
+    // Cancelar la suscripción para que no siga cobrando.
+    try {
+      await stripe.subscriptions.cancel(subscriptionId);
+    } catch (e) {
+      console.warn('[academy_refund] could not cancel subscription', e);
+    }
+  } catch (e) {
+    console.error('[academy_refund] error', e);
+  }
+}
+
+/**
+ * Owner desautoriza su Connect: limpiamos el mapping para que las
+ * próximas suscripciones caigan a modo central (KREOON cobra y debe
+ * al owner). Las existentes siguen activas hasta que Stripe las cancele
+ * por fallos de transfer.
+ */
+async function handleConnectAccountDeauthorized(supabase: any, account: Stripe.Account) {
+  const accountId = account.id;
+  const { error } = await supabase
+    .from('stripe_connected_accounts')
+    .delete()
+    .eq('stripe_account_id', accountId);
+  if (error) {
+    console.error('[connect_deauth] delete failed', error);
+  } else {
+    console.log(`[connect_deauth] Removed mapping for ${accountId}`);
+  }
+}
+
+/**
+ * Customer eliminado en Stripe → limpiar referencias y desactivar
+ * cualquier membresía con ese customer_id.
+ */
+async function handleAcademyCustomerDeleted(supabase: any, customer: Stripe.Customer) {
+  const customerId = customer.id;
+  const { error } = await supabase
+    .from('academy_memberships')
+    .update({ is_active: false, stripe_customer_id: null })
+    .eq('stripe_customer_id', customerId);
+  if (error) {
+    console.error('[customer_deleted] update failed', error);
+  } else {
+    console.log(`[customer_deleted] Cleaned memberships for customer ${customerId}`);
+  }
 }
 
 // ============================================================================
