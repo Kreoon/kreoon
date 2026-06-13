@@ -497,7 +497,7 @@ function AppRoutes() {
         <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
         <Route path="/admin/payouts" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdminPayoutsPage /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/overview" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<Navigate to="/crm" replace />} />
         <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/marcas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
         <Route path="/crm/marcas/:brandId" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
