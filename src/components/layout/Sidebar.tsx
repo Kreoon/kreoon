@@ -73,6 +73,7 @@ interface NavItem {
   platformRootOnly?: boolean;
   requiresOrg?: boolean;
   adminOnly?: boolean; // Solo visible para admins (feature en construcción para otros)
+  isNew?: boolean; // Muestra badge "NUEVO" al lado del nombre
 }
 
 interface NavSection {
@@ -110,7 +111,7 @@ const adminSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -148,7 +149,7 @@ const strategistSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -175,7 +176,7 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
     ]
   },
   {
@@ -193,7 +194,7 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
     ]
   },
   {
@@ -211,6 +212,7 @@ const clientSections: NavSection[] = [
       { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna, tourId: "sidebar-dna" },
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package, tourId: "sidebar-products" },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText, tourId: "sidebar-portfolio" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
       { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt, tourId: "sidebar-facturas" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
       { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
@@ -239,7 +241,7 @@ const basicTalentInOrgSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
     ]
   },
   {
@@ -273,7 +275,7 @@ const freelanceSections: NavSection[] = [
     items: [
       { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
-      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
     ]
   },
   {
@@ -837,7 +839,30 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                           isActive ? "text-purple-500" : "text-zinc-500 group-hover:text-purple-500"
                         )} />
                         {!collapsed && (
-                          <span>{item.name}</span>
+                          <span className="flex items-center gap-1.5">
+                            {item.name}
+                            {item.isNew && (
+                              <span
+                                className={cn(
+                                  "inline-flex items-center px-1.5 py-0.5 rounded-full",
+                                  "text-[9px] font-bold uppercase tracking-wider",
+                                  "bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white",
+                                  "shadow-sm shadow-purple-500/50",
+                                  "animate-pulse"
+                                )}
+                                aria-label="Nuevo"
+                              >
+                                NUEVO
+                              </span>
+                            )}
+                          </span>
+                        )}
+                        {/* Indicador NUEVO en modo collapsed: punto pulsante */}
+                        {collapsed && item.isNew && (
+                          <span
+                            className="absolute top-1 right-1 h-2 w-2 rounded-full bg-fuchsia-500 animate-pulse shadow-sm shadow-fuchsia-500/80"
+                            aria-label="Nuevo"
+                          />
                         )}
                       </NavLink>
                     );
