@@ -161,7 +161,7 @@ export function PostCard({
         </button>
       )}
 
-      {/* Media */}
+      {/* Media — detecta tipo por extensión y renderiza el elemento adecuado */}
       {post.media_urls.length > 0 && (
         <div
           className={cn(
@@ -169,15 +169,43 @@ export function PostCard({
             post.media_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
           )}
         >
-          {post.media_urls.slice(0, 4).map((url, i) => (
-            <img
-              key={i}
-              src={url}
-              alt=""
-              className="w-full h-48 object-cover rounded-lg"
-              loading="lazy"
-            />
-          ))}
+          {post.media_urls.slice(0, 4).map((url, i) => {
+            const lower = String(url).toLowerCase().split('?')[0];
+            const isVideo = /\.(mp4|webm|mov|ogg|m4v)$/.test(lower);
+            const isAudio = /\.(mp3|wav|m4a|aac|opus|flac)$/.test(lower);
+            if (isVideo) {
+              return (
+                <video
+                  key={i}
+                  src={url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full max-h-96 rounded-lg bg-black"
+                />
+              );
+            }
+            if (isAudio) {
+              return (
+                <audio
+                  key={i}
+                  src={url}
+                  controls
+                  preload="metadata"
+                  className="w-full"
+                />
+              );
+            }
+            return (
+              <img
+                key={i}
+                src={url}
+                alt=""
+                className="w-full h-48 object-cover rounded-lg"
+                loading="lazy"
+              />
+            );
+          })}
         </div>
       )}
 

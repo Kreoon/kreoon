@@ -211,19 +211,24 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               <KindButton active={kind === 'post'} onClick={() => setKind('post')} icon={MessageCircle} label="Post" />
               <KindButton active={kind === 'question'} onClick={() => setKind('question')} icon={HelpCircle} label="Pregunta" />
               <KindButton active={kind === 'poll'} onClick={() => setKind('poll')} icon={ListChecks} label="Poll" />
-              <label className="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer">
+              <label
+                className="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                title="Imagen, GIF, sticker, video o audio"
+              >
                 <ImageIcon className="h-4 w-4" />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*,audio/*,.gif,.webp,.apng,.avif"
                   className="hidden"
                   disabled={uploading}
                   onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) uploadImage(f);
+                    // Reset value para permitir subir el mismo archivo otra vez
+                    e.target.value = '';
                   }}
                 />
-                {uploading ? 'Subiendo...' : 'Imagen'}
+                {uploading ? 'Subiendo...' : 'Media'}
               </label>
               <button
                 onClick={() => setShowKiro(true)}

@@ -42,11 +42,19 @@ Responde EXACTAMENTE en este JSON sin texto extra:
 
 Cada body máximo 280 caracteres. Tono profesional pero cercano. Sin emojis excesivos.`;
 
-      const { data, error: fnError } = await (supabase.functions as any).invoke('ai-assistant', {
+      // KIRO usa multi-ai (genérico, multi-provider). El edge function
+      // ai-assistant requiere ai_assistant_config por organization_id y no
+      // aplica en contexto de academia (que usa space_id).
+      const { data, error: fnError } = await (supabase.functions as any).invoke('multi-ai', {
         body: {
-          prompt,
-          space_id: spaceId,
-          response_format: 'json',
+          messages: [
+            {
+              role: 'system',
+              content: 'Eres KIRO, asistente de comunidad de KREOON Academia. Respondes SIEMPRE en JSON válido sin texto extra alrededor.',
+            },
+            { role: 'user', content: prompt },
+          ],
+          mode: 'first',
         },
       });
 
@@ -54,10 +62,14 @@ Cada body máximo 280 caracteres. Tono profesional pero cercano. Sin emojis exce
 
       let parsed: Suggestion | null = null;
       try {
+        // multi-ai devuelve { responses: [{content, provider, ...}], combined: string, ... }
         const raw =
           typeof data === 'string'
             ? data
-            : data?.response ?? data?.result ?? data?.content ?? data?.text ?? JSON.stringify(data);
+            : data?.combined
+              ?? data?.responses?.[0]?.content
+              ?? data?.response ?? data?.result ?? data?.content ?? data?.text
+              ?? JSON.stringify(data);
         const jsonMatch = String(raw).match(/\{[\s\S]*\}/);
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
       } catch (_parseErr) {
