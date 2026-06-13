@@ -280,6 +280,8 @@ const AcademiaMemberCalendarCallbackPage = lazyWithRetry(() => import("./pages/a
 // Academia — Home dashboard + Classroom (catálogo de cursos)
 const AcademiaSpaceHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceHomePage"));
 const AcademiaSpaceClassroomPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceClassroomPage"));
+const AcademiaChallengesPage = lazyWithRetry(() => import("./pages/academia/AcademiaChallengesPage"));
+const AcademiaChallengeDetailPage = lazyWithRetry(() => import("./pages/academia/AcademiaChallengeDetailPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -563,11 +565,16 @@ function AppRoutes() {
         <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
         {/* Academia v2 — Community features */}
         <Route path="/academia/:spaceSlug/feed" element={<RequireAcademyAccess><AcademiaSpaceFeedPage /></RequireAcademyAccess>} />
+        {/* Deep-link a un post (notificaciones): abre el feed y resalta el post */}
+        <Route path="/academia/:spaceSlug/post/:postId" element={<RequireAcademyAccess><AcademiaSpaceFeedPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/dm" element={<RequireAcademyAccess><AcademiaSpaceDMPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/calendar" element={<RequireAcademyAccess><AcademiaSpaceCalendarPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/leaderboard" element={<RequireAcademyAccess><AcademiaLeaderboardPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/map" element={<RequireAcademyAccess><AcademiaMapPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/admin" element={<ProtectedRoute allowNoRoles><AcademiaSpaceAdminPage /></ProtectedRoute>} />
+        {/* Academia v2 — Challenges */}
+        <Route path="/academia/:spaceSlug/retos" element={<RequireAcademyAccess><AcademiaChallengesPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/retos/:challengeSlug" element={<RequireAcademyAccess><AcademiaChallengeDetailPage /></RequireAcademyAccess>} />
         {/* Academia v3 — Members + Calendar OAuth callbacks */}
         <Route path="/academia/:spaceSlug/members" element={<RequireAcademyAccess><AcademiaSpaceMembersPage /></RequireAcademyAccess>} />
         <Route path="/academia/calendar/callback" element={<ProtectedRoute allowNoRoles><AcademiaCalendarCallbackPage /></ProtectedRoute>} />
