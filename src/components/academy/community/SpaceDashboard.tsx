@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, DollarSign, TrendingUp, Heart, ArrowUpRight, Activity, Tag } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, Heart, ArrowUpRight, Activity, Tag, Sparkles } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -12,6 +12,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { useSpaceAnalytics } from '@/hooks/academy/useSpaceAnalytics';
 import { useAcademyFinancialHealth } from '@/hooks/academy/useAcademyLive';
+import { AdvancedMetricsPanel } from '@/components/academy/community/admin/AdvancedMetricsPanel';
 import { cn } from '@/lib/utils';
 
 interface SpaceDashboardProps {
@@ -185,6 +186,15 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
         </h3>
         <Heatmap data={data.activity_heatmap} accentColor={accentColor} />
       </Card>
+
+      {/* Métricas avanzadas tipo Baremetrics */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-violet-400" />
+          Métricas de negocio
+        </h2>
+        <AdvancedMetricsPanel spaceId={spaceId} />
+      </div>
     </div>
   );
 }

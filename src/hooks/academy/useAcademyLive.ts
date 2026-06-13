@@ -169,6 +169,77 @@ export interface FinancialHealth {
   total_redemptions: number;
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// 3b. MÉTRICAS AVANZADAS: LTV, CAC, Net new MRR, Cohort retention
+// ────────────────────────────────────────────────────────────────────────────
+export interface AdvancedMetrics {
+  ltv_usd: number | null;
+  avg_lifetime_months: number | null;
+  monthly_churn_rate_pct: number;
+  avg_revenue_per_member_usd: number;
+  cac_payback_months: number | null;
+  cac_note: string;
+  net_mrr_series: Array<{
+    month: string;
+    month_label: string;
+    new_mrr: number;
+    churned_mrr: number;
+    net_mrr: number;
+    new_members: number;
+    churned_members: number;
+  }>;
+  cohort_retention: Array<{
+    cohort_month: string;
+    cohort_label: string;
+    cohort_size: number;
+    still_active: number;
+    retention_pct: number;
+  }>;
+  mrr_breakdown: {
+    new_mrr_this_month: number;
+    churned_mrr_this_month: number;
+    net_mrr_this_month: number;
+    new_members_this_month: number;
+    churned_members_this_month: number;
+  };
+}
+
+export function useAcademyAdvancedMetrics(spaceId: string | null | undefined) {
+  const qc = useQueryClient();
+  const instanceId = useId();
+
+  const query = useQuery<AdvancedMetrics | null>({
+    queryKey: ['academy', 'advanced-metrics', spaceId],
+    queryFn: async () => {
+      if (!spaceId) return null;
+      const { data, error } = await (supabase as any).rpc(
+        'get_academy_advanced_metrics',
+        { p_space_id: spaceId }
+      );
+      if (error) throw error;
+      return data as AdvancedMetrics;
+    },
+    enabled: !!spaceId,
+    staleTime: 60_000,
+    refetchInterval: 5 * 60_000,
+  });
+
+  useEffect(() => {
+    if (!spaceId) return;
+    const channel = (supabase as any)
+      .channel(`academy-adv-metrics-${spaceId}-${instanceId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'academy_memberships', filter: `space_id=eq.${spaceId}` },
+        () => qc.invalidateQueries({ queryKey: ['academy', 'advanced-metrics', spaceId] })
+      )
+      .subscribe();
+    return () => { (supabase as any).removeChannel(channel); };
+  }, [spaceId]);
+
+  return query;
+}
+
 export function useAcademyFinancialHealth(spaceId: string | null | undefined) {
   const qc = useQueryClient();
   const instanceId = useId();
