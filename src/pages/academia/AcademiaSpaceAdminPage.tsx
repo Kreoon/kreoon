@@ -34,6 +34,7 @@ import { AffiliatesAdminTab } from '@/components/academy/community/admin/Affilia
 import { BillingAdminTab } from '@/components/academy/community/admin/BillingAdminTab';
 import { CommunityAdminTab } from '@/components/academy/community/admin/CommunityAdminTab';
 import { ConnectOnboardingTab } from '@/components/academy/community/admin/ConnectOnboardingTab';
+import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdminTab';
 
 type AdminTab =
   | 'overview'
@@ -46,6 +47,7 @@ type AdminTab =
   | 'notificaciones'
   | 'settings'
   | 'pagos'
+  | 'cupones'
   | 'payouts'
   | 'afiliados'
   | 'facturacion';
@@ -61,6 +63,7 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'notificaciones', label: 'Notificaciones', icon: Bell },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'pagos', label: 'Pagos', icon: CreditCard },
+  { id: 'cupones', label: 'Cupones', icon: CreditCard },
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'afiliados', label: 'Afiliados', icon: Handshake },
   { id: 'facturacion', label: 'Facturación', icon: CreditCard },
@@ -174,6 +177,7 @@ export default function AcademiaSpaceAdminPage() {
             )}
             {tab === 'settings' && <SpaceSettingsPanel space={space} />}
             {tab === 'pagos' && <ConnectOnboardingTab accentColor={accent} planSlug={space.plan_slug} />}
+            {tab === 'cupones' && <CouponsAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'payouts' && <PayoutsAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'afiliados' && (
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />

@@ -810,6 +810,59 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
     null,
     spaceId,
   );
+
+  // Si llegó con cupón gestionado por KREOON, registrar la redención.
+  await recordCouponRedemptionIfPresent(
+    session.metadata?.kreoon_coupon_id ?? null,
+    userId,
+    spaceId,
+    (session.metadata?.plan as 'monthly' | 'yearly' | undefined) ?? 'monthly',
+    subscriptionId,
+  );
+}
+
+// ============================================================================
+// HELPER: registrar redención de cupón si la sesión llegó con uno.
+// ============================================================================
+
+async function recordCouponRedemptionIfPresent(
+  couponId: string | null,
+  userId: string | null,
+  spaceId: string | null,
+  plan: 'monthly' | 'yearly',
+  subscriptionId: string | null,
+): Promise<void> {
+  if (!couponId || !userId || !spaceId) return;
+
+  const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+  const callerSecret = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
+  if (!supabaseUrl || !anonKey || !callerSecret) return;
+
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/record_coupon_redemption`, {
+      method: 'POST',
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_caller_secret: callerSecret,
+        p_coupon_id: couponId,
+        p_user_id: userId,
+        p_space_id: spaceId,
+        p_plan: plan,
+        p_stripe_subscription_id: subscriptionId,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      console.warn('[coupon_redemption] RPC failed', res.status, txt.slice(0, 200));
+    }
+  } catch (e) {
+    console.warn('[coupon_redemption] error', e);
+  }
 }
 
 // ============================================================================

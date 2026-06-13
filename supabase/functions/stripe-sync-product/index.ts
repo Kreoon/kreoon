@@ -112,22 +112,74 @@ async function persistResult(
   entityId: string,
   productId: string | null,
   priceId: string | null,
+  yearlyPriceId: string | null = null,
 ): Promise<void> {
-  await callRpc('apply_stripe_sync_result', {
+  await callRpc('apply_stripe_sync_result_v2', {
     p_caller_secret: STRIPE_SYNC_SECRET,
     p_entity_type: entityType,
     p_entity_id: entityId,
     p_stripe_product_id: productId,
     p_stripe_price_id: priceId,
+    p_stripe_yearly_price_id: yearlyPriceId,
   });
 }
 
-// ─── ACADEMY SPACE (suscripción mensual) ──────────────────────────────
+/** Crea o reutiliza un Price recurrente para el product dado. */
+async function ensureRecurringPrice(
+  productId: string,
+  existingPriceId: string | null,
+  unitAmount: number,
+  interval: 'month' | 'year',
+  entityId: string,
+): Promise<string> {
+  let recreate = !existingPriceId;
+  if (existingPriceId) {
+    try {
+      const current = await stripe.prices.retrieve(existingPriceId);
+      if (
+        current.unit_amount !== unitAmount ||
+        current.currency !== 'usd' ||
+        current.recurring?.interval !== interval ||
+        !current.active
+      ) {
+        recreate = true;
+      }
+    } catch {
+      recreate = true;
+    }
+  }
+
+  if (!recreate && existingPriceId) return existingPriceId;
+
+  const newPrice = await stripe.prices.create({
+    product: productId,
+    unit_amount: unitAmount,
+    currency: 'usd',
+    recurring: { interval },
+    metadata: {
+      kreoon_entity: 'academy_space',
+      kreoon_entity_id: entityId,
+      kreoon_plan: interval === 'month' ? 'monthly' : 'yearly',
+    },
+  });
+  if (existingPriceId && existingPriceId !== newPrice.id) {
+    try {
+      await stripe.prices.update(existingPriceId, { active: false });
+    } catch (e) {
+      console.warn('Could not deactivate old price', existingPriceId, e);
+    }
+  }
+  return newPrice.id;
+}
+
+// ─── ACADEMY SPACE (mensual + anual opcional) ──────────────────────────
 
 async function syncAcademySpace(space: any, req: Request) {
-  const price = Number(space.membership_price_usd ?? 0);
+  const monthlyPrice = Number(space.membership_price_usd ?? 0);
+  const yearlyPrice = Number(space.yearly_price_usd ?? 0);
 
-  if (price <= 0) {
+  if (monthlyPrice <= 0 && yearlyPrice <= 0) {
+    // Sin ningún plan de pago: archivar product.
     if (space.stripe_product_id) {
       try {
         await stripe.products.update(space.stripe_product_id, { active: false });
@@ -135,12 +187,12 @@ async function syncAcademySpace(space: any, req: Request) {
         console.warn('Could not deactivate product', space.stripe_product_id, e);
       }
     }
-    await persistResult('academy_space', space.id, space.stripe_product_id ?? null, null);
+    await persistResult('academy_space', space.id, space.stripe_product_id ?? null, null, null);
     return corsJsonResponse(req, { ok: true, archived: true });
   }
 
   let productId = space.stripe_product_id as string | null;
-  const description = stripText(space.description) || `Suscripción mensual a la academia "${space.name}" en KREOON`;
+  const description = stripText(space.description) || `Suscripción a la academia "${space.name}" en KREOON`;
   const images = space.cover_image_url ? [space.cover_image_url] : space.logo_url ? [space.logo_url] : undefined;
 
   if (!productId) {
@@ -178,53 +230,50 @@ async function syncAcademySpace(space: any, req: Request) {
     }
   }
 
-  const desiredUnitAmount = Math.round(price * 100);
-  let priceId = space.stripe_price_id as string | null;
-  let recreatePrice = !priceId;
-  if (priceId) {
+  // Price mensual.
+  let priceId: string | null = null;
+  if (monthlyPrice > 0) {
+    priceId = await ensureRecurringPrice(
+      productId!,
+      space.stripe_price_id ?? null,
+      Math.round(monthlyPrice * 100),
+      'month',
+      space.id,
+    );
+  } else if (space.stripe_price_id) {
     try {
-      const current = await stripe.prices.retrieve(priceId);
-      if (
-        current.unit_amount !== desiredUnitAmount ||
-        current.currency !== 'usd' ||
-        current.recurring?.interval !== 'month' ||
-        !current.active
-      ) {
-        recreatePrice = true;
-      }
-    } catch {
-      recreatePrice = true;
+      await stripe.prices.update(space.stripe_price_id, { active: false });
+    } catch (e) {
+      console.warn('Could not deactivate monthly price', e);
     }
   }
 
-  if (recreatePrice) {
-    const newPrice = await stripe.prices.create({
-      product: productId!,
-      unit_amount: desiredUnitAmount,
-      currency: 'usd',
-      recurring: { interval: 'month' },
-      metadata: {
-        kreoon_entity: 'academy_space',
-        kreoon_entity_id: space.id,
-      },
-    });
-    if (priceId && priceId !== newPrice.id) {
-      try {
-        await stripe.prices.update(priceId, { active: false });
-      } catch (e) {
-        console.warn('Could not deactivate old price', priceId, e);
-      }
+  // Price anual.
+  let yearlyPriceId: string | null = null;
+  if (yearlyPrice > 0) {
+    yearlyPriceId = await ensureRecurringPrice(
+      productId!,
+      space.stripe_yearly_price_id ?? null,
+      Math.round(yearlyPrice * 100),
+      'year',
+      space.id,
+    );
+  } else if (space.stripe_yearly_price_id) {
+    try {
+      await stripe.prices.update(space.stripe_yearly_price_id, { active: false });
+    } catch (e) {
+      console.warn('Could not deactivate yearly price', e);
     }
-    priceId = newPrice.id;
   }
 
-  await persistResult('academy_space', space.id, productId, priceId);
+  await persistResult('academy_space', space.id, productId, priceId, yearlyPriceId);
 
   return corsJsonResponse(req, {
     ok: true,
     entity_type: 'academy_space',
     stripe_product_id: productId,
     stripe_price_id: priceId,
+    stripe_yearly_price_id: yearlyPriceId,
   });
 }
 

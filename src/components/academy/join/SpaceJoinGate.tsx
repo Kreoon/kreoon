@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Lock, Sparkles, Users, Loader2, GraduationCap } from 'lucide-react';
+import { Lock, Sparkles, Users, Loader2, GraduationCap, Tag, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useJoinSpace } from '@/hooks/academy/useAcademyJoinSpace';
 import { supabase } from '@/integrations/supabase/client';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
+import { validateCouponCode, type CouponPlan } from '@/hooks/academy/useAcademyCoupons';
 
 const KREOON_PURPLE = '#7c3aed';
 
@@ -35,8 +37,68 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   const memberCount: number = space.member_count ?? 0;
   const logoUrl: string | null = space.logo_url ?? null;
   const coverUrl: string | null = space.cover_image_url ?? null;
-  const priceUsd: number = Number(space.membership_price_usd ?? 0);
-  const isPaid = priceUsd > 0;
+  const monthlyPrice: number = Number(space.membership_price_usd ?? 0);
+  const yearlyPrice: number = Number(space.yearly_price_usd ?? 0);
+  const hasMonthly = monthlyPrice > 0;
+  const hasYearly = yearlyPrice > 0;
+  const isPaid = hasMonthly || hasYearly;
+
+  // Plan seleccionado (default: el que esté disponible primero).
+  const [plan, setPlan] = useState<CouponPlan>(hasMonthly ? 'monthly' : 'yearly');
+  const currentPrice = plan === 'yearly' ? yearlyPrice : monthlyPrice;
+  const planLabel = plan === 'yearly' ? 'año' : 'mes';
+
+  // ─── Cupón ───
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    code: string;
+    finalPrice: number;
+    discountAmount: number;
+  } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  // Si el plan cambia, descarto el cupón aplicado (puede no aplicar al nuevo plan).
+  useEffect(() => {
+    setAppliedCoupon(null);
+  }, [plan]);
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) return;
+    setValidatingCoupon(true);
+    try {
+      const result = await validateCouponCode(space.id, code, plan);
+      if (!result.valid) {
+        const msg = {
+          coupon_not_found: 'Cupón no encontrado',
+          coupon_expired: 'Cupón vencido',
+          coupon_max_redemptions: 'Cupón agotado',
+          coupon_plan_not_applicable: `Este cupón no aplica al plan ${planLabel === 'año' ? 'anual' : 'mensual'}`,
+          plan_not_available: 'Plan no disponible',
+          invalid_plan: 'Plan inválido',
+        }[result.error ?? ''] ?? 'Cupón no válido';
+        toast.error(msg);
+        return;
+      }
+      setAppliedCoupon({
+        code: result.code ?? code,
+        finalPrice: result.final_price_usd ?? currentPrice,
+        discountAmount: result.discount_amount_usd ?? 0,
+      });
+      toast.success(`Cupón aplicado: -USD ${(result.discount_amount_usd ?? 0).toFixed(2)}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? 'No pudimos validar el cupón');
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+  };
+
+  const finalPrice = appliedCoupon?.finalPrice ?? currentPrice;
 
   const referrerId = searchParams.get('ref') || null;
   const source = searchParams.get('utm_source') || searchParams.get('source') || null;
@@ -72,7 +134,13 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
     try {
       const { data, error } = await (supabase as any).functions.invoke(
         'stripe-academy-subscribe',
-        { body: { space_slug: spaceSlug } }
+        {
+          body: {
+            space_slug: spaceSlug,
+            plan,
+            ...(appliedCoupon ? { coupon_code: appliedCoupon.code } : {}),
+          },
+        }
       );
       if (error) throw error;
       if (!data?.url) throw new Error('No recibimos URL de pago.');
@@ -133,11 +201,105 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider"
                   style={{ background: `${spaceAccent}30`, color: spaceAccent }}
                 >
-                  Premium · USD {priceUsd.toFixed(0)} /mes
+                  Premium
                 </span>
               )}
             </div>
           </div>
+
+          {/* Selector de plan + cupón (solo si es de pago y user autenticado) */}
+          {isPaid && user && (
+            <div className="space-y-3 max-w-md mx-auto w-full">
+              {/* Selector mensual / anual */}
+              {hasMonthly && hasYearly && (
+                <div className="grid grid-cols-2 gap-2">
+                  {(['monthly', 'yearly'] as CouponPlan[]).map((p) => {
+                    const price = p === 'yearly' ? yearlyPrice : monthlyPrice;
+                    const label = p === 'yearly' ? 'Anual' : 'Mensual';
+                    const per = p === 'yearly' ? '/año' : '/mes';
+                    return (
+                      <button
+                        key={p}
+                        onClick={() => setPlan(p)}
+                        className={`rounded-2xl border-2 p-3 text-left transition-all ${
+                          plan === p
+                            ? 'border-white/30 bg-white/10'
+                            : 'border-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        <div className="text-xs text-zinc-400">{label}</div>
+                        <div className="text-lg font-bold text-white mt-0.5">
+                          USD {price.toFixed(0)}
+                          <span className="text-xs text-zinc-400 font-normal">{per}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Campo de cupón */}
+              {!appliedCoupon ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
+                    placeholder="¿Tienes un cupón?"
+                    className="flex-1 bg-white/5 border-white/10 text-white font-mono"
+                  />
+                  <Button
+                    onClick={handleApplyCoupon}
+                    disabled={!couponCode || validatingCoupon}
+                    variant="outline"
+                    className="border-white/15"
+                  >
+                    {validatingCoupon ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Aplicar'
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    <code className="font-mono font-bold text-emerald-300">{appliedCoupon.code}</code>
+                    <span className="text-xs text-zinc-400">
+                      −USD {appliedCoupon.discountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={removeCoupon}
+                    className="text-zinc-400 hover:text-zinc-200"
+                    aria-label="Quitar cupón"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Resumen del precio */}
+              <div className="text-center pt-1">
+                {appliedCoupon && appliedCoupon.finalPrice !== currentPrice ? (
+                  <div className="space-y-0.5">
+                    <div className="text-zinc-500 line-through text-sm">
+                      USD {currentPrice.toFixed(2)}
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                      USD {finalPrice.toFixed(2)}{' '}
+                      <span className="text-sm font-normal text-zinc-400">/{planLabel}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold text-white">
+                    USD {currentPrice.toFixed(2)}{' '}
+                    <span className="text-sm font-normal text-zinc-400">/{planLabel}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Descripción */}
           {description && (
@@ -200,7 +362,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   ) : (
                     <>
                       <Sparkles className="h-5 w-5 mr-2" />
-                      Suscribirme · USD {priceUsd.toFixed(0)} /mes
+                      Suscribirme · USD {finalPrice.toFixed(2)} /{planLabel}
                     </>
                   )}
                 </Button>

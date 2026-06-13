@@ -118,7 +118,7 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
         <h3 className="font-semibold">Modelo de precios</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Precio mensual de membresía (USD)</Label>
+            <Label>Precio mensual (USD)</Label>
             <Input
               type="number"
               min={0}
@@ -127,9 +127,21 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
               onChange={(e) => set('membership_price_usd', Number(e.target.value))}
               className="bg-black/30 border-white/10"
             />
-            <p className="text-xs text-zinc-500 mt-1">0 = membresía gratuita</p>
+            <p className="text-xs text-zinc-500 mt-1">0 = sin plan mensual</p>
           </div>
           <div>
+            <Label>Precio anual (USD)</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              value={(draft as any).yearly_price_usd ?? 0}
+              onChange={(e) => set('yearly_price_usd' as any, Number(e.target.value))}
+              className="bg-black/30 border-white/10"
+            />
+            <p className="text-xs text-zinc-500 mt-1">0 = sin plan anual</p>
+          </div>
+          <div className="col-span-2">
             <Label>Visibilidad</Label>
             <select
               value={draft.is_public ? 'public' : 'private'}

@@ -92,6 +92,8 @@ Deno.serve(async (req) => {
     // ─── 2. Body ───
     const body = await req.json().catch(() => ({}));
     const space_slug = body?.space_slug;
+    const plan = (body?.plan === 'yearly' ? 'yearly' : 'monthly') as 'monthly' | 'yearly';
+    const coupon_code = body?.coupon_code as string | undefined;
     if (!space_slug) return corsJsonResponse(req, { error: 'space_slug_required' }, 400);
 
     // ─── 3. Payload via RPC (bypassa el bug del SR key) ───
@@ -110,15 +112,51 @@ Deno.serve(async (req) => {
     if (space.status !== 'active' || !space.is_public) {
       return corsJsonResponse(req, { error: 'space_unavailable' }, 400);
     }
-    const priceUsd = Number(space.membership_price_usd ?? 0);
+    // Seleccionar price + monto según plan elegido.
+    const priceUsd = plan === 'yearly'
+      ? Number(space.yearly_price_usd ?? 0)
+      : Number(space.membership_price_usd ?? 0);
+    const stripePriceId = plan === 'yearly' ? space.stripe_yearly_price_id : space.stripe_price_id;
     if (priceUsd <= 0) {
-      return corsJsonResponse(req, { error: 'space_is_free' }, 400);
+      return corsJsonResponse(req, { error: plan === 'yearly' ? 'yearly_plan_unavailable' : 'space_is_free' }, 400);
     }
-    if (!space.stripe_price_id) {
+    if (!stripePriceId) {
       return corsJsonResponse(req, { error: 'stripe_price_id_missing' }, 400);
     }
     if (payload.membership_active) {
       return corsJsonResponse(req, { error: 'already_member' }, 409);
+    }
+
+    // ─── 3b. Cupón opcional ───
+    let stripeCouponId: string | null = null;
+    let couponInfo: any = null;
+    if (coupon_code) {
+      const validation = await callRpc<any>('validate_academy_coupon', {
+        p_space_id: space.id,
+        p_code: coupon_code,
+        p_plan: plan,
+      }, jwt);
+      if (!validation?.valid) {
+        return corsJsonResponse(req, { error: 'invalid_coupon', detail: validation?.error ?? 'unknown' }, 400);
+      }
+      couponInfo = validation;
+      // Crear el Stripe Coupon al vuelo. Stripe nunca conoce el código KREOON,
+      // solo recibe el descuento ya calculado con la duración correcta.
+      const stripeCoupon = await stripe.coupons.create({
+        ...(validation.discount_type === 'percentage'
+          ? { percent_off: Number(validation.discount_value) }
+          : { amount_off: Math.round(Number(validation.discount_value) * 100), currency: 'usd' }),
+        duration: validation.duration,
+        ...(validation.duration === 'repeating'
+          ? { duration_in_months: validation.duration_in_months }
+          : {}),
+        // No metadata sensible: solo referencia al cupón de KREOON.
+        metadata: {
+          kreoon_coupon_id: validation.coupon_id,
+          kreoon_space_id: space.id,
+        },
+      });
+      stripeCouponId = stripeCoupon.id;
     }
 
     // ─── 4. Connect detection (NO bloqueamos) ───
@@ -131,24 +169,33 @@ Deno.serve(async (req) => {
       space_id: space.id,
       user_id: callerId,
       space_slug: space.slug,
+      plan,
       collection_mode: useConnect ? 'destination' : 'central',
       owner_user_id: space.owner_id ?? '',
       platform_fee_percent: String(feePercent),
+      // Si hay cupón, guardamos el ID interno para que el webhook
+      // registre la redención.
+      ...(couponInfo ? { kreoon_coupon_id: couponInfo.coupon_id } : {}),
     };
 
     const sessionParams: any = {
       mode: 'subscription',
       payment_method_types: ['card'],
       customer_email: callerEmail ?? undefined,
-      line_items: [{ price: space.stripe_price_id, quantity: 1 }],
+      line_items: [{ price: stripePriceId, quantity: 1 }],
       metadata,
       subscription_data: { metadata },
-      // Activamos el campo "Código promocional" en el Checkout. El owner
-      // crea los cupones en Stripe Dashboard → Productos → Cupones.
-      allow_promotion_codes: true,
       success_url: `${FRONTEND_URL}/academia/${space.slug}?paid=success`,
       cancel_url: `${FRONTEND_URL}/academia/${space.slug}?paid=cancel`,
     };
+
+    // Si tenemos un cupón gestionado, lo aplicamos directamente y NO
+    // mostramos el campo de "Promotion code" en Stripe (los códigos viven
+    // en KREOON, no en Stripe). Si NO hay cupón, NO activamos
+    // allow_promotion_codes para mantener consistencia.
+    if (stripeCouponId) {
+      sessionParams.discounts = [{ coupon: stripeCouponId }];
+    }
 
     if (useConnect && ownerAccountId) {
       sessionParams.subscription_data.application_fee_percent = feePercent;
