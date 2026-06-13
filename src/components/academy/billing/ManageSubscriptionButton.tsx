@@ -61,10 +61,10 @@ export function ManageSubscriptionButton({
               ? 'Tu sesión expiró. Vuelve a iniciar sesión.'
               : code === 'space_not_found'
                 ? 'No encontramos esta academia.'
-                : `No pudimos abrir el portal (${code ?? 'sin código'} @ ${step ?? 'sin step'}).`;
-      toast.error(msg, {
-        description: detail ? JSON.stringify(detail).slice(0, 200) : undefined,
-      });
+                : 'No pudimos abrir el portal. Intenta de nuevo.';
+      toast.error(msg);
+      void step;
+      void detail;
       setLoading(false);
     }
   };
