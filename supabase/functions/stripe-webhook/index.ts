@@ -14,8 +14,19 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const stripeSyncSecret = Deno.env.get("STRIPE_SYNC_SECRET") ?? "";
+
+// Fail-loud al arrancar si falta alguno de estos. Sin ellos, los RPCs
+// SECURITY DEFINER fallarán con 401 unauthorized (caller_secret check)
+// pero retornaríamos 200 al webhook, dejando la BD desincronizada sin
+// que nadie se entere. Mejor que el container no arranque.
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+const stripeSyncSecret = Deno.env.get("STRIPE_SYNC_SECRET");
+if (!supabaseAnonKey) {
+  throw new Error("[stripe-webhook] SUPABASE_ANON_KEY env var is required");
+}
+if (!stripeSyncSecret) {
+  throw new Error("[stripe-webhook] STRIPE_SYNC_SECRET env var is required");
+}
 
 // Helper para llamar RPCs SECURITY DEFINER. Sortea el bug del SR key
 // inyectado erráticamente en edge functions: con anon key + caller secret

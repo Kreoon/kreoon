@@ -11,11 +11,20 @@
 
 import Stripe from 'npm:stripe@20.1.0';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
-const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
-const STRIPE_SYNC_SECRET = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
-const RECONCILE_SECRET = Deno.env.get('RECONCILE_SECRET') ?? '';
+// Fail-loud si falta cualquier secret. Mejor crashear el container que
+// procesar requests con strings vacíos que silenciosamente fallarían
+// el caller_secret check de los RPCs.
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+const STRIPE_SYNC_SECRET = Deno.env.get('STRIPE_SYNC_SECRET');
+const RECONCILE_SECRET = Deno.env.get('RECONCILE_SECRET');
+for (const [k, v] of Object.entries({
+  STRIPE_SECRET_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, STRIPE_SYNC_SECRET, RECONCILE_SECRET,
+})) {
+  if (!v) throw new Error(`[stripe-reconcile] ${k} env var is required`);
+}
+const stripe = new Stripe(STRIPE_SECRET_KEY!);
 
 const ACTIVE_STATUSES = new Set(['active', 'trialing']);
 
