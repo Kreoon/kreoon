@@ -4,12 +4,18 @@ import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { MembersGrid } from '@/components/academy/community/MembersGrid';
 import { OnlineIndicator } from '@/components/academy/community/OnlineIndicator';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
+import { useAcademyLiveContent, useAcademyPresence } from '@/hooks/academy/useAcademyLive';
 
 const KREOON_PURPLE = '#7c3aed';
 
 export default function AcademiaSpaceMembersPage() {
   const { spaceSlug } = useParams<{ spaceSlug: string }>();
   const { data: space, isLoading } = useAcademySpace(spaceSlug);
+  const spaceId = (space as any)?.id;
+
+  // Realtime: invalidar lista de miembros + heartbeat de presencia.
+  useAcademyLiveContent(spaceId);
+  useAcademyPresence(spaceId);
 
   if (isLoading) {
     return (

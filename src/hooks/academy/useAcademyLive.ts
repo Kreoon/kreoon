@@ -399,6 +399,20 @@ export function useAcademyLiveContent(spaceId: string | null | undefined) {
         {
           event: '*',
           schema: 'public',
+          table: 'academy_memberships',
+          filter: `space_id=eq.${spaceId}`,
+        },
+        () => {
+          // Nuevo miembro o cambio de status → refrescar lista de creadores.
+          qc.invalidateQueries({ queryKey: ['academy', 'members', spaceId] });
+          qc.invalidateQueries({ queryKey: ['academy-space-members', spaceId] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
           table: 'academy_space_points',
           filter: `space_id=eq.${spaceId}`,
         },
