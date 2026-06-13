@@ -67,16 +67,22 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
     if (!code) return;
     setValidatingCoupon(true);
     try {
-      const result = await validateCouponCode(space.id, code, plan);
+      const result = await validateCouponCode(space.id, code, plan, user?.id);
       if (!result.valid) {
-        const msg = {
+        const customMsg =
+          result.error === 'coupon_max_per_user_reached'
+            ? result.limit_per_user === 1
+              ? 'Ya usaste este cupón antes'
+              : `Ya usaste este cupón ${result.uses_by_user}/${result.limit_per_user} veces`
+            : null;
+        const msg = customMsg ?? ({
           coupon_not_found: 'Cupón no encontrado',
           coupon_expired: 'Cupón vencido',
           coupon_max_redemptions: 'Cupón agotado',
           coupon_plan_not_applicable: `Este cupón no aplica al plan ${planLabel === 'año' ? 'anual' : 'mensual'}`,
           plan_not_available: 'Plan no disponible',
           invalid_plan: 'Plan inválido',
-        }[result.error ?? ''] ?? 'Cupón no válido';
+        }[result.error ?? ''] ?? 'Cupón no válido');
         toast.error(msg);
         return;
       }

@@ -15,6 +15,7 @@ export interface AcademyCoupon {
   duration: CouponDuration;
   duration_in_months: number | null;
   max_redemptions: number | null;
+  max_redemptions_per_user: number | null;
   redemptions_count: number;
   expires_at: string | null;
   is_active: boolean;
@@ -48,6 +49,7 @@ export interface CouponInput {
   duration: CouponDuration;
   duration_in_months: number | null;
   max_redemptions: number | null;
+  max_redemptions_per_user: number | null;
   expires_at: string | null;
   is_active?: boolean;
 }
@@ -107,6 +109,7 @@ export async function validateCouponCode(
   spaceId: string,
   code: string,
   plan: CouponPlan,
+  userId?: string,
 ): Promise<{
   valid: boolean;
   error?: string;
@@ -116,11 +119,15 @@ export async function validateCouponCode(
   final_price_usd?: number;
   duration?: CouponDuration;
   duration_in_months?: number | null;
+  max_redemptions_per_user?: number | null;
+  uses_by_user?: number;
+  limit_per_user?: number;
 }> {
   const { data, error } = await (supabase as any).rpc('validate_academy_coupon', {
     p_space_id: spaceId,
     p_code: code,
     p_plan: plan,
+    p_user_id: userId ?? null,
   });
   if (error) {
     return { valid: false, error: error.message ?? 'rpc_error' };

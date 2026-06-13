@@ -165,8 +165,16 @@ function CouponCard({
             <span className="flex items-center gap-1">
               <Hash className="h-3 w-3" />
               {coupon.redemptions_count}
-              {coupon.max_redemptions ? ` / ${coupon.max_redemptions}` : ''} usos
+              {coupon.max_redemptions ? ` / ${coupon.max_redemptions}` : ''} usos totales
             </span>
+            {coupon.max_redemptions_per_user && (
+              <span className="flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                {coupon.max_redemptions_per_user === 1
+                  ? '1 vez por usuario'
+                  : `${coupon.max_redemptions_per_user} usos por usuario`}
+              </span>
+            )}
             {coupon.expires_at && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
@@ -208,6 +216,7 @@ function CreateCouponDialog({
   const [duration, setDuration] = useState<CouponDuration>('forever');
   const [durationMonths, setDurationMonths] = useState<string>('3');
   const [maxRedemptions, setMaxRedemptions] = useState<string>('');
+  const [maxRedemptionsPerUser, setMaxRedemptionsPerUser] = useState<string>('1');
   const [expiresAt, setExpiresAt] = useState<string>('');
 
   const reset = () => {
@@ -219,6 +228,7 @@ function CreateCouponDialog({
     setDuration('forever');
     setDurationMonths('3');
     setMaxRedemptions('');
+    setMaxRedemptionsPerUser('1');
     setExpiresAt('');
   };
 
@@ -245,6 +255,7 @@ function CreateCouponDialog({
         duration,
         duration_in_months: duration === 'repeating' ? Number(durationMonths) : null,
         max_redemptions: maxRedemptions ? Number(maxRedemptions) : null,
+        max_redemptions_per_user: maxRedemptionsPerUser ? Number(maxRedemptionsPerUser) : null,
         expires_at: expiresAt ? new Date(expiresAt).toISOString() : null,
         is_active: true,
       });
@@ -375,7 +386,7 @@ function CreateCouponDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Límite de usos</Label>
+              <Label>Límite total</Label>
               <Input
                 type="number"
                 value={maxRedemptions}
@@ -383,15 +394,28 @@ function CreateCouponDialog({
                 placeholder="Sin límite"
                 min={1}
               />
+              <p className="text-[10px] text-zinc-500">usos en total del cupón</p>
             </div>
             <div className="space-y-2">
-              <Label>Vence</Label>
+              <Label>Por usuario</Label>
               <Input
-                type="date"
-                value={expiresAt}
-                onChange={(e) => setExpiresAt(e.target.value)}
+                type="number"
+                value={maxRedemptionsPerUser}
+                onChange={(e) => setMaxRedemptionsPerUser(e.target.value)}
+                placeholder="Ilimitado"
+                min={1}
               />
+              <p className="text-[10px] text-zinc-500">cuántas veces lo puede usar 1 persona</p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Vence</Label>
+            <Input
+              type="date"
+              value={expiresAt}
+              onChange={(e) => setExpiresAt(e.target.value)}
+            />
           </div>
 
           <div className="flex gap-2 justify-end pt-2">

@@ -135,6 +135,7 @@ Deno.serve(async (req) => {
         p_space_id: space.id,
         p_code: coupon_code,
         p_plan: plan,
+        p_user_id: callerId,
       }, jwt);
       if (!validation?.valid) {
         return corsJsonResponse(req, { error: 'invalid_coupon', detail: validation?.error ?? 'unknown' }, 400);
