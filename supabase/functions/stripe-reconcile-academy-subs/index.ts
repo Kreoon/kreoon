@@ -1,20 +1,20 @@
 // ============================================================================
 // STRIPE RECONCILE — ACADEMY SUBSCRIPTIONS
 //
-// Job nightly que pregunta a Stripe el estado real de cada suscripción activa
-// en academy_memberships y desactiva las que ya no estén en estados saludables
-// (active | trialing). Atrapa webhooks perdidos / endpoints mal configurados.
+// Pregunta a Stripe el estado real de cada subscription_id en
+// academy_memberships y desactiva las que no estén en active/trialing.
+// Atrapa webhooks perdidos / endpoints mal configurados.
 //
-// Idempotente: si la membresía ya está en el estado correcto, no hace nada.
-// Diseñado para correr vía pg_cron 1x/día (ver migración complementaria).
+// Lecturas/escrituras vía RPC SECURITY DEFINER porque SUPABASE_SERVICE_ROLE_KEY
+// no se inyecta confiablemente en edge functions con npm: imports.
 // ============================================================================
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'npm:stripe@20.1.0';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const STRIPE_SYNC_SECRET = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
 const RECONCILE_SECRET = Deno.env.get('RECONCILE_SECRET') ?? '';
 
 const ACTIVE_STATUSES = new Set(['active', 'trialing']);
@@ -24,46 +24,60 @@ interface Membership {
   user_id: string;
   space_id: string;
   is_active: boolean;
-  stripe_subscription_id: string | null;
+  stripe_subscription_id: string;
+}
+
+async function callRpc<T>(name: string, payload: Record<string, unknown>): Promise<T> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error('[callRpc]', name, res.status, text.slice(0, 500));
+    throw new Error(`rpc_failed:${name}`);
+  }
+  return text ? (JSON.parse(text) as T) : (null as unknown as T);
 }
 
 Deno.serve(async (req) => {
-  // Solo se invoca desde pg_cron o /admin manual con un bearer secret.
+  // Auth: solo se invoca con bearer secret.
   const authHeader = req.headers.get('Authorization') ?? '';
   const providedSecret = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (!RECONCILE_SECRET || providedSecret !== RECONCILE_SECRET) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), { status: 401 });
   }
 
-  if (!SUPABASE_SERVICE_ROLE_KEY) {
-    return new Response(JSON.stringify({ error: 'service_role_missing' }), { status: 500 });
-  }
   if (!Deno.env.get('STRIPE_SECRET_KEY')) {
     return new Response(JSON.stringify({ error: 'stripe_not_configured' }), { status: 500 });
   }
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-  // Solo reconciliamos las que tienen sub_id (las manuales se ignoran).
-  const { data: memberships, error } = await supabase
-    .from('academy_memberships')
-    .select('id, user_id, space_id, is_active, stripe_subscription_id')
-    .not('stripe_subscription_id', 'is', null);
-
-  if (error) {
-    console.error('[reconcile] query failed', error);
-    return new Response(JSON.stringify({ error: 'query_failed' }), { status: 500 });
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !STRIPE_SYNC_SECRET) {
+    return new Response(JSON.stringify({ error: 'supabase_env_missing' }), { status: 500 });
   }
 
-  const rows = (memberships ?? []) as Membership[];
+  let memberships: Membership[];
+  try {
+    memberships = await callRpc<Membership[]>('list_subs_to_reconcile', {
+      p_caller_secret: STRIPE_SYNC_SECRET,
+    });
+  } catch (e: any) {
+    console.error('[reconcile] list rpc failed', e?.message);
+    return new Response(JSON.stringify({ error: 'list_failed' }), { status: 500 });
+  }
+
   let activated = 0;
   let deactivated = 0;
   let skipped = 0;
   let errors = 0;
 
-  for (const m of rows) {
+  for (const m of memberships ?? []) {
     try {
-      const sub = await stripe.subscriptions.retrieve(m.stripe_subscription_id!);
+      const sub = await stripe.subscriptions.retrieve(m.stripe_subscription_id);
       const shouldBeActive = ACTIVE_STATUSES.has(sub.status);
 
       if (shouldBeActive === m.is_active) {
@@ -71,44 +85,36 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const { error: updErr } = await supabase
-        .from('academy_memberships')
-        .update({ is_active: shouldBeActive })
-        .eq('id', m.id);
-
-      if (updErr) {
-        console.warn('[reconcile] update failed', m.id, updErr);
-        errors++;
-        continue;
-      }
+      await callRpc<void>('apply_reconcile_result', {
+        p_caller_secret: STRIPE_SYNC_SECRET,
+        p_membership_id: m.id,
+        p_should_be_active: shouldBeActive,
+      });
 
       if (shouldBeActive) activated++;
       else deactivated++;
     } catch (e: any) {
-      // Suscripción ya no existe en Stripe → desactivar
       if (e?.code === 'resource_missing') {
-        await supabase
-          .from('academy_memberships')
-          .update({ is_active: false })
-          .eq('id', m.id);
-        deactivated++;
-        continue;
+        try {
+          await callRpc<void>('apply_reconcile_result', {
+            p_caller_secret: STRIPE_SYNC_SECRET,
+            p_membership_id: m.id,
+            p_should_be_active: false,
+          });
+          deactivated++;
+          continue;
+        } catch (e2: any) {
+          console.warn('[reconcile] apply_reconcile (missing) failed', m.id, e2?.message);
+        }
       }
       console.warn('[reconcile] stripe retrieve failed', m.id, e?.message);
       errors++;
     }
   }
 
-  // Refrescar member_count de cada space afectado
-  const affectedSpaces = [...new Set(rows.map((r) => r.space_id))];
-  for (const sid of affectedSpaces) {
-    await supabase.rpc('recompute_academy_space_member_count', { p_space_id: sid })
-      .catch(() => {});
-  }
-
   return new Response(
     JSON.stringify({
-      checked: rows.length,
+      checked: (memberships ?? []).length,
       activated,
       deactivated,
       skipped,
