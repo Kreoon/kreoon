@@ -161,53 +161,70 @@ export function PostCard({
         </button>
       )}
 
-      {/* Media — detecta tipo por extensión y renderiza el elemento adecuado */}
-      {post.media_urls.length > 0 && (
-        <div
-          className={cn(
-            'mt-3 grid gap-2 rounded-xl overflow-hidden',
-            post.media_urls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
-          )}
-        >
-          {post.media_urls.slice(0, 4).map((url, i) => {
-            const lower = String(url).toLowerCase().split('?')[0];
-            const isVideo = /\.(mp4|webm|mov|ogg|m4v)$/.test(lower);
-            const isAudio = /\.(mp3|wav|m4a|aac|opus|flac)$/.test(lower);
-            if (isVideo) {
+      {/* Media — adaptativo:
+          - 1 archivo: respeta aspect ratio natural (con cap max-h-[80vh])
+          - 2+ archivos: grid 2-col con object-cover (Twitter-style)
+          - Audio: siempre full-width sin altura fija */}
+      {post.media_urls.length > 0 && (() => {
+        const isSingle = post.media_urls.length === 1;
+        return (
+          <div
+            className={cn(
+              'mt-3 gap-2 rounded-xl overflow-hidden',
+              isSingle ? 'flex justify-center bg-black/20' : 'grid grid-cols-2'
+            )}
+          >
+            {post.media_urls.slice(0, 4).map((url, i) => {
+              const lower = String(url).toLowerCase().split('?')[0];
+              const isVideo = /\.(mp4|webm|mov|ogg|m4v|mkv|ogv|avi)$/.test(lower);
+              const isAudio = /\.(mp3|wav|m4a|aac|opus|flac)$/.test(lower);
+
+              if (isVideo) {
+                return (
+                  <video
+                    key={i}
+                    src={url}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className={cn(
+                      'rounded-lg bg-black',
+                      isSingle
+                        ? 'w-auto max-w-full max-h-[80vh] mx-auto'
+                        : 'w-full h-48 object-cover'
+                    )}
+                  />
+                );
+              }
+              if (isAudio) {
+                return (
+                  <audio
+                    key={i}
+                    src={url}
+                    controls
+                    preload="metadata"
+                    className="w-full"
+                  />
+                );
+              }
               return (
-                <video
+                <img
                   key={i}
                   src={url}
-                  controls
-                  playsInline
-                  preload="metadata"
-                  className="w-full max-h-96 rounded-lg bg-black"
+                  alt=""
+                  className={cn(
+                    'rounded-lg',
+                    isSingle
+                      ? 'w-auto max-w-full max-h-[80vh] h-auto mx-auto'
+                      : 'w-full h-48 object-cover'
+                  )}
+                  loading="lazy"
                 />
               );
-            }
-            if (isAudio) {
-              return (
-                <audio
-                  key={i}
-                  src={url}
-                  controls
-                  preload="metadata"
-                  className="w-full"
-                />
-              );
-            }
-            return (
-              <img
-                key={i}
-                src={url}
-                alt=""
-                className="w-full h-48 object-cover rounded-lg"
-                loading="lazy"
-              />
-            );
-          })}
-        </div>
-      )}
+            })}
+          </div>
+        );
+      })()}
 
       {/* Poll */}
       {post.type === 'poll' && post.poll_options && post.poll_options.length > 0 && (
