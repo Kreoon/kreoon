@@ -88,10 +88,26 @@ Deno.serve(async (req) => {
     return corsJsonResponse(req, { error: 'primary_session_invalid' }, 400);
   }
 
-  // Validar que el customer del primary session corresponde al user actual
-  if (primarySession.metadata?.user_id && primarySession.metadata.user_id !== userId) {
+  // FAIL CLOSED: el primary session DEBE tener metadata.user_id y DEBE
+  // coincidir con el caller. Sin metadata, rechazamos (no permitir sessions
+  // ajenas o externas a Kreoon).
+  if (!primarySession.metadata?.user_id || primarySession.metadata.user_id !== userId) {
     return corsJsonResponse(req, { error: 'session_mismatch' }, 403);
   }
+
+  // El session DEBE estar pagado. No permitimos reusar customers de sessions
+  // sin completar (cancel, expired, abandoned) para evitar fraude.
+  if (primarySession.payment_status !== 'paid') {
+    return corsJsonResponse(req, { error: 'session_not_paid', status: primarySession.payment_status }, 400);
+  }
+
+  // El session DEBE pertenecer al mismo space que el upsell, para evitar
+  // que un usuario reuse customer de un space para cobrar a otro.
+  const sessionSpaceId = primarySession.metadata?.space_id;
+  if (sessionSpaceId && sessionSpaceId !== toProduct.space_id) {
+    return corsJsonResponse(req, { error: 'space_mismatch' }, 403);
+  }
+
   const customerId = typeof primarySession.customer === 'string'
     ? primarySession.customer
     : primarySession.customer?.id;

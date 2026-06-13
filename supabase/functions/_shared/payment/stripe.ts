@@ -9,6 +9,16 @@
 //   import { getGateway } from '../_shared/payment/index.ts';
 //   const gw = getGateway('stripe');
 //   const { url } = await gw.createSubscriptionCheckout({ ... });
+//
+// SECURITY: TODO edge function que cree un checkout (Stripe, MP, Wompi)
+// DEBE insertar previamente una fila en `academy_checkout_intents` con
+// (reference, gateway, course_id, user_id, expected_amount_cents,
+// currency). Los webhooks lookup por reference y rechazan si:
+//   - El intent no existe (atacante con su propio checkout).
+//   - El amount cobrado < expected_amount_cents.
+//   - El intent ya está paid (anti-replay).
+// Stripe usa `session.id` como reference; MP usa `external_reference`;
+// Wompi usa el `reference` que pasamos al payment_link.
 // ============================================================
 
 import Stripe from 'npm:stripe@20.1.0';

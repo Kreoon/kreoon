@@ -11,7 +11,34 @@
 // La implementación asume el access_token del PARTNER (no del owner)
 // para fase 1; la integración split-money por owner queda para fase 2
 // (requiere OAuth flow MP + cuentas conectadas).
+//
+// Webhook firma: MP envía header `x-signature: ts=X,v1=HMAC` + header
+// `x-request-id`. Manifest a firmar: `id:<resource>;request-id:<X>;ts:<ts>;`.
+// Secret separado del access_token (MP_WEBHOOK_SECRET).
 // ============================================================
+
+async function hmacSha256Hex(secret: string, message: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function timingSafeEqualStr(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
 
 import type {
   PaymentGateway,
@@ -97,6 +124,16 @@ export class MercadoPagoGateway implements PaymentGateway {
 
   async createSubscriptionCheckout(params: SubscriptionCheckoutParams): Promise<CheckoutResult> {
     // MP preapproval: requiere reason, auto_recurring (frequency, transaction_amount).
+    //
+    // SECURITY: el caller (edge function de subscribe) DEBE pasar
+    // `amount_local_cents` y `currency` desde una fuente server-side
+    // autoritativa (academy_spaces.membership_price_usd o tabla local),
+    // NUNCA desde body del cliente. Aquí solo consumimos lo que llega.
+    const amountLocalCents = Number(params.metadata?.amount_local_cents ?? 0);
+    const currency = String(params.metadata?.currency ?? 'COP');
+    if (amountLocalCents <= 0) {
+      throw new Error('mp_subscription_invalid_amount');
+    }
     const body = {
       reason: params.metadata?.space_name ?? 'Suscripción',
       external_reference: params.metadata?.session_ref ?? undefined,
@@ -105,8 +142,8 @@ export class MercadoPagoGateway implements PaymentGateway {
       auto_recurring: {
         frequency: 1,
         frequency_type: 'months',
-        transaction_amount: Number(params.metadata?.amount_local ?? 0),
-        currency_id: params.metadata?.currency ?? 'COP',
+        transaction_amount: amountLocalCents / 100,
+        currency_id: currency,
       },
     };
 
@@ -136,20 +173,35 @@ export class MercadoPagoGateway implements PaymentGateway {
   }
 
   async verifyWebhook(req: Request): Promise<WebhookVerifyResult> {
-    // MP envía POST con { type, action, data: { id } }.
-    // La verificación de firma requiere x-signature header con HMAC.
-    // Aquí implementamos parse mínimo + lookup del payment a la API
-    // para confirmar el estado real (anti-spoof: confiamos en la API,
-    // no en el payload del webhook).
+    // 1. Parse body
     const body = await req.json();
     const eventType = body?.type ?? body?.action ?? 'unknown';
     const resourceId = body?.data?.id;
+    if (!resourceId) throw new Error('mp_webhook_no_resource_id');
 
-    if (!resourceId) {
-      throw new Error('mp_webhook_no_resource_id');
+    // 2. Verificar x-signature HMAC ANTES de cualquier I/O.
+    // MP envía: x-signature: "ts=<unixms>,v1=<hmac>" + x-request-id: <uuid>
+    // Manifest: `id:<resourceId>;request-id:<requestId>;ts:<ts>;`
+    const webhookSecret = Deno.env.get('MP_WEBHOOK_SECRET') ?? '';
+    if (!webhookSecret) {
+      throw new Error('mp_webhook_secret_not_configured');
+    }
+    const sigHeader = req.headers.get('x-signature') ?? '';
+    const requestId = req.headers.get('x-request-id') ?? '';
+    const parts = Object.fromEntries(
+      sigHeader.split(',').map((p) => p.split('=').map((s) => s.trim())),
+    ) as Record<string, string>;
+    const ts = parts.ts;
+    const v1 = parts.v1;
+    if (!ts || !v1) throw new Error('mp_webhook_signature_missing');
+
+    const manifest = `id:${resourceId};request-id:${requestId};ts:${ts};`;
+    const expected = await hmacSha256Hex(webhookSecret, manifest);
+    if (!timingSafeEqualStr(expected, v1)) {
+      throw new Error('mp_webhook_signature_invalid');
     }
 
-    // Lookup defensivo a la API
+    // 3. Lookup defensivo a la API solo después de verificar firma.
     const isSubscription = String(eventType).includes('preapproval');
     const apiPath = isSubscription ? `/preapproval/${resourceId}` : `/v1/payments/${resourceId}`;
     const lookup = await fetch(`${MP_API}${apiPath}`, { headers: this.headers() });
