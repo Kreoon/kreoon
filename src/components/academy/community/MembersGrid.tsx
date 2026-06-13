@@ -22,7 +22,7 @@ const FILTERS: { id: Filter; label: string }[] = [
 
 export function MembersGrid({ spaceId, spaceOwnerId, accentColor = '#8B5CF6' }: MembersGridProps) {
   const { data: members = [], isLoading } = useSpaceMembers(spaceId);
-  const { data: follows = new Set<string>() } = useMyFollows(spaceId);
+  const { data: follows = [] } = useMyFollows(spaceId);
   const { data: presence = [] } = useSpacePresence(spaceId);
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
@@ -94,7 +94,7 @@ export function MembersGrid({ spaceId, spaceOwnerId, accentColor = '#8B5CF6' }: 
               spaceId={spaceId}
               spaceOwnerId={spaceOwnerId}
               membership={m}
-              isFollowing={follows.has(m.user_id)}
+              isFollowing={follows.includes(m.user_id)}
               accentColor={accentColor}
             />
           ))}

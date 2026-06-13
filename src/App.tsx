@@ -264,6 +264,7 @@ const AcademiaCourseEditorPage = lazyWithRetry(() => import("./pages/academia/Ac
 
 // Academia v2 — Community features
 const AcademiaSpaceFeedPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceFeedPage"));
+const AcademiaSpaceDMPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceDMPage"));
 const AcademiaSpaceAdminPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceAdminPage"));
 const AcademiaSpaceCalendarPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceCalendarPage"));
 const AcademiaLeaderboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaLeaderboardPage"));
@@ -559,6 +560,7 @@ function AppRoutes() {
         <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
         {/* Academia v2 — Community features */}
         <Route path="/academia/:spaceSlug/feed" element={<RequireAcademyAccess><AcademiaSpaceFeedPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/dm" element={<RequireAcademyAccess><AcademiaSpaceDMPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/calendar" element={<RequireAcademyAccess><AcademiaSpaceCalendarPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/leaderboard" element={<RequireAcademyAccess><AcademiaLeaderboardPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/map" element={<RequireAcademyAccess><AcademiaMapPage /></RequireAcademyAccess>} />

@@ -15,6 +15,7 @@ import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
 import { useAuth } from '@/hooks/useAuth';
 import { SpaceJoinGate } from '@/components/academy/join/SpaceJoinGate';
+import { MandatoryOnboardingGate } from '@/components/academy/join/MandatoryOnboardingGate';
 
 interface Props { children: React.ReactNode; }
 
@@ -51,6 +52,16 @@ export function RequireAcademyAccess({ children }: Props) {
 
   if (!isOwner && !isActiveMember) {
     return <SpaceJoinGate space={space} />;
+  }
+
+  // Onboarding obligatorio para miembros (owner queda exento).
+  if (!isOwner && isActiveMember && !myMembership?.onboarding_completed_at) {
+    return (
+      <MandatoryOnboardingGate
+        spaceId={(space as any).id}
+        spaceName={(space as any).name}
+      />
+    );
   }
 
   return <>{children}</>;

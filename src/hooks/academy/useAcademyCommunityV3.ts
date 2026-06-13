@@ -304,15 +304,17 @@ export function useMyFollows(spaceId: string | undefined) {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['academy', 'my-follows', spaceId, user?.id],
-    queryFn: async () => {
-      if (!spaceId || !user) return new Set<string>();
+    // Devuelve string[] (no Set): el cache de React Query se persiste a JSON
+    // en la PWA y un Set se serializa a {} (perdiendo .has). Un array sobrevive.
+    queryFn: async (): Promise<string[]> => {
+      if (!spaceId || !user) return [];
       const { data, error } = await (supabase as any)
         .from('academy_member_follows')
         .select('following_id')
         .eq('space_id', spaceId)
         .eq('follower_id', user.id);
       if (error) throw error;
-      return new Set<string>((data ?? []).map((r: any) => r.following_id));
+      return (data ?? []).map((r: any) => r.following_id as string);
     },
     enabled: !!spaceId && !!user,
   });

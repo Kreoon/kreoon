@@ -48,6 +48,7 @@ import { EventBigCard } from '@/components/academy/big-cards/EventBigCard';
 import { JoinSpaceModal } from '@/components/academy/join/JoinSpaceModal';
 import { SpaceJoinGate } from '@/components/academy/join/SpaceJoinGate';
 import { OnboardingWizard } from '@/components/academy/join/OnboardingWizard';
+import { MandatoryOnboardingGate } from '@/components/academy/join/MandatoryOnboardingGate';
 import { ManageSubscriptionButton } from '@/components/academy/billing/ManageSubscriptionButton';
 import { ShareLinkDialog } from '@/components/academy/community/ShareLinkDialog';
 import { useMyMembership } from '@/hooks/academy/useAcademyJoinSpace';
@@ -162,6 +163,11 @@ export default function AcademiaSpaceHomePage() {
   // adaptado (registro / unirme gratis / suscribirme con Stripe).
   if (!isOwner && !isMember) {
     return <SpaceJoinGate space={space} />;
+  }
+
+  // Onboarding obligatorio: país + objetivo antes de entrar al home.
+  if (!isOwner && isMember && !myMembership?.onboarding_completed_at) {
+    return <MandatoryOnboardingGate spaceId={(space as any).id} spaceName={space.name} />;
   }
 
   const allCourses = (space as any).courses ?? [];

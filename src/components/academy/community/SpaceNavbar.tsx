@@ -13,6 +13,7 @@ import {
   Crown,
   Info,
   Settings,
+  Mail,
 } from 'lucide-react';
 import { NotificationBell } from './NotificationBell';
 import { OnlineIndicator } from './OnlineIndicator';
@@ -29,6 +30,7 @@ const TABS = [
   { to: 'classroom', label: 'Cursos', icon: GraduationCap },
   { to: 'calendar', label: 'Lives', icon: Video },
   { to: 'members', label: 'Creadores', icon: Users },
+  { to: 'dm', label: 'Mensajes', icon: Mail },
   { to: 'map', label: 'Mundo', icon: Globe2 },
   { to: 'leaderboard', label: 'Ranking', icon: Crown },
   { to: 'about', label: 'Acerca de', icon: Info, hidden: true },
