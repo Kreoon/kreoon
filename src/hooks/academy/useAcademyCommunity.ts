@@ -175,7 +175,12 @@ export function useCreateComment() {
   const qc = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: async (args: { postId: string; body: string; parentId?: string }) => {
+    mutationFn: async (args: {
+      postId: string;
+      body: string;
+      parentId?: string;
+      mediaUrls?: string[];
+    }) => {
       if (!user) throw new Error('No user');
       const { data, error } = await (supabase as any)
         .from('academy_post_comments')
@@ -184,6 +189,7 @@ export function useCreateComment() {
           author_id: user.id,
           body: args.body,
           parent_id: args.parentId ?? null,
+          media_urls: args.mediaUrls ?? [],
         })
         .select(`*, author:profiles!author_id(full_name, avatar_url)`)
         .single();

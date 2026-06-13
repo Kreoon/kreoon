@@ -143,7 +143,7 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6' }: SpaceFe
                 />
                 {expandedComments.has(post.id) && (
                   <div className="mt-2 mb-4 pl-4 pr-2">
-                    <PostComments postId={post.id} accentColor={accentColor} />
+                    <PostComments postId={post.id} spaceId={spaceId} accentColor={accentColor} />
                   </div>
                 )}
               </div>

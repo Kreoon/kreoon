@@ -361,6 +361,10 @@ export function useAcademyLiveContent(spaceId: string | null | undefined) {
           filter: `space_id=eq.${spaceId}`,
         },
         () => {
+          // El feed usa queryKey ['academy', 'feed', spaceId, categoryId, userId].
+          // Invalidamos el prefijo completo ['academy', 'feed'] para cubrir
+          // todas las variantes de filtro/categoría/usuario.
+          qc.invalidateQueries({ queryKey: ['academy', 'feed'] });
           qc.invalidateQueries({ queryKey: ['academy', 'posts', spaceId] });
           qc.invalidateQueries({ queryKey: ['academy-posts', spaceId] });
         }
@@ -373,8 +377,21 @@ export function useAcademyLiveContent(spaceId: string | null | undefined) {
           table: 'academy_post_comments',
         },
         () => {
+          qc.invalidateQueries({ queryKey: ['academy', 'feed'] });
           qc.invalidateQueries({ queryKey: ['academy', 'posts', spaceId] });
           qc.invalidateQueries({ queryKey: ['academy', 'comments'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'academy_post_reactions',
+        },
+        () => {
+          // Reacciones afectan reaction_count en posts; invalidamos feed.
+          qc.invalidateQueries({ queryKey: ['academy', 'feed'] });
         }
       )
       .on(
