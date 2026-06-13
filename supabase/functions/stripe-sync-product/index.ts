@@ -212,6 +212,7 @@ async function syncAcademySpace(space: any, req: Request) {
       await stripe.products.update(productId, {
         name: space.name,
         description,
+        ...(images ? { images } : {}),
         active: true,
         metadata: {
           kreoon_entity: 'academy_space',
@@ -224,6 +225,7 @@ async function syncAcademySpace(space: any, req: Request) {
       const product = await stripe.products.create({
         name: space.name,
         description,
+        images,
         metadata: { kreoon_entity: 'academy_space', kreoon_entity_id: space.id },
       });
       productId = product.id;
@@ -299,11 +301,13 @@ async function syncAcademyCourse(course: any, req: Request) {
   const baseName = `Curso · ${course.title}`;
   const baseDesc = stripText(course.description) || `Acceso al curso "${course.title}" en KREOON Academia`;
 
+  const courseImages = course.cover_image_url ? [course.cover_image_url] : undefined;
+
   if (!productId) {
     const product = await stripe.products.create({
       name: baseName,
       description: baseDesc,
-      images: course.cover_image_url ? [course.cover_image_url] : undefined,
+      images: courseImages,
       metadata: {
         kreoon_entity: 'academy_course',
         kreoon_entity_id: course.id,
@@ -317,6 +321,7 @@ async function syncAcademyCourse(course: any, req: Request) {
       await stripe.products.update(productId, {
         name: baseName,
         description: baseDesc,
+        ...(courseImages ? { images: courseImages } : {}),
         active: true,
         metadata: {
           kreoon_entity: 'academy_course',
@@ -329,6 +334,7 @@ async function syncAcademyCourse(course: any, req: Request) {
       const product = await stripe.products.create({
         name: baseName,
         description: baseDesc,
+        images: courseImages,
         metadata: { kreoon_entity: 'academy_course', kreoon_entity_id: course.id },
       });
       productId = product.id;
