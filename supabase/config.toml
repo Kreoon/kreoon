@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.whatsapp-notify]
 verify_jwt = false
 
+[functions.academy-event-fanout]
+verify_jwt = false
+
 [functions.public-showcase]
 verify_jwt = false
 
