@@ -8,6 +8,8 @@ import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatePost } from '@/hooks/academy/useAcademyCommunity';
+import { useBunnyImageUpload } from '@/hooks/useBunnyImageUpload';
+import { toast } from 'sonner';
 import { KiroAssistDialog } from './KiroAssistDialog';
 import { GifPicker } from './GifPicker';
 
@@ -57,21 +59,26 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
     setMediaUrls([]);
   }
 
+  const { uploadImage: bunnyUpload, progress: uploadProgress } = useBunnyImageUpload();
+
   async function uploadImage(file: File) {
     if (!user) return;
     setUploading(true);
     try {
+      // Sanitizamos nombre + ext para no exponer info del usuario en la URL.
       const extMatch = file.name.match(/\.([a-zA-Z0-9]{1,8})$/);
       const safeExt = extMatch ? `.${extMatch[1].toLowerCase()}` : '';
-      const path = `academy/posts/${spaceId}/${user.id}/${crypto.randomUUID()}${safeExt}`;
-      const { data, error } = await (supabase.storage as any)
-        .from('public-uploads')
-        .upload(path, file, { upsert: false });
-      if (error) throw error;
-      const { data: pub } = (supabase.storage as any).from('public-uploads').getPublicUrl(data.path);
-      setMediaUrls((arr) => [...arr, pub.publicUrl]);
-    } catch (e) {
-      console.error('Upload failed', e);
+      const storagePath = `academy/posts/${spaceId}/${user.id}/${crypto.randomUUID()}${safeExt}`;
+      // Max size dinámico: el hook lo determina por tipo (image=10MB,
+      // audio=50MB, video=100MB).
+      const result = await bunnyUpload(file, storagePath, 25);
+      if (!result.success || !result.cdnUrl) {
+        throw new Error(result.error ?? 'Error al subir el archivo');
+      }
+      setMediaUrls((arr) => [...arr, result.cdnUrl!]);
+    } catch (e: any) {
+      console.error('Bunny upload failed', e);
+      toast.error(e?.message ?? 'No se pudo subir el archivo');
     } finally {
       setUploading(false);
     }
@@ -205,19 +212,53 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
             </div>
           )}
 
+          {uploading && uploadProgress && uploadProgress.percentage < 100 && (
+            <div className="space-y-1">
+              <div className="text-[10px] text-zinc-500">
+                Subiendo a Bunny CDN... {uploadProgress.percentage}%
+              </div>
+              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all"
+                  style={{ width: `${uploadProgress.percentage}%`, backgroundColor: accentColor }}
+                />
+              </div>
+            </div>
+          )}
+
           {mediaUrls.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
-              {mediaUrls.map((url) => (
-                <div key={url} className="relative">
-                  <img src={url} alt="" className="rounded-lg h-24 w-full object-cover" />
-                  <button
-                    onClick={() => setMediaUrls((arr) => arr.filter((u) => u !== url))}
-                    className="absolute -top-2 -right-2 bg-zinc-800 rounded-full p-1 hover:bg-zinc-700"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
+              {mediaUrls.map((url) => {
+                const lower = String(url).toLowerCase().split('?')[0];
+                const isVideo = /\.(mp4|webm|mov|m4v|ogv|mkv)$/.test(lower);
+                const isAudio = /\.(mp3|wav|m4a|aac|opus|ogg|flac)$/.test(lower);
+                return (
+                  <div key={url} className="relative">
+                    {isVideo ? (
+                      <video
+                        src={url}
+                        className="rounded-lg h-24 w-full object-cover bg-black"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : isAudio ? (
+                      <div className="rounded-lg h-24 w-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-xs text-violet-300 px-2">
+                        🎵 Audio
+                      </div>
+                    ) : (
+                      <img src={url} alt="" className="rounded-lg h-24 w-full object-cover" />
+                    )}
+                    <button
+                      onClick={() => setMediaUrls((arr) => arr.filter((u) => u !== url))}
+                      className="absolute -top-2 -right-2 bg-zinc-800 rounded-full p-1 hover:bg-zinc-700"
+                      aria-label="Quitar"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 

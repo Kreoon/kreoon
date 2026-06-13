@@ -1,12 +1,31 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const ALLOWED_DOC_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'];
-const ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOC_TYPES, ...ALLOWED_VIDEO_TYPES];
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'image/avif', 'image/apng', 'image/svg+xml',
+];
+const ALLOWED_DOC_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4', 'video/quicktime', 'video/webm',
+  'video/x-matroska', 'video/ogg', 'video/x-msvideo',
+];
+const ALLOWED_AUDIO_TYPES = [
+  'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav',
+  'audio/ogg', 'audio/opus', 'audio/webm',
+  'audio/aac', 'audio/mp4', 'audio/flac', 'audio/x-m4a',
+];
+const ALLOWED_TYPES = [
+  ...ALLOWED_IMAGE_TYPES, ...ALLOWED_DOC_TYPES,
+  ...ALLOWED_VIDEO_TYPES, ...ALLOWED_AUDIO_TYPES,
+];
 const DEFAULT_MAX_SIZE_MB = 10;
 const VIDEO_MAX_SIZE_MB = 100;
+const AUDIO_MAX_SIZE_MB = 50;
 
 interface BunnyImageUploadProgress {
   loaded: number;
@@ -36,12 +55,20 @@ export function useBunnyImageUpload() {
     setError(null);
 
     try {
-      // Client-side validation
-      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type);
-      const effectiveMaxSize = isVideo ? VIDEO_MAX_SIZE_MB : maxSizeMB;
+      // Client-side validation. Si el browser no detectó el MIME, intentamos
+      // por extensión para no rechazar GIFs/AVIF que algunos browsers envían
+      // como octet-stream.
+      const isVideo = ALLOWED_VIDEO_TYPES.includes(file.type) || /\.(mp4|mov|webm|mkv|ogv|avi)$/i.test(file.name);
+      const isAudio = ALLOWED_AUDIO_TYPES.includes(file.type) || /\.(mp3|wav|m4a|aac|opus|ogg|flac)$/i.test(file.name);
+      const isImage = ALLOWED_IMAGE_TYPES.includes(file.type) || /\.(jpe?g|png|gif|webp|avif|apng|svg)$/i.test(file.name);
+      const isDoc   = ALLOWED_DOC_TYPES.includes(file.type) || /\.(pdf|docx?)$/i.test(file.name);
 
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        throw new Error('Formato no soportado. Usa JPG, PNG, GIF, WebP, PDF, DOC o MP4.');
+      const effectiveMaxSize = isVideo ? VIDEO_MAX_SIZE_MB
+        : isAudio ? AUDIO_MAX_SIZE_MB
+        : maxSizeMB;
+
+      if (!(isImage || isVideo || isAudio || isDoc)) {
+        throw new Error('Formato no soportado. Imagen, GIF, sticker, video, audio o documento.');
       }
 
       if (file.size > effectiveMaxSize * 1024 * 1024) {
