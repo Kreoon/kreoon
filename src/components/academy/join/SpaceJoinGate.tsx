@@ -49,18 +49,30 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   const planLabel = plan === 'yearly' ? 'año' : 'mes';
 
   // ─── Cupón ───
-  const [couponCode, setCouponCode] = useState('');
+  // Si la URL trae ?coupon=CODE, auto-aplicamos al cargar.
+  const couponFromUrl = searchParams.get('coupon') || '';
+  const [couponCode, setCouponCode] = useState(couponFromUrl);
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
     finalPrice: number;
     discountAmount: number;
   } | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [autoAppliedFromUrl, setAutoAppliedFromUrl] = useState(false);
 
   // Si el plan cambia, descarto el cupón aplicado (puede no aplicar al nuevo plan).
   useEffect(() => {
     setAppliedCoupon(null);
   }, [plan]);
+
+  // Auto-apply del cupón de la URL al cargar (solo una vez).
+  useEffect(() => {
+    if (couponFromUrl && !autoAppliedFromUrl && !appliedCoupon && !validatingCoupon) {
+      setAutoAppliedFromUrl(true);
+      void handleApplyCoupon();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [couponFromUrl, plan]);
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim();

@@ -21,9 +21,15 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 export function MembersGrid({ spaceId, spaceOwnerId, accentColor = '#8B5CF6' }: MembersGridProps) {
-  const { data: members = [], isLoading } = useSpaceMembers(spaceId);
-  const { data: follows = [] } = useMyFollows(spaceId);
-  const { data: presence = [] } = useSpacePresence(spaceId);
+  const { data: membersRaw, isLoading } = useSpaceMembers(spaceId);
+  const { data: followsRaw } = useMyFollows(spaceId);
+  const { data: presenceRaw } = useSpacePresence(spaceId);
+  // Normalización defensiva: el cache persistido de la PWA puede haber guardado
+  // versiones antiguas como Set/objeto (se rehidratan como {}, sin .includes/.map).
+  // Forzamos arrays siempre, sin importar qué haya en el cache viejo del navegador.
+  const members = Array.isArray(membersRaw) ? membersRaw : [];
+  const follows = Array.isArray(followsRaw) ? followsRaw : [];
+  const presence = Array.isArray(presenceRaw) ? presenceRaw : [];
   const [filter, setFilter] = useState<Filter>('all');
   const [query, setQuery] = useState('');
 

@@ -265,6 +265,7 @@ const AcademiaCourseEditorPage = lazyWithRetry(() => import("./pages/academia/Ac
 // Academia v2 — Community features
 const AcademiaSpaceFeedPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceFeedPage"));
 const AcademiaSpaceDMPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceDMPage"));
+const AcademiaPublicLandingPage = lazyWithRetry(() => import("./pages/academia/AcademiaPublicLandingPage"));
 const AcademiaSpaceAdminPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceAdminPage"));
 const AcademiaSpaceCalendarPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceCalendarPage"));
 const AcademiaLeaderboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaLeaderboardPage"));
@@ -552,6 +553,7 @@ function AppRoutes() {
         <Route path="/templates" element={<TemplateLibraryPage />} />
         {/* Academia - LMS Module */}
         <Route path="/cert/:certCode" element={<AcademiaVerifyPage />} />
+        <Route path="/a/:spaceSlug" element={<AcademiaPublicLandingPage />} />
         <Route path="/academia" element={<AcademiaHomePage />} />
         <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
         <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
