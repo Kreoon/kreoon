@@ -15,6 +15,7 @@ import {
   MessagesSquare,
   Lock,
   Crown,
+  MessageCircle,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
@@ -39,6 +40,7 @@ import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdm
 import { NotificationPreferencesPanel } from '@/components/academy/community/admin/NotificationPreferencesPanel';
 import { LandingEditorTab } from '@/components/academy/community/admin/LandingEditorTab';
 import { TiersAdminTab } from '@/components/academy/community/admin/TiersAdminTab';
+import { WhatsAppTemplatesPanel } from '@/components/academy/whatsapp/WhatsAppTemplatesPanel';
 
 type AdminTab =
   | 'overview'
@@ -57,7 +59,8 @@ type AdminTab =
   | 'tiers'
   | 'payouts'
   | 'afiliados'
-  | 'facturacion';
+  | 'facturacion'
+  | 'whatsapp';
 
 const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
@@ -77,6 +80,7 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'afiliados', label: 'Afiliados', icon: Handshake },
   { id: 'facturacion', label: 'Facturación', icon: CreditCard },
+  { id: 'whatsapp', label: 'WhatsApp Hub', icon: MessageCircle },
 ];
 
 export default function AcademiaSpaceAdminPage() {
@@ -198,6 +202,7 @@ export default function AcademiaSpaceAdminPage() {
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
             )}
             {tab === 'facturacion' && <BillingAdminTab isPro={isPro} accentColor={accent} />}
+            {tab === 'whatsapp' && <WhatsAppTemplatesPanel accentColor={accent} />}
           </main>
         </div>
       </div>
