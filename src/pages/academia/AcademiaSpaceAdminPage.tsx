@@ -14,6 +14,7 @@ import {
   Wallet,
   MessagesSquare,
   Lock,
+  Crown,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
@@ -36,9 +37,12 @@ import { CommunityAdminTab } from '@/components/academy/community/admin/Communit
 import { ConnectOnboardingTab } from '@/components/academy/community/admin/ConnectOnboardingTab';
 import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdminTab';
 import { NotificationPreferencesPanel } from '@/components/academy/community/admin/NotificationPreferencesPanel';
+import { LandingEditorTab } from '@/components/academy/community/admin/LandingEditorTab';
+import { TiersAdminTab } from '@/components/academy/community/admin/TiersAdminTab';
 
 type AdminTab =
   | 'overview'
+  | 'landing'
   | 'comunidad'
   | 'miembros'
   | 'leaderboard'
@@ -50,12 +54,14 @@ type AdminTab =
   | 'settings'
   | 'pagos'
   | 'cupones'
+  | 'tiers'
   | 'payouts'
   | 'afiliados'
   | 'facturacion';
 
 const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'landing', label: 'Landing pública', icon: Globe },
   { id: 'comunidad', label: 'Comunidad', icon: MessagesSquare },
   { id: 'miembros', label: 'Miembros', icon: Users },
   { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
@@ -67,6 +73,7 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'pagos', label: 'Pagos', icon: CreditCard },
   { id: 'cupones', label: 'Cupones', icon: CreditCard },
+  { id: 'tiers', label: 'Tiers', icon: Crown },
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'afiliados', label: 'Afiliados', icon: Handshake },
   { id: 'facturacion', label: 'Facturación', icon: CreditCard },
@@ -161,6 +168,7 @@ export default function AcademiaSpaceAdminPage() {
           {/* Content */}
           <main>
             {tab === 'overview' && <SpaceDashboard spaceId={space.id} accentColor={accent} />}
+            {tab === 'landing' && <LandingEditorTab spaceId={space.id} spaceSlug={spaceSlug!} />}
             {tab === 'comunidad' && <CommunityAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'miembros' && <MembersAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'leaderboard' && (
@@ -183,7 +191,8 @@ export default function AcademiaSpaceAdminPage() {
             )}
             {tab === 'settings' && <SpaceSettingsPanel space={space} />}
             {tab === 'pagos' && <ConnectOnboardingTab accentColor={accent} planSlug={space.plan_slug} />}
-            {tab === 'cupones' && <CouponsAdminTab spaceId={space.id} accentColor={accent} />}
+            {tab === 'cupones' && <CouponsAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />}
+            {tab === 'tiers' && <TiersAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'payouts' && <PayoutsAdminTab spaceId={space.id} accentColor={accent} />}
             {tab === 'afiliados' && (
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />

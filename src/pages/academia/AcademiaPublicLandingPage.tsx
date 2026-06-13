@@ -14,6 +14,32 @@ import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
 
+// Bloquea javascript:, data:, vbscript: y schemas no-web. Devuelve undefined
+// para URLs inseguras o malformadas, así no llegan al DOM (href/src).
+function safeUrl(u?: string | null): string | undefined {
+  if (!u) return undefined;
+  try {
+    const p = new URL(u, typeof window !== 'undefined' ? window.location.origin : 'https://kreoon.com');
+    return (p.protocol === 'https:' || p.protocol === 'http:') ? p.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// Solo permite #rgb, #rrggbb. Cualquier otra cosa (incluyendo intentos de
+// breakout con ); o expression()) cae al default — no se interpola crudo.
+function safeAccentColor(c?: string | null): string {
+  if (c && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(c)) return c;
+  return '#7c3aed';
+}
+
+// URL ya sanitizada para uso dentro de un literal CSS url("..."). encodeURI
+// preserva caracteres seguros pero escapa los que romperían el quoting.
+function cssUrl(u?: string): string | undefined {
+  if (!u) return undefined;
+  return `url("${encodeURI(u)}")`;
+}
+
 export default function AcademiaPublicLandingPage() {
   const { spaceSlug } = useParams<{ spaceSlug: string }>();
   const [searchParams] = useSearchParams();
@@ -32,14 +58,15 @@ export default function AcademiaPublicLandingPage() {
     enabled: !!spaceSlug,
   });
 
-  // Tracking affiliate click
+  // Tracking affiliate click vía edge function (valida origen + hashea IP)
   useEffect(() => {
-    if (affiliateCode && landing?.id) {
-      void (supabase as any).rpc('track_affiliate_click', {
-        p_code: affiliateCode,
-        p_space_id: landing.id,
-      });
-    }
+    if (!affiliateCode || !landing?.id) return;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/affiliate-track-click`;
+    void fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: affiliateCode, space_id: landing.id }),
+    }).catch(() => {});
   }, [affiliateCode, landing?.id]);
 
   // SEO: actualizar document head dinámicamente
@@ -49,7 +76,7 @@ export default function AcademiaPublicLandingPage() {
     setMeta('description', landing.seo_description ?? '');
     setMeta('og:title', landing.seo_title ?? landing.name, true);
     setMeta('og:description', landing.seo_description ?? '', true);
-    setMeta('og:image', landing.og_image_url ?? '', true);
+    setMeta('og:image', safeUrl(landing.og_image_url) ?? '', true);
     setMeta('og:type', 'website', true);
     setMeta('twitter:card', 'summary_large_image');
   }, [landing]);
@@ -81,9 +108,12 @@ export default function AcademiaPublicLandingPage() {
     return url.pathname + url.search;
   })();
 
-  const accent = landing.accent_color || '#7c3aed';
+  const accent = safeAccentColor(landing.accent_color);
   const monthlyPrice = Number(landing.monthly_price_usd ?? 0);
   const yearlyPrice = Number(landing.yearly_price_usd ?? 0);
+  const safeCoverUrl = safeUrl(landing.cover_image_url);
+  const safeLogoUrl = safeUrl(landing.logo_url);
+  const safeVideoUrl = safeUrl(landing.landing_video_url);
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
@@ -91,16 +121,16 @@ export default function AcademiaPublicLandingPage() {
       <section
         className="relative px-4 md:px-8 py-16 md:py-24 overflow-hidden"
         style={{
-          background: landing.cover_image_url
-            ? `linear-gradient(135deg, ${accent}40 0%, transparent 60%), url(${landing.cover_image_url}) center/cover`
+          background: safeCoverUrl
+            ? `linear-gradient(135deg, ${accent}40 0%, transparent 60%), ${cssUrl(safeCoverUrl)} center/cover`
             : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
-            {landing.logo_url && (
-              <img src={landing.logo_url} alt={landing.name}
+            {safeLogoUrl && (
+              <img src={safeLogoUrl} alt={landing.name}
                 className="h-14 w-14 rounded-xl object-cover border-2 border-white/10" />
             )}
             <div>
@@ -148,9 +178,9 @@ export default function AcademiaPublicLandingPage() {
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>
-            {landing.landing_video_url && (
+            {safeVideoUrl && (
               <Button variant="outline" size="lg" asChild>
-                <a href={landing.landing_video_url} target="_blank" rel="noreferrer">
+                <a href={safeVideoUrl} target="_blank" rel="noreferrer">
                   <Play className="h-4 w-4 mr-2" /> Ver video
                 </a>
               </Button>
@@ -179,11 +209,13 @@ export default function AcademiaPublicLandingPage() {
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Cursos incluidos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {landing.courses.map((c: any) => (
+              {landing.courses.map((c: any) => {
+                const safeCourseImg = safeUrl(c.cover_image_url);
+                return (
                 <Card key={c.id} className="bg-white/5 border-white/10 overflow-hidden">
-                  {c.cover_image_url && (
+                  {safeCourseImg && (
                     <div className="h-32 bg-cover bg-center"
-                         style={{ backgroundImage: `url(${c.cover_image_url})` }} />
+                         style={{ backgroundImage: cssUrl(safeCourseImg) }} />
                   )}
                   <div className="p-4">
                     <h3 className="font-semibold text-base">{c.title}</h3>
@@ -192,7 +224,8 @@ export default function AcademiaPublicLandingPage() {
                     )}
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
@@ -204,10 +237,12 @@ export default function AcademiaPublicLandingPage() {
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Quién enseña</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {landing.landing_instructors.map((i: any, idx: number) => (
+              {landing.landing_instructors.map((i: any, idx: number) => {
+                const safeAvatar = safeUrl(i.avatar_url);
+                return (
                 <Card key={idx} className="bg-white/5 border-white/10 p-4 text-center">
-                  {i.avatar_url && (
-                    <img src={i.avatar_url} alt={i.name}
+                  {safeAvatar && (
+                    <img src={safeAvatar} alt={i.name}
                          className="h-20 w-20 rounded-full mx-auto object-cover mb-3" />
                   )}
                   <h3 className="font-semibold">{i.name}</h3>

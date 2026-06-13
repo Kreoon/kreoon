@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Tag, Percent, DollarSign, Calendar, Hash, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Tag, Percent, DollarSign, Calendar, Hash, Loader2, Copy } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,10 +27,11 @@ import {
 
 interface Props {
   spaceId: string;
+  spaceSlug?: string;
   accentColor?: string;
 }
 
-export function CouponsAdminTab({ spaceId, accentColor = '#8B5CF6' }: Props) {
+export function CouponsAdminTab({ spaceId, spaceSlug, accentColor = '#8B5CF6' }: Props) {
   const { data: coupons = [], isLoading } = useAcademyCoupons(spaceId);
   const [openCreate, setOpenCreate] = useState(false);
   const updateMutation = useUpdateCoupon(spaceId);
@@ -97,6 +98,7 @@ export function CouponsAdminTab({ spaceId, accentColor = '#8B5CF6' }: Props) {
             <CouponCard
               key={c.id}
               coupon={c}
+              spaceSlug={spaceSlug}
               accentColor={accentColor}
               onToggle={() => handleToggleActive(c)}
               onDelete={() => handleDelete(c)}
@@ -119,15 +121,27 @@ export function CouponsAdminTab({ spaceId, accentColor = '#8B5CF6' }: Props) {
 
 function CouponCard({
   coupon,
+  spaceSlug,
   accentColor,
   onToggle,
   onDelete,
 }: {
   coupon: AcademyCoupon;
+  spaceSlug?: string;
   accentColor: string;
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const handleCopyLink = async () => {
+    if (!spaceSlug) return;
+    const url = `${window.location.origin}/a/${spaceSlug}?coupon=${encodeURIComponent(coupon.code)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copiado al portapapeles');
+    } catch {
+      toast.error('No se pudo copiar');
+    }
+  };
   const discountText = coupon.discount_type === 'percentage'
     ? `${coupon.discount_value}% off`
     : `USD ${coupon.discount_value} off`;
@@ -184,6 +198,17 @@ function CouponCard({
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {spaceSlug && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCopyLink}
+              aria-label="Copiar link de auto-aplicación"
+              title="Copiar link con cupón pre-aplicado"
+            >
+              <Copy className="h-4 w-4 text-zinc-400 hover:text-zinc-100" />
+            </Button>
+          )}
           <Switch checked={coupon.is_active} onCheckedChange={onToggle} />
           <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Eliminar">
             <Trash2 className="h-4 w-4 text-rose-400" />
