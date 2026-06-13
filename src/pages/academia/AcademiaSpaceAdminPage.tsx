@@ -40,7 +40,7 @@ import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdm
 import { NotificationPreferencesPanel } from '@/components/academy/community/admin/NotificationPreferencesPanel';
 import { LandingEditorTab } from '@/components/academy/community/admin/LandingEditorTab';
 import { TiersAdminTab } from '@/components/academy/community/admin/TiersAdminTab';
-import { WhatsAppTemplatesPanel } from '@/components/academy/whatsapp/WhatsAppTemplatesPanel';
+import { WhatsAppHubPanel } from '@/components/academy/whatsapp/WhatsAppHubPanel';
 
 type AdminTab =
   | 'overview'
@@ -202,7 +202,9 @@ export default function AcademiaSpaceAdminPage() {
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
             )}
             {tab === 'facturacion' && <BillingAdminTab isPro={isPro} accentColor={accent} />}
-            {tab === 'whatsapp' && <WhatsAppTemplatesPanel accentColor={accent} />}
+            {tab === 'whatsapp' && (
+              <WhatsAppHubPanel spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
+            )}
           </main>
         </div>
       </div>

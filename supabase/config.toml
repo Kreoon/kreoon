@@ -19,6 +19,16 @@ verify_jwt = false
 # pueda invocar el worker — defensa contra replay/forced-reprocess.
 verify_jwt = true
 
+[functions.academy-wa-summarizer]
+# Lo invoca pg_cron diario con service role. verify_jwt=true para rechazar
+# requests externos sin JWT del proyecto.
+verify_jwt = true
+
+[functions.academy-wa-broadcast]
+# Lo invoca el owner desde el UI con su JWT. verify_jwt=true + check de
+# ownership dentro del handler (owner_id == auth.uid()).
+verify_jwt = true
+
 [functions.public-showcase]
 verify_jwt = false
 
