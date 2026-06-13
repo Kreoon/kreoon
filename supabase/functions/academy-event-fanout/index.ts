@@ -18,7 +18,15 @@
 //   - academy-funnel-engine (upsell/cart-recovery)
 //   - Realtime broadcast (channel academy:space:{space_id})
 //
-// JWT verification: false (lo llama el RPC con SUPABASE_SERVICE_ROLE_KEY).
+// Auth en dos capas:
+//   1. verify_jwt = true (config.toml): Supabase rechaza requests sin
+//      JWT firmado por el proyecto antes de invocar este handler.
+//   2. Header `x-academy-fanout-secret`: shared secret entre el RPC y
+//      este worker. Validado con timing-safe compare. Defensa contra
+//      replay/forced-reprocess.
+//
+// Anti-replay: solo se procesan eventos con status='pending'. Si ya
+// está processed/processing/failed, se devuelve 409.
 // ============================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -26,6 +34,17 @@ import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+const FANOUT_SECRET = Deno.env.get('ACADEMY_FANOUT_SECRET') ?? '';
+
+/** Constant-time string compare (Deno no expone crypto.timingSafeEqual). */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
 
 interface EventRow {
   id: string;
@@ -36,20 +55,26 @@ interface EventRow {
   status: string;
 }
 
+// Campos que el caller (RPC academy_emit_event) puede poner en payload.
+// IMPORTANTE: solo el RPC (que es SECURITY DEFINER y solo callable por
+// service_role/postgres) escribe en academy_event_log, así que el
+// payload se considera trusted SI Y SOLO SI el GRANT a authenticated
+// fue revocado (migración 20260614000003_academy_v2_bus_harden.sql).
+//
+// Aún así, NO aceptamos `phone` desde payload — para evitar relay abuse
+// del cupo WhatsApp (template enviado a número arbitrario), el phone
+// se resuelve SIEMPRE desde profiles.whatsapp_phone vía event.user_id.
+// Si en el futuro un caso admin requiere "phone override", debe vivir
+// en un edge function dedicado con check de rol, NUNCA aquí.
 interface FanoutPayload {
-  // Campos opcionales que el caller puede haber puesto en payload.
-  // El fanout extrae los que necesita; los demás siguen viajando.
-  title?: string;          // título in-app
+  title?: string;          // título in-app (default: defaultTitleFor)
   body?: string;           // cuerpo in-app
   link?: string;           // link in-app
-  phone?: string;          // override de whatsapp_phone (si no, busca en profiles)
   variables?: string[];    // {{1}}, {{2}}, ... del template Meta
   button_variables?: string[];
   reference_id?: string;
   reference_type?: string;
   sender_id?: string;
-  skip_whatsapp?: boolean; // útil para tests o eventos puramente in-app
-  skip_in_app?: boolean;
 }
 
 Deno.serve(async (req) => {
@@ -59,6 +84,21 @@ Deno.serve(async (req) => {
 
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     return corsJsonResponse(req, { error: 'supabase_env_missing' }, 500);
+  }
+
+  // En producción ACADEMY_FANOUT_SECRET es obligatorio. Si no está
+  // configurado, fallamos cerrado en lugar de aceptar requests sin
+  // shared secret (defensa contra deploys mal configurados).
+  if (!FANOUT_SECRET) {
+    console.error('[academy-event-fanout] ACADEMY_FANOUT_SECRET not configured');
+    return corsJsonResponse(req, { error: 'fanout_secret_not_configured' }, 500);
+  }
+
+  // Shared secret check con timing-safe compare. El RPC envía el secret
+  // en este header desde el GUC `app.settings.academy_fanout_secret`.
+  const providedSecret = req.headers.get('x-academy-fanout-secret') ?? '';
+  if (!timingSafeEqual(providedSecret, FANOUT_SECRET)) {
+    return corsJsonResponse(req, { error: 'unauthorized' }, 401);
   }
 
   let body: { event_id?: string };
@@ -87,23 +127,40 @@ Deno.serve(async (req) => {
     return corsJsonResponse(req, { error: 'event_not_found' }, 404);
   }
 
-  // Idempotencia: si ya está procesado, salir limpio
-  if (event.status === 'processed') {
-    return corsJsonResponse(req, { ok: true, skipped: 'already_processed' });
+  // Anti-replay: rechazar cualquier estado distinto de `pending`.
+  // Idempotencia (processed) → 200 con skipped.
+  // Otros estados (processing/failed) → 409 — el reprocess explícito
+  // debe hacerse desde un edge separado por un admin, no aquí.
+  if (event.status !== 'pending') {
+    return corsJsonResponse(
+      req,
+      {
+        ok: event.status === 'processed',
+        skipped: event.status === 'processed' ? 'already_processed' : 'invalid_status',
+        status: event.status,
+      },
+      event.status === 'processed' ? 200 : 409,
+    );
   }
 
-  // Marcar como processing para que reintentos concurrentes salgan
-  await supabase
+  // Claim el evento con UPDATE condicional. Si otro worker concurrente
+  // ya lo claimeó, rowcount=0 y salimos sin reprocesar.
+  const { data: claimed } = await supabase
     .from('academy_event_log')
     .update({ status: 'processing' })
     .eq('id', eventId)
-    .eq('status', 'pending'); // condición para no pisar concurrent processed
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle();
+  if (!claimed) {
+    return corsJsonResponse(req, { ok: false, skipped: 'lost_race' }, 409);
+  }
 
   const payload = (event.payload ?? {}) as FanoutPayload;
   const sinks: Promise<{ sink: string; ok: boolean; reason?: string }>[] = [];
 
   // ─── 2. Fan-out: in-app ───
-  if (!payload.skip_in_app && event.user_id && event.space_id) {
+  if (event.user_id && event.space_id) {
     sinks.push(
       (async () => {
         const { error } = await supabase.from('academy_notifications').insert({
@@ -125,21 +182,21 @@ Deno.serve(async (req) => {
   }
 
   // ─── 3. Fan-out: WhatsApp ───
-  if (!payload.skip_whatsapp && event.user_id) {
+  // SIEMPRE resolvemos el phone desde profiles del event.user_id.
+  // Nunca aceptamos un override desde payload — anti relay abuse del
+  // cupo WhatsApp de Kreoon/Botcake (template no puede enviarse a
+  // números arbitrarios distintos del recipient real del evento).
+  if (event.user_id) {
     sinks.push(
       (async () => {
-        // Resolver teléfono: payload.phone tiene prioridad, si no busca en profiles
-        let phone = payload.phone;
-        if (!phone) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('whatsapp_phone, whatsapp_enabled')
-            .eq('id', event.user_id!)
-            .maybeSingle();
-          if (profile?.whatsapp_enabled && profile?.whatsapp_phone) {
-            phone = profile.whatsapp_phone;
-          }
-        }
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('whatsapp_phone, whatsapp_enabled')
+          .eq('id', event.user_id!)
+          .maybeSingle();
+        const phone = profile?.whatsapp_enabled && profile?.whatsapp_phone
+          ? profile.whatsapp_phone
+          : null;
         if (!phone) {
           return { sink: 'whatsapp', ok: false, reason: 'no_phone' };
         }

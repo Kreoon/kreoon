@@ -13,7 +13,11 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.academy-event-fanout]
-verify_jwt = false
+# verify_jwt=true rechaza cualquier request sin JWT válido (anon/user/service).
+# Además el handler exige header `x-academy-fanout-secret` para asegurar que
+# solo el RPC academy_emit_event (que conoce el shared secret vía GUC)
+# pueda invocar el worker — defensa contra replay/forced-reprocess.
+verify_jwt = true
 
 [functions.public-showcase]
 verify_jwt = false
