@@ -29,6 +29,7 @@ import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
 import { AcademyLiveToaster } from "@/components/academy/live/AcademyLiveToaster";
+import { RequireAcademyAccess } from "@/components/academy/guard/RequireAcademyAccess";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { PageLoader } from "./components/PageLoader";
@@ -554,21 +555,21 @@ function AppRoutes() {
         <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
         <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
         <Route path="/academia/:spaceSlug" element={<AcademiaSpaceHomePage />} />
-        <Route path="/academia/:spaceSlug/classroom" element={<AcademiaSpaceClassroomPage />} />
+        <Route path="/academia/:spaceSlug/classroom" element={<RequireAcademyAccess><AcademiaSpaceClassroomPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
         {/* Academia v2 — Community features */}
-        <Route path="/academia/:spaceSlug/feed" element={<AcademiaSpaceFeedPage />} />
-        <Route path="/academia/:spaceSlug/calendar" element={<AcademiaSpaceCalendarPage />} />
-        <Route path="/academia/:spaceSlug/leaderboard" element={<AcademiaLeaderboardPage />} />
-        <Route path="/academia/:spaceSlug/map" element={<AcademiaMapPage />} />
+        <Route path="/academia/:spaceSlug/feed" element={<RequireAcademyAccess><AcademiaSpaceFeedPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/calendar" element={<RequireAcademyAccess><AcademiaSpaceCalendarPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/leaderboard" element={<RequireAcademyAccess><AcademiaLeaderboardPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/map" element={<RequireAcademyAccess><AcademiaMapPage /></RequireAcademyAccess>} />
         <Route path="/academia/:spaceSlug/admin" element={<ProtectedRoute allowNoRoles><AcademiaSpaceAdminPage /></ProtectedRoute>} />
         {/* Academia v3 — Members + Calendar OAuth callbacks */}
-        <Route path="/academia/:spaceSlug/members" element={<AcademiaSpaceMembersPage />} />
+        <Route path="/academia/:spaceSlug/members" element={<RequireAcademyAccess><AcademiaSpaceMembersPage /></RequireAcademyAccess>} />
         <Route path="/academia/calendar/callback" element={<ProtectedRoute allowNoRoles><AcademiaCalendarCallbackPage /></ProtectedRoute>} />
         <Route path="/academia/calendar/member-callback" element={<ProtectedRoute allowNoRoles><AcademiaMemberCalendarCallbackPage /></ProtectedRoute>} />
         <Route path="/academia/:spaceSlug/:courseSlug/edit" element={<ProtectedRoute allowNoRoles><AcademiaCourseEditorPage /></ProtectedRoute>} />
-        <Route path="/academia/:spaceSlug/:courseSlug" element={<AcademiaCoursePage />} />
-        <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<ProtectedRoute allowNoRoles><AcademiaPlayerPage /></ProtectedRoute>} />
+        <Route path="/academia/:spaceSlug/:courseSlug" element={<RequireAcademyAccess><AcademiaCoursePage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<RequireAcademyAccess><AcademiaPlayerPage /></RequireAcademyAccess>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
