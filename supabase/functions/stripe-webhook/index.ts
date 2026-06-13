@@ -31,27 +31,27 @@ if (!stripeSyncSecret) {
 // Helper para llamar RPCs SECURITY DEFINER. Sortea el bug del SR key
 // inyectado erráticamente en edge functions: con anon key + caller secret
 // el escrito siempre llega a la BD.
+//
+// IMPORTANTE: tira excepción ante cualquier error. Los callers DEBEN dejar
+// propagar el throw para que el webhook responda 5xx → Stripe reintenta
+// con backoff. Tragar errores aquí causaría que la BD quede desincronizada
+// silenciosamente mientras Stripe cree que todo está OK.
 async function callAcademyRpc(name: string, payload: Record<string, unknown>): Promise<any> {
-  try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, {
-      method: 'POST',
-      headers: {
-        apikey: supabaseAnonKey,
-        Authorization: `Bearer ${supabaseAnonKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      console.error(`[webhook_rpc] ${name} failed ${res.status}`, text.slice(0, 300));
-      return null;
-    }
-    return text ? JSON.parse(text) : null;
-  } catch (e: any) {
-    console.error(`[webhook_rpc] ${name} threw`, e?.message);
-    return null;
+  const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey!,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error(`[webhook_rpc] ${name} failed ${res.status}`, text.slice(0, 300));
+    throw new Error(`webhook_rpc_failed:${name}:${res.status}`);
   }
+  return text ? JSON.parse(text) : null;
 }
 
 serve(async (req) => {
@@ -821,13 +821,23 @@ async function syncAcademyMembershipStatus(_supabase: any, subscription: Stripe.
       p_customer_id: customerId,
       p_should_be_active: shouldBeActive,
     });
-  } else {
-    await callAcademyRpc(
-      shouldBeActive ? 'webhook_deactivate_by_subscription' : 'webhook_deactivate_by_subscription',
-      { p_caller_secret: stripeSyncSecret, p_subscription_id: subscription.id }
-    );
+    console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → is_active=${shouldBeActive}`);
+    return;
   }
-  console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → is_active=${shouldBeActive}`);
+
+  // Sin metadata no podemos resolver la membresía para activarla. Si la
+  // suscripción ya no está activa, podemos al menos desactivar por sub_id.
+  // Si debería estar activa pero no tenemos metadata, logueamos warning
+  // (probablemente sub legacy creada antes de poblar metadata).
+  if (!shouldBeActive) {
+    await callAcademyRpc('webhook_deactivate_by_subscription', {
+      p_caller_secret: stripeSyncSecret,
+      p_subscription_id: subscription.id,
+    });
+    console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → deactivated by sub_id (no metadata)`);
+  } else {
+    console.warn(`[academy_sub_status] sub=${subscription.id} active but missing user_id/space_id metadata — cannot reconcile`);
+  }
 }
 
 /**
