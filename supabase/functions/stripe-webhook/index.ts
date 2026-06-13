@@ -14,6 +14,34 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const stripeSyncSecret = Deno.env.get("STRIPE_SYNC_SECRET") ?? "";
+
+// Helper para llamar RPCs SECURITY DEFINER. Sortea el bug del SR key
+// inyectado erráticamente en edge functions: con anon key + caller secret
+// el escrito siempre llega a la BD.
+async function callAcademyRpc(name: string, payload: Record<string, unknown>): Promise<any> {
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/${name}`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      console.error(`[webhook_rpc] ${name} failed ${res.status}`, text.slice(0, 300));
+      return null;
+    }
+    return text ? JSON.parse(text) : null;
+  } catch (e: any) {
+    console.error(`[webhook_rpc] ${name} threw`, e?.message);
+    return null;
+  }
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return handleCorsOptions(req);
@@ -287,15 +315,11 @@ async function handleSubscriptionCancelled(supabase: any, subscription: Stripe.S
 
   // Desactivar membresía de academia si la subscripción era de tipo academia.
   if ((subscription.metadata as any)?.type === "academy_membership_subscription") {
-    const { error: memErr } = await supabase
-      .from("academy_memberships")
-      .update({ is_active: false })
-      .eq("stripe_subscription_id", subscription.id);
-    if (memErr) {
-      console.error("Error deactivating academy membership:", memErr);
-    } else {
-      console.log(`[academy_membership] Deactivated by subscription ${subscription.id}`);
-    }
+    await callAcademyRpc('webhook_deactivate_by_subscription', {
+      p_caller_secret: stripeSyncSecret,
+      p_subscription_id: subscription.id,
+    });
+    console.log(`[academy_membership] Deactivated by subscription ${subscription.id}`);
   }
 }
 
@@ -694,57 +718,15 @@ async function handleAcademyMembershipFromSubscription(
     return;
   }
 
-  const { data: existing } = await supabase
-    .from("academy_memberships")
-    .select("id, is_active, stripe_subscription_id, role")
-    .eq("space_id", spaceId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existing && existing.is_active && existing.stripe_subscription_id === subscriptionId) {
-    console.log(`[academy_membership_from_sub] already active user=${userId} space=${spaceId}`);
-    return;
-  }
-
-  if (existing) {
-    await supabase
-      .from("academy_memberships")
-      .update({
-        is_active: true,
-        role: existing.role && existing.role !== "owner" ? existing.role : "student",
-        stripe_subscription_id: subscriptionId,
-        stripe_customer_id: customerId,
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabase.from("academy_memberships").insert({
-      space_id: spaceId,
-      user_id: userId,
-      role: "student",
-      is_active: true,
-      stripe_subscription_id: subscriptionId,
-      stripe_customer_id: customerId,
-      joined_at: new Date().toISOString(),
-    });
-
-    try {
-      const { data: spaceRow } = await supabase
-        .from("academy_spaces")
-        .select("member_count")
-        .eq("id", spaceId)
-        .single();
-      if (spaceRow) {
-        await supabase
-          .from("academy_spaces")
-          .update({ member_count: (spaceRow.member_count ?? 0) + 1 })
-          .eq("id", spaceId);
-      }
-    } catch (e) {
-      console.warn("[academy_membership_from_sub] member_count bump failed", e);
-    }
-  }
-
-  console.log(`[academy_membership_from_sub] ✓ user=${userId} space=${spaceId} sub=${subscriptionId}`);
+  const result = await callAcademyRpc('webhook_upsert_academy_membership', {
+    p_caller_secret: stripeSyncSecret,
+    p_space_id: spaceId,
+    p_user_id: userId,
+    p_subscription_id: subscriptionId,
+    p_customer_id: customerId,
+    p_should_be_active: true,
+  });
+  console.log(`[academy_membership_from_sub] ✓ user=${userId} space=${spaceId} sub=${subscriptionId} action=${result?.action ?? 'unknown'}`);
 }
 
 // ============================================================================
@@ -763,60 +745,15 @@ async function handleAcademyMembershipPurchase(supabase: any, session: Stripe.Ch
     return;
   }
 
-  // Idempotencia: si ya existe membresía activa con la misma subscription, salimos.
-  const { data: existing } = await supabase
-    .from("academy_memberships")
-    .select("id, is_active, stripe_subscription_id, role")
-    .eq("space_id", spaceId)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (existing && existing.is_active && existing.stripe_subscription_id === subscriptionId) {
-    console.log(`[academy_membership_subscription] Already active: user ${userId} space ${spaceId}`);
-    return;
-  }
-
-  if (existing) {
-    // Reactivar (e.g. el user había cancelado y vuelve a suscribirse).
-    await supabase
-      .from("academy_memberships")
-      .update({
-        is_active: true,
-        role: existing.role && existing.role !== "owner" ? existing.role : "student",
-        stripe_subscription_id: subscriptionId,
-        stripe_customer_id: customerId,
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabase.from("academy_memberships").insert({
-      space_id: spaceId,
-      user_id: userId,
-      role: "student",
-      is_active: true,
-      stripe_subscription_id: subscriptionId,
-      stripe_customer_id: customerId,
-      joined_at: new Date().toISOString(),
-    });
-
-    // Incrementar member_count del space.
-    try {
-      const { data: spaceRow } = await supabase
-        .from("academy_spaces")
-        .select("member_count")
-        .eq("id", spaceId)
-        .single();
-      if (spaceRow) {
-        await supabase
-          .from("academy_spaces")
-          .update({ member_count: (spaceRow.member_count ?? 0) + 1 })
-          .eq("id", spaceId);
-      }
-    } catch (e) {
-      console.warn("[academy_membership_subscription] Could not bump member_count", e);
-    }
-  }
-
-  console.log(`[academy_membership_subscription] ✓ User ${userId} subscribed to space ${spaceId} (sub ${subscriptionId})`);
+  const result = await callAcademyRpc('webhook_upsert_academy_membership', {
+    p_caller_secret: stripeSyncSecret,
+    p_space_id: spaceId,
+    p_user_id: userId,
+    p_subscription_id: subscriptionId,
+    p_customer_id: customerId,
+    p_should_be_active: true,
+  });
+  console.log(`[academy_membership_subscription] ✓ user=${userId} space=${spaceId} sub=${subscriptionId} action=${result?.action ?? 'unknown'}`);
 
   // Si fue cobro central (sin Connect del owner), registrar deuda
   // del primer cobro. Las renovaciones posteriores también deberían
@@ -857,19 +794,29 @@ const ACTIVE_SUBSCRIPTION_STATUSES = new Set(['active', 'trialing']);
  * Si Stripe dice past_due / paused / unpaid → desactivamos.
  * Si vuelve a active → reactivamos.
  */
-async function syncAcademyMembershipStatus(supabase: any, subscription: Stripe.Subscription) {
+async function syncAcademyMembershipStatus(_supabase: any, subscription: Stripe.Subscription) {
   const shouldBeActive = ACTIVE_SUBSCRIPTION_STATUSES.has(subscription.status);
+  const md = (subscription.metadata as any) ?? {};
+  const userId = md.user_id;
+  const spaceId = md.space_id;
+  const customerId = typeof subscription.customer === 'string' ? subscription.customer : null;
 
-  const { error } = await supabase
-    .from('academy_memberships')
-    .update({ is_active: shouldBeActive })
-    .eq('stripe_subscription_id', subscription.id);
-
-  if (error) {
-    console.error('[academy_sub_status] update failed', error);
+  if (userId && spaceId) {
+    await callAcademyRpc('webhook_upsert_academy_membership', {
+      p_caller_secret: stripeSyncSecret,
+      p_space_id: spaceId,
+      p_user_id: userId,
+      p_subscription_id: subscription.id,
+      p_customer_id: customerId,
+      p_should_be_active: shouldBeActive,
+    });
   } else {
-    console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → is_active=${shouldBeActive}`);
+    await callAcademyRpc(
+      shouldBeActive ? 'webhook_deactivate_by_subscription' : 'webhook_deactivate_by_subscription',
+      { p_caller_secret: stripeSyncSecret, p_subscription_id: subscription.id }
+    );
   }
+  console.log(`[academy_sub_status] sub=${subscription.id} status=${subscription.status} → is_active=${shouldBeActive}`);
 }
 
 /**
@@ -877,7 +824,7 @@ async function syncAcademyMembershipStatus(supabase: any, subscription: Stripe.S
  * El user puede actualizar tarjeta desde el portal; cuando se cobre,
  * `invoice.payment_succeeded` reactivará si la suscripción vuelve a active.
  */
-async function handleAcademyInvoiceFailed(supabase: any, invoice: Stripe.Invoice) {
+async function handleAcademyInvoiceFailed(_supabase: any, invoice: Stripe.Invoice) {
   const subscriptionId = invoice.subscription as string | null;
   if (!subscriptionId) return;
 
@@ -885,15 +832,11 @@ async function handleAcademyInvoiceFailed(supabase: any, invoice: Stripe.Invoice
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     if ((subscription.metadata as any)?.type !== 'academy_membership_subscription') return;
 
-    const { error } = await supabase
-      .from('academy_memberships')
-      .update({ is_active: false })
-      .eq('stripe_subscription_id', subscriptionId);
-    if (error) {
-      console.error('[academy_invoice_failed] update failed', error);
-    } else {
-      console.log(`[academy_invoice_failed] Deactivated membership for sub ${subscriptionId}`);
-    }
+    await callAcademyRpc('webhook_deactivate_by_subscription', {
+      p_caller_secret: stripeSyncSecret,
+      p_subscription_id: subscriptionId,
+    });
+    console.log(`[academy_invoice_failed] Deactivated membership for sub ${subscriptionId}`);
   } catch (e) {
     console.error('[academy_invoice_failed] error', e);
   }
@@ -919,15 +862,11 @@ async function handleAcademyChargeRefunded(supabase: any, charge: Stripe.Charge)
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     if ((subscription.metadata as any)?.type !== 'academy_membership_subscription') return;
 
-    const { error } = await supabase
-      .from('academy_memberships')
-      .update({ is_active: false })
-      .eq('stripe_subscription_id', subscriptionId);
-    if (error) {
-      console.error('[academy_refund] deactivate failed', error);
-    } else {
-      console.log(`[academy_refund] Deactivated membership for sub ${subscriptionId}`);
-    }
+    await callAcademyRpc('webhook_deactivate_by_subscription', {
+      p_caller_secret: stripeSyncSecret,
+      p_subscription_id: subscriptionId,
+    });
+    console.log(`[academy_refund] Deactivated membership for sub ${subscriptionId}`);
 
     // Cancelar la suscripción para que no siga cobrando.
     try {
@@ -963,17 +902,13 @@ async function handleConnectAccountDeauthorized(supabase: any, account: Stripe.A
  * Customer eliminado en Stripe → limpiar referencias y desactivar
  * cualquier membresía con ese customer_id.
  */
-async function handleAcademyCustomerDeleted(supabase: any, customer: Stripe.Customer) {
+async function handleAcademyCustomerDeleted(_supabase: any, customer: Stripe.Customer) {
   const customerId = customer.id;
-  const { error } = await supabase
-    .from('academy_memberships')
-    .update({ is_active: false, stripe_customer_id: null })
-    .eq('stripe_customer_id', customerId);
-  if (error) {
-    console.error('[customer_deleted] update failed', error);
-  } else {
-    console.log(`[customer_deleted] Cleaned memberships for customer ${customerId}`);
-  }
+  await callAcademyRpc('webhook_clear_by_customer', {
+    p_caller_secret: stripeSyncSecret,
+    p_customer_id: customerId,
+  });
+  console.log(`[customer_deleted] Cleaned memberships for customer ${customerId}`);
 }
 
 // ============================================================================
