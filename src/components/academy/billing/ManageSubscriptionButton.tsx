@@ -38,16 +38,19 @@ export function ManageSubscriptionButton({
       window.location.href = data.url as string;
     } catch (e: any) {
       console.error('billing portal failed', e);
-      // El FunctionsHttpError de supabase-js no expone el body en e.message
-      // (queda como "non-2xx status code"). Leemos el JSON de la respuesta
-      // para traducir códigos conocidos a mensajes claros.
       let code: string | undefined;
+      let step: string | undefined;
+      let detail: any;
       try {
         if (e?.context && typeof e.context.json === 'function') {
-          code = (await e.context.json())?.error;
+          const body = await e.context.json();
+          code = body?.error;
+          step = body?.step;
+          detail = body?.detail;
+          console.error('[stripe-academy-portal] response body:', body);
         }
-      } catch {
-        /* respuesta sin JSON */
+      } catch (parseErr) {
+        console.warn('[stripe-academy-portal] could not parse error body', parseErr);
       }
       const msg =
         code === 'no_paid_membership'
@@ -56,8 +59,12 @@ export function ManageSubscriptionButton({
             ? 'El portal de pagos no está disponible por ahora. Contacta a soporte.'
             : code === 'unauthorized'
               ? 'Tu sesión expiró. Vuelve a iniciar sesión.'
-              : 'No pudimos abrir el portal. Intenta de nuevo.';
-      toast.error(msg);
+              : code === 'space_not_found'
+                ? 'No encontramos esta academia.'
+                : `No pudimos abrir el portal (${code ?? 'sin código'} @ ${step ?? 'sin step'}).`;
+      toast.error(msg, {
+        description: detail ? JSON.stringify(detail).slice(0, 200) : undefined,
+      });
       setLoading(false);
     }
   };
