@@ -230,7 +230,7 @@ export function useSpaceMembers(spaceId: string | undefined) {
       const [membershipsRes, profilesRes, pointsRes] = await Promise.all([
         (supabase as any)
           .from('academy_memberships')
-          .select('*, user:profiles!user_id(full_name, avatar_url, email)')
+          .select('*, user:profiles!fk_academy_memberships_user_profile(full_name, avatar_url, email)')
           .eq('space_id', spaceId)
           .eq('is_active', true)
           .order('joined_at', { ascending: false }),

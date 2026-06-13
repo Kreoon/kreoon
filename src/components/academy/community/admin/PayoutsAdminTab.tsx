@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { Wallet, TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { Wallet, TrendingUp, Users, AlertCircle, ExternalLink, Tag } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useStripeConnectStatus } from '@/hooks/academy/useStripeConnectStatus';
 
 interface PayoutsAdminTabProps {
   spaceId: string;
@@ -10,71 +12,84 @@ interface PayoutsAdminTabProps {
 }
 
 /**
- * Resumen de earnings del owner basado en:
- * - amount_paid_usd de academy_enrollments (compras de cursos del space)
- * - membership_price_usd × member_count_activo (recurrente proyectado mensual)
- * Solo lectura: el flujo real de payouts a Stripe Connect requiere setup adicional.
+ * Resumen de ingresos del owner.
+ *
+ * Combina:
+ *  - Compras de cursos (academy_enrollments con amount_paid_usd).
+ *  - Suscripciones activas a la academia (academy_memberships con
+ *    stripe_subscription_id).
+ *
+ * NOTA: este panel no incluye descuentos/cupones aplicados en
+ * Stripe Checkout — esos solo se ven en el Stripe Express
+ * Dashboard del owner. El botón "Ver en Stripe" lleva allá.
  */
 export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdminTabProps) {
   const { user } = useAuth();
+  const { data: connectStatus } = useStripeConnectStatus();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['academy', 'admin-payouts', spaceId],
     queryFn: async () => {
-      // Total bruto recibido (suma de amount_paid_usd de inscripciones a cursos del space)
-      const { data: enrollments } = await (supabase as any)
-        .from('academy_enrollments')
-        .select('amount_paid_usd, enrolled_at, course_id, academy_courses!inner(space_id, title)')
-        .eq('academy_courses.space_id', spaceId);
+      const [enrollmentsRes, membershipsRes, spaceRes] = await Promise.all([
+        (supabase as any)
+          .from('academy_enrollments')
+          .select('amount_paid_usd, enrolled_at, course_id, academy_courses!inner(space_id, title)')
+          .eq('academy_courses.space_id', spaceId),
+        (supabase as any)
+          .from('academy_memberships')
+          .select(
+            'id, user_id, joined_at, is_active, stripe_subscription_id, stripe_customer_id, role, user:profiles!fk_academy_memberships_user_profile(full_name, email)',
+          )
+          .eq('space_id', spaceId)
+          .neq('role', 'owner')
+          .order('joined_at', { ascending: false }),
+        (supabase as any)
+          .from('academy_spaces')
+          .select('membership_price_usd, plan_slug, member_count')
+          .eq('id', spaceId)
+          .single(),
+      ]);
 
-      const totalGross =
-        (enrollments ?? []).reduce(
-          (sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0),
-          0
-        ) || 0;
+      const enrollments = enrollmentsRes.data ?? [];
+      const memberships = membershipsRes.data ?? [];
+      const space = spaceRes.data ?? {};
 
-      // Compras último 30 días
+      const totalCourses =
+        enrollments.reduce((sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0), 0) || 0;
+
       const sinceISO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      const last30 =
-        (enrollments ?? []).filter((e: any) => e.enrolled_at >= sinceISO).reduce(
-          (sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0),
-          0
-        ) || 0;
+      const last30Courses =
+        enrollments
+          .filter((e: any) => e.enrolled_at >= sinceISO)
+          .reduce((sum: number, e: any) => sum + Number(e.amount_paid_usd ?? 0), 0) || 0;
 
-      // MRR proyectado de membresías recurrentes
-      const { data: space } = await (supabase as any)
-        .from('academy_spaces')
-        .select('membership_price_usd, member_count')
-        .eq('id', spaceId)
-        .single();
-      const projectedMrr =
-        Number(space?.membership_price_usd ?? 0) * Number(space?.member_count ?? 0);
+      const activeMemberships = memberships.filter((m: any) => m.is_active);
+      const paidMemberships = activeMemberships.filter((m: any) => !!m.stripe_subscription_id);
+      const monthlyPrice = Number(space.membership_price_usd ?? 0);
+      const projectedMrr = monthlyPrice * activeMemberships.length;
 
-      // Stripe fee de KREOON Academia
-      // - Plan Hobby: 10% transaction fee
-      // - Plan Pro: 2.9% transaction fee
-      const { data: spacePlan } = await (supabase as any)
-        .from('academy_spaces')
-        .select('plan_slug')
-        .eq('id', spaceId)
-        .single();
-      const feePct = spacePlan?.plan_slug === 'pro' ? 0.029 : 0.10;
+      const feePct = space.plan_slug === 'pro' ? 0.029 : 0.10;
+      const totalGross = totalCourses;
       const platformFee = totalGross * feePct;
       const netEarnings = totalGross - platformFee;
 
-      // Compras count
-      const purchaseCount = (enrollments ?? []).filter((e: any) => Number(e.amount_paid_usd ?? 0) > 0)
-        .length;
+      const newMembersLast30 = activeMemberships.filter(
+        (m: any) => m.joined_at && m.joined_at >= sinceISO,
+      ).length;
 
       return {
         totalGross,
         netEarnings,
         platformFee,
         feePct,
-        last30,
+        last30Courses,
         projectedMrr,
-        purchaseCount,
-        enrollments: enrollments ?? [],
+        monthlyPrice,
+        activeMembershipsCount: activeMemberships.length,
+        paidMembershipsCount: paidMemberships.length,
+        newMembersLast30,
+        enrollments,
+        memberships: activeMemberships,
       };
     },
     enabled: !!spaceId && !!user,
@@ -84,60 +99,119 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
     return <div className="text-zinc-400 text-sm py-8 text-center">Calculando earnings...</div>;
   }
 
+  const dashboardLink = connectStatus?.dashboard_link;
+
   return (
     <div className="space-y-4">
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat
-          icon={Wallet}
-          label="Earnings netos"
-          value={`$${Math.round(stats.netEarnings).toLocaleString()}`}
-          subtext={`tras ${(stats.feePct * 100).toFixed(1)}% comisión`}
+          icon={Users}
+          label="Miembros activos"
+          value={stats.activeMembershipsCount.toLocaleString()}
+          subtext={`${stats.paidMembershipsCount} con suscripción de pago`}
           accent={accentColor}
         />
         <Stat
           icon={TrendingUp}
-          label="Últimos 30 días"
-          value={`$${Math.round(stats.last30).toLocaleString()}`}
-          subtext={`${stats.purchaseCount} compras totales`}
+          label="Nuevos últimos 30d"
+          value={stats.newMembersLast30.toLocaleString()}
+          subtext="se inscribieron a la academia"
           accent={accentColor}
         />
         <Stat
-          icon={Clock}
-          label="MRR proyectado"
+          icon={Wallet}
+          label="MRR potencial"
           value={`$${Math.round(stats.projectedMrr).toLocaleString()}`}
-          subtext="recurrente / mes"
+          subtext={`USD ${stats.monthlyPrice.toFixed(0)}/mes × ${stats.activeMembershipsCount}`}
           accent={accentColor}
         />
         <Stat
           icon={AlertCircle}
-          label="Comisión plataforma"
-          value={`$${Math.round(stats.platformFee).toLocaleString()}`}
-          subtext={`${(stats.feePct * 100).toFixed(1)}% de las ventas`}
+          label="Comisión KREOON"
+          value={`${(stats.feePct * 100).toFixed(1)}%`}
+          subtext="aplicada a cada cobro"
           accent="#f97316"
         />
       </div>
 
-      {/* Info de payout */}
-      <Card className="p-5 bg-kreoon-bg-card border-white/10">
-        <h3 className="font-semibold mb-3">Próximo pago</h3>
-        <p className="text-sm text-zinc-300">
-          Los earnings se procesan via <strong>Stripe Connect</strong> el primer día de cada mes.
-          Para recibir pagos, conecta tu cuenta de Stripe desde Configuración → Pagos.
-        </p>
-        <div className="mt-4 p-3 rounded-lg bg-kreoon-bg-secondary border border-white/5 text-xs text-zinc-400">
-          <strong className="text-zinc-200">Modelo de comisión actual:</strong> Plan{' '}
-          <span style={{ color: accentColor }}>
-            {(stats.feePct * 100).toFixed(1)}%
-          </span>{' '}
-          sobre cada venta de curso. Si subes a Plan Pro, baja al 2.9%.
+      {/* Aviso de descuentos */}
+      <Card className="p-4 bg-amber-500/5 border-amber-500/20">
+        <div className="flex items-start gap-3">
+          <Tag className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm">
+            <p className="font-medium text-amber-200">El MRR es el potencial bruto, no el cobrado real.</p>
+            <p className="text-xs text-zinc-300 mt-1">
+              Si aplicaste cupones (ej. <code className="bg-black/30 px-1 rounded">100% off</code>),
+              el monto real cobrado se ve solo en tu <strong>Stripe Express Dashboard</strong> →
+              Pagos / Suscripciones.
+            </p>
+          </div>
         </div>
       </Card>
 
-      {/* Últimas ventas */}
+      {/* Link al Stripe Dashboard del owner */}
+      {dashboardLink && (
+        <Card className="p-4 bg-kreoon-bg-card border-white/10">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <p className="font-semibold text-sm">Ver ingresos reales en Stripe</p>
+              <p className="text-xs text-zinc-400 mt-0.5">
+                Cobros, próximos pagos, descuentos aplicados, balance.
+              </p>
+            </div>
+            <a href={dashboardLink} target="_blank" rel="noreferrer">
+              <Button variant="outline" size="sm">
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Abrir Stripe
+              </Button>
+            </a>
+          </div>
+        </Card>
+      )}
+
+      {/* Suscripciones activas */}
+      {stats.memberships.length > 0 && (
+        <Card className="p-5 bg-kreoon-bg-card border-white/10">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold">Suscripciones activas a la academia</h3>
+            <span className="text-xs text-zinc-400">{stats.activeMembershipsCount} en total</span>
+          </div>
+          <ul className="divide-y divide-white/5">
+            {stats.memberships.slice(0, 10).map((m: any) => (
+              <li key={m.id} className="flex items-center justify-between py-2 text-sm gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium text-zinc-200 truncate">
+                    {m.user?.full_name || m.user?.email || 'Miembro'}
+                  </div>
+                  <div className="text-xs text-zinc-500 truncate">
+                    {m.user?.email}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-zinc-400">
+                    {m.joined_at ? new Date(m.joined_at).toLocaleDateString('es-ES') : '-'}
+                  </span>
+                  {m.stripe_subscription_id ? (
+                    <span className="text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10">
+                      Suscrito
+                    </span>
+                  ) : (
+                    <span className="text-zinc-500 px-2 py-0.5 rounded bg-white/5">
+                      Manual / Free
+                    </span>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      {/* Ventas de cursos (si hay) */}
       {stats.enrollments.length > 0 && (
         <Card className="p-5 bg-kreoon-bg-card border-white/10">
-          <h3 className="font-semibold mb-3">Últimas compras</h3>
+          <h3 className="font-semibold mb-3">Compras de cursos</h3>
           <ul className="divide-y divide-white/5">
             {stats.enrollments
               .filter((e: any) => Number(e.amount_paid_usd ?? 0) > 0)

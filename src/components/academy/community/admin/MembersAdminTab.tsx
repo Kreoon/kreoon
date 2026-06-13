@@ -22,9 +22,11 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['academy', 'admin-members', spaceId, filter],
     queryFn: async () => {
+      // academy_memberships.user_id tiene DOS FKs (auth.users + profiles).
+      // Especificamos el constraint exacto para que PostgREST no falle el JOIN.
       let q = (supabase as any)
         .from('academy_memberships')
-        .select('*, user:profiles!user_id(full_name, avatar_url, email)')
+        .select('*, user:profiles!fk_academy_memberships_user_profile(full_name, avatar_url, email)')
         .eq('space_id', spaceId)
         .order('joined_at', { ascending: false });
       if (filter === 'active') q = q.eq('is_active', true);
