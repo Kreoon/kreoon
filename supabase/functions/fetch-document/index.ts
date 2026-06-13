@@ -5,6 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Allowed hostnames for SSRF prevention — only Google Docs/Drive
+const ALLOWED_HOSTNAMES = ["docs.google.com", "drive.google.com"];
+
+function isAllowedHostname(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString);
+    return ALLOWED_HOSTNAMES.some((h) => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,13 +38,26 @@ serve(async (req) => {
       formattedUrl = `https://${formattedUrl}`;
     }
 
-    const isGoogleUrl = formattedUrl.includes("docs.google.com") || formattedUrl.includes("drive.google.com");
+    // SSRF prevention: only allow Google Docs/Drive hostnames
+    if (!isAllowedHostname(formattedUrl)) {
+      console.warn("[fetch-document] Rejected non-allowed hostname:", formattedUrl);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Solo se permiten URLs de docs.google.com o drive.google.com.",
+          content: "",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const isGoogleUrl = true; // hostname already validated above
 
     // Handle Google Drive/Docs links
     if (isGoogleUrl) {
       let fileId = "";
       let isNativeGoogleDoc = false;
-      
+
       // Extract file ID from various Google URL formats
       if (formattedUrl.includes("/file/d/")) {
         const match = formattedUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
@@ -70,11 +95,17 @@ serve(async (req) => {
         console.log("Fetching native Google Doc from:", exportUrl);
 
         try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
           const response = await fetch(exportUrl, {
             headers: {
               "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             },
+            signal: controller.signal,
           });
+
+          clearTimeout(timeoutId);
 
           if (response.ok) {
             const text = await response.text();
@@ -102,11 +133,17 @@ serve(async (req) => {
       console.log("Trying direct download for Drive file:", directDownloadUrl);
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
         const response = await fetch(directDownloadUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
           },
+          signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const contentType = response.headers.get("content-type") || "";
@@ -115,7 +152,7 @@ serve(async (req) => {
           // If it's HTML, it might be a confirmation page or error
           if (contentType.includes("text/html")) {
             const html = await response.text();
-            
+
             // Check if it's a virus scan warning page (large files)
             if (html.includes("confirm=") || html.includes("download_warning")) {
               console.log("Detected download confirmation page, file may be too large");
@@ -160,7 +197,7 @@ serve(async (req) => {
           }
 
           // For PDFs and binary files, we can't extract text directly
-          if (contentType.includes("application/pdf") || 
+          if (contentType.includes("application/pdf") ||
               contentType.includes("application/msword") ||
               contentType.includes("application/vnd.openxmlformats")) {
             console.log("Binary file detected:", contentType);
@@ -207,100 +244,22 @@ serve(async (req) => {
       );
     }
 
-    // For non-Google URLs, use Firecrawl
-    const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
-    if (!apiKey) {
-      console.log("FIRECRAWL_API_KEY not configured, returning empty content");
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          content: "", 
-          warning: "Firecrawl no configurado para URLs externas",
-          source: "none",
-          url: formattedUrl 
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // Unreachable — all non-Google URLs are rejected above.
+    // Kept as safety net.
+    return new Response(
+      JSON.stringify({ success: false, error: "URL no permitida.", content: "" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
 
-    console.log("Using Firecrawl for external URL:", formattedUrl);
-
-    try {
-      // Use Firecrawl with AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
-
-      const response = await fetch("https://api.firecrawl.dev/v1/scrape", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: formattedUrl,
-          formats: ["markdown"],
-          onlyMainContent: true,
-        }),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      const data = await response.json();
-
-      if (!response.ok || data.success === false) {
-        console.log("Firecrawl returned error:", data.error || "Unknown error");
-        return new Response(
-          JSON.stringify({
-            success: true,
-            content: "",
-            warning: data.error || "No se pudo obtener el contenido de la URL",
-            source: "firecrawl",
-            url: formattedUrl,
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      const content = data.data?.markdown || data.markdown || "";
-      const metadata = data.data?.metadata || data.metadata || {};
-
-      console.log("Firecrawl successful, content length:", content.length);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          content,
-          metadata,
-          source: "firecrawl",
-          url: formattedUrl,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    } catch (firecrawlError) {
-      const errorMessage = firecrawlError instanceof Error ? firecrawlError.message : "Error desconocido";
-      console.log("Firecrawl error:", errorMessage);
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          content: "",
-          warning: `No se pudo obtener el contenido: ${errorMessage}`,
-          source: "firecrawl",
-          url: formattedUrl,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
   } catch (error) {
     console.error("Error in fetch-document:", error);
     const errorMessage = error instanceof Error ? error.message : "Error desconocido";
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        content: "", 
+      JSON.stringify({
+        success: true,
+        content: "",
         warning: errorMessage,
-        source: "error" 
+        source: "error"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

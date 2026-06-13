@@ -16,36 +16,55 @@ async function hashApiKey(apiKey: string): Promise<string> {
     .map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// Validate API key against stored keys
-async function validateApiKey(supabase: any, apiKey: string): Promise<{ valid: boolean; permissions: string[] }> {
+// Validate API key against stored keys — also returns the owner's user_id
+async function validateApiKey(
+  supabase: any,
+  apiKey: string,
+): Promise<{ valid: boolean; permissions: string[]; userId: string | null }> {
   const keyHash = await hashApiKey(apiKey);
-  
+
   const { data: validKey, error } = await supabase
     .from('api_keys')
-    .select('permissions, expires_at, is_active')
+    .select('permissions, expires_at, is_active, user_id')
     .eq('key_hash', keyHash)
     .eq('is_active', true)
     .single();
-  
+
   if (error || !validKey) {
-    return { valid: false, permissions: [] };
+    return { valid: false, permissions: [], userId: null };
   }
-  
+
   // Check expiration
   if (validKey.expires_at && new Date(validKey.expires_at) < new Date()) {
-    return { valid: false, permissions: [] };
+    return { valid: false, permissions: [], userId: null };
   }
-  
+
   // Update last_used_at
   await supabase.from('api_keys').update({ last_used_at: new Date().toISOString() }).eq('key_hash', keyHash);
-  
-  return { valid: true, permissions: validKey.permissions || ['read'] };
+
+  return {
+    valid: true,
+    permissions: validKey.permissions || ['read'],
+    userId: validKey.user_id ?? null,
+  };
 }
 
 // Check if operation is allowed based on permissions
 function hasPermission(permissions: string[], requiredPermission: string): boolean {
   if (permissions.includes('admin')) return true;
   return permissions.includes(requiredPermission);
+}
+
+// Resolve the organization IDs that a user belongs to.
+// Returns [] if userId is null or the user has no memberships.
+async function getOrgIdsForUser(supabase: any, userId: string | null): Promise<string[]> {
+  if (!userId) return [];
+  const { data, error } = await supabase
+    .from('organization_members')
+    .select('organization_id')
+    .eq('user_id', userId);
+  if (error || !data) return [];
+  return data.map((r: { organization_id: string }) => r.organization_id);
 }
 
 // API pública para integraciones con n8n, Zapier, Make, etc.
@@ -77,8 +96,8 @@ serve(async (req) => {
     // Health check
     if (path === "/health" || path === "/") {
       return new Response(
-        JSON.stringify({ 
-          status: "ok", 
+        JSON.stringify({
+          status: "ok",
           version: "1.0.0",
           endpoints: [
             "GET /health - Health check",
@@ -146,7 +165,7 @@ serve(async (req) => {
               }
             },
             "/clients": {
-              GET: { 
+              GET: {
                 description: "Listar todos los clientes",
                 permissions: ["read"]
               },
@@ -161,7 +180,7 @@ serve(async (req) => {
               }
             },
             "/creators": {
-              GET: { 
+              GET: {
                 description: "Listar todos los creadores",
                 permissions: ["read"]
               }
@@ -196,6 +215,8 @@ serve(async (req) => {
     }
 
     // Verificar API key para endpoints protegidos
+    let callerUserId: string | null = null;
+
     if (!isPublic) {
       if (!apiKey) {
         return new Response(
@@ -205,8 +226,8 @@ serve(async (req) => {
       }
 
       // Validate API key against database
-      const { valid, permissions } = await validateApiKey(supabase, apiKey);
-      
+      const { valid, permissions, userId } = await validateApiKey(supabase, apiKey);
+
       if (!valid) {
         return new Response(
           JSON.stringify({ error: "Invalid or expired API key." }),
@@ -216,13 +237,15 @@ serve(async (req) => {
 
       // Determine required permission based on method
       const requiredPermission = req.method === 'GET' ? 'read' : 'write';
-      
+
       if (!hasPermission(permissions, requiredPermission)) {
         return new Response(
           JSON.stringify({ error: `Insufficient permissions. Required: ${requiredPermission}` }),
           { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      callerUserId = userId;
     }
 
     const body = req.method !== "GET" ? await req.json().catch(() => ({})) : {};
@@ -237,11 +260,11 @@ serve(async (req) => {
         const offset = parseInt(url.searchParams.get("offset") || "0");
 
         let query = supabase.from("content").select("*");
-        
+
         if (status) query = query.eq("status", status);
         if (client_id) query = query.eq("client_id", client_id);
         if (creator_id) query = query.eq("creator_id", creator_id);
-        
+
         const { data, error } = await query
           .order("created_at", { ascending: false })
           .range(offset, offset + limit - 1);
@@ -255,6 +278,36 @@ serve(async (req) => {
       }
 
       if (req.method === "POST") {
+        // Validate required fields
+        if (!body.title || typeof body.title !== 'string' || body.title.trim() === '') {
+          return new Response(
+            JSON.stringify({ error: "El campo 'title' es requerido y debe ser un string." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Validate that client_id belongs to one of the caller's organizations
+        if (body.client_id) {
+          const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+          if (orgIds.length === 0) {
+            return new Response(
+              JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          const { data: clientRow, error: clientErr } = await supabase
+            .from('clients')
+            .select('organization_id')
+            .eq('id', body.client_id)
+            .single();
+          if (clientErr || !clientRow || !orgIds.includes(clientRow.organization_id)) {
+            return new Response(
+              JSON.stringify({ error: "El client_id no pertenece a ninguna de tus organizaciones." }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
         const { data, error } = await supabase.from("content").insert(body).select().single();
         if (error) throw error;
 
@@ -269,8 +322,30 @@ serve(async (req) => {
     const contentMatch = path.match(/^\/content\/([a-f0-9-]+)$/);
     if (contentMatch) {
       const contentId = contentMatch[1];
-      
+
       if (req.method === "PATCH") {
+        // Validate that client_id (if being updated) belongs to caller's orgs
+        if (body.client_id) {
+          const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+          if (orgIds.length === 0) {
+            return new Response(
+              JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          const { data: clientRow, error: clientErr } = await supabase
+            .from('clients')
+            .select('organization_id')
+            .eq('id', body.client_id)
+            .single();
+          if (clientErr || !clientRow || !orgIds.includes(clientRow.organization_id)) {
+            return new Response(
+              JSON.stringify({ error: "El client_id no pertenece a ninguna de tus organizaciones." }),
+              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+        }
+
         const { data, error } = await supabase
           .from("content")
           .update(body)
@@ -305,7 +380,19 @@ serve(async (req) => {
     // Clients endpoints
     if (path === "/clients") {
       if (req.method === "GET") {
-        const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+        // IDOR fix: only return clients belonging to the caller's organizations
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        if (orgIds.length === 0) {
+          return new Response(
+            JSON.stringify({ data: [] }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const { data, error } = await supabase
+          .from("clients")
+          .select("*")
+          .in("organization_id", orgIds)
+          .order("created_at", { ascending: false });
         if (error) throw error;
 
         return new Response(
@@ -327,20 +414,38 @@ serve(async (req) => {
 
     // Creators endpoint - now uses organization_member_roles
     if (path === "/creators") {
-      // Get org_id from query params if provided
-      const orgId = url.searchParams.get("org_id");
-      
+      // IDOR fix: restrict to caller's organizations unless org_id is explicitly provided
+      const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+
+      const orgIdParam = url.searchParams.get("org_id");
+
+      // If a specific org is requested, verify the caller belongs to it
+      if (orgIdParam) {
+        if (!orgIds.includes(orgIdParam)) {
+          return new Response(
+            JSON.stringify({ error: "No tienes acceso a esa organización." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
+      const allowedOrgIds = orgIdParam ? [orgIdParam] : orgIds;
+
+      if (allowedOrgIds.length === 0) {
+        return new Response(
+          JSON.stringify({ data: [] }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       let query = supabase
         .from("organization_member_roles")
         .select("user_id")
-        .eq("role", "creator");
-      
-      if (orgId) {
-        query = query.eq("organization_id", orgId);
-      }
-      
+        .eq("role", "creator")
+        .in("organization_id", allowedOrgIds);
+
       const { data: rolesData } = await query;
-      const creatorIds = rolesData?.map(r => r.user_id) || [];
+      const creatorIds = rolesData?.map((r: { user_id: string }) => r.user_id) || [];
 
       if (creatorIds.length === 0) {
         return new Response(
@@ -403,7 +508,7 @@ TONO: ${body.tone || "Profesional"}`;
     // Webhook endpoint
     if (path === "/webhooks/content-status") {
       console.log("Webhook received:", body);
-      
+
       if (body.content_id && body.new_status) {
         const { error } = await supabase
           .from("content")

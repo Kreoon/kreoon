@@ -42,6 +42,7 @@ import {
   Blocks,
   Heart,
   Receipt,
+  GraduationCap,
 } from "lucide-react";
 import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -109,6 +110,7 @@ const adminSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -146,6 +148,7 @@ const strategistSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board", requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
       { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
@@ -172,6 +175,7 @@ const editorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -189,6 +193,7 @@ const creatorSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -234,6 +239,7 @@ const basicTalentInOrgSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, tourId: "sidebar-board" },
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
     ]
   },
   {
@@ -259,6 +265,40 @@ const basicTalentInOrgSections: NavSection[] = [
   }
 ];
 
+// Freelance users (no org) - Plan Básico Gratis
+// Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
+const freelanceSections: NavSection[] = [
+  {
+    label: "MI NEGOCIO",
+    items: [
+      { name: "Dashboard", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
+      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
+      { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia" },
+    ]
+  },
+  {
+    label: "MARKETPLACE",
+    items: [
+      { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
+      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
+      { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
+    ]
+  },
+  {
+    label: "SOCIAL",
+    items: [
+      { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
+    ]
+  },
+  {
+    label: "CONFIG",
+    items: [
+      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
+      { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
+      { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
+    ]
+  }
+];
 
 // Locked users (haven't completed referral gate) - only unlock access + profile
 const lockedUserSections: NavSection[] = [

@@ -28,7 +28,7 @@ const animationClasses: Record<KreoonSkeletonAnimation, string> = {
 /**
  * Skeleton base con estilo Kreoon.
  */
-const KreoonSkeleton = React.forwardRef<HTMLDivElement, KreoonSkeletonProps>(
+export const KreoonSkeleton = React.forwardRef<HTMLDivElement, KreoonSkeletonProps>(
   (
     {
       className,

@@ -4,6 +4,7 @@ import {
   UserType,
   ORG_USER_TYPE_OPTIONS,
   GENERAL_USER_TYPE_OPTIONS,
+  STUDENT_USER_TYPE_OPTION,
   RegistrationFlow,
 } from '../types';
 
@@ -19,6 +20,8 @@ interface TypeSelectorStepProps {
   selectedType?: UserType;
   onSelect: (type: UserType) => void;
   orgName?: string;
+  /** Si llega un tipo forzado vía query (ej. ?role=student), se muestra ÚNICAMENTE esa opción */
+  forcedUserType?: UserType;
 }
 
 export function TypeSelectorStep({
@@ -26,23 +29,34 @@ export function TypeSelectorStep({
   selectedType,
   onSelect,
   orgName,
+  forcedUserType,
 }: TypeSelectorStepProps) {
-  const options = flow === 'org' ? ORG_USER_TYPE_OPTIONS : GENERAL_USER_TYPE_OPTIONS;
+  let options: UserTypeOption[];
+  if (forcedUserType === 'student') {
+    options = [STUDENT_USER_TYPE_OPTION];
+  } else {
+    options = flow === 'org' ? ORG_USER_TYPE_OPTIONS : GENERAL_USER_TYPE_OPTIONS;
+  }
+  const isStudentOnly = forcedUserType === 'student';
 
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="text-5xl mb-2">👋</div>
+        {!isStudentOnly && <div className="text-5xl mb-2">👋</div>}
         <h1 className="text-3xl font-bold text-white leading-tight">
-          {flow === 'org' ? (
+          {isStudentOnly ? (
+            <>Crea tu cuenta<br />para entrar a la academia</>
+          ) : flow === 'org' ? (
             <>¿Cómo te unes a<br />{orgName || 'la organización'}?</>
           ) : (
             <>¿Cómo quieres<br />usar Kreoon?</>
           )}
         </h1>
         <p className="text-white/60 text-base">
-          Elige tu tipo de cuenta — puedes cambiarlo después
+          {isStudentOnly
+            ? 'Registro rápido. Solo necesitas tu email y una contraseña.'
+            : 'Elige tu tipo de cuenta — puedes cambiarlo después'}
         </p>
       </div>
 

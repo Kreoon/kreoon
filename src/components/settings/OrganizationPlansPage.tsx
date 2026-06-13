@@ -25,10 +25,7 @@ import { es } from 'date-fns/locale';
 import { PLANS as PLAN_DEFS, type PlanDef } from '@/lib/finance/constants';
 import { useAITokens } from '@/hooks/useAITokens';
 import { useUserPlanContext } from '@/hooks/useUserPlanContext';
-import { useGeoCountry } from '@/hooks/useGeoCountry';
 import type { SubscriptionTier, BillingCycle } from '@/types/unified-finance.types';
-
-const COP_RATE = 4_300;
 
 interface CommunityMembership {
   id: string;
@@ -49,7 +46,6 @@ type Segment = PlanDef['segment'];
 // Map plan IDs to subscription tier IDs
 const PLAN_TO_TIER: Record<string, SubscriptionTier> = {
   'marcas-starter': 'brand_starter',
-  'marcas-growth': 'brand_growth',
   'marcas-pro': 'brand_pro',
   'marcas-business': 'brand_business',
   'creadores-pro': 'creator_pro',
@@ -63,63 +59,10 @@ const SEGMENT_CONFIG: Record<Segment, { label: string; icon: React.ReactNode }> 
   agencias: { label: 'Agencias', icon: <Briefcase className="h-4 w-4" /> },
 };
 
-interface FeatureItem {
-  label: string;
-  included: boolean;
-  highlight?: boolean;
-}
-
-function getPlanTagline(planId: string): string {
-  const taglines: Record<string, string> = {
-    'creadores-basico':    'Para comenzar a mostrar tu trabajo',
-    'creadores-pro':       'Para creadores que quieren crecer en serio',
-    'creadores-premium':   'Para creadores en modo profesional full-time',
-    'marcas-free':         'Explora la plataforma sin costo',
-    'marcas-starter':      'Para marcas que están dando sus primeros pasos',
-    'marcas-growth':       'Para marcas en crecimiento activo con UGC',
-    'marcas-pro':          'Para equipos de marketing con alto volumen',
-    'marcas-business':     'Para empresas con operaciones UGC a escala',
-    'agencias-starter':    'Para agencias que gestionan múltiples clientes',
-    'agencias-pro':        'Para agencias consolidadas con equipo completo',
-    'agencias-enterprise': 'Para operaciones a gran escala con SLA personalizado',
-  };
-  return taglines[planId] ?? '';
-}
-
-function getPlanFeatureItems(plan: PlanDef): FeatureItem[] {
-  if (plan.segment === 'creadores') {
-    const isBasico  = plan.id === 'creadores-basico';
-    const isPremium = plan.id === 'creadores-premium';
-    return [
-      { label: 'Portafolio público de creador',          included: true },
-      { label: 'Postulación a campañas del Marketplace', included: true },
-      {
-        label: isBasico ? '50 posts en Social Hub/mes' : 'Posts en Social Hub ilimitados',
-        included: true,
-        highlight: !isBasico,
-      },
-      {
-        label: isBasico ? 'ADN Recargados — guiones con IA' : `${plan.adnRecargadosPerMonth} ADN Recargados/mes`,
-        included: !isBasico,
-        highlight: !isBasico,
-      },
-      { label: isPremium ? 'Badge Premium en perfil 👑'    : 'Badge verificado en perfil ⚡', included: !isBasico, highlight: !isBasico },
-      { label: 'Prioridad en búsquedas y campañas',      included: !isBasico },
-      { label: 'Estadísticas avanzadas de perfil',       included: !isBasico },
-      { label: isPremium ? 'Soporte VIP 24/7'             : 'Soporte prioritario',            included: !isBasico },
-      {
-        label: `${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}.000` : plan.aiTokens} tokens IA/mes`,
-        included: true,
-        highlight: !isBasico,
-      },
-    ];
-  }
-  return getPlanFeatures(plan).map(f => ({ label: f, included: true }));
-}
-
 function getPlanFeatures(plan: PlanDef): string[] {
   const features: string[] = [];
 
+  // Common features based on limits
   if (plan.users !== undefined) {
     features.push(`Hasta ${plan.users ?? 'ilimitados'} usuarios`);
   }
@@ -133,61 +76,60 @@ function getPlanFeatures(plan: PlanDef): string[] {
   }
   features.push(`${plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens} Tokens IA/mes`);
 
+  // Agency-specific: role-based limits
   if (plan.adminUsers !== undefined) {
     features.push(`${plan.adminUsers ?? 'Ilimitados'} admins`);
     features.push(`${plan.strategists ?? 'Ilimitados'} estrategas`);
-    features.push(`${plan.editors ?? 'Ilimitados'} post-producción`);
+    features.push(`${plan.editors ?? 'Ilimitados'} post-produccion`);
     features.push(`${plan.creators ?? 'Ilimitados'} creadores activos`);
   }
   if (plan.clients !== undefined) {
     features.push(`Hasta ${plan.clients ?? 'ilimitados'} clientes`);
   }
 
+  // Segment + tier specific features
   switch (plan.id) {
+    // Marcas
     case 'marcas-free':
-      features.push('1 contacto revelado de creador/mes');
-      features.push('1 campaña activa');
-      features.push('Sin canjes');
+      features.push('Exploracion de la plataforma');
       break;
     case 'marcas-starter':
-      features.push('5 contactos revelados/mes');
-      features.push('5 canjes/mes');
-      features.push('5 campañas activas');
       features.push('Soporte por email');
-      break;
-    case 'marcas-growth':
-      features.push('10 contactos revelados/mes');
-      features.push('10 canjes/mes');
-      features.push('10 campañas activas');
-      features.push('3 ADN Recargados/mes');
-      features.push('Analytics básicos');
+      features.push('Board Kanban basico');
       break;
     case 'marcas-pro':
-      features.push('20 contactos revelados/mes');
-      features.push('20 canjes/mes');
-      features.push('Campañas ilimitadas');
-      features.push('5 ADN Recargados/mes');
       features.push('Soporte prioritario');
+      features.push('Board Kanban avanzado');
+      features.push('Integraciones basicas');
       features.push('Reportes de rendimiento');
       break;
     case 'marcas-business':
-      features.push('Contactos revelados ilimitados');
-      features.push('Canjes ilimitados');
-      features.push('Campañas ilimitadas');
-      features.push('ADN Recargados ilimitados');
       features.push('Soporte 24/7');
+      features.push('Todas las integraciones');
       features.push('API access');
+      features.push('Reportes avanzados');
+      features.push('White-label');
       features.push('Manager dedicado');
       break;
+    // Creadores
+    case 'creadores-basico':
+      features.push('Portafolio publico');
+      features.push('Postulacion a campanas');
+      break;
+    case 'creadores-pro':
+      features.push('Badge verificado');
+      features.push('Prioridad en campanas');
+      features.push('Estadisticas avanzadas');
+      features.push('Soporte prioritario');
+      break;
+    // Agencias
     case 'agencias-starter':
-      features.push('Gestión multi-cliente');
+      features.push('Gestion multi-cliente');
       features.push('Board Kanban avanzado');
       features.push('Reportes por cliente');
-      features.push('ADN Recargados ilimitados');
-      features.push('Social Hub ilimitado');
       break;
     case 'agencias-pro':
-      features.push('Todo de Agency Starter');
+      features.push('Gestion multi-cliente');
       features.push('Todas las integraciones');
       features.push('White-label');
       features.push('API access');
@@ -206,7 +148,7 @@ function getPlanFeatures(plan: PlanDef): string[] {
 
 function getPopularPlanId(segment: Segment): string {
   switch (segment) {
-    case 'marcas': return 'marcas-growth';
+    case 'marcas': return 'marcas-pro';
     case 'creadores': return 'creadores-pro';
     case 'agencias': return 'agencias-pro';
   }
@@ -253,7 +195,6 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
   const trialStatus = useOrganizationTrial(hasPersonalSubscription ? null : organizationId);
   const { totalAvailable: kreoonCoins, loading: tokensLoading } = useAITokens(subscriptionScopeId);
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
-  const { isColombia } = useGeoCountry();
 
   const {
     subscription,
@@ -694,331 +635,252 @@ export function OrganizationPlansPage({ fixedSegment }: OrganizationPlansPagePro
         </Tabs>
       )}
 
-      {/* Billing Cycle Toggle */}
-      <div className="flex items-center justify-center gap-4">
-        <Button
-          variant={billingCycle === 'monthly' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setBillingCycle('monthly')}
-        >
-          Mensual
-        </Button>
-        <Button
-          variant={billingCycle === 'annual' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setBillingCycle('annual')}
-        >
-          Anual
-          <Badge variant="secondary" className="ml-2 text-xs">-30%</Badge>
-        </Button>
-      </div>
+      {/* Billing Cycle Toggle — los planes de agencia son de pago único, sin ciclo */}
+      {segment !== 'agencias' && (
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant={billingCycle === 'monthly' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBillingCycle('monthly')}
+          >
+            Mensual
+          </Button>
+          <Button
+            variant={billingCycle === 'annual' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setBillingCycle('annual')}
+          >
+            Anual
+            <Badge variant="secondary" className="ml-2 text-xs">-17%</Badge>
+          </Button>
+        </div>
+      )}
 
       {/* Plans Grid */}
-      {(() => {
-        // Tier visual config
-        const TIER_STYLES: Record<string, {
-          bar: string; cardBg: string; accentText: string;
-          metricBg: string; metricText: string; btnClass: string; emoji: string;
-        }> = {
-          'marcas-free':     { bar: 'bg-zinc-500',   cardBg: 'bg-zinc-900',                    accentText: 'text-zinc-300',   metricBg: 'bg-zinc-800',     metricText: 'text-zinc-200',   btnClass: 'bg-zinc-700 hover:bg-zinc-600 text-white',   emoji: '🆓' },
-          'marcas-starter':  { bar: 'bg-blue-500',   cardBg: 'bg-[#0c1929]',                   accentText: 'text-blue-300',   metricBg: 'bg-blue-950',     metricText: 'text-blue-200',   btnClass: 'bg-blue-600 hover:bg-blue-500 text-white',   emoji: '🚀' },
-          'marcas-growth':   { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]',                   accentText: 'text-purple-200', metricBg: 'bg-purple-950',   metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',emoji: '⚡' },
-          'marcas-pro':      { bar: 'bg-orange-500', cardBg: 'bg-[#1a0f00]',                   accentText: 'text-orange-300', metricBg: 'bg-orange-950',   metricText: 'text-orange-200', btnClass: 'bg-orange-600 hover:bg-orange-500 text-white',emoji: '🔥' },
-          'marcas-business': { bar: 'bg-amber-400',  cardBg: 'bg-[#1a1200]',                   accentText: 'text-amber-300',  metricBg: 'bg-amber-950',    metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',  emoji: '👑' },
-          'creadores-basico':  { bar: 'bg-zinc-500',   cardBg: 'bg-zinc-900',   accentText: 'text-zinc-300',   metricBg: 'bg-zinc-800',   metricText: 'text-zinc-200',   btnClass: 'bg-zinc-700 hover:bg-zinc-600 text-white',    emoji: '🎬' },
-          'creadores-pro':     { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]', accentText: 'text-purple-200', metricBg: 'bg-purple-950', metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white', emoji: '⭐' },
-          'creadores-premium': { bar: 'bg-amber-400',  cardBg: 'bg-[#1a1200]', accentText: 'text-amber-300',  metricBg: 'bg-amber-950',  metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',   emoji: '👑' },
-          'agencias-starter':{ bar: 'bg-blue-500',   cardBg: 'bg-[#0c1929]',                   accentText: 'text-blue-300',   metricBg: 'bg-blue-950',     metricText: 'text-blue-200',   btnClass: 'bg-blue-600 hover:bg-blue-500 text-white',   emoji: '🏢' },
-          'agencias-pro':    { bar: 'bg-purple-500', cardBg: 'bg-[#140f1f]',                   accentText: 'text-purple-200', metricBg: 'bg-purple-950',   metricText: 'text-purple-100', btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',emoji: '🏆' },
-          'agencias-enterprise':{ bar:'bg-amber-400',cardBg: 'bg-[#1a1200]',                   accentText: 'text-amber-300',  metricBg: 'bg-amber-950',    metricText: 'text-amber-200',  btnClass: 'bg-amber-500 hover:bg-amber-400 text-black',  emoji: '👑' },
-        };
-        const DEFAULT_TIER_STYLE = { bar: 'bg-primary', cardBg: 'bg-zinc-900', accentText: 'text-primary', metricBg: 'bg-primary/10', metricText: 'text-primary', btnClass: 'bg-primary hover:bg-primary/90 text-white', emoji: '📦' };
+      <div>
+        <h2 className="text-xl font-semibold mb-4">
+          Planes para {SEGMENT_CONFIG[segment].label}
+        </h2>
+        <div className={cn(
+          "grid gap-6",
+          segmentPlans.length <= 2 && "grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto",
+          segmentPlans.length === 3 && "grid-cols-1 md:grid-cols-3",
+          segmentPlans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
+        )}>
+          {segmentPlans.map((plan) => {
+            const tier = PLAN_TO_TIER[plan.id] || plan.id;
+            const isCurrentPlan = currentTier === tier;
+            const isFreeplan = plan.priceMonthly === 0 && plan.id !== 'agencias-enterprise';
+            const isEnterprise = plan.id === 'agencias-enterprise';
+            // Planes de agencia: pago único (no recurrente)
+            const isOneTime = segment === 'agencias' && !isEnterprise && !isFreeplan;
+            const price = !isOneTime && billingCycle === 'annual' && plan.priceAnnual
+              ? Math.round(plan.priceAnnual / 12)
+              : plan.priceMonthly;
+            const isPopular = plan.id === popularPlanId;
+            const features = getPlanFeatures(plan);
 
-        const isMarcas = segment === 'marcas';
-        const row1 = isMarcas ? segmentPlans.slice(0, 3) : segmentPlans;
-        const row2 = isMarcas ? segmentPlans.slice(3) : [];
-
-        const StatBox = ({ emoji, value, label, dim = false, bg, text }: { emoji: string; value: string; label: string; dim?: boolean; bg: string; text: string }) => (
-          <div className={cn("flex flex-col items-center justify-center rounded-xl py-3 px-2 text-center gap-0.5", dim ? 'bg-zinc-800/40 opacity-40' : bg)}>
-            <span className="text-xl leading-none">{emoji}</span>
-            <span className={cn("text-xl font-black leading-none mt-1", dim ? 'text-zinc-500' : text)}>{value}</span>
-            <span className="text-[10px] text-zinc-500 leading-tight mt-0.5">{label}</span>
-          </div>
-        );
-
-        const renderCard = (plan: (typeof segmentPlans)[0]) => {
-          const planTier = PLAN_TO_TIER[plan.id] || plan.id;
-          const isCurrentPlan = currentTier === planTier;
-          const isFreeplan = plan.priceMonthly === 0 && plan.id !== 'agencias-enterprise';
-          const isEnterprise = plan.id === 'agencias-enterprise';
-          const price = billingCycle === 'annual' && plan.priceAnnual
-            ? Math.round(plan.priceAnnual / 12)
-            : plan.priceMonthly;
-          const isPopular = plan.id === popularPlanId;
-          const features = getPlanFeatures(plan);
-          const ts = TIER_STYLES[plan.id] ?? DEFAULT_TIER_STYLE;
-
-          const monthlyAnnualPrice = plan.priceAnnual ? Math.round(plan.priceAnnual / 12) : 0;
-          const annualSaving = plan.priceMonthly > 0 && plan.priceAnnual
-            ? Math.round((plan.priceMonthly - monthlyAnnualPrice) * 12)
-            : 0;
-          const annualSavingCOP = plan.priceMonthlyCOP && plan.priceAnnualCOP
-            ? Math.round(plan.priceMonthlyCOP * 12 - plan.priceAnnualCOP)
-            : annualSaving * COP_RATE;
-
-          const hasContacts = plan.creatorContactsPerMonth !== undefined;
-          const hasCanjes = plan.canjesPerMonth !== undefined;
-          const showMarcasMetrics = hasContacts || hasCanjes;
-
-          const getCOPDisplay = () => {
-            const isAnnual = billingCycle === 'annual';
-            const copPrice = isAnnual && plan.priceAnnualCOP
-              ? Math.round(plan.priceAnnualCOP / 12)
-              : (plan.priceMonthlyCOP ?? price * COP_RATE);
-            return copPrice >= 1_000_000
-              ? `$${(copPrice / 1_000_000).toFixed(1).replace('.0', '')}M`
-              : `$${(copPrice / 1_000).toFixed(0)}K`;
-          };
-          const priceDisplay = isEnterprise ? null : isFreeplan ? 'Gratis' : isColombia
-            ? getCOPDisplay()
-            : `$${price}`;
-          const priceSuffix = isFreeplan || isEnterprise ? '' : isColombia ? ' COP/mes' : '/mes';
-
-          return (
-            <div
-              key={plan.id}
-              className={cn(
-                "relative flex flex-col rounded-2xl overflow-hidden transition-all duration-200",
-                ts.cardBg,
-                "border border-zinc-700/50",
-                isPopular && "border-purple-500/40 shadow-[0_0_32px_rgba(124,58,237,0.25)]",
-                isCurrentPlan && isActive && "ring-2 ring-emerald-500/50",
-              )}
-            >
-              {/* Colored top bar */}
-              <div className={cn("h-1.5 w-full", ts.bar)} />
-
-              {/* Popular badge */}
-              {isPopular && (
-                <div className="absolute top-4 right-4">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-purple-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-[0_0_12px_rgba(124,58,237,0.5)]">
-                    <Sparkles className="h-3 w-3" /> Más popular
-                  </span>
-                </div>
-              )}
-              {isCurrentPlan && isActive && (
-                <div className="absolute top-4 right-4">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white">
-                    <CheckCircle2 className="h-3 w-3" /> Activo
-                  </span>
-                </div>
-              )}
-
-              <div className="flex flex-col flex-1 p-5 gap-5">
-                {/* Plan name + tagline */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-2xl">{ts.emoji}</span>
-                    <h3 className={cn("text-xl font-black tracking-tight", ts.accentText)}>{plan.name}</h3>
-                  </div>
-                  <p className="text-xs text-zinc-400 leading-snug">
-                    {isEnterprise ? 'Contacta al equipo para un plan a medida' : getPlanTagline(plan.id)}
-                  </p>
-                </div>
-
-                {/* Price — BIG */}
-                {!isEnterprise && (
-                  <div className="flex items-end gap-1">
-                    <span className="text-5xl font-black text-white leading-none">{priceDisplay}</span>
-                    {priceSuffix && <span className="text-zinc-400 text-sm mb-1">{priceSuffix}</span>}
-                  </div>
+            return (
+              <Card
+                key={plan.id}
+                className={cn(
+                  "relative transition-colors duration-150 flex flex-col",
+                  isPopular && "border-primary shadow-lg",
+                  (plan.highlighted && !isPopular) && "border-primary/50",
+                  isCurrentPlan && isActive && "bg-primary/5"
                 )}
-                {isEnterprise && (
-                  <span className="text-4xl font-black text-white">A medida</span>
-                )}
-
-                {/* Savings hint */}
-                {!isFreeplan && !isEnterprise && billingCycle === 'monthly' && annualSaving > 0 && (
-                  <div className="flex items-center gap-1.5 -mt-2">
-                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                      {isColombia
-                        ? `💰 Ahorra $${(annualSavingCOP / 1_000).toFixed(0)}K COP/año en anual`
-                        : `💰 Ahorra $${annualSaving}/año en anual`}
-                    </span>
-                  </div>
-                )}
-                {!isFreeplan && !isEnterprise && billingCycle === 'annual' && (
-                  <div className="flex items-center gap-1.5 -mt-2">
-                    <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
-                      ✅ 30% de descuento aplicado
-                    </span>
+              >
+                {(isPopular || plan.badge) && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className={cn(
+                      isPopular ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                    )}>
+                      {isPopular ? 'Mas popular' : plan.badge}
+                    </Badge>
                   </div>
                 )}
 
-                {/* Marcas metrics — 4 stat boxes */}
-                {showMarcasMetrics && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <StatBox emoji="👥" value={plan.creatorContactsPerMonth === null ? '∞' : String(plan.creatorContactsPerMonth ?? 0)} label="contactos/mes" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="🤝" value={plan.canjesPerMonth === null ? '∞' : plan.canjesPerMonth === 0 ? '—' : String(plan.canjesPerMonth)} label="canjes/mes" dim={plan.canjesPerMonth === 0} bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="📢" value={plan.contentPerMonth === null ? '∞' : String(plan.contentPerMonth ?? '?')} label="contenidos/mes" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="✨" value={plan.aiTokens >= 1000 ? `${(plan.aiTokens/1000).toFixed(0)}k` : String(plan.aiTokens)} label="tokens IA" bg={ts.metricBg} text={ts.metricText} />
+                <CardHeader className="text-center pb-2">
+                  <CardTitle className="flex items-center justify-center gap-2">
+                    {getPlanIcon(plan.id)}
+                    {plan.name}
+                  </CardTitle>
+                  <div className="mt-4">
+                    {isEnterprise ? (
+                      <>
+                        <span className="text-3xl font-bold">Personalizado</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Contacta a ventas para una cotizacion
+                        </p>
+                      </>
+                    ) : isFreeplan ? (
+                      <>
+                        <span className="text-4xl font-bold">Gratis</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Sin tarjeta de credito
+                        </p>
+                      </>
+                    ) : isOneTime ? (
+                      <>
+                        <span className="text-4xl font-bold">${price}</span>
+                        <span className="text-muted-foreground"> pago único</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Un solo pago, sin renovaciones
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-bold">${price}</span>
+                        <span className="text-muted-foreground">/mes</span>
+                        {billingCycle === 'annual' && plan.priceAnnual > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            ${plan.priceAnnual}/ano facturado anualmente
+                          </p>
+                        )}
+                      </>
+                    )}
                   </div>
-                )}
+                </CardHeader>
 
-                {/* Agency metrics */}
-                {plan.adminUsers !== undefined && (
-                  <div className="grid grid-cols-2 gap-2">
-                    <StatBox emoji="🛡️" value={plan.adminUsers === null ? '∞' : String(plan.adminUsers)} label="admins" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="🎯" value={plan.strategists === null ? '∞' : String(plan.strategists ?? '∞')} label="estrategas" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="🎬" value={plan.editors === null ? '∞' : String(plan.editors ?? '∞')} label="editores" bg={ts.metricBg} text={ts.metricText} />
-                    <StatBox emoji="✨" value={plan.aiTokens >= 1000 ? `${(plan.aiTokens/1000).toFixed(0)}k` : String(plan.aiTokens)} label="tokens IA" bg={ts.metricBg} text={ts.metricText} />
-                  </div>
-                )}
+                <CardContent className="space-y-4 flex-1">
+                  <Separator />
 
-                {/* Creadores metrics */}
-                {!showMarcasMetrics && plan.adminUsers === undefined && (
-                  <div className="grid grid-cols-3 gap-2">
-                    <StatBox
-                      emoji="📝"
-                      value={plan.adnRecargadosPerMonth === null ? '∞' : plan.adnRecargadosPerMonth === 0 ? '—' : String(plan.adnRecargadosPerMonth)}
-                      label="ADN/mes"
-                      dim={plan.adnRecargadosPerMonth === 0}
-                      bg={ts.metricBg}
-                      text={ts.metricText}
-                    />
-                    <StatBox
-                      emoji="📱"
-                      value={plan.socialPostsPerMonth === null ? '∞' : String(plan.socialPostsPerMonth ?? 0)}
-                      label="posts/mes"
-                      bg={ts.metricBg}
-                      text={ts.metricText}
-                    />
-                    <StatBox
-                      emoji="✨"
-                      value={plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : String(plan.aiTokens)}
-                      label="tokens IA"
-                      bg={ts.metricBg}
-                      text={ts.metricText}
-                    />
-                  </div>
-                )}
-
-                {/* Separator */}
-                <div className="flex items-center gap-2">
-                  <div className="h-px flex-1 bg-zinc-700/50" />
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
-                    {plan.segment === 'creadores' ? 'Características' : 'Incluye'}
-                  </span>
-                  <div className="h-px flex-1 bg-zinc-700/50" />
-                </div>
-
-                {/* Features */}
-                <ul className="flex-1 space-y-2">
-                  {(plan.segment === 'creadores' ? getPlanFeatureItems(plan) : features.map(f => ({ label: f, included: true, highlight: false }))).map((item, idx) => (
-                    <li key={idx} className={cn('flex items-start gap-2 text-sm', item.included ? 'text-zinc-300' : 'text-zinc-600')}>
-                      <span className={cn('shrink-0 leading-none mt-0.5 text-base', item.included ? 'text-emerald-400' : 'text-zinc-700')}>
-                        {item.included ? '✓' : '✗'}
-                      </span>
-                      <span className={cn(item.highlight && item.included ? 'font-semibold' : '')}>{item.label}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                <div className="pt-1">
-                  {isFreeplan ? (
-                    <div className="w-full py-3 rounded-xl border border-zinc-700 text-sm text-zinc-500 flex items-center justify-center gap-2 font-medium">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      Plan gratuito incluido
+                  {/* Limits */}
+                  {plan.adminUsers !== undefined ? (
+                    /* Agency plans: role-based grid */
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Shield className="h-4 w-4 mx-auto mb-1 text-blue-500" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.adminUsers ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">admins</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Compass className="h-4 w-4 mx-auto mb-1 text-purple-500" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.strategists ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">estrategas</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Film className="h-4 w-4 mx-auto mb-1 text-orange-500" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.editors ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">editores</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Camera className="h-4 w-4 mx-auto mb-1 text-green-500" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.creators ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">creadores</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Briefcase className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.clients ?? '∞'}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">clientes</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Sparkles className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">coins</p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">∞</span>
+                          <p className="text-zinc-500 dark:text-zinc-400">proyectos</p>
+                        </div>
+                      </div>
                     </div>
+                  ) : (
+                    /* Non-agency plans: standard grid */
+                    <div className={cn(
+                      "grid gap-2 text-center text-xs",
+                      "grid-cols-3"
+                    )}>
+                      <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                        <Users className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {plan.users ?? '∞'}
+                        </span>
+                        <p className="text-zinc-500 dark:text-zinc-400">usuarios</p>
+                      </div>
+                      {plan.contentPerMonth !== undefined && (
+                        <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                          <Video className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                          <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {plan.contentPerMonth ?? '∞'}
+                          </span>
+                          <p className="text-zinc-500 dark:text-zinc-400">proyectos</p>
+                        </div>
+                      )}
+                      <div className="p-2 rounded-lg bg-zinc-50 dark:bg-[#1a1a24]">
+                        <Sparkles className="h-4 w-4 mx-auto mb-1 text-zinc-500 dark:text-zinc-400" />
+                        <span className="font-medium text-zinc-900 dark:text-zinc-100">{plan.aiTokens >= 1000 ? `${(plan.aiTokens / 1000).toFixed(0)}k` : plan.aiTokens}</span>
+                        <p className="text-zinc-500 dark:text-zinc-400">coins</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Features */}
+                  <ul className="space-y-2">
+                    {features.map((feature, idx) => (
+                      <li key={idx} className="flex items-start gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+
+                <CardFooter className="flex-col gap-2">
+                  {isFreeplan ? (
+                    <Button className="w-full" variant="outline" disabled>
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Plan incluido
+                    </Button>
                   ) : isEnterprise ? (
-                    <button
+                    <Button
+                      className="w-full"
+                      variant="secondary"
                       onClick={() => handleSelectPlan(plan.id)}
-                      className={cn("w-full py-3 rounded-xl text-sm font-bold transition-all", ts.btnClass)}
                     >
-                      Contactar ventas →
-                    </button>
+                      Contactar ventas
+                    </Button>
                   ) : (
                     <>
-                      <button
+                      <Button
+                        className="w-full"
+                        variant={isCurrentPlan && isActive ? "outline" : isPopular ? "default" : "secondary"}
                         disabled={(isCurrentPlan && isActive) || isCheckingOut}
                         onClick={() => handleSelectPlan(plan.id)}
-                        className={cn(
-                          "w-full py-3 rounded-xl text-sm font-bold transition-all",
-                          isCurrentPlan && isActive
-                            ? "bg-zinc-800 text-zinc-400 cursor-not-allowed border border-zinc-700"
-                            : ts.btnClass,
-                          isCheckingOut && "opacity-50 cursor-wait",
-                        )}
                       >
                         {isCurrentPlan && isActive ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                          <span className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" />
                             Plan activo
                           </span>
                         ) : isCheckingOut ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <Clock className="h-4 w-4 animate-spin" />
+                          <>
+                            <Clock className="h-4 w-4 mr-2 animate-spin" />
                             Procesando...
-                          </span>
+                          </>
                         ) : (
-                          'Seleccionar plan →'
+                          'Seleccionar plan'
                         )}
-                      </button>
+                      </Button>
                       {isCurrentPlan && isActive && hasCommunityBenefits && (
-                        <p className="text-xs text-center text-emerald-400 mt-1.5">
-                          🎁 {communityFreeMonths} {communityFreeMonths === 1 ? 'mes' : 'meses'} gratis de comunidad
+                        <p className="text-xs text-center text-green-600 dark:text-green-400">
+                          {communityFreeMonths} {communityFreeMonths === 1 ? 'mes' : 'meses'} gratis de comunidad
                         </p>
                       )}
                     </>
                   )}
-                </div>
-              </div>
-            </div>
-          );
-        };
-
-        return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-semibold">
-              Planes para {SEGMENT_CONFIG[segment].label}
-            </h2>
-
-            {isMarcas ? (
-              <>
-                {/* Row label 1 */}
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-zinc-700/40" />
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Planes de inicio</span>
-                  <div className="h-px flex-1 bg-zinc-700/40" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {row1.map(renderCard)}
-                </div>
-
-                {/* Row label 2 */}
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="h-px flex-1 bg-zinc-700/40" />
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">Planes avanzados</span>
-                  <div className="h-px flex-1 bg-zinc-700/40" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {row2.map(renderCard)}
-                </div>
-              </>
-            ) : (
-              <div className={cn(
-                "grid gap-5",
-                segmentPlans.length <= 2 && "grid-cols-1 md:grid-cols-2 max-w-2xl mx-auto",
-                segmentPlans.length === 3 && "grid-cols-1 md:grid-cols-3",
-                segmentPlans.length >= 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
-              )}>
-                {row1.map(renderCard)}
-              </div>
-            )}
-          </div>
-        );
-      })()}
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Info Card */}
       <Card className="bg-zinc-50 dark:bg-[#14141f] border-zinc-200 dark:border-zinc-800">

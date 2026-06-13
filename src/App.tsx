@@ -31,6 +31,8 @@ import { FloatingGenerationBadge } from "@/components/ui/FloatingGenerationBadge
 import { AuthStoreBridge } from "@/stores/AuthStoreBridge";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { MarketplaceReadinessPopup } from "@/components/marketplace/MarketplaceReadinessPopup";
+import { AcademyLiveToaster } from "@/components/academy/live/AcademyLiveToaster";
+import { RequireAcademyAccess } from "@/components/academy/guard/RequireAcademyAccess";
 import { CookieConsentBanner } from "@/components/legal/CookieConsentBanner";
 import { ThemeProvider } from "next-themes";
 import { PageLoader } from "./components/PageLoader";
@@ -165,6 +167,7 @@ const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
 const UneteOrganizaciones = lazyWithRetry(() => import("./pages/unete/organizaciones"));
 // CRM Platform
 const PlatformAdminDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformAdminDashboard"));
+const AdminPayoutsPage = lazyWithRetry(() => import("./pages/admin/AdminPayoutsPage"));
 const PlatformCRMDashboard = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMDashboard"));
 const PlatformCRMOrganizations = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMOrganizations"));
 const PlatformCRMPeople = lazyWithRetry(() => import("./pages/crm/platform/PlatformCRMPeople"));
@@ -246,6 +249,37 @@ const PublicReviewPage = lazyWithRetry(() => import("./pages/PublicReviewPage"))
 
 // Template Library
 const TemplateLibraryPage = lazyWithRetry(() => import("./pages/TemplateLibraryPage"));
+
+// Academia (LMS)
+const AcademiaHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaHomePage"));
+// AcademiaSpacePage reemplazado por AcademiaSpaceHomePage (home dashboard)
+// + AcademiaSpaceClassroomPage (catálogo de cursos)
+const AcademiaCoursePage = lazyWithRetry(() => import("./pages/academia/AcademiaCoursePage"));
+const AcademiaPlayerPage = lazyWithRetry(() => import("./pages/academia/AcademiaPlayerPage"));
+const AcademiaCreatePage = lazyWithRetry(() => import("./pages/academia/AcademiaCreatePage"));
+const AcademiaDashboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaDashboardPage"));
+const AcademiaVerifyPage = lazyWithRetry(() => import("./pages/academia/AcademiaVerifyPage"));
+const AcademiaManagePage = lazyWithRetry(() => import("./pages/academia/AcademiaManagePage"));
+const AcademiaCourseEditorPage = lazyWithRetry(() => import("./pages/academia/AcademiaCourseEditorPage"));
+
+// Academia v2 — Community features
+const AcademiaSpaceFeedPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceFeedPage"));
+const AcademiaSpaceDMPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceDMPage"));
+const AcademiaPublicLandingPage = lazyWithRetry(() => import("./pages/academia/AcademiaPublicLandingPage"));
+const AcademiaMarketplacePage = lazyWithRetry(() => import("./pages/academia/AcademiaMarketplacePage"));
+const AcademiaSpaceAdminPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceAdminPage"));
+const AcademiaSpaceCalendarPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceCalendarPage"));
+const AcademiaLeaderboardPage = lazyWithRetry(() => import("./pages/academia/AcademiaLeaderboardPage"));
+const AcademiaMapPage = lazyWithRetry(() => import("./pages/academia/AcademiaMapPage"));
+
+// Academia v3 — Members + Google Calendar callbacks
+const AcademiaSpaceMembersPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceMembersPage"));
+const AcademiaCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaCalendarCallbackPage"));
+const AcademiaMemberCalendarCallbackPage = lazyWithRetry(() => import("./pages/academia/AcademiaMemberCalendarCallbackPage"));
+
+// Academia — Home dashboard + Classroom (catálogo de cursos)
+const AcademiaSpaceHomePage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceHomePage"));
+const AcademiaSpaceClassroomPage = lazyWithRetry(() => import("./pages/academia/AcademiaSpaceClassroomPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -460,18 +494,20 @@ function AppRoutes() {
         <Route path="/streaming/hosting/:requestId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><AdminOnlyFeature featureName="Live Hosting"><LiveHostingRequest /></AdminOnlyFeature></MainLayout></ProtectedRoute>} />
         <Route path="/marketing" element={<ProtectedRoute allowedRoles={['admin', 'digital_strategist']}><MainLayout><Marketing /></MainLayout></ProtectedRoute>} />
         {/* CRM Plataforma */}
-        <Route path="/crm" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/overview" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/leads" element={<Navigate to="/crm" replace />} />
-        <Route path="/crm/marcas" element={<Navigate to="/clientes" replace />} />
-        <Route path="/crm/marcas/:brandId" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/comunidades" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/personas" element={<Navigate to="/team" replace />} />
-        <Route path="/crm/creadores" element={<Navigate to="/team" replace />} />
-        <Route path="/crm/usuarios" element={<Navigate to="/team" replace />} />
-        <Route path="/crm/organizaciones" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/crm/finanzas" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
-        <Route path="/crm/email-marketing" element={<ProtectedRoute allowedRoles={['admin']}><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformAdminDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/admin/payouts" element={<ProtectedRoute requirePlatformAdmin><MainLayout><AdminPayoutsPage /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/overview" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMDashboard /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/leads" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMLeads /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/organizaciones" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMOrganizations /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/marcas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandsCRM /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/marcas/:brandId" element={<ProtectedRoute requirePlatformAdmin><MainLayout><BrandDetail /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/comunidades" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMCommunities /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/personas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMPeople /></MainLayout></ProtectedRoute>} />
+        {/* Redirects from old routes */}
+        <Route path="/crm/creadores" element={<Navigate to="/crm/personas?tab=freelancers" replace />} />
+        <Route path="/crm/usuarios" element={<Navigate to="/crm/personas?tab=clientes" replace />} />
+        <Route path="/crm/finanzas" element={<ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMFinances /></MainLayout></ProtectedRoute>} />
+        <Route path="/crm/email-marketing" element={<RootOnlyRoute><ProtectedRoute requirePlatformAdmin><MainLayout><PlatformCRMEmailMarketing /></MainLayout></ProtectedRoute></RootOnlyRoute>} />
         {/* CRM Organización */}
         <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/clientes" replace />} />
@@ -515,6 +551,30 @@ function AppRoutes() {
         <Route path="/preview/:token" element={<ProfilePreviewPage />} />
         {/* Template Library (public) */}
         <Route path="/templates" element={<TemplateLibraryPage />} />
+        {/* Academia - LMS Module */}
+        <Route path="/cert/:certCode" element={<AcademiaVerifyPage />} />
+        <Route path="/a/:spaceSlug" element={<AcademiaPublicLandingPage />} />
+        <Route path="/academia/explorar" element={<AcademiaMarketplacePage />} />
+        <Route path="/academia" element={<AcademiaHomePage />} />
+        <Route path="/academia/crear" element={<ProtectedRoute allowNoRoles><AcademiaCreatePage /></ProtectedRoute>} />
+        <Route path="/academia/dashboard" element={<ProtectedRoute allowNoRoles><AcademiaDashboardPage /></ProtectedRoute>} />
+        <Route path="/academia/:spaceSlug" element={<AcademiaSpaceHomePage />} />
+        <Route path="/academia/:spaceSlug/classroom" element={<RequireAcademyAccess><AcademiaSpaceClassroomPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/gestionar" element={<ProtectedRoute allowNoRoles><AcademiaManagePage /></ProtectedRoute>} />
+        {/* Academia v2 — Community features */}
+        <Route path="/academia/:spaceSlug/feed" element={<RequireAcademyAccess><AcademiaSpaceFeedPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/dm" element={<RequireAcademyAccess><AcademiaSpaceDMPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/calendar" element={<RequireAcademyAccess><AcademiaSpaceCalendarPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/leaderboard" element={<RequireAcademyAccess><AcademiaLeaderboardPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/map" element={<RequireAcademyAccess><AcademiaMapPage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/admin" element={<ProtectedRoute allowNoRoles><AcademiaSpaceAdminPage /></ProtectedRoute>} />
+        {/* Academia v3 — Members + Calendar OAuth callbacks */}
+        <Route path="/academia/:spaceSlug/members" element={<RequireAcademyAccess><AcademiaSpaceMembersPage /></RequireAcademyAccess>} />
+        <Route path="/academia/calendar/callback" element={<ProtectedRoute allowNoRoles><AcademiaCalendarCallbackPage /></ProtectedRoute>} />
+        <Route path="/academia/calendar/member-callback" element={<ProtectedRoute allowNoRoles><AcademiaMemberCalendarCallbackPage /></ProtectedRoute>} />
+        <Route path="/academia/:spaceSlug/:courseSlug/edit" element={<ProtectedRoute allowNoRoles><AcademiaCourseEditorPage /></ProtectedRoute>} />
+        <Route path="/academia/:spaceSlug/:courseSlug" element={<RequireAcademyAccess><AcademiaCoursePage /></RequireAcademyAccess>} />
+        <Route path="/academia/:spaceSlug/:courseSlug/learn" element={<RequireAcademyAccess><AcademiaPlayerPage /></RequireAcademyAccess>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
@@ -544,6 +604,7 @@ function AppContent() {
                               <ImpersonationBanner />
                               <Toaster />
                               <Sonner />
+                              <AcademyLiveToaster />
                               <UpdatePrompt />
                               <PageLoader />
                               <MarketplaceReadinessPopup />

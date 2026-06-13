@@ -132,6 +132,7 @@ export function WizardContainer({
             selectedType={state.userType}
             onSelect={handleTypeSelect}
             orgName={state.orgName}
+            forcedUserType={state.forcedUserType}
           />
         )}
 
@@ -153,6 +154,7 @@ export function WizardContainer({
             userType={state.userType}
             requiresEmailConfirmation={state.requiresEmailConfirmation}
             orgSlug={state.orgSlug}
+            redirectTo={state.redirectTo}
           />
         )}
       </div>

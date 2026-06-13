@@ -36,15 +36,25 @@ const generateId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 };
 
+/**
+ * Sanitizes a single UTM/click-ID value.
+ * Only accepts strings that match /^[\w.-]{1,100}$/.
+ * Returns undefined for any value that fails validation.
+ */
+const sanitizeUTM = (value: string | null | undefined): string | undefined => {
+  if (!value) return undefined;
+  return /^[\w.-]{1,100}$/.test(value) ? value : undefined;
+};
+
 const parseUTMs = (url: string): UTMParams => {
   try {
     const params = new URLSearchParams(new URL(url).search);
     return {
-      utm_source: params.get('utm_source') || undefined,
-      utm_medium: params.get('utm_medium') || undefined,
-      utm_campaign: params.get('utm_campaign') || undefined,
-      utm_content: params.get('utm_content') || undefined,
-      utm_term: params.get('utm_term') || undefined,
+      utm_source: sanitizeUTM(params.get('utm_source')),
+      utm_medium: sanitizeUTM(params.get('utm_medium')),
+      utm_campaign: sanitizeUTM(params.get('utm_campaign')),
+      utm_content: sanitizeUTM(params.get('utm_content')),
+      utm_term: sanitizeUTM(params.get('utm_term')),
     };
   } catch {
     return {};
@@ -55,10 +65,10 @@ const parseClickIds = (url: string): ClickIds => {
   try {
     const params = new URLSearchParams(new URL(url).search);
     return {
-      fbclid: params.get('fbclid') || undefined,
-      ttclid: params.get('ttclid') || undefined,
-      gclid: params.get('gclid') || undefined,
-      li_fat_id: params.get('li_fat_id') || undefined,
+      fbclid: sanitizeUTM(params.get('fbclid')),
+      ttclid: sanitizeUTM(params.get('ttclid')),
+      gclid: sanitizeUTM(params.get('gclid')),
+      li_fat_id: sanitizeUTM(params.get('li_fat_id')),
     };
   } catch {
     return {};

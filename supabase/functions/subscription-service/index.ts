@@ -43,6 +43,16 @@ const PRICE_IDS: Record<string, { monthly: string; annual: string }> = {
   },
 };
 
+// Planes de AGENCIA: pago único (no recurrente). Requieren Price IDs one-time en Stripe.
+const ONE_TIME_PRICE_IDS: Record<string, string> = {
+  org_starter: Deno.env.get("STRIPE_PRICE_ORG_STARTER_ONETIME") || "",
+  org_pro: Deno.env.get("STRIPE_PRICE_ORG_PRO_ONETIME") || "",
+};
+
+function isOneTimeTier(tier: string): boolean {
+  return tier.startsWith("org_");
+}
+
 interface SubscribeRequest {
   tier: string;
   billing_cycle: "monthly" | "annual";
@@ -133,17 +143,30 @@ serve(async (req) => {
 async function createCheckoutSession(supabase: any, userId: string, request: SubscribeRequest) {
   const { tier, billing_cycle, organization_id, referral_code } = request;
 
-  // Validar tier
-  if (!PRICE_IDS[tier]) {
-    throw new Error(`Invalid tier: ${tier}`);
-  }
+  const oneTime = isOneTimeTier(tier);
 
-  const priceId = PRICE_IDS[tier][billing_cycle];
-  if (!priceId) {
-    throw new Error(
-      `Stripe Price ID no configurado para ${tier} (${billing_cycle}). ` +
-      `Configura la variable STRIPE_PRICE_* en Supabase.`
-    );
+  // Validar tier y resolver Price ID
+  let priceId: string;
+  if (oneTime) {
+    // Agencias: pago único (mode: payment)
+    priceId = ONE_TIME_PRICE_IDS[tier];
+    if (!priceId) {
+      throw new Error(
+        `Stripe Price ID (pago único) no configurado para ${tier}. ` +
+        `Configura la variable STRIPE_PRICE_${tier.toUpperCase()}_ONETIME en Supabase.`
+      );
+    }
+  } else {
+    if (!PRICE_IDS[tier]) {
+      throw new Error(`Invalid tier: ${tier}`);
+    }
+    priceId = PRICE_IDS[tier][billing_cycle];
+    if (!priceId) {
+      throw new Error(
+        `Stripe Price ID no configurado para ${tier} (${billing_cycle}). ` +
+        `Configura la variable STRIPE_PRICE_* en Supabase.`
+      );
+    }
   }
 
   // Obtener o crear wallet
@@ -285,8 +308,8 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   // URL base para redirecciones
   const baseUrl = Deno.env.get("FRONTEND_URL") || "https://kreoon.com";
 
-  // Ya existe plan Explorar gratuito → sin trial para planes pagos.
-  // Solo aplica trial si el usuario tiene membresía de comunidad con meses gratis.
+  // Sin trial por defecto: la plataforma tiene versión gratis permanente.
+  // Solo se otorgan días gratis si el usuario tiene beneficio de comunidad partner.
   let trialDays = 0;
 
   const { data: communityMembership } = await supabase
@@ -306,11 +329,13 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
   }
 
   // Crear Checkout Session
+  // - Suscripciones (marcas/creadores): mode "subscription", recurrente mensual/anual, sin trial
+  // - Agencias: mode "payment", un solo pago no recurrente
   let session;
   try {
     session = await stripe.checkout.sessions.create({
       customer: customerId,
-      mode: "subscription",
+      mode: oneTime ? "payment" : "subscription",
       payment_method_types: ["card"],
       line_items: [
         {
@@ -318,21 +343,35 @@ async function createCheckoutSession(supabase: any, userId: string, request: Sub
           quantity: 1,
         },
       ],
-      subscription_data: {
-        ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
-        metadata: {
-          tier,
-          user_id: userId,
-          organization_id: organization_id || "",
-          wallet_id: wallet.id,
-          referral_relationship_id: referralRelationshipId || "",
-        },
-      },
+      ...(oneTime
+        ? {}
+        : {
+            subscription_data: {
+              // Stripe no acepta trial_period_days: 0 — solo incluirlo si hay beneficio de comunidad
+              ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
+              metadata: {
+                tier,
+                user_id: userId,
+                organization_id: organization_id || "",
+                wallet_id: wallet.id,
+                referral_relationship_id: referralRelationshipId || "",
+              },
+            },
+          }),
       success_url: `${baseUrl}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/planes`,
       metadata: {
         tier,
-        billing_cycle,
+        billing_cycle: oneTime ? "one_time" : billing_cycle,
+        ...(oneTime
+          ? {
+              type: "org_access_purchase",
+              user_id: userId,
+              organization_id: organization_id || "",
+              wallet_id: wallet.id,
+              referral_relationship_id: referralRelationshipId || "",
+            }
+          : {}),
       },
       allow_promotion_codes: true,
     });
@@ -401,6 +440,13 @@ async function cancelSubscription(supabase: any, userId: string, request: Cancel
     throw new Error("Subscription not found");
   }
 
+  // Planes de pago único o beneficios sin Stripe no tienen suscripción recurrente que cancelar
+  if (!subscription.stripe_subscription_id) {
+    throw new Error(
+      "Este plan es de pago único o un beneficio sin facturación recurrente: no hay nada que cancelar."
+    );
+  }
+
   // TODO: Verificar permisos si es organización
 
   if (cancel_immediately) {
@@ -459,6 +505,13 @@ async function changePlan(supabase: any, userId: string, body: any) {
   const billingCycle = body.new_billing_cycle || body.billing_cycle;
   const { subscription_id, organization_id } = body;
 
+  // Los planes de agencia son de pago único: se compran con un nuevo checkout, no con cambio de plan
+  if (isOneTimeTier(tier)) {
+    throw new Error(
+      "Los planes de agencia son de pago único. Cómpralo desde la página de planes con un nuevo checkout."
+    );
+  }
+
   // Look up subscription by ID or by org/user
   let subscriptionQuery = supabase
     .from("platform_subscriptions")
@@ -477,6 +530,12 @@ async function changePlan(supabase: any, userId: string, body: any) {
 
   if (!subscription) {
     throw new Error("Subscription not found");
+  }
+
+  if (!subscription.stripe_subscription_id) {
+    throw new Error(
+      "Tu plan actual no es una suscripción recurrente de Stripe. Compra el nuevo plan desde la página de planes."
+    );
   }
 
   const newPriceId = PRICE_IDS[tier]?.[billingCycle];

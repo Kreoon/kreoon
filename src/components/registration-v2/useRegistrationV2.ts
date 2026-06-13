@@ -29,6 +29,10 @@ export function useRegistrationV2(options: UseRegistrationV2Options) {
   // Detectar intent de URL (para compatibilidad con ReferralLanding)
   const intentFromUrl = searchParams.get('intent') as UserType | null;
 
+  // ?role=student desde JoinSpaceModal de Academia → fuerza el tipo y guarda redirect
+  const roleFromUrl = searchParams.get('role') as UserType | null;
+  const redirectFromUrl = searchParams.get('redirect');
+
   // Estado inicial con opciones
   const [state, setState] = useState<RegistrationV2State>(() => {
     const initialStep = options.flow === 'org' && options.requiresInviteCode
@@ -56,7 +60,16 @@ export function useRegistrationV2(options: UseRegistrationV2Options) {
       else if (intentFromUrl === 'organization') preselectedUserType = 'organization';
     }
 
-    // Si hay un tipo preseleccionado, ir directo al formulario
+    // ?role=student tiene prioridad: fuerza el tipo y salta el type-selector
+    // (el usuario ya decidió al hacer click en "Unirme" en la academia).
+    let forcedUserType: UserType | undefined;
+    if (roleFromUrl === 'student') {
+      forcedUserType = 'student';
+      preselectedUserType = 'student';
+    }
+
+    // Si hay un tipo preseleccionado (intent o forzado), saltamos el type-selector
+    // y vamos directo al formulario.
     const actualInitialStep = preselectedUserType ? 'form' : initialStep;
 
     return {
@@ -71,11 +84,15 @@ export function useRegistrationV2(options: UseRegistrationV2Options) {
       referralCode: finalReferralCode,
       partnerCommunity: partnerCommunityFromUrl || storedCommunity || undefined,
       userType: preselectedUserType,
+      forcedUserType,
+      redirectTo: redirectFromUrl || undefined,
     };
   });
 
-  // Obtener pasos del wizard
-  const steps = getWizardSteps(state.flow, !!state.requiresInviteCode);
+  // Obtener pasos del wizard.
+  // Si hay forcedUserType (ej. ?role=student desde la academia), saltamos
+  // 'type-selector' completamente: el progress muestra solo "Datos".
+  const steps = getWizardSteps(state.flow, !!state.requiresInviteCode, !!state.forcedUserType);
 
   // Setters
   const setInviteCode = useCallback((code: string) => {

@@ -267,6 +267,14 @@ export function useKiroGamification(options: UseKiroGamificationOptions = {}) {
   // ─────────────────────────────────────────────────────────────────────────
   // Otorgar puntos
   // ─────────────────────────────────────────────────────────────────────────
+  // SEGURIDAD: el insert directo en 'point_transactions' y el upsert en
+  // 'user_points' fueron reemplazados por la RPC award_kiro_points
+  // (SECURITY DEFINER). El servidor valida ownership (user_id = auth.uid()),
+  // rango de puntos [1, 10000] y source no vacío. El nivel se recalcula en
+  // SQL usando calculate_up_level() en lugar de enviarlo como número entero
+  // desde el cliente (evita inconsistencia con el enum up_level de la BD).
+  // La lógica de cooldown y localStorage permanece inalterada.
+  // ─────────────────────────────────────────────────────────────────────────
   const awardPoints = useCallback(
     async (sourceKey: string, customDescription?: string): Promise<AwardResult> => {
       const source = getPointSource(sourceKey);
@@ -337,33 +345,18 @@ export function useKiroGamification(options: UseKiroGamificationOptions = {}) {
       const updatedTransactions = [transaction, ...storedTransactions].slice(0, MAX_TRANSACTIONS_STORED);
       saveToStorage(STORAGE_KEYS.transactions, updatedTransactions);
 
-      // Intentar sincronizar con Supabase (fire and forget)
-      if (userId && !useLocalStorage) {
-        try {
-          // Insertar transacción
-          supabase
-            .from('point_transactions')
-            .insert({
-              user_id: userId,
-              points,
-              source: sourceKey,
-              description,
-            })
-            .then(() => {});
-
-          // Actualizar total de puntos
-          supabase
-            .from('user_points')
-            .upsert({
-              user_id: userId,
-              total_points: newPoints,
-              level: getLevelForPoints(newPoints).level,
-              updated_at: new Date().toISOString(),
-            })
-            .then(() => {});
-        } catch {
-          // Silenciosamente fallar, ya está en localStorage
-        }
+      // Sincronizar con Supabase via RPC SECURITY DEFINER (fire and forget)
+      // La RPC award_kiro_points valida ownership e inserta en point_transactions
+      // + upsert en user_points con current_level calculado en SQL.
+      if (userId && !useLocalStorage && points > 0) {
+        (supabase as any)
+          .rpc('award_kiro_points', {
+            p_points:           points,
+            p_source:           sourceKey,
+            p_description:      description,
+            p_new_total_points: newPoints,
+          })
+          .then(() => {});
       }
 
       // Verificar level up

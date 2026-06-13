@@ -138,7 +138,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
               <span className="text-green-500">✓</span> Gestión de equipos creativos
             </span>
             <span className="flex items-center gap-2">
-              <span className="text-green-500">✓</span> 14 días de prueba gratis
+              <span className="text-green-500">✓</span> Plan gratis para siempre
             </span>
           </motion.div>
         </div>

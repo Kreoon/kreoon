@@ -11,6 +11,8 @@ interface SuccessStepProps {
   userType: UserType;
   requiresEmailConfirmation: boolean;
   orgSlug?: string;
+  /** Si está presente, tiene prioridad sobre el redirect por tipo de usuario */
+  redirectTo?: string;
 }
 
 export function SuccessStep({
@@ -18,6 +20,7 @@ export function SuccessStep({
   userType,
   requiresEmailConfirmation,
   orgSlug,
+  redirectTo,
 }: SuccessStepProps) {
   const navigate = useNavigate();
   const [countdown, setCountdown] = useState(5);
@@ -34,8 +37,10 @@ export function SuccessStep({
     checkSession();
   }, []);
 
-  // Determinar destino según tipo de usuario
+  // Determinar destino según tipo de usuario o redirect explícito
   const getRedirectPath = () => {
+    if (redirectTo) return redirectTo;
+    if (userType === 'student') return '/academia';
     if (userType === 'freelancer' && !orgSlug) {
       return '/unlock-access';
     }
@@ -109,6 +114,8 @@ export function SuccessStep({
         return '¡Tu cuenta de marca está lista!';
       case 'organization':
         return '¡Tu organización ha sido creada!';
+      case 'student':
+        return '¡Tu cuenta de estudiante está lista!';
       default:
         return '¡Tu cuenta está lista!';
     }
@@ -354,6 +361,33 @@ export function SuccessStep({
         </div>
 
         {/* Cards informativas según tipo de usuario */}
+        {userType === 'student' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="mt-4 p-4 rounded-sm"
+            style={{
+              background: 'rgba(139, 92, 246, 0.08)',
+              border: '1px solid rgba(139, 92, 246, 0.2)',
+            }}
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-sm bg-purple-500/10">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-white">
+                  Bienvenido a la academia
+                </p>
+                <p className="text-xs text-white/60 mt-0.5">
+                  Cuando quieras, puedes activarte como creador o empresa desde tu perfil.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {userType === 'organization' && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
