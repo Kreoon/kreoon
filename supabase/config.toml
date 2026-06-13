@@ -29,6 +29,21 @@ verify_jwt = true
 # ownership dentro del handler (owner_id == auth.uid()).
 verify_jwt = true
 
+[functions.academy-upsell-charge]
+# Post-purchase upsell one-click. Caller debe estar autenticado y ser
+# dueño del session_id primario (validacion en handler).
+verify_jwt = true
+
+[functions.mercadopago-webhook]
+# Webhook publico de Mercado Pago. Verificacion de origen vive en el
+# handler (lookup defensivo a la API de MP).
+verify_jwt = false
+
+[functions.wompi-webhook]
+# Webhook publico de Wompi. Verificacion de firma SHA256 integrity en
+# el handler usando WOMPI_EVENTS_SECRET.
+verify_jwt = false
+
 [functions.public-showcase]
 verify_jwt = false
 
