@@ -46,6 +46,12 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         await handleSubscriptionChange(supabase, subscription);
+        // Fallback: si es una suscripción a una academia, también
+        // creamos la membresía (por si checkout.session.completed no
+        // llegó o no tenía la metadata). Idempotente.
+        if ((subscription.metadata as any)?.type === "academy_membership_subscription") {
+          await handleAcademyMembershipFromSubscription(supabase, subscription);
+        }
         break;
       }
 
@@ -75,6 +81,15 @@ serve(async (req) => {
 
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log('[checkout.session.completed]', {
+          session_id: session.id,
+          mode: session.mode,
+          payment_status: session.payment_status,
+          metadata: session.metadata,
+          customer: session.customer,
+          subscription: session.subscription,
+          amount_total: session.amount_total,
+        });
         if (session.metadata?.type?.startsWith("campaign_")) {
           await handleCampaignCheckoutCompleted(supabase, session);
         } else if (session.metadata?.type === "academy_course_purchase") {
@@ -83,6 +98,8 @@ serve(async (req) => {
           await handleAcademyMembershipPurchase(supabase, session);
         } else if (session.metadata?.type === "org_access_purchase") {
           await handleOrgAccessPurchase(supabase, session);
+        } else {
+          console.warn('[checkout.session.completed] unhandled metadata.type', session.metadata?.type);
         }
         break;
       }
@@ -635,6 +652,80 @@ async function handleAcademyCoursePurchase(supabase: any, session: Stripe.Checko
     null,                              // owner_user_id viene de metadata
     null,                              // space_id viene de metadata
   );
+}
+
+// ============================================================================
+// HANDLER: crea/activa membresía desde un evento de suscripción
+// (cuando checkout.session.completed no llega o no procesa).
+// Idempotente — usa stripe_subscription_id como clave.
+// ============================================================================
+
+async function handleAcademyMembershipFromSubscription(
+  supabase: any,
+  subscription: Stripe.Subscription,
+) {
+  const md = (subscription.metadata as any) ?? {};
+  const userId = md.user_id;
+  const spaceId = md.space_id;
+  const subscriptionId = subscription.id;
+  const customerId = typeof subscription.customer === "string" ? subscription.customer : null;
+
+  if (!userId || !spaceId) {
+    console.warn("[academy_membership_from_sub] missing metadata", subscription.id, md);
+    return;
+  }
+
+  const { data: existing } = await supabase
+    .from("academy_memberships")
+    .select("id, is_active, stripe_subscription_id, role")
+    .eq("space_id", spaceId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (existing && existing.is_active && existing.stripe_subscription_id === subscriptionId) {
+    console.log(`[academy_membership_from_sub] already active user=${userId} space=${spaceId}`);
+    return;
+  }
+
+  if (existing) {
+    await supabase
+      .from("academy_memberships")
+      .update({
+        is_active: true,
+        role: existing.role && existing.role !== "owner" ? existing.role : "student",
+        stripe_subscription_id: subscriptionId,
+        stripe_customer_id: customerId,
+      })
+      .eq("id", existing.id);
+  } else {
+    await supabase.from("academy_memberships").insert({
+      space_id: spaceId,
+      user_id: userId,
+      role: "student",
+      is_active: true,
+      stripe_subscription_id: subscriptionId,
+      stripe_customer_id: customerId,
+      joined_at: new Date().toISOString(),
+    });
+
+    try {
+      const { data: spaceRow } = await supabase
+        .from("academy_spaces")
+        .select("member_count")
+        .eq("id", spaceId)
+        .single();
+      if (spaceRow) {
+        await supabase
+          .from("academy_spaces")
+          .update({ member_count: (spaceRow.member_count ?? 0) + 1 })
+          .eq("id", spaceId);
+      }
+    } catch (e) {
+      console.warn("[academy_membership_from_sub] member_count bump failed", e);
+    }
+  }
+
+  console.log(`[academy_membership_from_sub] ✓ user=${userId} space=${spaceId} sub=${subscriptionId}`);
 }
 
 // ============================================================================

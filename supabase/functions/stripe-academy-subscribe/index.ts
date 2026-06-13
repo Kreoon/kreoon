@@ -1,23 +1,19 @@
 // ============================================================
-// STRIPE ACADEMY SUBSCRIBE (con Stripe Connect destination charges).
+// STRIPE ACADEMY SUBSCRIBE (dual-mode Connect / central)
 //
-// Crea una Checkout Session de suscripción mensual para que un user
-// se inscriba a una academia de pago. El cobro entra DIRECTO a la
-// cuenta Connect del owner; KREOON cobra su comisión vía
-// `application_fee_percent`.
+// Crea una Checkout Session de suscripción mensual.
 //
-// Comisiones (decisión de producto):
-//   - plan_slug='pro'  → 2.9 % al platform
-//   - cualquier otro    → 10 %
+//   - Si el owner tiene Stripe Connect activo (capability
+//     stripe_transfers ACTIVE) → destination charge directo a su
+//     cuenta, con application_fee_percent al platform.
+//   - Si NO → cobro central a KREOON; el webhook registra la deuda
+//     al owner en pending_owner_payouts para liquidación manual.
 //
-// Requisitos para que un cobro sea posible:
-//   1. La academia tiene `stripe_price_id` (lo crea el auto-sync).
-//   2. El owner tiene `stripe_connected_accounts.stripe_account_id`
-//      con la capability `stripe_transfers` activa. Si no, devolvemos
-//      'connect_pending' y el frontend muestra "Verificando cuenta…".
+// Comisiones: 10 % (Hobby) / 2.9 % (Pro), según `plan_slug`.
 //
-// El webhook (stripe-webhook → handleAcademyMembershipPurchase) crea
-// la fila en academy_memberships al confirmarse el pago.
+// Lecturas de DB vía RPC SECURITY DEFINER (`get_subscribe_payload`)
+// porque SUPABASE_SERVICE_ROLE_KEY no se inyecta confiablemente en
+// edge functions con npm: imports — terminamos cayendo a anon role.
 // ============================================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -25,6 +21,9 @@ import Stripe from 'npm:stripe@20.1.0';
 import { getCorsHeaders, handleCorsOptions, corsJsonResponse } from '../_shared/cors.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
+const STRIPE_SYNC_SECRET = Deno.env.get('STRIPE_SYNC_SECRET') ?? '';
 const FRONTEND_URL = Deno.env.get('FRONTEND_URL') ?? 'https://kreoon.com';
 
 function platformFeePercent(planSlug: string | null | undefined): number {
@@ -46,45 +45,71 @@ async function ownerCanReceive(stripeAccountId: string): Promise<boolean> {
   }
 }
 
+async function callRpc<T>(name: string, payload: Record<string, unknown>, userJwt: string): Promise<T> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      // JWT del user (no anon_key) — Postgrest lo verifica y el RPC
+      // ejecuta como `authenticated` con auth.uid() bien seteado.
+      Authorization: `Bearer ${userJwt}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    // Log completo en server, error genérico al cliente para no filtrar
+    // estructura interna (PG codes, RLS info, schema names, etc.).
+    console.error('[callRpc] failed', name, res.status, text.slice(0, 500));
+    throw new Error('internal_rpc_error');
+  }
+  return text ? (JSON.parse(text) as T) : (null as unknown as T);
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return handleCorsOptions(req);
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    if (!Deno.env.get('STRIPE_SECRET_KEY')) {
+      return corsJsonResponse(req, { error: 'stripe_not_configured' }, 500);
+    }
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !STRIPE_SYNC_SECRET) {
+      return corsJsonResponse(req, { error: 'supabase_env_missing' }, 500);
+    }
 
-    // Auth
+    // ─── 1. Auth ───
+    // Usamos un cliente liviano solo para validar el JWT del user.
+    const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const authHeader = req.headers.get('Authorization') ?? '';
     const jwt = authHeader.replace(/^Bearer\s+/i, '').trim();
     if (!jwt) return corsJsonResponse(req, { error: 'unauthorized' }, 401);
-    const { data: userData, error: userErr } = await supabase.auth.getUser(jwt);
+    const { data: userData, error: userErr } = await authClient.auth.getUser(jwt);
     if (userErr || !userData?.user) return corsJsonResponse(req, { error: 'unauthorized' }, 401);
     const callerId = userData.user.id;
     const callerEmail = userData.user.email ?? null;
 
-    if (!Deno.env.get('STRIPE_SECRET_KEY')) {
-      return corsJsonResponse(req, { error: 'stripe_not_configured' }, 500);
-    }
-
-    const { space_slug } = await req.json();
+    // ─── 2. Body ───
+    const body = await req.json().catch(() => ({}));
+    const space_slug = body?.space_slug;
     if (!space_slug) return corsJsonResponse(req, { error: 'space_slug_required' }, 400);
 
-    // Cargamos space + plan_slug + owner_id para resolver Connect después.
-    const { data: space, error: spaceErr } = await supabase
-      .from('academy_spaces')
-      .select('id, slug, name, membership_price_usd, stripe_price_id, status, is_public, owner_id, plan_slug')
-      .eq('slug', space_slug)
-      .maybeSingle();
+    // ─── 3. Payload via RPC (bypassa el bug del SR key) ───
+    // Pasamos el JWT del user para que el RPC pueda validar auth.uid().
+    const payload = await callRpc<any>('get_subscribe_payload', {
+      p_caller_secret: STRIPE_SYNC_SECRET,
+      p_space_slug: space_slug,
+      p_user_id: callerId,
+    }, jwt);
 
-    if (spaceErr || !space) {
-      return corsJsonResponse(req, { error: 'space_not_found' }, 404);
+    if (!payload || payload.found === false) {
+      return corsJsonResponse(req, { error: 'space_not_found', slug: space_slug }, 404);
     }
+
+    const space = payload.space;
     if (space.status !== 'active' || !space.is_public) {
       return corsJsonResponse(req, { error: 'space_unavailable' }, 400);
     }
-
     const priceUsd = Number(space.membership_price_usd ?? 0);
     if (priceUsd <= 0) {
       return corsJsonResponse(req, { error: 'space_is_free' }, 400);
@@ -92,41 +117,20 @@ Deno.serve(async (req) => {
     if (!space.stripe_price_id) {
       return corsJsonResponse(req, { error: 'stripe_price_id_missing' }, 400);
     }
-
-    // Ya es miembro activo: no permitimos doble cobro.
-    const { data: existing } = await supabase
-      .from('academy_memberships')
-      .select('id, is_active')
-      .eq('space_id', space.id)
-      .eq('user_id', callerId)
-      .maybeSingle();
-    if (existing?.is_active) {
+    if (payload.membership_active) {
       return corsJsonResponse(req, { error: 'already_member' }, 409);
     }
 
-    // ─── Connect detection (NO bloqueamos) ───
-    // Si el owner YA terminó Connect y la capability está activa, usamos
-    // destination charge (el cobro va directo a su cuenta, KREOON queda
-    // con application_fee_percent).
-    //
-    // Si NO, hacemos cobro CENTRAL: todo entra a la cuenta de KREOON y
-    // el webhook registra la deuda en `pending_owner_payouts`. KREOON
-    // liquida manualmente una vez al mes.
-    const { data: connect } = await (supabase as any)
-      .from('stripe_connected_accounts')
-      .select('stripe_account_id')
-      .eq('user_id', space.owner_id)
-      .maybeSingle();
-    const ownerAccountId = connect?.stripe_account_id as string | undefined;
+    // ─── 4. Connect detection (NO bloqueamos) ───
+    const ownerAccountId = payload.owner_stripe_account_id as string | undefined;
     const useConnect = ownerAccountId ? await ownerCanReceive(ownerAccountId) : false;
-    const feePercent = platformFeePercent(space.plan_slug as any);
+    const feePercent = platformFeePercent(space.plan_slug);
 
     const metadata = {
       type: 'academy_membership_subscription',
       space_id: space.id,
       user_id: callerId,
       space_slug: space.slug,
-      // Info para el webhook: modo + datos para registrar deuda si es central.
       collection_mode: useConnect ? 'destination' : 'central',
       owner_user_id: space.owner_id ?? '',
       platform_fee_percent: String(feePercent),
@@ -139,6 +143,9 @@ Deno.serve(async (req) => {
       line_items: [{ price: space.stripe_price_id, quantity: 1 }],
       metadata,
       subscription_data: { metadata },
+      // Activamos el campo "Código promocional" en el Checkout. El owner
+      // crea los cupones en Stripe Dashboard → Productos → Cupones.
+      allow_promotion_codes: true,
       success_url: `${FRONTEND_URL}/academia/${space.slug}?paid=success`,
       cancel_url: `${FRONTEND_URL}/academia/${space.slug}?paid=cancel`,
     };
@@ -149,10 +156,17 @@ Deno.serve(async (req) => {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
-
     return corsJsonResponse(req, { url: session.url, session_id: session.id });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err?.message ?? 'internal_error' }), {
+    // Loggeamos todo server-side pero NO filtramos detalle al cliente
+    // (puede revelar tipos de Stripe, requestIds, etc.).
+    console.error('stripe-academy-subscribe error', {
+      message: err?.message,
+      type: err?.type,
+      code: err?.code,
+      stack: err?.stack,
+    });
+    return new Response(JSON.stringify({ error: 'internal_error' }), {
       status: 500,
       headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     });
