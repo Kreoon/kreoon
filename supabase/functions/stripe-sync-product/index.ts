@@ -255,7 +255,10 @@ async function syncAcademySpace(space: any, req: Request) {
 
   let productId = space.stripe_product_id as string | null;
   const description = stripText(space.description) || `Suscripción a la academia "${space.name}" en KREOON`;
-  const sourceImage = space.cover_image_url || space.logo_url || null;
+  // Priorizamos logo sobre cover: Stripe Portal/Checkout muestran la imagen
+  // como icono cuadrado pequeño junto al nombre del producto, donde el logo
+  // funciona mejor que un banner horizontal.
+  const sourceImage = space.logo_url || space.cover_image_url || null;
 
   let cachedStripeUrl: string | null = null;
   let cachedSourceUrl: string | null = null;
