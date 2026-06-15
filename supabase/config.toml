@@ -35,14 +35,26 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.mercadopago-webhook]
-# Webhook publico de Mercado Pago. Verificacion de origen vive en el
-# handler (lookup defensivo a la API de MP).
+# DORMANT (2026-06-15): codigo presente pero MP no esta activo en
+# preferred_gateways default. Reactivar deployando + agregando 'mercadopago'
+# al array preferred_gateways del space.
 verify_jwt = false
 
 [functions.wompi-webhook]
-# Webhook publico de Wompi. Verificacion de firma SHA256 integrity en
-# el handler usando WOMPI_EVENTS_SECRET.
+# DORMANT (2026-06-15): codigo presente pero Wompi no esta activo en
+# preferred_gateways default.
 verify_jwt = false
+
+[functions.hotmart-webhook]
+# Webhook publico de Hotmart. Validacion de origen via Hottok del header
+# x-hotmart-hottok comparado contra academy_hotmart_coproductions
+# (timing-safe compare).
+verify_jwt = false
+
+[functions.academy-hotmart-redirect]
+# Genera URL de checkout Hotmart con tracking + crea academy_checkout_intent.
+# Caller debe estar autenticado.
+verify_jwt = true
 
 [functions.public-showcase]
 verify_jwt = false
