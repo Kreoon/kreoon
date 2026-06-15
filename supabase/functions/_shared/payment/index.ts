@@ -12,11 +12,20 @@
 // ============================================================
 
 import { StripeGateway } from './stripe.ts';
+import { HotmartGateway } from './hotmart.ts';
 import { MercadoPagoGateway } from './mercadopago.ts';
 import { WompiGateway } from './wompi.ts';
 import type { GatewayName, PaymentGateway } from './types.ts';
 
 export * from './types.ts';
+export { HotmartGateway } from './hotmart.ts';
+export type { HotmartRedirectParams } from './hotmart.ts';
+
+// Gateways activos en producción. mercadopago/wompi quedan disponibles
+// vía getGateway() para no romper imports existentes, pero NO se
+// muestran en GatewaySelector ni se incluyen en preferred_gateways
+// default (decisión 2026-06-15).
+export const ACTIVE_GATEWAYS: GatewayName[] = ['stripe', 'hotmart'];
 
 export function getGateway(name: GatewayName): PaymentGateway {
   switch (name) {
@@ -24,6 +33,9 @@ export function getGateway(name: GatewayName): PaymentGateway {
       const secret = Deno.env.get('STRIPE_SECRET_KEY') ?? '';
       const whSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET') ?? '';
       return new StripeGateway(secret, whSecret);
+    }
+    case 'hotmart': {
+      return new HotmartGateway();
     }
     case 'mercadopago': {
       const token = Deno.env.get('MERCADOPAGO_ACCESS_TOKEN') ?? '';

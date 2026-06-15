@@ -9,7 +9,7 @@
 // Ver supabase/functions/_shared/payment/index.ts para la factory.
 // ============================================================
 
-export type GatewayName = 'stripe' | 'mercadopago' | 'wompi' | 'dlocal';
+export type GatewayName = 'stripe' | 'hotmart' | 'mercadopago' | 'wompi' | 'dlocal';
 
 export type Currency = 'USD' | 'COP' | 'MXN' | 'BRL' | 'ARS' | 'PEN' | 'CLP' | 'EUR';
 
