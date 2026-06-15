@@ -1,7 +1,10 @@
-import { CreditCard, Smartphone, Building2 } from 'lucide-react';
+import { CreditCard, Globe2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
-type GatewayName = 'stripe' | 'mercadopago' | 'wompi';
+// Gateways activos. mercadopago/wompi quedan dormant (código presente
+// pero filtrados aquí). Volver a habilitarlos = agregar entrada en
+// SUPPORTED_GATEWAYS + asegurar que estén en preferred_gateways del space.
+type GatewayName = 'stripe' | 'hotmart';
 
 interface GatewayMeta {
   id: GatewayName;
@@ -11,27 +14,20 @@ interface GatewayMeta {
   availableIn: string[];
 }
 
-const GATEWAYS: GatewayMeta[] = [
+const SUPPORTED_GATEWAYS: GatewayMeta[] = [
   {
     id: 'stripe',
     label: 'Tarjeta internacional',
-    description: 'Visa, Mastercard, Amex. En USD.',
+    description: 'Visa, Mastercard, Amex. Pago directo en USD.',
     icon: CreditCard,
     availableIn: ['*'],
   },
   {
-    id: 'mercadopago',
-    label: 'Mercado Pago',
-    description: 'Tarjeta local, efectivo, cuotas. En COP/MXN/BRL/ARS.',
-    icon: Smartphone,
-    availableIn: ['CO', 'MX', 'BR', 'AR', 'PE', 'CL'],
-  },
-  {
-    id: 'wompi',
-    label: 'Wompi · PSE/Nequi',
-    description: 'PSE, Nequi, tarjeta Colombia. En COP.',
-    icon: Building2,
-    availableIn: ['CO'],
+    id: 'hotmart',
+    label: 'Hotmart · LATAM',
+    description: 'PIX, Boleto, OXXO, PSE, tarjeta y cuotas. Moneda local.',
+    icon: Globe2,
+    availableIn: ['BR', 'MX', 'CO', 'AR', 'PE', 'CL', 'EC', 'UY'],
   },
 ];
 
@@ -50,7 +46,9 @@ export function GatewaySelector({
   userCountry,
   accentColor = '#8B5CF6',
 }: Props) {
-  const visible = GATEWAYS.filter((g) => available.includes(g.id));
+  // Solo mostramos gateways soportados activos. Si available trae
+  // 'mercadopago' o 'wompi' (legacy), se ignoran.
+  const visible = SUPPORTED_GATEWAYS.filter((g) => available.includes(g.id));
 
   if (visible.length <= 1) return null;
 
