@@ -1,92 +1,110 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import {
+  ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
-  EyeOff,
-  GripVertical,
-  Layers3,
-  Palette,
-  ShieldCheck,
-  Sparkles,
+  Circle,
   Eye,
-  Monitor,
-  Smartphone,
+  Loader2,
+  Palette,
   Save,
   Send,
-  Trash2,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import { BlockRenderer } from "@/components/profile-builder/BlockRenderer";
 import { useProfileBuilderData } from "@/components/profile-builder/hooks/useProfileBuilderData";
 import {
   DEFAULT_BUILDER_CONFIG,
+  type BlockType,
   type BuilderConfig,
   type ProfileBlock,
 } from "@/components/profile-builder/types/profile-builder";
-import { CanvasPreview } from "./CanvasPreview";
 import { SectionEditor } from "./editors";
 import { StylePanel } from "./panels/StylePanel";
-import { blocksToSections, getSelectedSection } from "./section-adapter";
-import type { BuilderPanel, DevicePreview } from "./types";
+import { getPublishChecklist } from "./publish-checklist";
+import { blockToSection } from "./section-adapter";
 
 interface ProfileBuilderV2Props {
   profileId: string;
 }
 
-const STEP_META: Record<
-  BuilderPanel,
-  { title: string; copy: string; action: string; icon: typeof Layers3 }
-> = {
-  templates: {
-    title: "Empieza con una base",
-    copy: "Elige un punto de partida y deja que el contenido se acomode solo.",
-    action: "Abrir plantillas",
-    icon: Sparkles,
+interface SectionStepDef {
+  type: BlockType;
+  label: string;
+  question: string;
+}
+
+// Orden canónico de secciones que el asistente guía paso a paso.
+const SECTION_STEPS: SectionStepDef[] = [
+  {
+    type: "hero_banner",
+    label: "Tu portada",
+    question: "Lo primero que verán de ti",
   },
-  sections: {
-    title: "Ordena lo importante",
-    copy: "Arrastra o selecciona las secciones para dejar lo esencial arriba.",
-    action: "Ver secciones",
-    icon: Layers3,
+  { type: "about", label: "Sobre ti", question: "Cuéntales quién eres" },
+  {
+    type: "portfolio",
+    label: "Tus trabajos",
+    question: "Muestra lo que sabes hacer",
   },
-  style: {
-    title: "Ponlo a tu gusto",
-    copy: "Cambia el color, el estilo y la forma sin tocar nada técnico.",
-    action: "Cambiar estilo",
-    icon: Palette,
+  { type: "services", label: "Tus servicios", question: "¿Qué ofreces?" },
+  {
+    type: "pricing",
+    label: "Tus precios",
+    question: "¿Cuánto cuesta trabajar contigo?",
   },
-  media: {
-    title: "Agrega fotos o video",
-    copy: "Sube media cuando quieras; por ahora solo guía visual y acceso rápido.",
-    action: "Ir a media",
-    icon: Eye,
-  },
-  ai: {
-    title: "Pide ayuda a la IA",
-    copy: "Usa sugerencias guiadas para mejorar texto y secciones sin romper nada.",
-    action: "Abrir IA",
-    icon: Sparkles,
-  },
-  publish: {
-    title: "Revisa antes de salir",
-    copy: "Haz el chequeo final y publica cuando todo se vea correcto.",
-    action: "Ver publicación",
-    icon: ShieldCheck,
-  },
-};
+  { type: "contact", label: "Contacto", question: "¿Cómo te escriben?" },
+];
+
+type WizardStep =
+  | {
+      kind: "section";
+      key: string;
+      label: string;
+      question: string;
+      blockId: string;
+    }
+  | { kind: "style"; key: string; label: string; question: string }
+  | { kind: "publish"; key: string; label: string; question: string };
+
+// Vista previa de solo lectura de un bloque (sin el editor complejo).
+function SectionPreview({
+  block,
+  theme,
+  userId,
+  creatorProfileId,
+}: {
+  block: ProfileBlock;
+  theme: BuilderConfig["theme"];
+  userId?: string;
+  creatorProfileId?: string;
+}) {
+  return (
+    <div
+      className={[
+        "overflow-hidden rounded-2xl border",
+        theme === "dark"
+          ? "border-slate-800 bg-slate-950 text-slate-100"
+          : "border-slate-200 bg-white text-slate-900",
+      ].join(" ")}
+    >
+      <BlockRenderer
+        block={block}
+        isEditing={false}
+        isSelected={false}
+        onSelect={() => undefined}
+        onUpdate={() => undefined}
+        userId={userId}
+        creatorProfileId={creatorProfileId}
+        currentDevice="desktop"
+      />
+    </div>
+  );
+}
 
 export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
   const { toast } = useToast();
@@ -101,15 +119,14 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     isError,
     error,
     isSaving: hookIsSaving,
+    isPublishing,
   } = useProfileBuilderData(profileId);
 
   const [blocks, setBlocks] = useState<ProfileBlock[]>([]);
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<BuilderPanel>("sections");
-  const [device, setDevice] = useState<DevicePreview>("desktop");
   const [builderConfig, setBuilderConfig] = useState<BuilderConfig>(
     DEFAULT_BUILDER_CONFIG,
   );
+  const [currentStep, setCurrentStep] = useState(0);
   const [isDirty, setIsDirty] = useState(false);
   const [hasLoadedBlocks, setHasLoadedBlocks] = useState(false);
   const [hasLoadedConfig, setHasLoadedConfig] = useState(false);
@@ -130,33 +147,43 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     }
   }, [hasLoadedConfig, profile?.builder_config]);
 
-  const selectedSection = useMemo(
-    () => getSelectedSection(blocks, selectedBlockId),
-    [blocks, selectedBlockId],
-  );
+  // ─── Pasos del asistente ──────────────────────────────────────────────────
+  const steps = useMemo<WizardStep[]>(() => {
+    const sectionSteps = SECTION_STEPS.reduce<WizardStep[]>((acc, def) => {
+      const block = blocks.find((item) => item.type === def.type);
+      if (block) {
+        acc.push({
+          kind: "section",
+          key: def.type,
+          label: def.label,
+          question: def.question,
+          blockId: block.id,
+        });
+      }
+      return acc;
+    }, []);
 
-  const sections = useMemo(() => blocksToSections(blocks), [blocks]);
-  const visibleCount = sections.filter((section) => section.isVisible).length;
-  const requiredCount = sections.filter((section) => section.isRequired).length;
-  const totalCount = sections.length || 1;
-  const progressValue = Math.round((visibleCount / totalCount) * 100);
-  const currentStepIndex =
-    activePanel === "templates"
-      ? 0
-      : activePanel === "sections"
-        ? 1
-        : activePanel === "style"
-          ? 2
-          : 3;
-  const activeStep = STEP_META[activePanel];
-  const selectedTitle = selectedSection?.label ?? "Sin sección seleccionada";
+    return [
+      ...sectionSteps,
+      {
+        kind: "style",
+        key: "style",
+        label: "Estilo",
+        question: "Dale tu toque",
+      },
+      {
+        kind: "publish",
+        key: "publish",
+        label: "Publicar",
+        question: "Revisa y publica",
+      },
+    ];
+  }, [blocks]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const stepIndex = Math.min(currentStep, steps.length - 1);
+  const step = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length - 1;
+  const progressValue = Math.round(((stepIndex + 1) / steps.length) * 100);
 
   const updateBlock = useCallback(
     (id: string, updates: Partial<ProfileBlock>) => {
@@ -170,55 +197,18 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     [],
   );
 
-  const toggleVisibility = useCallback((id: string) => {
-    setBlocks((current) =>
-      current.map((block) =>
-        block.id === id ? { ...block, isVisible: !block.isVisible } : block,
-      ),
-    );
-    setIsDirty(true);
-  }, []);
-
-  const moveSection = useCallback((id: string, direction: -1 | 1) => {
-    setBlocks((current) => {
-      const sorted = [...current].sort((a, b) => a.orderIndex - b.orderIndex);
-      const index = sorted.findIndex((block) => block.id === id);
-      const nextIndex = index + direction;
-      if (index < 0 || nextIndex < 0 || nextIndex >= sorted.length) {
-        return current;
-      }
-      const [moved] = sorted.splice(index, 1);
-      sorted.splice(nextIndex, 0, moved);
-      return sorted.map((block, orderIndex) => ({ ...block, orderIndex }));
-    });
-    setIsDirty(true);
-  }, []);
-
-  const deleteSection = useCallback((id: string) => {
-    setBlocks((current) => current.filter((block) => block.id !== id));
-    setSelectedBlockId((current) => (current === id ? null : current));
+  const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
+    setBuilderConfig((current) => ({ ...current, ...updates }));
     setIsDirty(true);
   }, []);
 
   const handleSave = useCallback(async () => {
-    if (blocks.length === 0) {
-      toast({
-        title: "No hay secciones",
-        description: "Agrega al menos una seccion antes de guardar.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    if (blocks.length === 0) return;
     setIsSavingLocal(true);
     try {
       await saveBlocksAsync(blocks, true);
       await saveBuilderConfigAsync(builderConfig);
       setIsDirty(false);
-      toast({
-        title: "Borrador guardado",
-        description: "Tus cambios se guardaron como borrador.",
-      });
     } catch (saveError) {
       toast({
         title: "Error al guardar",
@@ -233,36 +223,67 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     }
   }, [blocks, builderConfig, saveBlocksAsync, saveBuilderConfigAsync, toast]);
 
-  const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
-    setBuilderConfig((current) => ({ ...current, ...updates }));
-    setIsDirty(true);
-  }, []);
-
-  const handlePublish = useCallback(() => {
-    publishBlocks();
-    setIsDirty(false);
-  }, [publishBlocks]);
+  const handlePublish = useCallback(async () => {
+    setIsSavingLocal(true);
+    try {
+      // El RPC publica el borrador guardado: hay que guardar antes de publicar.
+      await saveBlocksAsync(blocks, true);
+      await saveBuilderConfigAsync(builderConfig);
+      setIsDirty(false);
+      publishBlocks();
+    } catch (publishError) {
+      toast({
+        title: "Error al publicar",
+        description:
+          publishError instanceof Error
+            ? publishError.message
+            : "No se pudo publicar el perfil.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingLocal(false);
+    }
+  }, [
+    blocks,
+    builderConfig,
+    publishBlocks,
+    saveBlocksAsync,
+    saveBuilderConfigAsync,
+    toast,
+  ]);
 
   const handlePreview = useCallback(async () => {
+    await handleSave();
     const token = await generatePreviewTokenAsync();
     if (token) {
       window.open(`/preview/${token}`, "_blank", "noopener,noreferrer");
       return;
     }
-
     toast({
       title: "Error",
       description: "No se pudo generar la vista previa.",
       variant: "destructive",
     });
-  }, [generatePreviewTokenAsync, toast]);
+  }, [generatePreviewTokenAsync, handleSave, toast]);
+
+  const goNext = useCallback(() => {
+    setCurrentStep((current) => Math.min(current + 1, steps.length - 1));
+    if (isDirty) void handleSave();
+  }, [steps.length, isDirty, handleSave]);
+
+  const goBack = useCallback(() => {
+    setCurrentStep((current) => Math.max(current - 1, 0));
+  }, []);
 
   const isSaving = hookIsSaving || isSavingLocal;
 
+  const checklist = useMemo(() => getPublishChecklist(blocks), [blocks]);
+
+  // ─── Estados de carga ───────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -284,453 +305,226 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     );
   }
 
+  const currentBlock =
+    step?.kind === "section"
+      ? blocks.find((item) => item.id === step.blockId)
+      : undefined;
+  const styleBlock =
+    blocks.find((item) => item.type === "hero_banner") ?? blocks[0];
+
   return (
-    <DndContext sensors={sensors}>
-      <div className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.10),_transparent_35%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#ffffff_100%)] text-foreground">
-        <div className="mx-auto flex min-h-screen w-full max-w-[1800px] flex-col px-4 py-4 md:px-6">
-          <header className="mb-4 rounded-[18px] border border-slate-200 bg-white/85 px-4 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="info" className="gap-1.5">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    V2 guiado
-                  </Badge>
-                  <Badge variant="outline" className="gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    {visibleCount} visibles
-                  </Badge>
-                </div>
-                <div className="space-y-1">
-                  <h1 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
-                    Construye tu perfil sin pelearte con el editor
-                  </h1>
-                  <p className="max-w-3xl text-sm text-slate-600 md:text-base">
-                    Sigue los pasos de izquierda a derecha: primero ordena,
-                    luego ajusta el estilo y al final revisa antes de publicar.
+    <div className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_45%,#ffffff_100%)] text-slate-900">
+      {/* ─── Encabezado fijo: progreso ─── */}
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto w-full max-w-3xl px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <Sparkles className="h-4 w-4 text-violet-500" />
+              <span>Arma tu perfil</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">
+                {isSaving ? "Guardando…" : isDirty ? "Sin guardar" : "Guardado"}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving || !isDirty}
+              >
+                <Save className="h-4 w-4" />
+                Guardar
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-slate-500">
+              <span>
+                Paso {stepIndex + 1} de {steps.length} · {step?.label}
+              </span>
+              <span>{progressValue}%</span>
+            </div>
+            <Progress value={progressValue} className="h-1.5" />
+          </div>
+        </div>
+      </header>
+
+      {/* ─── Cuerpo: una sección a la vez ─── */}
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-950">
+            {step?.label}
+          </h1>
+          <p className="text-sm text-slate-600">{step?.question}</p>
+        </div>
+
+        <div className="mt-6 space-y-6">
+          {step?.kind === "section" && currentBlock && (
+            <>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <SectionEditor
+                  section={blockToSection(currentBlock)}
+                  onUpdateBlock={updateBlock}
+                />
+              </div>
+              <div>
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                  <Eye className="h-3.5 w-3.5" />
+                  Así se ve
+                </p>
+                <SectionPreview
+                  block={currentBlock}
+                  theme={builderConfig.theme}
+                  userId={profile?.user_id}
+                  creatorProfileId={profileId}
+                />
+              </div>
+            </>
+          )}
+
+          {step?.kind === "style" && (
+            <>
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <StylePanel
+                  config={builderConfig}
+                  onChange={handleConfigChange}
+                />
+              </div>
+              {styleBlock && (
+                <div>
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                    <Eye className="h-3.5 w-3.5" />
+                    Vista previa
                   </p>
+                  <SectionPreview
+                    block={styleBlock}
+                    theme={builderConfig.theme}
+                    userId={profile?.user_id}
+                    creatorProfileId={profileId}
+                  />
                 </div>
+              )}
+            </>
+          )}
+
+          {step?.kind === "publish" && (
+            <div className="space-y-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">
+                  Antes de publicar
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {checklist.map((item) => (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      {item.isComplete ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                      ) : (
+                        <Circle className="h-4 w-4 shrink-0 text-slate-300" />
+                      )}
+                      <span
+                        className={
+                          item.isComplete ? "text-slate-700" : "text-slate-400"
+                        }
+                      >
+                        {item.label}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-[16px] border border-slate-200 bg-slate-50/90 p-3 md:min-w-[320px]">
-                <div className="flex items-center justify-between text-xs text-slate-600">
-                  <span>Paso {currentStepIndex + 1} de 4</span>
-                  <span>{progressValue}% armado</span>
-                </div>
-                <Progress value={progressValue} className="h-2" />
-                <div className="flex flex-wrap gap-2">
+              <div className="rounded-2xl border border-slate-900 bg-slate-950 p-5 text-white">
+                <p className="text-sm font-semibold">Todo listo</p>
+                <p className="mt-1 text-sm text-white/70">
+                  Publica para que tu perfil sea visible. Puedes seguir
+                  editándolo después.
+                </p>
+                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
                   <Button
                     type="button"
                     variant="secondary"
-                    size="sm"
-                    onClick={() => setActivePanel("sections")}
-                  >
-                    <Layers3 className="h-4 w-4" />
-                    Ordenar
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setActivePanel("style")}
-                  >
-                    <Palette className="h-4 w-4" />
-                    Estilo
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handlePublish}
+                    className="flex-1"
+                    onClick={handlePreview}
                     disabled={isSaving}
                   >
-                    <Send className="h-4 w-4" />
-                    Publicar
+                    <Eye className="h-4 w-4" />
+                    Ver vista previa
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex-1"
+                    onClick={handlePublish}
+                    disabled={isSaving || isPublishing}
+                  >
+                    {isPublishing ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Publicar perfil
                   </Button>
                 </div>
               </div>
             </div>
-          </header>
+          )}
 
-          <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[360px_minmax(0,1fr)_320px]">
-            <aside className="min-h-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <div className="border-b border-slate-200 px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-950">
-                      Haz esto primero
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Tres pasos simples, sin paneles técnicos.
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="gap-1.5">
-                    <GripVertical className="h-3.5 w-3.5" />
-                    Simple
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-3 overflow-y-auto p-4">
-                {(
-                  [
-                    "templates",
-                    "sections",
-                    "style",
-                    "publish",
-                  ] as BuilderPanel[]
-                ).map((panel, index) => {
-                  const meta = STEP_META[panel];
-                  const Icon = meta.icon;
-                  const isActive = activePanel === panel;
-                  return (
-                    <button
-                      key={panel}
-                      type="button"
-                      onClick={() => setActivePanel(panel)}
-                      className={[
-                        "group w-full rounded-[18px] border px-4 py-4 text-left transition-all",
-                        isActive
-                          ? "border-slate-900 bg-slate-950 text-white shadow-[0_16px_40px_rgba(15,23,42,0.18)]"
-                          : "border-slate-200 bg-slate-50 text-slate-900 hover:border-slate-300 hover:bg-white",
-                      ].join(" ")}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={[
-                            "flex h-10 w-10 items-center justify-center rounded-full border text-sm font-semibold",
-                            isActive
-                              ? "border-white/20 bg-white/10 text-white"
-                              : "border-slate-200 bg-white text-slate-900",
-                          ].join(" ")}
-                        >
-                          {index + 1}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <Icon className="h-4 w-4" />
-                            <p className="text-sm font-semibold">
-                              {meta.title}
-                            </p>
-                          </div>
-                          <p
-                            className={[
-                              "mt-1 text-sm leading-5",
-                              isActive ? "text-white/75" : "text-slate-600",
-                            ].join(" ")}
-                          >
-                            {meta.copy}
-                          </p>
-                          <div className="mt-3 flex items-center gap-2 text-xs font-medium">
-                            <span>{meta.action}</span>
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>Secciones del perfil</span>
-                    <span>{sections.length}</span>
-                  </div>
-                  {sections.map((section, index) => {
-                    const isSelected = section.blockId === selectedBlockId;
-                    return (
-                      <div
-                        key={section.id}
-                        className={[
-                          "rounded-[14px] border px-3 py-2.5 transition-all",
-                          isSelected
-                            ? "border-slate-900 bg-slate-950 text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
-                            : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50",
-                        ].join(" ")}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedBlockId(section.blockId)}
-                            className="min-w-0 flex-1 text-left"
-                          >
-                            <p className="truncate text-sm font-medium">
-                              {section.label}
-                            </p>
-                            <p
-                              className={[
-                                "truncate text-xs",
-                                isSelected ? "text-white/70" : "text-slate-500",
-                              ].join(" ")}
-                            >
-                              {section.isVisible ? "Visible" : "Oculta"} ·{" "}
-                              {section.isRequired ? "Necesaria" : "Opcional"}
-                            </p>
-                          </button>
-                          <div className="flex shrink-0 items-center gap-0.5">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={[
-                                "h-7 w-7",
-                                isSelected
-                                  ? "text-white hover:bg-white/10"
-                                  : "",
-                              ].join(" ")}
-                              onClick={() => toggleVisibility(section.blockId)}
-                              title={section.isVisible ? "Ocultar" : "Mostrar"}
-                            >
-                              {section.isVisible ? (
-                                <Eye className="h-3.5 w-3.5" />
-                              ) : (
-                                <EyeOff className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={[
-                                "h-7 w-7",
-                                isSelected
-                                  ? "text-white hover:bg-white/10"
-                                  : "",
-                              ].join(" ")}
-                              onClick={() => moveSection(section.blockId, -1)}
-                              disabled={index === 0}
-                              title="Subir"
-                            >
-                              <ChevronUp className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={[
-                                "h-7 w-7",
-                                isSelected
-                                  ? "text-white hover:bg-white/10"
-                                  : "",
-                              ].join(" ")}
-                              onClick={() => moveSection(section.blockId, 1)}
-                              disabled={index === sections.length - 1}
-                              title="Bajar"
-                            >
-                              <ChevronDown className="h-3.5 w-3.5" />
-                            </Button>
-                            {section.isDeletable && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className={[
-                                  "h-7 w-7 text-rose-500 hover:text-rose-600",
-                                  isSelected ? "hover:bg-white/10" : "",
-                                ].join(" ")}
-                                onClick={() => deleteSection(section.blockId)}
-                                title="Eliminar"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </aside>
-
-            <main className="min-h-0 overflow-hidden rounded-[24px] border border-slate-200 bg-white/90 shadow-[0_20px_70px_rgba(15,23,42,0.10)]">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4">
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">
-                    Vista previa
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Toca una sección para editarla. Todo lo demás queda fuera de
-                    tu camino.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 p-1">
-                  <Button
-                    type="button"
-                    variant={device === "desktop" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setDevice("desktop")}
-                  >
-                    <Monitor className="h-4 w-4" />
-                    Desktop
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={device === "mobile" ? "secondary" : "ghost"}
-                    size="sm"
-                    onClick={() => setDevice("mobile")}
-                  >
-                    <Smartphone className="h-4 w-4" />
-                    Mobile
-                  </Button>
-                </div>
-              </div>
-
-              <div className="relative min-h-0 flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)]">
-                <div className="absolute left-4 top-4 z-10 max-w-[420px] rounded-[18px] border border-sky-200 bg-sky-50/95 px-4 py-3 text-sm text-sky-950 shadow-sm">
-                  <p className="font-semibold">Ahora mismo</p>
-                  <p className="mt-1 text-sm">
-                    {selectedSection
-                      ? `Estás editando ${selectedTitle.toLowerCase()}.`
-                      : "Elige una sección para empezar por lo más fácil."}
-                  </p>
-                </div>
-
-                <CanvasPreview
-                  blocks={blocks}
-                  selectedBlockId={selectedBlockId}
-                  device={device}
-                  builderConfig={builderConfig}
-                  userId={profile?.user_id}
-                  creatorProfileId={profileId}
-                  onSelectBlock={setSelectedBlockId}
-                  onUpdateBlock={updateBlock}
-                />
-              </div>
-            </main>
-
-            <aside className="min-h-0 overflow-hidden rounded-[20px] border border-slate-200 bg-white/90 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
-              <div className="border-b border-slate-200 px-4 py-4">
-                <p className="text-sm font-semibold text-slate-950">
-                  Siguiente paso
-                </p>
-                <p className="text-xs text-slate-500">
-                  Sin pantallas raras. Solo lo que necesitas hacer ahora.
-                </p>
-              </div>
-
-              <div className="space-y-4 overflow-y-auto p-4">
-                <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4">
-                  {activePanel === "style" ? (
-                    <>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-                        <Palette className="h-4 w-4" />
-                        Estilo del perfil
-                      </div>
-                      <p className="mt-2 text-sm text-slate-600">
-                        Cambia el color, el tema y las fuentes. Se aplican a
-                        todo tu perfil al instante.
-                      </p>
-                      <div className="mt-4 rounded-[14px] border border-slate-200 bg-white p-4">
-                        <StylePanel
-                          config={builderConfig}
-                          onChange={handleConfigChange}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-                        <ShieldCheck className="h-4 w-4" />
-                        {selectedTitle}
-                      </div>
-                      <p className="mt-2 text-sm text-slate-600">
-                        {selectedSection
-                          ? selectedSection.description
-                          : "Haz clic en una sección a la izquierda para abrirla aquí con instrucciones cortas y directas."}
-                      </p>
-                      {selectedSection && (
-                        <div className="mt-4 rounded-[14px] border border-slate-200 bg-white p-4">
-                          <SectionEditor
-                            section={selectedSection}
-                            onUpdateBlock={updateBlock}
-                          />
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setActivePanel("sections")}
-                    >
-                      <Layers3 className="h-4 w-4" />
-                      Secciones
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setActivePanel("style")}
-                    >
-                      <Palette className="h-4 w-4" />
-                      Estilo
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-slate-200 bg-white px-4 py-4">
-                  <p className="text-sm font-semibold text-slate-950">
-                    Lista rápida
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Bloques visibles</span>
-                      <span>{visibleCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Bloques necesarios</span>
-                      <span>{requiredCount}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-slate-600">
-                      <span>Guardado</span>
-                      <span>
-                        {isSaving
-                          ? "Ahora mismo"
-                          : isDirty
-                            ? "Pendiente"
-                            : "Listo"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[18px] border border-slate-200 bg-slate-950 px-4 py-4 text-white">
-                  <p className="text-sm font-semibold">Acción final</p>
-                  <p className="mt-2 text-sm text-white/70">
-                    Cuando todo se vea bien, guarda o publica sin tener que
-                    buscar botones escondidos.
-                  </p>
-                  <div className="mt-4 flex flex-col gap-2">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="justify-start"
-                      onClick={handleSave}
-                      disabled={isSaving}
-                    >
-                      <Save className="h-4 w-4" />
-                      Guardar borrador
-                    </Button>
-                    <Button
-                      type="button"
-                      className="justify-start"
-                      onClick={handlePublish}
-                      disabled={isSaving}
-                    >
-                      <Send className="h-4 w-4" />
-                      Publicar perfil
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </aside>
-          </div>
+          {step?.kind === "section" && !currentBlock && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">
+              Esta sección aún no está disponible en tu perfil.
+            </div>
+          )}
         </div>
-      </div>
-    </DndContext>
+      </main>
+
+      {/* ─── Pie fijo: navegación ─── */}
+      <footer className="sticky bottom-0 z-20 border-t border-slate-200 bg-white/90 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-3xl items-center justify-between gap-3 px-4 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={goBack}
+            disabled={stepIndex === 0}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Atrás
+          </Button>
+
+          <div className="flex items-center gap-1.5">
+            {steps.map((wizardStep, index) => (
+              <span
+                key={wizardStep.key}
+                className={[
+                  "h-1.5 rounded-full transition-all",
+                  index === stepIndex
+                    ? "w-5 bg-slate-900"
+                    : "w-1.5 bg-slate-300",
+                ].join(" ")}
+              />
+            ))}
+          </div>
+
+          {isLastStep ? (
+            <Button
+              type="button"
+              onClick={handlePublish}
+              disabled={isSaving || isPublishing}
+            >
+              <Check className="h-4 w-4" />
+              Publicar
+            </Button>
+          ) : (
+            <Button type="button" onClick={goNext}>
+              Siguiente
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </footer>
+    </div>
   );
 }
