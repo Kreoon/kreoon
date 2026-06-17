@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { ProfileBuilder } from '@/components/profile-builder/ProfileBuilder';
+import { ProfileBuilderV2 } from '@/components/profile-builder-v2';
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function ProfileBuilderPage() {
   const { user, loading: authLoading } = useAuth();
+  const [searchParams] = useSearchParams();
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const useV2 = searchParams.get('v') === '2';
 
   useEffect(() => {
     if (!user) return;
@@ -120,5 +123,5 @@ export default function ProfileBuilderPage() {
     );
   }
 
-  return <ProfileBuilder profileId={profileId} />;
+  return useV2 ? <ProfileBuilderV2 profileId={profileId} /> : <ProfileBuilder profileId={profileId} />;
 }
