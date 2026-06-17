@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Navigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { ProfileBuilder } from '@/components/profile-builder/ProfileBuilder';
-import { ProfileBuilderV2 } from '@/components/profile-builder-v2';
+import { useEffect, useState } from "react";
+import { Navigate, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { ProfileBuilder } from "@/components/profile-builder/ProfileBuilder";
+import { ProfileBuilderV2 } from "@/components/profile-builder-v2";
+import { TemplateEditorPrototype } from "@/components/profile-builder-v2/prototype/TemplateEditorPrototype";
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 
@@ -13,7 +14,8 @@ export default function ProfileBuilderPage() {
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const useV2 = searchParams.get('v') === '2';
+  const useV2 = searchParams.get("v") === "2";
+  const useProto = searchParams.get("v") === "3";
 
   useEffect(() => {
     if (!user) return;
@@ -24,9 +26,9 @@ export default function ProfileBuilderPage() {
         setError(null);
 
         const { data, error: fetchError } = await supabase
-          .from('creator_profiles')
-          .select('id')
-          .eq('user_id', user!.id)
+          .from("creator_profiles")
+          .select("id")
+          .eq("user_id", user!.id)
           .maybeSingle();
 
         if (fetchError) throw fetchError;
@@ -38,24 +40,24 @@ export default function ProfileBuilderPage() {
 
         // Si no existe perfil, crear uno básico
         const { data: newProfile, error: createError } = await supabase
-          .from('creator_profiles')
+          .from("creator_profiles")
           .insert({
             user_id: user!.id,
-            display_name: user!.email?.split('@')[0] ?? 'Creador',
-            location_country: 'CO',
-            country_flag: '🇨🇴',
+            display_name: user!.email?.split("@")[0] ?? "Creador",
+            location_country: "CO",
+            country_flag: "🇨🇴",
             categories: [],
             content_types: [],
-            languages: ['es'],
+            languages: ["es"],
             platforms: [],
             social_links: {},
-            level: 'bronze',
+            level: "bronze",
             is_verified: false,
             is_available: true,
             rating_avg: 0,
             rating_count: 0,
             completed_projects: 0,
-            currency: 'COP',
+            currency: "COP",
             accepts_product_exchange: false,
             response_time_hours: 24,
             on_time_delivery_pct: 0,
@@ -64,13 +66,14 @@ export default function ProfileBuilderPage() {
             is_active: true,
             profile_customization: {},
           })
-          .select('id')
+          .select("id")
           .single();
 
         if (createError) throw createError;
         if (newProfile?.id) setProfileId(newProfile.id);
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Error al cargar el perfil';
+        const message =
+          err instanceof Error ? err.message : "Error al cargar el perfil";
         setError(message);
       } finally {
         setLoading(false);
@@ -79,6 +82,11 @@ export default function ProfileBuilderPage() {
 
     fetchOrCreateProfileId();
   }, [user]);
+
+  // Prototipo del editor de plantillas (estático, sin requerir login).
+  if (useProto) {
+    return <TemplateEditorPrototype />;
+  }
 
   // ── Estados de carga ────────────────────────────────────────────────────────
 
@@ -102,7 +110,9 @@ export default function ProfileBuilderPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center space-y-3 max-w-sm">
-          <p className="text-destructive font-medium">Error al cargar el perfil</p>
+          <p className="text-destructive font-medium">
+            Error al cargar el perfil
+          </p>
           <p className="text-sm text-muted-foreground">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -123,5 +133,9 @@ export default function ProfileBuilderPage() {
     );
   }
 
-  return useV2 ? <ProfileBuilderV2 profileId={profileId} /> : <ProfileBuilder profileId={profileId} />;
+  return useV2 ? (
+    <ProfileBuilderV2 profileId={profileId} />
+  ) : (
+    <ProfileBuilder profileId={profileId} />
+  );
 }

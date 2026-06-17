@@ -148,6 +148,11 @@ const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const PortfolioShowcasePage = lazyWithRetry(
   () => import("./pages/PortfolioShowcasePage"),
 );
+const TemplateEditorPrototypePage = lazyWithRetry(() =>
+  import("./components/profile-builder-v2/prototype/TemplateEditorPrototype").then(
+    (m) => ({ default: m.TemplateEditorPrototype }),
+  ),
+);
 const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
@@ -647,6 +652,10 @@ function AppRoutes() {
         <Route path="/casos-de-exito" element={<CaseStudies />} />
         <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
         <Route path="/portafolio" element={<PortfolioShowcasePage />} />
+        <Route
+          path="/plantilla-demo"
+          element={<TemplateEditorPrototypePage />}
+        />
         <Route path="/marca-referida" element={<BrandReferralRedirect />} />
         {/* Legal pages (public, required for Meta app review) */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
