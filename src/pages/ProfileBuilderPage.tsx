@@ -83,9 +83,15 @@ export default function ProfileBuilderPage() {
     fetchOrCreateProfileId();
   }, [user]);
 
-  // Prototipo del editor de plantillas (estático, sin requerir login).
+  // Prototipo del editor de plantillas. Con sesión, habilita la biblioteca de
+  // medios (Bunny + portafolio); sin sesión, cae a edición por URL.
   if (useProto) {
-    return <TemplateEditorPrototype />;
+    return (
+      <TemplateEditorPrototype
+        userId={user?.id}
+        creatorProfileId={profileId ?? undefined}
+      />
+    );
   }
 
   // ── Estados de carga ────────────────────────────────────────────────────────

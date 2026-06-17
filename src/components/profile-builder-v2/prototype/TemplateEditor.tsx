@@ -34,6 +34,9 @@ import {
   Trash2,
   Type,
 } from "lucide-react";
+import { MediaLibraryPicker } from "@/components/profile-builder/media/MediaLibraryPicker";
+import type { MediaItem } from "@/components/profile-builder/media/types";
+import { isBunnyUrl } from "@/components/profile-builder/blocks/BunnyStreamPlayer";
 import { prepareTemplate } from "./prepareTemplate";
 import type { PortfolioTemplate } from "./registry";
 import type { TemplateToken } from "./sampleTemplate";
@@ -42,6 +45,46 @@ interface SectionItem {
   id: string;
   label: string;
   hidden: boolean;
+}
+
+// ─── Helpers de media adaptativa ──────────────────────────────────────────
+function ratioFromAspect(aspect?: string): string | null {
+  if (!aspect) return null;
+  const m = aspect.match(/(\d+)\s*[:/x]\s*(\d+)/);
+  return m ? `${m[1]} / ${m[2]}` : null;
+}
+
+function bunnyEmbedSrc(url: string): string {
+  const m = url.match(
+    /(?:iframe\.mediadelivery\.net\/(?:embed|play)|(\d+)\.mediadelivery\.net|vz-[a-f0-9-]+\.b-cdn\.net|cdn\.kreoon\.com)\/?(\d+)?\/?([a-f0-9-]{8,})/i,
+  );
+  // Reconstrucción simple: extrae library/video cuando es URL embed estándar.
+  const embed = url.match(
+    /iframe\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([a-f0-9-]+)/i,
+  );
+  if (embed) {
+    return `https://iframe.mediadelivery.net/embed/${embed[1]}/${embed[2]}?responsive=true`;
+  }
+  const cdn = url.match(/vz-[a-f0-9-]+\.b-cdn\.net\/([a-f0-9-]+)/i);
+  if (cdn) {
+    return `https://iframe.mediadelivery.net/embed/568434/${cdn[1]}?responsive=true`;
+  }
+  void m;
+  return url;
+}
+
+/** Construye el HTML de un medio que se adapta a su aspecto (vertical/horizontal). */
+function mediaHtml(item: MediaItem): string {
+  const ratio = ratioFromAspect(item.aspectRatio);
+  if (item.type === "video") {
+    if (isBunnyUrl(item.url)) {
+      const src = bunnyEmbedSrc(item.url);
+      return `<div data-ke-media class="rounded-2xl overflow-hidden my-2" style="position:relative;width:100%;aspect-ratio:${ratio ?? "16 / 9"};background:#000"><iframe src="${src}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay;encrypted-media;picture-in-picture;fullscreen" allowfullscreen></iframe></div>`;
+    }
+    return `<video data-ke-media src="${item.url}" controls playsinline class="rounded-2xl my-2" style="display:block;width:100%;height:auto;${ratio ? `aspect-ratio:${ratio};` : ""}background:#000"></video>`;
+  }
+  // Imagen: width 100% + height auto => conserva su proporción real (adaptativo).
+  return `<img data-ke-media src="${item.url}" class="rounded-2xl my-2" style="display:block;width:100%;height:auto;max-width:100%"/>`;
 }
 
 type SelectionKind = "image" | "text" | "other";
@@ -173,9 +216,13 @@ function SortableSectionRow({
 export function TemplateEditor({
   template,
   onBack,
+  userId,
+  creatorProfileId,
 }: {
   template: PortfolioTemplate;
   onBack: () => void;
+  userId?: string;
+  creatorProfileId?: string;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const selectedNodeRef = useRef<HTMLElement | null>(null);
@@ -188,6 +235,10 @@ export function TemplateEditor({
   const [selection, setSelection] = useState<Selection | null>(null);
   const [imageUrl, setImageUrl] = useState("");
   const [showImageInput, setShowImageInput] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  // 'replace' = cambia el medio seleccionado; 'insert' = inserta uno nuevo.
+  const [pickerMode, setPickerMode] = useState<"replace" | "insert">("replace");
+  const hasMediaLibrary = !!userId;
 
   const srcDoc = useMemo(
     () => prepareTemplate(template, template.tokens),
@@ -329,6 +380,50 @@ export function TemplateEditor({
     setShowImageInput(false);
     setImageUrl("");
   }, [imageUrl]);
+
+  // Abrir la biblioteca de medios (Bunny + portafolio).
+  const openMediaPicker = useCallback((mode: "replace" | "insert") => {
+    setPickerMode(mode);
+    setPickerOpen(true);
+  }, []);
+
+  // Coloca un medio (imagen o video) de forma adaptativa al aspecto real.
+  const handleMediaSelect = useCallback(
+    (item: MediaItem) => {
+      setPickerOpen(false);
+      const doc = getDoc();
+      if (!doc) return;
+      const html = mediaHtml(item);
+      const target = selectedNodeRef.current;
+
+      if (pickerMode === "replace" && target) {
+        // Si es imagen y el destino ya es <img>, basta cambiar el src (adaptativo).
+        if (item.type === "image" && target.tagName === "IMG") {
+          (target as HTMLImageElement).src = item.url;
+          (target as HTMLImageElement).removeAttribute("srcset");
+          target.style.height = "auto";
+          return;
+        }
+        // Si no, reemplazar el nodo por el medio adaptativo.
+        target.insertAdjacentHTML("afterend", html);
+        const added = target.nextElementSibling as HTMLElement | null;
+        target.remove();
+        if (added) selectElement(added);
+        return;
+      }
+
+      // Insertar nuevo medio debajo de la selección o al final.
+      if (target) {
+        target.insertAdjacentHTML("afterend", html);
+        const added = target.nextElementSibling as HTMLElement | null;
+        if (added) selectElement(added);
+      } else {
+        const last = doc.body.querySelector(":scope > section:last-of-type");
+        (last ?? doc.body).insertAdjacentHTML("beforeend", html);
+      }
+    },
+    [pickerMode, selectElement],
+  );
 
   const duplicateSelected = useCallback(() => {
     const el = selectedNodeRef.current;
@@ -568,8 +663,18 @@ export function TemplateEditor({
                 </button>
               ))}
             </div>
+            {hasMediaLibrary && (
+              <button
+                type="button"
+                onClick={() => openMediaPicker("insert")}
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-100"
+              >
+                <ImageIcon className="h-4 w-4" /> Imagen / Video (Bunny)
+              </button>
+            )}
             <p className="mt-2 text-xs text-slate-400">
-              Se inserta debajo del elemento seleccionado.
+              Se inserta debajo del elemento seleccionado. El medio se adapta a
+              su tamaño (vertical u horizontal).
             </p>
           </section>
 
@@ -625,15 +730,24 @@ export function TemplateEditor({
                   <Pencil className="h-4 w-4" /> Editar
                 </button>
               )}
-              {selection.kind === "image" && (
-                <button
-                  type="button"
-                  onClick={() => setShowImageInput((v) => !v)}
-                  className="ke-action"
-                >
-                  <ImageIcon className="h-4 w-4" /> Cambiar imagen
-                </button>
-              )}
+              {selection.kind === "image" &&
+                (hasMediaLibrary ? (
+                  <button
+                    type="button"
+                    onClick={() => openMediaPicker("replace")}
+                    className="ke-action"
+                  >
+                    <ImageIcon className="h-4 w-4" /> Cambiar imagen/video
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowImageInput((v) => !v)}
+                    className="ke-action"
+                  >
+                    <ImageIcon className="h-4 w-4" /> Cambiar imagen (URL)
+                  </button>
+                ))}
               <button
                 type="button"
                 onClick={duplicateSelected}
@@ -702,6 +816,17 @@ export function TemplateEditor({
           </div>
         </div>
       </main>
+
+      {hasMediaLibrary && (
+        <MediaLibraryPicker
+          open={pickerOpen}
+          onOpenChange={setPickerOpen}
+          onSelect={handleMediaSelect}
+          allowedTypes={["image", "video"]}
+          userId={userId!}
+          creatorProfileId={creatorProfileId}
+        />
+      )}
 
       <style>{`.ke-action{display:inline-flex;align-items:center;gap:.35rem;border-radius:.375rem;padding:.35rem .6rem;font-size:.8rem;font-weight:500;color:#334155}.ke-action:hover{background:#f1f5f9}`}</style>
     </div>
