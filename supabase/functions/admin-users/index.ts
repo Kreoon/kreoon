@@ -7,10 +7,14 @@ import { createLogger } from "../_shared/logger.ts";
 // SECURITY: No fallback - must be explicitly configured in environment
 const ROOT_ADMIN_EMAILS_RAW = Deno.env.get("ROOT_ADMIN_EMAILS");
 if (!ROOT_ADMIN_EMAILS_RAW) {
-  console.warn("[admin-users] WARNING: ROOT_ADMIN_EMAILS not configured. Root access disabled until configured.");
+  console.warn(
+    "[admin-users] WARNING: ROOT_ADMIN_EMAILS not configured. Root access disabled until configured.",
+  );
 }
 const ROOT_EMAILS = ROOT_ADMIN_EMAILS_RAW
-  ? ROOT_ADMIN_EMAILS_RAW.split(",").map(e => e.trim()).filter(Boolean)
+  ? ROOT_ADMIN_EMAILS_RAW.split(",")
+      .map((e) => e.trim())
+      .filter(Boolean)
   : [];
 
 // Actions that require ROOT access (destructive operations)
@@ -22,7 +26,7 @@ const ROOT_ONLY_ACTIONS = [
   "delete_product",
   "delete_notification",
   "delete_portfolio_post",
-  "delete_referral"
+  "delete_referral",
 ];
 
 serve(async (req) => {
@@ -34,25 +38,34 @@ serve(async (req) => {
   try {
     // Use native Supabase env vars when deployed to Kreoon directly
     // Falls back to KREOON_* vars for backwards compatibility
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('KREOON_SUPABASE_URL');
-    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || Deno.env.get('KREOON_SERVICE_ROLE_KEY');
+    const supabaseUrl =
+      Deno.env.get("SUPABASE_URL") || Deno.env.get("KREOON_SUPABASE_URL");
+    const serviceRoleKey =
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ||
+      Deno.env.get("KREOON_SERVICE_ROLE_KEY");
 
     if (!supabaseUrl || !serviceRoleKey) {
       logger.error("Database credentials not configured");
-      return new Response(JSON.stringify({ error: "Database credentials not configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      return new Response(
+        JSON.stringify({ error: "Database credentials not configured" }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Verify the caller has authorization header
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith("Bearer ")) {
       logger.warn("Request without authorization header");
-      return new Response(JSON.stringify({ error: "No authorization header" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      return new Response(
+        JSON.stringify({ error: "No authorization header" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Create admin client with service role
@@ -61,15 +74,23 @@ serve(async (req) => {
     });
 
     // Extract JWT token and verify using admin client (more reliable than anonKey)
-    const token = authHeader.replace('Bearer ', '');
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } =
+      await supabaseAdmin.auth.getUser(token);
 
     if (userError || !userData?.user) {
-      logger.warn("Invalid or expired token", { auth_error: userError?.message });
-      return new Response(JSON.stringify({ error: "Invalid or expired token - please log in again" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      logger.warn("Invalid or expired token", {
+        auth_error: userError?.message,
       });
+      return new Response(
+        JSON.stringify({
+          error: "Invalid or expired token - please log in again",
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const callerEmail = userData.user.email as string;
@@ -96,7 +117,19 @@ serve(async (req) => {
 
     // Parse body to get action
     const body = await req.json();
-    const { action, userId, email, role, clientId, contentId, conversationId, productId, notificationId, postId, referralId } = body;
+    const {
+      action,
+      userId,
+      email,
+      role,
+      clientId,
+      contentId,
+      conversationId,
+      productId,
+      notificationId,
+      postId,
+      referralId,
+    } = body;
 
     logger.info("Admin action requested", {
       action,
@@ -109,20 +142,36 @@ serve(async (req) => {
     if (ROOT_ONLY_ACTIONS.includes(action)) {
       // Destructive actions require ROOT access
       if (!isRootUser) {
-        logger.warn("Unauthorized ROOT action attempt", { action, caller_email: callerEmail });
-        return new Response(JSON.stringify({ error: "Unauthorized - Root access required for this action" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        logger.warn("Unauthorized ROOT action attempt", {
+          action,
+          caller_email: callerEmail,
         });
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized - Root access required for this action",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
     } else {
       // Non-destructive actions require platform admin OR root
       if (!isPlatformAdmin) {
-        logger.warn("Unauthorized admin access attempt", { action, caller_email: callerEmail });
-        return new Response(JSON.stringify({ error: "Unauthorized - Platform admin access required" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        logger.warn("Unauthorized admin access attempt", {
+          action,
+          caller_email: callerEmail,
         });
+        return new Response(
+          JSON.stringify({
+            error: "Unauthorized - Platform admin access required",
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
     }
 
@@ -135,7 +184,8 @@ serve(async (req) => {
     switch (action) {
       case "list_users": {
         // Get all users from auth
-        const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: authUsers, error: listError } =
+          await supabaseAdmin.auth.admin.listUsers();
 
         if (listError) {
           logger.error("Error listing users", listError);
@@ -143,54 +193,72 @@ serve(async (req) => {
         }
 
         // Get profiles and roles
-        const { data: profiles } = await supabaseAdmin.from("profiles").select("*");
-        const { data: userRoles } = await supabaseAdmin.from("user_roles").select("*");
+        const { data: profiles } = await supabaseAdmin
+          .from("profiles")
+          .select("*");
+        const { data: userRoles } = await supabaseAdmin
+          .from("user_roles")
+          .select("*");
 
         // Build list of auth user emails to check for missing root
-        const authUserEmails = new Set(authUsers.users.map(u => u.email?.toLowerCase()));
+        const authUserEmails = new Set(
+          authUsers.users.map((u) => u.email?.toLowerCase()),
+        );
 
-        const users = authUsers.users.map(u => {
-          const profile = profiles?.find(p => p.id === u.id);
-          const roles = userRoles?.filter(r => r.user_id === u.id).map(r => r.role) || [];
+        const users = authUsers.users.map((u) => {
+          const profile = profiles?.find((p) => p.id === u.id);
+          const roles =
+            userRoles?.filter((r) => r.user_id === u.id).map((r) => r.role) ||
+            [];
           const userAny = u as any;
           return {
             id: u.id,
             email: u.email,
-            full_name: profile?.full_name || u.user_metadata?.full_name || "Sin nombre",
+            full_name:
+              profile?.full_name || u.user_metadata?.full_name || "Sin nombre",
             avatar_url: profile?.avatar_url,
             roles,
             created_at: u.created_at,
             last_sign_in_at: u.last_sign_in_at,
             email_confirmed_at: u.email_confirmed_at,
-            banned: userAny.banned_until ? new Date(userAny.banned_until) > new Date() : false
+            banned: userAny.banned_until
+              ? new Date(userAny.banned_until) > new Date()
+              : false,
           };
         });
 
         // Check if any root users are missing from auth.users but exist in profiles
         for (const rootEmail of ROOT_EMAILS) {
           if (!authUserEmails.has(rootEmail.toLowerCase())) {
-            const rootProfile = profiles?.find(p => p.email?.toLowerCase() === rootEmail.toLowerCase());
+            const rootProfile = profiles?.find(
+              (p) => p.email?.toLowerCase() === rootEmail.toLowerCase(),
+            );
             if (rootProfile) {
-              const rootRoles = userRoles?.filter(r => r.user_id === rootProfile.id).map(r => r.role) || [];
+              const rootRoles =
+                userRoles
+                  ?.filter((r) => r.user_id === rootProfile.id)
+                  .map((r) => r.role) || [];
               users.unshift({
                 id: rootProfile.id,
                 email: rootProfile.email || rootEmail,
                 full_name: rootProfile.full_name || "Root Admin",
                 avatar_url: rootProfile.avatar_url,
-                roles: rootRoles.length > 0 ? rootRoles : ['admin'],
+                roles: rootRoles.length > 0 ? rootRoles : ["admin"],
                 created_at: rootProfile.created_at,
                 last_sign_in_at: undefined,
                 email_confirmed_at: rootProfile.created_at,
-                banned: false
+                banned: false,
               });
-              logger.debug("Added root user from profiles", { root_email: rootEmail });
+              logger.debug("Added root user from profiles", {
+                root_email: rootEmail,
+              });
             }
           }
         }
 
         logger.info("Users listed", { count: users.length });
         return new Response(JSON.stringify({ users }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -198,18 +266,18 @@ serve(async (req) => {
         if (!email) {
           return new Response(JSON.stringify({ error: "Email required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         // Always redirect password recovery to the primary domain.
-        const redirectTo = 'https://kreoon.com/reset-password';
+        const redirectTo = "https://kreoon.com/reset-password";
 
         // Generate link; if user does not exist in auth yet, create it and retry.
         let resetError: any = null;
         {
           const res = await supabaseAdmin.auth.admin.generateLink({
-            type: 'recovery',
+            type: "recovery",
             email,
             options: { redirectTo },
           });
@@ -218,31 +286,41 @@ serve(async (req) => {
 
         if (resetError) {
           const msg = String(resetError.message || resetError);
-          const isNotFound = /user\s*not\s*found|not\s*found|no\s*user/i.test(msg);
+          const isNotFound = /user\s*not\s*found|not\s*found|no\s*user/i.test(
+            msg,
+          );
           if (isNotFound) {
             const tempPassword = crypto.randomUUID();
-            const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-              email,
-              password: tempPassword,
-              email_confirm: true,
-            });
+            const { error: createError } =
+              await supabaseAdmin.auth.admin.createUser({
+                email,
+                password: tempPassword,
+                email_confirm: true,
+              });
             if (createError) throw createError;
 
-            const { error: retryError } = await supabaseAdmin.auth.admin.generateLink({
-              type: 'recovery',
-              email,
-              options: { redirectTo },
-            });
+            const { error: retryError } =
+              await supabaseAdmin.auth.admin.generateLink({
+                type: "recovery",
+                email,
+                options: { redirectTo },
+              });
             if (retryError) throw retryError;
           } else {
-            logger.error("Error sending password reset", resetError instanceof Error ? resetError : new Error(String(resetError)), { email });
+            logger.error(
+              "Error sending password reset",
+              resetError instanceof Error
+                ? resetError
+                : new Error(String(resetError)),
+              { email },
+            );
             throw resetError;
           }
         }
 
         logger.info("Password reset sent", { email });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -250,32 +328,37 @@ serve(async (req) => {
         // Directly set a password for a user (bypasses email rate limits)
         const { password: newPassword } = body;
         if (!email || !newPassword) {
-          return new Response(JSON.stringify({ error: "Email and password required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Email and password required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Find user by email
-        const { data: users, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+        const { data: users, error: listErr } =
+          await supabaseAdmin.auth.admin.listUsers();
         if (listErr) throw listErr;
 
-        const targetUser = users.users.find(u => u.email === email);
+        const targetUser = users.users.find((u) => u.email === email);
         if (!targetUser) {
           return new Response(JSON.stringify({ error: "User not found" }), {
             status: 404,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
-          password: newPassword,
-        });
+        const { error: updateErr } =
+          await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
+            password: newPassword,
+          });
         if (updateErr) throw updateErr;
 
         logger.info("Password set for user", { email });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -283,42 +366,56 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         // Get current user status
-        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: userData } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
         const userAny = userData?.user as any;
-        const isBanned = userAny?.banned_until && new Date(userAny.banned_until) > new Date();
+        const isBanned =
+          userAny?.banned_until && new Date(userAny.banned_until) > new Date();
 
         if (isBanned) {
           // Unban
-          const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-            ban_duration: "none"
-          });
+          const { error } = await supabaseAdmin.auth.admin.updateUserById(
+            userId,
+            {
+              ban_duration: "none",
+            },
+          );
           if (error) throw error;
           logger.info("User unbanned", { target_user_id: userId });
         } else {
           // Ban for 100 years (effectively permanent)
-          const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
-            ban_duration: "876000h" // ~100 years
-          });
+          const { error } = await supabaseAdmin.auth.admin.updateUserById(
+            userId,
+            {
+              ban_duration: "876000h", // ~100 years
+            },
+          );
           if (error) throw error;
           logger.warn("User banned", { target_user_id: userId });
         }
 
-        return new Response(JSON.stringify({ success: true, banned: !isBanned }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        return new Response(
+          JSON.stringify({ success: true, banned: !isBanned }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       case "update_role": {
         if (!userId || !role) {
-          return new Response(JSON.stringify({ error: "User ID and role required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "User ID and role required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Check if role already exists
@@ -338,9 +435,12 @@ serve(async (req) => {
             .eq("role", role);
 
           if (error) throw error;
-          logger.info("Role removed from user", { target_user_id: userId, role });
+          logger.info("Role removed from user", {
+            target_user_id: userId,
+            role,
+          });
           return new Response(JSON.stringify({ success: true, added: false }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         } else {
           // Add role
@@ -351,7 +451,7 @@ serve(async (req) => {
           if (error) throw error;
           logger.info("Role added to user", { target_user_id: userId, role });
           return new Response(JSON.stringify({ success: true, added: true }), {
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }
@@ -363,7 +463,7 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
@@ -386,7 +486,10 @@ serve(async (req) => {
             .from("organization_members")
             .update({ role: activeRole })
             .eq("user_id", userId);
-          if (omError) logger.warn("Error updating organization_members", { error: omError.message });
+          if (omError)
+            logger.warn("Error updating organization_members", {
+              error: omError.message,
+            });
 
           if (memberships && memberships.length > 0) {
             for (const m of memberships) {
@@ -396,13 +499,11 @@ serve(async (req) => {
                 .eq("user_id", userId)
                 .eq("organization_id", m.organization_id);
 
-              await supabaseAdmin
-                .from("organization_member_roles")
-                .insert({
-                  user_id: userId,
-                  organization_id: m.organization_id,
-                  role: activeRole,
-                });
+              await supabaseAdmin.from("organization_member_roles").insert({
+                user_id: userId,
+                organization_id: m.organization_id,
+                role: activeRole,
+              });
             }
           }
         } else {
@@ -424,7 +525,7 @@ serve(async (req) => {
           active_role: activeRole || null,
         });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -432,40 +533,71 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         logger.warn("Starting user deletion", { target_user_id: userId });
 
         // Don't allow deleting any root user
-        const { data: targetUserData, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: targetUserData, error: getUserError } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
         if (getUserError) {
-          logger.warn("Error getting user for deletion check", { error: getUserError.message, target_user_id: userId });
+          logger.warn("Error getting user for deletion check", {
+            error: getUserError.message,
+            target_user_id: userId,
+          });
           // Continue anyway - user might not exist in auth but exists in profiles
         }
 
-        if (targetUserData?.user?.email && ROOT_EMAILS.includes(targetUserData.user.email)) {
-          logger.warn("Attempted to delete root user", { target_user_id: userId });
-          return new Response(JSON.stringify({ error: "Cannot delete root user" }), {
-            status: 403,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+        if (
+          targetUserData?.user?.email &&
+          ROOT_EMAILS.includes(targetUserData.user.email)
+        ) {
+          logger.warn("Attempted to delete root user", {
+            target_user_id: userId,
           });
+          return new Response(
+            JSON.stringify({ error: "Cannot delete root user" }),
+            {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Clean up all related data before deleting auth user
         // Using a helper to log errors but continue
-        const cleanupTable = async (table: string, column: string, value: string, operation: 'delete' | 'nullify' = 'delete') => {
+        const cleanupTable = async (
+          table: string,
+          column: string,
+          value: string,
+          operation: "delete" | "nullify" = "delete",
+        ) => {
           try {
-            if (operation === 'delete') {
-              const { error } = await supabaseAdmin.from(table).delete().eq(column, value);
-              if (error) logger.warn(`Cleanup ${table}.${column}`, { error: error.message });
+            if (operation === "delete") {
+              const { error } = await supabaseAdmin
+                .from(table)
+                .delete()
+                .eq(column, value);
+              if (error)
+                logger.warn(`Cleanup ${table}.${column}`, {
+                  error: error.message,
+                });
             } else {
-              const { error } = await supabaseAdmin.from(table).update({ [column]: null }).eq(column, value);
-              if (error) logger.warn(`Nullify ${table}.${column}`, { error: error.message });
+              const { error } = await supabaseAdmin
+                .from(table)
+                .update({ [column]: null })
+                .eq(column, value);
+              if (error)
+                logger.warn(`Nullify ${table}.${column}`, {
+                  error: error.message,
+                });
             }
           } catch (e) {
-            logger.warn(`Failed cleanup ${table}.${column}`, { error: String(e) });
+            logger.warn(`Failed cleanup ${table}.${column}`, {
+              error: String(e),
+            });
           }
         };
 
@@ -491,10 +623,10 @@ serve(async (req) => {
         await cleanupTable("chat_messages", "sender_id", userId);
 
         // ─── Content (nullify, don't delete) ───
-        await cleanupTable("content", "creator_id", userId, 'nullify');
-        await cleanupTable("content", "editor_id", userId, 'nullify');
-        await cleanupTable("content", "script_approved_by", userId, 'nullify');
-        await cleanupTable("content", "approved_by", userId, 'nullify');
+        await cleanupTable("content", "creator_id", userId, "nullify");
+        await cleanupTable("content", "editor_id", userId, "nullify");
+        await cleanupTable("content", "script_approved_by", userId, "nullify");
+        await cleanupTable("content", "approved_by", userId, "nullify");
         await cleanupTable("content_comments", "user_id", userId);
         await cleanupTable("content_history", "user_id", userId);
         await cleanupTable("content_likes", "user_id", userId);
@@ -509,14 +641,29 @@ serve(async (req) => {
         await cleanupTable("creator_profiles", "user_id", userId);
         await cleanupTable("saved_creators", "user_id", userId);
         await cleanupTable("campaign_applications", "creator_id", userId);
-        await cleanupTable("marketplace_projects", "creator_id", userId, 'nullify');
-        await cleanupTable("marketplace_projects", "editor_id", userId, 'nullify');
-        await cleanupTable("project_deliveries", "creator_id", userId, 'nullify');
-        await cleanupTable("creator_reviews", "reviewer_id", userId, 'nullify');
+        await cleanupTable(
+          "marketplace_projects",
+          "creator_id",
+          userId,
+          "nullify",
+        );
+        await cleanupTable(
+          "marketplace_projects",
+          "editor_id",
+          userId,
+          "nullify",
+        );
+        await cleanupTable(
+          "project_deliveries",
+          "creator_id",
+          userId,
+          "nullify",
+        );
+        await cleanupTable("creator_reviews", "reviewer_id", userId, "nullify");
 
         // ─── Referrals ───
         await cleanupTable("referrals", "referrer_id", userId);
-        await cleanupTable("referrals", "referred_user_id", userId, 'nullify');
+        await cleanupTable("referrals", "referred_user_id", userId, "nullify");
         await cleanupTable("referral_commissions", "referrer_id", userId);
 
         // ─── Unified Finance ───
@@ -535,9 +682,24 @@ serve(async (req) => {
         await cleanupTable("marketplace_reputation", "user_id", userId);
 
         // ─── CRM ───
-        await cleanupTable("platform_crm_leads", "converted_user_id", userId, 'nullify');
-        await cleanupTable("platform_crm_leads", "assigned_to", userId, 'nullify');
-        await cleanupTable("platform_crm_activities", "performed_by", userId, 'nullify');
+        await cleanupTable(
+          "platform_crm_leads",
+          "converted_user_id",
+          userId,
+          "nullify",
+        );
+        await cleanupTable(
+          "platform_crm_leads",
+          "assigned_to",
+          userId,
+          "nullify",
+        );
+        await cleanupTable(
+          "platform_crm_activities",
+          "performed_by",
+          userId,
+          "nullify",
+        );
         await cleanupTable("platform_user_health", "user_id", userId);
 
         // ─── Followers ───
@@ -546,20 +708,29 @@ serve(async (req) => {
 
         // ─── Brands ───
         await cleanupTable("brand_members", "user_id", userId);
-        await cleanupTable("brands", "owner_id", userId, 'nullify');
+        await cleanupTable("brands", "owner_id", userId, "nullify");
 
         // ─── Finally delete profile ───
         await cleanupTable("profiles", "id", userId);
 
-        logger.info("Using SQL cascade function to delete user", { target_user_id: userId });
-
-        // Use the robust SQL function that handles all FK constraints
-        const { data: deleteResult, error: rpcError } = await supabaseAdmin.rpc('admin_delete_user_cascade', {
-          target_user_id: userId
+        logger.info("Using SQL cascade function to delete user", {
+          target_user_id: userId,
         });
 
+        // Use the robust SQL function that handles all FK constraints
+        const { data: deleteResult, error: rpcError } = await supabaseAdmin.rpc(
+          "admin_delete_user_cascade",
+          {
+            target_user_id: userId,
+          },
+        );
+
         if (rpcError) {
-          logger.error("RPC cascade delete failed", rpcError instanceof Error ? rpcError : new Error(rpcError.message), { target_user_id: userId });
+          logger.error(
+            "RPC cascade delete failed",
+            rpcError instanceof Error ? rpcError : new Error(rpcError.message),
+            { target_user_id: userId },
+          );
           throw new Error(`Failed to delete user: ${rpcError.message}`);
         }
 
@@ -576,7 +747,7 @@ serve(async (req) => {
           tables_cleaned: deleteResult?.deleted_from,
         });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -586,79 +757,121 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         // Get user info from auth
-        const { data: authUserData, error: authUserErr } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: authUserData, error: authUserErr } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
         if (authUserErr) {
-          logger.error("Error getting auth user for create_profile", authUserErr, { target_user_id: userId });
+          logger.error(
+            "Error getting auth user for create_profile",
+            authUserErr,
+            { target_user_id: userId },
+          );
           throw authUserErr;
         }
 
-        const userEmail = authUserData.user.email || email || '';
-        const userName = fullName
-          || authUserData.user.user_metadata?.full_name
-          || authUserData.user.user_metadata?.name
-          || userEmail.split('@')[0]
-          || 'Usuario';
+        const userEmail = authUserData.user.email || email || "";
+        const userName =
+          fullName ||
+          authUserData.user.user_metadata?.full_name ||
+          authUserData.user.user_metadata?.name ||
+          userEmail.split("@")[0] ||
+          "Usuario";
 
         // Use UPSERT - creates if not exists, updates if exists
         const { error: profileError } = await supabaseAdmin
           .from("profiles")
-          .upsert({
-            id: userId,
-            email: userEmail,
-            full_name: userName,
-            is_active: true,
-            current_organization_id: profileOrgId || null,
-          }, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
+          .upsert(
+            {
+              id: userId,
+              email: userEmail,
+              full_name: userName,
+              is_active: true,
+              current_organization_id: profileOrgId || null,
+            },
+            {
+              onConflict: "id",
+              ignoreDuplicates: false,
+            },
+          );
 
         if (profileError) {
-          logger.error("Error upserting profile", profileError, { target_user_id: userId });
+          logger.error("Error upserting profile", profileError, {
+            target_user_id: userId,
+          });
           throw profileError;
         }
 
-        logger.info("Profile created/updated", { target_user_id: userId, email: userEmail });
+        logger.info("Profile created/updated", {
+          target_user_id: userId,
+          email: userEmail,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "assign_to_org": {
         // Assign a user to an organization with a specific role
         const { organizationId, assignRole, makeOwner: assignOwner } = body;
-        logger.debug("assign_to_org params", { target_user_id: userId, organizationId, assignRole });
+        logger.debug("assign_to_org params", {
+          target_user_id: userId,
+          organizationId,
+          assignRole,
+        });
 
         if (!userId || !organizationId) {
-          logger.warn("Missing required params for assign_to_org", { has_user_id: !!userId, has_org_id: !!organizationId });
-          return new Response(JSON.stringify({
-            error: `Missing required params: ${!userId ? 'userId ' : ''}${!organizationId ? 'organizationId' : ''}`.trim()
-          }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+          logger.warn("Missing required params for assign_to_org", {
+            has_user_id: !!userId,
+            has_org_id: !!organizationId,
           });
+          return new Response(
+            JSON.stringify({
+              error:
+                `Missing required params: ${!userId ? "userId " : ""}${!organizationId ? "organizationId" : ""}`.trim(),
+            }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Get user info from auth
-        const { data: authUser, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(userId);
+        const { data: authUser, error: authUserError } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
         if (authUserError) {
-          logger.error("Error getting auth user for assign_to_org", authUserError, { target_user_id: userId });
+          logger.error(
+            "Error getting auth user for assign_to_org",
+            authUserError,
+            { target_user_id: userId },
+          );
           throw authUserError;
         }
 
-        const userEmail = authUser.user.email || '';
-        const fullName = authUser.user.user_metadata?.full_name
-          || authUser.user.user_metadata?.name
-          || userEmail.split('@')[0]
-          || 'Usuario';
+        const userEmail = authUser.user.email || "";
+        const fullName =
+          authUser.user.user_metadata?.full_name ||
+          authUser.user.user_metadata?.name ||
+          userEmail.split("@")[0] ||
+          "Usuario";
         // GUARD: Never assign 'ambassador' as active_role - it's a badge, not a functional role
-        const functionalRoles = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor', 'client'];
-        const roleToAssign = (assignRole && functionalRoles.includes(assignRole)) ? assignRole : 'creator';
+        const functionalRoles = [
+          "admin",
+          "team_leader",
+          "strategist",
+          "trafficker",
+          "creator",
+          "editor",
+          "client",
+        ];
+        const roleToAssign =
+          assignRole && functionalRoles.includes(assignRole)
+            ? assignRole
+            : "creator";
 
         logger.info("Assigning user to org", {
           target_user_id: userId,
@@ -681,12 +894,16 @@ serve(async (req) => {
         const { error: upsertError } = await supabaseAdmin
           .from("profiles")
           .upsert(profileData, {
-            onConflict: 'id',
-            ignoreDuplicates: false
+            onConflict: "id",
+            ignoreDuplicates: false,
           });
 
         if (upsertError) {
-          logger.error("Error upserting profile in assign_to_org", upsertError, { target_user_id: userId });
+          logger.error(
+            "Error upserting profile in assign_to_org",
+            upsertError,
+            { target_user_id: userId },
+          );
           throw new Error(`Failed to upsert profile: ${upsertError.message}`);
         }
 
@@ -718,7 +935,10 @@ serve(async (req) => {
           .insert(memberData);
 
         if (memberError) {
-          logger.error("Error inserting organization member", memberError, { target_user_id: userId, organization_id: organizationId });
+          logger.error("Error inserting organization member", memberError, {
+            target_user_id: userId,
+            organization_id: organizationId,
+          });
           throw memberError;
         }
 
@@ -733,7 +953,10 @@ serve(async (req) => {
             });
 
           if (roleError) {
-            logger.warn("Error inserting organization_member_roles (membership created)", { error: roleError.message });
+            logger.warn(
+              "Error inserting organization_member_roles (membership created)",
+              { error: roleError.message },
+            );
             // Don't throw - membership was created
           }
         }
@@ -744,7 +967,7 @@ serve(async (req) => {
           role: roleToAssign || null,
         });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -754,7 +977,7 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
@@ -769,10 +992,15 @@ serve(async (req) => {
             .maybeSingle();
 
           if (!membership) {
-            return new Response(JSON.stringify({ error: "User is not a member of any organization" }), {
-              status: 400,
-              headers: { ...corsHeaders, "Content-Type": "application/json" }
-            });
+            return new Response(
+              JSON.stringify({
+                error: "User is not a member of any organization",
+              }),
+              {
+                status: 400,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              },
+            );
           }
           targetOrgId = membership.organization_id;
         }
@@ -789,7 +1017,10 @@ serve(async (req) => {
           .eq("organization_id", targetOrgId);
 
         if (ownerError) {
-          logger.error("Error setting owner", ownerError, { target_user_id: userId, organization_id: targetOrgId });
+          logger.error("Error setting owner", ownerError, {
+            target_user_id: userId,
+            organization_id: targetOrgId,
+          });
           throw ownerError;
         }
 
@@ -798,9 +1029,12 @@ serve(async (req) => {
           organization_id: targetOrgId,
           is_owner: setOwner,
         });
-        return new Response(JSON.stringify({ success: true, is_owner: setOwner }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
+        return new Response(
+          JSON.stringify({ success: true, is_owner: setOwner }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       case "remove_from_org": {
@@ -808,7 +1042,7 @@ serve(async (req) => {
         if (!userId) {
           return new Response(JSON.stringify({ error: "User ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
@@ -830,9 +1064,11 @@ serve(async (req) => {
           .update({ current_organization_id: null })
           .eq("id", userId);
 
-        logger.info("User removed from all organizations", { target_user_id: userId });
+        logger.info("User removed from all organizations", {
+          target_user_id: userId,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -842,102 +1078,163 @@ serve(async (req) => {
         if (!clientId) {
           return new Response(JSON.stringify({ error: "Client ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
         // Delete related data first
         await supabaseAdmin.from("products").delete().eq("client_id", clientId);
-        await supabaseAdmin.from("client_packages").delete().eq("client_id", clientId);
-        await supabaseAdmin.from("content").update({ client_id: null }).eq("client_id", clientId);
+        await supabaseAdmin
+          .from("client_packages")
+          .delete()
+          .eq("client_id", clientId);
+        await supabaseAdmin
+          .from("content")
+          .update({ client_id: null })
+          .eq("client_id", clientId);
 
-        const { error } = await supabaseAdmin.from("clients").delete().eq("id", clientId);
+        const { error } = await supabaseAdmin
+          .from("clients")
+          .delete()
+          .eq("id", clientId);
         if (error) throw error;
 
         logger.warn("Client deleted by root", { client_id: clientId });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "delete_content": {
         if (!contentId) {
-          return new Response(JSON.stringify({ error: "Content ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Content ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Delete related data
-        await supabaseAdmin.from("content_comments").delete().eq("content_id", contentId);
-        await supabaseAdmin.from("content_history").delete().eq("content_id", contentId);
-        await supabaseAdmin.from("content_likes").delete().eq("content_id", contentId);
-        await supabaseAdmin.from("content_collaborators").delete().eq("content_id", contentId);
-        await supabaseAdmin.from("chat_conversations").update({ content_id: null }).eq("content_id", contentId);
+        await supabaseAdmin
+          .from("content_comments")
+          .delete()
+          .eq("content_id", contentId);
+        await supabaseAdmin
+          .from("content_history")
+          .delete()
+          .eq("content_id", contentId);
+        await supabaseAdmin
+          .from("content_likes")
+          .delete()
+          .eq("content_id", contentId);
+        await supabaseAdmin
+          .from("content_collaborators")
+          .delete()
+          .eq("content_id", contentId);
+        await supabaseAdmin
+          .from("chat_conversations")
+          .update({ content_id: null })
+          .eq("content_id", contentId);
 
-        const { error } = await supabaseAdmin.from("content").delete().eq("id", contentId);
+        const { error } = await supabaseAdmin
+          .from("content")
+          .delete()
+          .eq("id", contentId);
         if (error) throw error;
 
         logger.warn("Content deleted by root", { content_id: contentId });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "delete_conversation": {
         if (!conversationId) {
-          return new Response(JSON.stringify({ error: "Conversation ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Conversation ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Delete messages and participants first
-        await supabaseAdmin.from("chat_messages").delete().eq("conversation_id", conversationId);
-        await supabaseAdmin.from("chat_participants").delete().eq("conversation_id", conversationId);
+        await supabaseAdmin
+          .from("chat_messages")
+          .delete()
+          .eq("conversation_id", conversationId);
+        await supabaseAdmin
+          .from("chat_participants")
+          .delete()
+          .eq("conversation_id", conversationId);
 
-        const { error } = await supabaseAdmin.from("chat_conversations").delete().eq("id", conversationId);
+        const { error } = await supabaseAdmin
+          .from("chat_conversations")
+          .delete()
+          .eq("id", conversationId);
         if (error) throw error;
 
-        logger.warn("Conversation deleted by root", { conversation_id: conversationId });
+        logger.warn("Conversation deleted by root", {
+          conversation_id: conversationId,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "delete_product": {
         if (!productId) {
-          return new Response(JSON.stringify({ error: "Product ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Product ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
-        await supabaseAdmin.from("content").update({ product_id: null }).eq("product_id", productId);
+        await supabaseAdmin
+          .from("content")
+          .update({ product_id: null })
+          .eq("product_id", productId);
 
-        const { error } = await supabaseAdmin.from("products").delete().eq("id", productId);
+        const { error } = await supabaseAdmin
+          .from("products")
+          .delete()
+          .eq("id", productId);
         if (error) throw error;
 
         logger.warn("Product deleted by root", { product_id: productId });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "delete_notification": {
         if (!notificationId) {
-          return new Response(JSON.stringify({ error: "Notification ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Notification ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
-        const { error } = await supabaseAdmin.from("notifications").delete().eq("id", notificationId);
+        const { error } = await supabaseAdmin
+          .from("notifications")
+          .delete()
+          .eq("id", notificationId);
         if (error) throw error;
 
-        logger.info("Notification deleted by root", { notification_id: notificationId });
+        logger.info("Notification deleted by root", {
+          notification_id: notificationId,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
@@ -945,45 +1242,60 @@ serve(async (req) => {
         if (!postId) {
           return new Response(JSON.stringify({ error: "Post ID required" }), {
             status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
 
-        const { error } = await supabaseAdmin.from("portfolio_posts").delete().eq("id", postId);
+        const { error } = await supabaseAdmin
+          .from("portfolio_posts")
+          .delete()
+          .eq("id", postId);
         if (error) throw error;
 
         logger.warn("Portfolio post deleted by root", { post_id: postId });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "delete_referral": {
         if (!referralId) {
-          return new Response(JSON.stringify({ error: "Referral ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "Referral ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
-        await supabaseAdmin.from("referral_commissions").delete().eq("referral_id", referralId);
+        await supabaseAdmin
+          .from("referral_commissions")
+          .delete()
+          .eq("referral_id", referralId);
 
-        const { error } = await supabaseAdmin.from("referrals").delete().eq("id", referralId);
+        const { error } = await supabaseAdmin
+          .from("referrals")
+          .delete()
+          .eq("id", referralId);
         if (error) throw error;
 
         logger.warn("Referral deleted by root", { referral_id: referralId });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "link_to_company": {
         // Link a user to a company via client_users
         if (!userId || !clientId) {
-          return new Response(JSON.stringify({ error: "User ID and Client ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "User ID and Client ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         // Check if already linked
@@ -995,10 +1307,13 @@ serve(async (req) => {
           .maybeSingle();
 
         if (existingLink) {
-          return new Response(JSON.stringify({ error: "User is already linked to this company" }), {
-            status: 409,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "User is already linked to this company" }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         const { error: linkError } = await supabaseAdmin
@@ -1006,23 +1321,32 @@ serve(async (req) => {
           .insert({ user_id: userId, client_id: clientId, role: "viewer" });
 
         if (linkError) {
-          logger.error("Error linking user to company", linkError, { target_user_id: userId, client_id: clientId });
+          logger.error("Error linking user to company", linkError, {
+            target_user_id: userId,
+            client_id: clientId,
+          });
           throw linkError;
         }
 
-        logger.info("User linked to company", { target_user_id: userId, client_id: clientId });
+        logger.info("User linked to company", {
+          target_user_id: userId,
+          client_id: clientId,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "unlink_from_company": {
         // Remove a user from a company via client_users
         if (!userId || !clientId) {
-          return new Response(JSON.stringify({ error: "User ID and Client ID required" }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" }
-          });
+          return new Response(
+            JSON.stringify({ error: "User ID and Client ID required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
         }
 
         const { error: unlinkError } = await supabaseAdmin
@@ -1032,46 +1356,587 @@ serve(async (req) => {
           .eq("client_id", clientId);
 
         if (unlinkError) {
-          logger.error("Error unlinking user from company", unlinkError, { target_user_id: userId, client_id: clientId });
+          logger.error("Error unlinking user from company", unlinkError, {
+            target_user_id: userId,
+            client_id: clientId,
+          });
           throw unlinkError;
         }
 
-        logger.info("User unlinked from company", { target_user_id: userId, client_id: clientId });
+        logger.info("User unlinked from company", {
+          target_user_id: userId,
+          client_id: clientId,
+        });
         return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       case "list_all_entities": {
         // Get counts of all entities for the admin dashboard
-        const [clients, content, conversations, products, notifications, portfolioPosts, referrals] = await Promise.all([
-          supabaseAdmin.from("clients").select("id, name, user_id, created_at").order("created_at", { ascending: false }),
-          supabaseAdmin.from("content").select("id, title, client_id, creator_id, status, created_at").order("created_at", { ascending: false }),
-          supabaseAdmin.from("chat_conversations").select("id, name, is_group, created_at, created_by").order("created_at", { ascending: false }),
-          supabaseAdmin.from("products").select("id, name, client_id, created_at").order("created_at", { ascending: false }),
-          supabaseAdmin.from("notifications").select("id, title, user_id, type, created_at").order("created_at", { ascending: false }).limit(100),
-          supabaseAdmin.from("portfolio_posts").select("id, user_id, media_type, created_at").order("created_at", { ascending: false }),
-          supabaseAdmin.from("referrals").select("id, referrer_id, referred_email, status, created_at").order("created_at", { ascending: false }),
+        const [
+          clients,
+          content,
+          conversations,
+          products,
+          notifications,
+          portfolioPosts,
+          referrals,
+        ] = await Promise.all([
+          supabaseAdmin
+            .from("clients")
+            .select("id, name, user_id, created_at")
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("content")
+            .select("id, title, client_id, creator_id, status, created_at")
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("chat_conversations")
+            .select("id, name, is_group, created_at, created_by")
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("products")
+            .select("id, name, client_id, created_at")
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("notifications")
+            .select("id, title, user_id, type, created_at")
+            .order("created_at", { ascending: false })
+            .limit(100),
+          supabaseAdmin
+            .from("portfolio_posts")
+            .select("id, user_id, media_type, created_at")
+            .order("created_at", { ascending: false }),
+          supabaseAdmin
+            .from("referrals")
+            .select("id, referrer_id, referred_email, status, created_at")
+            .order("created_at", { ascending: false }),
         ]);
 
         logger.info("All entities listed");
-        return new Response(JSON.stringify({
-          clients: clients.data || [],
-          content: content.data || [],
-          conversations: conversations.data || [],
-          products: products.data || [],
-          notifications: notifications.data || [],
-          portfolioPosts: portfolioPosts.data || [],
-          referrals: referrals.data || [],
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        return new Response(
+          JSON.stringify({
+            clients: clients.data || [],
+            content: content.data || [],
+            conversations: conversations.data || [],
+            products: products.data || [],
+            notifications: notifications.data || [],
+            portfolioPosts: portfolioPosts.data || [],
+            referrals: referrals.data || [],
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      // ====================================================================
+      // PLATFORM BANS — usuario / IP / email
+      // ====================================================================
+
+      case "ban_user": {
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const reason: string | null = body.reason ?? null;
+        const expiresAt: string | null = body.expiresAt ?? null;
+
+        // No permitir banear a un root user
+        const { data: targetData } =
+          await supabaseAdmin.auth.admin.getUserById(userId);
+        const targetEmail = targetData?.user?.email ?? null;
+        if (targetEmail && ROOT_EMAILS.includes(targetEmail)) {
+          logger.warn("Attempted to ban root user", { target_user_id: userId });
+          return new Response(
+            JSON.stringify({ error: "Cannot ban root user" }),
+            {
+              status: 403,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        // Calcular duracion del ban para Supabase Auth (impide login + refresh).
+        // Sin expiracion => permanente (~100 anios).
+        let banDuration = "876000h";
+        if (expiresAt) {
+          const ms = new Date(expiresAt).getTime() - Date.now();
+          if (isNaN(ms) || ms <= 0) {
+            return new Response(
+              JSON.stringify({ error: "expiresAt must be a future date" }),
+              {
+                status: 400,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              },
+            );
+          }
+          banDuration = `${Math.ceil(ms / 3_600_000)}h`;
+        }
+
+        const { error: banErr } = await supabaseAdmin.auth.admin.updateUserById(
+          userId,
+          {
+            ban_duration: banDuration,
+          },
+        );
+        if (banErr) throw banErr;
+
+        // Desactivar bans previos del mismo usuario y registrar el nuevo (historial)
+        await supabaseAdmin
+          .from("user_bans")
+          .update({ is_active: false })
+          .eq("user_id", userId)
+          .eq("is_active", true);
+
+        const { error: insErr } = await supabaseAdmin.from("user_bans").insert({
+          user_id: userId,
+          email: targetEmail,
+          reason,
+          banned_by: callerId,
+          expires_at: expiresAt,
+          is_active: true,
+        });
+        if (insErr) throw insErr;
+
+        // Opcional: bloquear tambien las IPs y/o dispositivos conocidos del usuario
+        const blockedIpsCount = { ips: 0, devices: 0 };
+        if (body.alsoBlockIps === true || body.alsoBlockDevices === true) {
+          const { data: ipRows } = await supabaseAdmin
+            .from("user_ip_log")
+            .select("ip_address, device_id")
+            .eq("user_id", userId);
+
+          if (body.alsoBlockIps === true) {
+            const ips = [
+              ...new Set(
+                (ipRows || [])
+                  .map((r) => r.ip_address)
+                  .filter((v) => v && v !== "unknown"),
+              ),
+            ];
+            for (const ipAddr of ips) {
+              const { data: already } = await supabaseAdmin
+                .from("blocked_ips")
+                .select("id")
+                .eq("ip_address", ipAddr)
+                .eq("is_active", true)
+                .maybeSingle();
+              if (!already) {
+                await supabaseAdmin.from("blocked_ips").insert({
+                  ip_address: ipAddr,
+                  reason: reason || `Ban usuario ${targetEmail ?? userId}`,
+                  blocked_by: callerId,
+                  expires_at: expiresAt,
+                  is_active: true,
+                });
+                blockedIpsCount.ips++;
+              }
+            }
+          }
+
+          if (body.alsoBlockDevices === true) {
+            const devices = [
+              ...new Set(
+                (ipRows || [])
+                  .map((r) => r.device_id)
+                  .filter((v) => v && v !== ""),
+              ),
+            ];
+            for (const dev of devices) {
+              const { data: already } = await supabaseAdmin
+                .from("blocked_devices")
+                .select("id")
+                .eq("device_id", dev)
+                .eq("is_active", true)
+                .maybeSingle();
+              if (!already) {
+                await supabaseAdmin.from("blocked_devices").insert({
+                  device_id: dev,
+                  reason: reason || `Ban usuario ${targetEmail ?? userId}`,
+                  blocked_by: callerId,
+                  expires_at: expiresAt,
+                  is_active: true,
+                });
+                blockedIpsCount.devices++;
+              }
+            }
+          }
+        }
+
+        // NOTA: el access token vigente del usuario sigue valido hasta expirar (~1h),
+        // pero ban_duration invalida el refresh token y el chequeo is_user_banned en
+        // useAuth.fetchUserData fuerza signOut en la siguiente carga. supabase-js v2 no
+        // expone revocacion de sesion por userId, por lo que no se invoca aqui.
+        logger.warn("User banned (platform)", {
+          target_user_id: userId,
+          expires_at: expiresAt,
+        });
+        return new Response(
+          JSON.stringify({
+            success: true,
+            banned: true,
+            blockedIps: blockedIpsCount.ips,
+            blockedDevices: blockedIpsCount.devices,
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      case "unban_user": {
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { error: unbanErr } =
+          await supabaseAdmin.auth.admin.updateUserById(userId, {
+            ban_duration: "none",
+          });
+        if (unbanErr) throw unbanErr;
+
+        const { error: updErr } = await supabaseAdmin
+          .from("user_bans")
+          .update({
+            is_active: false,
+            unbanned_by: callerId,
+            unbanned_at: new Date().toISOString(),
+          })
+          .eq("user_id", userId)
+          .eq("is_active", true);
+        if (updErr) throw updErr;
+
+        logger.info("User unbanned (platform)", { target_user_id: userId });
+        return new Response(JSON.stringify({ success: true, banned: false }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_user_bans": {
+        const { data: bans, error: bansErr } = await supabaseAdmin
+          .from("user_bans")
+          .select("*")
+          .order("banned_at", { ascending: false });
+        if (bansErr) throw bansErr;
+
+        // Enriquecer con full_name desde profiles (no hay FK directa para embeber)
+        const ids = [...new Set((bans || []).map((b) => b.user_id))];
+        let profilesById: Record<
+          string,
+          { full_name: string | null; email: string | null }
+        > = {};
+        if (ids.length > 0) {
+          const { data: profs } = await supabaseAdmin
+            .from("profiles")
+            .select("id, full_name, email")
+            .in("id", ids);
+          profilesById = Object.fromEntries(
+            (profs || []).map((p) => [
+              p.id,
+              { full_name: p.full_name, email: p.email },
+            ]),
+          );
+        }
+
+        const enriched = (bans || []).map((b) => ({
+          ...b,
+          full_name: profilesById[b.user_id]?.full_name ?? null,
+          current_email: profilesById[b.user_id]?.email ?? b.email,
+        }));
+
+        logger.info("User bans listed", { count: enriched.length });
+        return new Response(JSON.stringify({ bans: enriched }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "block_ip": {
+        const ipAddress: string | null = body.ipAddress?.trim() || null;
+        if (!ipAddress) {
+          return new Response(JSON.stringify({ error: "ipAddress required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: inserted, error: ipErr } = await supabaseAdmin
+          .from("blocked_ips")
+          .insert({
+            ip_address: ipAddress,
+            reason: body.reason ?? null,
+            blocked_by: callerId,
+            expires_at: body.expiresAt ?? null,
+            is_active: true,
+          })
+          .select()
+          .single();
+        if (ipErr) throw ipErr;
+
+        logger.warn("IP blocked", { ip_address: ipAddress });
+        return new Response(
+          JSON.stringify({ success: true, blocked: inserted }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      case "unblock_ip": {
+        // Acepta blockId o ipAddress (desactiva todas las coincidencias activas)
+        const blockId: string | null = body.blockId ?? null;
+        const ipAddress: string | null = body.ipAddress?.trim() || null;
+        if (!blockId && !ipAddress) {
+          return new Response(
+            JSON.stringify({ error: "blockId or ipAddress required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        const q = supabaseAdmin
+          .from("blocked_ips")
+          .update({ is_active: false });
+        const { error: unblockErr } = blockId
+          ? await q.eq("id", blockId)
+          : await q.eq("ip_address", ipAddress).eq("is_active", true);
+        if (unblockErr) throw unblockErr;
+
+        logger.info("IP unblocked", {
+          block_id: blockId,
+          ip_address: ipAddress,
+        });
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_blocked_ips": {
+        const { data: ips, error: ipsErr } = await supabaseAdmin
+          .from("blocked_ips")
+          .select("*")
+          .order("blocked_at", { ascending: false });
+        if (ipsErr) throw ipsErr;
+
+        logger.info("Blocked IPs listed", { count: ips?.length || 0 });
+        return new Response(JSON.stringify({ ips: ips || [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "block_email": {
+        const pattern: string | null =
+          body.pattern?.trim().toLowerCase() || null;
+        const patternType: string =
+          body.patternType === "domain" ? "domain" : "email";
+        if (!pattern) {
+          return new Response(JSON.stringify({ error: "pattern required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: inserted, error: emailErr } = await supabaseAdmin
+          .from("blocked_emails")
+          .insert({
+            pattern,
+            pattern_type: patternType,
+            reason: body.reason ?? null,
+            blocked_by: callerId,
+            expires_at: body.expiresAt ?? null,
+            is_active: true,
+          })
+          .select()
+          .single();
+        if (emailErr) throw emailErr;
+
+        logger.warn("Email blocked", { pattern, pattern_type: patternType });
+        return new Response(
+          JSON.stringify({ success: true, blocked: inserted }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      case "unblock_email": {
+        const blockId: string | null = body.blockId ?? null;
+        if (!blockId) {
+          return new Response(JSON.stringify({ error: "blockId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { error: unblockErr } = await supabaseAdmin
+          .from("blocked_emails")
+          .update({ is_active: false })
+          .eq("id", blockId);
+        if (unblockErr) throw unblockErr;
+
+        logger.info("Email unblocked", { block_id: blockId });
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_blocked_emails": {
+        const { data: emails, error: emailsErr } = await supabaseAdmin
+          .from("blocked_emails")
+          .select("*")
+          .order("blocked_at", { ascending: false });
+        if (emailsErr) throw emailsErr;
+
+        logger.info("Blocked emails listed", { count: emails?.length || 0 });
+        return new Response(JSON.stringify({ emails: emails || [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_user_ips": {
+        if (!userId) {
+          return new Response(JSON.stringify({ error: "User ID required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: ipRows, error: ipsErr } = await supabaseAdmin
+          .from("user_ip_log")
+          .select("ip_address, device_id, user_agent, last_seen, hits")
+          .eq("user_id", userId)
+          .order("last_seen", { ascending: false });
+        if (ipsErr) throw ipsErr;
+
+        // Cuales IPs / devices estan activamente bloqueados
+        const uniqueIps = [...new Set((ipRows || []).map((r) => r.ip_address))];
+        const uniqueDevices = [
+          ...new Set(
+            (ipRows || []).map((r) => r.device_id).filter((d) => d && d !== ""),
+          ),
+        ];
+
+        const [{ data: blkIps }, { data: blkDevs }] = await Promise.all([
+          uniqueIps.length
+            ? supabaseAdmin
+                .from("blocked_ips")
+                .select("ip_address")
+                .eq("is_active", true)
+                .in("ip_address", uniqueIps)
+            : Promise.resolve({ data: [] as { ip_address: string }[] }),
+          uniqueDevices.length
+            ? supabaseAdmin
+                .from("blocked_devices")
+                .select("device_id")
+                .eq("is_active", true)
+                .in("device_id", uniqueDevices)
+            : Promise.resolve({ data: [] as { device_id: string }[] }),
+        ]);
+        const blockedIpSet = new Set((blkIps || []).map((r) => r.ip_address));
+        const blockedDevSet = new Set((blkDevs || []).map((r) => r.device_id));
+
+        const rows = (ipRows || []).map((r) => ({
+          ...r,
+          ip_blocked: blockedIpSet.has(r.ip_address),
+          device_blocked: r.device_id ? blockedDevSet.has(r.device_id) : false,
+        }));
+
+        logger.info("User IPs listed", {
+          target_user_id: userId,
+          count: rows.length,
+        });
+        return new Response(JSON.stringify({ ips: rows }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "block_device": {
+        const deviceId: string | null = body.deviceId?.trim() || null;
+        if (!deviceId) {
+          return new Response(JSON.stringify({ error: "deviceId required" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const { data: inserted, error: devErr } = await supabaseAdmin
+          .from("blocked_devices")
+          .insert({
+            device_id: deviceId,
+            reason: body.reason ?? null,
+            blocked_by: callerId,
+            expires_at: body.expiresAt ?? null,
+            is_active: true,
+          })
+          .select()
+          .single();
+        if (devErr) throw devErr;
+
+        logger.warn("Device blocked", { device_id: deviceId });
+        return new Response(
+          JSON.stringify({ success: true, blocked: inserted }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+
+      case "unblock_device": {
+        const blockId: string | null = body.blockId ?? null;
+        const deviceId: string | null = body.deviceId?.trim() || null;
+        if (!blockId && !deviceId) {
+          return new Response(
+            JSON.stringify({ error: "blockId or deviceId required" }),
+            {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        const q = supabaseAdmin
+          .from("blocked_devices")
+          .update({ is_active: false });
+        const { error: unblockErr } = blockId
+          ? await q.eq("id", blockId)
+          : await q.eq("device_id", deviceId).eq("is_active", true);
+        if (unblockErr) throw unblockErr;
+
+        logger.info("Device unblocked", {
+          block_id: blockId,
+          device_id: deviceId,
+        });
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "list_blocked_devices": {
+        const { data: devices, error: devsErr } = await supabaseAdmin
+          .from("blocked_devices")
+          .select("*")
+          .order("blocked_at", { ascending: false });
+        if (devsErr) throw devsErr;
+
+        logger.info("Blocked devices listed", { count: devices?.length || 0 });
+        return new Response(JSON.stringify({ devices: devices || [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
       default:
         return new Response(JSON.stringify({ error: "Unknown action" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
     }
   } catch (error: unknown) {
@@ -1080,7 +1945,7 @@ serve(async (req) => {
     const errorId = logger.error("Admin operation failed", err);
     return new Response(JSON.stringify({ error: err.message, errorId }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" }
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
