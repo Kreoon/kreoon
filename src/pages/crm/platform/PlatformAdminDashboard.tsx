@@ -21,15 +21,26 @@ import {
   AdminAISection,
   AdminHealthWidget,
 } from "@/components/admin/dashboard";
-import { KPIDetailSheet, type KPIType } from "@/components/admin/dashboard/sheets";
+import {
+  KPIDetailSheet,
+  type KPIType,
+} from "@/components/admin/dashboard/sheets";
 import {
   useAdminDashboardData,
   getPeriodLabel,
 } from "@/hooks/useAdminDashboard";
-import { MetaAdsDateRangePicker, type MetaAdsDateRangeValue } from "@/components/ui/meta-ads-date-range-picker";
+import {
+  MetaAdsDateRangePicker,
+  type MetaAdsDateRangeValue,
+} from "@/components/ui/meta-ads-date-range-picker";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { PancakeSyncPanel } from "@/components/crm/PancakeSyncPanel";
-import { usePancakeDashboardStats, useTriggerBulkSync } from "@/hooks/usePancakeDashboard";
+import { PlatformBansManagement } from "@/components/settings/PlatformBansManagement";
+import { PlatformUsersManagement } from "@/components/settings/PlatformUsersManagement";
+import {
+  usePancakeDashboardStats,
+  useTriggerBulkSync,
+} from "@/hooks/usePancakeDashboard";
 import type { AdminDashboardStats } from "@/types/admin-dashboard.types";
 
 // =====================================================
@@ -39,7 +50,11 @@ import type { AdminDashboardStats } from "@/types/admin-dashboard.types";
 function QuickActionsCard() {
   const actions = [
     { label: "Ver Usuarios", href: "/team", icon: Users },
-    { label: "Ver Organizaciones", href: "/talent?tab=clientes", icon: Building2 },
+    {
+      label: "Ver Organizaciones",
+      href: "/talent?tab=clientes",
+      icon: Building2,
+    },
     { label: "Configuración IA", href: "/settings/ai", icon: Brain },
     { label: "Configuración", href: "/settings", icon: Settings },
     { label: "Pancake CRM", href: "/crm/overview", icon: Wifi },
@@ -78,7 +93,11 @@ interface AlertBannerProps {
   pancakeLoading: boolean;
 }
 
-function AlertBanner({ stats, pancakeErrorRate, pancakeLoading }: AlertBannerProps) {
+function AlertBanner({
+  stats,
+  pancakeErrorRate,
+  pancakeLoading,
+}: AlertBannerProps) {
   const needsAttention = stats?.health?.needs_attention ?? 0;
   const hasPancakeError = !pancakeLoading && pancakeErrorRate > 20;
   const hasHealthAlert = needsAttention > 0;
@@ -91,7 +110,9 @@ function AlertBanner({ stats, pancakeErrorRate, pancakeLoading }: AlertBannerPro
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-sm bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 flex-1">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="text-sm">
-            <span className="font-semibold">{needsAttention}</span> organización{needsAttention !== 1 ? 'es' : ''} requieren atención (en riesgo o churning)
+            <span className="font-semibold">{needsAttention}</span> organización
+            {needsAttention !== 1 ? "es" : ""} requieren atención (en riesgo o
+            churning)
           </span>
         </div>
       )}
@@ -99,7 +120,11 @@ function AlertBanner({ stats, pancakeErrorRate, pancakeLoading }: AlertBannerPro
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-sm bg-red-500/10 border border-red-500/20 text-red-400 flex-1">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span className="text-sm">
-            Pancake CRM: tasa de error de sync en <span className="font-semibold">{pancakeErrorRate.toFixed(0)}%</span>. Verifica la integración.
+            Pancake CRM: tasa de error de sync en{" "}
+            <span className="font-semibold">
+              {pancakeErrorRate.toFixed(0)}%
+            </span>
+            . Verifica la integración.
           </span>
         </div>
       )}
@@ -118,7 +143,12 @@ interface DashboardHeaderProps {
   isLoading: boolean;
 }
 
-function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }: DashboardHeaderProps) {
+function DashboardHeader({
+  dateRange,
+  onDateRangeChange,
+  onRefresh,
+  isLoading,
+}: DashboardHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
       {/* Title */}
@@ -127,8 +157,12 @@ function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }:
           <LayoutDashboard className="h-6 w-6 text-purple-400" />
         </div>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">Admin Dashboard</h1>
-          <p className="text-sm text-white/50">Panel de control de plataforma</p>
+          <h1 className="text-xl md:text-2xl font-bold text-white">
+            Admin Dashboard
+          </h1>
+          <p className="text-sm text-white/50">
+            Panel de control de plataforma
+          </p>
         </div>
       </div>
 
@@ -157,27 +191,31 @@ function DashboardHeader({ dateRange, onDateRangeChange, onRefresh, isLoading }:
 // MAIN COMPONENT
 // =====================================================
 
-function dateRangeToPeriod(dateRange: MetaAdsDateRangeValue): '1d' | '7d' | '30d' | 'ytd' {
-  if (dateRange.preset === 'today') return '1d';
-  if (dateRange.preset === 'last_7') return '7d';
-  if (dateRange.preset === 'this_year') return 'ytd';
-  return '30d';
+function dateRangeToPeriod(
+  dateRange: MetaAdsDateRangeValue,
+): "1d" | "7d" | "30d" | "ytd" {
+  if (dateRange.preset === "today") return "1d";
+  if (dateRange.preset === "last_7") return "7d";
+  if (dateRange.preset === "this_year") return "ytd";
+  return "30d";
 }
 
 export default function PlatformAdminDashboard() {
   const [dateRange, setDateRange] = useState<MetaAdsDateRangeValue>(() => {
     const to = endOfDay(new Date());
     const from = startOfDay(subDays(to, 29));
-    return { from, to, preset: 'last_30' };
+    return { from, to, preset: "last_30" };
   });
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
   const [openKPI, setOpenKPI] = useState<KPIType | null>(null);
 
   const period = dateRangeToPeriod(dateRange);
-  const { stats, aiStats, timeline, distribution, isLoading, refetch } = useAdminDashboardData(period);
+  const { stats, aiStats, timeline, distribution, isLoading, refetch } =
+    useAdminDashboardData(period);
 
-  const { data: pancakeStats, isLoading: pancakeLoading } = usePancakeDashboardStats();
+  const { data: pancakeStats, isLoading: pancakeLoading } =
+    usePancakeDashboardStats();
   const triggerSync = useTriggerBulkSync();
 
   const pancakeErrorRate = pancakeStats?.sync_health?.error_rate_pct ?? 0;
@@ -204,19 +242,47 @@ export default function PlatformAdminDashboard() {
         pancakeLoading={pancakeLoading}
       />
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList className="bg-white/5 border border-white/10 p-1 w-full sm:w-auto overflow-x-auto">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-purple-500/20">
+          <TabsTrigger
+            value="overview"
+            className="data-[state=active]:bg-purple-500/20"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="users" className="data-[state=active]:bg-purple-500/20">
+          <TabsTrigger
+            value="users"
+            className="data-[state=active]:bg-purple-500/20"
+          >
             Usuarios
           </TabsTrigger>
-          <TabsTrigger value="ai" className="data-[state=active]:bg-purple-500/20">
+          <TabsTrigger
+            value="ai"
+            className="data-[state=active]:bg-purple-500/20"
+          >
             IA & Costos
           </TabsTrigger>
-          <TabsTrigger value="pancake" className="data-[state=active]:bg-purple-500/20">
+          <TabsTrigger
+            value="pancake"
+            className="data-[state=active]:bg-purple-500/20"
+          >
             Pancake CRM
+          </TabsTrigger>
+          <TabsTrigger
+            value="accounts"
+            className="data-[state=active]:bg-purple-500/20"
+          >
+            Cuentas
+          </TabsTrigger>
+          <TabsTrigger
+            value="security"
+            className="data-[state=active]:bg-purple-500/20"
+          >
+            Seguridad
           </TabsTrigger>
         </TabsList>
 
@@ -231,7 +297,10 @@ export default function PlatformAdminDashboard() {
               />
             </div>
             <div className="lg:col-span-2 space-y-6">
-              <AdminHealthWidget stats={stats.data} isLoading={stats.isLoading} />
+              <AdminHealthWidget
+                stats={stats.data}
+                isLoading={stats.isLoading}
+              />
               <QuickActionsCard />
             </div>
           </div>
@@ -258,9 +327,11 @@ export default function PlatformAdminDashboard() {
                     className="p-3 rounded-sm bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                   >
                     <p className="text-xs text-white/50 truncate capitalize">
-                      {item.role.replace(/_/g, ' ')}
+                      {item.role.replace(/_/g, " ")}
                     </p>
-                    <p className="text-lg font-semibold text-white">{item.count}</p>
+                    <p className="text-lg font-semibold text-white">
+                      {item.count}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -270,7 +341,10 @@ export default function PlatformAdminDashboard() {
 
         {/* AI Tab */}
         <TabsContent value="ai" className="space-y-6">
-          <AdminAISection aiStats={aiStats.data} isLoading={aiStats.isLoading} />
+          <AdminAISection
+            aiStats={aiStats.data}
+            isLoading={aiStats.isLoading}
+          />
         </TabsContent>
 
         {/* Pancake CRM Tab */}
@@ -282,17 +356,27 @@ export default function PlatformAdminDashboard() {
             onSync={() => triggerSync.mutate()}
           />
         </TabsContent>
+
+        {/* Accounts Tab — lista completa de usuarios con acciones (banear, roles, etc.) */}
+        <TabsContent value="accounts" className="space-y-4">
+          <PlatformUsersManagement />
+        </TabsContent>
+
+        {/* Security / Bans Tab */}
+        <TabsContent value="security" className="space-y-4">
+          <PlatformBansManagement />
+        </TabsContent>
       </Tabs>
 
       <div className="text-center text-xs text-white/30 pt-4">
-        Datos actualizados: {stats.data?.generated_at
-          ? new Date(stats.data.generated_at).toLocaleString('es-CO')
-          : 'Cargando...'
-        }
-        {' | '}Periodo: {dateRange.from && dateRange.to
-          ? `${format(dateRange.from, 'dd MMM')} - ${format(dateRange.to, 'dd MMM, yyyy')}`
-          : getPeriodLabel(period)
-        }
+        Datos actualizados:{" "}
+        {stats.data?.generated_at
+          ? new Date(stats.data.generated_at).toLocaleString("es-CO")
+          : "Cargando..."}
+        {" | "}Periodo:{" "}
+        {dateRange.from && dateRange.to
+          ? `${format(dateRange.from, "dd MMM")} - ${format(dateRange.to, "dd MMM, yyyy")}`
+          : getPeriodLabel(period)}
       </div>
 
       <KPIDetailSheet

@@ -1,13 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
-  Building2, ShieldCheck, ShieldOff, KeyRound, Ban, UserX, UserPlus,
-  Loader2, AlertTriangle, Trash2, UserCog, Crown, Key,
-} from 'lucide-react';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+  Building2,
+  ShieldCheck,
+  ShieldOff,
+  KeyRound,
+  Ban,
+  UserX,
+  UserPlus,
+  Loader2,
+  AlertTriangle,
+  Trash2,
+  UserCog,
+  Crown,
+  Key,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,17 +34,22 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { DetailSection } from '../DetailSection';
-import { supabase } from '@/integrations/supabase/client';
-import { ORG_ASSIGNABLE_ROLES, getRoleLabel } from '@/lib/roles';
-import type { AppRole } from '@/types/database';
+} from "@/components/ui/alert-dialog";
+import { DetailSection } from "../DetailSection";
+import { BanUserButton } from "@/components/admin/BanUserButton";
+import { UserIpManager } from "@/components/admin/UserIpManager";
+import { supabase } from "@/integrations/supabase/client";
+import { ORG_ASSIGNABLE_ROLES, getRoleLabel } from "@/lib/roles";
+import type { AppRole } from "@/types/database";
 
-const ROOT_EMAILS = ['jacsolucionesgraficas@gmail.com', 'kairosgp.sas@gmail.com'];
+const ROOT_EMAILS = [
+  "jacsolucionesgraficas@gmail.com",
+  "kairosgp.sas@gmail.com",
+];
 
 // 8 global niche roles for assignment (simplified from 36 marketplace roles)
 const ALL_ASSIGNABLE_ROLES: { value: string; label: string }[] =
-  ORG_ASSIGNABLE_ROLES.map(r => ({ value: r, label: getRoleLabel(r) }));
+  ORG_ASSIGNABLE_ROLES.map((r) => ({ value: r, label: getRoleLabel(r) }));
 
 interface AdminActionsSectionProps {
   userId: string;
@@ -65,13 +87,15 @@ export function AdminActionsSection({
 
   // Change role state
   const [changeRoleOpen, setChangeRoleOpen] = useState(false);
-  const [selectedActiveRole, setSelectedActiveRole] = useState<string>(activeRole || 'none');
+  const [selectedActiveRole, setSelectedActiveRole] = useState<string>(
+    activeRole || "none",
+  );
 
   // Assign to org state
   const [assignOpen, setAssignOpen] = useState(false);
   const [allOrgs, setAllOrgs] = useState<{ id: string; name: string }[]>([]);
-  const [selectedOrgId, setSelectedOrgId] = useState('');
-  const [selectedRole, setSelectedRole] = useState<string>('');
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("");
   const [assignAsOwner, setAssignAsOwner] = useState(false);
 
   // Delete confirm
@@ -80,9 +104,9 @@ export function AdminActionsSection({
   useEffect(() => {
     if (assignOpen && allOrgs.length === 0) {
       supabase
-        .from('organizations')
-        .select('id, name')
-        .order('name')
+        .from("organizations")
+        .select("id, name")
+        .order("name")
         .then(({ data }) => {
           if (data) setAllOrgs(data);
         });
@@ -93,10 +117,12 @@ export function AdminActionsSection({
     setLoading(action);
     try {
       // Get auth token for the request
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No autenticado');
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("No autenticado");
 
-      const { data, error } = await supabase.functions.invoke('admin-users', {
+      const { data, error } = await supabase.functions.invoke("admin-users", {
         body: { action, ...body },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
@@ -110,8 +136,12 @@ export function AdminActionsSection({
 
   const handleTogglePlatformAdmin = async () => {
     try {
-      await invokeAdmin('update_role', { userId, role: 'admin' });
-      toast.success(isPlatformAdmin ? 'Admin plataforma removido' : 'Admin plataforma asignado');
+      await invokeAdmin("update_role", { userId, role: "admin" });
+      toast.success(
+        isPlatformAdmin
+          ? "Admin plataforma removido"
+          : "Admin plataforma asignado",
+      );
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -120,10 +150,14 @@ export function AdminActionsSection({
 
   const handleSetActiveRole = async () => {
     if (!selectedActiveRole) return;
-    const roleValue = selectedActiveRole === 'none' ? null : selectedActiveRole;
+    const roleValue = selectedActiveRole === "none" ? null : selectedActiveRole;
     try {
-      await invokeAdmin('set_active_role', { userId, activeRole: roleValue });
-      toast.success(roleValue ? `Rol cambiado a ${getRoleLabel(roleValue as AppRole)}` : 'Rol removido');
+      await invokeAdmin("set_active_role", { userId, activeRole: roleValue });
+      toast.success(
+        roleValue
+          ? `Rol cambiado a ${getRoleLabel(roleValue as AppRole)}`
+          : "Rol removido",
+      );
       setChangeRoleOpen(false);
       onActionComplete();
     } catch (e: any) {
@@ -133,18 +167,8 @@ export function AdminActionsSection({
 
   const handleResetPassword = async () => {
     try {
-      await invokeAdmin('send_password_reset', { email: userEmail });
-      toast.success('Email de reset enviado');
-    } catch (e: any) {
-      toast.error(`Error: ${e.message}`);
-    }
-  };
-
-  const handleToggleBan = async () => {
-    try {
-      await invokeAdmin('toggle_ban', { userId });
-      toast.success(isBanned ? 'Usuario desbloqueado' : 'Usuario bloqueado');
-      onActionComplete();
+      await invokeAdmin("send_password_reset", { email: userEmail });
+      toast.success("Email de reset enviado");
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
     }
@@ -152,12 +176,12 @@ export function AdminActionsSection({
 
   const handleCreateProfile = async () => {
     try {
-      await invokeAdmin('create_profile', {
+      await invokeAdmin("create_profile", {
         userId,
         email: userEmail,
-        fullName: userName || userEmail.split('@')[0],
+        fullName: userName || userEmail.split("@")[0],
       });
-      toast.success('Perfil creado');
+      toast.success("Perfil creado");
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -167,13 +191,14 @@ export function AdminActionsSection({
   const handleAssignToOrg = async () => {
     if (!selectedOrgId) return;
     try {
-      await invokeAdmin('assign_to_org', {
+      await invokeAdmin("assign_to_org", {
         userId,
         organizationId: selectedOrgId,
-        assignRole: selectedRole && selectedRole !== 'none' ? selectedRole : null,
+        assignRole:
+          selectedRole && selectedRole !== "none" ? selectedRole : null,
         makeOwner: assignAsOwner,
       });
-      toast.success('Usuario asignado a organización');
+      toast.success("Usuario asignado a organización");
       setAssignOpen(false);
       onActionComplete();
     } catch (e: any) {
@@ -183,8 +208,12 @@ export function AdminActionsSection({
 
   const handleToggleOwner = async () => {
     try {
-      await invokeAdmin('set_owner', { userId, organizationId: orgId, makeOwner: !isOwner });
-      toast.success(isOwner ? 'Propietario removido' : 'Propietario asignado');
+      await invokeAdmin("set_owner", {
+        userId,
+        organizationId: orgId,
+        makeOwner: !isOwner,
+      });
+      toast.success(isOwner ? "Propietario removido" : "Propietario asignado");
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -193,8 +222,8 @@ export function AdminActionsSection({
 
   const handleRemoveFromOrg = async () => {
     try {
-      await invokeAdmin('remove_from_org', { userId });
-      toast.success('Usuario removido de organización');
+      await invokeAdmin("remove_from_org", { userId });
+      toast.success("Usuario removido de organización");
       onActionComplete();
     } catch (e: any) {
       toast.error(`Error: ${e.message}`);
@@ -203,8 +232,8 @@ export function AdminActionsSection({
 
   const handleDeleteUser = async () => {
     try {
-      await invokeAdmin('delete_user', { userId });
-      toast.success('Usuario eliminado');
+      await invokeAdmin("delete_user", { userId });
+      toast.success("Usuario eliminado");
       setDeleteOpen(false);
       onActionComplete();
     } catch (e: any) {
@@ -229,12 +258,20 @@ export function AdminActionsSection({
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
               <UserCog className="h-3.5 w-3.5 text-purple-400" />
-              Cambiar rol {activeRole ? `(${getRoleLabel(activeRole as AppRole)})` : '(Sin rol)'}
+              Cambiar rol{" "}
+              {activeRole
+                ? `(${getRoleLabel(activeRole as AppRole)})`
+                : "(Sin rol)"}
             </Button>
           ) : (
             <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
-              <p className="text-[10px] text-white/40">Seleccionar rol de plataforma</p>
-              <Select value={selectedActiveRole} onValueChange={setSelectedActiveRole}>
+              <p className="text-[10px] text-white/40">
+                Seleccionar rol de plataforma
+              </p>
+              <Select
+                value={selectedActiveRole}
+                onValueChange={setSelectedActiveRole}
+              >
                 <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
                   <SelectValue placeholder="Rol..." />
                 </SelectTrigger>
@@ -256,7 +293,11 @@ export function AdminActionsSection({
                   disabled={!selectedActiveRole || !!loading}
                   className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
                 >
-                  {loading === 'set_active_role' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Guardar'}
+                  {loading === "set_active_role" ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    "Guardar"
+                  )}
                 </Button>
                 <Button
                   size="sm"
@@ -279,14 +320,16 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
-              {loading === 'update_role' ? (
+              {loading === "update_role" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : isPlatformAdmin ? (
                 <ShieldOff className="h-3.5 w-3.5 text-orange-400" />
               ) : (
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
               )}
-              {isPlatformAdmin ? 'Quitar Admin Plataforma' : 'Hacer Admin Plataforma'}
+              {isPlatformAdmin
+                ? "Quitar Admin Plataforma"
+                : "Hacer Admin Plataforma"}
             </Button>
           )}
 
@@ -296,17 +339,23 @@ export function AdminActionsSection({
               variant="ghost"
               size="sm"
               onClick={async () => {
-                setLoading('grant_access');
+                setLoading("grant_access");
                 try {
-                  const { data: { user: currentUser } } = await supabase.auth.getUser();
-                  if (!currentUser) throw new Error('No autenticado');
-                  const { data, error } = await supabase.rpc('grant_platform_access', {
-                    p_admin_id: currentUser.id,
-                    p_target_user_id: userId,
-                  });
+                  const {
+                    data: { user: currentUser },
+                  } = await supabase.auth.getUser();
+                  if (!currentUser) throw new Error("No autenticado");
+                  const { data, error } = await supabase.rpc(
+                    "grant_platform_access",
+                    {
+                      p_admin_id: currentUser.id,
+                      p_target_user_id: userId,
+                    },
+                  );
                   if (error) throw error;
-                  if (data && !(data as any).success) throw new Error((data as any).error || 'Error');
-                  toast.success('Acceso a plataforma otorgado');
+                  if (data && !(data as any).success)
+                    throw new Error((data as any).error || "Error");
+                  toast.success("Acceso a plataforma otorgado");
                   onActionComplete();
                 } catch (e: any) {
                   toast.error(`Error: ${e.message}`);
@@ -317,7 +366,7 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
-              {loading === 'grant_access' ? (
+              {loading === "grant_access" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <Key className="h-3.5 w-3.5 text-amber-400" />
@@ -335,12 +384,17 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
-              {loading === 'set_owner' ? (
+              {loading === "set_owner" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Crown className={cn('h-3.5 w-3.5', isOwner ? 'text-yellow-400' : 'text-white/40')} />
+                <Crown
+                  className={cn(
+                    "h-3.5 w-3.5",
+                    isOwner ? "text-yellow-400" : "text-white/40",
+                  )}
+                />
               )}
-              {isOwner ? 'Quitar propietario' : 'Hacer propietario de org'}
+              {isOwner ? "Quitar propietario" : "Hacer propietario de org"}
             </Button>
           )}
 
@@ -354,11 +408,13 @@ export function AdminActionsSection({
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
               <Building2 className="h-3.5 w-3.5 text-blue-400" />
-              {orgId ? 'Cambiar organización' : 'Asignar a organización'}
+              {orgId ? "Cambiar organización" : "Asignar a organización"}
             </Button>
           ) : (
             <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
-              <p className="text-[10px] text-white/40">Seleccionar organización y rol</p>
+              <p className="text-[10px] text-white/40">
+                Seleccionar organización y rol
+              </p>
               <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
                 <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
                   <SelectValue placeholder="Organización..." />
@@ -404,7 +460,11 @@ export function AdminActionsSection({
                   disabled={!selectedOrgId || !!loading}
                   className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
                 >
-                  {loading === 'assign_to_org' ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Asignar'}
+                  {loading === "assign_to_org" ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    "Asignar"
+                  )}
                 </Button>
                 <Button
                   size="sm"
@@ -427,12 +487,12 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
-              {loading === 'remove_from_org' ? (
+              {loading === "remove_from_org" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <UserX className="h-3.5 w-3.5 text-orange-400" />
               )}
-              Remover de {orgName || 'organización'}
+              Remover de {orgName || "organización"}
             </Button>
           )}
 
@@ -444,7 +504,7 @@ export function AdminActionsSection({
             disabled={!!loading}
             className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
           >
-            {loading === 'send_password_reset' ? (
+            {loading === "send_password_reset" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <KeyRound className="h-3.5 w-3.5 text-yellow-400" />
@@ -461,7 +521,7 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
             >
-              {loading === 'create_profile' ? (
+              {loading === "create_profile" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
                 <UserPlus className="h-3.5 w-3.5 text-emerald-400" />
@@ -470,22 +530,14 @@ export function AdminActionsSection({
             </Button>
           )}
 
-          {/* Toggle Ban */}
+          {/* Banear / Desbanear usuario (ban_user/unban_user + metadata en user_bans) */}
           {!isSelf && !isTargetRoot && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleToggleBan}
-              disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-red-400/70 hover:text-red-400 hover:bg-red-500/10"
-            >
-              {loading === 'toggle_ban' ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Ban className="h-3.5 w-3.5" />
-              )}
-              {isBanned ? 'Desbloquear usuario' : 'Bloquear usuario'}
-            </Button>
+            <BanUserButton
+              userId={userId}
+              userEmail={userEmail}
+              isBanned={isBanned}
+              onDone={onActionComplete}
+            />
           )}
 
           {/* Delete User - Root only */}
@@ -504,6 +556,11 @@ export function AdminActionsSection({
         </div>
       </DetailSection>
 
+      {/* IPs y dispositivos del usuario */}
+      <DetailSection title="IPs y dispositivos">
+        <UserIpManager userId={userId} />
+      </DetailSection>
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent className="bg-popover border-red-500/30">
@@ -513,7 +570,8 @@ export function AdminActionsSection({
               Eliminar usuario
             </AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
-              Esta acción eliminará permanentemente al usuario <strong className="text-white">{userName || userEmail}</strong> y
+              Esta acción eliminará permanentemente al usuario{" "}
+              <strong className="text-white">{userName || userEmail}</strong> y
               todos sus datos asociados. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -526,7 +584,9 @@ export function AdminActionsSection({
               disabled={!!loading}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {loading === 'delete_user' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {loading === "delete_user" ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : null}
               Eliminar permanentemente
             </AlertDialogAction>
           </AlertDialogFooter>

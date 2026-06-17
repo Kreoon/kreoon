@@ -1,26 +1,45 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
-  Building2, Phone, Mail, MapPin, Crown, Shield, Eye,
-  Unlink, Link as LinkIcon, Users, MessageCircle,
-  UserMinus, Trash2,
-} from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+  Building2,
+  Phone,
+  Mail,
+  MapPin,
+  Crown,
+  Shield,
+  Eye,
+  Unlink,
+  Link as LinkIcon,
+  Users,
+  MessageCircle,
+  UserMinus,
+  Trash2,
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { DetailPanelShell } from '@/components/crm/DetailPanelShell';
-import { DetailSection } from '@/components/crm/DetailSection';
-import { CopyButton } from '@/components/crm/CopyButton';
-import { usePurgeMember, useRemoveMember } from '@/hooks/useOrgMemberActions';
-import type { ClientUser } from '@/types/unifiedClient.types';
+} from "@/components/ui/alert-dialog";
+import { DetailPanelShell } from "@/components/crm/DetailPanelShell";
+import { DetailSection } from "@/components/crm/DetailSection";
+import { BanUserButton } from "@/components/admin/BanUserButton";
+import { UserIpManager } from "@/components/admin/UserIpManager";
+import { LegalConsentsSection } from "@/components/crm/detail-sections/LegalConsentsSection";
+import { CopyButton } from "@/components/crm/CopyButton";
+import { usePurgeMember, useRemoveMember } from "@/hooks/useOrgMemberActions";
+import type { ClientUser } from "@/types/unifiedClient.types";
 
 const ROLE_ICON: Record<string, typeof Crown> = {
   owner: Crown,
@@ -29,9 +48,9 @@ const ROLE_ICON: Record<string, typeof Crown> = {
 };
 
 const ROLE_LABEL: Record<string, string> = {
-  owner: 'Propietario',
-  admin: 'Administrador',
-  viewer: 'Visor',
+  owner: "Propietario",
+  admin: "Administrador",
+  viewer: "Visor",
 };
 
 interface ClientUserDetailPanelProps {
@@ -43,29 +62,35 @@ interface ClientUserDetailPanelProps {
 }
 
 export function ClientUserDetailPanel({
-  user, organizationId, allCompanies, onClose, onUpdate,
+  user,
+  organizationId,
+  allCompanies,
+  onClose,
+  onUpdate,
 }: ClientUserDetailPanelProps) {
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
   const purgeMember = usePurgeMember();
   const removeMember = useRemoveMember();
 
-  const linkedIds = new Set(user.linked_companies.map(c => c.client_id));
-  const availableCompanies = allCompanies.filter(c => !linkedIds.has(c.id));
+  const linkedIds = new Set(user.linked_companies.map((c) => c.client_id));
+  const availableCompanies = allCompanies.filter((c) => !linkedIds.has(c.id));
 
   const handleUnlink = async (clientId: string) => {
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('client_users')
+        .from("client_users")
         .delete()
-        .eq('client_id', clientId)
-        .eq('user_id', user.user_id);
+        .eq("client_id", clientId)
+        .eq("user_id", user.user_id);
       if (error) throw error;
-      toast.success('Usuario desvinculado de la empresa');
+      toast.success("Usuario desvinculado de la empresa");
       onUpdate();
     } catch (err: any) {
-      toast.error('Error al desvincular: ' + (err.message || 'Error desconocido'));
+      toast.error(
+        "Error al desvincular: " + (err.message || "Error desconocido"),
+      );
     } finally {
       setLoading(false);
     }
@@ -75,20 +100,20 @@ export function ClientUserDetailPanel({
     setLoading(true);
     try {
       const { error } = await supabase
-        .from('client_users')
-        .insert({ client_id: clientId, user_id: user.user_id, role: 'viewer' });
+        .from("client_users")
+        .insert({ client_id: clientId, user_id: user.user_id, role: "viewer" });
       if (error) {
-        if (error.code === '23505') {
-          toast.info('El usuario ya está vinculado a esta empresa');
+        if (error.code === "23505") {
+          toast.info("El usuario ya está vinculado a esta empresa");
         } else {
           throw error;
         }
       } else {
-        toast.success('Usuario vinculado a la empresa');
+        toast.success("Usuario vinculado a la empresa");
       }
       onUpdate();
     } catch (err: any) {
-      toast.error('Error al vincular: ' + (err.message || 'Error desconocido'));
+      toast.error("Error al vincular: " + (err.message || "Error desconocido"));
     } finally {
       setLoading(false);
     }
@@ -96,7 +121,11 @@ export function ClientUserDetailPanel({
 
   // Avatar
   const avatarEl = user.avatar_url ? (
-    <img src={user.avatar_url} alt={user.full_name} className="h-11 w-11 rounded-full object-cover ring-1 ring-border" />
+    <img
+      src={user.avatar_url}
+      alt={user.full_name}
+      className="h-11 w-11 rounded-full object-cover ring-1 ring-border"
+    />
   ) : (
     <div className="h-11 w-11 rounded-full bg-emerald-500/10 flex items-center justify-center ring-1 ring-border">
       <Users className="h-5 w-5 text-emerald-400" />
@@ -110,7 +139,10 @@ export function ClientUserDetailPanel({
       name={user.full_name}
       subtitle={user.email}
       badges={
-        <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+        <Badge
+          variant="outline"
+          className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+        >
           Usuario Cliente
         </Badge>
       }
@@ -121,7 +153,9 @@ export function ClientUserDetailPanel({
           <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-white/5">
             <div className="flex items-center gap-2 min-w-0">
               <Mail className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-              <span className="text-xs text-white/70 truncate">{user.email}</span>
+              <span className="text-xs text-white/70 truncate">
+                {user.email}
+              </span>
             </div>
             <CopyButton text={user.email} />
           </div>
@@ -134,11 +168,11 @@ export function ClientUserDetailPanel({
               <div className="flex items-center gap-1">
                 <CopyButton text={user.phone} />
                 <a
-                  href={`https://wa.me/${user.phone.replace(/[^0-9+]/g, '')}`}
+                  href={`https://wa.me/${user.phone.replace(/[^0-9+]/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors text-white/30 hover:text-green-400"
-                  onClick={e => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <MessageCircle className="h-3 w-3" />
                 </a>
@@ -158,14 +192,17 @@ export function ClientUserDetailPanel({
       <DetailSection
         title="Empresas vinculadas"
         action={
-          <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/50 border-white/10">
+          <Badge
+            variant="outline"
+            className="text-[10px] h-5 bg-white/5 text-white/50 border-white/10"
+          >
             {user.linked_companies.length}
           </Badge>
         }
       >
         {user.linked_companies.length > 0 ? (
           <div className="space-y-1.5">
-            {user.linked_companies.map(company => {
+            {user.linked_companies.map((company) => {
               const RoleIcon = ROLE_ICON[company.role] || Eye;
               return (
                 <div
@@ -174,10 +211,14 @@ export function ClientUserDetailPanel({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Building2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-xs text-white/80 font-medium truncate">{company.client_name}</span>
+                    <span className="text-xs text-white/80 font-medium truncate">
+                      {company.client_name}
+                    </span>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <RoleIcon className="h-3 w-3 text-white/30" />
-                      <span className="text-[10px] text-white/40">{ROLE_LABEL[company.role] || company.role}</span>
+                      <span className="text-[10px] text-white/40">
+                        {ROLE_LABEL[company.role] || company.role}
+                      </span>
                     </div>
                   </div>
                   {isAdmin && (
@@ -194,9 +235,13 @@ export function ClientUserDetailPanel({
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Desvincular usuario</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Desvincular usuario
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            {user.full_name} será desvinculado de {company.client_name}. Podrás volver a vincularlo después.
+                            {user.full_name} será desvinculado de{" "}
+                            {company.client_name}. Podrás volver a vincularlo
+                            después.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -226,7 +271,7 @@ export function ClientUserDetailPanel({
       {isAdmin && availableCompanies.length > 0 && (
         <DetailSection title="Vincular empresa">
           <div className="space-y-1">
-            {availableCompanies.map(company => (
+            {availableCompanies.map((company) => (
               <button
                 key={company.id}
                 onClick={() => handleLink(company.id)}
@@ -247,18 +292,25 @@ export function ClientUserDetailPanel({
           <div className="py-1.5 px-2 rounded-sm bg-white/5">
             <p className="text-[10px] text-white/30 uppercase">Registrado</p>
             <p className="text-xs text-white/70 mt-0.5">
-              {formatDistanceToNow(new Date(user.created_at), { addSuffix: true, locale: es })}
+              {formatDistanceToNow(new Date(user.created_at), {
+                addSuffix: true,
+                locale: es,
+              })}
             </p>
           </div>
           <div className="py-1.5 px-2 rounded-sm bg-white/5">
             <p className="text-[10px] text-white/30 uppercase">Empresas</p>
-            <p className="text-xs text-white/70 mt-0.5">{user.linked_companies.length}</p>
+            <p className="text-xs text-white/70 mt-0.5">
+              {user.linked_companies.length}
+            </p>
           </div>
         </div>
         {user.bio && (
           <div className="py-1.5 px-2 rounded-sm bg-white/5 mt-2">
             <p className="text-[10px] text-white/30 uppercase">Bio</p>
-            <p className="text-xs text-white/70 mt-0.5 line-clamp-3">{user.bio}</p>
+            <p className="text-xs text-white/70 mt-0.5 line-clamp-3">
+              {user.bio}
+            </p>
           </div>
         )}
       </DetailSection>
@@ -283,7 +335,10 @@ export function ClientUserDetailPanel({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Depurar miembro</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Se eliminarán todos los roles y vínculos de empresas de <strong>{user.full_name}</strong>. El usuario quedará como Lead en la pestaña Talento y podrás reasignarle roles después.
+                    Se eliminarán todos los roles y vínculos de empresas de{" "}
+                    <strong>{user.full_name}</strong>. El usuario quedará como
+                    Lead en la pestaña Talento y podrás reasignarle roles
+                    después.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -292,8 +347,18 @@ export function ClientUserDetailPanel({
                     className="bg-orange-600 text-white hover:bg-orange-700"
                     onClick={() =>
                       purgeMember.mutate(
-                        { userId: user.user_id, orgId: organizationId, userName: user.full_name, clearClientLinks: true },
-                        { onSuccess: () => { onUpdate(); onClose(); } },
+                        {
+                          userId: user.user_id,
+                          orgId: organizationId,
+                          userName: user.full_name,
+                          clearClientLinks: true,
+                        },
+                        {
+                          onSuccess: () => {
+                            onUpdate();
+                            onClose();
+                          },
+                        },
                       )
                     }
                   >
@@ -317,9 +382,13 @@ export function ClientUserDetailPanel({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Eliminar de la organización</AlertDialogTitle>
+                  <AlertDialogTitle>
+                    Eliminar de la organización
+                  </AlertDialogTitle>
                   <AlertDialogDescription>
-                    <strong>{user.full_name}</strong> será eliminado completamente de la organización. Esta acción no se puede deshacer.
+                    <strong>{user.full_name}</strong> será eliminado
+                    completamente de la organización. Esta acción no se puede
+                    deshacer.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -328,8 +397,17 @@ export function ClientUserDetailPanel({
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={() =>
                       removeMember.mutate(
-                        { userId: user.user_id, orgId: organizationId, userName: user.full_name },
-                        { onSuccess: () => { onUpdate(); onClose(); } },
+                        {
+                          userId: user.user_id,
+                          orgId: organizationId,
+                          userName: user.full_name,
+                        },
+                        {
+                          onSuccess: () => {
+                            onUpdate();
+                            onClose();
+                          },
+                        },
                       )
                     }
                   >
@@ -341,6 +419,23 @@ export function ClientUserDetailPanel({
           </div>
         </DetailSection>
       )}
+
+      {/* Acceso a la plataforma (admin only) — banear/desbanear + IPs */}
+      {isAdmin && (
+        <DetailSection title="Acceso a la plataforma">
+          <div className="space-y-3">
+            <BanUserButton
+              userId={user.user_id}
+              userEmail={user.email}
+              onDone={onUpdate}
+            />
+            <UserIpManager userId={user.user_id} />
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Documentos legales firmados (admin only) */}
+      {isAdmin && <LegalConsentsSection userId={user.user_id} />}
     </DetailPanelShell>
   );
 }

@@ -740,3 +740,11 @@ verify_jwt = true
 # Procesa la cola talent_payment_notifications y envia WhatsApp al talent via Botcake.
 # verify_jwt=false para invocacion desde n8n/cron sin token de usuario.
 verify_jwt = false
+
+# -- Platform Bans (Access Gate) --
+
+[functions.access-gate]
+# Gate publico de acceso: bloqueo de IP al arrancar la app + chequeo de email/IP en signup.
+# verify_jwt=false porque corre ANTES de tener sesion (arranque) y en signup anonimo.
+# Solo lee estados de bloqueo (is_ip_blocked/is_email_blocked/is_user_banned) y falla-abierto.
+verify_jwt = false

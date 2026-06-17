@@ -1,9 +1,21 @@
-import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { AppRole, Profile, UserType, AccountType } from '@/types/database';
-import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
-import { logger } from '@/lib/logger';
+import {
+  useState,
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+  ReactNode,
+} from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { invokeEdgeFunction } from "@/lib/edgeFunctions";
+import { getDeviceId } from "@/lib/deviceId";
+import { AppRole, Profile, UserType, AccountType } from "@/types/database";
+import {
+  getPermissionGroup,
+  type PermissionGroup,
+} from "@/lib/permissionGroups";
+import { logger } from "@/lib/logger";
 
 interface AuthContextType {
   user: User | null;
@@ -16,7 +28,13 @@ interface AuthContextType {
   loading: boolean;
   rolesLoaded: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => Promise<{ error: Error | null }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName: string,
+    role: AppRole,
+    companyName?: string,
+  ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
   refetchUserData: () => Promise<void>;
@@ -39,7 +57,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Storage key for active role
-const ACTIVE_ROLE_STORAGE_KEY = 'activeRole';
+const ACTIVE_ROLE_STORAGE_KEY = "activeRole";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -75,20 +93,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (roles.length > 0) {
       // Priority: 1) profile.active_role from DB (ALWAYS trust this first), 2) admin check, 3) localStorage, 4) default
       const dbRole = (profile as any)?.active_role as AppRole | null;
-      const storedRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY) as AppRole | null;
+      const storedRole = localStorage.getItem(
+        ACTIVE_ROLE_STORAGE_KEY,
+      ) as AppRole | null;
 
       // CRITICAL: Skip 'ambassador' as active_role - it's a badge, not a functional role.
       // Functional roles: admin, team_leader, strategist, trafficker, creator, editor, client
       const isValidFunctionalRole = (r: string | null): boolean =>
-        !!r && r !== 'ambassador' && roles.includes(r as AppRole);
+        !!r && r !== "ambassador" && roles.includes(r as AppRole);
 
       if (dbRole && isValidFunctionalRole(dbRole)) {
         setActiveRoleState(dbRole);
         localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, dbRole);
-      } else if (roles.includes('admin')) {
+      } else if (roles.includes("admin")) {
         // Admin users default to admin to avoid accidentally loading scoped views.
-        setActiveRoleState('admin');
-        localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, 'admin');
+        setActiveRoleState("admin");
+        localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, "admin");
       } else if (storedRole && isValidFunctionalRole(storedRole)) {
         // Only use localStorage if it matches a valid functional role for this user
         setActiveRoleState(storedRole);
@@ -96,13 +116,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Default to first functional role by priority (ambassador excluded)
         // Includes both new role names (content_creator) and legacy names (creator) for compatibility
         const priority: AppRole[] = [
-          'admin', 'team_leader',
-          'digital_strategist', 'creative_strategist', 'strategist',
-          'content_creator', 'creator', // content_creator is new, creator is legacy
-          'editor',
-          'community_manager',
-          'trafficker',
-          'client'
+          "admin",
+          "team_leader",
+          "digital_strategist",
+          "creative_strategist",
+          "strategist",
+          "content_creator",
+          "creator", // content_creator is new, creator is legacy
+          "editor",
+          "community_manager",
+          "trafficker",
+          "client",
         ];
         const primaryRole = priority.find((r) => roles.includes(r)) || roles[0];
         setActiveRoleState(primaryRole);
@@ -115,8 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const setActiveRole = async (role: AppRole) => {
     // GUARD: Never allow 'ambassador' as active_role - it's a badge, not a functional role
-    if (role === 'ambassador') {
-      logger.warn('auth Blocked attempt to set active_role to ambassador');
+    if (role === "ambassador") {
+      logger.warn("auth Blocked attempt to set active_role to ambassador");
       return;
     }
     if (roles.includes(role)) {
@@ -126,16 +150,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Persist to database
       if (user?.id) {
         supabase
-          .from('profiles')
+          .from("profiles")
           .update({ active_role: role })
-          .eq('id', user.id)
+          .eq("id", user.id)
           .then(({ error }) => {
-            if (error) logger.warn('auth Failed to persist active_role', { error });
+            if (error)
+              logger.warn("auth Failed to persist active_role", { error });
           });
       }
 
       // Dispatch event for components that need to react to role change
-      window.dispatchEvent(new CustomEvent('active-role-changed', { detail: { role } }));
+      window.dispatchEvent(
+        new CustomEvent("active-role-changed", { detail: { role } }),
+      );
     }
   };
 
@@ -147,15 +174,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // IMPORTANT: Don't clear this timeout just because getSession resolved; only clear when bootstrapping finishes.
     bootTimeoutRef.current = window.setTimeout(() => {
       if (!isMounted) return;
-      logger.warn('auth bootstrap timeout');
+      logger.warn("auth bootstrap timeout");
       setRolesLoaded(true);
       setLoading(false);
     }, 8000);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!isMounted) return;
 
-      logger.debug('auth state change', { event });
+      logger.debug("auth state change", { event });
 
       // CRITICAL: Treat same-user events (often triggered on tab focus / token refresh)
       // as a silent refresh. We should never re-block the entire UI in that case.
@@ -166,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // If there is no session AND the event is NOT an explicit sign-out, ignore.
       // Browsers (especially mobile) can emit transient null session events on focus.
-      if (!nextSession && event !== 'SIGNED_OUT') {
+      if (!nextSession && event !== "SIGNED_OUT") {
         return;
       }
 
@@ -194,7 +223,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (nextSession?.user) {
         // Only block the UI on first bootstrap or when the user actually changes.
-        const shouldBlockUi = userChanged && !bootstrappedRef.current ? true : userChanged;
+        const shouldBlockUi =
+          userChanged && !bootstrappedRef.current ? true : userChanged;
 
         if (shouldBlockUi) {
           setLoading(true);
@@ -217,10 +247,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    supabase.auth.getSession()
+    supabase.auth
+      .getSession()
       .then(({ data: { session } }) => {
         if (!isMounted) return;
-        logger.debug('auth getSession resolved', { hasSession: !!session });
+        logger.debug("auth getSession resolved", { hasSession: !!session });
 
         setSession(session);
         setUser(session?.user ?? null);
@@ -239,7 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       })
       .catch((err) => {
-        logger.error('auth getSession error', err);
+        logger.error("auth getSession error", err);
         if (!isMounted) return;
         setRolesLoaded(true);
         setLoading(false);
@@ -265,38 +296,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (fetchInProgressRef.current === userId) {
       if (silent) return;
       // Non-silent: wait briefly for the in-progress fetch to finish
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
       if (fetchInProgressRef.current === userId) return;
     }
     fetchInProgressRef.current = userId;
 
     // Helper to add timeout to promises
-    const withTimeout = <T,>(promiseFn: () => PromiseLike<T>, ms: number): Promise<T> => {
+    const withTimeout = <T,>(
+      promiseFn: () => PromiseLike<T>,
+      ms: number,
+    ): Promise<T> => {
       return Promise.race([
         Promise.resolve(promiseFn()),
-        new Promise<T>((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), ms)
-        )
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), ms),
+        ),
       ]);
     };
 
     // Root admin emails for fallback lookup
-    const ROOT_EMAILS = ["jacsolucionesgraficas@gmail.com", "kairosgp.sas@gmail.com"];
-    
+    const ROOT_EMAILS = [
+      "jacsolucionesgraficas@gmail.com",
+      "kairosgp.sas@gmail.com",
+    ];
+
     try {
       // First fetch profile to get current_organization_id (with 20s timeout)
       const profileResult = await withTimeout(
         () =>
-          supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle(),
-        20000
+          supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        20000,
       );
 
       if (profileResult.error) {
-        logger.warn('auth profile fetch error', { error: profileResult.error });
+        logger.warn("auth profile fetch error", { error: profileResult.error });
       }
 
       let userProfile = profileResult.data as Profile | null;
@@ -304,24 +337,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // FALLBACK: If profile not found by ID, check if this is a root admin by email
       // This handles ID mismatch issues from project migrations
       if (!userProfile) {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
         const userEmail = authUser?.email;
-        
+
         if (userEmail && ROOT_EMAILS.includes(userEmail)) {
-          logger.debug('auth Profile not found by ID, trying email lookup for root admin');
+          logger.debug(
+            "auth Profile not found by ID, trying email lookup for root admin",
+          );
           const emailProfileResult = await withTimeout(
             () =>
               supabase
-                .from('profiles')
-                .select('*')
-                .eq('email', userEmail)
+                .from("profiles")
+                .select("*")
+                .eq("email", userEmail)
                 .maybeSingle(),
-            10000
+            10000,
           );
-          
+
           if (emailProfileResult.data) {
             userProfile = emailProfileResult.data as Profile;
-            logger.debug('auth Found root admin profile by email');
+            logger.debug("auth Found root admin profile by email");
           }
         }
       }
@@ -330,6 +367,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // profile/roles if the fetch returns null or errors. This prevents visible UI flicker.
       if (!silent || userProfile) {
         setProfile(userProfile);
+      }
+
+      // Platform ban enforcement: si el usuario tiene un baneo activo, expulsar la
+      // sesion. El login lo bloquea Supabase Auth (banned_until), pero un token de
+      // acceso vigente seguiria funcionando hasta expirar; este chequeo cierra la
+      // sesion en la siguiente carga/refresh. Nunca aplica a usuarios root.
+      const banEmail = userProfile?.email;
+      if (!banEmail || !ROOT_EMAILS.includes(banEmail)) {
+        try {
+          const { data: isBanned } = await supabase.rpc("is_user_banned", {
+            _uid: userId,
+          });
+          if (isBanned === true) {
+            logger.warn("auth user is banned, signing out", { userId });
+            fetchInProgressRef.current = null;
+            await supabase.auth.signOut();
+            if (typeof window !== "undefined")
+              window.location.href = "/auth?banned=1";
+            return;
+          }
+        } catch (e) {
+          // fail-open: no bloquear el arranque por un error en el chequeo
+          logger.warn("auth ban check failed", { error: String(e) });
+        }
+
+        // Registrar IP + dispositivo del usuario (best-effort, no bloqueante) para
+        // permitir el bloqueo dirigido por IP/dispositivo desde el panel admin.
+        void invokeEdgeFunction("access-gate", {
+          body: { mode: "gate", userId, deviceId: getDeviceId() },
+        }).catch(() => {});
       }
 
       // Fetch roles from organization_member_roles.
@@ -346,21 +413,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const fetchOrgRoles = async (organizationId?: string) => {
         const q = supabase
-          .from('organization_member_roles')
-          .select('role')
-          .eq('user_id', roleUserId);
+          .from("organization_member_roles")
+          .select("role")
+          .eq("user_id", roleUserId);
 
-        return organizationId ? q.eq('organization_id', organizationId) : q;
+        return organizationId ? q.eq("organization_id", organizationId) : q;
       };
 
       if (userProfile?.current_organization_id) {
         const memberRolesResult = await withTimeout(
           () => fetchOrgRoles(userProfile.current_organization_id),
-          8000
+          8000,
         );
 
         if (memberRolesResult.error) {
-          logger.warn('auth org member roles fetch error', { error: memberRolesResult.error });
+          logger.warn("auth org member roles fetch error", {
+            error: memberRolesResult.error,
+          });
         }
 
         if (memberRolesResult.data && memberRolesResult.data.length > 0) {
@@ -371,12 +440,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const memberResult = await withTimeout(
             () =>
               supabase
-                .from('organization_members')
-                .select('role')
-                .eq('user_id', roleUserId)
-                .eq('organization_id', userProfile.current_organization_id)
+                .from("organization_members")
+                .select("role")
+                .eq("user_id", roleUserId)
+                .eq("organization_id", userProfile.current_organization_id)
                 .maybeSingle(),
-            8000
+            8000,
           );
 
           if (memberResult.data?.role) {
@@ -387,11 +456,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // No org selected in profile — still include org-based roles to allow role switching.
         const anyOrgRolesResult = await withTimeout(
           () => fetchOrgRoles(),
-          8000
+          8000,
         );
 
         if (anyOrgRolesResult.error) {
-          logger.warn('auth org member roles (any org) fetch error', { error: anyOrgRolesResult.error });
+          logger.warn("auth org member roles (any org) fetch error", {
+            error: anyOrgRolesResult.error,
+          });
         }
 
         if (anyOrgRolesResult.data && anyOrgRolesResult.data.length > 0) {
@@ -404,18 +475,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const anyMemberRolesResult = await withTimeout(
             () =>
               supabase
-                .from('organization_members')
-                .select('role')
-                .eq('user_id', roleUserId)
+                .from("organization_members")
+                .select("role")
+                .eq("user_id", roleUserId)
                 .limit(50),
-            8000
+            8000,
           );
 
           if (anyMemberRolesResult.error) {
-            logger.warn('auth organization_members (any org) fetch error', { error: anyMemberRolesResult.error });
+            logger.warn("auth organization_members (any org) fetch error", {
+              error: anyMemberRolesResult.error,
+            });
           }
 
-          if (anyMemberRolesResult.data && anyMemberRolesResult.data.length > 0) {
+          if (
+            anyMemberRolesResult.data &&
+            anyMemberRolesResult.data.length > 0
+          ) {
             userRoles = anyMemberRolesResult.data
               .map((r) => (r as any).role as AppRole)
               .filter(Boolean);
@@ -434,56 +510,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const ownerCheck = await withTimeout(
             () =>
               supabase
-                .from('organization_members')
-                .select('is_owner')
-                .eq('user_id', roleUserId)
-                .eq('organization_id', userProfile.current_organization_id!)
+                .from("organization_members")
+                .select("is_owner")
+                .eq("user_id", roleUserId)
+                .eq("organization_id", userProfile.current_organization_id!)
                 .maybeSingle(),
-            5000
+            5000,
           );
           if (ownerCheck.data?.is_owner) {
             // Owner without explicit role gets a ghost 'creator' from the NOT NULL DEFAULT
             // on organization_members.role. Remove it if no real role is assigned.
             // Key: if roles came from the fallback (not canonical), the 'creator' is always
             // the ghost default. Don't rely on active_role which may be stale.
-            if (!rolesFromCanonical && userRoles.length <= 1 && (!userRoles[0] || userRoles[0] === 'creator')) {
+            if (
+              !rolesFromCanonical &&
+              userRoles.length <= 1 &&
+              (!userRoles[0] || userRoles[0] === "creator")
+            ) {
               userRoles = [];
             }
-            if (!userRoles.includes('admin')) {
-              userRoles.unshift('admin');
+            if (!userRoles.includes("admin")) {
+              userRoles.unshift("admin");
             }
-            logger.debug('auth User is org owner — granted admin access');
+            logger.debug("auth User is org owner — granted admin access");
           }
         } catch (err) {
-          logger.warn('auth Error checking owner status', { error: err });
+          logger.warn("auth Error checking owner status", { error: err });
         }
       }
 
       // ALWAYS check if user is in client_users table - they should have client role
       // This runs regardless of other roles to ensure multi-role users get client access
-      if (!userRoles.includes('client')) {
+      if (!userRoles.includes("client")) {
         try {
           const clientUserResult = await withTimeout(
             () =>
               supabase
-                .from('client_users')
-                .select('id')
-                .eq('user_id', roleUserId)
+                .from("client_users")
+                .select("id")
+                .eq("user_id", roleUserId)
                 .limit(1),
-            8000
+            8000,
           );
 
           if (clientUserResult.error) {
-            logger.warn('auth client_users fetch error', { error: clientUserResult.error });
+            logger.warn("auth client_users fetch error", {
+              error: clientUserResult.error,
+            });
           }
 
           if (clientUserResult.data && clientUserResult.data.length > 0) {
             // User is a client user, add client role
-            userRoles = [...userRoles, 'client'];
-            logger.debug('auth Added client role for user in client_users table');
+            userRoles = [...userRoles, "client"];
+            logger.debug(
+              "auth Added client role for user in client_users table",
+            );
           }
         } catch (err) {
-          logger.warn('auth Error checking client_users', { error: err });
+          logger.warn("auth Error checking client_users", { error: err });
         }
       }
 
@@ -491,19 +575,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Always query user_roles for platform-level admin status.
       // This is separate from org-level admin (organization_member_roles).
       // Platform admin = entry in user_roles with role='admin' OR ROOT_EMAILS.
-      let detectedPlatformAdmin = !!(userProfile?.email && ROOT_EMAILS.includes(userProfile.email));
+      let detectedPlatformAdmin = !!(
+        userProfile?.email && ROOT_EMAILS.includes(userProfile.email)
+      );
       try {
         const platformRolesResult = await withTimeout(
           () =>
             supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', roleUserId),
-          8000
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", roleUserId),
+          8000,
         );
 
-        const platformRoles = (platformRolesResult.data || []).map((r) => r.role as AppRole);
-        if (platformRoles.includes('admin')) {
+        const platformRoles = (platformRolesResult.data || []).map(
+          (r) => r.role as AppRole,
+        );
+        if (platformRoles.includes("admin")) {
           detectedPlatformAdmin = true;
         }
 
@@ -512,13 +600,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userRoles = platformRoles;
         }
       } catch (err) {
-        logger.warn('auth Error checking user_roles', { error: err });
+        logger.warn("auth Error checking user_roles", { error: err });
       }
 
       // FINAL FALLBACK: If still no roles and this is a root admin, grant admin role
       if (userRoles.length === 0 && detectedPlatformAdmin) {
-        logger.debug('auth Platform admin detected with no roles, granting admin role');
-        userRoles = ['admin'];
+        logger.debug(
+          "auth Platform admin detected with no roles, granting admin role",
+        );
+        userRoles = ["admin"];
       }
 
       setIsPlatformAdmin(detectedPlatformAdmin);
@@ -529,7 +619,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // talent registration. Using these as organizational roles would bypass the referral gate.
       // Users without real organizational roles should remain with roles.length === 0
       // so the referral gate can properly block them until they complete 3 referrals.
-      const profileActiveRole = (userProfile as any)?.active_role as AppRole | null;
+      const profileActiveRole = (userProfile as any)
+        ?.active_role as AppRole | null;
 
       // NOTE: We intentionally do NOT use creator_profiles.marketplace_roles as organizational roles.
       // Marketplace roles are for display purposes only (showing talent specialties in the marketplace).
@@ -539,13 +630,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The active_role in profile can be set for UI purposes, but the roles array stays empty
       // until the user joins an organization or completes the referral gate.
 
-      logger.debug('auth Final roles for user', { roles: userRoles, activeRole: profileActiveRole });
+      logger.debug("auth Final roles for user", {
+        roles: userRoles,
+        activeRole: profileActiveRole,
+      });
 
       if (!silent || userRoles.length > 0) {
         setRoles(userRoles);
       }
     } catch (error) {
-      logger.error('auth Error fetching user data', error);
+      logger.error("auth Error fetching user data", error);
 
       // On silent refresh, keep the previous profile/roles to avoid flicker.
       if (!silent) {
@@ -576,20 +670,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     return { error };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: AppRole, companyName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    role: AppRole,
+    companyName?: string,
+  ) => {
     const redirectUrl = `${window.location.origin}/`;
-    
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { full_name: fullName }
-      }
+        data: { full_name: fullName },
+      },
     });
 
     if (!error && data.user) {
@@ -598,7 +701,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // user_roles is only for platform-level admins (root admins).
       // For now, we skip inserting into user_roles here since roles
       // are managed at the organization level.
-
       // Company creation happens post-wizard from the dashboard, not at signup
     }
 
@@ -626,61 +728,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Permission groups: 'admin' | 'talent' | 'client'
   // All creator/editor/strategist roles map to 'talent' group
-  const isAdmin = permissionGroup === 'admin';
-  const isTalentGroup = permissionGroup === 'talent';
-  const isCreator = isTalentGroup;    // Legacy alias - all content roles are talent
-  const isEditor = isTalentGroup;     // Legacy alias - all production roles are talent
-  const isClient = permissionGroup === 'client';
+  const isAdmin = permissionGroup === "admin";
+  const isTalentGroup = permissionGroup === "talent";
+  const isCreator = isTalentGroup; // Legacy alias - all content roles are talent
+  const isEditor = isTalentGroup; // Legacy alias - all production roles are talent
+  const isClient = permissionGroup === "client";
   const isStrategist = isTalentGroup; // Legacy alias - all strategy roles are talent
   const isTrafficker = isTalentGroup; // Legacy alias - trafficker is talent
-  const isTeamLeader = isAdmin;       // Legacy alias - team_leader maps to admin
+  const isTeamLeader = isAdmin; // Legacy alias - team_leader maps to admin
   const isSuperadmin = profile?.is_superadmin === true; // Platform superadmin
 
   // User type: talent (content creators, editors, etc.), client, or admin
   // Priority: admin > client > talent
   const getUserTypeFromRoles = (): UserType => {
-    if (roles.length === 0) return 'talent';
-    const groups = roles.map(r => getPermissionGroup(r));
-    if (groups.includes('admin')) return 'admin';
-    if (groups.includes('client')) return 'client';
-    return 'talent';
+    if (roles.length === 0) return "talent";
+    const groups = roles.map((r) => getPermissionGroup(r));
+    if (groups.includes("admin")) return "admin";
+    if (groups.includes("client")) return "client";
+    return "talent";
   };
 
   const userType = getUserTypeFromRoles();
-  const isTalent = userType === 'talent';
+  const isTalent = userType === "talent";
 
   // Account type from profile (set during onboarding)
-  const accountType: AccountType | null = (profile?.user_type as AccountType) || null;
+  const accountType: AccountType | null =
+    (profile?.user_type as AccountType) || null;
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      profile,
-      roles,
-      activeRole,
-      permissionGroup,
-      setActiveRole,
-      loading,
-      rolesLoaded,
-      signIn,
-      signUp,
-      signOut,
-      hasRole,
-      refetchUserData,
-      isPlatformAdmin,
-      isAdmin,
-      isCreator,
-      isEditor,
-      isClient,
-      isStrategist,
-      isTrafficker,
-      isTeamLeader,
-      isSuperadmin,
-      userType,
-      isTalent,
-      accountType
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
+        roles,
+        activeRole,
+        permissionGroup,
+        setActiveRole,
+        loading,
+        rolesLoaded,
+        signIn,
+        signUp,
+        signOut,
+        hasRole,
+        refetchUserData,
+        isPlatformAdmin,
+        isAdmin,
+        isCreator,
+        isEditor,
+        isClient,
+        isStrategist,
+        isTrafficker,
+        isTeamLeader,
+        isSuperadmin,
+        userType,
+        isTalent,
+        accountType,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -689,7 +794,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

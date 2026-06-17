@@ -1,15 +1,15 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { DetailSection } from '../DetailSection';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { DetailSection } from "../DetailSection";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   FileText,
   CheckCircle2,
@@ -23,11 +23,14 @@ import {
   Globe,
   Monitor,
   Fingerprint,
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
-import { useState } from 'react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
+import { downloadUserLegalDocs } from "@/lib/legalDocExport";
 
 interface LegalConsentsSectionProps {
   userId: string;
@@ -60,38 +63,45 @@ interface DigitalSignature {
 }
 
 const DOC_TYPE_LABELS: Record<string, string> = {
-  terms_of_service: 'Términos de Servicio',
-  privacy_policy: 'Política de Privacidad',
-  acceptable_use_policy: 'Uso Aceptable',
-  cookie_policy: 'Cookies',
-  age_verification_policy: 'Verificación Edad',
-  creator_agreement: 'Acuerdo Creador',
-  content_moderation_policy: 'Moderación',
-  dmca_policy: 'DMCA',
-  brand_agreement: 'Acuerdo Marca',
-  escrow_payment_terms: 'Escrow/Pagos',
-  white_label_agreement: 'White Label',
-  data_processing_agreement: 'DPA',
+  terms_of_service: "Términos de Servicio",
+  privacy_policy: "Política de Privacidad",
+  acceptable_use_policy: "Uso Aceptable",
+  cookie_policy: "Cookies",
+  age_verification_policy: "Verificación Edad",
+  creator_agreement: "Acuerdo Creador",
+  content_moderation_policy: "Moderación",
+  dmca_policy: "DMCA",
+  brand_agreement: "Acuerdo Marca",
+  escrow_payment_terms: "Escrow/Pagos",
+  white_label_agreement: "White Label",
+  data_processing_agreement: "DPA",
 };
 
 const SIGNATURE_METHOD_LABELS: Record<string, string> = {
-  clickwrap: 'Click',
-  typed_name: 'Nombre escrito',
-  drawn_signature: 'Firma dibujada',
+  clickwrap: "Click",
+  typed_name: "Nombre escrito",
+  drawn_signature: "Firma dibujada",
 };
 
-export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCompletedProp }: LegalConsentsSectionProps) {
-  const [selectedSignature, setSelectedSignature] = useState<DigitalSignature | null>(null);
-  const [selectedConsent, setSelectedConsent] = useState<UserConsent | null>(null);
+export function LegalConsentsSection({
+  userId,
+  onboardingCompleted: onboardingCompletedProp,
+}: LegalConsentsSectionProps) {
+  const [selectedSignature, setSelectedSignature] =
+    useState<DigitalSignature | null>(null);
+  const [selectedConsent, setSelectedConsent] = useState<UserConsent | null>(
+    null,
+  );
+  const [downloading, setDownloading] = useState(false);
 
   // Cargar estado de onboarding del perfil si no se proporciona
   const { data: profileData } = useQuery({
-    queryKey: ['user-onboarding-status', userId],
+    queryKey: ["user-onboarding-status", userId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('onboarding_completed')
-        .eq('id', userId)
+        .from("profiles")
+        .select("onboarding_completed")
+        .eq("id", userId)
         .single();
 
       if (error) return { onboarding_completed: false };
@@ -100,17 +110,19 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
     enabled: !!userId && onboardingCompletedProp === undefined,
   });
 
-  const onboardingCompleted = onboardingCompletedProp ?? profileData?.onboarding_completed ?? false;
+  const onboardingCompleted =
+    onboardingCompletedProp ?? profileData?.onboarding_completed ?? false;
 
   // Cargar consentimientos del usuario usando RPC (bypasses RLS for admins)
   const { data: consents, isLoading: loadingConsents } = useQuery({
-    queryKey: ['user-consents-crm', userId],
+    queryKey: ["user-consents-crm", userId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .rpc('get_user_consents', { p_user_id: userId });
+      const { data, error } = await (supabase as any).rpc("get_user_consents", {
+        p_user_id: userId,
+      });
 
       if (error) {
-        console.error('[LegalConsentsSection] Error:', error);
+        console.error("[LegalConsentsSection] Error:", error);
         return [];
       }
       return (data || []) as UserConsent[];
@@ -120,13 +132,15 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
 
   // Cargar firmas digitales del usuario usando RPC
   const { data: signatures, isLoading: loadingSignatures } = useQuery({
-    queryKey: ['user-signatures-crm', userId],
+    queryKey: ["user-signatures-crm", userId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .rpc('get_user_signatures', { p_user_id: userId });
+      const { data, error } = await (supabase as any).rpc(
+        "get_user_signatures",
+        { p_user_id: userId },
+      );
 
       if (error) {
-        console.error('[LegalConsentsSection] Signatures error:', error);
+        console.error("[LegalConsentsSection] Signatures error:", error);
         return [];
       }
       return (data || []) as DigitalSignature[];
@@ -138,6 +152,27 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
   const hasConsents = (consents?.length || 0) > 0;
   const hasSignatures = (signatures?.length || 0) > 0;
   const hasAnyLegal = hasConsents || hasSignatures;
+
+  const handleDownloadAll = async () => {
+    setDownloading(true);
+    try {
+      await downloadUserLegalDocs({
+        userId,
+        consents: (consents || []) as Parameters<
+          typeof downloadUserLegalDocs
+        >[0]["consents"],
+        signatures: (signatures || []) as Parameters<
+          typeof downloadUserLegalDocs
+        >[0]["signatures"],
+      });
+    } catch (e: unknown) {
+      toast.error(
+        e instanceof Error ? e.message : "No se pudo generar el documento",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     try {
@@ -180,6 +215,22 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Descargar todo lo legal firmado */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadAll}
+            disabled={downloading}
+            className="w-full justify-center gap-2 h-8 text-xs"
+          >
+            {downloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
+            )}
+            Descargar todo lo legal firmado (PDF)
+          </Button>
+
           {/* Consentimientos */}
           {hasConsents && (
             <div className="space-y-2">
@@ -199,14 +250,22 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                         <XCircle className="h-3.5 w-3.5 text-red-400" />
                       )}
                       <span className="text-white/80">
-                        {DOC_TYPE_LABELS[consent.document_type] || consent.document_type}
+                        {DOC_TYPE_LABELS[consent.document_type] ||
+                          consent.document_type}
                       </span>
-                      <span className="text-white/40">v{consent.document_version}</span>
+                      <span className="text-white/40">
+                        v{consent.document_version}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">{SIGNATURE_METHOD_LABELS[consent.consent_method] || consent.consent_method}</span>
+                      <span className="text-white/40">
+                        {SIGNATURE_METHOD_LABELS[consent.consent_method] ||
+                          consent.consent_method}
+                      </span>
                       <span className="text-white/40">•</span>
-                      <span className="text-white/40">{formatDate(consent.accepted_at)}</span>
+                      <span className="text-white/40">
+                        {formatDate(consent.accepted_at)}
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -238,15 +297,20 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                     <div className="flex items-center gap-2">
                       <PenTool className="h-3.5 w-3.5 text-purple-400" />
                       <span className="text-white/80">
-                        {DOC_TYPE_LABELS[sig.document_type] || sig.document_type}
+                        {DOC_TYPE_LABELS[sig.document_type] ||
+                          sig.document_type}
                       </span>
-                      <span className="text-white/40">v{sig.document_version}</span>
-                      {sig.status === 'valid' && (
+                      <span className="text-white/40">
+                        v{sig.document_version}
+                      </span>
+                      {sig.status === "valid" && (
                         <Shield className="h-3 w-3 text-green-400" />
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">{formatDate(sig.timestamp_utc)}</span>
+                      <span className="text-white/40">
+                        {formatDate(sig.timestamp_utc)}
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -265,7 +329,8 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
           {/* Resumen */}
           <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-white/40">
             <span>
-              {consents?.length || 0} consentimientos • {signatures?.length || 0} firmas
+              {consents?.length || 0} consentimientos •{" "}
+              {signatures?.length || 0} firmas
             </span>
             {onboardingCompleted && (
               <span className="flex items-center gap-1 text-green-400">
@@ -278,7 +343,10 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
       )}
 
       {/* Modal de detalle de firma */}
-      <Dialog open={!!selectedSignature} onOpenChange={() => setSelectedSignature(null)}>
+      <Dialog
+        open={!!selectedSignature}
+        onOpenChange={() => setSelectedSignature(null)}
+      >
         <DialogContent className="max-w-lg bg-[#1a1a2e] border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
@@ -294,12 +362,15 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-white/40 text-xs">Firmante</p>
-                  <p className="text-white font-medium">{selectedSignature.signer_full_name}</p>
+                  <p className="text-white font-medium">
+                    {selectedSignature.signer_full_name}
+                  </p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Documento</p>
                   <p className="text-white">
-                    {DOC_TYPE_LABELS[selectedSignature.document_type] || selectedSignature.document_type}
+                    {DOC_TYPE_LABELS[selectedSignature.document_type] ||
+                      selectedSignature.document_type}
                   </p>
                 </div>
               </div>
@@ -308,19 +379,25 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                 <div>
                   <p className="text-white/40 text-xs">Método</p>
                   <p className="text-white">
-                    {SIGNATURE_METHOD_LABELS[selectedSignature.signature_method] || selectedSignature.signature_method}
+                    {SIGNATURE_METHOD_LABELS[
+                      selectedSignature.signature_method
+                    ] || selectedSignature.signature_method}
                   </p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Fecha UTC</p>
-                  <p className="text-white">{formatDate(selectedSignature.timestamp_utc)}</p>
+                  <p className="text-white">
+                    {formatDate(selectedSignature.timestamp_utc)}
+                  </p>
                 </div>
               </div>
 
               {selectedSignature.typed_signature && (
                 <div>
                   <p className="text-white/40 text-xs">Firma Escrita</p>
-                  <p className="text-white text-lg italic">"{selectedSignature.typed_signature}"</p>
+                  <p className="text-white text-lg italic">
+                    "{selectedSignature.typed_signature}"
+                  </p>
                 </div>
               )}
 
@@ -347,24 +424,32 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-white/40 text-xs">IP</p>
-                  <p className="text-white font-mono text-xs">{selectedSignature.ip_address || 'N/A'}</p>
+                  <p className="text-white font-mono text-xs">
+                    {selectedSignature.ip_address || "N/A"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Estado</p>
-                  <Badge className={cn(
-                    "text-[10px]",
-                    selectedSignature.status === 'valid'
-                      ? "bg-green-500/10 text-green-400"
-                      : "bg-yellow-500/10 text-yellow-400"
-                  )}>
-                    {selectedSignature.status === 'valid' ? 'Válida' : selectedSignature.status}
+                  <Badge
+                    className={cn(
+                      "text-[10px]",
+                      selectedSignature.status === "valid"
+                        ? "bg-green-500/10 text-green-400"
+                        : "bg-yellow-500/10 text-yellow-400",
+                    )}
+                  >
+                    {selectedSignature.status === "valid"
+                      ? "Válida"
+                      : selectedSignature.status}
                   </Badge>
                 </div>
               </div>
 
               <div>
                 <p className="text-white/40 text-xs">ID de Firma</p>
-                <p className="text-white/60 font-mono text-[10px]">{selectedSignature.id}</p>
+                <p className="text-white/60 font-mono text-[10px]">
+                  {selectedSignature.id}
+                </p>
               </div>
             </div>
           )}
@@ -372,7 +457,10 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
       </Dialog>
 
       {/* Modal de detalle de consentimiento */}
-      <Dialog open={!!selectedConsent} onOpenChange={() => setSelectedConsent(null)}>
+      <Dialog
+        open={!!selectedConsent}
+        onOpenChange={() => setSelectedConsent(null)}
+      >
         <DialogContent className="max-w-lg bg-[#1a1a2e] border-white/10">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
@@ -389,12 +477,15 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                 <div>
                   <p className="text-white/40 text-xs">Documento</p>
                   <p className="text-white font-medium">
-                    {DOC_TYPE_LABELS[selectedConsent.document_type] || selectedConsent.document_type}
+                    {DOC_TYPE_LABELS[selectedConsent.document_type] ||
+                      selectedConsent.document_type}
                   </p>
                 </div>
                 <div>
                   <p className="text-white/40 text-xs">Versión</p>
-                  <p className="text-white">v{selectedConsent.document_version}</p>
+                  <p className="text-white">
+                    v{selectedConsent.document_version}
+                  </p>
                 </div>
               </div>
 
@@ -405,27 +496,36 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                     {selectedConsent.accepted ? (
                       <>
                         <CheckCircle2 className="h-4 w-4 text-green-400" />
-                        <span className="text-green-400 font-medium">Aceptado</span>
+                        <span className="text-green-400 font-medium">
+                          Aceptado
+                        </span>
                       </>
                     ) : (
                       <>
                         <XCircle className="h-4 w-4 text-red-400" />
-                        <span className="text-red-400 font-medium">Rechazado</span>
+                        <span className="text-red-400 font-medium">
+                          Rechazado
+                        </span>
                       </>
                     )}
                   </div>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Método de Consentimiento</p>
+                  <p className="text-white/40 text-xs">
+                    Método de Consentimiento
+                  </p>
                   <p className="text-white">
-                    {SIGNATURE_METHOD_LABELS[selectedConsent.consent_method] || selectedConsent.consent_method}
+                    {SIGNATURE_METHOD_LABELS[selectedConsent.consent_method] ||
+                      selectedConsent.consent_method}
                   </p>
                 </div>
               </div>
 
               <div>
                 <p className="text-white/40 text-xs">Fecha y Hora UTC</p>
-                <p className="text-white">{formatDate(selectedConsent.accepted_at)}</p>
+                <p className="text-white">
+                  {formatDate(selectedConsent.accepted_at)}
+                </p>
               </div>
 
               <div className="pt-3 border-t border-white/10">
@@ -438,16 +538,20 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
                     <Globe className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-white/40 text-xs">Dirección IP</p>
-                      <p className="text-white font-mono text-sm">{selectedConsent.ip_address || 'No registrada'}</p>
+                      <p className="text-white font-mono text-sm">
+                        {selectedConsent.ip_address || "No registrada"}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3 p-3 rounded-sm bg-white/5">
                     <Monitor className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-white/40 text-xs">User Agent (Navegador/Dispositivo)</p>
+                      <p className="text-white/40 text-xs">
+                        User Agent (Navegador/Dispositivo)
+                      </p>
                       <p className="text-white/70 text-xs break-all font-mono leading-relaxed">
-                        {selectedConsent.user_agent || 'No registrado'}
+                        {selectedConsent.user_agent || "No registrado"}
                       </p>
                     </div>
                   </div>
@@ -456,7 +560,9 @@ export function LegalConsentsSection({ userId, onboardingCompleted: onboardingCo
 
               <div className="pt-3 border-t border-white/10">
                 <p className="text-white/40 text-xs">ID de Consentimiento</p>
-                <p className="text-white/60 font-mono text-[10px]">{selectedConsent.id}</p>
+                <p className="text-white/60 font-mono text-[10px]">
+                  {selectedConsent.id}
+                </p>
               </div>
             </div>
           )}
