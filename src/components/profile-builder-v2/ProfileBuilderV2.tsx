@@ -38,6 +38,7 @@ import {
 } from "@/components/profile-builder/types/profile-builder";
 import { CanvasPreview } from "./CanvasPreview";
 import { SectionEditor } from "./editors";
+import { StylePanel } from "./panels/StylePanel";
 import { blocksToSections, getSelectedSection } from "./section-adapter";
 import type { BuilderPanel, DevicePreview } from "./types";
 
@@ -93,6 +94,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     profile,
     blocks: loadedBlocks,
     saveBlocksAsync,
+    saveBuilderConfigAsync,
     publishBlocks,
     generatePreviewTokenAsync,
     isLoading,
@@ -211,6 +213,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     setIsSavingLocal(true);
     try {
       await saveBlocksAsync(blocks, true);
+      await saveBuilderConfigAsync(builderConfig);
       setIsDirty(false);
       toast({
         title: "Borrador guardado",
@@ -228,7 +231,12 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     } finally {
       setIsSavingLocal(false);
     }
-  }, [blocks, saveBlocksAsync, toast]);
+  }, [blocks, builderConfig, saveBlocksAsync, saveBuilderConfigAsync, toast]);
+
+  const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
+    setBuilderConfig((current) => ({ ...current, ...updates }));
+    setIsDirty(true);
+  }, []);
 
   const handlePublish = useCallback(() => {
     publishBlocks();
@@ -604,22 +612,43 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
 
               <div className="space-y-4 overflow-y-auto p-4">
                 <div className="rounded-[18px] border border-slate-200 bg-slate-50 px-4 py-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
-                    <ShieldCheck className="h-4 w-4" />
-                    {selectedTitle}
-                  </div>
-                  <p className="mt-2 text-sm text-slate-600">
-                    {selectedSection
-                      ? selectedSection.description
-                      : "Haz clic en una sección a la izquierda para abrirla aquí con instrucciones cortas y directas."}
-                  </p>
-                  {selectedSection && (
-                    <div className="mt-4 rounded-[14px] border border-slate-200 bg-white p-4">
-                      <SectionEditor
-                        section={selectedSection}
-                        onUpdateBlock={updateBlock}
-                      />
-                    </div>
+                  {activePanel === "style" ? (
+                    <>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+                        <Palette className="h-4 w-4" />
+                        Estilo del perfil
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Cambia el color, el tema y las fuentes. Se aplican a
+                        todo tu perfil al instante.
+                      </p>
+                      <div className="mt-4 rounded-[14px] border border-slate-200 bg-white p-4">
+                        <StylePanel
+                          config={builderConfig}
+                          onChange={handleConfigChange}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-950">
+                        <ShieldCheck className="h-4 w-4" />
+                        {selectedTitle}
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {selectedSection
+                          ? selectedSection.description
+                          : "Haz clic en una sección a la izquierda para abrirla aquí con instrucciones cortas y directas."}
+                      </p>
+                      {selectedSection && (
+                        <div className="mt-4 rounded-[14px] border border-slate-200 bg-white p-4">
+                          <SectionEditor
+                            section={selectedSection}
+                            onUpdateBlock={updateBlock}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <Button
