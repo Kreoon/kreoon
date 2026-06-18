@@ -1,27 +1,40 @@
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfileBuilderData } from "@/components/profile-builder/hooks/useProfileBuilderData";
+import { useCreatorPlanFeatures } from "@/hooks/useCreatorPlanFeatures";
+import {
+  generateBlocksFromTemplate,
+  type CreatorDataForTemplate,
+} from "@/lib/profile-builder/generateBlocksFromTemplate";
 import {
   DEFAULT_BUILDER_CONFIG,
   type BuilderConfig,
   type ProfileBlock,
+  type ProfileTemplate,
 } from "@/components/profile-builder/types/profile-builder";
 import { TopToolbarV2 } from "./TopToolbarV2";
 import { LeftToolRail } from "./LeftToolRail";
 import { CanvasPreview } from "./CanvasPreview";
 import { ContextPanel } from "./ContextPanel";
+import { useBuilderAutosave } from "./hooks/useBuilderAutosave";
 import { blocksToSections, getSelectedSection } from "./section-adapter";
+import type { ApplyMode } from "./panels/TemplatesPanel";
 import type { BuilderPanel, DevicePreview } from "./types";
 
 interface ProfileBuilderV2Props {
   profileId: string;
 }
 
+const AUTOSAVE_DELAY_MS = 1500;
+
 export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
   const { toast } = useToast();
+  const { isPro, isPremium } = useCreatorPlanFeatures();
   const {
     profile,
     blocks: loadedBlocks,
+    marketplaceData,
+    currentTemplate,
     isLoading,
     isSaving,
     saveBlocksAsync,
@@ -37,11 +50,13 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     DEFAULT_BUILDER_CONFIG,
   );
   const [isDirty, setIsDirty] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   // ─── Sincronizar datos cargados al estado local ────────────────────────────
   useEffect(() => {
     if (loadedBlocks && loadedBlocks.length > 0) {
       setBlocks(loadedBlocks);
+      setHydrated(true);
     }
   }, [loadedBlocks]);
 
@@ -90,17 +105,90 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
   }, []);
 
   const deleteSection = useCallback((blockId: string) => {
-    setBlocks((current) => {
-      const remaining = current.filter((block) => block.id !== blockId);
-      return remaining
+    setBlocks((current) =>
+      current
+        .filter((block) => block.id !== blockId)
         .sort((a, b) => a.orderIndex - b.orderIndex)
-        .map((block, orderIndex) => ({ ...block, orderIndex }));
-    });
+        .map((block, orderIndex) => ({ ...block, orderIndex })),
+    );
     setSelectedBlockId((current) => (current === blockId ? null : current));
     setIsDirty(true);
   }, []);
 
-  // ─── Guardar / Publicar / Preview ──────────────────────────────────────────
+  const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
+    setBuilderConfig((current) => ({ ...current, ...updates }));
+    setIsDirty(true);
+  }, []);
+
+  // ─── Aplicar plantilla ─────────────────────────────────────────────────────
+  const handleApplyTemplate = useCallback(
+    (template: ProfileTemplate, mode: ApplyMode) => {
+      if (mode === "style-only") {
+        setBuilderConfig(template.config);
+        setIsDirty(true);
+        toast({
+          title: "Estilo aplicado",
+          description: `Se aplico el estilo de "${template.label}".`,
+        });
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `Reemplazar el contenido actual con la plantilla "${template.label}"? Esta accion no se puede deshacer hasta guardar.`,
+      );
+      if (!confirmed) return;
+
+      if (!marketplaceData?.profile) {
+        toast({
+          title: "No se pudo aplicar",
+          description:
+            "Aun no se cargaron tus datos. Intenta de nuevo en unos segundos.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const creatorData: CreatorDataForTemplate = {
+        profile: marketplaceData.profile,
+        portfolioItems: marketplaceData.portfolioItems,
+        services: marketplaceData.services,
+        reviews: marketplaceData.reviews,
+        trustStats: marketplaceData.trustStats || undefined,
+        specializations:
+          marketplaceData.specializations?.map((s) => s.name) || [],
+      };
+
+      const newBlocks = generateBlocksFromTemplate(template, creatorData);
+      setBlocks(newBlocks);
+      setBuilderConfig(template.config);
+      setSelectedBlockId(null);
+      setIsDirty(true);
+      toast({
+        title: "Plantilla aplicada",
+        description: `Se aplico "${template.label}".`,
+      });
+    },
+    [marketplaceData, toast],
+  );
+
+  // ─── Guardado silencioso (autosave) ────────────────────────────────────────
+  const persist = useCallback(
+    async (isDraft: boolean) => {
+      await saveBuilderConfigAsync(builderConfig);
+      await saveBlocksAsync(blocks, isDraft);
+      setIsDirty(false);
+    },
+    [blocks, builderConfig, saveBlocksAsync, saveBuilderConfigAsync],
+  );
+
+  const { lastSavedAt, saveError } = useBuilderAutosave({
+    enabled: hydrated && blocks.length > 0,
+    isDirty,
+    delayMs: AUTOSAVE_DELAY_MS,
+    onSave: () => persist(true),
+  });
+
+  // ─── Guardar / Publicar / Preview manuales ─────────────────────────────────
   const handleSave = useCallback(async () => {
     if (!blocks.length) {
       toast({
@@ -111,9 +199,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
       return;
     }
     try {
-      await saveBuilderConfigAsync(builderConfig);
-      await saveBlocksAsync(blocks, true);
-      setIsDirty(false);
+      await persist(true);
       toast({
         title: "Borrador guardado",
         description: "Tus cambios se guardaron.",
@@ -125,7 +211,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
         variant: "destructive",
       });
     }
-  }, [blocks, builderConfig, saveBlocksAsync, saveBuilderConfigAsync, toast]);
+  }, [blocks.length, persist, toast]);
 
   const handlePublish = useCallback(async () => {
     if (!blocks.length) {
@@ -137,9 +223,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
       return;
     }
     try {
-      await saveBuilderConfigAsync(builderConfig);
-      await saveBlocksAsync(blocks, false);
-      setIsDirty(false);
+      await persist(false);
       toast({
         title: "Perfil publicado",
         description: "Tu portafolio ya es visible en el marketplace.",
@@ -151,7 +235,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
         variant: "destructive",
       });
     }
-  }, [blocks, builderConfig, saveBlocksAsync, saveBuilderConfigAsync, toast]);
+  }, [blocks.length, persist, toast]);
 
   const handlePreview = useCallback(async () => {
     const token = await generatePreviewTokenAsync();
@@ -172,9 +256,13 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
 
   const statusLabel = isSaving
     ? "Guardando..."
-    : isDirty
-      ? "Cambios sin guardar"
-      : "Todo guardado";
+    : saveError
+      ? "Error al guardar"
+      : isDirty
+        ? "Cambios sin guardar"
+        : lastSavedAt
+          ? "Guardado"
+          : "Todo guardado";
 
   if (isLoading) {
     return (
@@ -216,17 +304,22 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
           activePanel={activePanel}
           selectedSection={selectedSection}
           sections={sections}
+          blocks={blocks}
           selectedBlockId={selectedBlockId}
           builderConfig={builderConfig}
+          currentTemplate={currentTemplate}
+          canUsePro={isPro}
+          canUsePremium={isPremium}
+          isSaving={isSaving}
           onSelectSection={setSelectedBlockId}
           onToggleVisibility={toggleVisibility}
           onMoveSection={moveSection}
           onDeleteSection={deleteSection}
           onUpdateBlock={updateBlock}
-          onConfigChange={(updates) => {
-            setBuilderConfig((current) => ({ ...current, ...updates }));
-            setIsDirty(true);
-          }}
+          onConfigChange={handleConfigChange}
+          onApplyTemplate={handleApplyTemplate}
+          onPreview={handlePreview}
+          onPublish={handlePublish}
         />
       </div>
     </div>
