@@ -2,7 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import grapesjs, { type Editor } from "grapesjs";
 import "grapesjs/dist/css/grapes.min.css";
 import presetWebpage from "grapesjs-preset-webpage";
-import { ArrowLeft, ImageIcon, Moon, Save, Sparkles, Sun } from "lucide-react";
+import esLocale from "grapesjs/locale/es";
+import {
+  ArrowLeft,
+  Eye,
+  ImageIcon,
+  Moon,
+  Redo2,
+  Save,
+  Sparkles,
+  Sun,
+  Undo2,
+} from "lucide-react";
+import { registerBlocks, STYLE_SECTORS, I18N_ES_EXTRA } from "./grapesSetup";
 import { MediaLibraryPicker } from "@/components/profile-builder/media/MediaLibraryPicker";
 import type { MediaItem } from "@/components/profile-builder/media/types";
 import { isBunnyUrl } from "@/components/profile-builder/blocks/BunnyStreamPlayer";
@@ -144,6 +156,19 @@ export function GrapesEditor({
       width: "100%",
       fromElement: false,
       storageManager: false,
+      // Interfaz en español neutro (LATAM).
+      i18n: {
+        locale: "es",
+        localeFallback: "es",
+        messages: {
+          es: {
+            ...(esLocale as Record<string, unknown>),
+            ...I18N_ES_EXTRA,
+          },
+        },
+      },
+      // Panel de estilos simplificado (solo lo esencial, en español).
+      styleManager: { sectors: STYLE_SECTORS },
       // Se invoca el plugin con sus opciones directamente (la clave string de
       // pluginsOpts no casa con la función importada/minificada).
       plugins: [
@@ -151,6 +176,8 @@ export function GrapesEditor({
           presetWebpage(ed, {
             modalImportTitle: "Importar",
             showStylesOnChange: true,
+            // Sin bloques del preset (en inglés): usamos los nuestros.
+            blocks: [],
             // Desactiva el tema marrón hardcodeado del preset para que GrapesJS
             // use sus variables CSS (controladas por el toggle oscuro/claro).
             useCustomTheme: false,
@@ -174,6 +201,8 @@ export function GrapesEditor({
         injectTemplateHead(doc, parsed.head as HTMLHeadElement);
         applyTokens(doc, tokens);
       }
+      // Reemplazar bloques en inglés por los nuestros en español.
+      registerBlocks(editor);
     });
 
     editor.setComponents(bodyHtml);
@@ -201,6 +230,10 @@ export function GrapesEditor({
     },
     [tokens],
   );
+
+  const runCmd = useCallback((cmd: string) => {
+    editorRef.current?.runCommand(cmd);
+  }, []);
 
   const handleMediaSelect = useCallback((item: MediaItem) => {
     setPickerOpen(false);
@@ -286,6 +319,26 @@ export function GrapesEditor({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {[
+            { cmd: "core:undo", label: "Deshacer", Icon: Undo2 },
+            { cmd: "core:redo", label: "Rehacer", Icon: Redo2 },
+            { cmd: "preview", label: "Previsualizar", Icon: Eye },
+          ].map(({ cmd, label, Icon }) => (
+            <button
+              key={cmd}
+              type="button"
+              onClick={() => runCmd(cmd)}
+              title={label}
+              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${
+                isDark
+                  ? "border-white/10 text-slate-200 hover:bg-white/10"
+                  : "border-slate-200 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden lg:inline">{label}</span>
+            </button>
+          ))}
           <button
             type="button"
             onClick={onToggleTheme}
