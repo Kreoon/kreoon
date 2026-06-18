@@ -36,6 +36,7 @@ import {
   type EditorTheme,
 } from "./editorTheme";
 import type { PortfolioTemplate } from "./registry";
+import { getTemplateSeed } from "./templateSeeds";
 
 const GrapesAdvancedModal = lazy(() =>
   import("./GrapesAdvancedModal").then((m) => ({
@@ -48,9 +49,11 @@ const EMPTY_DATA = { content: [], root: {} } as unknown as Data;
 function loadData(id: string): Data {
   try {
     const raw = localStorage.getItem(PUCK_STORAGE_PREFIX + id);
-    return raw ? (JSON.parse(raw) as Data) : EMPTY_DATA;
+    if (raw) return JSON.parse(raw) as Data;
+    // Sin diseño guardado: arrancar con la plantilla adaptada a bloques de Puck.
+    return getTemplateSeed(id) ?? EMPTY_DATA;
   } catch {
-    return EMPTY_DATA;
+    return getTemplateSeed(id) ?? EMPTY_DATA;
   }
 }
 

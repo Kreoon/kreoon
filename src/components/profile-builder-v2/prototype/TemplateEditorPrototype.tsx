@@ -6,6 +6,7 @@ import { TemplateGallery } from "./TemplateGallery";
 import { GrapesEditor } from "./GrapesEditor";
 import { getTemplate } from "./registry";
 import { puckConfig, PUCK_STORAGE_PREFIX } from "./puckConfig";
+import { getTemplateSeed } from "./templateSeeds";
 import {
   loadEditorTheme,
   saveEditorTheme,
@@ -22,9 +23,9 @@ interface ProtoProps {
 function loadPuckData(id: string): Data | null {
   try {
     const raw = localStorage.getItem(PUCK_STORAGE_PREFIX + id);
-    return raw ? (JSON.parse(raw) as Data) : null;
+    return raw ? (JSON.parse(raw) as Data) : getTemplateSeed(id);
   } catch {
-    return null;
+    return getTemplateSeed(id);
   }
 }
 
