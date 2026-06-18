@@ -48,6 +48,16 @@ interface SectionItem {
 }
 
 // ─── Helpers de media adaptativa ──────────────────────────────────────────
+// El endpoint de Storage de Bunny (*.storage.bunnycdn.com) no sirve GET público;
+// hay que usar el pull zone CDN ({zona}.b-cdn.net). Normaliza por si la URL
+// guardada/devuelta apunta al Storage.
+function normalizeBunnyUrl(url: string): string {
+  const m = url.match(
+    /^https?:\/\/[a-z0-9-]+\.storage\.bunnycdn\.com\/([^/]+)\/(.+)$/i,
+  );
+  return m ? `https://${m[1]}.b-cdn.net/${m[2]}` : url;
+}
+
 function ratioFromAspect(aspect?: string): string | null {
   if (!aspect) return null;
   const m = aspect.match(/(\d+)\s*[:/x]\s*(\d+)/);
@@ -76,15 +86,16 @@ function bunnyEmbedSrc(url: string): string {
 /** Construye el HTML de un medio que se adapta a su aspecto (vertical/horizontal). */
 function mediaHtml(item: MediaItem): string {
   const ratio = ratioFromAspect(item.aspectRatio);
+  const url = normalizeBunnyUrl(item.url);
   if (item.type === "video") {
-    if (isBunnyUrl(item.url)) {
-      const src = bunnyEmbedSrc(item.url);
+    if (isBunnyUrl(url)) {
+      const src = bunnyEmbedSrc(url);
       return `<div data-ke-media class="rounded-2xl overflow-hidden my-2" style="position:relative;width:100%;aspect-ratio:${ratio ?? "16 / 9"};background:#000"><iframe src="${src}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay;encrypted-media;picture-in-picture;fullscreen" allowfullscreen></iframe></div>`;
     }
-    return `<video data-ke-media src="${item.url}" controls playsinline class="rounded-2xl my-2" style="display:block;width:100%;height:auto;${ratio ? `aspect-ratio:${ratio};` : ""}background:#000"></video>`;
+    return `<video data-ke-media src="${url}" controls playsinline class="rounded-2xl my-2" style="display:block;width:100%;height:auto;${ratio ? `aspect-ratio:${ratio};` : ""}background:#000"></video>`;
   }
   // Imagen: width 100% + height auto => conserva su proporción real (adaptativo).
-  return `<img data-ke-media src="${item.url}" class="rounded-2xl my-2" style="display:block;width:100%;height:auto;max-width:100%"/>`;
+  return `<img data-ke-media src="${url}" class="rounded-2xl my-2" style="display:block;width:100%;height:auto;max-width:100%"/>`;
 }
 
 type SelectionKind = "image" | "text" | "other";
@@ -399,7 +410,7 @@ export function TemplateEditor({
       if (pickerMode === "replace" && target) {
         // Si es imagen y el destino ya es <img>, basta cambiar el src (adaptativo).
         if (item.type === "image" && target.tagName === "IMG") {
-          (target as HTMLImageElement).src = item.url;
+          (target as HTMLImageElement).src = normalizeBunnyUrl(item.url);
           (target as HTMLImageElement).removeAttribute("srcset");
           target.style.height = "auto";
           return;
