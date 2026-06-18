@@ -1,105 +1,263 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import grapesjs, { type Editor } from "grapesjs";
-import "grapesjs/dist/css/grapes.min.css";
-import presetWebpage from "grapesjs-preset-webpage";
-import esLocale from "grapesjs/locale/es";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Puck, usePuck, type Data } from "@measured/puck";
+import "@measured/puck/puck.css";
 import {
   ArrowLeft,
   Eye,
-  ImageIcon,
   Moon,
   Redo2,
   Save,
+  Settings2,
   Sparkles,
   Sun,
   Undo2,
 } from "lucide-react";
-import { registerBlocks, STYLE_SECTORS, I18N_ES_EXTRA } from "./grapesSetup";
 import { MediaLibraryPicker } from "@/components/profile-builder/media/MediaLibraryPicker";
 import type { MediaItem } from "@/components/profile-builder/media/types";
-import { isBunnyUrl } from "@/components/profile-builder/blocks/BunnyStreamPlayer";
-import { prepareTemplate } from "./prepareTemplate";
-import type { PortfolioTemplate } from "./registry";
-import type { TemplateToken } from "./sampleTemplate";
+import { puckConfig, PUCK_STORAGE_PREFIX } from "./puckConfig";
+import { EditorMediaContext } from "./editorContext";
+import {
+  puckBlockToGrapesHTML,
+  grapesHTMLToPuckBlock,
+  isAdvancedSupported,
+} from "./puckGrapesBridge";
 import {
   installGjsThemeStyles,
   setGjsTheme,
   clearGjsTheme,
   type EditorTheme,
 } from "./editorTheme";
+import type { PortfolioTemplate } from "./registry";
 
-// ─── Helpers de media (idénticos al motor anterior) ───────────────────────
-function normalizeBunnyUrl(url: string): string {
-  const m = url.match(
-    /^https?:\/\/[a-z0-9-]+\.storage\.bunnycdn\.com\/([^/]+)\/(.+)$/i,
-  );
-  return m ? `https://${m[1]}.b-cdn.net/${m[2]}` : url;
-}
+const GrapesAdvancedModal = lazy(() =>
+  import("./GrapesAdvancedModal").then((m) => ({
+    default: m.GrapesAdvancedModal,
+  })),
+);
 
-function ratioFromAspect(aspect?: string): string | null {
-  if (!aspect) return null;
-  const m = aspect.match(/(\d+)\s*[:/x]\s*(\d+)/);
-  return m ? `${m[1]} / ${m[2]}` : null;
-}
+const EMPTY_DATA = { content: [], root: {} } as unknown as Data;
 
-function bunnyEmbedSrc(url: string): string {
-  const embed = url.match(
-    /iframe\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([a-f0-9-]+)/i,
-  );
-  if (embed)
-    return `https://iframe.mediadelivery.net/embed/${embed[1]}/${embed[2]}?responsive=true`;
-  const cdn = url.match(/vz-[a-f0-9-]+\.b-cdn\.net\/([a-f0-9-]+)/i);
-  if (cdn)
-    return `https://iframe.mediadelivery.net/embed/568434/${cdn[1]}?responsive=true`;
-  return url;
-}
-
-function mediaHtml(item: MediaItem): string {
-  const ratio = ratioFromAspect(item.aspectRatio);
-  const url = normalizeBunnyUrl(item.url);
-  if (item.type === "video") {
-    if (isBunnyUrl(url)) {
-      return `<div class="rounded-2xl overflow-hidden my-2" style="position:relative;width:100%;aspect-ratio:${ratio ?? "16 / 9"};background:#000"><iframe src="${bunnyEmbedSrc(url)}" loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;border:0" allow="autoplay;encrypted-media;picture-in-picture;fullscreen" allowfullscreen></iframe></div>`;
-    }
-    return `<video src="${url}" controls playsinline class="rounded-2xl my-2" style="display:block;width:100%;height:auto;${ratio ? `aspect-ratio:${ratio};` : ""}background:#000"></video>`;
+function loadData(id: string): Data {
+  try {
+    const raw = localStorage.getItem(PUCK_STORAGE_PREFIX + id);
+    return raw ? (JSON.parse(raw) as Data) : EMPTY_DATA;
+  } catch {
+    return EMPTY_DATA;
   }
-  return `<img src="${url}" class="rounded-2xl my-2" style="display:block;width:100%;height:auto;max-width:100%"/>`;
 }
 
-/**
- * Inyecta el <head> de la plantilla (Tailwind CDN + config + fuentes + estilos)
- * en el documento del canvas de GrapesJS, respetando el orden de ejecución para
- * que Tailwind aplique correctamente.
- */
-function injectTemplateHead(doc: Document, head: HTMLHeadElement) {
-  // 1. links / styles / meta inmediatos (fuentes, CSS custom, tokens).
-  head.querySelectorAll("link, style, meta").forEach((node) => {
-    doc.head.appendChild(node.cloneNode(true));
+interface PuckApi {
+  dispatch: (action: Record<string, unknown>) => void;
+  appState: {
+    data: Data;
+    ui: { itemSelector?: { index: number; zone?: string } };
+  };
+  history?: {
+    back: () => void;
+    forward: () => void;
+    hasPast?: boolean;
+    hasFuture?: boolean;
+  };
+}
+
+interface AdvancedState {
+  index: number;
+  zone?: string;
+  type: string;
+  label: string;
+  html: string;
+}
+
+// ─── Barra superior (override del header de Puck; usePuck disponible aquí) ───
+function TopBar({
+  isDark,
+  template,
+  savedAt,
+  onBack,
+  onSave,
+  onToggleTheme,
+  onPreview,
+  puckApiRef,
+}: {
+  isDark: boolean;
+  template: PortfolioTemplate;
+  savedAt: string | null;
+  onBack: () => void;
+  onSave: () => void;
+  onToggleTheme: () => void;
+  onPreview: () => void;
+  puckApiRef: React.MutableRefObject<PuckApi | null>;
+}) {
+  const puck = usePuck() as unknown as PuckApi;
+  useEffect(() => {
+    puckApiRef.current = puck;
   });
+  const history = puck.history;
 
-  const cdn = head.querySelector<HTMLScriptElement>(
-    'script[src*="cdn.tailwindcss.com"]',
+  const btn = isDark
+    ? "border-white/10 text-slate-200 hover:bg-white/10"
+    : "border-slate-200 text-slate-600 hover:bg-slate-100";
+
+  return (
+    <div
+      className={`flex items-center gap-3 border-b px-3 py-2 ${
+        isDark ? "border-white/10 bg-[#1f2430]" : "border-slate-200 bg-white"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onBack}
+        className={`rounded-md p-1.5 ${btn} border`}
+        aria-label="Volver"
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </button>
+      <div
+        className={`flex items-center gap-1.5 text-sm font-semibold ${isDark ? "text-slate-100" : "text-slate-900"}`}
+      >
+        <Sparkles className="h-4 w-4 text-violet-500" />
+        {template.name}
+      </div>
+
+      <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => history?.back()}
+          disabled={!history?.hasPast}
+          title="Deshacer"
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium disabled:opacity-40 ${btn}`}
+        >
+          <Undo2 className="h-4 w-4" />
+          <span className="hidden lg:inline">Deshacer</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => history?.forward()}
+          disabled={!history?.hasFuture}
+          title="Rehacer"
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium disabled:opacity-40 ${btn}`}
+        >
+          <Redo2 className="h-4 w-4" />
+          <span className="hidden lg:inline">Rehacer</span>
+        </button>
+        <button
+          type="button"
+          onClick={onPreview}
+          title="Previsualizar"
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${btn}`}
+        >
+          <Eye className="h-4 w-4" />
+          <span className="hidden lg:inline">Previsualizar</span>
+        </button>
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          title={isDark ? "Modo claro" : "Modo oscuro"}
+          className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${btn}`}
+        >
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {isDark ? "Claro" : "Oscuro"}
+        </button>
+        {savedAt && (
+          <span
+            className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}
+          >
+            Guardado {savedAt}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onSave}
+          className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
+        >
+          <Save className="h-4 w-4" /> Guardar
+        </button>
+      </div>
+    </div>
   );
-  const cfg = head.querySelector<HTMLScriptElement>("script#tailwind-config");
-  const cfgText = cfg?.textContent ?? "";
+}
 
-  // 2. Un único bootstrap inline que corre en el contexto del canvas: carga el
-  //    CDN de Tailwind y, en su onload, aplica el config (patrón oficial del
-  //    Play CDN: <script src> y luego tailwind.config = {...}).
-  if (cdn) {
-    const boot = doc.createElement("script");
-    boot.textContent = `(function(){
-      var s=document.createElement('script');
-      s.src=${JSON.stringify(cdn.getAttribute("src") ?? "")};
-      s.onload=function(){ try{ ${cfgText} }catch(e){ console.error('[kreoon] tailwind config', e); } };
-      document.head.appendChild(s);
-    })();`;
-    doc.head.appendChild(boot);
-  } else if (cfgText) {
-    const c = doc.createElement("script");
-    c.textContent = cfgText;
-    doc.head.appendChild(c);
+// ─── Acción "Avanzado" en la barra del bloque seleccionado ──────────────────
+function AdvancedAction({
+  children,
+  onAdvanced,
+}: {
+  children?: React.ReactNode;
+  onAdvanced: (sel: {
+    index: number;
+    zone?: string;
+    type: string;
+    label: string;
+    props: Record<string, unknown>;
+  }) => void;
+}) {
+  const puck = usePuck() as unknown as PuckApi;
+  const sel = puck.appState.ui.itemSelector;
+  let type = "";
+  let props: Record<string, unknown> = {};
+  if (sel) {
+    const zone = sel.zone;
+    const dataAny = puck.appState.data as unknown as {
+      content: { type: string; props: Record<string, unknown> }[];
+      zones?: Record<
+        string,
+        { type: string; props: Record<string, unknown> }[]
+      >;
+    };
+    const arr =
+      zone && dataAny.zones?.[zone] ? dataAny.zones[zone] : dataAny.content;
+    const item = arr?.[sel.index];
+    type = item?.type ?? "";
+    props = item?.props ?? {};
   }
+  const supported = !!type && isAdvancedSupported(type);
+  const label =
+    (puckConfig.components as Record<string, { label?: string }>)[type]
+      ?.label ?? type;
+
+  return (
+    <>
+      {children}
+      {sel && (
+        <button
+          type="button"
+          onClick={() =>
+            supported &&
+            onAdvanced({ index: sel.index, zone: sel.zone, type, label, props })
+          }
+          disabled={!supported}
+          title={
+            supported
+              ? "Edición avanzada"
+              : "Edición avanzada próximamente para este bloque"
+          }
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            padding: "2px 8px",
+            marginLeft: 4,
+            borderRadius: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            color: "#fff",
+            background: supported ? "#8b5cf6" : "rgba(255,255,255,.25)",
+            cursor: supported ? "pointer" : "not-allowed",
+          }}
+        >
+          ⚙ {supported ? "✦ Avanzado" : "Próximamente"}
+        </button>
+      )}
+    </>
+  );
 }
 
 export function GrapesEditor({
@@ -118,285 +276,182 @@ export function GrapesEditor({
   onToggleTheme: () => void;
 }) {
   const isDark = theme === "dark";
-  const containerRef = useRef<HTMLDivElement>(null);
-  const editorRef = useRef<Editor | null>(null);
-  const [tokens, setTokens] = useState<TemplateToken[]>(() =>
-    template.tokens.map((t) => ({ ...t })),
-  );
+  const [data, setData] = useState<Data>(() => loadData(template.id));
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [saved, setSaved] = useState<string | null>(null);
-  const hasMediaLibrary = !!userId;
+  const [advanced, setAdvanced] = useState<AdvancedState | null>(null);
+  const pickCbRef = useRef<((item: MediaItem) => void) | null>(null);
+  const puckApiRef = useRef<PuckApi | null>(null);
+  const primary =
+    template.tokens.find((t) => t.key === "--c-primary")?.value ?? "#8b5cf6";
 
-  // Tema del editor (oscuro/claro) vía atributo en <html>.
   useEffect(() => {
     installGjsThemeStyles();
     setGjsTheme(theme);
     return () => clearGjsTheme();
   }, [theme]);
 
-  const applyTokens = useCallback((doc: Document, list: TemplateToken[]) => {
-    list.forEach((t) =>
-      doc.documentElement.style.setProperty(
-        t.key,
-        t.type === "font" ? `'${t.value}'` : t.value,
-      ),
+  const handleSave = useCallback(() => {
+    const current = puckApiRef.current?.appState.data ?? data;
+    localStorage.setItem(
+      PUCK_STORAGE_PREFIX + template.id,
+      JSON.stringify(current),
     );
+    setSavedAt(new Date().toLocaleTimeString());
+  }, [data, template.id]);
+
+  const handlePreview = useCallback(() => {
+    handleSave();
+    window.open(
+      `/plantilla-demo?ver=${template.id}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }, [handleSave, template.id]);
+
+  const openPicker = useCallback((cb: (item: MediaItem) => void) => {
+    pickCbRef.current = cb;
+    setPickerOpen(true);
   }, []);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const onMediaSelect = useCallback((item: MediaItem) => {
+    pickCbRef.current?.(item);
+    pickCbRef.current = null;
+    setPickerOpen(false);
+  }, []);
 
-    const prepared = prepareTemplate(template, template.tokens);
-    const parsed = new DOMParser().parseFromString(prepared, "text/html");
-    const bodyHtml = parsed.body.innerHTML;
-
-    const editor = grapesjs.init({
-      container: containerRef.current,
-      height: "100%",
-      width: "100%",
-      fromElement: false,
-      storageManager: false,
-      // Interfaz en español neutro (LATAM).
-      i18n: {
-        locale: "es",
-        localeFallback: "es",
-        messages: {
-          es: {
-            ...(esLocale as Record<string, unknown>),
-            ...I18N_ES_EXTRA,
-          },
-        },
-      },
-      // Panel de estilos simplificado (solo lo esencial, en español).
-      styleManager: { sectors: STYLE_SECTORS },
-      // Se invoca el plugin con sus opciones directamente (la clave string de
-      // pluginsOpts no casa con la función importada/minificada).
-      plugins: [
-        (ed: Editor) =>
-          presetWebpage(ed, {
-            modalImportTitle: "Importar",
-            showStylesOnChange: true,
-            // Sin bloques del preset (en inglés): usamos los nuestros.
-            blocks: [],
-            // Desactiva el tema marrón hardcodeado del preset para que GrapesJS
-            // use sus variables CSS (controladas por el toggle oscuro/claro).
-            useCustomTheme: false,
-          }),
-      ],
-      deviceManager: {
-        devices: [
-          { name: "Escritorio", width: "" },
-          { name: "Tablet", width: "768px", widthMedia: "992px" },
-          { name: "Móvil", width: "375px", widthMedia: "575px" },
-        ],
-      },
-      assetManager: { custom: true },
-    });
-
-    editorRef.current = editor;
-
-    editor.on("load", () => {
-      const doc = editor.Canvas.getDocument();
-      if (doc) {
-        injectTemplateHead(doc, parsed.head as HTMLHeadElement);
-        applyTokens(doc, tokens);
-      }
-      // Reemplazar bloques en inglés por los nuestros en español.
-      registerBlocks(editor);
-    });
-
-    editor.setComponents(bodyHtml);
-
-    return () => {
-      editor.destroy();
-      editorRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [template]);
-
-  const handleTokenChange = useCallback(
-    (key: string, value: string) => {
-      setTokens((current) =>
-        current.map((t) => (t.key === key ? { ...t, value } : t)),
-      );
-      const doc = editorRef.current?.Canvas.getDocument();
-      const token = tokens.find((t) => t.key === key);
-      if (doc) {
-        doc.documentElement.style.setProperty(
-          key,
-          token?.type === "font" ? `'${value}'` : value,
-        );
-      }
+  const openAdvanced = useCallback(
+    (sel: {
+      index: number;
+      zone?: string;
+      type: string;
+      label: string;
+      props: Record<string, unknown>;
+    }) => {
+      const html = puckBlockToGrapesHTML(sel.type, sel.props);
+      if (!html) return;
+      setAdvanced({
+        index: sel.index,
+        zone: sel.zone,
+        type: sel.type,
+        label: sel.label,
+        html,
+      });
     },
-    [tokens],
+    [],
   );
 
-  const runCmd = useCallback((cmd: string) => {
-    editorRef.current?.runCommand(cmd);
-  }, []);
+  const applyAdvanced = useCallback(
+    (html: string) => {
+      const api = puckApiRef.current;
+      if (!api || !advanced) {
+        setAdvanced(null);
+        return;
+      }
+      const { index, zone, type } = advanced;
+      const dataAny = api.appState.data as unknown as {
+        content: { type: string; props: Record<string, unknown> }[];
+        zones?: Record<
+          string,
+          { type: string; props: Record<string, unknown> }[]
+        >;
+      };
+      const arr =
+        zone && dataAny.zones?.[zone] ? dataAny.zones[zone] : dataAny.content;
+      const item = arr?.[index];
+      if (!item) {
+        setAdvanced(null);
+        return;
+      }
+      const parsed = grapesHTMLToPuckBlock(type, html) ?? {};
+      const newItem = {
+        ...item,
+        props: { ...item.props, ...parsed, _html: html },
+      };
+      api.dispatch({
+        type: "replace",
+        destinationIndex: index,
+        destinationZone: zone,
+        data: newItem,
+      });
+      setAdvanced(null);
+    },
+    [advanced],
+  );
 
-  const handleMediaSelect = useCallback((item: MediaItem) => {
-    setPickerOpen(false);
-    const editor = editorRef.current;
-    if (!editor) return;
-    const selected = editor.getSelected();
-    const url = normalizeBunnyUrl(item.url);
+  const mediaCtx = useMemo(
+    () => ({ userId, creatorProfileId, openPicker, theme }),
+    [userId, creatorProfileId, openPicker, theme],
+  );
 
-    // Si hay una imagen seleccionada y el medio es imagen -> cambiar src.
-    if (selected && selected.get("type") === "image" && item.type === "image") {
-      selected.addAttributes({ src: url });
-      selected.removeAttributes?.(["srcset"]);
-      return;
-    }
-    // Si no, insertar el medio adaptativo después de lo seleccionado (o al final).
-    const html = mediaHtml(item);
-    if (selected) {
-      const parent = selected.parent();
-      const at = parent ? parent.components().indexOf(selected) + 1 : undefined;
-      (parent ?? editor.getWrapper())?.append(html, { at });
-    } else {
-      editor.getWrapper()?.append(html);
-    }
-  }, []);
-
-  const handleSave = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    const html = editor.getHtml();
-    const css = editor.getCss();
-    // Persistencia real (BD) es la siguiente fase; por ahora guardamos local
-    // para validar el round-trip.
-    const payload = JSON.stringify({ html, css, tokens });
-    window.localStorage.setItem(`kreoon-template-${template.id}`, payload);
-    setSaved(new Date().toLocaleTimeString());
-  }, [template.id, tokens]);
+  const overrides = useMemo(
+    () => ({
+      header: () => (
+        <TopBar
+          isDark={isDark}
+          template={template}
+          savedAt={savedAt}
+          onBack={onBack}
+          onSave={handleSave}
+          onToggleTheme={onToggleTheme}
+          onPreview={handlePreview}
+          puckApiRef={puckApiRef}
+        />
+      ),
+      actionBar: ({ children }: { children?: React.ReactNode }) => (
+        <AdvancedAction onAdvanced={openAdvanced}>{children}</AdvancedAction>
+      ),
+    }),
+    [
+      isDark,
+      template,
+      savedAt,
+      onBack,
+      handleSave,
+      onToggleTheme,
+      handlePreview,
+      openAdvanced,
+    ],
+  );
 
   return (
-    <div
-      className={`flex h-screen w-full flex-col ${isDark ? "bg-[#161a22]" : "bg-slate-100"}`}
-    >
-      {/* Barra superior propia */}
+    <EditorMediaContext.Provider value={mediaCtx}>
       <div
-        className={`flex items-center gap-3 border-b px-3 py-2 ${
-          isDark ? "border-white/10 bg-[#1f2430]" : "border-slate-200 bg-white"
-        }`}
+        className="h-screen w-full"
+        style={{ ["--c-primary" as string]: primary }}
       >
-        <button
-          type="button"
-          onClick={onBack}
-          className={`rounded-md p-1.5 ${
-            isDark
-              ? "text-slate-400 hover:bg-white/10 hover:text-white"
-              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-          }`}
-          aria-label="Volver a plantillas"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <div
-          className={`flex items-center gap-1.5 text-sm font-semibold ${
-            isDark ? "text-slate-100" : "text-slate-900"
-          }`}
-        >
-          <Sparkles className="h-4 w-4 text-violet-500" />
-          {template.name}
-        </div>
-
-        {/* Tokens de color */}
-        <div className="ml-2 flex items-center gap-1.5">
-          {tokens
-            .filter((t) => t.type === "color")
-            .map((t) => (
-              <input
-                key={t.key}
-                type="color"
-                value={t.value}
-                title={t.label}
-                onChange={(e) => handleTokenChange(t.key, e.target.value)}
-                className="h-7 w-7 cursor-pointer rounded border border-slate-200 bg-white"
-              />
-            ))}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          {[
-            { cmd: "core:undo", label: "Deshacer", Icon: Undo2 },
-            { cmd: "core:redo", label: "Rehacer", Icon: Redo2 },
-            { cmd: "preview", label: "Previsualizar", Icon: Eye },
-          ].map(({ cmd, label, Icon }) => (
-            <button
-              key={cmd}
-              type="button"
-              onClick={() => runCmd(cmd)}
-              title={label}
-              className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${
-                isDark
-                  ? "border-white/10 text-slate-200 hover:bg-white/10"
-                  : "border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              <span className="hidden lg:inline">{label}</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={onToggleTheme}
-            title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${
-              isDark
-                ? "border-white/10 text-slate-200 hover:bg-white/10"
-                : "border-slate-200 text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            {isDark ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-            {isDark ? "Claro" : "Oscuro"}
-          </button>
-          {hasMediaLibrary && (
-            <button
-              type="button"
-              onClick={() => setPickerOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-md border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-100"
-            >
-              <ImageIcon className="h-4 w-4" /> Imagen / Video (Bunny)
-            </button>
-          )}
-          {saved && (
-            <span
-              className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}
-            >
-              Guardado {saved}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={handleSave}
-            className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            <Save className="h-4 w-4" /> Guardar
-          </button>
-        </div>
+        <Puck
+          config={puckConfig}
+          data={data}
+          onChange={setData}
+          overrides={overrides}
+          iframe={{ enabled: false }}
+        />
       </div>
 
-      {/* Editor GrapesJS (su propia UI de paneles, bloques, estilos, capas) */}
-      <div className="min-h-0 flex-1">
-        <div ref={containerRef} className="h-full" />
-      </div>
-
-      {hasMediaLibrary && (
+      {pickerOpen && userId && (
         <MediaLibraryPicker
           open={pickerOpen}
           onOpenChange={setPickerOpen}
-          onSelect={handleMediaSelect}
+          onSelect={onMediaSelect}
           allowedTypes={["image", "video"]}
-          userId={userId!}
+          userId={userId}
           creatorProfileId={creatorProfileId}
         />
       )}
-    </div>
+
+      {advanced && (
+        <Suspense fallback={null}>
+          <GrapesAdvancedModal
+            blockLabel={advanced.label}
+            html={advanced.html}
+            css=""
+            theme={theme}
+            onApply={applyAdvanced}
+            onClose={() => setAdvanced(null)}
+          />
+        </Suspense>
+      )}
+    </EditorMediaContext.Provider>
   );
 }
