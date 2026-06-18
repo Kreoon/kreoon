@@ -2,13 +2,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import grapesjs, { type Editor } from "grapesjs";
 import "grapesjs/dist/css/grapes.min.css";
 import presetWebpage from "grapesjs-preset-webpage";
-import { ArrowLeft, ImageIcon, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, ImageIcon, Moon, Save, Sparkles, Sun } from "lucide-react";
 import { MediaLibraryPicker } from "@/components/profile-builder/media/MediaLibraryPicker";
 import type { MediaItem } from "@/components/profile-builder/media/types";
 import { isBunnyUrl } from "@/components/profile-builder/blocks/BunnyStreamPlayer";
 import { prepareTemplate } from "./prepareTemplate";
 import type { PortfolioTemplate } from "./registry";
 import type { TemplateToken } from "./sampleTemplate";
+import {
+  installGjsThemeStyles,
+  setGjsTheme,
+  clearGjsTheme,
+  type EditorTheme,
+} from "./editorTheme";
 
 // ─── Helpers de media (idénticos al motor anterior) ───────────────────────
 function normalizeBunnyUrl(url: string): string {
@@ -89,12 +95,17 @@ export function GrapesEditor({
   onBack,
   userId,
   creatorProfileId,
+  theme,
+  onToggleTheme,
 }: {
   template: PortfolioTemplate;
   onBack: () => void;
   userId?: string;
   creatorProfileId?: string;
+  theme: EditorTheme;
+  onToggleTheme: () => void;
 }) {
+  const isDark = theme === "dark";
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<Editor | null>(null);
   const [tokens, setTokens] = useState<TemplateToken[]>(() =>
@@ -103,6 +114,13 @@ export function GrapesEditor({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saved, setSaved] = useState<string | null>(null);
   const hasMediaLibrary = !!userId;
+
+  // Tema del editor (oscuro/claro) vía atributo en <html>.
+  useEffect(() => {
+    installGjsThemeStyles();
+    setGjsTheme(theme);
+    return () => clearGjsTheme();
+  }, [theme]);
 
   const applyTokens = useCallback((doc: Document, list: TemplateToken[]) => {
     list.forEach((t) =>
@@ -126,13 +144,18 @@ export function GrapesEditor({
       width: "100%",
       fromElement: false,
       storageManager: false,
-      plugins: [presetWebpage],
-      pluginsOpts: {
-        "grapesjs-preset-webpage": {
-          modalImportTitle: "Importar",
-          showStylesOnChange: true,
-        },
-      },
+      // Se invoca el plugin con sus opciones directamente (la clave string de
+      // pluginsOpts no casa con la función importada/minificada).
+      plugins: [
+        (ed: Editor) =>
+          presetWebpage(ed, {
+            modalImportTitle: "Importar",
+            showStylesOnChange: true,
+            // Desactiva el tema marrón hardcodeado del preset para que GrapesJS
+            // use sus variables CSS (controladas por el toggle oscuro/claro).
+            useCustomTheme: false,
+          }),
+      ],
       deviceManager: {
         devices: [
           { name: "Escritorio", width: "" },
@@ -216,18 +239,32 @@ export function GrapesEditor({
   }, [template.id, tokens]);
 
   return (
-    <div className="flex h-screen w-full flex-col bg-slate-100">
+    <div
+      className={`flex h-screen w-full flex-col ${isDark ? "bg-[#161a22]" : "bg-slate-100"}`}
+    >
       {/* Barra superior propia */}
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-white px-3 py-2">
+      <div
+        className={`flex items-center gap-3 border-b px-3 py-2 ${
+          isDark ? "border-white/10 bg-[#1f2430]" : "border-slate-200 bg-white"
+        }`}
+      >
         <button
           type="button"
           onClick={onBack}
-          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          className={`rounded-md p-1.5 ${
+            isDark
+              ? "text-slate-400 hover:bg-white/10 hover:text-white"
+              : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+          }`}
           aria-label="Volver a plantillas"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
-        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+        <div
+          className={`flex items-center gap-1.5 text-sm font-semibold ${
+            isDark ? "text-slate-100" : "text-slate-900"
+          }`}
+        >
           <Sparkles className="h-4 w-4 text-violet-500" />
           {template.name}
         </div>
@@ -249,6 +286,23 @@ export function GrapesEditor({
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${
+              isDark
+                ? "border-white/10 text-slate-200 hover:bg-white/10"
+                : "border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {isDark ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+            {isDark ? "Claro" : "Oscuro"}
+          </button>
           {hasMediaLibrary && (
             <button
               type="button"
@@ -259,7 +313,11 @@ export function GrapesEditor({
             </button>
           )}
           {saved && (
-            <span className="text-xs text-slate-400">Guardado {saved}</span>
+            <span
+              className={`text-xs ${isDark ? "text-slate-500" : "text-slate-400"}`}
+            >
+              Guardado {saved}
+            </span>
           )}
           <button
             type="button"

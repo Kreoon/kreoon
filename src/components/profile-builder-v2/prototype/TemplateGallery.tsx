@@ -1,6 +1,7 @@
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Moon, Sparkles, Sun } from "lucide-react";
 import { prepareTemplate } from "./prepareTemplate";
 import { TEMPLATES, type PortfolioTemplate } from "./registry";
+import type { EditorTheme } from "./editorTheme";
 
 function TemplateCard({
   template,
@@ -56,24 +57,54 @@ function TemplateCard({
 
 export function TemplateGallery({
   onSelect,
+  theme,
+  onToggleTheme,
 }: {
   onSelect: (id: string) => void;
+  theme: EditorTheme;
+  onToggleTheme: () => void;
 }) {
+  const isDark = theme === "dark";
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-6">
-          <div className="flex items-center gap-2 text-sm font-medium text-violet-600">
-            <Sparkles className="h-4 w-4" />
-            Builder v3 · Plantillas
+    <div className={`min-h-screen ${isDark ? "bg-[#161a22]" : "bg-slate-100"}`}>
+      <header
+        className={`border-b ${isDark ? "border-white/10 bg-[#1f2430]" : "border-slate-200 bg-white"}`}
+      >
+        <div className="mx-auto flex max-w-6xl items-start justify-between gap-4 px-6 py-6">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-medium text-violet-400">
+              <Sparkles className="h-4 w-4" />
+              Builder v3 · Plantillas
+            </div>
+            <h1
+              className={`mt-1 text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-950"}`}
+            >
+              Elige una plantilla para tu perfil
+            </h1>
+            <p
+              className={`mt-1 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}
+            >
+              Selecciona un diseño y personalízalo 100%: textos, imágenes,
+              colores, secciones y elementos.
+            </p>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
-            Elige una plantilla para tu perfil
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Selecciona un diseño y personalízalo 100%: textos, imágenes,
-            colores, secciones y elementos.
-          </p>
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            title={isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium ${
+              isDark
+                ? "border-white/10 text-slate-200 hover:bg-white/10"
+                : "border-slate-200 text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {isDark ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+            {isDark ? "Claro" : "Oscuro"}
+          </button>
         </div>
       </header>
 
