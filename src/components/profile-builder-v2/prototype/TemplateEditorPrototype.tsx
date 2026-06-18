@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TemplateGallery } from "./TemplateGallery";
-import { TemplateEditor } from "./TemplateEditor";
+import { GrapesEditor } from "./GrapesEditor";
 import { getTemplate } from "./registry";
 
 interface ProtoProps {
@@ -22,7 +22,7 @@ export function TemplateEditorPrototype({
   }
 
   return (
-    <TemplateEditor
+    <GrapesEditor
       template={template}
       onBack={() => setTemplateId(null)}
       userId={userId}

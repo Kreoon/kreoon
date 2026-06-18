@@ -78,6 +78,8 @@
     "embla-carousel-react": "^8.6.0",
     "emoji-picker-react": "^4.19.1",
     "framer-motion": "^11.18.2",
+    "grapesjs": "^0.23.2",
+    "grapesjs-preset-webpage": "^1.0.3",
     "hls.js": "^1.6.15",
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
