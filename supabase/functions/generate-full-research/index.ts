@@ -19,6 +19,7 @@ import {
 import { validateCompetitorUrls } from "../_shared/url-validator.ts";
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 import { KIRO_MASTER_PROMPT as KIRO_MASTER_PROMPT_FALLBACK } from "../_shared/prompts/research.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -2686,8 +2687,15 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Internal call: run processRequest synchronously and return when done
-  if (body._internal === true) {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const authHeader = req.headers.get("Authorization");
+  // El self-invoke entre phases siempre manda el service role key como Bearer.
+  // body._internal es controlable por cualquiera, por eso NUNCA se confía solo en ese flag.
+  const isTrustedInternalCall = !!authHeader && authHeader === `Bearer ${supabaseKey}`;
+
+  // Internal call (chaining entre phases, ya validado en el primer hop externo)
+  if (body._internal === true && isTrustedInternalCall) {
     await processRequest(body);
     return new Response(
       JSON.stringify({ success: true }),
@@ -2695,17 +2703,93 @@ Deno.serve(async (req) => {
     );
   }
 
-  // External call: fire-and-forget an internal self-invocation, return 202 immediately
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  // External call: validar caller + ownership del producto ANTES de disparar nada
+  // (antes: organization_id/user_id/is_client_user se tomaban del body sin validar —
+  // cualquiera sin login podía correr research de 21 fases para cualquier product_id
+  // quemando tokens de otra org).
+  const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+  const supabaseUser = createClient(
+    supabaseUrl,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader ?? "" } } },
+  );
 
+  const { data: { user: callerUser } = { user: null } } = authHeader
+    ? await supabaseUser.auth.getUser()
+    : { data: { user: null } };
+
+  if (!callerUser) {
+    return new Response(
+      JSON.stringify({ success: false, error: "unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  const { data: product } = await supabaseAdmin
+    .from("products")
+    .select("id, client_id")
+    .eq("id", body.product_id)
+    .maybeSingle();
+
+  if (!product) {
+    return new Response(
+      JSON.stringify({ success: false, error: "product not found" }),
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  let realOrgId: string | null = null;
+  let ownershipOk = false;
+
+  if (product.client_id) {
+    const { data: clientRow } = await supabaseAdmin
+      .from("clients")
+      .select("id, organization_id, user_id")
+      .eq("id", product.client_id)
+      .maybeSingle();
+
+    realOrgId = clientRow?.organization_id ?? null;
+
+    if (clientRow?.user_id === callerUser.id) {
+      ownershipOk = true;
+    } else {
+      const { data: clientUserRow } = await supabaseAdmin
+        .from("client_users")
+        .select("id")
+        .eq("client_id", product.client_id)
+        .eq("user_id", callerUser.id)
+        .maybeSingle();
+      if (clientUserRow) ownershipOk = true;
+    }
+  }
+
+  if (!ownershipOk && realOrgId) {
+    const membershipRejection = await assertOrgMembership(req, supabaseAdmin, callerUser.id, realOrgId);
+    ownershipOk = !membershipRejection;
+  }
+
+  if (!ownershipOk) {
+    return new Response(
+      JSON.stringify({ success: false, error: "forbidden: no access to this product" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
+  // Fire-and-forget self-invocation con user_id/organization_id derivados server-side
+  // (nunca los valores originales del body — esos siguen sin ser confiables).
   fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${supabaseKey}`,
     },
-    body: JSON.stringify({ ...body, phase: body.phase ?? 0, _internal: true }),
+    body: JSON.stringify({
+      ...body,
+      user_id: callerUser.id,
+      organization_id: realOrgId,
+      phase: body.phase ?? 0,
+      _internal: true,
+    }),
   }).catch(() => {});
 
   return new Response(

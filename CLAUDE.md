@@ -9,6 +9,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Contexto**: Kreoon es una plataforma SaaS de marketplace creativo para LATAM
 - **Prioridades**: Código limpio, tipado estricto y mejores prácticas
 
+## Context7 — Documentación actualizada
+
+**REGLA OBLIGATORIA:** Antes de escribir código que use cualquier librería
+del stack, consultar Context7 para obtener la documentación actualizada:
+
+- TanStack Query v5 → query-docs("tanstack query v5")
+- Supabase JS → query-docs("supabase javascript")
+- shadcn/ui → query-docs("shadcn ui")
+- React Hook Form → query-docs("react hook form")
+- Deno APIs → query-docs("deno")
+- Framer Motion → query-docs("framer motion")
+
+Nunca asumir que la sintaxis del training data es correcta — siempre verificar.
+
 ## Project Overview
 
 **KREOON** is a full-stack Progressive Web Application (PWA) that serves as a creative operations management system - an "operating system for creators." It's a multi-tenant SaaS platform managing content creation, talent management, client relationships, team collaboration, social media portfolios, live streaming, and AI-powered features.
@@ -136,6 +150,12 @@ supabase/
 - Multi-provider fallback: Perplexity → Gemini → OpenAI
 - AI functions: `multi-ai`, `content-ai`, `board-ai`, `portfolio-ai`, `up-ai-copilot`
 - Prompts stored in `src/lib/` directory
+- **ADN Recargado (Product DNA research)**: el pipeline real y único en producción es
+  `generate-full-research` (21 fases, self-invocation chain, Perplexity+Firecrawl+Gemini+Mistral,
+  invocado desde `src/lib/services/product-dna.service.ts`). `adn-orchestrator`, `adn-continue` y
+  `adn-orchestrator-lite` eran un árbol paralelo sin ningún caller real (uno de ellos apuntaba a
+  `adn-research-v3`, función que nunca existió) — se eliminaron de producción y del repo el 2026-07-05.
+  No recrear ese árbol sin confirmar antes que hace falta.
 
 ### Edge Function Development
 - All functions in `supabase/functions/[function-name]/`
