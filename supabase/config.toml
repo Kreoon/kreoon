@@ -92,6 +92,10 @@ verify_jwt = false
 [functions.academy-trigger-integrations]
 verify_jwt = true
 
+[functions.academy-signed-video-url]
+# Auth + ownership/unlock validados internamente (getUser + academy_evaluate_unlock)
+verify_jwt = false
+
 [functions.public-registration]
 verify_jwt = false
 
