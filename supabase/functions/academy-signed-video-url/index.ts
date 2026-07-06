@@ -93,7 +93,8 @@ Deno.serve(async (req) => {
     });
   }
 
-  const libraryId = Deno.env.get("BUNNY_LIBRARY_ID") ?? "";
+  // Libreria propia de Academia -- ver nota en academy-video-upload-init
+  const libraryId = Deno.env.get("BUNNY_ACADEMY_LIBRARY_ID") ?? "";
   const securityKey = Deno.env.get("BUNNY_STREAM_TOKEN_KEY");
   const expires = Math.floor(Date.now() / 1000) + EXPIRES_SECONDS;
 

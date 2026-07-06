@@ -38,7 +38,10 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const bunnyLibraryId = Deno.env.get("BUNNY_LIBRARY_ID");
+  // Libreria propia de Academia -- separada de BUNNY_LIBRARY_ID (usada por
+  // bunny-portfolio-upload y 15+ funciones mas del modulo de contenido).
+  // Compartir el mismo nombre pisaba el valor de una con la otra.
+  const bunnyLibraryId = Deno.env.get("BUNNY_ACADEMY_LIBRARY_ID");
   const bunnyApiKey = Deno.env.get("BUNNY_STREAM_TOKEN_KEY");
 
   if (!bunnyLibraryId || !bunnyApiKey) {
