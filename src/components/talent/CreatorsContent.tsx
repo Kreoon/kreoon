@@ -138,75 +138,18 @@ export function CreatorsContent() {
     ));
 
     try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          is_ambassador: newStatus,
-          ambassador_celebration_pending: newStatus,
-        })
-        .eq('id', talent.id);
+      // FASE5 Bloque C: antes eran 4 escrituras secuenciales sin transaccion
+      // (profiles, organization_member_badges, organization_members,
+      // organization_member_roles) -- un fallo a mitad de camino dejaba
+      // estado inconsistente. Ahora todo corre atomico en un solo RPC.
+      const { data, error } = await (supabase as any).rpc('toggle_ambassador_status', {
+        p_organization_id: currentOrgId,
+        p_user_id: talent.id,
+        p_new_status: newStatus,
+      });
 
-      if (profileError) throw profileError;
-
-      if (newStatus) {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .upsert(
-            {
-              organization_id: currentOrgId,
-              user_id: talent.id,
-              badge: 'ambassador',
-              level: 'bronze',
-              is_active: true,
-              granted_at: new Date().toISOString(),
-              granted_by: user?.id || null,
-            },
-            { onConflict: 'organization_id,user_id,badge' }
-          );
-        if (badgeError) throw badgeError;
-      } else {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .update({
-            is_active: false,
-            revoked_at: new Date().toISOString(),
-            revoked_by: user?.id || null,
-          })
-          .eq('organization_id', currentOrgId)
-          .eq('user_id', talent.id)
-          .eq('badge', 'ambassador');
-        if (badgeError) throw badgeError;
-      }
-
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .update({ ambassador_level: newLevel })
-        .eq('organization_id', currentOrgId)
-        .eq('user_id', talent.id);
-
-      if (memberError) throw memberError;
-
-      if (newStatus) {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .upsert(
-            {
-              organization_id: currentOrgId,
-              user_id: talent.id,
-              role: 'ambassador',
-            },
-            { onConflict: 'organization_id,user_id,role' }
-          );
-        if (roleError) throw roleError;
-      } else {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .delete()
-          .eq('organization_id', currentOrgId)
-          .eq('user_id', talent.id)
-          .eq('role', 'ambassador');
-        if (roleError) throw roleError;
-      }
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || 'Failed');
 
       toast({
         description: newStatus
