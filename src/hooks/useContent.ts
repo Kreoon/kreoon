@@ -18,6 +18,10 @@ export function markLocalUpdate(contentId: string, durationMs: number = 3000) {
 
 // Shared helper: fetch content via SECURITY DEFINER RPC (bypasses 18 RLS policies)
 // Falls back to direct query if no org context (rare case)
+// FASE4 B2: acepta offset para paginacion real (antes el LIMIT 500 era fijo
+// y sin forma de pedir la pagina siguiente -- el resto desaparecia en
+// silencio para una org con mas de 500 items). hasMore es heuristico:
+// si la pagina vino llena, asumimos que puede haber mas.
 async function fetchContentData(opts: {
   currentOrgId?: string;
   role?: string;
@@ -25,7 +29,9 @@ async function fetchContentData(opts: {
   clientId?: string;
   creatorId?: string;
   editorId?: string;
-}) {
+  offset?: number;
+}): Promise<{ items: any[]; hasMore: boolean }> {
+  const offset = opts.offset ?? 0;
   let contentData: any[] = [];
 
   if (opts.currentOrgId) {
@@ -38,6 +44,7 @@ async function fetchContentData(opts: {
       p_creator_id: opts.creatorId || null,
       p_editor_id: opts.editorId || null,
       p_limit: CONTENT_PAGE_SIZE,
+      p_offset: offset,
     });
     if (error) throw error;
     contentData = data || [];
@@ -47,7 +54,7 @@ async function fetchContentData(opts: {
       .from('content')
       .select('*')
       .order('created_at', { ascending: false })
-      .limit(CONTENT_PAGE_SIZE);
+      .range(offset, offset + CONTENT_PAGE_SIZE - 1);
     if (opts.clientId) query = query.eq('client_id', opts.clientId);
     if (opts.creatorId) query = query.eq('creator_id', opts.creatorId);
     if (opts.editorId) query = query.eq('editor_id', opts.editorId);
@@ -57,6 +64,8 @@ async function fetchContentData(opts: {
     if (error) throw error;
     contentData = data || [];
   }
+
+  const hasMore = contentData.length === CONTENT_PAGE_SIZE;
 
   // Fetch client, creator, editor info in parallel (lightweight individual queries)
   // Each fetch is wrapped in try/catch so a timeout on clients (heavy RLS) won't block everything
@@ -88,12 +97,14 @@ async function fetchContentData(opts: {
   const creatorMap = new Map(creatorsData.map((c: any) => [c.id, c]));
   const editorMap = new Map(editorsData.map((e: any) => [e.id, e]));
 
-  return contentData.map(item => ({
+  const items = contentData.map(item => ({
     ...item,
     client: item.client_id ? clientMap.get(item.client_id) || null : null,
     creator: item.creator_id ? creatorMap.get(item.creator_id) || null : null,
     editor: item.editor_id ? editorMap.get(item.editor_id) || null : null,
   }));
+
+  return { items, hasMore };
 }
 
 interface UseContentOptions {
@@ -127,7 +138,7 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 
     try {
       setLoading(true);
-      const result = await fetchContentData({
+      const { items: result } = await fetchContentData({
         currentOrgId: currentOrgId || undefined,
         role,
         userId,
@@ -317,6 +328,8 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
 export function useContentWithFilters(options: UseContentOptions = {}) {
   const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const lastErrorTimeRef = useRef<number>(0);
@@ -333,7 +346,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
 
     try {
       setLoading(true);
-      const result = await fetchContentData({
+      const { items: result, hasMore: more } = await fetchContentData({
         currentOrgId: currentOrgId || undefined,
         role: options.role,
         userId: options.userId,
@@ -356,6 +369,7 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
       }
 
       setContent(result as unknown as Content[]);
+      setHasMore(more);
       setError(null);
       lastErrorTimeRef.current = 0;
     } catch (err) {
@@ -366,6 +380,44 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
       setLoading(false);
     }
   }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, options.showOnlyAssigned, isPlatformRoot, currentOrgId, orgLoading]);
+
+  // FASE4 B2: carga la siguiente pagina y la agrega al final (get_org_content
+  // ya no tiene un LIMIT 500 fijo sin salida -- esto la usa via p_offset).
+  const loadMore = useCallback(async () => {
+    if (orgLoading || loadingMore || !hasMore) return;
+
+    try {
+      setLoadingMore(true);
+      const { items: result, hasMore: more } = await fetchContentData({
+        currentOrgId: currentOrgId || undefined,
+        role: options.role,
+        userId: options.userId,
+        clientId: options.clientId,
+        creatorId: options.creatorId,
+        editorId: options.editorId,
+        offset: content.length,
+      });
+
+      for (const item of result) {
+        if (item.client && item.client_id) {
+          profileCacheRef.current.clients.set(item.client_id, item.client);
+        }
+        if (item.creator && item.creator_id) {
+          profileCacheRef.current.creators.set(item.creator_id, item.creator);
+        }
+        if (item.editor && item.editor_id) {
+          profileCacheRef.current.editors.set(item.editor_id, item.editor);
+        }
+      }
+
+      setContent(prev => [...prev, ...(result as unknown as Content[])]);
+      setHasMore(more);
+    } catch (err) {
+      console.error('Error loading more content:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [options.userId, options.role, options.clientId, options.creatorId, options.editorId, currentOrgId, orgLoading, loadingMore, hasMore, content.length]);
 
   // Handler para cambios realtime
   const handleRealtimeChange = useCallback((updater: (current: Content[]) => Content[]) => {
@@ -444,5 +496,5 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     fetchContent();
   }, [fetchContent]);
 
-  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent, restoreContent };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent, restoreContent, hasMore, loadingMore, loadMore };
 }
