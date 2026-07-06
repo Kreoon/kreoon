@@ -2,6 +2,8 @@ import {
   useState,
   useEffect,
   useRef,
+  useCallback,
+  useMemo,
   createContext,
   useContext,
   ReactNode,
@@ -15,6 +17,7 @@ import {
   getPermissionGroup,
   type PermissionGroup,
 } from "@/lib/permissionGroups";
+import { getUserType } from "@/lib/roles";
 import { logger } from "@/lib/logger";
 
 interface AuthContextType {
@@ -137,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [roles, profile]);
 
-  const setActiveRole = async (role: AppRole) => {
+  const setActiveRole = useCallback(async (role: AppRole) => {
     // GUARD: Never allow 'ambassador' as active_role - it's a badge, not a functional role
     if (role === "ambassador") {
       logger.warn("auth Blocked attempt to set active_role to ambassador");
@@ -164,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         new CustomEvent("active-role-changed", { detail: { role } }),
       );
     }
-  };
+  }, [roles, user]);
 
   useEffect(() => {
     let isMounted = true;
@@ -669,15 +672,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     return { error };
-  };
+  }, []);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     fullName: string,
@@ -705,23 +708,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return { error };
-  };
+  }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
     await supabase.auth.signOut();
-  };
+  }, []);
 
-  const hasRole = (role: AppRole) => roles.includes(role);
+  const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);
+
+  // fetchUserData se redefine en cada render (closures sobre refs/estado);
+  // el ref siempre apunta a la version mas reciente sin invalidar la
+  // identidad estable de refetchUserData en cada render.
+  const fetchUserDataRef = useRef(fetchUserData);
+  fetchUserDataRef.current = fetchUserData;
 
   // Exposed refetch for external triggers (e.g., after org registration RPC)
-  const refetchUserData = async () => {
+  const refetchUserData = useCallback(async () => {
     const userId = user?.id;
     if (!userId) return;
     // Clear dedup guard so the fetch actually runs
     fetchInProgressRef.current = null;
-    await fetchUserData(userId);
-  };
+    await fetchUserDataRef.current(userId);
+  }, [user]);
 
   // Permission group for current active role
   const permissionGroup = activeRole ? getPermissionGroup(activeRole) : null;
@@ -738,54 +747,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isTeamLeader = isAdmin; // Legacy alias - team_leader maps to admin
   const isSuperadmin = profile?.is_superadmin === true; // Platform superadmin
 
-  // User type: talent (content creators, editors, etc.), client, or admin
-  // Priority: admin > client > talent
-  const getUserTypeFromRoles = (): UserType => {
-    if (roles.length === 0) return "talent";
-    const groups = roles.map((r) => getPermissionGroup(r));
-    if (groups.includes("admin")) return "admin";
-    if (groups.includes("client")) return "client";
-    return "talent";
-  };
-
-  const userType = getUserTypeFromRoles();
+  // User type: talent (content creators, editors, etc.), client, admin, or
+  // student. Fuente única en lib/roles.ts (antes duplicada aquí, en
+  // useRoles.ts y en authStore.ts, sin ninguna revisar 'student').
+  const userType = getUserType(roles);
   const isTalent = userType === "talent";
 
   // Account type from profile (set during onboarding)
   const accountType: AccountType | null =
     (profile?.user_type as AccountType) || null;
 
+  // FASE4 B4: sin esto, cada render de AuthProvider (incluyendo los
+  // disparados por un ancestro, no solo por su propio estado) creaba un
+  // objeto value nuevo -> todo consumidor de useAuth() re-renderizaba
+  // aunque nada relevante hubiera cambiado.
+  const value = useMemo(() => ({
+    user,
+    session,
+    profile,
+    roles,
+    activeRole,
+    permissionGroup,
+    setActiveRole,
+    loading,
+    rolesLoaded,
+    signIn,
+    signUp,
+    signOut,
+    hasRole,
+    refetchUserData,
+    isPlatformAdmin,
+    isAdmin,
+    isCreator,
+    isEditor,
+    isClient,
+    isStrategist,
+    isTrafficker,
+    isTeamLeader,
+    isSuperadmin,
+    userType,
+    isTalent,
+    accountType,
+  }), [
+    user, session, profile, roles, activeRole, permissionGroup,
+    setActiveRole, loading, rolesLoaded, signIn, signUp, signOut,
+    hasRole, refetchUserData, isPlatformAdmin, isAdmin, isCreator,
+    isEditor, isClient, isStrategist, isTrafficker, isTeamLeader,
+    isSuperadmin, userType, isTalent, accountType,
+  ]);
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        roles,
-        activeRole,
-        permissionGroup,
-        setActiveRole,
-        loading,
-        rolesLoaded,
-        signIn,
-        signUp,
-        signOut,
-        hasRole,
-        refetchUserData,
-        isPlatformAdmin,
-        isAdmin,
-        isCreator,
-        isEditor,
-        isClient,
-        isStrategist,
-        isTrafficker,
-        isTeamLeader,
-        isSuperadmin,
-        userType,
-        isTalent,
-        accountType,
-      }}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
