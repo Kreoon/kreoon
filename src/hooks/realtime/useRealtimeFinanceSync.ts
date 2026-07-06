@@ -35,6 +35,10 @@ export function useRealtimeFinanceSync({
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [connected, setConnected] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Id unico por instancia — evita colision de canal con otro hook montado
+  // para la misma org (ej. una vista admin con includePlatformPayouts=true
+  // y una vista normal con false, antes compartian el mismo nombre de canal).
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2, 10));
 
   // Debounce de invalidaciones — agrupa eventos seguidos en una sola ronda
   const pendingInvalidations = useRef<Set<string>>(new Set());
@@ -148,7 +152,7 @@ export function useRealtimeFinanceSync({
       channelRef.current = null;
     }
 
-    const channelName = `finance-sync-${orgId}`;
+    const channelName = `finance-sync-${orgId}-${includePlatformPayouts ? 'platform' : 'org'}-${instanceIdRef.current}`;
 
     let channel = supabase
       .channel(channelName)

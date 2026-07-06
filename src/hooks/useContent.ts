@@ -180,6 +180,8 @@ export function useContent(userId?: string, role?: 'creator' | 'editor' | 'clien
     enabled: enableRealtime && !orgLoading && !!currentOrgId,
     onContentChange: handleRealtimeChange,
     profileCache: profileCacheRef.current,
+    creatorId: role === 'creator' ? userId : undefined,
+    editorId: role === 'editor' ? userId : undefined,
   });
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {
@@ -430,6 +432,9 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     enabled: !orgLoading && !!currentOrgId,
     onContentChange: handleRealtimeChange,
     profileCache: profileCacheRef.current,
+    clientId: options.clientId,
+    creatorId: options.creatorId,
+    editorId: options.editorId,
   });
 
   const updateContentStatus = async (contentId: string, newStatus: ContentStatus, oldStatus?: ContentStatus) => {

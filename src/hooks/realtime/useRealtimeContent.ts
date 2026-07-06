@@ -20,6 +20,14 @@ interface UseRealtimeContentOptions {
   ) => void;
   /** Cache de profiles para enriquecer datos */
   profileCache?: ProfileCache;
+  /**
+   * Filtros de la query que este hook alimenta (los mismos que useContentWithFilters).
+   * Sin esto, cualquier fila de la org que cambie se agrega al state aunque el
+   * componente este mostrando solo el contenido de un cliente/creador/editor.
+   */
+  clientId?: string;
+  creatorId?: string;
+  editorId?: string;
 }
 
 /**
@@ -30,10 +38,26 @@ export function useRealtimeContent({
   enabled = true,
   onContentChange,
   profileCache,
+  clientId,
+  creatorId,
+  editorId,
 }: UseRealtimeContentOptions) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
+
+  // Filtros vigentes en un ref para que el handler (memoizado por otras deps)
+  // siempre lea el valor actual sin tener que recrearse en cada cambio de filtro.
+  const filtersRef = useRef({ clientId, creatorId, editorId });
+  filtersRef.current = { clientId, creatorId, editorId };
+
+  const matchesFilters = useCallback((row: ContentRow): boolean => {
+    const { clientId: fc, creatorId: fcr, editorId: fe } = filtersRef.current;
+    if (fc && row.client_id !== fc) return false;
+    if (fcr && row.creator_id !== fcr) return false;
+    if (fe && row.editor_id !== fe) return false;
+    return true;
+  }, []);
 
   // Enriquecer content row con datos de cache
   const enrichContent = useCallback(
@@ -75,6 +99,12 @@ export function useRealtimeContent({
       onContentChange((currentContent) => {
         switch (eventType) {
           case 'INSERT': {
+            // No agregar filas que no matcheen los filtros de esta vista
+            // (antes cualquier INSERT de la org se sumaba al state aunque
+            // el componente estuviera filtrado por cliente/creador/editor).
+            if (!matchesFilters(newRecord)) {
+              return currentContent;
+            }
             // Verificar que no existe ya (por si acaso)
             if (currentContent.some(c => c.id === newRecord.id)) {
               return currentContent;
@@ -114,8 +144,13 @@ export function useRealtimeContent({
         }
       });
     },
-    [onContentChange, enrichContent, profileCache]
+    [onContentChange, enrichContent, profileCache, matchesFilters]
   );
+
+  // Id unico por instancia del hook — evita que dos componentes con los
+  // mismos filtros (ej. dos tabs de la misma vista) colisionen en el mismo
+  // nombre de canal.
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2, 10));
 
   // Setup y cleanup de canal
   useEffect(() => {
@@ -133,8 +168,13 @@ export function useRealtimeContent({
       supabase.removeChannel(channelRef.current);
     }
 
-    // Crear nuevo canal con filtro por organization_id
-    const channelName = `content-realtime-${organizationId}`;
+    // Nombre de canal unico por org + filtros + instancia — antes era
+    // `content-realtime-${organizationId}` a secas, asi que dos hooks
+    // (ej. useContent y useContentWithFilters) montados para la misma org
+    // colisionaban en el mismo canal: el cleanup de uno mataba la
+    // suscripcion del otro.
+    const filterSig = `c${clientId ?? '_'}-cr${creatorId ?? '_'}-e${editorId ?? '_'}`;
+    const channelName = `content-realtime-${organizationId}-${filterSig}-${instanceIdRef.current}`;
     const channel = supabase
       .channel(channelName)
       .on(
@@ -165,7 +205,7 @@ export function useRealtimeContent({
         channelRef.current = null;
       }
     };
-  }, [organizationId, enabled, handleRealtimeChange]);
+  }, [organizationId, enabled, handleRealtimeChange, clientId, creatorId, editorId]);
 
   // Retornar función para forzar reconexión si es necesario
   const reconnect = useCallback(() => {
