@@ -10,6 +10,7 @@ import { UnlockRulesEditor } from '@/components/academy/unlock/UnlockRulesEditor
 import { LessonResource, SaveState, LESSON_TYPE_ICON, VIDEO_SOURCES } from './types';
 import { normalizeYouTubeUrl, youTubeThumbnail } from './youtubeHelpers';
 import { SaveIndicator } from './SaveIndicator';
+import { BunnyVideoUploader } from './BunnyVideoUploader';
 
 export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor = '#7c3aed', onSaved }: { lesson: AcademyLesson; spaceId: string; accentColor?: string; onSaved: (updated: AcademyLesson) => void }) {
   const updateLesson = useUpdateLesson();
@@ -192,10 +193,26 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
           </div>
 
           {form.video_source === 'bunny' ? (
-            <div className="space-y-1">
-              <Label>Bunny Video ID</Label>
-              <Input value={form.video_bunny_id} onChange={(e) => set('video_bunny_id', e.target.value)} placeholder="Ej: a1b2c3d4-e5f6-..." className="bg-white/5 border-white/10 font-mono text-sm" />
-              <p className="text-xs text-zinc-500">El ID del video en tu librería Bunny Stream.</p>
+            <div className="space-y-2">
+              <Label>Video</Label>
+              <BunnyVideoUploader
+                lessonId={initialLesson.id}
+                onUploaded={(videoId) => set('video_bunny_id', videoId)}
+              />
+              {form.video_bunny_id && (
+                <p className="text-xs text-zinc-500">
+                  Video actual: <span className="font-mono">{form.video_bunny_id}</span>
+                </p>
+              )}
+              <details className="text-xs text-zinc-600">
+                <summary className="cursor-pointer hover:text-zinc-400">Pegar un Video ID existente en vez de subir</summary>
+                <Input
+                  value={form.video_bunny_id}
+                  onChange={(e) => set('video_bunny_id', e.target.value)}
+                  placeholder="Ej: a1b2c3d4-e5f6-..."
+                  className="bg-white/5 border-white/10 font-mono text-sm mt-2"
+                />
+              </details>
             </div>
           ) : (
             <div className="space-y-2">

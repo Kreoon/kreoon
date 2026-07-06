@@ -96,6 +96,10 @@ verify_jwt = true
 # Auth + ownership/unlock validados internamente (getUser + academy_evaluate_unlock)
 verify_jwt = false
 
+[functions.academy-video-upload-init]
+# Auth + ownership de instructor validados internamente (getUser + course.instructor_id)
+verify_jwt = false
+
 [functions.public-registration]
 verify_jwt = false
 
