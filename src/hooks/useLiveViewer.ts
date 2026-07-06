@@ -263,12 +263,12 @@ export function useLiveViewer(
         pingIntervalRef.current = null;
       }
 
-      // Marcar como salido
-      await supabase
-        .from('live_stream_viewers')
-        .update({ left_at: new Date().toISOString() })
-        .eq('stream_id', stream.id)
-        .eq('session_id', sessionIdRef.current);
+      // Marcar como salido — via RPC (FASE5 A1: ya no hay policy de UPDATE
+      // directo sobre live_stream_viewers, mismo patron que ping_live_viewer)
+      await supabase.rpc('leave_live_viewer', {
+        p_stream_id: stream.id,
+        p_session_id: sessionIdRef.current,
+      });
 
       setIsJoined(false);
     } catch (err) {

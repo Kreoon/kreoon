@@ -25,6 +25,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // FASE5 A1: no habia ninguna verificacion de firma/secreto -- cualquiera
+  // podia postear eventos falsos (stream_started/ended, viewer_update,
+  // purchase) para cualquier session_id. Fail-closed: sin secret
+  // configurado, se rechaza todo (mismo STREAMING_WEBHOOK_SECRET que v1).
+  const webhookSecret = req.headers.get('x-webhook-secret');
+  const expectedSecret = Deno.env.get('STREAMING_WEBHOOK_SECRET');
+  if (!expectedSecret || webhookSecret !== expectedSecret) {
+    console.error('[streaming-webhook-v2] Invalid or missing webhook secret');
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -351,13 +365,16 @@ async function processEvent(
           created_at: event.timestamp,
         });
 
-        // Update message count
-        await supabase
-          .from('streaming_sessions_v2')
-          .update({
-            total_messages: supabase.rpc('increment_by_one', { row_id: event.session_id, column_name: 'total_messages' }),
-          })
-          .eq('id', event.session_id);
+        // Update message count -- FASE5 B: antes se asignaba el builder de
+        // la RPC como valor de la columna (nunca se invocaba de verdad,
+        // total_messages jamas se incrementaba). increment_column ya existe
+        // y se usa igual en otros webhooks (stripe-webhook).
+        await supabase.rpc('increment_column', {
+          p_table: 'streaming_sessions_v2',
+          p_column: 'total_messages',
+          p_amount: 1,
+          p_id: event.session_id,
+        });
       }
       break;
     }

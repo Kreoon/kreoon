@@ -28,6 +28,26 @@ export function useStreamingChat({ sessionId }: UseStreamingChatOptions): UseStr
 
   const [platformFilter, setPlatformFilter] = useState<string | null>(null);
 
+  // FASE5 A1: is_host se derivaba hardcodeado a `true` en el cliente (cualquiera
+  // podia mandar un mensaje marcandose como host). Ahora se deriva comparando
+  // contra el host_user_id real de la sesion; el RLS ademas exige que coincida
+  // (no basta con mandar el valor "correcto" del lado del cliente).
+  const { data: sessionHostId } = useQuery({
+    queryKey: [QUERY_KEY, 'host', sessionId],
+    queryFn: async () => {
+      if (!sessionId) return null;
+      const { data } = await supabase
+        .from('streaming_sessions_v2')
+        .select('host_user_id')
+        .eq('id', sessionId)
+        .maybeSingle();
+      return data?.host_user_id ?? null;
+    },
+    enabled: !!sessionId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const isHost = !!profile?.id && sessionHostId === profile.id;
+
   // Fetch recent messages
   const {
     data: allMessages = [],
@@ -137,7 +157,7 @@ export function useStreamingChat({ sessionId }: UseStreamingChatOptions): UseStr
         source_platform: 'kreoon',
         message_type: type,
         content,
-        is_host: true, // TODO: Check if user is host
+        is_host: isHost,
       });
 
       if (error) throw error;

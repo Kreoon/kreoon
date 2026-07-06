@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,6 +23,19 @@ serve(async (req) => {
 
     const { action, ...params } = await req.json();
     console.log(`[restream-api] Action: ${action}`, params);
+
+    // FASE 1: toda acción toma organization_id del body sin validar
+    // membresía — antes cualquier autenticado leía/gestionaba stream
+    // keys, eventos y tokens OAuth de CUALQUIER org. verify_jwt=true
+    // solo confirma que hay un usuario válido, no que pertenezca a esta
+    // organización.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, (params as any).organization_id);
+    if (membershipRejection) return membershipRejection;
 
     switch (action) {
       // ============================================
@@ -71,15 +85,23 @@ serve(async (req) => {
         }
 
         const tokens = await tokenResponse.json();
-        
+
+        // FASE5 A1: access_token_encrypted/refresh_token_encrypted guardaban
+        // el token OAuth en claro pese al nombre de columna. Se cifran con
+        // pgcrypto antes de guardar.
+        const [encAccessToken, encRefreshToken] = await Promise.all([
+          encryptToken(supabase, tokens.access_token),
+          encryptToken(supabase, tokens.refresh_token),
+        ]);
+
         // Store tokens in database
         const { error: upsertError } = await supabase
           .from('live_org_oauth_tokens')
           .upsert({
             organization_id,
             provider: 'restream',
-            access_token_encrypted: tokens.access_token,
-            refresh_token_encrypted: tokens.refresh_token,
+            access_token_encrypted: encAccessToken,
+            refresh_token_encrypted: encRefreshToken,
             expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
             scopes: tokens.scope?.split(' ') || [],
           }, { onConflict: 'organization_id,provider' });
@@ -296,6 +318,35 @@ serve(async (req) => {
   }
 });
 
+// FASE5 A1: cifrado/descifrado de tokens OAuth con pgcrypto (encrypt_oauth_token/
+// decrypt_oauth_token, SECURITY DEFINER, solo service_role). La clave nunca se
+// persiste en la BD, viaja como secret de Supabase en cada llamada.
+function getEncryptionKey(): string {
+  const key = Deno.env.get('RESTREAM_TOKEN_ENCRYPTION_KEY');
+  if (!key) throw new Error('RESTREAM_TOKEN_ENCRYPTION_KEY no configurada');
+  return key;
+}
+
+async function encryptToken(supabase: any, plaintext: string | null | undefined): Promise<string | null> {
+  if (!plaintext) return null;
+  const { data, error } = await supabase.rpc('encrypt_oauth_token', {
+    p_plaintext: plaintext,
+    p_key: getEncryptionKey(),
+  });
+  if (error) throw error;
+  return data;
+}
+
+async function decryptToken(supabase: any, ciphertext: string | null | undefined): Promise<string | null> {
+  if (!ciphertext) return null;
+  const { data, error } = await supabase.rpc('decrypt_oauth_token', {
+    p_ciphertext: ciphertext,
+    p_key: getEncryptionKey(),
+  });
+  if (error) throw error;
+  return data;
+}
+
 // Helper to get and refresh access token
 async function getAccessToken(supabase: any, organizationId: string): Promise<string> {
   const { data: tokenData, error } = await supabase
@@ -315,13 +366,14 @@ async function getAccessToken(supabase: any, organizationId: string): Promise<st
     // Refresh the token
     const clientId = Deno.env.get('RESTREAM_CLIENT_ID');
     const clientSecret = Deno.env.get('RESTREAM_CLIENT_SECRET');
+    const refreshToken = await decryptToken(supabase, tokenData.refresh_token_encrypted);
 
     const refreshResponse = await fetch(`${RESTREAM_AUTH_URL}/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         grant_type: 'refresh_token',
-        refresh_token: tokenData.refresh_token_encrypted,
+        refresh_token: refreshToken!,
         client_id: clientId!,
         client_secret: clientSecret!,
       }),
@@ -333,12 +385,17 @@ async function getAccessToken(supabase: any, organizationId: string): Promise<st
 
     const newTokens = await refreshResponse.json();
 
+    const [encAccessToken, encRefreshToken] = await Promise.all([
+      encryptToken(supabase, newTokens.access_token),
+      newTokens.refresh_token ? encryptToken(supabase, newTokens.refresh_token) : Promise.resolve(tokenData.refresh_token_encrypted),
+    ]);
+
     // Update tokens in database
     await supabase
       .from('live_org_oauth_tokens')
       .update({
-        access_token_encrypted: newTokens.access_token,
-        refresh_token_encrypted: newTokens.refresh_token || tokenData.refresh_token_encrypted,
+        access_token_encrypted: encAccessToken,
+        refresh_token_encrypted: encRefreshToken,
         expires_at: new Date(Date.now() + newTokens.expires_in * 1000).toISOString(),
       })
       .eq('id', tokenData.id);
@@ -346,5 +403,5 @@ async function getAccessToken(supabase: any, organizationId: string): Promise<st
     return newTokens.access_token;
   }
 
-  return tokenData.access_token_encrypted;
+  return (await decryptToken(supabase, tokenData.access_token_encrypted))!;
 }
