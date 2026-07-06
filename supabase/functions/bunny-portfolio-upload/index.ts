@@ -33,7 +33,20 @@ Deno.serve(async (req) => {
     const bunnyLibraryId = Deno.env.get('BUNNY_LIBRARY_ID')!
     const bunnyCdnHostname = Deno.env.get('BUNNY_CDN_HOSTNAME') || ''
 
-    const body = await req.json()
+    // Parse aparte del resto: si el body llega truncado (conexion inestable
+    // durante una subida larga), antes esto caia al catch generico de abajo
+    // y devolvia un 500 sin contexto -- imposible de diagnosticar desde los
+    // logs. Ahora es un 400 explicito que el cliente puede reintentar.
+    let body: Record<string, unknown>
+    try {
+      body = await req.json()
+    } catch (parseError) {
+      console.error('[bunny-portfolio-upload] Invalid/truncated request body:', parseError)
+      return new Response(
+        JSON.stringify({ error: 'invalid_body: request payload was empty or malformed (possibly a dropped connection) — retry' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
     const action = body.action || 'create' // 'create', 'save-hash', 'save-record'
 
     // === Action: save-hash (after client-side upload completes) ===
@@ -169,6 +182,101 @@ Deno.serve(async (req) => {
       )
     }
 
+    // === Action: set-final-videos (overwrite content.video_urls) ===
+    // Persiste los videos finales replicando la autorizacion del RPC update_content_by_id
+    // PERO sin depender del auto-refresh de token en background (que Safari estrangula durante
+    // subidas largas). El cliente envia un token fresco (obtenido on-demand via getSession justo
+    // antes de llamar); aqui validamos identidad + permiso y recien entonces escribimos.
+    // Seguridad: NO se confia en el anon key ni en el content_id solos -> se exige JWT valido
+    // del usuario y membresia en la organizacion del contenido antes del write con service_role.
+    if (action === 'set-final-videos') {
+      const { content_id, urls } = body
+
+      if (!content_id || !Array.isArray(urls)) {
+        return new Response(
+          JSON.stringify({ error: 'Missing content_id or urls[]' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // 1) Autenticar al llamante por su JWT (no por el anon key, que es publico)
+      const authHeader = req.headers.get('Authorization') || ''
+      const token = authHeader.replace('Bearer ', '').trim()
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Missing authorization' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const admin = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: { user }, error: authError } = await admin.auth.getUser(token)
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // 2) Resolver la organizacion del contenido
+      const { data: contentRow, error: contentErr } = await admin
+        .from('content')
+        .select('organization_id, editor_id, creator_id, strategist_id')
+        .eq('id', content_id)
+        .maybeSingle()
+      if (contentErr || !contentRow?.organization_id) {
+        return new Response(
+          JSON.stringify({ error: 'Content not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // 3) Autorizar: asignado al contenido (editor/creator/strategist) o miembro de la org
+      //    (mismo criterio que el RPC update_content_by_id que reemplaza este flujo)
+      let allowed =
+        contentRow.editor_id === user.id ||
+        contentRow.creator_id === user.id ||
+        contentRow.strategist_id === user.id
+      if (!allowed) {
+        const { data: member } = await admin
+          .from('organization_member_roles')
+          .select('user_id')
+          .eq('organization_id', contentRow.organization_id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+        allowed = !!member
+      }
+      if (!allowed) {
+        return new Response(
+          JSON.stringify({ error: 'Forbidden' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // 4) Escribir con service_role (ya autorizado)
+      const cleaned = (urls as unknown[])
+        .filter((u): u is string => typeof u === 'string' && u.trim() !== '')
+
+      const { error: updateError } = await admin
+        .from('content')
+        .update({ video_urls: cleaned })
+        .eq('id', content_id)
+
+      if (updateError) {
+        console.error('[bunny-portfolio-upload] Error setting final videos:', updateError)
+        return new Response(
+          JSON.stringify({ success: false, error: updateError.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`[bunny-portfolio-upload] Final videos set for content ${content_id}: ${cleaned.length} url(s)`)
+      return new Response(
+        JSON.stringify({ success: true, video_urls: cleaned }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // === Action: create (default) - Create video in Bunny and return upload credentials ===
     const userId = body.user_id
     const type = body.type || 'featured'
@@ -226,7 +334,9 @@ Deno.serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('[bunny-portfolio-upload] Error:', error)
+    // Log con stack completo -- el mensaje solo (como antes) no alcanzaba
+    // para diagnosticar un 500 despues del hecho.
+    console.error('[bunny-portfolio-upload] Unhandled error:', error instanceof Error ? error.stack || error.message : error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
       JSON.stringify({ error: errorMessage }),

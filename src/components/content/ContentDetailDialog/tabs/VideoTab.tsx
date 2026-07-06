@@ -10,7 +10,7 @@ import { PermissionsGate, EditableField } from '../components/PermissionsGate';
 import { SectionCard } from '../components/SectionCard';
 import { TabProps } from '../types';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { persistFinalVideos } from '@/lib/persistFinalVideos';
 import { markLocalUpdate } from '@/hooks/useContent';
 import { Video, Share2, Lock, ExternalLink } from 'lucide-react';
 import { NovaTextarea, NovaButton } from '@/components/ui/nova';
@@ -30,6 +30,7 @@ export function VideoTab({
   selectedProduct,
   readOnly = false,
 }: VideoTabProps) {
+  const { toast } = useToast();
   // Combine permissions with readOnly prop for effective edit capability
   const canEditVideo = permissions.can('content.video', 'edit') && !readOnly;
   const effectiveEditMode = editMode && !readOnly;
@@ -108,23 +109,20 @@ export function VideoTab({
               onUploadComplete={(urls) => {
                 setFormData(prev => ({ ...prev, video_urls: urls }));
                 if (!editMode) setEditMode(true);
-                // Auto-save video URLs to DB immediately via RPC (bypasses 18 RLS policies)
                 const contentId = content?.id;
                 if (contentId && canEditVideo) {
-                  // Use 5-minute window to cover video encoding time
+                  // Persistir via edge function (token fresco on-demand + service_role), no via RPC
+                  // con auth.uid(): en Safari el auto-refresh del token se estrangula durante subidas
+                  // largas y el RPC fallaba en silencio dejando video_urls vacio.
                   markLocalUpdate(contentId, 5 * 60 * 1000);
-                  supabase
-                    .rpc('update_content_by_id', {
-                      p_content_id: contentId,
-                      p_updates: { video_urls: urls.filter((u: string) => u.trim() !== '') }
-                    })
-                    .then(({ error }) => {
-                      if (error) {
-                        console.error('[VideoTab] Failed to auto-save video URLs:', error);
-                      } else {
-                        console.log('[VideoTab] Auto-saved video URLs to database');
-                      }
+                  persistFinalVideos(contentId, urls).catch((err) => {
+                    console.error('[VideoTab] Failed to auto-save video URLs:', err);
+                    toast({
+                      title: 'No se pudo guardar el video',
+                      description: err?.message || 'Recarga la pagina e intenta de nuevo.',
+                      variant: 'destructive',
                     });
+                  });
                 } else if (contentId && !canEditVideo) {
                   console.warn('[VideoTab] Upload blocked — user lacks content.video edit permission');
                 }
