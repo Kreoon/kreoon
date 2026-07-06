@@ -3,6 +3,17 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
+// FASE5 Bloque B: sin handler de beforeunload/visibilitychange, is_online
+// quedaba en true para siempre si el usuario cerraba la pestaña en vez de
+// navegar dentro de la app (solo se corregia la proxima vez que volviera a
+// abrirla). visibilitychange es la señal principal y confiable (se dispara
+// tanto al cambiar de pestaña como justo antes de cerrarla, y no depende del
+// back-forward-cache como beforeunload). No se usa sendBeacon: Supabase
+// REST exige headers de auth (apikey/Authorization) que sendBeacon no
+// puede adjuntar, asi que un beacon aca fallaria siempre por RLS sin que
+// se notara -- peor que no tenerlo. beforeunload queda como intento
+// adicional best-effort con el mismo cliente autenticado.
+
 const PAGE_NAMES: Record<string, string> = {
   '/': 'Dashboard',
   '/board': 'Tablero',
@@ -91,10 +102,27 @@ export function usePresence() {
       updatePresence(isActive, getPageName(pathnameRef.current));
     }, 60000);
 
+    // Marcar offline al salir (tab oculta o cierre real) — antes quedaba
+    // is_online=true indefinidamente si el usuario cerraba la pestaña.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        updatePresence(false);
+      } else {
+        updatePresence(true, getPageName(pathnameRef.current));
+      }
+    };
+    const handleBeforeUnload = () => {
+      updatePresence(false);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       clearTimeout(initTimeout);
       if (activityThrottle) clearTimeout(activityThrottle);
       events.forEach(event => window.removeEventListener(event, throttledActivity));
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (updateIntervalRef.current) {
         clearInterval(updateIntervalRef.current);
       }
