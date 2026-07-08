@@ -358,33 +358,6 @@ const ProductBannersPage = lazy(
   () => import("./modules/ad-generator/pages/ProductBannersPage"),
 );
 
-// Booking Module
-const BookingSettingsPage = lazy(() =>
-  import("./modules/booking/pages/BookingSettingsPage").then((m) => ({
-    default: m.BookingSettingsPage,
-  })),
-);
-const BookingCalendarPage = lazy(() =>
-  import("./modules/booking/pages/BookingCalendarPage").then((m) => ({
-    default: m.BookingCalendarPage,
-  })),
-);
-const PublicBookingPage = lazy(() =>
-  import("./modules/booking/components/Public/PublicBookingPage").then((m) => ({
-    default: m.PublicBookingPage,
-  })),
-);
-const CancelBookingPage = lazy(() =>
-  import("./modules/booking/pages/CancelBookingPage").then((m) => ({
-    default: m.CancelBookingPage,
-  })),
-);
-const RescheduleBookingPage = lazy(() =>
-  import("./modules/booking/pages/RescheduleBookingPage").then((m) => ({
-    default: m.RescheduleBookingPage,
-  })),
-);
-
 // Ambassador Module
 const AmbassadorPage = lazyWithRetry(() => import("./pages/AmbassadorPage"));
 
@@ -1247,37 +1220,6 @@ function AppRoutes() {
               </MainLayout>
             </ProtectedRoute>
           }
-        />
-        {/* Booking Module */}
-        <Route
-          path="/booking/settings"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <BookingSettingsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/booking/calendar"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <BookingCalendarPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/book/:username" element={<PublicBookingPage />} />
-        <Route
-          path="/book/:username/:eventSlug"
-          element={<PublicBookingPage />}
-        />
-        <Route path="/book/cancel/:bookingId" element={<CancelBookingPage />} />
-        <Route
-          path="/book/reschedule/:bookingId"
-          element={<RescheduleBookingPage />}
         />
         <Route
           path="/settings"

@@ -16,8 +16,7 @@ import {
   Radar,
   GitBranch,
   Megaphone,
-  Wallet,
-  CalendarDays
+  Wallet
 } from 'lucide-react';
 
 /** Email del usuario root con acceso a módulos en desarrollo */
@@ -150,17 +149,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/wallet', '/wallet/transactions', '/wallet/withdrawals', '/wallet/payment-methods', '/wallet/settings', '/admin/wallets'],
     sidebarItems: [
       { label: 'Wallet', path: '/wallet', icon: Wallet }
-    ]
-  },
-  {
-    id: 'booking',
-    name: 'Booking',
-    description: 'Sistema de reservas y agendamiento de citas',
-    icon: CalendarDays,
-    status: 'development',
-    routes: ['/booking/settings', '/booking/calendar', '/book'],
-    sidebarItems: [
-      { label: 'Booking', path: '/booking/calendar', icon: CalendarDays }
     ]
   }
 ];

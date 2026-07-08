@@ -34,7 +34,6 @@ import {
   Share2,
   Radar,
   ImagePlus,
-  CalendarDays,
   Trash2,
   Dna,
   Package,
@@ -94,7 +93,6 @@ const MARKETING_ITEMS: NavItem[] = [
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-  { name: "Booking", href: "/booking/calendar", icon: CalendarDays, tourId: "sidebar-booking" },
   { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
   { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },

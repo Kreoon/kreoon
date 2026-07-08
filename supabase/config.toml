@@ -495,46 +495,10 @@ verify_jwt = false
 # La autenticación se verifica internamente para las acciones que lo requieren
 verify_jwt = false
 
-# ── Booking System ──
-
-[functions.booking-create]
-# Público para permitir reservas sin login
-verify_jwt = false
-
-[functions.booking-confirm]
-# Público para confirmaciones/cancelaciones via token
-verify_jwt = false
-
-[functions.booking-reminder]
-# Ejecutado via cron, no requiere JWT
-verify_jwt = false
-
 # ── Marketplace AI Search ──
 
 [functions.marketplace-ai-search]
 # Búsqueda en lenguaje natural, público
-verify_jwt = false
-
-# ── Booking Webhooks & Calendar ──
-
-[functions.booking-webhook-test]
-# Probar webhooks configurados
-verify_jwt = true
-
-[functions.booking-webhook-dispatch]
-# Disparar webhooks cuando hay eventos de booking (llamado internamente)
-verify_jwt = false
-
-[functions.calendar-oauth-start]
-# Iniciar OAuth para conectar calendario externo
-verify_jwt = true
-
-[functions.calendar-sync]
-# Sincronizar eventos con calendario externo
-verify_jwt = true
-
-[functions.calendar-check-conflicts]
-# Verificar conflictos con calendario externo (público para reservas)
 verify_jwt = false
 
 # ── Google Calendar OAuth ──
