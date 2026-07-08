@@ -254,9 +254,6 @@ const PlatformCRMCommunities = lazyWithRetry(
   () => import("./pages/crm/platform/PlatformCRMCommunities"),
 );
 // CRM Org
-const OrgCRMDashboard = lazyWithRetry(
-  () => import("./pages/crm/org/OrgCRMDashboard"),
-);
 const OrgCRMFinances = lazyWithRetry(
   () => import("./pages/crm/org/OrgCRMFinances"),
 );
@@ -1096,19 +1093,6 @@ function AppRoutes() {
           }
         />
         {/* CRM Organización */}
-        <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
-        <Route
-          path="/org-crm/contactos"
-          element={<Navigate to="/clientes" replace />}
-        />
-        <Route
-          path="/org-crm/creadores"
-          element={<Navigate to="/talent?tab=externo" replace />}
-        />
-        <Route
-          path="/org-crm/pipelines"
-          element={<Navigate to="/talent" replace />}
-        />
         <Route
           path="/org-crm/finanzas"
           element={

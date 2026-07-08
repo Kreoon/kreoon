@@ -14,7 +14,6 @@ import {
   ImagePlus,
   Search,
   Radar,
-  GitBranch,
   Megaphone,
   Wallet
 } from 'lucide-react';
@@ -116,17 +115,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/admin/social-scraper'],
     sidebarItems: [
       { label: 'Social Scraper', path: '/admin/social-scraper', icon: Radar }
-    ]
-  },
-  {
-    id: 'pipelines',
-    name: 'Pipelines',
-    description: 'Gestión de pipelines de ventas CRM',
-    icon: GitBranch,
-    status: 'development',
-    routes: ['/org-crm/pipelines'],
-    sidebarItems: [
-      { label: 'Pipelines', path: '/org-crm/pipelines', icon: GitBranch }
     ]
   },
   {

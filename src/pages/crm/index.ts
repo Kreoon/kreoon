@@ -6,7 +6,4 @@ export { default as PlatformCRMUsers } from './platform/PlatformCRMUsers';
 export { default as PlatformCRMFinances } from './platform/PlatformCRMFinances';
 
 // Org CRM
-export { default as OrgCRMDashboard } from './org/OrgCRMDashboard';
-export { default as OrgCRMContacts } from './org/OrgCRMContacts';
-export { default as OrgCRMCreators } from './org/OrgCRMCreators';
 export { default as OrgCRMFinances } from './org/OrgCRMFinances';

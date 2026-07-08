@@ -1,10 +1,8 @@
-export { ContactCard } from './ContactCard';
 export { CreatorRelationshipBadge } from './CreatorRelationshipBadge';
 export { InteractionTimeline } from './InteractionTimeline';
 export { AddInteractionModal } from './AddInteractionModal';
 export { CreateContactModal } from './CreateContactModal';
 export { ContactDetailPanel } from './ContactDetailPanel';
-export { ContactKanban } from './ContactKanban';
 
 // Shared components
 export { CopyButton } from './CopyButton';

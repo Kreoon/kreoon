@@ -11,15 +11,12 @@ import type {
   OrgContactUpdate,
   OrgContactInsert,
   OrgCreatorRelationshipUpdate,
-  OrgPipelineInsert,
-  OrgPipelineUpdate,
   OrgContactInteractionInsert,
   PlatformLeadInteractionInsert,
   TalentCategory,
   SpecificRole,
 } from '@/types/crm.types';
 import type { LeadFilters, LeadDistribution } from '@/services/crm/platformCrmService';
-import type { ContactFilters, RelationshipFilters } from '@/services/crm/orgCrmService';
 
 // =====================================================
 // PLATFORM CRM HOOKS
@@ -285,22 +282,6 @@ export function useUsersWithHealth() {
 
 // --- Contacts ---
 
-export function useOrgContacts(orgId: string | undefined, filters?: ContactFilters) {
-  return useQuery({
-    queryKey: ['org-contacts', orgId, filters],
-    queryFn: () => orgCrm.getOrgContacts(orgId!, filters),
-    enabled: !!orgId,
-  });
-}
-
-export function useOrgContact(id: string | undefined) {
-  return useQuery({
-    queryKey: ['org-contact', id],
-    queryFn: () => orgCrm.getOrgContactById(id!),
-    enabled: !!id,
-  });
-}
-
 export function useCreateOrgContact(orgId: string) {
   const queryClient = useQueryClient();
 
@@ -385,14 +366,6 @@ export function useAddContactInteraction(orgId: string) {
 
 // --- Creator Relationships ---
 
-export function useCreatorRelationships(orgId: string | undefined, filters?: RelationshipFilters) {
-  return useQuery({
-    queryKey: ['org-creator-relationships', orgId, filters],
-    queryFn: () => orgCrm.getCreatorRelationships(orgId!, filters),
-    enabled: !!orgId,
-  });
-}
-
 export function useToggleFavoriteCreator(orgId: string) {
   const queryClient = useQueryClient();
 
@@ -429,23 +402,6 @@ export function useBlockCreator(orgId: string) {
   });
 }
 
-export function useAddCreatorToList(orgId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ creatorId, listName }: { creatorId: string; listName: string }) =>
-      orgCrm.addCreatorToList(orgId, creatorId, listName),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['org-creator-relationships', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['unified-talent', orgId] });
-      toast.success('Creador agregado a la lista');
-    },
-    onError: (error: Error) => {
-      toast.error(`Error: ${error.message}`);
-    },
-  });
-}
-
 export function useUpdateCreatorRelationship(orgId: string) {
   const queryClient = useQueryClient();
 
@@ -463,16 +419,6 @@ export function useUpdateCreatorRelationship(orgId: string) {
   });
 }
 
-// --- Creator Stats ---
-
-export function useOrgCreatorStats(orgId: string | undefined) {
-  return useQuery({
-    queryKey: ['org-creator-stats', orgId],
-    queryFn: () => orgCrm.getOrgCreatorStats(orgId!),
-    enabled: !!orgId,
-  });
-}
-
 // --- Pipelines ---
 
 export function useOrgPipelines(orgId: string | undefined) {
@@ -480,91 +426,6 @@ export function useOrgPipelines(orgId: string | undefined) {
     queryKey: ['org-pipelines', orgId],
     queryFn: () => orgCrm.getOrgPipelines(orgId!),
     enabled: !!orgId,
-  });
-}
-
-export function useCreateOrgPipeline(orgId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (input: Omit<OrgPipelineInsert, 'organization_id'>) =>
-      orgCrm.createOrgPipeline(orgId, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['org-pipelines', orgId] });
-      toast.success('Pipeline creado exitosamente');
-    },
-    onError: (error: Error) => {
-      toast.error(`Error al crear pipeline: ${error.message}`);
-    },
-  });
-}
-
-export function useUpdateOrgPipeline(orgId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: OrgPipelineUpdate }) =>
-      orgCrm.updateOrgPipeline(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['org-pipelines', orgId] });
-      toast.success('Pipeline actualizado');
-    },
-    onError: (error: Error) => {
-      toast.error(`Error al actualizar pipeline: ${error.message}`);
-    },
-  });
-}
-
-export function useDeleteOrgPipeline(orgId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => orgCrm.deleteOrgPipeline(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['org-pipelines', orgId] });
-      toast.success('Pipeline eliminado');
-    },
-    onError: (error: Error) => {
-      toast.error(`Error al eliminar pipeline: ${error.message}`);
-    },
-  });
-}
-
-// --- Org Dashboard RPCs ---
-
-export function useOrgCrmOverview(orgId: string | undefined) {
-  return useQuery({
-    queryKey: ['org-crm-overview', orgId],
-    queryFn: () => orgCrm.getOrgCrmOverview(orgId!),
-    enabled: !!orgId,
-    staleTime: 5 * 60 * 1000,
-  });
-}
-
-export function useOrgUpcomingActions(orgId: string | undefined, limit: number = 5) {
-  return useQuery({
-    queryKey: ['org-upcoming-actions', orgId, limit],
-    queryFn: () => orgCrm.getOrgUpcomingActions(orgId!, limit),
-    enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
-export function useOrgRecentActivity(orgId: string | undefined, limit: number = 10) {
-  return useQuery({
-    queryKey: ['org-recent-activity', orgId, limit],
-    queryFn: () => orgCrm.getOrgRecentActivity(orgId!, limit),
-    enabled: !!orgId,
-    staleTime: 2 * 60 * 1000,
-  });
-}
-
-export function useOrgPipelineSummary(orgId: string | undefined) {
-  return useQuery({
-    queryKey: ['org-pipeline-summary', orgId],
-    queryFn: () => orgCrm.getOrgPipelineSummary(orgId!),
-    enabled: !!orgId,
-    staleTime: 5 * 60 * 1000,
   });
 }
 
