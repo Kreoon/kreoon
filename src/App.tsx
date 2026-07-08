@@ -300,9 +300,6 @@ const CampanasGestionadasPage = lazyWithRetry(
 const CreatorPricingPage = lazyWithRetry(
   () => import("./pages/CreatorPricingPage"),
 );
-const FreelancerDashboard = lazyWithRetry(
-  () => import("./pages/FreelancerDashboard"),
-);
 const PartnerCommunityLanding = lazyWithRetry(
   () => import("./pages/PartnerCommunityLanding"),
 );
