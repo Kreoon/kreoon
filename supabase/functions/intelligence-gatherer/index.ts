@@ -13,6 +13,7 @@
  */
 
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -523,6 +524,24 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    // FASE 1: exigir auth real + membresía de organization_id — antes
+    // este endpoint costoso (Perplexity) era invocable sin ninguna auth.
+    // adn-orchestrator lo invoca server-a-server con el service_role key
+    // como Bearer (no hay JWT de usuario en ese flujo) — se confía en esa
+    // llamada interna sin exigir membresía.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const isTrustedInternalCall = !!authToken && !!serviceRoleKey && authToken === serviceRoleKey;
+
+    if (!isTrustedInternalCall) {
+      const { data: { user: callerUser } = { user: null } } = authToken
+        ? await supabase.auth.getUser(authToken)
+        : { data: { user: null } };
+      const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, input.organization_id);
+      if (membershipRejection) return membershipRejection;
+    }
 
     // Actualizar sesión a 'gathering_intelligence'
     if (input.session_id) {

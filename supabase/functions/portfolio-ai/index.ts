@@ -8,18 +8,14 @@ import { PORTFOLIO_PROMPTS } from "../_shared/portfolio-prompts.ts";
 import { getPrompt, interpolatePrompt } from "../_shared/prompts/db-prompts.ts";
 // SECURITY: Rate limiting para proteger APIs costosas
 import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
+import { corsJsonResponse } from "../_shared/cors.ts";
 
 interface AIRequest {
   action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
   payload: Record<string, unknown>;
   organizationId?: string;
-  userId?: string;
   model?: string;
-  prompts?: {
-    system: string;
-    user: string;
-    outputSchema?: Record<string, unknown>;
-  };
 }
 
 /** Prompts centralizados - fallback cuando el frontend no envía prompts */
@@ -79,21 +75,32 @@ serve(async (req) => {
     }
     // ─────────────────────────────────────────────────────────
 
-    const { action, payload, organizationId, userId, model: requestedModel, prompts } = (await req.json()) as AIRequest;
+    const { action, payload, organizationId, model: requestedModel } = (await req.json()) as AIRequest;
 
     console.log(`[portfolio-ai] Action: ${action}, Org: ${organizationId}, model: ${requestedModel ?? 'default'}`);
 
-    let systemPrompt: string;
-    let userPrompt: string;
-
-    if (prompts?.system && prompts?.user) {
-      systemPrompt = prompts.system;
-      userPrompt = prompts.user;
-    } else {
-      const dbPrompts = await getPromptsFromDB(supabase, action, payload ?? {});
-      systemPrompt = dbPrompts.system;
-      userPrompt = dbPrompts.user;
+    // FASE 1: exigir auth real siempre. organizationId es opcional (el
+    // portfolio personal no siempre tiene org), pero si viene, valida
+    // membresía. Antes: cero auth y prompts.system/user crudos del body
+    // se mandaban tal cual al LLM (relay abierto) — se retira esa rama,
+    // ningún caller real la usaba (siempre viene de getPromptsFromDB).
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    if (!callerUser) {
+      return corsJsonResponse(req, { error: "unauthorized" }, 401);
     }
+    if (organizationId) {
+      const membershipRejection = await assertOrgMembership(req, supabase, callerUser.id, organizationId);
+      if (membershipRejection) return membershipRejection;
+    }
+    const userId = callerUser.id;
+
+    const dbPrompts = await getPromptsFromDB(supabase, action, payload ?? {});
+    const systemPrompt = dbPrompts.system;
+    const userPrompt = dbPrompts.user;
 
     let result: any;
     const startTime = Date.now();

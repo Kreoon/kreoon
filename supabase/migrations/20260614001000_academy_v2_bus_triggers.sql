@@ -84,7 +84,7 @@ BEGIN
   SELECT name, slug INTO v_space_name, v_space_slug
   FROM academy_spaces WHERE id = NEW.space_id;
 
-  SELECT COALESCE(display_name, full_name, email, 'Miembro')
+  SELECT COALESCE(full_name, email, 'Miembro')
     INTO v_member_name
   FROM profiles WHERE id = NEW.user_id;
 
@@ -130,13 +130,13 @@ BEGIN
   SELECT name, slug INTO v_space_name, v_space_slug
   FROM academy_spaces WHERE id = NEW.space_id;
 
-  SELECT COALESCE(display_name, full_name, email, 'Miembro')
+  SELECT COALESCE(full_name, email, 'Miembro')
     INTO v_member_name
   FROM profiles WHERE id = NEW.user_id;
 
   -- Label legible del badge — si no hay catálogo, usar el slug.
   v_badge_label := COALESCE(
-    (SELECT name FROM academy_badges WHERE slug = NEW.badge_id LIMIT 1),
+    (SELECT name FROM academy_badges WHERE id = NEW.badge_id LIMIT 1),
     INITCAP(REPLACE(NEW.badge_id, '_', ' '))
   );
 
@@ -188,7 +188,7 @@ BEGIN
   SELECT name, slug INTO v_space_name, v_space_slug
   FROM academy_spaces WHERE id = NEW.space_id;
 
-  SELECT COALESCE(display_name, full_name, email, 'Miembro')
+  SELECT COALESCE(full_name, email, 'Miembro')
     INTO v_member_name
   FROM profiles WHERE id = NEW.user_id;
 
@@ -240,7 +240,7 @@ BEGIN
   SELECT name, slug INTO v_space_name, v_space_slug
   FROM academy_spaces WHERE id = v_space_id;
 
-  SELECT COALESCE(display_name, full_name, email, 'Miembro')
+  SELECT COALESCE(full_name, email, 'Miembro')
     INTO v_member_name
   FROM profiles WHERE id = NEW.user_id;
 

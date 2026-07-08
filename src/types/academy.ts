@@ -31,6 +31,8 @@ export interface AcademySpace {
   slug: string;
   description: string | null;
   cover_image_url: string | null;
+  /** Posición vertical del cover en el hero (0-100, 50 = centro). */
+  cover_position: number | null;
   logo_url: string | null;
   accent_color: string;
   is_public: boolean;
@@ -87,6 +89,7 @@ export interface AcademyCourse {
   stripe_product_id: string | null;
   stripe_price_id: string | null;
   sort_order: number;
+  unlock_logic?: UnlockLogic;
   created_at: string;
   updated_at: string;
   // joins
@@ -106,6 +109,7 @@ export interface AcademyModule {
   description: string | null;
   sort_order: number;
   is_free_preview: boolean;
+  unlock_logic?: UnlockLogic;
   created_at?: string;
   lessons?: AcademyLesson[];
 }
@@ -133,6 +137,8 @@ export interface AcademyLesson {
   midlesson_quiz_timestamp_seconds: number | null;
   end_lesson_quiz_id: string | null;
   drip_days_after_enroll: number;
+  unlock_after_days?: number;
+  unlock_logic?: UnlockLogic;
   created_at?: string;
   updated_at?: string;
   // joins
@@ -405,4 +411,51 @@ export interface GradingResult {
   has_pending_manual: boolean;
   earned_points: number;
   total_points: number;
+}
+
+// ── UNLOCK RULES (desbloqueo condicional / gamificación) ──
+export type UnlockTargetType = 'course' | 'module' | 'lesson';
+
+export type UnlockRuleType =
+  | 'min_level'
+  | 'min_xp'
+  | 'course_completed'
+  | 'module_completed'
+  | 'lesson_completed'
+  | 'quiz_passed'
+  | 'badge_earned'
+  | 'drip_days'
+  | 'platform_role';
+
+export type UnlockLogic = 'all' | 'any';
+
+export interface UnlockRule {
+  id: string;
+  space_id: string;
+  target_type: UnlockTargetType;
+  target_id: string;
+  rule_type: UnlockRuleType;
+  int_value: number | null;
+  ref_id: string | null;
+  text_value: string | null;
+  created_at: string;
+}
+
+/** Una regla evaluada para el usuario actual (devuelta por la RPC). */
+export interface UnlockRequirement {
+  rule_type: UnlockRuleType;
+  met: boolean;
+  target: number;
+  ref_id: string | null;
+  text_value: string | null;
+  label: string | null;
+  detail: string | null;
+}
+
+/** Resultado de academy_evaluate_unlock para un target. */
+export interface UnlockEvaluation {
+  unlocked: boolean;
+  logic: UnlockLogic;
+  bypass: boolean;
+  requirements: UnlockRequirement[];
 }

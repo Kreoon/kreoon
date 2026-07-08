@@ -80,7 +80,7 @@ export function useCreateAcademySpace() {
 }
 
 const SPACE_COLUMNS: (keyof AcademySpace)[] = [
-  'name', 'slug', 'description', 'cover_image_url', 'logo_url',
+  'name', 'slug', 'description', 'cover_image_url', 'cover_position', 'logo_url',
   'accent_color', 'is_public', 'membership_price_usd', 'plan_slug',
   'status', 'custom_domain', 'metadata',
 ];
@@ -102,6 +102,10 @@ export function useUpdateAcademySpace() {
       if (error) throw error;
       return data as AcademySpace;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['academy', 'spaces'] }),
+    onSuccess: () => {
+      // 'spaces' (listas mías/públicas) y 'space' (detalle por slug, usado en home y admin).
+      qc.invalidateQueries({ queryKey: ['academy', 'spaces'] });
+      qc.invalidateQueries({ queryKey: ['academy', 'space'] });
+    },
   });
 }

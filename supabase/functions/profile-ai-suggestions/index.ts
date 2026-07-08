@@ -106,6 +106,7 @@ serve(async (req) => {
     const tokenCheck = await checkAndDeductTokens(
       supabase,
       organizationId,
+      user.id,
       AI_ACTION,
       TOKEN_COST,
       { description: "Sugerencias de bloques de perfil con IA" }

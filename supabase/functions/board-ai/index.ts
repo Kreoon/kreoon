@@ -19,6 +19,7 @@ import {
   RATE_LIMIT_PRESETS,
   rateLimitResponse,
 } from "../_shared/rate-limiter.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 // Action types
 type BoardAIAction =
@@ -779,6 +780,7 @@ serve(async (req) => {
 
   let body: RequestBody | null = null;
   let userId = "system";
+  let realUserId: string | null = null;
 
   try {
     // Use Kreoon (external) database if configured
@@ -794,8 +796,10 @@ serve(async (req) => {
         try {
           const auth = await validateKreoonAuth(authHeader);
           userId = auth.user.id;
+          realUserId = auth.user.id;
         } catch (e) {
-          // Silently continue with system user
+          // Auth inválida: realUserId queda null, se rechaza más abajo
+          // (FASE 1: antes esto caía silenciosamente en "system" user).
         }
       }
     } else {
@@ -807,7 +811,10 @@ serve(async (req) => {
       if (authHeader) {
         const token = authHeader.replace("Bearer ", "");
         const { data: { user } } = await supabase.auth.getUser(token);
-        if (user) userId = user.id;
+        if (user) {
+          userId = user.id;
+          realUserId = user.id;
+        }
       }
     }
 
@@ -827,6 +834,15 @@ serve(async (req) => {
     const { action, organizationId, contentId } = body;
 
     console.log(`Board AI action: ${action} for org: ${organizationId}`);
+
+    // FASE 1: exigir auth real + membresía de organizationId. Antes,
+    // sin header o con token inválido, seguía con userId="system" y
+    // cualquier organizationId del body sin validar.
+    if (!organizationId) {
+      throw new Error("organizationId is required");
+    }
+    const membershipRejection = await assertOrgMembership(req, supabase, realUserId, organizationId);
+    if (membershipRejection) return membershipRejection;
 
     // Get module key for this action
     const moduleKey = ACTION_TO_MODULE[action];

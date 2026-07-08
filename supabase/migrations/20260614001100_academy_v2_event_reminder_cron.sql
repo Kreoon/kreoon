@@ -67,7 +67,7 @@ BEGIN
       AND sent.event_id IS NULL
   LOOP
     SELECT slug INTO v_space_slug FROM academy_spaces WHERE id = r.space_id;
-    SELECT COALESCE(display_name, full_name, email, 'Miembro') INTO v_member_name
+    SELECT COALESCE(full_name, email, 'Miembro') INTO v_member_name
       FROM profiles WHERE id = r.user_id;
 
     PERFORM academy_emit_event_safe(

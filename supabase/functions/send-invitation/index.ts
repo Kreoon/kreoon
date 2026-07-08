@@ -1,18 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 interface InvitationRequest {
   email: string;
   role: "admin" | "creator" | "editor" | "client";
-  inviter_name: string;
   client_id?: string;
 }
 
@@ -24,12 +19,11 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  if (req.method === "OPTIONS") return handleCorsOptions(req);
+  const corsHeaders = getCorsHeaders(req);
 
   try {
-    const { email, role, inviter_name, client_id }: InvitationRequest = await req.json();
+    const { email, role, client_id }: InvitationRequest = await req.json();
 
     if (!email || !role) {
       throw new Error("Email y rol son requeridos");
@@ -38,12 +32,65 @@ serve(async (req) => {
     // Use Kreoon as the primary database
     const kreoonUrl = Deno.env.get("KREOON_SUPABASE_URL");
     const kreoonServiceKey = Deno.env.get("KREOON_SERVICE_ROLE_KEY");
-    
+
     if (!kreoonUrl || !kreoonServiceKey) {
       throw new Error("Database credentials not configured");
     }
-    
+
     const supabase = createClient(kreoonUrl, kreoonServiceKey);
+
+    // FASE 1: validar quién llama (antes: sin auth alguna, cualquiera
+    // podía invitar con role:"admin" y client_id arbitrario).
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No autorizado");
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      authHeader.replace("Bearer ", ""),
+    );
+    if (authError || !user) throw new Error("No autorizado");
+
+    const { data: inviterProfile } = await supabase
+      .from("profiles")
+      .select("full_name, current_organization_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!inviterProfile?.current_organization_id) {
+      throw new Error("No perteneces a ninguna organización");
+    }
+
+    const orgId = inviterProfile.current_organization_id;
+    const inviterName = inviterProfile.full_name || "Un miembro del equipo";
+
+    const { data: memberRow } = await supabase
+      .from("organization_members")
+      .select("role")
+      .eq("organization_id", orgId)
+      .eq("user_id", user.id)
+      .single();
+
+    const allowedInviterRoles = ["admin", "team_leader"];
+    if (!memberRow || !allowedInviterRoles.includes(memberRow.role)) {
+      throw new Error("No tienes permisos para invitar usuarios. Se requiere rol de admin o líder de equipo.");
+    }
+
+    // Solo un admin puede invitar a otro como admin.
+    if (role === "admin" && memberRow.role !== "admin") {
+      throw new Error("Solo un administrador puede invitar con rol de administrador.");
+    }
+
+    // Si se invita para representar a un cliente, ese cliente debe ser de la misma org.
+    if (client_id) {
+      const { data: clientRow } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("id", client_id)
+        .eq("organization_id", orgId)
+        .maybeSingle();
+      if (!clientRow) {
+        throw new Error("El cliente indicado no pertenece a tu organización.");
+      }
+    }
 
     // Generate magic link for signup - redirect to kreoon.com
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
@@ -86,7 +133,7 @@ serve(async (req) => {
           <div class="container">
             <div class="logo">🎬 KREOON</div>
             <h1>¡Has sido invitado!</h1>
-            <p><strong>${inviter_name}</strong> te ha invitado a unirte a KREOON como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
+            <p><strong>${inviterName}</strong> te ha invitado a unirte a KREOON como <span class="role-badge">${ROLE_LABELS[role]}</span></p>
             <p>KREOON es una plataforma profesional para la gestión de contenido de video, donde podrás colaborar con creadores y editores en proyectos de alto impacto.</p>
             <a href="${inviteLink}" class="button">Aceptar Invitación</a>
             <p style="font-size: 14px;">O copia este enlace: <br/><code style="background: #1a1a1a; padding: 8px 12px; border-radius: 4px; display: block; margin-top: 8px; word-break: break-all;">${inviteLink}</code></p>
@@ -108,7 +155,7 @@ serve(async (req) => {
       .insert({
         email,
         role,
-        invited_by: inviter_name,
+        invited_by: inviterName,
         client_id,
         status: "pending",
       });

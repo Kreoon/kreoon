@@ -338,7 +338,8 @@ async function handlePublish(
 
 async function handlePublishSingle(
   supabase: ReturnType<typeof createClient>,
-  body: { post_id: string; account_id: string }
+  body: { post_id: string; account_id: string },
+  callerUserId: string | null
 ): Promise<{ result: PublishResult }> {
   const { post_id, account_id } = body;
   if (!post_id || !account_id) {
@@ -359,6 +360,11 @@ async function handlePublishSingle(
   }
 
   const scheduledPost = post as ScheduledPost;
+
+  // FASE1: mismo guard que handlePublish/handleDeletePost -- se habia quedado
+  // sin aplicar en esta ruta, dejando republicar el post de otra org.
+  await assertPostOwnership(supabase, callerUserId, scheduledPost.user_id, scheduledPost.organization_id);
+
   const startTime = Date.now();
 
   // Pre-resolve Bunny CDN URLs
@@ -716,7 +722,7 @@ Deno.serve(async (req: Request) => {
         break;
 
       case "publish-single":
-        result = await handlePublishSingle(supabase, body);
+        result = await handlePublishSingle(supabase, body, callerUserId);
         break;
 
       case "delete-post":

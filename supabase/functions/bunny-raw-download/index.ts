@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,6 +63,21 @@ serve(async (req: Request) => {
       });
     }
 
+    // Reject path traversal / userinfo / backslashes before anything else
+    // (protocol-relative, "..", encoded traversal, etc.)
+    if (
+      rawInput.includes("..") ||
+      rawInput.includes("\\") ||
+      /%2e%2e|%2f%2e%2e|%252e/i.test(rawInput) ||
+      /^\/\//.test(rawInput) ||
+      /@/.test(rawInput.replace(/^https?:\/\//i, ""))
+    ) {
+      return new Response(JSON.stringify({ success: false, error: "Ruta inválida" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Normalize to a RELATIVE path inside the storage zone.
     // Accepts:
     // - full storage URL: https://<region>.storage.bunnycdn.com/<zone>/<path>
@@ -98,12 +115,34 @@ serve(async (req: Request) => {
       normalizedPath = normalizedPath.slice(storageZone.length + 1);
     }
 
-    if (!normalizedPath) {
+    if (!normalizedPath || normalizedPath.includes("..") || normalizedPath.startsWith("/")) {
       return new Response(JSON.stringify({ success: false, error: "Ruta inválida" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // FASE 1: antes solo se validaba que el header Authorization existiera
+    // (no que fuera un JWT válido), y storagePath no se comprobaba contra
+    // ninguna organización. Los paths se generan siempre como
+    // org_<orgId>/client_.../project_.../raw/<file> (ver
+    // RawAssetsUploader.tsx) — el org SIEMPRE debe ser el primer segmento
+    // del path YA NORMALIZADO (no un match en cualquier parte del string
+    // crudo, que podía ser burlado con ../ o un segundo "org_" falso).
+    const orgMatch = normalizedPath.match(/^org_([a-zA-Z0-9-]+)\//);
+    if (!orgMatch) {
+      return new Response(JSON.stringify({ success: false, error: "No se pudo determinar la organización del archivo" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authToken = authHeader.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = await supabase.auth.getUser(authToken);
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, orgMatch[1]);
+    if (membershipRejection) return membershipRejection;
 
     const finalUrl = `https://${hostForStorage}/${storageZone}/${normalizedPath}`;
     console.log("Downloading raw asset via normalized storage URL:", finalUrl);

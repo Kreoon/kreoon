@@ -15,12 +15,15 @@ interface SpaceFeedProps {
   spaceId: string;
   ownerId: string;
   accentColor?: string;
+  /** Si viene (deep-link desde notificación), hace scroll y resalta ese post. */
+  highlightPostId?: string;
 }
 
-export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6' }: SpaceFeedProps) {
+export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlightPostId }: SpaceFeedProps) {
   const { user } = useAuth();
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
+  const [highlighted, setHighlighted] = useState<string | null>(null);
   const { data: categories = [] } = useSpaceCategories(spaceId);
   const {
     data,
@@ -46,10 +49,28 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6' }: SpaceFe
     return () => window.removeEventListener('scroll', handler);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Deep-link a un post: scroll + resaltado. Si no está cargado, pagina hasta hallarlo.
+  useEffect(() => {
+    if (!highlightPostId) return;
+    const found = posts.some((p) => p.id === highlightPostId);
+    if (!found) {
+      if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+      return;
+    }
+    const el = document.getElementById(`post-${highlightPostId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setHighlighted(highlightPostId);
+    const t = setTimeout(() => setHighlighted(null), 2800);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightPostId, posts.length, hasNextPage, isFetchingNextPage]);
+
   function toggleComments(postId: string) {
     setExpandedComments((s) => {
       const next = new Set(s);
-      next.has(postId) ? next.delete(postId) : next.add(postId);
+      if (next.has(postId)) next.delete(postId);
+      else next.add(postId);
       return next;
     });
   }
@@ -132,7 +153,15 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6' }: SpaceFe
         ) : (
           <div className="space-y-4">
             {posts.map((post) => (
-              <div key={post.id}>
+              <div
+                key={post.id}
+                id={`post-${post.id}`}
+                className={cn(
+                  'rounded-2xl transition-all duration-500 scroll-mt-24',
+                  highlighted === post.id &&
+                    'ring-2 ring-purple-500 ring-offset-2 ring-offset-[#0a0a0f]'
+                )}
+              >
                 <PostCard
                   post={post}
                   spaceId={spaceId}

@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   Clock, BarChart3, Award, Play, Lock, CheckCircle2, Pencil,
@@ -11,6 +11,8 @@ import { SpaceNavbar } from '@/components/academy/community/SpaceNavbar';
 import { BigCard } from '@/components/academy/big-cards/BigCard';
 import { useAcademyCourseBySlug } from '@/hooks/academy/useAcademyCourse';
 import { useEnrollInCourse, useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
+import { useUnlockStatus, useUnlockStatusBatch, type BatchTarget } from '@/hooks/academy/useAcademyUnlock';
+import { UnlockRequirements } from '@/components/academy/unlock/UnlockRequirements';
 import { useAuth } from '@/hooks/useAuth';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,19 @@ export default function AcademiaCoursePage() {
   const enroll = useEnrollInCourse();
   const [enrolling, setEnrolling] = useState(false);
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
+
+  // Estado de desbloqueo condicional de módulos y lecciones (una sola llamada)
+  const unlockTargets = useMemo<BatchTarget[]>(() => {
+    const list: BatchTarget[] = [];
+    for (const m of course?.modules ?? []) {
+      list.push({ target_type: 'module', target_id: m.id });
+      for (const l of m.lessons ?? []) list.push({ target_type: 'lesson', target_id: l.id });
+    }
+    return list;
+  }, [course]);
+  const { data: unlockMap = {} } = useUnlockStatusBatch(unlockTargets);
+  const isUnlocked = (id: string) => unlockMap[id]?.unlocked ?? true;
+  const { data: courseUnlock } = useUnlockStatus('course', course?.id);
 
   if (isLoading) {
     return (
@@ -64,6 +79,7 @@ export default function AcademiaCoursePage() {
   const isEnrolled = !!enrollment;
   const isOwner =
     !!user && (course.instructor_id === user.id || course.space?.owner_id === user.id);
+  const courseLocked = !isOwner && !!courseUnlock && !courseUnlock.unlocked && !courseUnlock.bypass;
 
   async function handleEnroll() {
     if (!user) {
@@ -254,6 +270,8 @@ export default function AcademiaCoursePage() {
                     .slice()
                     .sort((a, b) => a.sort_order - b.sort_order);
                   const isOpen = openModules.has(m.id);
+                  const moduleLocked = isEnrolled && !isOwner && !isUnlocked(m.id);
+                  const moduleEval = unlockMap[m.id];
                   return (
                     <BigCard key={m.id} className="overflow-hidden">
                       <button
@@ -267,7 +285,7 @@ export default function AcademiaCoursePage() {
                             color: '#c084fc',
                           }}
                         >
-                          {mi + 1}
+                          {moduleLocked ? <Lock className="h-4 w-4" /> : mi + 1}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-extrabold text-base md:text-lg text-white">
@@ -275,6 +293,7 @@ export default function AcademiaCoursePage() {
                           </h3>
                           <div className="text-xs text-zinc-400 mt-0.5">
                             {lessons.length} lección{lessons.length !== 1 ? 'es' : ''}
+                            {moduleLocked && <span className="text-amber-300/80"> · 🔒 Bloqueado</span>}
                           </div>
                         </div>
                         <ChevronDown
@@ -293,18 +312,27 @@ export default function AcademiaCoursePage() {
                               dangerouslySetInnerHTML={{ __html: sanitizeHTML(m.description) }}
                             />
                           )}
+                          {moduleLocked && moduleEval && (
+                            <div className="px-5 py-3">
+                              <UnlockRequirements evaluation={moduleEval} compact />
+                            </div>
+                          )}
                           <ul className="divide-y divide-white/5">
                             {lessons.map((l, li) => {
                               const canPreview = l.is_free_preview || isEnrolled || isOwner;
+                              const lessonConditionLocked =
+                                canPreview && !isOwner && (!isUnlocked(l.id) || moduleLocked);
+                              const canAccess = canPreview && !lessonConditionLocked;
+                              const lessonEval = unlockMap[l.id];
                               return (
                                 <li
                                   key={l.id}
                                   className={cn(
                                     'px-5 py-3 flex items-center gap-3',
-                                    canPreview && 'hover:bg-white/[0.03] cursor-pointer'
+                                    canAccess && 'hover:bg-white/[0.03] cursor-pointer'
                                   )}
                                   onClick={() => {
-                                    if (canPreview) {
+                                    if (canAccess) {
                                       navigate(
                                         `/academia/${spaceSlug}/${courseSlug}/learn?lesson=${l.id}`
                                       );
@@ -317,21 +345,26 @@ export default function AcademiaCoursePage() {
                                   >
                                     {li + 1}
                                   </span>
-                                  {canPreview ? (
+                                  {canAccess ? (
                                     <Play
                                       className="h-4 w-4"
                                       style={{ color: KREOON_PURPLE }}
                                     />
                                   ) : (
-                                    <Lock className="h-4 w-4 text-zinc-600" />
+                                    <Lock className={cn('h-4 w-4', lessonConditionLocked ? 'text-amber-400/80' : 'text-zinc-600')} />
                                   )}
                                   <span
                                     className={cn(
                                       'flex-1 text-sm',
-                                      canPreview ? 'text-zinc-200' : 'text-zinc-500'
+                                      canAccess ? 'text-zinc-200' : 'text-zinc-500'
                                     )}
                                   >
                                     {l.title}
+                                    {lessonConditionLocked && lessonEval?.requirements?.[0]?.label && !moduleLocked && (
+                                      <span className="block text-[11px] text-amber-300/70 font-normal mt-0.5">
+                                        🔒 {lessonEval.requirements.find((r) => !r.met)?.label ?? 'Requisitos pendientes'}
+                                      </span>
+                                    )}
                                   </span>
                                   {l.duration_minutes && (
                                     <span className="text-[11px] text-zinc-500 tabular-nums">
@@ -380,7 +413,17 @@ export default function AcademiaCoursePage() {
                 {course.is_free ? 'Acceso completo · sin pago' : 'Pago único · acceso de por vida'}
               </div>
 
-              {isEnrolled ? (
+              {courseLocked ? (
+                <div className="space-y-3">
+                  <Button
+                    className="w-full h-12 rounded-2xl font-extrabold text-base bg-white/5 text-zinc-400 cursor-not-allowed"
+                    disabled
+                  >
+                    <Lock className="h-4 w-4 mr-2" /> Curso bloqueado
+                  </Button>
+                  {courseUnlock && <UnlockRequirements evaluation={courseUnlock} compact />}
+                </div>
+              ) : isEnrolled ? (
                 <Button
                   className="w-full h-12 text-white rounded-2xl font-extrabold text-base shadow-lg"
                   style={{

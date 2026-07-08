@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -174,7 +176,48 @@ serve(async (req: Request) => {
       );
     }
 
+    // Reject path traversal / userinfo / backslashes before anything else.
+    if (
+      typeof folderPath !== 'string' ||
+      folderPath.includes('..') ||
+      folderPath.includes('\\') ||
+      /%2e%2e|%2f%2e%2e|%252e/i.test(folderPath)
+    ) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Ruta inválida' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const targetFolder = folderPath.replace(/^\/+|\/+$/g, '');
+    if (!targetFolder || targetFolder.includes('..')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Ruta inválida' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // FASE 1: solo se validaba que el header existiera; folderPath no se
+    // comprobaba contra ninguna org — cualquiera zippeaba cualquier
+    // carpeta. Los folders siempre son org_<orgId>/client_.../project_...
+    // (ver RawAssetsUploader.tsx) — el org SIEMPRE debe ser el primer
+    // segmento del path YA NORMALIZADO (no un match en cualquier parte
+    // del string crudo).
+    const orgMatch = targetFolder.match(/^org_([a-zA-Z0-9-]+)\//);
+    if (!orgMatch) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'No se pudo determinar la organización de la carpeta' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authToken = authHeader.replace(/^Bearer\s+/i, '').trim();
+    const { data: { user: callerUser } = { user: null } } = await supabase.auth.getUser(authToken);
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, orgMatch[1]);
+    if (membershipRejection) return membershipRejection;
+
     console.log(`Generating streamed ZIP for project ${projectId} from folder: ${targetFolder}`);
 
     const files = await listFiles(storageHostname, envStorageZone, targetFolder, storagePassword);

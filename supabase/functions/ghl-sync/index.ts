@@ -7,6 +7,27 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// FASE 1 (anti-SSRF, patrón de n8n-proxy): payload.webhook_url venía del
+// body sin allowlist — cualquiera podía usar este endpoint como relay
+// para hacer fetch server-side a cualquier URL (SSRF a red interna,
+// exfiltración de datos de clientes/pagos hacia un host propio).
+const ALLOWED_WEBHOOK_DOMAINS = [
+  'leadconnectorhq.com',
+  'gohighlevel.com',
+];
+
+function isAllowedWebhookUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== 'https:') return false;
+    return ALLOWED_WEBHOOK_DOMAINS.some(domain =>
+      url.hostname === domain || url.hostname.endsWith('.' + domain)
+    );
+  } catch {
+    return false;
+  }
+}
+
 interface GHLSyncPayload {
   event_type: 'new_client' | 'new_lead' | 'content_approved' | 'payment_created' | 'content_delivered' | 'custom' | 'test';
   data: Record<string, any>;
@@ -50,11 +71,23 @@ serve(async (req) => {
     if (!webhookUrl) {
       console.error('[ghl-sync] GHL_WEBHOOK_URL not configured');
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           success: false,
-          error: 'URL del webhook no configurada. Por favor ingresa la URL en Configuración → Integraciones → Funnel ROI.' 
+          error: 'URL del webhook no configurada. Por favor ingresa la URL en Configuración → Integraciones → Funnel ROI.'
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!isAllowedWebhookUrl(webhookUrl)) {
+      console.error('[ghl-sync] Rejected webhook URL (not in allowlist):', webhookUrl);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Webhook URL not allowed',
+          allowed_domains: ALLOWED_WEBHOOK_DOMAINS,
+        }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 

@@ -2,28 +2,14 @@ import { useMemo } from 'react';
 import { useAuth } from './useAuth';
 import { AppRole, UserType, Specialization, TalentRole } from '@/types/database';
 import { getPermissionGroup, type PermissionGroup } from '@/lib/permissionGroups';
+// FUENTE ÚNICA: getUserType y getPrimaryRole viven en lib/roles.ts.
+// Re-exportados aquí para no romper imports existentes de `@/hooks/useRoles`.
+export { getUserType, getPrimaryRole } from '@/lib/roles';
+import { getUserType, getPrimaryRole } from '@/lib/roles';
 
 // =============================================================================
 // HELPER FUNCTIONS (standalone, can be used without hooks)
 // =============================================================================
-
-/**
- * Determine the user type based on their roles
- * Priority: admin > client > talent
- *
- * @param roles - Array of user roles
- * @returns UserType - 'admin', 'client', or 'talent'
- */
-export function getUserType(roles: AppRole[]): UserType {
-  if (!roles || roles.length === 0) return 'talent';
-
-  // Check permission groups for flexibility with marketplace roles
-  const groups = roles.map(r => getPermissionGroup(r));
-
-  if (groups.includes('admin')) return 'admin';
-  if (groups.includes('client')) return 'client';
-  return 'talent';
-}
 
 /**
  * Check if user is a talent (content creator, editor, strategist, etc.)
@@ -105,34 +91,6 @@ export function hasClientRole(roles: AppRole[]): boolean {
 export function hasAdminRole(roles: AppRole[]): boolean {
   if (!roles || roles.length === 0) return false;
   return roles.some(r => getPermissionGroup(r) === 'admin');
-}
-
-/**
- * Get the primary role for a user (highest priority)
- * Priority: admin > team_leader > digital_strategist > creative_strategist >
- *           content_creator > editor > community_manager > client
- *
- * @param roles - Array of user roles
- * @returns Primary AppRole or null
- */
-export function getPrimaryRole(roles: AppRole[]): AppRole | null {
-  if (!roles || roles.length === 0) return null;
-
-  const priority: AppRole[] = [
-    'admin',
-    'digital_strategist',
-    'creative_strategist',
-    'content_creator',
-    'editor',
-    'community_manager',
-    'client',
-  ];
-
-  for (const role of priority) {
-    if (roles.includes(role)) return role;
-  }
-
-  return roles[0];
 }
 
 /**

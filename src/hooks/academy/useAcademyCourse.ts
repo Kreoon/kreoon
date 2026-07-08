@@ -14,7 +14,7 @@ const COURSE_SELECT_FOR_STUDENT = `
   instructor:profiles!instructor_id(full_name, avatar_url),
   modules:academy_modules(
     id, title, description, sort_order, is_free_preview,
-    lessons:academy_lessons(
+    lessons:academy_lessons_gated(
       id, title, type, video_source, video_url, video_bunny_id,
       video_duration_seconds, video_thumbnail_url, is_free_preview,
       is_required, sort_order, has_midlesson_quiz,
@@ -243,27 +243,15 @@ export function useMarkLessonProgress() {
       lastPosition?: number;
     }) => {
       if (!user) throw new Error('No user');
-      const { data, error } = await (supabase as any)
-        .from('academy_lesson_progress')
-        .upsert(
-          {
-            lesson_id: args.lessonId,
-            user_id: user.id,
-            enrollment_id: args.enrollmentId,
-            status: args.status,
-            video_watch_pct: args.videoPct ?? 0,
-            last_position_seconds: args.lastPosition ?? 0,
-            completed_at: args.status === 'completed' ? new Date().toISOString() : null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'lesson_id,user_id' }
-        )
-        .select()
-        .single();
+      // Vía RPC server-side: valida enrollment real y recalcula
+      // completion_pct por trigger (nunca confía en un valor del cliente).
+      const { data, error } = await (supabase as any).rpc('record_lesson_progress', {
+        p_lesson_id: args.lessonId,
+        p_status: args.status,
+        p_video_watch_pct: args.videoPct ?? 0,
+        p_last_position_seconds: args.lastPosition ?? 0,
+      });
       if (error) throw error;
-
-      // Recalcular % de completitud de la inscripción
-      await recalcEnrollmentCompletion(args.enrollmentId);
 
       return data;
     },
@@ -271,39 +259,3 @@ export function useMarkLessonProgress() {
   });
 }
 
-async function recalcEnrollmentCompletion(enrollmentId: string) {
-  const { data: enroll } = await (supabase as any)
-    .from('academy_enrollments')
-    .select('id, course_id, user_id')
-    .eq('id', enrollmentId)
-    .maybeSingle();
-  if (!enroll) return;
-
-  const { data: lessons } = await (supabase as any)
-    .from('academy_lessons')
-    .select('id, is_required')
-    .eq('course_id', enroll.course_id);
-  const requiredLessons = (lessons ?? []).filter((l: any) => l.is_required);
-  if (requiredLessons.length === 0) return;
-
-  const { data: progressRows } = await (supabase as any)
-    .from('academy_lesson_progress')
-    .select('lesson_id, status')
-    .eq('enrollment_id', enrollmentId)
-    .eq('status', 'completed');
-
-  const completedRequiredCount = (progressRows ?? []).filter((p: any) =>
-    requiredLessons.some((l: any) => l.id === p.lesson_id)
-  ).length;
-
-  const pct = Math.round((completedRequiredCount / requiredLessons.length) * 10000) / 100;
-
-  await (supabase as any)
-    .from('academy_enrollments')
-    .update({
-      completion_pct: pct,
-      completed_at: pct >= 100 ? new Date().toISOString() : null,
-      last_accessed_at: new Date().toISOString(),
-    })
-    .eq('id', enrollmentId);
-}

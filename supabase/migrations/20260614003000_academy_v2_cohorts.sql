@@ -200,7 +200,7 @@ BEGIN
       AND co.start_date = (current_date + 1)
       AND el.id IS NULL
   LOOP
-    SELECT COALESCE(display_name, full_name, email, 'Miembro') INTO v_member_name
+    SELECT COALESCE(full_name, email, 'Miembro') INTO v_member_name
       FROM profiles WHERE id = r.user_id;
 
     PERFORM academy_emit_event_safe(

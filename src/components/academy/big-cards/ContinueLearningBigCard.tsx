@@ -52,7 +52,21 @@ export function ContinueLearningBigCard({
           }
         >
           {coverImageUrl ? (
-            <img src={coverImageUrl} alt="" className="w-full h-full object-cover" />
+            <>
+              {/* Fondo difuminado: rellena si la imagen no es 16:9 exacto */}
+              <img
+                src={coverImageUrl}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50"
+              />
+              {/* Imagen completa: nunca se recorta */}
+              <img
+                src={coverImageUrl}
+                alt=""
+                className="relative w-full h-full object-contain"
+              />
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-7xl" aria-hidden="true">
               📚
