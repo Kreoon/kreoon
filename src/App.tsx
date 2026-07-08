@@ -340,11 +340,6 @@ const MarketingAdsPage = lazy(
   () => import("./modules/marketing/pages/MarketingPage"),
 );
 
-// Ad Intelligence Module
-const AdIntelligencePage = lazy(
-  () => import("./modules/ad-intelligence/pages/AdIntelligencePage"),
-);
-
 // Social Scraper Module
 const SocialScraperPage = lazy(
   () => import("./modules/social-scraper/pages/SocialScraperPage"),
@@ -1133,16 +1128,6 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={["admin"]}>
               <MainLayout>
                 <KAEAnalyticsDashboard />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/ad-intelligence"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdIntelligencePage />
               </MainLayout>
             </ProtectedRoute>
           }

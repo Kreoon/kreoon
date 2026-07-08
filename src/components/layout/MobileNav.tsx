@@ -78,7 +78,6 @@ const MARKETING_ITEMS: NavItem[] = [
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
   { name: "Anuncios", href: "/marketing-ads", icon: BarChart3 },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
-  { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search },
   { name: "Análisis de Redes", href: "/admin/social-scraper", icon: Radar },
 ];
 

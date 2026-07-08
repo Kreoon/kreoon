@@ -109,7 +109,6 @@ export const ALL_APP_PAGES: QASection[] = [
       { name: 'Anuncios (Marketing Ads)', path: '/marketing-ads', icon: BarChart3 },
       { name: 'Generador de Anuncios', path: '/ad-generator', icon: ImagePlus },
       { name: 'Social Hub', path: '/social-hub', icon: Share2 },
-      { name: 'Inteligencia de Anuncios', path: '/admin/ad-intelligence', icon: Search },
       { name: 'Análisis de Redes (Social Scraper)', path: '/admin/social-scraper', icon: Radar },
       { name: 'Analytics (KAE)', path: '/admin/analytics', icon: LineChart },
     ],

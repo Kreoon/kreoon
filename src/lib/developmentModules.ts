@@ -12,7 +12,6 @@ import {
   Users,
   BarChart3,
   ImagePlus,
-  Search,
   Radar,
   Megaphone,
   Wallet
@@ -93,17 +92,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/ad-generator'],
     sidebarItems: [
       { label: 'Generador Ads', path: '/ad-generator', icon: ImagePlus }
-    ]
-  },
-  {
-    id: 'ad-intelligence',
-    name: 'Ad Intelligence',
-    description: 'Análisis de competencia y tendencias en publicidad',
-    icon: Search,
-    status: 'development',
-    routes: ['/admin/ad-intelligence'],
-    sidebarItems: [
-      { label: 'Ad Intelligence', path: '/admin/ad-intelligence', icon: Search }
     ]
   },
   {
