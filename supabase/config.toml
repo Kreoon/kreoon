@@ -115,9 +115,6 @@ verify_jwt = false
 [functions.upload-campaign-media]
 verify_jwt = true
 
-[functions.analyze-product-dna]
-verify_jwt = true
-
 [functions.kreoon-bootstrap]
 verify_jwt = false
 
@@ -125,9 +122,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.migrate-to-kreoon]
-verify_jwt = false
-
-[functions.migrate-storage]
 verify_jwt = false
 
 [functions.multi-ai]
@@ -293,12 +287,6 @@ verify_jwt = true
 # Esta función es invocada exclusivamente desde el frontend via
 # supabase.functions.invoke (useBunnyStorage.ts, usePortfolioItems.ts),
 # que adjunta el JWT automáticamente. No es un webhook externo.
-verify_jwt = true
-
-[functions.bunny-status-v2]
-verify_jwt = true
-
-[functions.bunny-thumbnail-v2]
 verify_jwt = true
 
 [functions.ai-creator-matching]
@@ -548,16 +536,6 @@ verify_jwt = false
 verify_jwt = false
 
 # ── Social Verification & Instagram/TikTok APIs ──
-
-[functions.social-instagram]
-# Instagram Basic Display + Graph API integration
-# OAuth flow requires verify_jwt = false
-verify_jwt = false
-
-[functions.social-tiktok]
-# TikTok API integration for creator verification
-# OAuth flow requires verify_jwt = false
-verify_jwt = false
 
 [functions.verify-influencer]
 # Influencer verification service
