@@ -9,7 +9,6 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Trophy,
   TrendingUp,
-  Radio,
   Users,
   BarChart3,
   ImagePlus,
@@ -74,28 +73,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/marketing'],
     sidebarItems: [
       { label: 'Marketing', path: '/marketing', icon: TrendingUp }
-    ]
-  },
-  {
-    id: 'streaming',
-    name: 'Streaming',
-    description: 'Hub de transmisiones en vivo y estudios virtuales',
-    icon: Radio,
-    status: 'development',
-    routes: ['/streaming', '/streaming/studio', '/streaming/recap'],
-    sidebarItems: [
-      { label: 'Streaming', path: '/streaming', icon: Radio }
-    ]
-  },
-  {
-    id: 'live-hosting',
-    name: 'Live Hosting',
-    description: 'Contratación de hosts para transmisiones en vivo',
-    icon: Users,
-    status: 'development',
-    routes: ['/streaming/hosting', '/streaming/hosting/new'],
-    sidebarItems: [
-      { label: 'Live Hosting', path: '/streaming/hosting', icon: Users }
     ]
   },
   {

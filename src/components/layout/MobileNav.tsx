@@ -76,7 +76,6 @@ interface NavSection {
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
-  { name: "Streaming", href: "/streaming", icon: Video },
   { name: "Anuncios", href: "/marketing-ads", icon: BarChart3 },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
   { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search },

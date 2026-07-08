@@ -241,10 +241,6 @@ const ROUTE_TO_ZONE: Record<string, KiroZone> = {
   '/training': 'escuela',
   '/academy': 'escuela',
   '/ranking': 'escuela',
-
-  // Live Stage - Streaming en vivo
-  '/live': 'live-stage',
-  '/streaming': 'live-stage',
 };
 
 /** Información descriptiva de cada zona */

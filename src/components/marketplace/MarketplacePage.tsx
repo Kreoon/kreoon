@@ -26,17 +26,11 @@ import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, Market
 // Lazy-load componentes pesados que solo se usan de forma condicional.
 // FilterModal: ~40KB, solo se abre al pulsar el botón de filtros.
 // CampaignsFeed: tab secundario con su propio árbol de dependencias.
-// ActiveLivesCarousel: solo visible para admins, no impacta el render inicial.
 const FilterModal = lazy(() =>
   import('./FilterModal').then((m) => ({ default: m.FilterModal }))
 );
 const CampaignsFeed = lazy(() =>
   import('./campaigns/feed/CampaignsFeed').then((m) => ({ default: m.CampaignsFeed }))
-);
-const ActiveLivesCarousel = lazy(() =>
-  import('@/components/live-streaming/ActiveLivesCarousel').then((m) => ({
-    default: m.ActiveLivesCarousel,
-  }))
 );
 
 // Fallback liviano para Suspense de modales/tabs (no bloquea el render principal)
@@ -362,16 +356,6 @@ export default function MarketplacePage() {
                   onCreatorClick={handleCreatorClick}
                   priority={true}
                 />
-              )}
-
-              {/* Lives activos - solo para admins (feature en construcción para otros) */}
-              {isAdmin && (
-                <Suspense fallback={<NullFallback />}>
-                  <ActiveLivesCarousel
-                    onViewAll={() => navigate('/live')}
-                    className="mb-6"
-                  />
-                </Suspense>
               )}
 
               {showCarousels && (

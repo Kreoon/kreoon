@@ -323,9 +323,6 @@ function generateActionRoute(entityType: string, entityId: string): string {
       return `/campaigns/${entityId}`;
     case 'board':
       return `/content-board`;
-    case 'stream':
-    case 'live':
-      return `/live/${entityId}`;
     case 'profile':
       return `/profile/${entityId}`;
     default:

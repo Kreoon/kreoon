@@ -86,8 +86,6 @@ interface NavSection {
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-  { name: "Streaming", href: "/streaming", icon: Video, tourId: "sidebar-live", adminOnly: true },
-  { name: "Hosting en Vivo", href: "/streaming/hosting", icon: Users, tourId: "sidebar-live-hosting", adminOnly: true },
   { name: "Anuncios", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
   { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
