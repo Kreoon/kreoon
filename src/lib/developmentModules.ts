@@ -12,7 +12,6 @@ import {
   Users,
   BarChart3,
   ImagePlus,
-  Radar,
   Megaphone,
   Wallet
 } from 'lucide-react';
@@ -92,17 +91,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/ad-generator'],
     sidebarItems: [
       { label: 'Generador Ads', path: '/ad-generator', icon: ImagePlus }
-    ]
-  },
-  {
-    id: 'social-scraper',
-    name: 'Social Scraper',
-    description: 'Extracción de datos de redes sociales',
-    icon: Radar,
-    status: 'development',
-    routes: ['/admin/social-scraper'],
-    sidebarItems: [
-      { label: 'Social Scraper', path: '/admin/social-scraper', icon: Radar }
     ]
   },
   {

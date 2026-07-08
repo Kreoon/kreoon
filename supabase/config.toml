@@ -469,9 +469,6 @@ verify_jwt = false
 [functions.campaign-checkout]
 verify_jwt = true
 
-[functions.social-scraper]
-verify_jwt = true
-
 # ── Portfolio Image Upload ──
 # verify_jwt = false porque la función maneja auth internamente con userClient.auth.getUser()
 
