@@ -22,27 +22,55 @@ export async function handleCampaignCheckoutCompleted(supabase: any, session: St
   }
 
   if (metadata.type === "campaign_publish") {
-    // ── Fixed price: activate campaign ──
+    // FASE checklist seccion 3: reintento de Stripe (timeout, 5xx transitorio)
+    // ejecutaba este handler de nuevo sin ningun guard -> escrow_holds y
+    // unified_transactions duplicados por el mismo cobro. Chequeo previo +
+    // UNIQUE parcial en escrow_holds.stripe_payment_intent_id como backstop
+    // de la ventana de carrera (dos entregas del webhook solapadas).
+    const { data: existingEscrow } = await supabase
+      .from("escrow_holds")
+      .select("id")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .maybeSingle();
+
+    if (existingEscrow) {
+      console.log(`Campaign ${campaignId}: escrow ya existe para payment_intent ${paymentIntentId}, omitiendo (reintento de Stripe)`);
+      return;
+    }
+
     // Create escrow hold
+    // FASE checklist seccion 3: las columnas usadas aca (creator_amount,
+    // platform_fee, commission_rate, hold_type) NO EXISTEN en escrow_holds
+    // -- este insert SIEMPRE fallaba (23503/42703), la campaña nunca se
+    // activaba pese a que Stripe ya habia cobrado. Columnas reales
+    // confirmadas contra el schema real (ver escrow-service/index.ts, que
+    // si inserta correctamente en esta misma tabla): client_id (NOT NULL),
+    // project_type (enum financial_project_type), platform_fee_rate
+    // (fraccion 0-1, no porcentaje), distributions (jsonb NOT NULL).
     const { data: escrow, error: escrowErr } = await supabase
       .from("escrow_holds")
       .insert({
+        project_type: "campaign_managed",
+        project_title: `Campaign payment`,
+        client_id: userId,
         client_wallet_id: walletId,
         total_amount: totalAmount,
-        creator_amount: totalCreatorPayment,
-        platform_fee: platformFee,
-        commission_rate: commissionRate,
+        currency: "USD",
+        platform_fee_rate: commissionRate / 100, // platform_fee_amount es columna generada (total_amount * rate)
+        distributions: [],
         status: "funded",
         funded_at: new Date().toISOString(),
         stripe_payment_intent_id: paymentIntentId,
         stripe_payment_status: "succeeded",
-        project_title: `Campaign payment`,
-        hold_type: "marketplace",
       })
       .select("id")
       .single();
 
     if (escrowErr) {
+      if (escrowErr.code === "23505") {
+        console.log(`Campaign ${campaignId}: escrow duplicado detectado por UNIQUE constraint (carrera de webhooks), omitiendo`);
+        return;
+      }
       console.error("Error creating escrow:", escrowErr);
       return;
     }
@@ -76,25 +104,41 @@ export async function handleCampaignCheckoutCompleted(supabase: any, session: St
 
   } else if (metadata.type === "campaign_bid_payment") {
     // ── Auction/Range: move campaign to in_progress ──
+    const { data: existingBidEscrow } = await supabase
+      .from("escrow_holds")
+      .select("id")
+      .eq("stripe_payment_intent_id", paymentIntentId)
+      .maybeSingle();
+
+    if (existingBidEscrow) {
+      console.log(`Campaign ${campaignId}: escrow de bid ya existe para payment_intent ${paymentIntentId}, omitiendo (reintento de Stripe)`);
+      return;
+    }
+
     const { data: escrow, error: escrowErr } = await supabase
       .from("escrow_holds")
       .insert({
+        project_type: "campaign_managed",
+        project_title: `Campaign bid payment`,
+        client_id: userId,
         client_wallet_id: walletId,
         total_amount: totalAmount,
-        creator_amount: totalCreatorPayment,
-        platform_fee: platformFee,
-        commission_rate: commissionRate,
+        currency: "USD",
+        platform_fee_rate: commissionRate / 100, // platform_fee_amount es columna generada (total_amount * rate)
+        distributions: [],
         status: "funded",
         funded_at: new Date().toISOString(),
         stripe_payment_intent_id: paymentIntentId,
         stripe_payment_status: "succeeded",
-        project_title: `Campaign bid payment`,
-        hold_type: "marketplace",
       })
       .select("id")
       .single();
 
     if (escrowErr) {
+      if (escrowErr.code === "23505") {
+        console.log(`Campaign ${campaignId}: escrow de bid duplicado detectado por UNIQUE constraint (carrera de webhooks), omitiendo`);
+        return;
+      }
       console.error("Error creating escrow:", escrowErr);
       return;
     }
