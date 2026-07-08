@@ -354,24 +354,6 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         docsUrl: "https://analytics.google.com/"
       },
       {
-        key: "meta_pixel_id",
-        label: "Meta Pixel ID",
-        description: "ID del píxel de Facebook/Meta para tracking.",
-        type: "config",
-        placeholder: "1234567890123456",
-        isSecret: false,
-        docsUrl: "https://business.facebook.com/events_manager"
-      },
-      {
-        key: "tiktok_pixel_id",
-        label: "TikTok Pixel ID",
-        description: "ID del píxel de TikTok para tracking.",
-        type: "config",
-        placeholder: "XXXXXXXXXXXXXXXXX",
-        isSecret: false,
-        docsUrl: "https://ads.tiktok.com/help/article/tiktok-pixel"
-      },
-      {
         key: "hotjar_id",
         label: "Hotjar ID",
         description: "ID de Hotjar para heatmaps y grabaciones.",
