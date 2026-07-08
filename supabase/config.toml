@@ -450,12 +450,6 @@ verify_jwt = false
 [functions.social-ai-generator]
 verify_jwt = false
 
-[functions.marketing-auth]
-verify_jwt = false
-
-[functions.marketing-campaigns]
-verify_jwt = false
-
 # ── Campaign Checkout ──
 
 [functions.campaign-checkout]

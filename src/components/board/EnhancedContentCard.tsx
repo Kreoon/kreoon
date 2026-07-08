@@ -55,7 +55,6 @@ import { BOARD_CLASSES, getStatusNeonStyle, getSpherePhaseStyle } from "./kanban
 import { QuickShareButton } from "@/modules/social/components/Dashboard/QuickShareButton";
 import { PostComposer } from "@/modules/social/components/Composer/PostComposer";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { PromoteContentDialog } from "@/modules/marketing/components/Promote/PromoteContentDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import type { ContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
@@ -406,23 +405,6 @@ export function EnhancedContentCard({
                   caption={content.title || ""}
                   variant="button"
                   className="w-full justify-start gap-2 px-2 py-1.5 h-auto font-normal text-sm border-0 hover:bg-zinc-100 dark:hover:bg-white/10"
-                />
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10 p-0">
-                <PromoteContentDialog
-                  content={{
-                    contentId: content.id,
-                    title: content.title || "",
-                    videoUrl: content.video_url || (content as any).bunny_embed_url || null,
-                    thumbnailUrl: content.thumbnail_url || null,
-                    description: content.title || "",
-                  }}
-                  trigger={
-                    <button className="w-full flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-white/10 rounded-lg">
-                      <Megaphone className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-                      Pautar contenido
-                    </button>
-                  }
                 />
               </DropdownMenuItem>
             </DropdownMenuContent>
