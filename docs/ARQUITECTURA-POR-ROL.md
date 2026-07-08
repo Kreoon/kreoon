@@ -14,12 +14,16 @@ Documento de referencia. Describe cómo funciona la plataforma **desde la perspe
 ## PARTE 0 — Modelo mental de la plataforma
 
 ### La idea central
-KREOON es el **sistema operativo de una agencia de contenido**. El loop que la plataforma existe para ejecutar es:
+KREOON es el **sistema operativo de una agencia de contenido**. El modelo es **cash-first**: lo PRIMERO es el cobro al cliente. No arranca producción sin el dinero adentro — así es autosostenible. El loop que la plataforma existe para ejecutar es:
 
 ```
-ESTRATEGIA  →  CONTENIDO  →  TALENTO  →  EJECUCIÓN  →  COBRO
- (guion/ADN)   (producción)  (marketplace) (pipeline)   (finanzas)
+COBRO      →  ESTRATEGIA  →  CONTENIDO  →  TALENTO  →  EJECUCIÓN  →  APROBACIÓN  →  PAGO TALENTO
+(cliente)     (guion/ADN)    (scripts)   (marketplace) (pipeline)   (cliente)      (nómina)
+   ▲                                                                                    ▼
+ paso 1 = gate de entrada (payment-first)                          paso final = se paga al talento
 ```
+
+**Clave:** el cobro al cliente es el **gate de entrada** (paso 1), no el cierre. El pago al talento sí va al final, tras la aprobación. Esto extiende a todo el flujo de producción el mismo payment-first que ya existe en el marketplace (Stripe antes del hire directo).
 
 Una **organización** (agencia) tiene un **dueño (admin)**, un **equipo de talento** (creadores, editores, estrategas, community managers), y **clientes/marcas** para quienes produce contenido. Cuando el equipo interno no alcanza, se contrata **talento externo** en el marketplace.
 
@@ -104,17 +108,18 @@ Registro como organización → `complete_onboarding` lo registra en su org con 
 - Configurar la organización: estados custom del board, white-label, marketplace on/off.
 - **Rutas admin-only** (guard `allowedRoles={["admin"]}`): 13 rutas protegidas exclusivas.
 
-### Proceso end-to-end (el flujo del dueño)
+### Proceso end-to-end (el flujo del dueño) — cash-first
 1. **Da de alta un cliente/marca** en `/clientes`.
-2. **Crea el producto** de ese cliente.
-3. **Genera el ADN** del producto (`generate-full-research`, 21 fases) — investigación de mercado, competencia, ángulos.
-4. **Genera guiones** en Kreoon IA (`/scripts`) — 6 fases de IA, método CAST.
-5. **Aprueba el guion** (o lo delega al cliente).
-6. **Asigna** creador y editor al contenido en el board → estado `assigned`.
-7. **Supervisa el pipeline** en Producciones mientras el talento graba/edita.
-8. **Aprueba la entrega final** → `approved`.
-9. **Paga al talento** (nómina, con comprobante) y **cobra al cliente** (paquetes/facturas).
-10. Revisa **Finanzas** para salud del negocio (margen, mora, nómina pendiente).
+2. **COBRA al cliente** (paquete/campaña/hire) → el dinero entra ANTES de producir. Este es el gate: sin cobro, no arranca la producción.
+3. **Crea el producto** de ese cliente.
+4. **Genera el ADN** del producto (`generate-full-research`, 21 fases) — investigación de mercado, competencia, ángulos.
+5. **Genera guiones** en Kreoon IA (`/scripts`) — 6 fases de IA, método CAST.
+6. **Aprueba el guion** (o lo delega al cliente).
+7. **Asigna** creador y editor al contenido en el board → estado `assigned`.
+8. **Supervisa el pipeline** en Producciones mientras el talento graba/edita.
+9. **Aprueba la entrega final** → `approved`.
+10. **Paga al talento** (nómina, con comprobante) — recién aquí sale dinero, contra el cobro ya recibido en el paso 2.
+11. Revisa **Finanzas** para salud del negocio (margen, mora, nómina pendiente).
 
 ### Datos que toca
 `content`, `clients`, `products`, `organization_members`, `organization_member_roles`, `organization_member_badges`, `talent_payments`, `client_packages`, `org_financial_costs`, todos los `get_org_*` RPCs.
@@ -269,13 +274,14 @@ Es la navegación **más parecida a la de admin** (son el cerebro de la operaci�
 - **Crear campañas** para reclutar creadores.
 - Ver sus **facturas** y su plan.
 
-### Proceso end-to-end (el flujo del cliente)
+### Proceso end-to-end (el flujo del cliente) — cash-first
 1. **Define el ADN de su marca** y crea sus **productos**.
-2. La agencia le genera guiones → el cliente **revisa y aprueba** (o pide cambios → `issue`).
-3. La agencia produce; el cliente **revisa el video final** → aprueba (`approved`) o pide correcciones.
-4. **(Autoservicio marketplace):** explora talento → **contrata directo** (paga con Stripe → se crea el proyecto + escrow) → recibe entregables → libera el pago.
-5. **(Campañas):** crea una campaña → recibe aplicaciones de creadores → selecciona → paga → ejecuta.
-6. Ve sus **facturas** y comprobantes.
+2. **PAGA** el paquete/servicio a la agencia (o el hire/campaña en marketplace) → el pago es el gate: la producción arranca DESPUÉS de que el cliente paga.
+3. La agencia le genera guiones → el cliente **revisa y aprueba** (o pide cambios → `issue`).
+4. La agencia produce; el cliente **revisa el video final** → aprueba (`approved`) o pide correcciones.
+5. **(Autoservicio marketplace):** explora talento → **contrata directo** (paga con Stripe → se crea el proyecto + escrow) → recibe entregables → libera el pago.
+6. **(Campañas):** crea una campaña → **paga** → recibe aplicaciones de creadores → selecciona → ejecuta.
+7. Ve sus **facturas** y comprobantes.
 
 ### Datos que toca
 `content` (solo suyo, solo status), `clients`, `products`, `product_dna` (marca), `marketplace_projects`, `marketplace_campaigns`, `escrow_holds`, `client_packages`/facturas.
@@ -372,17 +378,18 @@ Nivel bronze/silver/gold en `organization_member_badges`. Es un **privilegio/log
 
 ## PARTE 9 — Los 5 flujos completos de la plataforma (end-to-end)
 
-### Flujo A — Producción interna (agencia → cliente)
+### Flujo A — Producción interna (agencia → cliente) — CASH-FIRST
 ```
-Admin da de alta cliente + producto
-  → Estratega genera ADN + guion (Kreoon IA)
+Admin da de alta cliente
+  → COBRA al cliente (paquete/campaña) ← GATE: el dinero entra primero
+  → crea producto → Estratega genera ADN + guion (Kreoon IA)
   → Cliente aprueba guion
   → Admin asigna creador + editor
   → Creador graba (recorded)
   → Editor edita (review)
   → Cliente aprueba video (approved)
   → Contenido entregado (delivered)
-  → Admin paga al talento + cobra al cliente (paid)
+  → Admin paga al talento (paid) ← sale dinero contra el cobro ya recibido
 ```
 
 ### Flujo B — Contratación directa (cliente → creador externo)
