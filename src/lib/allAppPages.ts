@@ -104,7 +104,6 @@ export const ALL_APP_PAGES: QASection[] = [
   {
     label: 'Marketing',
     items: [
-      { name: 'Marketing', path: '/marketing', icon: TrendingUp },
       { name: 'Anuncios (Marketing Ads)', path: '/marketing-ads', icon: BarChart3 },
       { name: 'Generador de Anuncios', path: '/ad-generator', icon: ImagePlus },
       { name: 'Social Hub', path: '/social-hub', icon: Share2 },

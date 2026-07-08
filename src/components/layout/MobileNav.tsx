@@ -23,7 +23,6 @@ import {
   MessageSquare,
   ListChecks,
   Video,
-  TrendingUp,
   BarChart3,
   DollarSign,
   Crown,
@@ -73,7 +72,6 @@ interface NavSection {
 // ── Navigation sections — MUST mirror Sidebar.tsx exactly ──
 
 const MARKETING_ITEMS: NavItem[] = [
-  { name: "Marketing", href: "/marketing", icon: TrendingUp, requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
   { name: "Anuncios", href: "/marketing-ads", icon: BarChart3 },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
@@ -159,7 +157,7 @@ const editorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'),
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
@@ -176,7 +174,7 @@ const creatorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'),
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];

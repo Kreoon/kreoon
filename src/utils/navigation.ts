@@ -24,7 +24,7 @@ export function getDashboardPath(
       case "client":
         return "/client-dashboard";
       case "trafficker":
-        return "/marketing";
+        return "/creator-dashboard";
     }
   }
 
@@ -32,7 +32,7 @@ export function getDashboardPath(
   if (roles.includes("team_leader")) return "/dashboard";
   if (roles.includes("ambassador")) return "/dashboard";
   if (roles.includes("strategist")) return "/strategist-dashboard";
-  if (roles.includes("trafficker")) return "/marketing";
+  if (roles.includes("trafficker")) return "/creator-dashboard";
   if (roles.includes("creator")) return "/creator-dashboard";
   if (roles.includes("editor")) return "/editor-dashboard";
   if (roles.includes("client")) return "/client-dashboard";

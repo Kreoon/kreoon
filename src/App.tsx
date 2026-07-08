@@ -152,7 +152,6 @@ const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
-const Marketing = lazyWithRetry(() => import("./pages/Marketing"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazyWithRetry(
   () => import("./pages/OrgPortfolioPage"),
@@ -961,16 +960,6 @@ function AppRoutes() {
         <Route
           path="/team"
           element={<Navigate to="/talent?tab=sin-asignar" replace />}
-        />
-        <Route
-          path="/marketing"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "digital_strategist"]}>
-              <MainLayout>
-                <Marketing />
-              </MainLayout>
-            </ProtectedRoute>
-          }
         />
         {/* CRM Plataforma */}
         <Route

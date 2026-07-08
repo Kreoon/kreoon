@@ -17,7 +17,6 @@ import {
   RefreshCw,
   Trophy,
   Video,
-  TrendingUp,
   Megaphone,
   BarChart3,
   Wallet,
@@ -83,7 +82,6 @@ interface NavSection {
 // ── Shared section definitions ──
 
 const MARKETING_ITEMS: NavItem[] = [
-  { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
   { name: "Anuncios", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
@@ -177,7 +175,7 @@ const editorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for editors
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
@@ -195,7 +193,7 @@ const creatorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for creators
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];

@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Megaphone, Zap, Lightbulb, RefreshCw, Heart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Content, ContentStatus } from "@/types/database";
-import { SPHERE_PHASES, SpherePhase } from "@/components/marketing/types";
+import { SPHERE_PHASES, SpherePhase } from "@/types/marketing.types";
 
 interface CampaignAssignmentDialogProps {
   open: boolean;

@@ -27,18 +27,6 @@ const GROUP_ICONS: Record<PermissionGroup, React.ComponentType<{ className?: str
   client: Building2,
 };
 
-// Dashboard routes for each role
-const ROLE_DASHBOARDS: Record<AppRole, string> = {
-  admin: '/dashboard',
-  strategist: '/strategist-dashboard',
-  creator: '/creator-dashboard',
-  editor: '/editor-dashboard',
-  client: '/client-dashboard',
-  trafficker: '/marketing',
-  team_leader: '/dashboard',
-  ambassador: '/creator-dashboard',
-};
-
 // Classify roles into personal vs company context (ambassador excluded - it's a badge)
 const PERSONAL_ROLES: AppRole[] = ['admin', 'team_leader', 'strategist', 'trafficker', 'creator', 'editor'];
 const COMPANY_ROLES: AppRole[] = ['client'];

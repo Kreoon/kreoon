@@ -141,7 +141,6 @@ export { useJoinRequests } from './useJoinRequests';
 // ─── Other ──────────────────────────────────────────────────────────────────
 export { useDigitalSignature } from './useDigitalSignature';
 export { useEmailMarketing } from './useEmailMarketing';
-export { useLinkedInAds } from './useLinkedInAds';
 
 // ─── Subdirectories ─────────────────────────────────────────────────────────
 export * from './marketplace';

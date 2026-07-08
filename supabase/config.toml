@@ -564,14 +564,6 @@ verify_jwt = false
 # Ejecutar como cron diario
 verify_jwt = false
 
-# ── LinkedIn Ads Integration ──
-
-[functions.marketing-linkedin]
-# Integración con LinkedIn Ads API
-# OAuth flow, campañas, métricas y CAPI
-# JWT verificado internamente para mayor flexibilidad
-verify_jwt = true
-
 # ── Social Verification & Instagram/TikTok APIs ──
 
 [functions.social-instagram]
