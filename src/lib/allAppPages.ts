@@ -155,7 +155,6 @@ export const ALL_APP_PAGES: QASection[] = [
       { name: 'Dashboard Estratega', path: '/strategist-dashboard', icon: TrendingUp },
       { name: 'Dashboard Cliente', path: '/client-dashboard', icon: Building2 },
       { name: 'Tablero Cliente', path: '/client-board', icon: Kanban },
-      { name: 'Demo Cliente', path: '/demo', icon: Play },
     ],
   },
   {

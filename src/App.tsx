@@ -11,7 +11,6 @@ import {
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
-import { DemoModeProvider } from "@/contexts/DemoModeContext";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -116,9 +115,6 @@ const StrategistDashboard = lazyWithRetry(
   () => import("./pages/StrategistDashboard"),
 );
 const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
-const DemoClientDashboard = lazyWithRetry(
-  () => import("./pages/DemoClientDashboard"),
-);
 const ClientContentBoard = lazyWithRetry(
   () => import("./pages/ClientContentBoard"),
 );
@@ -1239,14 +1235,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/demo"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <DemoClientDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/client-board"
           element={
             <ProtectedRoute allowedRoles={["client"]}>
@@ -1481,49 +1469,47 @@ function AppContent() {
         <BrandingProvider>
           <AuthProvider>
             <AuthStoreBridge />
-            <DemoModeProvider>
-              <OnboardingGateProvider>
-                <RoleLegalGateProvider>
-                  <CurrencyProvider>
-                    <AnalyticsProvider>
-                      <ImpersonationProvider>
-                        <TrialProvider>
-                          <UnsavedChangesProvider>
-                            <AchievementNotificationProvider>
-                              <StrategistClientProvider>
-                                <AICopilotProvider>
-                                  <KiroProvider>
-                                    <GenerationJobProvider>
-                                      <TooltipProvider delayDuration={0}>
-                                        <ImpersonationBanner />
-                                        <Toaster />
-                                        <Sonner />
-                                        <AcademyLiveToaster />
-                                        <UpdatePrompt />
-                                        <PageLoader />
-                                        <MarketplaceReadinessPopup />
-                                        <CookieConsentBanner />
-                                        <ScrollToTop />
-                                        <FloatingGenerationBadge />
-                                        <ErrorBoundary>
-                                          <CreatorFavoritesProvider>
-                                            <AppRoutes />
-                                          </CreatorFavoritesProvider>
-                                        </ErrorBoundary>
-                                      </TooltipProvider>
-                                    </GenerationJobProvider>
-                                  </KiroProvider>
-                                </AICopilotProvider>
-                              </StrategistClientProvider>
-                            </AchievementNotificationProvider>
-                          </UnsavedChangesProvider>
-                        </TrialProvider>
-                      </ImpersonationProvider>
-                    </AnalyticsProvider>
-                  </CurrencyProvider>
-                </RoleLegalGateProvider>
-              </OnboardingGateProvider>
-            </DemoModeProvider>
+            <OnboardingGateProvider>
+              <RoleLegalGateProvider>
+                <CurrencyProvider>
+                  <AnalyticsProvider>
+                    <ImpersonationProvider>
+                      <TrialProvider>
+                        <UnsavedChangesProvider>
+                          <AchievementNotificationProvider>
+                            <StrategistClientProvider>
+                              <AICopilotProvider>
+                                <KiroProvider>
+                                  <GenerationJobProvider>
+                                    <TooltipProvider delayDuration={0}>
+                                      <ImpersonationBanner />
+                                      <Toaster />
+                                      <Sonner />
+                                      <AcademyLiveToaster />
+                                      <UpdatePrompt />
+                                      <PageLoader />
+                                      <MarketplaceReadinessPopup />
+                                      <CookieConsentBanner />
+                                      <ScrollToTop />
+                                      <FloatingGenerationBadge />
+                                      <ErrorBoundary>
+                                        <CreatorFavoritesProvider>
+                                          <AppRoutes />
+                                        </CreatorFavoritesProvider>
+                                      </ErrorBoundary>
+                                    </TooltipProvider>
+                                  </GenerationJobProvider>
+                                </KiroProvider>
+                              </AICopilotProvider>
+                            </StrategistClientProvider>
+                          </AchievementNotificationProvider>
+                        </UnsavedChangesProvider>
+                      </TrialProvider>
+                    </ImpersonationProvider>
+                  </AnalyticsProvider>
+                </CurrencyProvider>
+              </RoleLegalGateProvider>
+            </OnboardingGateProvider>
           </AuthProvider>
         </BrandingProvider>
       </AccessGateProvider>
