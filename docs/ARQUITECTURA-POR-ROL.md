@@ -30,10 +30,12 @@ Una **organización** (agencia) tiene un **dueño (admin)**, un **equipo de tale
 ### Multi-tenancy: cada organización es un mundo aislado
 **El marketplace pertenece a cada organización, NO es un pool global compartido.** Hoy solo existe **1 organización = KREOON**, así que todo (creadores, campañas, contenido) es de KREOON. Cuando se cree otra organización, debe **arrancar desde cero**: su propio marketplace vacío, sin heredar nada de KREOON.
 
-> **Estado real del código (verificado en BD 2026-07-08):**
-> - `marketplace_campaigns` y `marketplace_projects` **YA tienen `organization_id`** → campañas y proyectos ya están aislados por org. ✅
-> - `creator_profiles` (429 filas) **NO tiene `organization_id`** → el catálogo de creadores es **global** hoy. ⚠️ **GAP:** una org nueva vería los creadores de KREOON en vez de arrancar vacía. Falta agregar `organization_id` a `creator_profiles` (o una tabla puente org↔creador) + filtrar los listados del marketplace por org.
-> - Flag `marketplaceEnabled`/`clientMarketplaceEnabled` por org controla si una org VE el marketplace, pero no aísla el catálogo de creadores.
+> **Estado real del código (RESUELTO 2026-07-08):**
+> - `marketplace_campaigns` y `marketplace_projects` tienen `organization_id` → campañas y proyectos aislados por org. ✅
+> - **Catálogo de creadores aislado por org** vía tabla puente `organization_marketplace_creators` (org_id ↔ creador). `creator_profiles` sigue GLOBAL (perfil único del talento; su wallet/pagos son globales, no llevan org_id). El marketplace de cada org muestra solo su roster; una org nueva arranca **vacía**. RPC `get_org_marketplace_creator_ids` + filtro en `fetchAllCreators(orgId)`. Backfill: 425 creadores → KREOON. ✅
+> - 14 tablas del dominio marketplace/campaña recibieron `organization_id` (Fase 2, todas 0 filas). Excluidas las globales del talento (wallets, transacciones, perfil, servicios, portafolio, DNA, reputación).
+> - Flag `marketplaceEnabled`/`clientMarketplaceEnabled` por org controla si una org VE el marketplace.
+> - **Modelo:** creador global + reclutamiento por org (un creador puede estar en varias orgs). El admin de cada org recluta/invita creadores a su marketplace.
 
 ### Los 8 roles → 4 grupos de permiso
 El sistema define **8 roles base** (`src/lib/roles.ts`) que se colapsan en **4 grupos de permiso** (`src/lib/permissionGroups.ts`). **Toda verificación de permiso usa el GRUPO, no el rol individual.**
@@ -442,7 +444,7 @@ Creador se registra sin org (plan básico gratis)
 
 ## PARTE 10 — Notas de arquitectura relevantes por rol
 
-- **Aislamiento multi-tenant:** toda query filtra por `organization_id`; las RLS lo fuerzan a nivel de BD. Un usuario de una org NUNCA ve datos de otra (los RPCs `get_org_*` validan membresía con `assert_org_member`). **Excepción actual (gap):** `creator_profiles` no tiene `organization_id` → el catálogo de creadores del marketplace es global. La visión es que sea por-org (cada org arranca con marketplace vacío); requiere agregar el scope de org a los perfiles de creador. Ver `MEMORY.md` → "Marketplace por-org".
+- **Aislamiento multi-tenant:** toda query filtra por `organization_id`; las RLS lo fuerzan a nivel de BD. Un usuario de una org NUNCA ve datos de otra (los RPCs `get_org_*` validan membresía con `assert_org_member`). **Marketplace por-org (resuelto 2026-07-08):** el catálogo de creadores se aísla vía la tabla puente `organization_marketplace_creators` — `creator_profiles` es global pero cada org solo ve su propio roster; una org nueva arranca con marketplace vacío. El wallet/pagos del creador son globales (suyos), no llevan org_id.
 - **Seguridad de escritura del cliente:** el trigger `trg_guard_client_content_update` impide que un cliente-portal modifique cualquier campo de `content` que no sea `status`.
 - **Escalada de privilegios cerrada:** un talento no puede auto-asignarse admin (`register_user_to_organization` valida `auth.uid()` y bloquea `p_role='admin'`).
 - **Impersonation:** solo platform admin; usa `effectiveRoles` en vez de `realRoles` en toda la UI para ver como el usuario objetivo.
