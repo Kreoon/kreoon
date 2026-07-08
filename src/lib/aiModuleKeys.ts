@@ -243,7 +243,6 @@ export type AIModuleKey =
   | typeof CONTENT_AI_MODULES[keyof typeof CONTENT_AI_MODULES]
   | typeof UP_AI_MODULES[keyof typeof UP_AI_MODULES]
   | typeof TALENT_AI_MODULES[keyof typeof TALENT_AI_MODULES]
-  | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES]
   | typeof GENERAL_AI_MODULES[keyof typeof GENERAL_AI_MODULES];
 
 // All module keys as array
@@ -252,6 +251,5 @@ export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
   ...Object.values(CONTENT_AI_MODULES),
   ...Object.values(UP_AI_MODULES),
   ...Object.values(TALENT_AI_MODULES),
-  ...Object.values(LIVE_AI_MODULES),
   ...Object.values(GENERAL_AI_MODULES),
 ];
