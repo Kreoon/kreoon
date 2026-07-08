@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { MarketplaceCreator, MarketplaceFilters, MarketplaceRoleCategory, PortfolioMedia } from '@/components/marketplace/types/marketplace';
 import { MARKETPLACE_ROLES } from '@/components/marketplace/roles/marketplaceRoleConfig';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
+import { useOrgOwner } from '@/hooks/useOrgOwner';
 
 // ── Helper: map DB row → MarketplaceCreator ────────────────────────────
 
@@ -101,7 +102,7 @@ export interface MarketplaceCreatorsResult {
   organizations: MarketplaceOrganization[];
 }
 
-export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
+export async function fetchAllCreators(orgId?: string | null): Promise<MarketplaceCreatorsResult> {
   // ── 0. Fetch exclusions & subscriptions ──────────────────────────
   // Ejecutar en paralelo para reducir waterfall
   const [{ data: excludedRows }, { data: subOrgRows }] = await Promise.all([
@@ -113,6 +114,18 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
       .eq('status', 'active'),
   ]);
   const clientUserIds = new Set((excludedRows || []).map((r: any) => r.user_id as string));
+
+  // ── 0b. Marketplace por-org: qué creadores del catálogo global están
+  // en el marketplace de ESTA org. creator_profiles es global; la tabla
+  // puente organization_marketplace_creators define el roster de cada org.
+  // Sin orgId (vista pública/freelance) NO se filtra (catálogo abierto).
+  let orgCreatorUserIds: Set<string> | null = null;
+  if (orgId) {
+    const { data: mktRows } = await (supabase as any)
+      .rpc('get_org_marketplace_creator_ids', { p_org_id: orgId });
+    orgCreatorUserIds = new Set((mktRows || []).map((r: any) => r.creator_user_id as string));
+  }
+  const inOrgMarketplace = (userId: string) => !orgCreatorUserIds || orgCreatorUserIds.has(userId);
 
   // Resolve subscribed user_ids from org memberships
   const subscribedOrgIds = (subOrgRows || []).map((r: any) => r.organization_id).filter(Boolean) as string[];
@@ -143,8 +156,9 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
 
   if (err) throw err;
 
-  // Filter out client users from creator_profiles
-  const creatorRows = (rows || []).filter((r: any) => !clientUserIds.has(r.user_id));
+  // Filter out client users + limitar al roster del marketplace de la org
+  const creatorRows = (rows || []).filter((r: any) =>
+    !clientUserIds.has(r.user_id) && inOrgMarketplace(r.user_id));
   const creatorIds = creatorRows.map((r: any) => r.id as string);
   const creatorUserIds = creatorRows.map((r: any) => r.user_id as string);
 
@@ -415,8 +429,12 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
 
   const profilesWithContent: MarketplaceCreator[] = [];
 
-  if (profileRows && profileRows.length > 0) {
-    const profileUserIds = profileRows.map(p => p.id);
+  // Marketplace por-org: el fallback de perfiles-con-contenido también se
+  // limita al roster de la org activa (mismo criterio que creator_profiles).
+  const profileRowsScoped = (profileRows || []).filter((p: any) => inOrgMarketplace(p.id));
+
+  if (profileRowsScoped && profileRowsScoped.length > 0) {
+    const profileUserIds = profileRowsScoped.map(p => p.id);
 
     const [{ data: contentRowsFallback }, { data: postRowsFallback }] = await Promise.all([
       supabase
@@ -499,7 +517,7 @@ export async function fetchAllCreators(): Promise<MarketplaceCreatorsResult> {
       }
     }
 
-    for (const row of profileRows) {
+    for (const row of profileRowsScoped) {
       if (!row.full_name && !row.username) continue;
       const media = contentMap.get(row.id) || [];
       if (media.length === 0) continue;
@@ -564,14 +582,18 @@ export const MARKETPLACE_CREATORS_QUERY_KEY = ['marketplace-creators'] as const;
 // ── Main hook (React Query) ────────────────────────────────────────────
 
 export function useMarketplaceCreators(filters?: MarketplaceFilters) {
+  // Marketplace por-org: el roster de creadores se aísla por la org activa.
+  // Sin org (freelance/vista pública) el catálogo queda abierto (orgId null).
+  const { currentOrgId } = useOrgOwner();
+
   const {
     data,
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: MARKETPLACE_CREATORS_QUERY_KEY,
-    queryFn: fetchAllCreators,
+    queryKey: [...MARKETPLACE_CREATORS_QUERY_KEY, currentOrgId ?? 'global'],
+    queryFn: () => fetchAllCreators(currentOrgId),
     staleTime: 10 * 60 * 1000,  // 10 min – datos frescos, no refetch en navegación
     gcTime: 60 * 60 * 1000,     // 60 min – sobrevive entre rutas
     refetchOnWindowFocus: false,
