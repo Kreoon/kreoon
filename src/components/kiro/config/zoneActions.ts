@@ -26,9 +26,6 @@ import {
   Star,
   Zap,
   Route,
-  Radio,
-  ListChecks,
-  PlayCircle,
   Wand2,
   Brain,
 } from 'lucide-react';
@@ -354,44 +351,6 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
     ],
   },
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // LIVE STAGE - Live Shopping
-  // ─────────────────────────────────────────────────────────────────────────
-  'live-stage': {
-    zoneName: 'Live Stage',
-    zoneEmoji: '🔴',
-    greeting: '¡El Live Stage está listo! ¿Preparamos un show?',
-    actions: [
-      {
-        icon: FileText,
-        label: 'Script de Live',
-        description: 'Live Shopping',
-        prompt: 'Genera un script para un Live Shopping de mi producto',
-        priority: 1,
-      },
-      {
-        icon: Calendar,
-        label: 'Planificar evento',
-        description: 'Próximo Live',
-        prompt: 'Ayúdame a planificar un evento de Live Shopping',
-        priority: 2,
-      },
-      {
-        icon: ListChecks,
-        label: 'Checklist pre-live',
-        description: 'Todo listo',
-        prompt: 'Dame el checklist completo de lo que necesito antes del Live',
-        priority: 3,
-      },
-      {
-        icon: PlayCircle,
-        label: 'Analizar live anterior',
-        description: 'Métricas y mejoras',
-        prompt: '¿Cómo fue el rendimiento del último Live? ¿Qué puedo mejorar?',
-        priority: 4,
-      },
-    ],
-  },
 
   // ─────────────────────────────────────────────────────────────────────────
   // GENERAL - Fallback para rutas no mapeadas

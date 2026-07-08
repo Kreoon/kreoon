@@ -92,7 +92,6 @@ export type KiroZone =
   | 'casting'
   | 'sala-de-prensa'
   | 'escuela'
-  | 'live-stage'
   | 'general';
 
 /** Interfaz del contexto de KIRO */
@@ -279,11 +278,6 @@ export const ZONE_INFO: Record<KiroZone, { label: string; description: string; i
     label: 'Escuela',
     description: 'Formación y ranking',
     icon: '🎓',
-  },
-  'live-stage': {
-    label: 'Live Stage',
-    description: 'Streaming y eventos en vivo',
-    icon: '🔴',
   },
   'general': {
     label: 'General',

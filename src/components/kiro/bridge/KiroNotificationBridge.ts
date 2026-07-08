@@ -169,10 +169,6 @@ const ENTITY_TYPE_TO_ZONE: Record<string, KiroZone> = {
   // Comunicación
   comment: 'sala-de-prensa',
 
-  // Live y Streaming
-  stream: 'live-stage',
-  live: 'live-stage',
-
   // Educación
   course: 'escuela',
   lesson: 'escuela',
