@@ -42,6 +42,7 @@ import {
   Heart,
   Receipt,
   GraduationCap,
+  LayoutList,
 } from "lucide-react";
 import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -132,6 +133,8 @@ const adminSections: NavSection[] = [
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
       { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, tourId: "sidebar-pending-payments", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
+      { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
+      { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, tourId: "sidebar-qa-pages", platformRootOnly: true },
     ]
   },
   { label: "CONFIG", items: CONFIG_ITEMS }

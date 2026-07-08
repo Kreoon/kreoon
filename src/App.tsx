@@ -275,6 +275,9 @@ const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
 const DevModulesPage = lazyWithRetry(
   () => import("./pages/admin/DevModulesPage"),
 );
+const AllPagesQAPage = lazyWithRetry(
+  () => import("./pages/admin/AllPagesQAPage"),
+);
 const PendingPaymentsPage = lazyWithRetry(
   () => import("./pages/admin/PendingPaymentsPage"),
 );
@@ -1170,6 +1173,16 @@ function AppRoutes() {
             <RootOnlyRoute>
               <MainLayout>
                 <DevModulesPage />
+              </MainLayout>
+            </RootOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/qa-paginas"
+          element={
+            <RootOnlyRoute>
+              <MainLayout>
+                <AllPagesQAPage />
               </MainLayout>
             </RootOnlyRoute>
           }
