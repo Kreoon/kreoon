@@ -23,7 +23,6 @@ import {
   MessageSquare,
   ListChecks,
   Video,
-  BarChart3,
   DollarSign,
   Crown,
   Share2,
@@ -73,7 +72,6 @@ interface NavSection {
 
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Social Hub", href: "/social-hub", icon: Share2 },
-  { name: "Anuncios", href: "/marketing-ads", icon: BarChart3 },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
 ];
 

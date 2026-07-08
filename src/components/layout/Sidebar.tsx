@@ -18,7 +18,6 @@ import {
   Trophy,
   Video,
   Megaphone,
-  BarChart3,
   Wallet,
   Store,
   Play,
@@ -83,7 +82,6 @@ interface NavSection {
 
 const MARKETING_ITEMS: NavItem[] = [
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-  { name: "Anuncios", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
 ];
 

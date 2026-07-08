@@ -433,14 +433,6 @@ verify_jwt = true
 [functions.wallet-mercury-payout]
 verify_jwt = true
 
-# ── Marketing Module ──
-
-[functions.marketing-metrics]
-verify_jwt = true
-
-[functions.marketing-reports]
-verify_jwt = true
-
 # ── Social Hub Module ──
 
 [functions.social-auth]

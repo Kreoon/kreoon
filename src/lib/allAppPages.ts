@@ -31,7 +31,6 @@ import {
   Heart,
   CircleUser,
   TrendingUp,
-  BarChart3,
   ImagePlus,
   Share2,
   Search,
@@ -104,7 +103,6 @@ export const ALL_APP_PAGES: QASection[] = [
   {
     label: 'Marketing',
     items: [
-      { name: 'Anuncios (Marketing Ads)', path: '/marketing-ads', icon: BarChart3 },
       { name: 'Generador de Anuncios', path: '/ad-generator', icon: ImagePlus },
       { name: 'Social Hub', path: '/social-hub', icon: Share2 },
       { name: 'Analytics (KAE)', path: '/admin/analytics', icon: LineChart },

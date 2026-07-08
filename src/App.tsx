@@ -335,9 +335,6 @@ const ReceiptPage = lazyWithRetry(() => import("./pages/legal/ReceiptPage"));
 const SocialHubPage = lazy(
   () => import("./modules/social/pages/SocialHubPage"),
 );
-const MarketingAdsPage = lazy(
-  () => import("./modules/marketing/pages/MarketingPage"),
-);
 
 // Ad Generator Module
 const AdGeneratorPage = lazy(
@@ -1092,16 +1089,6 @@ function AppRoutes() {
             <ProtectedRoute allowNoRoles>
               <MainLayout>
                 <SocialHubPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketing-ads"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "client"]}>
-              <MainLayout>
-                <MarketingAdsPage />
               </MainLayout>
             </ProtectedRoute>
           }
