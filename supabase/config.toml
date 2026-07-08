@@ -668,11 +668,6 @@ verify_jwt = false
 # Ejecutar como cron diario
 verify_jwt = false
 
-[functions.intelligence-gatherer]
-# Social + Ad Intelligence gathering
-# Llamado internamente por orchestrator
-verify_jwt = false
-
 # ── LinkedIn Ads Integration ──
 
 [functions.marketing-linkedin]
