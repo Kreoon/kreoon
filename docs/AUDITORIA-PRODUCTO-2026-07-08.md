@@ -332,6 +332,6 @@ Todas fuera del loop central. Cada una es peso.
 **Falta (requiere herramientas que no tengo ahora / próxima pasada con agentes frescos):**
 - Callers de cada uno de los 142 comps de marketplace y 73 de content (la poda FINA intra-núcleo — mecánico, 1 sesión de agente).
 - QA funcional por click-through de cada wizard (campaña, **hire — que sabemos que nunca produjo un proyecto**, onboarding) — necesita agente de browser, no grep.
-- Confirmar que borrar streaming/booking/org-crm no rompe imports transversales (algún dashboard que renderice un widget de esos módulos) — grep de imports cruzados antes de ejecutar Fase B.
+- ~~Confirmar que borrar streaming/booking/org-crm no rompe imports transversales~~ **HECHO:** el único acople del núcleo con esos módulos es `ActiveLivesCarousel` (lazy import en `components/marketplace/MarketplacePage.tsx:36-38`, "solo admins, feature en construcción", navega a `/live`). Booking y org-CRM: sin acople transversal. **Fase B es segura ejecutando: quitar ese único carousel (bloque líneas ~367-372 + import) y luego borrar los módulos.** El resto sale limpio (todo referenciado solo desde App.tsx y dentro de sí mismo).
 
 **El reporte es EJECUTABLE tal cual para las Fases A y B** (borrado de código muerto + módulos de uso cero). Las Fases C-E requieren tus decisiones y trabajo de construcción.
