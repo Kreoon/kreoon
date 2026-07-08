@@ -64,20 +64,10 @@ export function useEnrollInCourse() {
       if (courseErr) throw courseErr;
 
       if (course.is_free) {
-        // Inscripción directa
-        const { data, error } = await (supabase as any)
-          .from('academy_enrollments')
-          .upsert(
-            {
-              course_id: courseId,
-              user_id: user.id,
-              enrolled_at: new Date().toISOString(),
-              last_accessed_at: new Date().toISOString(),
-            },
-            { onConflict: 'course_id,user_id' }
-          )
-          .select()
-          .single();
+        // Inscripción vía RPC server-side: valida gratuidad/pago antes de insertar.
+        const { data, error } = await (supabase as any).rpc('enroll_in_course', {
+          p_course_id: courseId,
+        });
         if (error) throw error;
         return { type: 'enrolled' as const, enrollment: data as AcademyEnrollment };
       }

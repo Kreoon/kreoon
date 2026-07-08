@@ -214,8 +214,14 @@ export default function AcademiaPublicLandingPage() {
                 return (
                 <Card key={c.id} className="bg-white/5 border-white/10 overflow-hidden">
                   {safeCourseImg && (
-                    <div className="h-32 bg-cover bg-center"
-                         style={{ backgroundImage: cssUrl(safeCourseImg) }} />
+                    <div className="relative aspect-video w-full overflow-hidden">
+                      {/* Fondo difuminado de relleno */}
+                      <div className="absolute inset-0 bg-cover bg-center scale-110 blur-2xl opacity-50"
+                           style={{ backgroundImage: cssUrl(safeCourseImg) }} />
+                      {/* Imagen completa, sin recortes */}
+                      <img src={safeCourseImg} alt={c.title}
+                           className="relative w-full h-full object-contain" loading="lazy" />
+                    </div>
                   )}
                   <div className="p-4">
                     <h3 className="font-semibold text-base">{c.title}</h3>

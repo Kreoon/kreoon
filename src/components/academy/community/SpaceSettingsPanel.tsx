@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { BunnyImageUploader } from '@/components/marketplace/BunnyImageUploader';
 import { marketplaceStoragePath } from '@/hooks/useBunnyImageUpload';
 import { useUpdateAcademySpace } from '@/hooks/academy/useAcademySpaces';
@@ -83,6 +84,46 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
             height="h-32"
             maxSizeMB={5}
           />
+          <p className="text-[11px] text-zinc-500 mt-1">
+            📐 Tamaño recomendado: <span className="font-semibold text-zinc-400">1800 × 900 px</span> (formato 2:1).
+            Se muestra como banner y se funde con el fondo arriba y abajo.
+          </p>
+
+          {/* Reposicionar el banner: preview en vivo + slider vertical */}
+          {draft.cover_image_url && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs text-zinc-400">Posición del banner</Label>
+                <span className="text-[10px] text-zinc-500">
+                  {draft.cover_position ?? 50}% vertical
+                </span>
+              </div>
+              {/* Preview imitando el hero real (degradados arriba/abajo) */}
+              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden bg-[#0a0a0f] border border-white/10">
+                <img
+                  src={draft.cover_image_url}
+                  alt="Preview del banner"
+                  className="w-full h-full object-cover"
+                  style={{ objectPosition: `center ${draft.cover_position ?? 50}%` }}
+                />
+                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent pointer-events-none" />
+              </div>
+              <Slider
+                value={[draft.cover_position ?? 50]}
+                onValueChange={(v) => set('cover_position', v[0])}
+                min={0}
+                max={100}
+                step={1}
+                aria-label="Posición vertical del banner"
+              />
+              <div className="flex justify-between text-[10px] text-zinc-600">
+                <span>⬆️ Arriba</span>
+                <span>Centro</span>
+                <span>Abajo ⬇️</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>

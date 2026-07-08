@@ -9,6 +9,7 @@ import { errorResponse, successResponse, moduleInactiveResponse, validationError
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 // SECURITY: Rate limiting para proteger APIs costosas
 import { checkRateLimit, RATE_LIMIT_PRESETS, rateLimitResponse, getClientIp } from "../_shared/rate-limiter.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 interface ScriptRequest {
   organizationId: string;
@@ -249,6 +250,15 @@ serve(async (req) => {
     if (!organizationId) {
       return validationErrorResponse("organizationId es requerido", "organizationId");
     }
+
+    // FASE 1: exigir auth real + membresía de organizationId.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, organizationId);
+    if (membershipRejection) return membershipRejection;
 
     // Validate module is active and get config
     let aiConfig;

@@ -56,6 +56,7 @@ export interface TokenCheckResult {
 export async function checkAndDeductTokens(
   supabase: SupabaseClient,
   organizationId: string,
+  userId: string | null | undefined,
   action: string,
   estimatedCost?: number,
   metadata?: {
@@ -66,6 +67,13 @@ export async function checkAndDeductTokens(
     description?: string;
   }
 ): Promise<TokenCheckResult> {
+  // FASE 1: el caller DEBE venir de una sesión autenticada real. Antes
+  // este guard no recibía userId en absoluto — no había forma de saber
+  // quién estaba gastando tokens de la org.
+  if (!userId) {
+    return { allowed: false, reason: "no_tokens", tokensRemaining: 0, _debug: "unauthorized: missing userId" };
+  }
+
   // 1. Obtener config de tokens de la org
   const { data: tokenData, error: fetchError } = await supabase
     .from("organization_ai_tokens")
@@ -185,9 +193,14 @@ export function insufficientTokensResponse(tokenCheck: TokenCheckResult): Respon
 export async function checkTokensOnly(
   supabase: SupabaseClient,
   organizationId: string,
+  userId: string | null | undefined,
   action: string,
   estimatedCost?: number
 ): Promise<TokenCheckResult> {
+  if (!userId) {
+    return { allowed: false, reason: "no_tokens", tokensRemaining: 0 };
+  }
+
   const { data: tokenData, error } = await supabase
     .from("organization_ai_tokens")
     .select("custom_api_enabled, tokens_remaining, purchased_tokens")

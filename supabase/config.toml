@@ -12,6 +12,50 @@ verify_jwt = false
 [functions.whatsapp-notify]
 verify_jwt = false
 
+[functions.academy-event-fanout]
+# verify_jwt=true rechaza cualquier request sin JWT válido (anon/user/service).
+# Además el handler exige header `x-academy-fanout-secret` para asegurar que
+# solo el RPC academy_emit_event (que conoce el shared secret vía GUC)
+# pueda invocar el worker — defensa contra replay/forced-reprocess.
+verify_jwt = true
+
+[functions.academy-wa-summarizer]
+# Lo invoca pg_cron diario con service role. verify_jwt=true para rechazar
+# requests externos sin JWT del proyecto.
+verify_jwt = true
+
+[functions.academy-wa-broadcast]
+# Lo invoca el owner desde el UI con su JWT. verify_jwt=true + check de
+# ownership dentro del handler (owner_id == auth.uid()).
+verify_jwt = true
+
+[functions.academy-upsell-charge]
+# Post-purchase upsell one-click. Caller debe estar autenticado y ser
+# dueño del session_id primario (validacion en handler).
+verify_jwt = true
+
+[functions.mercadopago-webhook]
+# DORMANT (2026-06-15): codigo presente pero MP no esta activo en
+# preferred_gateways default. Reactivar deployando + agregando 'mercadopago'
+# al array preferred_gateways del space.
+verify_jwt = false
+
+[functions.wompi-webhook]
+# DORMANT (2026-06-15): codigo presente pero Wompi no esta activo en
+# preferred_gateways default.
+verify_jwt = false
+
+[functions.hotmart-webhook]
+# Webhook publico de Hotmart. Validacion de origen via Hottok del header
+# x-hotmart-hottok comparado contra academy_hotmart_coproductions
+# (timing-safe compare).
+verify_jwt = false
+
+[functions.academy-hotmart-redirect]
+# Genera URL de checkout Hotmart con tracking + crea academy_checkout_intent.
+# Caller debe estar autenticado.
+verify_jwt = true
+
 [functions.public-showcase]
 verify_jwt = false
 
@@ -47,6 +91,14 @@ verify_jwt = false
 
 [functions.academy-trigger-integrations]
 verify_jwt = true
+
+[functions.academy-signed-video-url]
+# Auth + ownership/unlock validados internamente (getUser + academy_evaluate_unlock)
+verify_jwt = false
+
+[functions.academy-video-upload-init]
+# Auth + ownership de instructor validados internamente (getUser + course.instructor_id)
+verify_jwt = false
 
 [functions.public-registration]
 verify_jwt = false
@@ -614,23 +666,6 @@ verify_jwt = false
 [functions.marketplace-score-updater]
 # Worker de recálculo de scores de ranking
 # Ejecutar como cron diario
-verify_jwt = false
-
-# ── ADN Recargado v3 ──
-
-[functions.adn-orchestrator]
-# Entry point para ADN Recargado v3
-# JWT verificado internamente
-verify_jwt = false
-
-[functions.adn-orchestrator-lite]
-# Versión simplificada que dispara n8n webhook
-# JWT verificado internamente
-verify_jwt = false
-
-[functions.adn-research-v3]
-# Worker de 22 pasos de research
-# Llamado internamente por orchestrator
 verify_jwt = false
 
 [functions.intelligence-gatherer]

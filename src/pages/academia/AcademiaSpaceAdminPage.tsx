@@ -15,6 +15,8 @@ import {
   MessagesSquare,
   Lock,
   Crown,
+  MessageCircle,
+  Globe2,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
@@ -39,6 +41,8 @@ import { CouponsAdminTab } from '@/components/academy/community/admin/CouponsAdm
 import { NotificationPreferencesPanel } from '@/components/academy/community/admin/NotificationPreferencesPanel';
 import { LandingEditorTab } from '@/components/academy/community/admin/LandingEditorTab';
 import { TiersAdminTab } from '@/components/academy/community/admin/TiersAdminTab';
+import { WhatsAppHubPanel } from '@/components/academy/whatsapp/WhatsAppHubPanel';
+import { HotmartConnectPanel } from '@/components/academy/hotmart/HotmartConnectPanel';
 
 type AdminTab =
   | 'overview'
@@ -57,7 +61,9 @@ type AdminTab =
   | 'tiers'
   | 'payouts'
   | 'afiliados'
-  | 'facturacion';
+  | 'facturacion'
+  | 'whatsapp'
+  | 'hotmart';
 
 const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'overview', label: 'Overview', icon: Activity },
@@ -77,6 +83,8 @@ const TABS: { id: AdminTab; label: string; icon: any }[] = [
   { id: 'payouts', label: 'Payouts', icon: Wallet },
   { id: 'afiliados', label: 'Afiliados', icon: Handshake },
   { id: 'facturacion', label: 'Facturación', icon: CreditCard },
+  { id: 'whatsapp', label: 'WhatsApp Hub', icon: MessageCircle },
+  { id: 'hotmart', label: 'Hotmart', icon: Globe2 },
 ];
 
 export default function AcademiaSpaceAdminPage() {
@@ -198,6 +206,16 @@ export default function AcademiaSpaceAdminPage() {
               <AffiliatesAdminTab spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
             )}
             {tab === 'facturacion' && <BillingAdminTab isPro={isPro} accentColor={accent} />}
+            {tab === 'whatsapp' && (
+              <WhatsAppHubPanel spaceId={space.id} spaceSlug={spaceSlug!} accentColor={accent} />
+            )}
+            {tab === 'hotmart' && (
+              <HotmartConnectPanel
+                spaceId={space.id}
+                planSlug={space.plan_slug ?? 'hobby'}
+                accentColor={accent}
+              />
+            )}
           </main>
         </div>
       </div>

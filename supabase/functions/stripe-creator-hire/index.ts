@@ -1,8 +1,7 @@
 // ============================================================================
 // KREOON STRIPE CREATOR HIRE CHECKOUT
-// Dos modos de operación:
-//   1. service_id mode   → busca el servicio en creator_services (precio en DB)
-//   2. direct mode       → acepta title/price/currency directamente (Profile Builder)
+// service_id es obligatorio: precio/título SIEMPRE se leen de
+// creator_services en el servidor (nunca del body del request).
 // ============================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -52,27 +51,19 @@ Deno.serve(async (req) => {
     const {
       service_id,
       creator_id,
-      title,
-      price,
-      currency,
       brief_title,
-      description,
     } = body as {
       service_id?: string;
       creator_id: string;
-      title?: string;
-      price?: number;
-      currency?: string;
       brief_title?: string;
-      description?: string;
     };
 
     if (!creator_id) throw new Error("Falta parámetro: creator_id");
 
-    const isDirectMode = !service_id;
-    if (isDirectMode && (!title || price == null || !currency)) {
-      throw new Error("Proporciona service_id o (title, price, currency)");
-    }
+    // Modo directo (precio/título confiado del body) eliminado: permitía
+    // contratar por céntimos enviando cualquier `price`. El precio SIEMPRE
+    // se lee de creator_services en el servidor.
+    if (!service_id) throw new Error("Falta parámetro: service_id");
 
     // No puede contratarse a sí mismo
     if (user.id === creator_id) throw new Error("No puedes contratar tu propio servicio");
@@ -93,84 +84,54 @@ Deno.serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    let productName: string;
-    let productDescription: string;
-    let sessionAmount: number;
-    let sessionCurrency: string;
-    let sessionMetadata: Record<string, string>;
+    // ─── Precio/título SIEMPRE leídos de creator_services en el servidor ───
+    const { data: service, error: svcError } = await adminClient
+      .from("creator_services")
+      .select("id, user_id, title, description, price_amount, price_currency, price_type, delivery_days, revisions_included, deliverables, is_active")
+      .eq("id", service_id)
+      .eq("user_id", creator_id)
+      .eq("is_active", true)
+      .single();
 
-    if (!isDirectMode) {
-      // ─── Modo service_id: buscar servicio en DB ───────────────────────────
-      const { data: service, error: svcError } = await adminClient
-        .from("creator_services")
-        .select("id, user_id, title, description, price_amount, price_currency, price_type, delivery_days, revisions_included, deliverables, is_active")
-        .eq("id", service_id!)
-        .eq("user_id", creator_id)
-        .eq("is_active", true)
-        .single();
-
-      if (svcError || !service) throw new Error("Servicio no encontrado o no disponible");
-      if (service.price_type === "custom" || !service.price_amount || service.price_amount <= 0) {
-        throw new Error("Este servicio tiene precio a convenir — contacta al creador directamente");
-      }
-
-      // Construir descripción del servicio
-      const deliverables: { quantity: number; item: string }[] = service.deliverables || [];
-      const featureLines: string[] = [];
-      for (const d of deliverables) {
-        featureLines.push(d.quantity > 1 ? `${d.quantity}x ${d.item}` : d.item);
-      }
-      if (service.revisions_included > 0) {
-        featureLines.push(`${service.revisions_included} revisión${service.revisions_included > 1 ? "es" : ""}`);
-      }
-      if (service.delivery_days) {
-        featureLines.push(`Entrega en ${service.delivery_days} días`);
-      }
-
-      productName = `${service.title} · @${creatorProfile?.username || creatorName}`;
-      productDescription = featureLines.length > 0
-        ? featureLines.join(" · ")
-        : service.description || `Servicio de ${creatorName}`;
-      sessionAmount = Number(service.price_amount);
-      sessionCurrency = (service.price_currency || "USD").toLowerCase();
-      sessionMetadata = {
-        type: "creator_hire_payment",
-        mode: "service",
-        service_id: service.id,
-        creator_id,
-        buyer_id: user.id,
-        buyer_name: buyerProfile?.full_name || user.email || "",
-        currency: sessionCurrency,
-        amount: String(sessionAmount),
-        brief_title: brief_title || service.title,
-      };
-    } else {
-      // ─── Modo directo: usar parámetros del Profile Builder ────────────────
-      const parsedPrice = Number(price);
-      if (isNaN(parsedPrice) || parsedPrice <= 0) {
-        throw new Error("El precio debe ser un número positivo");
-      }
-
-      productName = `${title} · @${creatorProfile?.username || creatorName}`;
-      productDescription = description || title!;
-      sessionAmount = parsedPrice;
-      sessionCurrency = (currency as string).toLowerCase();
-      sessionMetadata = {
-        type: "creator_hire_payment",
-        mode: "direct",
-        package_title: title!,
-        creator_id,
-        buyer_id: user.id,
-        buyer_name: buyerProfile?.full_name || user.email || "",
-        currency: sessionCurrency,
-        amount: String(parsedPrice),
-        brief_title: brief_title || title!,
-      };
+    if (svcError || !service) throw new Error("Servicio no encontrado o no disponible");
+    if (service.price_type === "custom" || !service.price_amount || service.price_amount <= 0) {
+      throw new Error("Este servicio tiene precio a convenir — contacta al creador directamente");
     }
+
+    // Construir descripción del servicio
+    const deliverables: { quantity: number; item: string }[] = service.deliverables || [];
+    const featureLines: string[] = [];
+    for (const d of deliverables) {
+      featureLines.push(d.quantity > 1 ? `${d.quantity}x ${d.item}` : d.item);
+    }
+    if (service.revisions_included > 0) {
+      featureLines.push(`${service.revisions_included} revisión${service.revisions_included > 1 ? "es" : ""}`);
+    }
+    if (service.delivery_days) {
+      featureLines.push(`Entrega en ${service.delivery_days} días`);
+    }
+
+    const productName = `${service.title} · @${creatorProfile?.username || creatorName}`;
+    const productDescription = featureLines.length > 0
+      ? featureLines.join(" · ")
+      : service.description || `Servicio de ${creatorName}`;
+    const sessionAmount = Number(service.price_amount);
+    const sessionCurrency = (service.price_currency || "USD").toLowerCase();
+    const sessionMetadata = {
+      type: "creator_hire_payment",
+      mode: "service",
+      service_id: service.id,
+      creator_id,
+      buyer_id: user.id,
+      buyer_name: buyerProfile?.full_name || user.email || "",
+      currency: sessionCurrency,
+      amount: String(sessionAmount),
+      brief_title: brief_title || service.title,
+    };
 
     const appUrl = Deno.env.get("APP_URL") || "https://app.kreoon.com";
 
-    console.log(`[stripe-creator-hire] ${productName} · ${sessionAmount} ${sessionCurrency.toUpperCase()} · buyer=${user.id} · creator=${creator_id} · mode=${isDirectMode ? "direct" : "service"}`);
+    console.log(`[stripe-creator-hire] ${productName} · ${sessionAmount} ${sessionCurrency.toUpperCase()} · buyer=${user.id} · creator=${creator_id} · service=${service_id}`);
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

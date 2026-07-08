@@ -5,6 +5,7 @@ import { searchWithPerplexity } from "../_shared/perplexity-client.ts";
 import { checkAndDeductTokens, insufficientTokensResponse } from "../_shared/ai-token-guard.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,12 +19,37 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Validar y deducir tokens de IA (si la org tiene organization_ai_tokens)
-    if (organizationId) {
+    // FASE 1: exigir auth real SIEMPRE (no solo cuando venía
+    // organizationId) — antes, omitir organizationId en el body saltaba
+    // tanto la validación de membresía como la deducción de tokens,
+    // dejando el endpoint completamente abierto y gratis.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    if (!callerUser) {
+      return new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (!organizationId) {
+      return new Response(JSON.stringify({ error: "organizationId es requerido" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser.id, organizationId);
+    if (membershipRejection) return membershipRejection;
+
+    // Validar y deducir tokens de IA
+    {
       const estimatedCost = use_perplexity ? 145 : 25; // script_chat (25) + research (120) si Perplexity
       const tokenCheck = await checkAndDeductTokens(
         supabase,
         organizationId,
+        callerUser.id,
         "script_chat",
         estimatedCost
       );

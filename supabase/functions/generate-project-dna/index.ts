@@ -5,6 +5,7 @@ import {
   insufficientTokensResponse,
 } from "../_shared/ai-token-guard.ts";
 import { logAIUsage, calculateCost } from "../_shared/ai-usage-logger.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 // ── JSON repair ─────────────────────────────────────────────────────────
 function repairJsonForParse(str: string): string {
@@ -250,11 +251,27 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[generate-project-dna] Project loaded - type: ${projectType}, org: ${project.organization_id}, responses: ${Object.keys(responses).length}, audio: ${!!audioUrl}`);
 
+    // FASE 1: exigir auth real + membresía de la org del proyecto (si
+    // aplica) — antes cero validación de quién dispara este research.
+    const authHeader = req.headers.get("Authorization");
+    let userId = "00000000-0000-0000-0000-000000000000";
+    if (authHeader) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
+        if (user?.id) userId = user.id;
+      } catch { /* ignore */ }
+    }
+    if (project.organization_id) {
+      const membershipRejection = await assertOrgMembership(req, supabase, userId, project.organization_id);
+      if (membershipRejection) return membershipRejection;
+    }
+
     // ── 2. Check & deduct tokens ──────────────────────────────────────────
     if (project.organization_id) {
       const tokenCheck = await checkAndDeductTokens(
         supabase,
         project.organization_id,
+        userId,
         "dna.project_analysis",
         400,
         {
@@ -336,14 +353,6 @@ Deno.serve(async (req: Request) => {
 
     // ── 5b. Log AI usage ──────────────────────────────────────────────────
     const organizationId = project.organization_id || "00000000-0000-0000-0000-000000000000";
-    const authHeader = req.headers.get("Authorization");
-    let userId = "00000000-0000-0000-0000-000000000000";
-    if (authHeader) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-        if (user?.id) userId = user.id;
-      } catch { /* ignore */ }
-    }
 
     logAIUsage(supabase, {
       organization_id: organizationId,

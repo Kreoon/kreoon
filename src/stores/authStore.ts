@@ -13,6 +13,7 @@ import type { User, Session } from '@supabase/supabase-js';
 import type { AppRole, Profile, UserType, AccountType } from '@/types/database';
 import type { PermissionGroup } from '@/lib/permissionGroups';
 import { getPermissionGroup } from '@/lib/permissionGroups';
+import { getUserType } from '@/lib/roles';
 
 interface AuthState {
   // Core auth state
@@ -157,13 +158,7 @@ export const useIsClient = () =>
  * Obtiene el tipo de usuario basado en sus roles
  */
 export const useUserType = () =>
-  useAuthStore((s): UserType => {
-    if (s.roles.length === 0) return 'talent';
-    const groups = s.roles.map(r => getPermissionGroup(r));
-    if (groups.includes('admin')) return 'admin';
-    if (groups.includes('client')) return 'client';
-    return 'talent';
-  });
+  useAuthStore((s): UserType => getUserType(s.roles));
 
 /**
  * Verifica si el usuario tiene un rol específico
@@ -220,13 +215,9 @@ export function useAuthState() {
   const isTalentGroup = permissionGroup === 'talent';
   const isClient = permissionGroup === 'client';
 
-  const getUserTypeFromRoles = (): UserType => {
-    if (state.roles.length === 0) return 'talent';
-    const groups = state.roles.map(r => getPermissionGroup(r));
-    if (groups.includes('admin')) return 'admin';
-    if (groups.includes('client')) return 'client';
-    return 'talent';
-  };
+  // Fuente única en lib/roles.ts (antes duplicada aquí, en useAuth.tsx y
+  // useRoles.ts, sin ninguna revisar 'student').
+  const userType = getUserType(state.roles);
 
   return {
     ...state,
@@ -238,8 +229,8 @@ export function useAuthState() {
     isStrategist: isTalentGroup,
     isTrafficker: isTalentGroup,
     isTeamLeader: isAdmin,
-    userType: getUserTypeFromRoles(),
-    isTalent: getUserTypeFromRoles() === 'talent',
+    userType,
+    isTalent: userType === 'talent',
     accountType: (state.profile?.user_type as AccountType) || null,
     hasRole: (role: AppRole) => state.roles.includes(role),
   };

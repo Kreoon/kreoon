@@ -1,6 +1,6 @@
 import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Star, User, Sword, Users, Edit3, Trophy } from "lucide-react";
+import { Search, Plus, Star, User, Sword, Users, Edit3, Trophy, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,199 +76,43 @@ export function CreatorsContent() {
         return;
       }
 
-      const { data: memberRoles, error: memberRolesError } = await supabase
-        .from('organization_member_roles')
-        .select('user_id, role')
-        .eq('organization_id', currentOrgId)
-        .in('role', ['creator', 'editor', 'strategist']);
-
-      if (memberRolesError) throw memberRolesError;
-
-      if (!memberRoles?.length) {
-        setTalents([]);
-        return;
-      }
-
-      const userIds = [...new Set(memberRoles.map(r => r.user_id))];
-      const roleMap = new Map(memberRoles.map(r => [r.user_id, r.role]));
-
-      const { data: ambassadorRoles } = await supabase
-        .from('organization_member_roles')
-        .select('user_id')
-        .eq('organization_id', currentOrgId)
-        .eq('role', 'ambassador')
-        .in('user_id', userIds);
-
-      const ambassadorSet = new Set(ambassadorRoles?.map(r => r.user_id) || []);
-
-      const { data: memberData } = await supabase
-        .from('organization_members')
-        .select('user_id, ambassador_level')
-        .eq('organization_id', currentOrgId)
-        .in('user_id', userIds);
-
-      const ambassadorLevelMap = new Map(memberData?.map(m => [m.user_id, m.ambassador_level]) || []);
-
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select(`
-          id, full_name, email, avatar_url, phone, bio, is_ambassador,
-          quality_score_avg, reliability_score, velocity_score,
-          ai_recommended_level, ai_risk_flag,
-          editor_rating, editor_completed_count, editor_on_time_count
-        `)
-        .in('id', userIds);
-
-      const { data: creatorCounts } = await supabase
-        .from('content')
-        .select('creator_id')
-        .eq('organization_id', currentOrgId)
-        .in('creator_id', userIds);
-
-      const { data: editorCounts } = await supabase
-        .from('content')
-        .select('editor_id')
-        .eq('organization_id', currentOrgId)
-        .in('editor_id', userIds);
-
-      const countMap = new Map<string, number>();
-      creatorCounts?.forEach(c => {
-        if (c.creator_id) {
-          countMap.set(c.creator_id, (countMap.get(c.creator_id) || 0) + 1);
-        }
-      });
-      editorCounts?.forEach(c => {
-        if (c.editor_id) {
-          countMap.set(c.editor_id, (countMap.get(c.editor_id) || 0) + 1);
-        }
+      // FASE 4 B2: antes eran ~12 queries secuenciales (roles, ambassador,
+      // member data, profiles, content counts x2, active tasks, up totals x2,
+      // ratings x3). Unificado en un solo RPC agregado server-side.
+      const { data, error } = await (supabase as any).rpc('get_org_talent_roster', {
+        p_organization_id: currentOrgId,
       });
 
-      const { data: activeTasks } = await supabase
-        .from('content')
-        .select('creator_id, editor_id')
-        .eq('organization_id', currentOrgId)
-        .in('status', ['assigned', 'recording', 'recorded', 'editing', 'review', 'issue']);
+      if (error) throw error;
 
-      const activeTasksMap = new Map<string, number>();
-      activeTasks?.forEach(c => {
-        if (c.creator_id) {
-          activeTasksMap.set(c.creator_id, (activeTasksMap.get(c.creator_id) || 0) + 1);
-        }
-        if (c.editor_id) {
-          activeTasksMap.set(c.editor_id, (activeTasksMap.get(c.editor_id) || 0) + 1);
-        }
-      });
-
-      const { data: creatorTotals } = await supabase
-        .from('up_creadores_totals')
-        .select('user_id, total_points, current_level')
-        .eq('organization_id', currentOrgId)
-        .in('user_id', userIds);
-
-      const { data: editorTotals } = await supabase
-        .from('up_editores_totals')
-        .select('user_id, total_points, current_level')
-        .eq('organization_id', currentOrgId)
-        .in('user_id', userIds);
-
-      const creatorUpMap = new Map(creatorTotals?.map(t => [t.user_id, t]) || []);
-      const editorUpMap = new Map(editorTotals?.map(t => [t.user_id, t]) || []);
-
-      const { data: creatorRatings } = await supabase
-        .from('content')
-        .select('creator_id, creator_rating')
-        .eq('organization_id', currentOrgId)
-        .in('creator_id', userIds)
-        .not('creator_rating', 'is', null);
-
-      const { data: editorRatings } = await supabase
-        .from('content')
-        .select('editor_id, editor_rating')
-        .eq('organization_id', currentOrgId)
-        .in('editor_id', userIds)
-        .not('editor_rating', 'is', null);
-
-      const { data: strategyRatings } = await supabase
-        .from('content')
-        .select('strategist_id, strategy_rating')
-        .eq('organization_id', currentOrgId)
-        .in('strategist_id', userIds)
-        .not('strategy_rating', 'is', null);
-
-      const creatorRatingMap = new Map<string, { sum: number; count: number }>();
-      creatorRatings?.forEach(c => {
-        if (c.creator_id && c.creator_rating !== null) {
-          const existing = creatorRatingMap.get(c.creator_id) || { sum: 0, count: 0 };
-          creatorRatingMap.set(c.creator_id, {
-            sum: existing.sum + c.creator_rating,
-            count: existing.count + 1
-          });
-        }
-      });
-
-      const editorRatingMap = new Map<string, { sum: number; count: number }>();
-      editorRatings?.forEach(c => {
-        if (c.editor_id && c.editor_rating !== null) {
-          const existing = editorRatingMap.get(c.editor_id) || { sum: 0, count: 0 };
-          editorRatingMap.set(c.editor_id, {
-            sum: existing.sum + c.editor_rating,
-            count: existing.count + 1
-          });
-        }
-      });
-
-      const strategyRatingMap = new Map<string, { sum: number; count: number }>();
-      strategyRatings?.forEach(c => {
-        if (c.strategist_id && c.strategy_rating !== null) {
-          const existing = strategyRatingMap.get(c.strategist_id) || { sum: 0, count: 0 };
-          strategyRatingMap.set(c.strategist_id, {
-            sum: existing.sum + c.strategy_rating,
-            count: existing.count + 1
-          });
-        }
-      });
-
-      const talentsData: TalentProfile[] = (profiles || []).map(p => {
-        const role = roleMap.get(p.id) as 'creator' | 'editor' | 'strategist';
-        const upData = role === 'creator' ? creatorUpMap.get(p.id) : editorUpMap.get(p.id);
-
-        const creatorRating = creatorRatingMap.get(p.id);
-        const editorRating = editorRatingMap.get(p.id);
-        const strategyRating = strategyRatingMap.get(p.id);
-
-        const primaryRating = role === 'creator' ? creatorRating :
-                             role === 'editor' ? editorRating :
-                             strategyRating;
-
-        return {
-          id: p.id,
-          full_name: p.full_name,
-          email: p.email,
-          avatar_url: p.avatar_url,
-          phone: p.phone,
-          bio: p.bio,
-          role,
-          content_count: countMap.get(p.id) || 0,
-          is_ambassador: ambassadorSet.has(p.id) || p.is_ambassador || false,
-          quality_score_avg: p.quality_score_avg || 0,
-          reliability_score: p.reliability_score || 0,
-          velocity_score: p.velocity_score || 0,
-          ai_recommended_level: (p.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior',
-          ai_risk_flag: (p.ai_risk_flag as 'none' | 'warning' | 'high') || 'none',
-          ambassador_level: (ambassadorLevelMap.get(p.id) as 'none' | 'bronze' | 'silver' | 'gold') || 'none',
-          editor_rating: p.editor_rating,
-          editor_completed_count: p.editor_completed_count,
-          editor_on_time_count: p.editor_on_time_count,
-          active_tasks: activeTasksMap.get(p.id) || 0,
-          up_points: upData?.total_points || 0,
-          up_level: upData?.current_level || 'bronze',
-          avg_creator_rating: creatorRating ? creatorRating.sum / creatorRating.count : undefined,
-          avg_editor_rating: editorRating ? editorRating.sum / editorRating.count : undefined,
-          avg_strategy_rating: strategyRating ? strategyRating.sum / strategyRating.count : undefined,
-          avg_star_rating: primaryRating ? primaryRating.sum / primaryRating.count : 0,
-          rated_content_count: primaryRating?.count || 0,
-        };
-      });
+      const talentsData: TalentProfile[] = (data || []).map((row: any) => ({
+        id: row.id,
+        full_name: row.full_name,
+        email: row.email,
+        avatar_url: row.avatar_url,
+        phone: row.phone,
+        bio: row.bio,
+        role: row.role,
+        content_count: Number(row.content_count) || 0,
+        is_ambassador: row.is_ambassador || false,
+        quality_score_avg: row.quality_score_avg || 0,
+        reliability_score: row.reliability_score || 0,
+        velocity_score: row.velocity_score || 0,
+        ai_recommended_level: (row.ai_recommended_level as 'junior' | 'pro' | 'elite') || 'junior',
+        ai_risk_flag: (row.ai_risk_flag as 'none' | 'warning' | 'high') || 'none',
+        ambassador_level: (row.ambassador_level as 'none' | 'bronze' | 'silver' | 'gold') || 'none',
+        editor_rating: row.editor_rating,
+        editor_completed_count: row.editor_completed_count,
+        editor_on_time_count: row.editor_on_time_count,
+        active_tasks: Number(row.active_tasks) || 0,
+        up_points: Number(row.up_points) || 0,
+        up_level: row.up_level || 'bronze',
+        avg_creator_rating: row.avg_creator_rating != null ? Number(row.avg_creator_rating) : undefined,
+        avg_editor_rating: row.avg_editor_rating != null ? Number(row.avg_editor_rating) : undefined,
+        avg_strategy_rating: row.avg_strategy_rating != null ? Number(row.avg_strategy_rating) : undefined,
+        avg_star_rating: Number(row.avg_star_rating) || 0,
+        rated_content_count: Number(row.rated_content_count) || 0,
+      }));
 
       setTalents(talentsData);
     } catch (error) {
@@ -294,75 +138,18 @@ export function CreatorsContent() {
     ));
 
     try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          is_ambassador: newStatus,
-          ambassador_celebration_pending: newStatus,
-        })
-        .eq('id', talent.id);
+      // FASE5 Bloque C: antes eran 4 escrituras secuenciales sin transaccion
+      // (profiles, organization_member_badges, organization_members,
+      // organization_member_roles) -- un fallo a mitad de camino dejaba
+      // estado inconsistente. Ahora todo corre atomico en un solo RPC.
+      const { data, error } = await (supabase as any).rpc('toggle_ambassador_status', {
+        p_organization_id: currentOrgId,
+        p_user_id: talent.id,
+        p_new_status: newStatus,
+      });
 
-      if (profileError) throw profileError;
-
-      if (newStatus) {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .upsert(
-            {
-              organization_id: currentOrgId,
-              user_id: talent.id,
-              badge: 'ambassador',
-              level: 'bronze',
-              is_active: true,
-              granted_at: new Date().toISOString(),
-              granted_by: user?.id || null,
-            },
-            { onConflict: 'organization_id,user_id,badge' }
-          );
-        if (badgeError) throw badgeError;
-      } else {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .update({
-            is_active: false,
-            revoked_at: new Date().toISOString(),
-            revoked_by: user?.id || null,
-          })
-          .eq('organization_id', currentOrgId)
-          .eq('user_id', talent.id)
-          .eq('badge', 'ambassador');
-        if (badgeError) throw badgeError;
-      }
-
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .update({ ambassador_level: newLevel })
-        .eq('organization_id', currentOrgId)
-        .eq('user_id', talent.id);
-
-      if (memberError) throw memberError;
-
-      if (newStatus) {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .upsert(
-            {
-              organization_id: currentOrgId,
-              user_id: talent.id,
-              role: 'ambassador',
-            },
-            { onConflict: 'organization_id,user_id,role' }
-          );
-        if (roleError) throw roleError;
-      } else {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .delete()
-          .eq('organization_id', currentOrgId)
-          .eq('user_id', talent.id)
-          .eq('role', 'ambassador');
-        if (roleError) throw roleError;
-      }
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || 'Failed');
 
       toast({
         description: newStatus
@@ -393,6 +180,8 @@ export function CreatorsContent() {
         return t.role === 'creator';
       case 'editors':
         return t.role === 'editor';
+      case 'strategists':
+        return t.role === 'strategist';
       case 'ambassadors':
         return t.is_ambassador;
       default:
@@ -404,6 +193,7 @@ export function CreatorsContent() {
     all: talents.length,
     creators: talents.filter(t => t.role === 'creator').length,
     editors: talents.filter(t => t.role === 'editor').length,
+    strategists: talents.filter(t => t.role === 'strategist').length,
     ambassadors: talents.filter(t => t.is_ambassador).length,
   };
 
@@ -412,7 +202,7 @@ export function CreatorsContent() {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <TabsList className="grid grid-cols-3 sm:grid-cols-5 w-full sm:w-auto">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full sm:w-auto">
             <TabsTrigger value="all" className="gap-1.5">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Todos</span>
@@ -427,6 +217,11 @@ export function CreatorsContent() {
               <Edit3 className="h-4 w-4" />
               <span className="hidden sm:inline">Editores</span>
               <span className="text-xs opacity-70">({stats.editors})</span>
+            </TabsTrigger>
+            <TabsTrigger value="strategists" className="gap-1.5">
+              <TrendingUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Estrategas</span>
+              <span className="text-xs opacity-70">({stats.strategists})</span>
             </TabsTrigger>
             <TabsTrigger value="ambassadors" className="gap-1.5">
               <Star className="h-4 w-4" />
@@ -476,6 +271,16 @@ export function CreatorsContent() {
         </TabsContent>
 
         <TabsContent value="editors" className="mt-0">
+          <TalentGrid
+            talents={filteredTalents}
+            loading={loading}
+            onSelect={setSelectedTalent}
+            onAmbassadorToggle={toggleAmbassador}
+            isAdmin={isAdmin}
+          />
+        </TabsContent>
+
+        <TabsContent value="strategists" className="mt-0">
           <TalentGrid
             talents={filteredTalents}
             loading={loading}

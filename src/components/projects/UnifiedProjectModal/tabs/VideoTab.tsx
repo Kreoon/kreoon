@@ -7,8 +7,9 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 import { BunnyMultiVideoUploader } from '@/components/content/BunnyMultiVideoUploader';
 import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { CommentsSection } from '@/components/content/CommentsSection';
-import { supabase } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
+import { useToast } from '@/hooks/use-toast';
+import { persistFinalVideos } from '@/lib/persistFinalVideos';
 import { Video, Share2, Lock, ExternalLink, Info } from 'lucide-react';
 import type { UnifiedTabProps } from '../types';
 
@@ -21,6 +22,7 @@ export default function VideoTab({
   permissions,
   readOnly = false,
 }: UnifiedTabProps) {
+  const { toast } = useToast();
   // Only content projects have the video tab
   if (project.source !== 'content') {
     return (
@@ -111,16 +113,18 @@ export default function VideoTab({
               onUploadComplete={(urls) => {
                 setFormData((prev: Record<string, any>) => ({ ...prev, video_urls: urls }));
                 if (!editMode) setEditMode(true);
-                // Auto-save video URLs to DB immediately via RPC
+                // Persistir via edge function (token fresco on-demand + service_role) en vez del
+                // RPC con auth.uid(): en Safari el auto-refresh del token se estrangula durante
+                // subidas largas y el RPC fallaba en silencio dejando video_urls vacio.
                 markLocalUpdate(project.id, 5 * 60 * 1000);
-                supabase
-                  .rpc('update_content_by_id', {
-                    p_content_id: project.id,
-                    p_updates: { video_urls: urls.filter((u: string) => u.trim() !== '') }
-                  })
-                  .then(({ error }) => {
-                    if (error) console.error('[VideoTab] Failed to auto-save video URLs:', error);
+                persistFinalVideos(project.id, urls).catch((err) => {
+                  console.error('[VideoTab] Failed to auto-save video URLs:', err);
+                  toast({
+                    title: 'No se pudo guardar el video',
+                    description: err?.message || 'Recarga la pagina e intenta de nuevo.',
+                    variant: 'destructive',
                   });
+                });
               }}
               disabled={!canEditVideo}
             />

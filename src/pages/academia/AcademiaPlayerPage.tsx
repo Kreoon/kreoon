@@ -12,6 +12,8 @@ import { CertificateProgressPanel } from '@/components/academy/CertificateProgre
 import { BigCard } from '@/components/academy/big-cards/BigCard';
 import { useAcademyCourseBySlug, useMarkLessonProgress } from '@/hooks/academy/useAcademyCourse';
 import { useMyEnrollment } from '@/hooks/academy/useAcademyEnrollment';
+import { useUnlockStatus } from '@/hooks/academy/useAcademyUnlock';
+import { UnlockRequirements } from '@/components/academy/unlock/UnlockRequirements';
 import { useAuth } from '@/hooks/useAuth';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
 import { LessonCommentSection } from '@/components/academy/lesson/LessonCommentSection';
@@ -29,6 +31,11 @@ export default function AcademiaPlayerPage() {
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [midlessonQuizId, setMidlessonQuizId] = useState<string | null>(null);
   const [currentVideoTimestamp, setCurrentVideoTimestamp] = useState<number | undefined>(undefined);
+
+  // Desbloqueo condicional de la lección activa
+  const { data: lessonUnlock } = useUnlockStatus('lesson', activeLessonId ?? undefined);
+  const isOwner = !!user && (course?.instructor_id === user.id || course?.space?.owner_id === user.id);
+  const lessonLocked = !isOwner && !!lessonUnlock && !lessonUnlock.unlocked && !lessonUnlock.bypass;
 
   const flatLessons = useMemo<AcademyLesson[]>(() => {
     if (!course?.modules) return [];
@@ -87,6 +94,29 @@ export default function AcademiaPlayerPage() {
   }
 
   function handleVideoComplete() {
+    if (!activeLesson || !enrollment) return;
+    // FASE5 Bloque C: si la leccion tiene quiz de fin, la completitud la
+    // decide el quiz (handleEndLessonQuizPassed), no el video -- antes se
+    // marcaba completed apenas terminaba el video sin importar si el quiz
+    // se aprobaba, reprobaba o ni se intentaba.
+    if (activeLesson.end_lesson_quiz_id) {
+      markProgress.mutate({
+        lessonId: activeLesson.id,
+        enrollmentId: enrollment.id,
+        status: 'in_progress',
+        videoPct: 100,
+      });
+      return;
+    }
+    markProgress.mutate({
+      lessonId: activeLesson.id,
+      enrollmentId: enrollment.id,
+      status: 'completed',
+      videoPct: 100,
+    });
+  }
+
+  function handleEndLessonQuizPassed() {
     if (!activeLesson || !enrollment) return;
     markProgress.mutate({
       lessonId: activeLesson.id,
@@ -229,6 +259,10 @@ export default function AcademiaPlayerPage() {
                 </h1>
               </div>
 
+              {lessonLocked && lessonUnlock ? (
+                <UnlockRequirements evaluation={lessonUnlock} accentColor={KREOON_PURPLE} />
+              ) : (
+              <>
               {/* Player según tipo */}
               {(activeLesson.type === 'video' || activeLesson.type === 'live') && (
                 <div className="rounded-3xl overflow-hidden border-2 border-white/5 shadow-2xl">
@@ -288,6 +322,9 @@ export default function AcademiaPlayerPage() {
                       enrollmentId={enrollment.id}
                       accentColor={KREOON_PURPLE}
                       mode="inline"
+                      onComplete={(result) => {
+                        if (result.passed) handleEndLessonQuizPassed();
+                      }}
                     />
                   </BigCard>
                 )}
@@ -335,6 +372,8 @@ export default function AcademiaPlayerPage() {
                   accentColor={KREOON_PURPLE}
                   onIssued={(certCode) => navigate(`/cert/${certCode}`)}
                 />
+              )}
+              </>
               )}
             </div>
           ) : (

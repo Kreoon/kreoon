@@ -3,3 +3,8 @@ export { NovaAlertBanner } from './NovaAlertBanner';
 export { NovaVerticalVideoGrid } from './NovaVerticalVideoGrid';
 export { NovaActivityFeed } from './NovaActivityFeed';
 export { ClientDashboardOverview } from './ClientDashboardOverview';
+export { ClientProductsTab } from './ClientProductsTab';
+export { ClientReviewTab } from './ClientReviewTab';
+export { ClientCompanyTab } from './ClientCompanyTab';
+export { ClientContentReviewDialog } from './ClientContentReviewDialog';
+export { EmptyBrandClientState } from './EmptyBrandClientState';

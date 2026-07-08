@@ -6,6 +6,7 @@ import { callAISingle, corsHeaders } from "../_shared/ai-providers.ts";
 import { logAIUsage as logAIUsageShared, calculateCost } from "../_shared/ai-usage-logger.ts";
 // Nuevo: Prompts desde DB con cache y fallback
 import { getPrompt } from "../_shared/prompts/db-prompts.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 interface QualityScoreRequest {
   action: "quality_score";
@@ -93,6 +94,17 @@ serve(async (req) => {
 
     const orgId = body.organizationId;
 
+    // FASE 1: exigir auth real + membresía de orgId — antes cero auth,
+    // cualquiera invocaba acciones costosas contra cualquier org.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, orgId);
+    if (membershipRejection) return membershipRejection;
+    const callerUserId = callerUser!.id;
+
     // Validate module is active and get configuration
     let aiConfig;
     try {
@@ -143,7 +155,7 @@ serve(async (req) => {
     // Add provider info and execution id for feedback loop
     result.aiProvider = provider;
     result.aiModel = model;
-    const userId = (body as any).userId ?? "system";
+    const userId = callerUserId;
     const executionId = await logAIUsage(supabase, orgId, userId, provider, model, "sistema_up", body.action, true, undefined, undefined, undefined, response_time_ms);
     result.execution_id = executionId ?? undefined;
 

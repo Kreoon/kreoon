@@ -44,7 +44,14 @@ import { ProductDetailDialog } from '@/components/products/ProductDetailDialog';
 
 // Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
 const ClientDNATab = lazy(() => import('@/components/clients/dna/ClientDNATab').then(m => ({ default: m.ClientDNATab })));
-import { ClientDashboardOverview } from '@/components/client-dashboard';
+import {
+  ClientDashboardOverview,
+  ClientProductsTab,
+  ClientReviewTab,
+  ClientCompanyTab,
+  ClientContentReviewDialog,
+  EmptyBrandClientState,
+} from '@/components/client-dashboard';
 import { ClientInvoicesTab } from '@/components/client-dashboard/ClientInvoicesTab';
 import { useClientPaymentStatus } from '@/hooks/useClientPaymentStatus';
 import {
@@ -113,7 +120,7 @@ interface ClientInfo {
   notes: string | null;
 }
 
-interface Product {
+export interface Product {
   id: string;
   client_id: string;
   name: string;
@@ -1060,298 +1067,27 @@ export default function ClientDashboard() {
 
         {/* Products Tab */}
         {activeTab === 'products' && (
-          <div className="space-y-6">
-            {/* Show wizard if creating new product */}
-            {showCreateProductWizard ? (
-              <ProductDNAWizard
-                clientId={selectedClientId!}
-                onComplete={() => {
-                  setShowCreateProductWizard(false);
-                  if (selectedClientId) {
-                    fetchClientData(selectedClientId);
-                  }
-                }}
-                onCancel={() => setShowCreateProductWizard(false)}
-              />
-            ) : (
-              <>
-                {/* Header with CTA */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h2 className="text-lg font-bold mb-1">Mis Productos</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Productos y servicios que estamos promocionando para ti
-                    </p>
-                  </div>
-                  
-                  {/* Prominent Create Button */}
-                  <Button 
-                    size="lg" 
-                    onClick={() => setShowCreateProductWizard(true)}
-                    className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg hover:shadow-xl transition-all"
-                  >
-                    <Plus className="h-5 w-5" />
-                    Crear Nuevo Producto
-                  </Button>
-                </div>
-
-                {/* Create Product CTA Card when no products */}
-                {products.length === 0 ? (
-                  <Card className="border-2 border-dashed border-primary/30 bg-gradient-to-br from-primary/5 to-transparent">
-                    <CardContent className="p-8 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-sm-full bg-primary/10 flex items-center justify-center">
-                        <Package className="w-8 h-8 text-primary" />
-                      </div>
-                      <h4 className="font-semibold text-lg mb-2">¡Crea tu primer producto!</h4>
-                      <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                        Graba un audio describiendo tu producto y nuestra IA investigará tu mercado,
-                        competencia y creará estrategias automáticamente.
-                      </p>
-                      <Button 
-                        size="lg"
-                        onClick={() => setShowCreateProductWizard(true)}
-                        className="gap-2"
-                      >
-                        <Sparkles className="h-5 w-5" />
-                        Crear Producto con IA
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4">
-                    {products.map((product) => (
-                      <Card 
-                        key={product.id} 
-                        className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => setSelectedProduct(product)}
-                      >
-                        <CardContent className="p-0">
-                          {/* Product Header */}
-                          <div className="p-4 bg-gradient-to-r from-primary/5 to-primary/10 border-b">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-sm bg-primary/10">
-                                  <Package className="h-5 w-5 text-primary" />
-                                </div>
-                                <div>
-                                  <h3 className="font-semibold text-lg">
-                                    {product.product_code && <span className="text-primary">#{product.product_code}</span>}{' '}
-                                    {product.name}
-                                  </h3>
-                                  <p className="text-xs text-muted-foreground">
-                                    Creado: {product.created_at ? format(new Date(product.created_at), "d 'de' MMM, yyyy", { locale: es }) : 'N/A'}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Button variant="ghost" size="sm">
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  Ver detalles
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteProduct(product.id, product.name);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Product Quick Info */}
-                          <div className="p-4 space-y-4">
-                            {/* Sales Angles */}
-                            {product.sales_angles && product.sales_angles.length > 0 && (
-                              <div>
-                                <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
-                                  <Sparkles className="h-3 w-3" /> Ángulos de Venta
-                                </Label>
-                                <div className="flex flex-wrap gap-2">
-                                  {product.sales_angles.map((angle, idx) => (
-                                    <Badge key={idx} variant="secondary" className="text-xs">
-                                      {angle}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Quick Links */}
-                            <div className="flex flex-wrap gap-2">
-                              {product.brief_url && (
-                                <a 
-                                  href={product.brief_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
-                                >
-                                  <FolderOpen className="h-3 w-3" /> Brief
-                                </a>
-                              )}
-                              {product.onboarding_url && (
-                                <a 
-                                  href={product.onboarding_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
-                                >
-                                  <FileText className="h-3 w-3" /> Onboarding
-                                </a>
-                              )}
-                              {product.research_url && (
-                                <a 
-                                  href={product.research_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-primary/5 px-2 py-1 rounded-sm"
-                                >
-                                  <Target className="h-3 w-3" /> Investigación
-                                </a>
-                              )}
-                            </div>
-
-                            {/* Description preview */}
-                            {product.description && (
-                              <div className="text-sm text-muted-foreground line-clamp-2">
-                                <RichTextViewer content={product.description} className="prose-sm" />
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <ClientProductsTab
+            selectedClientId={selectedClientId}
+            products={products}
+            showCreateProductWizard={showCreateProductWizard}
+            setShowCreateProductWizard={setShowCreateProductWizard}
+            onProductCreated={() => selectedClientId && fetchClientData(selectedClientId)}
+            onSelectProduct={setSelectedProduct}
+            onDeleteProduct={handleDeleteProduct}
+          />
         )}
 
-        {/* Review Tab - Inline Cards */}
+        {/* Review Tab */}
         {activeTab === 'review' && (
-          <div className="space-y-6">
-            {/* Scripts to Review */}
-            {scriptReviewContent.length > 0 && (
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Guiones por Aprobar
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {scriptReviewContent.length} {scriptReviewContent.length === 1 ? 'guión pendiente' : 'guiones pendientes'} de aprobación
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {scriptReviewContent.map((item) => (
-                    <ScriptReviewCard
-                      key={item.id}
-                      content={item}
-                      userId={user?.id}
-                      onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Videos to Review */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold mb-1 flex items-center gap-2">
-                    <Video className="h-5 w-5 text-info" />
-                    Videos por Revisar
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {videoReviewContent.length} {videoReviewContent.length === 1 ? 'video pendiente' : 'videos pendientes'} de revisión
-                  </p>
-                </div>
-              </div>
-
-              {videoReviewContent.length === 0 ? (
-                <Card>
-                  <CardContent className="p-8 text-center">
-                    <CheckCircle2 className="w-12 h-12 mx-auto text-success mb-4" />
-                    <h3 className="font-semibold mb-2">Todo al día</h3>
-                    <p className="text-sm text-muted-foreground">No hay videos pendientes de revisión</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-6">
-                  {videoReviewContent.map((item) => (
-                    <div key={item.id} className="space-y-2">
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        {/* Video Review Card */}
-                        <ReviewCard
-                          content={item}
-                          userId={user?.id}
-                          onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
-                        />
-
-                        {/* Script Panel alongside video */}
-                        {item.script ? (
-                          <Card className="overflow-hidden border-primary/20">
-                            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-primary/5">
-                              <div className="flex items-center gap-2">
-                                <FileText className="h-4 w-4 text-primary" />
-                                <span className="font-semibold text-sm">Guión</span>
-                              </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={() => setStageScriptContent(item)}
-                              >
-                                <Eye className="h-3.5 w-3.5 mr-1" />
-                                Ver completo
-                              </Button>
-                            </div>
-                            <CardContent className="p-0">
-                              <ScrollArea className="h-[460px]">
-                                <div className="p-4">
-                                  <div
-                                    className="prose prose-sm dark:prose-invert max-w-none [&_p]:leading-relaxed [&_p]:mb-3 [&_strong]:font-bold [&_em]:text-muted-foreground [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1 [&_ul]:pl-4 [&_ul]:mb-3 [&_li]:leading-relaxed"
-                                    dangerouslySetInnerHTML={{ __html: sanitizeHTML(item.script) }}
-                                  />
-                                </div>
-                              </ScrollArea>
-                            </CardContent>
-                          </Card>
-                        ) : (
-                          <Card className="overflow-hidden border-dashed border-muted-foreground/20">
-                            <CardContent className="flex flex-col items-center justify-center h-full min-h-[200px] text-muted-foreground">
-                              <FileText className="h-8 w-8 mb-2 opacity-40" />
-                              <p className="text-sm">Sin guión disponible</p>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Empty state when nothing to review */}
-            {totalPendingReview === 0 && (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <CheckCircle2 className="w-12 h-12 mx-auto text-success mb-4" />
-                  <h3 className="font-semibold mb-2">Todo al día</h3>
-                  <p className="text-sm text-muted-foreground">No hay contenido pendiente de revisión</p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          <ClientReviewTab
+            scriptReviewContent={scriptReviewContent}
+            videoReviewContent={videoReviewContent}
+            totalPendingReview={totalPendingReview}
+            userId={user?.id}
+            onUpdate={() => selectedClientId && fetchClientData(selectedClientId)}
+            onViewScript={setStageScriptContent}
+          />
         )}
 
         {/* Portfolio Tab - Unified Module */}
@@ -1376,260 +1112,32 @@ export default function ClientDashboard() {
 
         {/* Company Tab */}
         {activeTab === 'company' && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-bold mb-1">Datos de la Empresa</h2>
-                <p className="text-sm text-muted-foreground">Administra la información de tu marca</p>
-              </div>
-              {!isEditingCompany && (
-                <Button variant="outline" size="sm" onClick={() => setIsEditingCompany(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-              )}
-            </div>
-
-            <Card>
-              <CardContent className="p-6">
-                {isEditingCompany ? (
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="company-name">Nombre de la empresa</Label>
-                      <Input
-                        id="company-name"
-                        value={editForm.name}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Nombre de tu empresa"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contact-email">Email de contacto</Label>
-                      <Input
-                        id="contact-email"
-                        type="email"
-                        value={editForm.contact_email}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, contact_email: e.target.value }))}
-                        placeholder="email@empresa.com"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contact-phone">Teléfono de contacto</Label>
-                      <Input
-                        id="contact-phone"
-                        value={editForm.contact_phone}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, contact_phone: e.target.value }))}
-                        placeholder="+57 300 000 0000"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="notes">Notas adicionales</Label>
-                      <Textarea
-                        id="notes"
-                        value={editForm.notes}
-                        onChange={(e) => setEditForm(prev => ({ ...prev, notes: e.target.value }))}
-                        placeholder="Información adicional sobre tu empresa..."
-                        className="mt-1"
-                        rows={3}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleSaveCompany} disabled={savingCompany} className="flex-1">
-                        {savingCompany ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Guardar
-                      </Button>
-                      <Button variant="outline" onClick={() => setIsEditingCompany(false)}>
-                        <X className="w-4 h-4 mr-2" />
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      {clientInfo.logo_url ? (
-                        <img src={clientInfo.logo_url} alt={clientInfo.name} className="h-16 w-16 rounded-sm object-cover" />
-                      ) : (
-                        <div className="h-16 w-16 rounded-sm bg-primary/10 flex items-center justify-center">
-                          <Building2 className="h-8 w-8 text-primary" />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="text-xl font-bold">{clientInfo.name}</h3>
-                        <p className="text-sm text-muted-foreground">Cliente desde {formatDate(packages[packages.length - 1]?.created_at || '')}</p>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Email de contacto</Label>
-                        <p className="font-medium">{clientInfo.contact_email || 'No especificado'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs text-muted-foreground">Teléfono</Label>
-                        <p className="font-medium">{clientInfo.contact_phone || 'No especificado'}</p>
-                      </div>
-                    </div>
-
-                    {clientInfo.notes && (
-                      <div className="pt-4 border-t">
-                        <Label className="text-xs text-muted-foreground">Notas</Label>
-                        <p className="text-sm mt-1">{clientInfo.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats about company */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <Package className="h-5 w-5 mx-auto text-primary mb-2" />
-                  <p className="text-2xl font-bold">{packages.length}</p>
-                  <p className="text-xs text-muted-foreground">Paquetes</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <Video className="h-5 w-5 mx-auto text-info mb-2" />
-                  <p className="text-2xl font-bold">{content.length}</p>
-                  <p className="text-xs text-muted-foreground">Videos</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <DollarSign className="h-5 w-5 mx-auto text-success mb-2" />
-                  <p className="text-2xl font-bold">${(totalInvested / 1000).toFixed(0)}k</p>
-                  <p className="text-xs text-muted-foreground">Invertido</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4 text-center">
-                  <TrendingUp className="h-5 w-5 mx-auto text-warning mb-2" />
-                  <p className="text-2xl font-bold">{avgViewsPerVideo.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Vistas/Video</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+          <ClientCompanyTab
+            clientInfo={clientInfo}
+            packages={packages}
+            content={content}
+            totalInvested={totalInvested}
+            avgViewsPerVideo={avgViewsPerVideo}
+            isEditingCompany={isEditingCompany}
+            setIsEditingCompany={setIsEditingCompany}
+            editForm={editForm}
+            setEditForm={setEditForm}
+            savingCompany={savingCompany}
+            onSave={handleSaveCompany}
+          />
         )}
       </div>
 
       {/* Review Dialog */}
-      <Dialog open={!!selectedContent} onOpenChange={() => { setSelectedContent(null); setFeedback(''); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] p-0">
-          <DialogHeader className="p-4 pb-0">
-            <DialogTitle className="text-lg">{selectedContent?.title}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedContent && (
-            <ScrollArea className="max-h-[calc(90vh-80px)]">
-              <div className="p-4 space-y-4">
-                <Badge className={STATUS_COLORS[selectedContent.status]}>
-                  {STATUS_LABELS[selectedContent.status]}
-                </Badge>
-
-                {selectedContent.description && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Descripción</Label>
-                    <p className="text-sm mt-1">{selectedContent.description}</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Creador</Label>
-                    <p>{selectedContent.creator?.full_name || 'Sin asignar'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Editor</Label>
-                    <p>{selectedContent.editor?.full_name || 'Sin asignar'}</p>
-                  </div>
-                </div>
-
-                {selectedContent.script && (
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Guión</Label>
-                    <div className="mt-1 p-3 bg-muted rounded-sm whitespace-pre-wrap text-sm max-h-40 overflow-y-auto">
-                      {selectedContent.script}
-                    </div>
-                  </div>
-                )}
-
-                {/* Video(s) inline */}
-                {(() => {
-                  const urls = (selectedContent.video_urls as string[] | undefined)?.filter(u => u?.trim()) || [];
-                  const singleUrl = selectedContent.video_url || selectedContent.bunny_embed_url;
-                  const allUrls = urls.length > 0 ? urls : (singleUrl ? [singleUrl] : []);
-                  if (allUrls.length === 0) return null;
-                  return (
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        {allUrls.length > 1 ? `Videos (${allUrls.length})` : 'Video'}
-                      </Label>
-                      {allUrls.map((url, i) => (
-                        <div key={i} className="rounded-sm overflow-hidden bg-black" style={{ aspectRatio: '9/16', maxHeight: '350px' }}>
-                          <AutoPauseVideo
-                            src={url}
-                            contentId={selectedContent.id}
-                            thumbnailUrl={selectedContent.thumbnail_url}
-                            className="w-full h-full"
-                            autoPlay={false}
-                            muted
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-
-                {(['review', 'delivered', 'corrected'] as ContentStatus[]).includes(selectedContent.status) && (
-                  <>
-                    <div>
-                      <Label htmlFor="feedback" className="text-xs text-muted-foreground">
-                        Comentarios (opcional para aprobar, requerido para correcciones)
-                      </Label>
-                      <Textarea
-                        id="feedback"
-                        placeholder="Escribe tus comentarios o correcciones..."
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        className="mt-1"
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        className="flex-1 bg-success hover:bg-success/90"
-                        onClick={handleApprove}
-                        disabled={submitting}
-                      >
-                        <ThumbsUp className="w-4 h-4 mr-2" />
-                        Aprobar
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={handleReject}
-                        disabled={submitting || !feedback}
-                      >
-                        <ThumbsDown className="w-4 h-4 mr-2" />
-                        Correcciones
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </ScrollArea>
-          )}
-        </DialogContent>
-      </Dialog>
+      <ClientContentReviewDialog
+        selectedContent={selectedContent}
+        onClose={() => { setSelectedContent(null); setFeedback(''); }}
+        feedback={feedback}
+        setFeedback={setFeedback}
+        submitting={submitting}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
 
       {/* Product Detail Dialog - Usando el mismo componente que los admins */}
       <ProductDetailDialog
@@ -1749,113 +1257,6 @@ export default function ClientDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-// UX-C02b + UX-C03: Componente de estado vacío con polling automático
-function EmptyBrandClientState({ onRetry }: { onRetry: () => Promise<void> }) {
-  const [polling, setPolling] = useState(false);
-  const [attempts, setAttempts] = useState(0);
-  const [failed, setFailed] = useState(false);
-  const MAX_ATTEMPTS = 3;
-  const POLL_INTERVAL_MS = 3000;
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const runPolling = async () => {
-      setPolling(true);
-      for (let i = 0; i < MAX_ATTEMPTS; i++) {
-        if (cancelled) break;
-        await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
-        if (cancelled) break;
-        setAttempts(i + 1);
-        await onRetry();
-      }
-      if (!cancelled) {
-        setPolling(false);
-        setFailed(true);
-      }
-    };
-
-    runPolling();
-    return () => { cancelled = true; };
-  }, []);
-
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <Building2 className="w-16 h-16 text-primary mb-4" />
-      <h2 className="text-xl font-semibold mb-2">Configurando tu empresa</h2>
-      {polling ? (
-        <>
-          <Loader2 className="w-6 h-6 text-primary animate-spin mb-3" />
-          <p className="text-muted-foreground text-center max-w-md">
-            Vinculando tu empresa con la plataforma&hellip; ({attempts}/{MAX_ATTEMPTS})
-          </p>
-        </>
-      ) : failed ? (
-        <>
-          <p className="text-muted-foreground text-center max-w-md mb-6">
-            No pudimos detectar tu empresa automáticamente.
-            Contacta a soporte o intenta de nuevo.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={() => { setFailed(false); setAttempts(0); setPolling(false); onRetry(); }}>
-              Intentar de nuevo
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="mailto:soporte@kreoon.com">Contactar soporte</a>
-            </Button>
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
-}
-
-// Content List Component with Quick Actions
-function ContentList({
-  items,
-  onSelect,
-  onStatusChange,
-  userId,
-  onUpdate,
-  showRatings = false,
-  downloadBlocked = false
-}: {
-  items: Content[];
-  onSelect: (c: Content) => void;
-  onStatusChange?: (id: string, status: ContentStatus, notes?: string) => Promise<void>;
-  userId?: string;
-  onUpdate?: () => void;
-  showRatings?: boolean;
-  downloadBlocked?: boolean;
-}) {
-  if (items.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <Video className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
-          <p className="text-sm text-muted-foreground">No hay contenido en esta categoría</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {items.map(item => (
-        <ContentVideoCard
-          key={item.id}
-          content={item}
-          userId={userId}
-          onStatusChange={onStatusChange}
-          onUpdate={onUpdate}
-          showRatings={showRatings}
-          downloadBlocked={downloadBlocked}
-        />
-      ))}
     </div>
   );
 }

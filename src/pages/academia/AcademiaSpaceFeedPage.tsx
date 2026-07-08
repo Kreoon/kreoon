@@ -9,7 +9,7 @@ import { useAcademyLiveContent } from '@/hooks/academy/useAcademyLive';
 const KREOON_PURPLE = '#7c3aed';
 
 export default function AcademiaSpaceFeedPage() {
-  const { spaceSlug } = useParams<{ spaceSlug: string }>();
+  const { spaceSlug, postId } = useParams<{ spaceSlug: string; postId?: string }>();
   const { data: space, isLoading } = useAcademySpace(spaceSlug);
 
   if (isLoading) {
@@ -32,10 +32,18 @@ export default function AcademiaSpaceFeedPage() {
     );
   }
 
-  return <FeedWithLive space={space} spaceSlug={spaceSlug!} />;
+  return <FeedWithLive space={space} spaceSlug={spaceSlug!} highlightPostId={postId} />;
 }
 
-function FeedWithLive({ space, spaceSlug }: { space: any; spaceSlug: string }) {
+function FeedWithLive({
+  space,
+  spaceSlug,
+  highlightPostId,
+}: {
+  space: any;
+  spaceSlug: string;
+  highlightPostId?: string;
+}) {
   // Activa Realtime para posts/comments/points del space.
   useAcademyLiveContent(space.id);
 
@@ -52,7 +60,12 @@ function FeedWithLive({ space, spaceSlug }: { space: any; spaceSlug: string }) {
               Lo que comparte la comunidad de {space.name}
             </p>
           </div>
-          <SpaceFeed spaceId={space.id} ownerId={space.owner_id} accentColor={KREOON_PURPLE} />
+          <SpaceFeed
+            spaceId={space.id}
+            ownerId={space.owner_id}
+            accentColor={KREOON_PURPLE}
+            highlightPostId={highlightPostId}
+          />
         </div>
         <ActivitySidebar
           spaceId={space.id}

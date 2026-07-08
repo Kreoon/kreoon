@@ -4,14 +4,13 @@ import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanCol
 import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
 import { FillmakerDialog } from "@/components/clients/FillmakerDialog";
-import { Search, Plus, Filter, X, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
+import { Search, Plus, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
 
 const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
 import { BulkGenerationDrawer } from "@/components/content/BulkGenerationDrawer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { useTrialGuard } from "@/hooks/useTrialGuard";
@@ -19,18 +18,17 @@ import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { KREOON_ORG_ID } from "@/lib/kreoon-org";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
-import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_ORDER, STATUS_LABELS, Product } from "@/types/database";
+import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_LABELS, Product } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
+import { type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
 import { cn } from "@/lib/utils";
-import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
-import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
+import { type DateRangeValue } from "@/lib/date-presets";
 import {
   BoardViewSwitcher,
   BoardView,
@@ -38,8 +36,6 @@ import {
   BoardCalendarView,
   BoardTableView,
   BoardListView,
-  EnhancedKanbanColumn,
-  EnhancedContentCard,
   BoardAIPanel,
   MarketingInfoPanel,
   CampaignAssignmentDialog,
@@ -53,121 +49,9 @@ import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
 import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
-
-// Helper types for movement rules
-interface StatusRule {
-  status_id: string;
-  can_advance_roles: string[];
-  can_retreat_roles: string[];
-  can_view_roles: string[];
-}
-
-interface OrgStatus {
-  id: string;
-  status_key: string;
-  sort_order: number;
-}
-
-// Verificar si un movimiento de estado es válido según el rol y las reglas configuradas
-// Ahora acepta múltiples roles para usuarios con permisos combinados (ej: creator + editor)
-const canMoveToStatusWithRules = (
-  role: string,
-  currentStatus: ContentStatus | string,
-  targetStatus: ContentStatus | string,
-  content: Content,
-  userId: string,
-  orgStatuses: OrgStatus[],
-  rules: StatusRule[],
-  allUserRoles?: string[] // Opcional: todos los roles del usuario para verificación combinada
-): boolean => {
-  // Admin siempre puede mover
-  if (role === 'admin' || allUserRoles?.includes('admin')) return true;
-
-  // Encontrar los estados en la configuración de la organización
-  const currentOrgStatus = orgStatuses.find(s => s.status_key === currentStatus);
-  const targetOrgStatus = orgStatuses.find(s => s.status_key === targetStatus);
-
-  // Si no hay configuración de estados, usar lógica legacy
-  if (!currentOrgStatus || !targetOrgStatus || rules.length === 0) {
-    // Para usuarios con múltiples roles, verificar si ALGÚN rol tiene permiso
-    if (allUserRoles && allUserRoles.length > 1) {
-      return allUserRoles.some(r => canMoveToStatusLegacy(r, currentStatus, targetStatus, content, userId));
-    }
-    return canMoveToStatusLegacy(role, currentStatus, targetStatus, content, userId);
-  }
-
-  // Buscar las reglas para el estado actual
-  const currentRule = rules.find(r => r.status_id === currentOrgStatus.id);
-
-  // Si no hay regla para el estado actual, permitir por defecto
-  if (!currentRule) {
-    return true;
-  }
-
-  // Determinar si es avance o retroceso basado en sort_order
-  const isForward = targetOrgStatus.sort_order > currentOrgStatus.sort_order;
-
-  // Roles a verificar (rol primario + todos los roles si están disponibles)
-  const rolesToCheck = allUserRoles && allUserRoles.length > 0 ? allUserRoles : [role];
-
-  // Verificar permisos según dirección desde el estado actual
-  if (isForward) {
-    const canAdvanceRoles = currentRule.can_advance_roles || [];
-    if (canAdvanceRoles.length === 0) return true; // Sin restricciones
-    return rolesToCheck.some(r => canAdvanceRoles.includes(r));
-  } else {
-    const canRetreatRoles = currentRule.can_retreat_roles || [];
-    if (canRetreatRoles.length === 0) return true; // Sin restricciones
-    return rolesToCheck.some(r => canRetreatRoles.includes(r));
-  }
-};
-
-// Lógica legacy como fallback
-const canMoveToStatusLegacy = (
-  role: string,
-  currentStatus: ContentStatus | string,
-  targetStatus: ContentStatus | string,
-  content: Content,
-  userId: string
-): boolean => {
-  const currentIndex = STATUS_ORDER.indexOf(currentStatus as ContentStatus);
-  const targetIndex = STATUS_ORDER.indexOf(targetStatus as ContentStatus);
-
-  // Admin and management roles can move anything
-  if (role === 'admin' || role === 'strategist' || role === 'team_leader' || role === 'trafficker') return true;
-
-  if (role === 'client') {
-    if (currentStatus === 'draft' && targetStatus === 'script_approved') return true;
-    if (currentStatus === 'delivered' && targetStatus === 'approved') return true;
-    if (currentStatus === 'delivered' && targetStatus === 'issue') return true;
-    return false;
-  }
-
-  if (role === 'creator') {
-    if (content.creator_id !== userId) return false;
-    if (targetStatus === 'paid' || targetStatus === 'approved') return false;
-    if (targetIndex <= currentIndex) return false;
-    if (currentStatus === 'assigned' && targetStatus === 'recording') return true;
-    if (currentStatus === 'recording' && targetStatus === 'recorded') return true;
-    return false;
-  }
-
-  if (role === 'editor') {
-    if (content.editor_id !== userId) return false;
-    if (targetStatus === 'paid' || targetStatus === 'approved') return false;
-    // Permitir movimientos desde estados de edición hacia adelante o retroceder a edición
-    const editorStates = ['recorded', 'editing', 'delivered', 'issue', 'corrected', 'review'];
-    if (editorStates.includes(currentStatus as string) && editorStates.includes(targetStatus as string)) {
-      return true;
-    }
-    // Fallback: permitir avance desde recorded/editing
-    if (currentStatus === 'recorded' && targetStatus === 'editing') return true;
-    if (currentStatus === 'editing' && targetStatus === 'delivered') return true;
-    return false;
-  }
-
-  return false;
-};
+import { canMoveToStatusWithRules } from "@/lib/contentBoardPermissions";
+import { ContentBoardFilters } from "@/components/content-board/ContentBoardFilters";
+import { ContentBoardKanbanView } from "@/components/content-board/ContentBoardKanbanView";
 
 export default function ContentBoard() {
   const { user, profile, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole, roles } = useAuth();
@@ -278,7 +162,7 @@ export default function ContentBoard() {
   ], [products]);
 
   // Limit visible cards per column to reduce DOM/network load (240+ cards → ~80 visible)
-  const CARDS_PER_COLUMN = 8;
+  // El limite en si (CARDS_PER_COLUMN) vive en ContentBoardKanbanView.tsx junto al render.
   const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
   const toggleColumnExpand = useCallback((status: string) => {
     setExpandedColumns(prev => {
@@ -793,74 +677,24 @@ export default function ContentBoard() {
         <>
         {/* Filtros para admin */}
         {showAdminControls && (
-          <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
-            <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-
-            <DateRangePresetPicker
-              value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
-              onChange={setDateRangeFilter}
-              presets={['today', 'yesterday', 'last_7', 'last_15', 'last_30', 'this_week', 'this_month', 'last_month', 'custom']}
-              align="start"
-            />
-            {dateRangeFilter && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setDateRangeFilter(null)}>
-                <X className="h-3 w-3 md:h-4 md:w-4" />
-              </Button>
-            )}
-
-            <div className="h-6 w-px bg-border hidden md:block" />
-
-            <SearchableSelect
-              value={filterCreatorId}
-              onValueChange={setFilterCreatorId}
-              options={creatorOptions}
-              placeholder="Creadores"
-              searchPlaceholder="Buscar creador..."
-              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
-            />
-
-            <SearchableSelect
-              value={filterEditorId}
-              onValueChange={setFilterEditorId}
-              options={editorOptions}
-              placeholder="Editores"
-              searchPlaceholder="Buscar editor..."
-              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
-            />
-
-            <SearchableSelect
-              value={filterClientId}
-              onValueChange={setFilterClientId}
-              options={clientOptions}
-              placeholder="Clientes"
-              searchPlaceholder="Buscar cliente..."
-              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
-            />
-
-            <div className="h-6 w-px bg-border hidden md:block" />
-
-            <SearchableSelect
-              value={filterProductId}
-              onValueChange={setFilterProductId}
-              options={productOptions}
-              placeholder="Productos"
-              searchPlaceholder="Buscar producto..."
-              triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
-            />
-
-            <Input
-              type="text"
-              placeholder="Campaña/Semana"
-              value={filterCampaignWeek}
-              onChange={(e) => setFilterCampaignWeek(e.target.value)}
-              className="w-[100px] md:w-[120px] h-8 md:h-9 text-xs md:text-sm"
-            />
-            {filterCampaignWeek && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setFilterCampaignWeek('')}>
-                <X className="h-3 w-3 md:h-4 md:w-4" />
-              </Button>
-            )}
-          </div>
+          <ContentBoardFilters
+            dateRangeFilter={dateRangeFilter}
+            setDateRangeFilter={setDateRangeFilter}
+            filterCreatorId={filterCreatorId}
+            setFilterCreatorId={setFilterCreatorId}
+            creatorOptions={creatorOptions}
+            filterEditorId={filterEditorId}
+            setFilterEditorId={setFilterEditorId}
+            editorOptions={editorOptions}
+            filterClientId={filterClientId}
+            setFilterClientId={setFilterClientId}
+            clientOptions={clientOptions}
+            filterProductId={filterProductId}
+            setFilterProductId={setFilterProductId}
+            productOptions={productOptions}
+            filterCampaignWeek={filterCampaignWeek}
+            setFilterCampaignWeek={setFilterCampaignWeek}
+          />
         )}
         {/* Board Header with View Switcher - 2 rows layout */}
         <div className="rounded-sm border border-border bg-card p-3 md:p-4">
@@ -1004,133 +838,41 @@ export default function ContentBoard() {
 
           {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
           {currentView === 'kanban' && (
-            <div className="relative w-full overflow-hidden rounded-sm">
-            <div
-              className="flex overflow-x-auto gap-3 p-3 md:p-4 scroll-smooth"
-              style={{
-                background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
-                height: "calc(100vh - 180px)",
-                minHeight: "450px",
-                scrollbarWidth: "thin",
-                scrollbarColor: "rgba(139, 92, 246, 0.3) transparent",
-              }}
-            >
-              {allBoardColumns.map(column => {
-                const columnContent = getContentByStatus(column.status);
-                const isCurrentDropTarget = dropTarget === column.status;
-                const canDropHere = draggingContent
-                  ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, targetUserId || '', orgStatuses, rules, roles)
-                  : true;
-                
-                // Get dynamic color and title from organization settings
-                const orgStatus = orgStatuses.find(s => s.status_key === column.status);
-                const columnTitle = orgStatus?.label || column.title;
-                
-                // Convert CSS class to hex for fallback, or use orgStatus color
-                const fallbackColors: Record<string, string> = {
-                  'bg-muted-foreground': '#6b7280',
-                  'bg-info': '#3b82f6',
-                  'bg-purple-500': '#8b5cf6',
-                  'bg-purple-600': '#9333ea',
-                  'bg-orange-500': '#f97316',
-                  'bg-cyan-500': '#06b6d4',
-                  'bg-pink-500': '#ec4899',
-                  'bg-emerald-500': '#10b981',
-                  'bg-destructive': '#ef4444',
-                  'bg-blue-500': '#3b82f6',
-                  'bg-success': '#22c55e'
-                };
-                const columnColor = orgStatus?.color || fallbackColors[column.color] || column.color || '#6b7280';
-
-                return (
-                  <EnhancedKanbanColumn
-                    key={column.status}
-                    id={column.status}
-                    title={columnTitle}
-                    count={columnContent.length}
-                    color={columnColor}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, column.status)}
-                    onDragEnter={() => handleDragEnter(column.status)}
-                    isDropTarget={isCurrentDropTarget}
-                    canDrop={canDropHere}
-                  >
-                    {(() => {
-                      const isExpanded = expandedColumns.has(column.status);
-                      const visibleItems = isExpanded ? columnContent : columnContent.slice(0, CARDS_PER_COLUMN);
-                      const hiddenCount = columnContent.length - CARDS_PER_COLUMN;
-                      return (
-                        <>
-                          {visibleItems.map(item => (
-                            <EnhancedContentCard
-                              key={item.id}
-                              content={item}
-                              cardSize={settings?.card_size || 'normal'}
-                              visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
-                              showFieldsCustomizer={true}
-                              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
-                              onClick={() => setSelectedContent(item)}
-                              onDragStart={(e) => handleDragStart(e, item)}
-                              isDragging={draggingContent?.id === item.id}
-                              showAIIndicators={showAdminControls}
-                              organizationStatuses={orgStatuses}
-                              userRole={primaryRole as any}
-                              userId={targetUserId}
-                              onStatusChange={async (contentId, newStatus) => {
-                                await updateContentStatus(contentId, newStatus);
-                                refetch();
-                              }}
-                              showStatusControls={true}
-                              ambassadorIds={ambassadorIds}
-                              onAnalyzeWithAI={showAdminControls ? (contentId, title) => {
-                                setAIPanelMode('card');
-                                setAIContentId(contentId);
-                                setAIContentTitle(title);
-                                setShowAIPanel(true);
-                              } : undefined}
-                              onShowMarketingInfo={(content) => {
-                                setMarketingPanelContent(content);
-                                setShowMarketingPanel(true);
-                              }}
-                              creators={assignableCreators}
-                              editors={assignableEditors}
-                              onAssignCreator={showAdminControls || primaryRole === "team_leader" ? handleAssignCreator : undefined}
-                              onAssignEditor={showAdminControls || primaryRole === "team_leader" ? handleAssignEditor : undefined}
-                              onUpdate={refetch}
-                              socialStatus={socialStatusMap?.[item.id]}
-                            />
-                          ))}
-                          {!isExpanded && hiddenCount > 0 && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                              className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors"
-                              style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px dashed rgba(139, 92, 246, 0.25)' }}
-                            >
-                              Ver {hiddenCount} más
-                            </button>
-                          )}
-                          {isExpanded && hiddenCount > 0 && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                              className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
-                              style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px dashed rgba(255, 255, 255, 0.1)' }}
-                            >
-                              Mostrar menos
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
-                    {columnContent.length === 0 && (
-                      <div className="border-2 border-dashed border-border rounded-sm p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
-                        Sin contenido
-                      </div>
-                    )}
-                  </EnhancedKanbanColumn>
-                );
-              })}
-            </div>
-            </div>
+            <ContentBoardKanbanView
+              allBoardColumns={allBoardColumns}
+              getContentByStatus={getContentByStatus}
+              dropTarget={dropTarget}
+              draggingContent={draggingContent}
+              primaryRole={primaryRole as string}
+              targetUserId={targetUserId}
+              orgStatuses={orgStatuses}
+              rules={rules}
+              roles={roles}
+              handleDragOver={handleDragOver}
+              handleDrop={handleDrop}
+              handleDragEnter={handleDragEnter}
+              handleDragStart={handleDragStart}
+              expandedColumns={expandedColumns}
+              toggleColumnExpand={toggleColumnExpand}
+              settings={settings}
+              updateSettings={updateSettings}
+              setSelectedContent={setSelectedContent}
+              showAdminControls={showAdminControls}
+              ambassadorIds={ambassadorIds}
+              updateContentStatus={updateContentStatus}
+              refetch={refetch}
+              setAIPanelMode={setAIPanelMode}
+              setAIContentId={setAIContentId}
+              setAIContentTitle={setAIContentTitle}
+              setShowAIPanel={setShowAIPanel}
+              setMarketingPanelContent={setMarketingPanelContent}
+              setShowMarketingPanel={setShowMarketingPanel}
+              assignableCreators={assignableCreators}
+              assignableEditors={assignableEditors}
+              handleAssignCreator={handleAssignCreator}
+              handleAssignEditor={handleAssignEditor}
+              socialStatusMap={socialStatusMap}
+            />
           )}
           
           {/* List View - conectado a preferencias de usuario */}

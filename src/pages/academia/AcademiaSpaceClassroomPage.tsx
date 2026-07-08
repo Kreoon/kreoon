@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   GraduationCap, Plus, Pencil,
@@ -12,6 +12,7 @@ import { CourseBigCard } from '@/components/academy/big-cards/CourseBigCard';
 import { useAcademySpace } from '@/hooks/academy/useAcademySpaces';
 import { useUpdateCourse } from '@/hooks/academy/useAcademyCourse';
 import { useMyEnrollments } from '@/hooks/academy/useAcademyEnrollment';
+import { useUnlockStatusBatch, type BatchTarget } from '@/hooks/academy/useAcademyUnlock';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +33,13 @@ export default function AcademiaSpaceClassroomPage() {
   enrollments.forEach((e) => {
     if (e.course?.id) progressByCourse.set(e.course.id, e.completion_pct);
   });
+
+  // Estado de desbloqueo a nivel curso (candado en la grilla)
+  const courseTargets = useMemo<BatchTarget[]>(
+    () => ((space as any)?.courses ?? []).map((c: any) => ({ target_type: 'course' as const, target_id: c.id })),
+    [space]
+  );
+  const { data: courseUnlockMap = {} } = useUnlockStatusBatch(courseTargets);
 
   if (isLoading) {
     return (
@@ -184,13 +192,23 @@ export default function AcademiaSpaceClassroomPage() {
         ) : (
           /* Grid de cursos — mismas tarjetas grandes para owner y student */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {visibleCourses.map((course: any) => (
+            {visibleCourses.map((course: any) => {
+              const courseEval = courseUnlockMap[course.id];
+              const courseLocked = !isOwner && !!courseEval && !courseEval.unlocked && !courseEval.bypass;
+              return (
               <div key={course.id} className="relative group">
                 <CourseBigCard
                   course={course}
                   spaceSlug={spaceSlug!}
                   progress={user ? progressByCourse.get(course.id) : undefined}
                 />
+
+                {/* Candado de desbloqueo condicional (no-owner) */}
+                {courseLocked && (
+                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm bg-zinc-900/80 text-amber-200 border-amber-500/40">
+                    <Lock className="h-3 w-3" /> Bloqueado
+                  </span>
+                )}
 
                 {/* Badge de estado (solo owner ve drafts/archived) */}
                 {isOwner && course.status !== 'published' && (
@@ -255,7 +273,8 @@ export default function AcademiaSpaceClassroomPage() {
                   </div>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

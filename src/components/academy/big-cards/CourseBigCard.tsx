@@ -87,8 +87,9 @@ export function CourseBigCard({
         ? `${durationMin}m`
         : null;
 
+  // 16:9 (1600x900) en grid para que el cover encaje sin recortes.
   const coverAspect =
-    variant === 'hero' ? 'aspect-[21/9]' : variant === 'wide' ? 'aspect-[2/1]' : 'aspect-[16/10]';
+    variant === 'hero' ? 'aspect-[21/9]' : variant === 'wide' ? 'aspect-[2/1]' : 'aspect-video';
 
   return (
     <Link
@@ -109,12 +110,23 @@ export function CourseBigCard({
           }
         >
           {course.cover_image_url ? (
-            <img
-              src={course.cover_image_url}
-              alt=""
-              className="w-full h-full object-cover motion-safe:group-hover:scale-105 transition-transform duration-700"
-              loading="lazy"
-            />
+            <>
+              {/* Fondo difuminado: rellena el espacio si la imagen no es 16:9 exacto */}
+              <img
+                src={course.cover_image_url}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50"
+                loading="lazy"
+              />
+              {/* Imagen completa: nunca se recorta (object-contain) */}
+              <img
+                src={course.cover_image_url}
+                alt=""
+                className="relative w-full h-full object-contain motion-safe:group-hover:scale-105 transition-transform duration-700"
+                loading="lazy"
+              />
+            </>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
               <span

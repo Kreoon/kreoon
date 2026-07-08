@@ -431,38 +431,46 @@ export interface BarterPackage {
   is_active: boolean;
 }
 
+// FASE 3 · Bloque B: total_sold/total_collected/total_pending vienen SIEMPRE
+// de get_client_billing_totals (RPC compartida con get_org_finance_overview,
+// misma fórmula: client_packages + fillmaker_services + fallback de
+// client_package_payments). Antes esta función solo sumaba
+// client_packages.paid_amount directo, sin fillmaker ni el fallback.
 export async function getAgencyPackageStats(_orgId: string): Promise<AgencyPackageStats> {
-  // Excluir canjes — is_barter = false
-  const { data, error } = await (supabase as any)
-    .from('client_packages')
-    .select('total_value, paid_amount, is_active, currency')
-    .eq('is_barter', false);
+  const [totals, { data: pkgData, error: pkgError }] = await Promise.all([
+    (supabase as any).rpc('get_client_billing_totals', { p_organization_id: _orgId }).then((r: any) => {
+      if (r.error) throw r.error;
+      return r.data as Array<{ currency: string; total_sold: number; total_collected: number; total_pending: number }>;
+    }),
+    (supabase as any)
+      .from('client_packages')
+      .select('is_active, currency')
+      .eq('is_barter', false),
+  ]);
 
-  if (error) throw error;
-  const pkgs = (data || []) as { total_value: number; paid_amount: number; is_active: boolean; currency: PackageCurrency }[];
+  if (pkgError) throw pkgError;
+  const pkgs = (pkgData || []) as { is_active: boolean; currency: PackageCurrency }[];
 
   const map = new Map<PackageCurrency, CurrencyStats>();
+  for (const row of totals) {
+    const cur = (row.currency || 'COP') as PackageCurrency;
+    map.set(cur, {
+      currency: cur,
+      total_sold: row.total_sold,
+      total_collected: row.total_collected,
+      total_pending: row.total_pending,
+      packages_count: 0,
+      active_packages: 0,
+    });
+  }
   for (const p of pkgs) {
-    const cur = p.currency || 'COP';
-    const existing = map.get(cur);
-    const sold = p.total_value || 0;
-    const collected = p.paid_amount || 0;
-    if (existing) {
-      existing.total_sold += sold;
-      existing.total_collected += collected;
-      existing.total_pending += sold - collected;
-      existing.packages_count += 1;
-      if (p.is_active) existing.active_packages += 1;
-    } else {
-      map.set(cur, {
-        currency: cur,
-        total_sold: sold,
-        total_collected: collected,
-        total_pending: sold - collected,
-        packages_count: 1,
-        active_packages: p.is_active ? 1 : 0,
-      });
-    }
+    const cur = (p.currency || 'COP') as PackageCurrency;
+    const existing = map.get(cur) || {
+      currency: cur, total_sold: 0, total_collected: 0, total_pending: 0, packages_count: 0, active_packages: 0,
+    };
+    existing.packages_count += 1;
+    if (p.is_active) existing.active_packages += 1;
+    map.set(cur, existing);
   }
 
   return {
@@ -472,38 +480,42 @@ export async function getAgencyPackageStats(_orgId: string): Promise<AgencyPacka
 }
 
 export async function getClientPackagesRevenue(_orgId: string): Promise<ClientPackageRevenue[]> {
-  // Excluir canjes — is_barter = false
-  const { data, error } = await (supabase as any)
-    .from('client_packages')
-    .select('client_id, total_value, paid_amount, currency, clients(name)')
-    .eq('is_barter', false);
+  const [totalsResult, { data: pkgData, error: pkgError }] = await Promise.all([
+    (supabase as any).rpc('get_client_billing_totals', { p_organization_id: _orgId }),
+    (supabase as any)
+      .from('client_packages')
+      .select('client_id, currency')
+      .eq('is_barter', false),
+  ]);
 
-  if (error) throw error;
+  if (totalsResult.error) throw totalsResult.error;
+  if (pkgError) throw pkgError;
 
-  // Key: clientId+currency — never sum across currencies
+  const totals = (totalsResult.data || []) as Array<{
+    client_id: string; client_name: string; currency: string;
+    total_sold: number; total_collected: number; total_pending: number;
+  }>;
+
   const map = new Map<string, ClientPackageRevenue>();
-  for (const row of (data || []) as any[]) {
-    const cur: PackageCurrency = row.currency || 'COP';
+  for (const row of totals) {
+    const cur = (row.currency || 'COP') as PackageCurrency;
+    const key = `${row.client_id}::${cur}`;
+    map.set(key, {
+      client_id: row.client_id,
+      client_name: row.client_name || 'Sin nombre',
+      currency: cur,
+      packages_count: 0,
+      total_sold: row.total_sold,
+      total_collected: row.total_collected,
+      total_pending: row.total_pending,
+    });
+  }
+
+  for (const row of (pkgData || []) as { client_id: string; currency: PackageCurrency }[]) {
+    const cur = (row.currency || 'COP') as PackageCurrency;
     const key = `${row.client_id}::${cur}`;
     const existing = map.get(key);
-    const sold = row.total_value || 0;
-    const collected = row.paid_amount || 0;
-    if (existing) {
-      existing.packages_count += 1;
-      existing.total_sold += sold;
-      existing.total_collected += collected;
-      existing.total_pending += sold - collected;
-    } else {
-      map.set(key, {
-        client_id: row.client_id,
-        client_name: row.clients?.name || 'Sin nombre',
-        currency: cur,
-        packages_count: 1,
-        total_sold: sold,
-        total_collected: collected,
-        total_pending: sold - collected,
-      });
-    }
+    if (existing) existing.packages_count += 1;
   }
 
   return Array.from(map.values()).sort((a, b) =>

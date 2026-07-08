@@ -1,4 +1,4 @@
-import { AppRole, AmbassadorLevel } from '@/types/database';
+import { AppRole, AmbassadorLevel, UserType } from '@/types/database';
 import { getPermissionGroup, isDeprecatedRole, isSystemRole, type PermissionGroup } from './permissionGroups';
 import { MARKETPLACE_ROLES, MARKETPLACE_ROLES_MAP } from '@/components/marketplace/roles/marketplaceRoleConfig';
 import type { MarketplaceRoleId } from '@/components/marketplace/types/marketplace';
@@ -263,7 +263,13 @@ export function getBaseRole(role: AppRole | string | null | undefined): BaseRole
   // Check if it's already a base role
   if (BASE_ROLE_LABELS[role as BaseRole]) return role as BaseRole;
   // Map legacy role to base role
-  return LEGACY_TO_BASE_ROLE[role] || 'content_creator';
+  const mapped = LEGACY_TO_BASE_ROLE[role];
+  if (mapped) return mapped;
+  // Unknown role: log it instead of silently defaulting, so bad data
+  // (typos, roles removed from the schema, etc.) surfaces instead of
+  // silently masquerading as content_creator.
+  console.warn(`[getBaseRole] Unknown role "${role}", defaulting to content_creator`);
+  return 'content_creator';
 }
 
 /** Get the display label for any role (base role → legacy mapping → group fallback) */
@@ -389,18 +395,26 @@ export function isBaseRole(role: string): role is BaseRole {
 }
 
 // Get the primary role from an array (priority order) - only returns functional roles
+//
+// FUENTE ÚNICA: esta es la tabla de prioridad canónica del proyecto
+// (orden declarado en CLAUDE.md: admin > content_creator > editor >
+// digital_strategist > creative_strategist > community_manager > client,
+// con student al final por ser un tipo de cuenta de acceso limitado).
+// useRoles.ts re-exporta esta función en vez de reimplementarla — antes
+// había 2 versiones con prioridad DISTINTA (community_manager vs
+// content_creator/editor en orden invertido).
 export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   if (roles.length === 0) return null;
 
-  // Priority order: admin first, then by functional importance
   const priority: AppRole[] = [
     'admin', 'team_leader',
-    'digital_strategist', 'creative_strategist', 'strategist',
-    'community_manager',
     'content_creator', 'creator',
     'editor',
-    'trafficker',
+    'digital_strategist', 'strategist', 'trafficker',
+    'creative_strategist',
+    'community_manager',
     'client',
+    'student',
   ] as AppRole[];
 
   for (const role of priority) {
@@ -410,6 +424,22 @@ export function getPrimaryRole(roles: AppRole[]): AppRole | null {
   }
 
   return roles[0];
+}
+
+// Determine the user type from an array of roles.
+// Priority: admin > client > student > talent (default).
+//
+// FUENTE ÚNICA: antes esta lógica estaba duplicada idéntica en
+// useRoles.ts, useAuth.tsx y authStore.ts, y NINGUNA de las 3 revisaba
+// 'student' pese a que UserType lo incluye — un usuario solo-student
+// caía silenciosamente en 'talent'.
+export function getUserType(roles: AppRole[]): UserType {
+  if (!roles || roles.length === 0) return 'talent';
+  const groups = roles.map((r) => getPermissionGroup(r));
+  if (groups.includes('admin')) return 'admin';
+  if (groups.includes('client')) return 'client';
+  if (groups.includes('student')) return 'student';
+  return 'talent';
 }
 
 // Get role badge info (label + color) for display

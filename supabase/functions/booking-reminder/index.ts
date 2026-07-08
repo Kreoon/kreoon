@@ -49,6 +49,21 @@ serve(async (req) => {
       console.error("Error fetching 24h bookings:", err24h);
     } else if (bookings24h && bookings24h.length > 0) {
       for (const booking of bookings24h) {
+        // FASE5 Bloque B: reclamar ANTES de enviar (UPDATE condicional
+        // atomico) -- antes se enviaba primero y se marcaba despues, asi
+        // que dos corridas superpuestas del cron (o un crash entre el send
+        // y el update) mandaban el mismo recordatorio dos veces.
+        const { data: claimed } = await supabase
+          .from("bookings")
+          .update({ reminder_24h_sent: true })
+          .eq("id", booking.id)
+          .eq("reminder_24h_sent", false)
+          .select("id");
+
+        if (!claimed || claimed.length === 0) {
+          continue; // otra corrida ya lo reclamo, o ya estaba enviado
+        }
+
         try {
           // Send reminder to guest
           await resend.emails.send({
@@ -72,15 +87,11 @@ serve(async (req) => {
             `,
           });
 
-          // Mark as sent
-          await supabase
-            .from("bookings")
-            .update({ reminder_24h_sent: true })
-            .eq("id", booking.id);
-
           sentCount++;
         } catch (e) {
           console.error(`Error sending 24h reminder for booking ${booking.id}:`, e);
+          // Revertir el claim para que la proxima corrida reintente el envio.
+          await supabase.from("bookings").update({ reminder_24h_sent: false }).eq("id", booking.id);
         }
       }
     }
@@ -102,6 +113,17 @@ serve(async (req) => {
       console.error("Error fetching 1h bookings:", err1h);
     } else if (bookings1h && bookings1h.length > 0) {
       for (const booking of bookings1h) {
+        const { data: claimed } = await supabase
+          .from("bookings")
+          .update({ reminder_1h_sent: true })
+          .eq("id", booking.id)
+          .eq("reminder_1h_sent", false)
+          .select("id");
+
+        if (!claimed || claimed.length === 0) {
+          continue;
+        }
+
         try {
           // Send reminder to guest
           await resend.emails.send({
@@ -140,15 +162,10 @@ serve(async (req) => {
             `,
           });
 
-          // Mark as sent
-          await supabase
-            .from("bookings")
-            .update({ reminder_1h_sent: true })
-            .eq("id", booking.id);
-
           sentCount++;
         } catch (e) {
           console.error(`Error sending 1h reminder for booking ${booking.id}:`, e);
+          await supabase.from("bookings").update({ reminder_1h_sent: false }).eq("id", booking.id);
         }
       }
     }

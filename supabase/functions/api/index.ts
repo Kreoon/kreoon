@@ -253,13 +253,22 @@ serve(async (req) => {
     // Content endpoints
     if (path === "/content") {
       if (req.method === "GET") {
+        // FASE 1: sin filtro de org devolvía contenido de TODAS las orgs.
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        if (orgIds.length === 0) {
+          return new Response(
+            JSON.stringify({ data: [], count: 0 }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         const status = url.searchParams.get("status");
         const client_id = url.searchParams.get("client_id");
         const creator_id = url.searchParams.get("creator_id");
         const limit = parseInt(url.searchParams.get("limit") || "50");
         const offset = parseInt(url.searchParams.get("offset") || "0");
 
-        let query = supabase.from("content").select("*");
+        let query = supabase.from("content").select("*").in("organization_id", orgIds);
 
         if (status) query = query.eq("status", status);
         if (client_id) query = query.eq("client_id", client_id);
@@ -286,15 +295,24 @@ serve(async (req) => {
           );
         }
 
+        // FASE 1: organization_id del body SIEMPRE debe ser una org del
+        // caller (antes solo se validaba si venía client_id).
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        if (orgIds.length === 0) {
+          return new Response(
+            JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (!body.organization_id || !orgIds.includes(body.organization_id)) {
+          return new Response(
+            JSON.stringify({ error: "organization_id debe ser una de tus organizaciones." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         // Validate that client_id belongs to one of the caller's organizations
         if (body.client_id) {
-          const orgIds = await getOrgIdsForUser(supabase, callerUserId);
-          if (orgIds.length === 0) {
-            return new Response(
-              JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
-              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
           const { data: clientRow, error: clientErr } = await supabase
             .from('clients')
             .select('organization_id')
@@ -324,15 +342,31 @@ serve(async (req) => {
       const contentId = contentMatch[1];
 
       if (req.method === "PATCH") {
+        // FASE 1: sin importar si body.client_id venía o no, el contentId
+        // en sí debe pertenecer a una org del caller — antes se podía
+        // editar cualquier contenido de cualquier org con solo omitir
+        // client_id del body.
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        if (orgIds.length === 0) {
+          return new Response(
+            JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        const { data: existingContent, error: existingErr } = await supabase
+          .from("content")
+          .select("organization_id")
+          .eq("id", contentId)
+          .single();
+        if (existingErr || !existingContent || !orgIds.includes(existingContent.organization_id)) {
+          return new Response(
+            JSON.stringify({ error: "No tienes acceso a este contenido." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         // Validate that client_id (if being updated) belongs to caller's orgs
         if (body.client_id) {
-          const orgIds = await getOrgIdsForUser(supabase, callerUserId);
-          if (orgIds.length === 0) {
-            return new Response(
-              JSON.stringify({ error: "No tienes organizaciones asociadas a esta API key." }),
-              { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
           const { data: clientRow, error: clientErr } = await supabase
             .from('clients')
             .select('organization_id')
@@ -362,6 +396,7 @@ serve(async (req) => {
       }
 
       if (req.method === "GET") {
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
         const { data, error } = await supabase
           .from("content")
           .select("*")
@@ -369,6 +404,12 @@ serve(async (req) => {
           .single();
 
         if (error) throw error;
+        if (!orgIds.includes(data.organization_id)) {
+          return new Response(
+            JSON.stringify({ error: "No tienes acceso a este contenido." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
 
         return new Response(
           JSON.stringify({ data }),
@@ -402,6 +443,16 @@ serve(async (req) => {
       }
 
       if (req.method === "POST") {
+        // FASE 1: organization_id del body SIEMPRE debe ser una org del
+        // caller — antes se insertaba el body crudo sin validar.
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        if (!body.organization_id || !orgIds.includes(body.organization_id)) {
+          return new Response(
+            JSON.stringify({ error: "organization_id debe ser una de tus organizaciones." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         const { data, error } = await supabase.from("clients").insert(body).select().single();
         if (error) throw error;
 
@@ -510,6 +561,22 @@ TONO: ${body.tone || "Profesional"}`;
       console.log("Webhook received:", body);
 
       if (body.content_id && body.new_status) {
+        // FASE 1: content_id debe pertenecer a una org del caller —
+        // antes cualquiera con API key válida cambiaba status de
+        // cualquier content_id de cualquier org.
+        const orgIds = await getOrgIdsForUser(supabase, callerUserId);
+        const { data: existingContent, error: existingErr } = await supabase
+          .from("content")
+          .select("organization_id")
+          .eq("id", body.content_id)
+          .single();
+        if (existingErr || !existingContent || !orgIds.includes(existingContent.organization_id)) {
+          return new Response(
+            JSON.stringify({ error: "No tienes acceso a este contenido." }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         const { error } = await supabase
           .from("content")
           .update({ status: body.new_status })

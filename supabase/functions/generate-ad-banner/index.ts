@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { getModuleAIConfig } from "../_shared/get-module-ai-config.ts";
+import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 import {
   checkAndDeductTokens,
   corsHeaders,
@@ -1428,6 +1429,17 @@ serve(async (req) => {
       });
     }
 
+    // FASE 1: exigir auth real + membresía de orgId — antes cero auth,
+    // cualquiera generaba banners (200 tokens/ea) contra cualquier org.
+    const authHeader = req.headers.get("Authorization");
+    const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
+    const { data: { user: callerUser } = { user: null } } = authToken
+      ? await supabase.auth.getUser(authToken)
+      : { data: { user: null } };
+    const membershipRejection = await assertOrgMembership(req, supabase, callerUser?.id, orgId);
+    if (membershipRejection) return membershipRejection;
+    const callerUserId = callerUser!.id;
+
     const { data: product, error: productError } = await supabase
       .from("ad_generator_products").select("name, description, crm_product_id").eq("id", productId).single();
 
@@ -1458,7 +1470,7 @@ serve(async (req) => {
 
     // ── GENERATE COPY ONLY (legacy action, kept for backward compat) ──
     if (action === "generate-copy-only") {
-      const tokenCheck = await checkAndDeductTokens(supabase, orgId, "ads.generate_copy");
+      const tokenCheck = await checkAndDeductTokens(supabase, orgId, callerUserId, "ads.generate_copy");
       if (!tokenCheck.allowed) return insufficientTokensResponse(tokenCheck);
       let aiConfig;
       try { aiConfig = await getModuleAIConfig(supabase, orgId, "ad_generator"); }
@@ -1477,7 +1489,7 @@ serve(async (req) => {
     }
 
     // ── GENERATE (full banner with text rendered in image) ──
-    const tokenCheck = await checkAndDeductTokens(supabase, orgId, "ads.generate_banner");
+    const tokenCheck = await checkAndDeductTokens(supabase, orgId, callerUserId, "ads.generate_banner");
     if (!tokenCheck.allowed) return insufficientTokensResponse(tokenCheck);
 
     let aiConfig;
@@ -1667,7 +1679,7 @@ serve(async (req) => {
       // Log usage
       try {
         await supabase.from("ai_usage_logs").insert({
-          organization_id: orgId, user_id: body.user_id || "system",
+          organization_id: orgId, user_id: callerUserId,
           provider: "fal", model: "nano-banana-pro",
           module: "ad_generator", action: "generate_banner", success: true,
         });

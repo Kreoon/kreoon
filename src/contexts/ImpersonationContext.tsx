@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { AppRole, Profile } from '@/types/database';
@@ -78,9 +78,13 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
   const isRootAdmin = profile?.email === ROOT_ADMIN_EMAIL;
 
   // Calculate effective values based on impersonation state
-  const effectiveRoles: AppRole[] = isImpersonating && impersonationTarget.role 
-    ? [impersonationTarget.role] 
-    : realRoles;
+  // useMemo propio: el array [impersonationTarget.role] es un literal nuevo
+  // en cada render y rompia la estabilidad del value memoizado de abajo
+  // mientras se esta impersonando.
+  const effectiveRoles: AppRole[] = useMemo(
+    () => (isImpersonating && impersonationTarget.role ? [impersonationTarget.role] : realRoles),
+    [isImpersonating, impersonationTarget.role, realRoles]
+  );
     
   const effectiveClientId = isImpersonating 
     ? impersonationTarget.clientId 
@@ -200,20 +204,29 @@ export function ImpersonationProvider({ children }: { children: ReactNode }) {
     }
   }, [isRootAdmin]);
 
+  // FASE4 B4: sin esto, cada render de ImpersonationProvider creaba un
+  // objeto value nuevo -> todo consumidor de useImpersonation()
+  // re-renderizaba aunque nada relevante hubiera cambiado.
+  const value = useMemo(() => ({
+    isRootAdmin,
+    isImpersonating,
+    impersonationTarget,
+    effectiveRoles,
+    effectiveClientId,
+    effectiveUserId,
+    isReadOnlyMode,
+    impersonationKey,
+    startImpersonation,
+    stopImpersonation,
+    canPerformAction,
+  }), [
+    isRootAdmin, isImpersonating, impersonationTarget, effectiveRoles,
+    effectiveClientId, effectiveUserId, isReadOnlyMode, impersonationKey,
+    startImpersonation, stopImpersonation, canPerformAction,
+  ]);
+
   return (
-    <ImpersonationContext.Provider value={{
-      isRootAdmin,
-      isImpersonating,
-      impersonationTarget,
-      effectiveRoles,
-      effectiveClientId,
-      effectiveUserId,
-      isReadOnlyMode,
-      impersonationKey,
-      startImpersonation,
-      stopImpersonation,
-      canPerformAction,
-    }}>
+    <ImpersonationContext.Provider value={value}>
       {children}
     </ImpersonationContext.Provider>
   );

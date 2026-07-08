@@ -25,12 +25,14 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify webhook secret if provided
+    // FASE5 A1: fail-closed -- si expectedSecret no esta configurado, antes
+    // se saltaba la verificacion entera (cualquiera podia postear eventos de
+    // stream sin secreto). Ahora sin secret configurado, se rechaza todo.
     const webhookSecret = req.headers.get('x-webhook-secret');
     const expectedSecret = Deno.env.get('STREAMING_WEBHOOK_SECRET');
-    
-    if (expectedSecret && webhookSecret !== expectedSecret) {
-      console.error('Invalid webhook secret');
+
+    if (!expectedSecret || webhookSecret !== expectedSecret) {
+      console.error('Invalid or missing webhook secret');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

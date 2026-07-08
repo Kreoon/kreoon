@@ -184,16 +184,19 @@ export default function AcademiaSpaceHomePage() {
         enabled={!!plugins?.meta_pixel_enabled}
       />
 
-      {/* HERO */}
+      {/* HERO — banner 1800x900 (2:1) que se funde con el fondo arriba y abajo */}
       <div
-        className="relative h-64 md:h-80 overflow-hidden"
+        className="relative h-72 md:h-96 overflow-hidden"
         style={{
           background: space.cover_image_url
-            ? `url(${space.cover_image_url}) center/cover`
+            ? `url(${space.cover_image_url}) center ${space.cover_position ?? 50}% / cover no-repeat`
             : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, #0a0a0f)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent" />
+        {/* Degradado superior: funde el borde de arriba con la página */}
+        <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
+        {/* Degradado inferior: funde el borde de abajo con la página */}
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent pointer-events-none" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20 relative">
@@ -215,7 +218,7 @@ export default function AcademiaSpaceHomePage() {
             </div>
           )}
           <div className="flex-1 min-w-0 pb-1">
-            <h1 className="text-3xl md:text-5xl font-extrabold mb-2 truncate text-white">
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-3 text-white leading-[1.1] text-balance">
               {space.name}
             </h1>
             <div className="flex items-center gap-2 text-sm text-zinc-300 flex-wrap">
@@ -235,13 +238,17 @@ export default function AcademiaSpaceHomePage() {
                 {space.plan_slug === 'pro' ? '✨ Pro' : 'Hobby'}
               </span>
             </div>
-            {space.description && (
-              <p className="text-sm md:text-base text-zinc-300 mt-3 max-w-2xl line-clamp-2 leading-relaxed">
-                {space.description}
-              </p>
-            )}
           </div>
-          <div className="flex gap-2 flex-shrink-0">
+        </div>
+
+        {/* Descripción + acciones — fila propia con aire */}
+        <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 mb-8">
+          {space.description && (
+            <p className="text-sm md:text-base text-zinc-300 max-w-2xl line-clamp-2 leading-relaxed lg:flex-1">
+              {space.description}
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-2 lg:flex-shrink-0 lg:ml-auto">
             {!isOwner && !isMember ? (
               <Button
                 onClick={() => setJoinOpen(true)}

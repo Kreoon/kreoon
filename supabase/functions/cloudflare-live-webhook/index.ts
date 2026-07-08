@@ -34,6 +34,19 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // FASE5 A1: el header cf-webhook-auth se declaraba en CORS pero nunca se
+  // comprobaba -- cualquiera podia forzar el estado de cualquier stream
+  // (marcarlo ended/live/errored) con un POST directo. Fail-closed: si el
+  // secret no esta configurado, se rechaza todo en vez de aceptar sin validar.
+  const providedAuth = req.headers.get("cf-webhook-auth");
+  if (!CLOUDFLARE_WEBHOOK_SECRET || providedAuth !== CLOUDFLARE_WEBHOOK_SECRET) {
+    console.warn("[cloudflare-live-webhook] Rejected: invalid or missing cf-webhook-auth header");
+    return new Response(
+      JSON.stringify({ error: "unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

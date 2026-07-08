@@ -506,6 +506,12 @@ const AcademiaSpaceHomePage = lazyWithRetry(
 const AcademiaSpaceClassroomPage = lazyWithRetry(
   () => import("./pages/academia/AcademiaSpaceClassroomPage"),
 );
+const AcademiaChallengesPage = lazyWithRetry(
+  () => import("./pages/academia/AcademiaChallengesPage"),
+);
+const AcademiaChallengeDetailPage = lazyWithRetry(
+  () => import("./pages/academia/AcademiaChallengeDetailPage"),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -1596,6 +1602,15 @@ function AppRoutes() {
             </RequireAcademyAccess>
           }
         />
+        {/* Deep-link a un post (notificaciones): abre el feed y resalta el post */}
+        <Route
+          path="/academia/:spaceSlug/post/:postId"
+          element={
+            <RequireAcademyAccess>
+              <AcademiaSpaceFeedPage />
+            </RequireAcademyAccess>
+          }
+        />
         <Route
           path="/academia/:spaceSlug/dm"
           element={
@@ -1634,6 +1649,23 @@ function AppRoutes() {
             <ProtectedRoute allowNoRoles>
               <AcademiaSpaceAdminPage />
             </ProtectedRoute>
+          }
+        />
+        {/* Academia v2 — Challenges */}
+        <Route
+          path="/academia/:spaceSlug/retos"
+          element={
+            <RequireAcademyAccess>
+              <AcademiaChallengesPage />
+            </RequireAcademyAccess>
+          }
+        />
+        <Route
+          path="/academia/:spaceSlug/retos/:challengeSlug"
+          element={
+            <RequireAcademyAccess>
+              <AcademiaChallengeDetailPage />
+            </RequireAcademyAccess>
           }
         />
         {/* Academia v3 — Members + Calendar OAuth callbacks */}

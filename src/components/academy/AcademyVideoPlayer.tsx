@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ReactPlayer from 'react-player';
 import Hls from 'hls.js';
+import * as playerjsModule from 'player.js';
 import type { AcademyLesson } from '@/types/academy';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface AcademyVideoPlayerProps {
   lesson: AcademyLesson;
@@ -12,8 +14,8 @@ export interface AcademyVideoPlayerProps {
   onMidlessonQuizTrigger?: (quizId: string) => void;
 }
 
-const BUNNY_CDN = (import.meta as any).env?.VITE_BUNNY_STREAM_CDN_URL ?? '';
-const BUNNY_LIB = (import.meta as any).env?.VITE_BUNNY_LIBRARY_ID ?? '';
+// player.js es un modulo UMD (module.exports = playerjs); soporta ambas formas de interop.
+const PlayerJS: any = (playerjsModule as any).Player ?? (playerjsModule as any).default?.Player;
 const SAVE_INTERVAL_S = 10;
 const noCtxMenu = (e: React.MouseEvent) => e.preventDefault();
 
@@ -49,24 +51,9 @@ export function AcademyVideoPlayer({
   const resumeFrom = getSavedPosition(lesson);
   const shared = { lesson, accentColor, resumeFrom, onProgress, onComplete, onMidlessonQuizTrigger };
 
-  // Bunny HLS directo
-  if (video_source === 'bunny' && video_bunny_id && BUNNY_CDN)
-    return <NativePlayer {...shared} videoUrl={`${BUNNY_CDN}/${video_bunny_id}/playlist.m3u8`} />;
-
-  // Bunny iframe embed (player nativo de Bunny)
+  // Bunny: URL de embed firmada server-side (nunca se expone video_bunny_id crudo al cliente)
   if (video_source === 'bunny' && video_bunny_id)
-    return (
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black" onContextMenu={noCtxMenu}>
-        <iframe
-          src={`https://iframe.mediadelivery.net/embed/${BUNNY_LIB}/${video_bunny_id}?autoplay=false&responsive=true&preload=true`}
-          loading="lazy"
-          allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 h-full w-full border-0"
-          title={lesson.title}
-        />
-      </div>
-    );
+    return <BunnyEmbedPlayer {...shared} lessonId={lesson.id} />;
 
   if (video_source === 'url' && video_url)    return <NativePlayer {...shared} videoUrl={video_url} />;
   if (video_source === 'youtube' && video_url) return <YouTubePlayer {...shared} url={video_url} />;
@@ -96,6 +83,109 @@ function Unsupported() {
   return (
     <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm">
       Origen de video no soportado o sin configurar
+    </div>
+  );
+}
+
+// ─── Bunny Embed Player (URL firmada server-side + tracking via player.js) ────
+interface BunnyEmbedProps {
+  lesson: AcademyLesson; lessonId: string; accentColor: string; resumeFrom: number;
+  onProgress?: (pct: number, last: number) => void;
+  onComplete?: () => void;
+  onMidlessonQuizTrigger?: (id: string) => void;
+}
+
+function BunnyEmbedPlayer({ lesson, lessonId, resumeFrom, onProgress, onComplete, onMidlessonQuizTrigger }: BunnyEmbedProps) {
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const completedRef = useRef(false);
+  const quizDoneRef = useRef(false);
+  const lastSavedRef = useRef(0);
+  const effectiveResume = Math.max(resumeFrom, readPosCache(lessonId));
+
+  const cbProgress = useRef(onProgress);
+  const cbComplete = useRef(onComplete);
+  const cbMid = useRef(onMidlessonQuizTrigger);
+  const lessonRef = useRef(lesson);
+  useEffect(() => { cbProgress.current = onProgress; }, [onProgress]);
+  useEffect(() => { cbComplete.current = onComplete; }, [onComplete]);
+  useEffect(() => { cbMid.current = onMidlessonQuizTrigger; }, [onMidlessonQuizTrigger]);
+  useEffect(() => { lessonRef.current = lesson; }, [lesson]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setEmbedUrl(null);
+    setError(false);
+    completedRef.current = false; quizDoneRef.current = false; lastSavedRef.current = 0;
+
+    supabase.functions.invoke('academy-signed-video-url', { body: { lesson_id: lessonId } })
+      .then(({ data, error: fnError }) => {
+        if (cancelled) return;
+        if (fnError || !data?.embed_url) { setError(true); return; }
+        setEmbedUrl(data.embed_url);
+      })
+      .catch(() => { if (!cancelled) setError(true); });
+
+    return () => { cancelled = true; };
+  }, [lessonId]);
+
+  useEffect(() => {
+    if (!embedUrl || !PlayerJS || !iframeRef.current) return;
+
+    const player = new PlayerJS(iframeRef.current);
+    let disposed = false;
+
+    player.on('ready', () => {
+      if (disposed) return;
+      if (effectiveResume > 5) player.setCurrentTime(effectiveResume);
+    });
+
+    player.on('timeupdate', ({ seconds, duration }: { seconds: number; duration: number }) => {
+      if (disposed || !duration || seconds - lastSavedRef.current < SAVE_INTERVAL_S) return;
+      const pct = (seconds / duration) * 100;
+      cbProgress.current?.(pct, Math.floor(seconds));
+      writePosCache(lessonRef.current.id, Math.floor(seconds));
+      lastSavedRef.current = seconds;
+      const l = lessonRef.current;
+      if (!quizDoneRef.current && l.has_midlesson_quiz && l.midlesson_quiz_timestamp_seconds && l.end_lesson_quiz_id && seconds >= l.midlesson_quiz_timestamp_seconds) {
+        quizDoneRef.current = true;
+        player.pause();
+        cbMid.current?.(l.end_lesson_quiz_id);
+      }
+      if (!completedRef.current && pct >= 85) { completedRef.current = true; cbComplete.current?.(); }
+    });
+
+    player.on('ended', () => {
+      if (!disposed && !completedRef.current) { completedRef.current = true; cbComplete.current?.(); }
+    });
+
+    return () => { disposed = true; };
+  }, [embedUrl, effectiveResume]);
+
+  if (error) return (
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm">
+      No se pudo cargar el video (¿leccion bloqueada?)
+    </div>
+  );
+
+  if (!embedUrl) return (
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm animate-pulse">
+      Cargando video...
+    </div>
+  );
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black" onContextMenu={noCtxMenu}>
+      <iframe
+        ref={iframeRef}
+        src={embedUrl}
+        loading="lazy"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+        allowFullScreen
+        className="absolute inset-0 h-full w-full border-0"
+        title={lesson.title}
+      />
     </div>
   );
 }

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { UnifiedTalentMember } from '@/types/unifiedTalent.types';
 import { MARKETPLACE_CREATORS_QUERY_KEY } from '@/hooks/useMarketplaceCreators';
@@ -22,82 +21,24 @@ export function useUnifiedTalent(orgId: string | undefined) {
 
 export function useToggleAmbassador(orgId: string | undefined) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ userId, currentlyAmbassador }: { userId: string; currentlyAmbassador: boolean }) => {
       if (!orgId) throw new Error('No org');
       const newStatus = !currentlyAmbassador;
-      const newLevel = newStatus ? 'bronze' : 'none';
 
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          is_ambassador: newStatus,
-          ambassador_celebration_pending: newStatus,
-        })
-        .eq('id', userId);
-      if (profileError) throw profileError;
-
-      // Upsert/deactivate badge
-      if (newStatus) {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .upsert(
-            {
-              organization_id: orgId,
-              user_id: userId,
-              badge: 'ambassador',
-              level: 'bronze',
-              is_active: true,
-              granted_at: new Date().toISOString(),
-              granted_by: user?.id || null,
-            },
-            { onConflict: 'organization_id,user_id,badge' }
-          );
-        if (badgeError) throw badgeError;
-      } else {
-        const { error: badgeError } = await supabase
-          .from('organization_member_badges')
-          .update({
-            is_active: false,
-            revoked_at: new Date().toISOString(),
-            revoked_by: user?.id || null,
-          })
-          .eq('organization_id', orgId)
-          .eq('user_id', userId)
-          .eq('badge', 'ambassador');
-        if (badgeError) throw badgeError;
-      }
-
-      // Update member level
-      const { error: memberError } = await supabase
-        .from('organization_members')
-        .update({ ambassador_level: newLevel })
-        .eq('organization_id', orgId)
-        .eq('user_id', userId);
-      if (memberError) throw memberError;
-
-      // Upsert/remove ambassador role
-      if (newStatus) {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .upsert(
-            { organization_id: orgId, user_id: userId, role: 'ambassador' },
-            { onConflict: 'organization_id,user_id,role' }
-          );
-        if (roleError) throw roleError;
-      } else {
-        const { error: roleError } = await supabase
-          .from('organization_member_roles')
-          .delete()
-          .eq('organization_id', orgId)
-          .eq('user_id', userId)
-          .eq('role', 'ambassador');
-        if (roleError) throw roleError;
-      }
+      // FASE5 Bloque C: antes eran 4 escrituras secuenciales sin transaccion
+      // (profiles, organization_member_badges, organization_members,
+      // organization_member_roles). Ahora todo corre atomico en un solo RPC
+      // (mismo usado en CreatorsContent.tsx).
+      const { data, error } = await (supabase as any).rpc('toggle_ambassador_status', {
+        p_organization_id: orgId,
+        p_user_id: userId,
+        p_new_status: newStatus,
+      });
+      if (error) throw error;
+      if (data && data.success === false) throw new Error(data.error || 'Failed');
 
       return { newStatus, userId };
     },

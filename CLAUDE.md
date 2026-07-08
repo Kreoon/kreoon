@@ -9,6 +9,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Contexto**: Kreoon es una plataforma SaaS de marketplace creativo para LATAM
 - **Prioridades**: Código limpio, tipado estricto y mejores prácticas
 
+## Context7 — Documentación actualizada
+
+**REGLA OBLIGATORIA:** Antes de escribir código que use cualquier librería
+del stack, consultar Context7 para obtener la documentación actualizada:
+
+- TanStack Query v5 → query-docs("tanstack query v5")
+- Supabase JS → query-docs("supabase javascript")
+- shadcn/ui → query-docs("shadcn ui")
+- React Hook Form → query-docs("react hook form")
+- Deno APIs → query-docs("deno")
+- Framer Motion → query-docs("framer motion")
+
+Nunca asumir que la sintaxis del training data es correcta — siempre verificar.
+
 ## Project Overview
 
 **KREOON** is a full-stack Progressive Web Application (PWA) that serves as a creative operations management system - an "operating system for creators." It's a multi-tenant SaaS platform managing content creation, talent management, client relationships, team collaboration, social media portfolios, live streaming, and AI-powered features.
@@ -75,7 +89,7 @@ Organizations (isolated tenants)
 
 ### Role-Based Access Control (RBAC)
 
-**7 Roles** (defined in `src/lib/roles.ts`):
+**8 Roles** (single source of truth: `src/lib/roles.ts`):
 1. `admin` - Full system access
 2. `content_creator` - Audiovisual and written content creation
 3. `editor` - Video/audio editing and post-production
@@ -83,8 +97,11 @@ Organizations (isolated tenants)
 5. `creative_strategist` - Creative direction and brand concept
 6. `community_manager` - Community and social media management
 7. `client` - Client/customer access (review and approval)
+8. `student` - Global role, Academia-only access, no organization required (express registration, no org membership)
 
-**Role Priority**: admin > content_creator > editor > digital_strategist > creative_strategist > community_manager > client
+**Role Priority**: admin > content_creator > editor > digital_strategist > creative_strategist > community_manager > client > student
+
+Use canonical role keys everywhere (`content_creator`, not the legacy `creator`) — legacy values still appear in some older `organization_members.role` rows and must be mapped, not perpetuated in new code.
 
 **Ambassador Badge System** (separate from roles):
 - Bronze, Silver, Gold levels
@@ -136,6 +153,12 @@ supabase/
 - Multi-provider fallback: Perplexity → Gemini → OpenAI
 - AI functions: `multi-ai`, `content-ai`, `board-ai`, `portfolio-ai`, `up-ai-copilot`
 - Prompts stored in `src/lib/` directory
+- **ADN Recargado (Product DNA research)**: el pipeline real y único en producción es
+  `generate-full-research` (21 fases, self-invocation chain, Perplexity+Firecrawl+Gemini+Mistral,
+  invocado desde `src/lib/services/product-dna.service.ts`). `adn-orchestrator`, `adn-continue` y
+  `adn-orchestrator-lite` eran un árbol paralelo sin ningún caller real (uno de ellos apuntaba a
+  `adn-research-v3`, función que nunca existió) — se eliminaron de producción y del repo el 2026-07-05.
+  No recrear ese árbol sin confirmar antes que hace falta.
 
 ### Edge Function Development
 - All functions in `supabase/functions/[function-name]/`
@@ -144,10 +167,12 @@ supabase/
 - Deno runtime (TypeScript native)
 
 ### Bunny CDN Integration
-- Video upload: `bunny-upload`, `bunny-raw-upload`, `bunny-portfolio-upload`, `bunny-chat-upload`
+- Video upload: `bunny-upload`, `bunny-raw-upload`, `bunny-portfolio-upload`
 - Video download: `bunny-download`, `bunny-raw-download`, `bunny-download-zip`
 - Management: `bunny-delete`, `bunny-raw-delete`, `bunny-status`, `bunny-storage`, `bunny-thumbnail`
 - Webhooks: `bunny-webhook` (handles CDN callbacks)
+- Academia (librería Bunny separada): `academy-video-upload-init` (credenciales TUS de subida, solo el instructor del curso), `academy-signed-video-url` (URL firmada de reproducción para lecciones desbloqueadas)
+- **CRÍTICO**: la librería de Bunny de Academia usa el secret `BUNNY_ACADEMY_LIBRARY_ID`, NUNCA `BUNNY_LIBRARY_ID` — ese nombre ya lo usan 15+ funciones del módulo de contenido (`bunny-*`, `upload-campaign-media`, `cleanup-expired-stories`, etc.) apuntando a la librería original. Pisar `BUNNY_LIBRARY_ID` con el valor de Academia rompe la subida de video en TODA la plataforma, no solo Academia (incidente real: 2026-07-06)
 
 ### Component Patterns
 - shadcn/ui components in `src/components/ui/`
@@ -163,6 +188,11 @@ supabase/
 - Supabase Realtime for live updates
 - Chat with presence and reactions
 - Real-time board updates
+
+### Payments
+- **Marketplace / paquetes de cliente / hire directo**: Stripe es el ÚNICO gateway. `wompi-webhook` y `mercadopago-webhook` existen en el repo pero están deprecados para este flujo — no agregar lógica nueva ahí.
+- **Academia (venta de cursos)**: gateway independiente — Hotmart co-producción sigue activo (`hotmart-webhook`, feature reciente), además de checkout intents propios (`academy_checkout_intents`). No es lo mismo que el financiero general — no asumir que "deprecar Wompi/MP" aplica a Academia.
+- **Payout a talento**: manual — el admin registra el método (DolarApp/Mercury) y marca como pagado con comprobante; no hay automatización de payout saliente.
 
 ## Important Notes
 
@@ -180,9 +210,10 @@ supabase/
 
 ### Security
 - JWT verification configured per edge function
-- Most AI/webhook functions have `verify_jwt = false` for external access
+- Most AI/webhook functions have `verify_jwt = false` for external access — cuando es así, la función DEBE validar membresía/ownership internamente (patrón `assertOrgMembership` en `_shared/assertOrgMembership.ts`, usado por `content-ai`, `board-ai`, `up-ai-copilot`, `generate-script`, `portfolio-ai`, `generate-full-research`, `generate-project-dna`, `generate-ad-banner`, `intelligence-gatherer`, `script-chat`, `restream-api`, `bunny-raw-download`, `bunny-raw-zip` — antes de esto, un usuario autenticado de CUALQUIER organización podía invocarlas contra datos de otra org)
 - Protected operations (upload, delete, admin) have `verify_jwt = true`
 - RLS policies on all tables
+- Streaming (chat, viewers, reactions): RLS escopeado por sesión/ownership real, no `USING(true)`; webhooks de streaming (`streaming-webhook`, `streaming-webhook-v2`, `cloudflare-live-webhook`) validan firma fail-closed (si el secret no está seteado, rechazan — no dejan pasar)
 
 ### Styling
 - Dark mode support (class-based theme switching)
