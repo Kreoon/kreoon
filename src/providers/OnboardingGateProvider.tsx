@@ -30,7 +30,6 @@ const PUBLIC_ROUTES = [
   '/org/',
   '/company/',
   '/profile/',
-  '/book/',
 ];
 
 interface OnboardingGateProviderProps {
