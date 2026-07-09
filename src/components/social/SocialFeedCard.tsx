@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
-import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause, Loader2, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ExpandableText } from '@/components/ui/expandable-text';
 import { HLSVideoPlayer, HLSVideoPlayerRef } from '@/components/video/HLSVideoPlayer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
+import { ReactionButton, ReactionType } from '@/components/social/ReactionButton';
+import { FollowButton } from '@/components/social/FollowButton';
 
 // Check if URL is a Bunny embed URL
 function isBunnyEmbed(url: string): boolean {
@@ -53,6 +55,11 @@ export interface SocialFeedItem {
   clientName?: string | null;
   createdAt?: string;
   canInteract?: boolean;
+  /** Post con reacciones tipadas (feed_reactions) en vez de like binario */
+  supportsReactions?: boolean;
+  myReaction?: ReactionType | null;
+  reactionsCount?: number;
+  isSaved?: boolean;
 }
 
 interface FloatingHeart {
@@ -66,6 +73,8 @@ interface SocialFeedCardProps {
   isActive: boolean;
   audioUnlocked: boolean;
   onLike?: () => void;
+  onReact?: (type: ReactionType | null) => void;
+  onSave?: () => void;
   onComment?: () => void;
   onShare?: () => void;
   onView?: () => void;
@@ -111,6 +120,8 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       isActive,
       audioUnlocked,
       onLike,
+      onReact,
+      onSave,
       onComment,
       onShare,
       onView,
@@ -216,10 +227,11 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       const clientY = 'touches' in e ? e.changedTouches?.[0]?.clientY || 0 : e.clientY;
 
       if (now - lastTap < 300) {
-        // Double tap - like and show floating heart
+        // Double tap - reaccionar (love) y mostrar floating heart
         spawnFloatingHeart(clientX, clientY);
-        if (canInteract && !item.isLiked && onLike) {
-          onLike();
+        if (canInteract && !item.isLiked) {
+          if (item.supportsReactions && onReact) onReact('love');
+          else onLike?.();
         }
         return;
       }
@@ -363,36 +375,71 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
 
         {/* Right side actions - TikTok style */}
         <div className="absolute right-3 bottom-28 z-20 flex flex-col items-center gap-4">
-          {/* Creator avatar */}
+          {/* Creator avatar + Follow */}
           {item.creatorAvatar && onProfileClick && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onProfileClick(); }}
-              className="relative mb-2"
-            >
-              <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg">
-                <AvatarImage src={item.creatorAvatar} />
-                <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-sm font-bold">
-                  {item.creatorName?.charAt(0)?.toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </button>
+            <div className="flex flex-col items-center gap-1.5 mb-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onProfileClick(); }}
+                className="relative"
+              >
+                <Avatar className="h-12 w-12 ring-2 ring-white shadow-lg">
+                  <AvatarImage src={item.creatorAvatar} />
+                  <AvatarFallback className="bg-gradient-to-br from-pink-500 to-purple-600 text-white text-sm font-bold">
+                    {item.creatorName?.charAt(0)?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+              {item.creatorId && (
+                <div onClick={(e) => e.stopPropagation()}>
+                  <FollowButton profileId={item.creatorId} size="icon" iconOnly className="h-8 w-8 rounded-full p-0 bg-primary" />
+                </div>
+              )}
+            </div>
           )}
 
-          {/* Like */}
-          {canInteract && onLike && (
+          {/* Reaccion (5 tipos) o like binario legacy */}
+          {canInteract && item.supportsReactions ? (
+            <div className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
+              <div className="p-3 rounded-full bg-black/40">
+                <ReactionButton
+                  currentReaction={item.myReaction}
+                  onReact={(type) => onReact?.(type)}
+                  size="lg"
+                />
+              </div>
+              <span className="text-white text-xs font-semibold drop-shadow-lg">
+                {formatCount(item.reactionsCount ?? item.likesCount)}
+              </span>
+            </div>
+          ) : canInteract && onLike && (
             <button
               onClick={(e) => { e.stopPropagation(); onLike(); }}
               className="flex flex-col items-center gap-1"
             >
               <div className={cn(
                 "p-3 rounded-full transition-all duration-200 active:scale-90",
-                item.isLiked 
-                  ? "bg-red-500 text-white" 
+                item.isLiked
+                  ? "bg-red-500 text-white"
                   : "bg-black/40 text-white"
               )}>
                 <Heart className="h-7 w-7" fill={item.isLiked ? "currentColor" : "none"} />
               </div>
               <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(item.likesCount)}</span>
+            </button>
+          )}
+
+          {/* Guardar */}
+          {canInteract && onSave && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onSave(); }}
+              className="flex flex-col items-center gap-1"
+            >
+              <div className={cn(
+                "p-3 rounded-full transition-all duration-200 active:scale-90",
+                item.isSaved ? "bg-primary text-white" : "bg-black/40 text-white"
+              )}>
+                <Bookmark className="h-7 w-7" fill={item.isSaved ? "currentColor" : "none"} />
+              </div>
             </button>
           )}
 

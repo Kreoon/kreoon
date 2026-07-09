@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { Loader2, UserPlus, UserCheck } from 'lucide-react';
 
 interface FollowButtonProps {
@@ -11,6 +12,8 @@ interface FollowButtonProps {
   variant?: 'default' | 'outline' | 'ghost';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
+  /** Solo icono (+ / check), sin texto — para rails compactos como el feed TikTok-style */
+  iconOnly?: boolean;
 }
 
 export function FollowButton({
@@ -19,6 +22,7 @@ export function FollowButton({
   variant = 'default',
   size = 'default',
   className,
+  iconOnly = false,
 }: FollowButtonProps) {
   const { user } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
@@ -116,22 +120,26 @@ export function FollowButton({
       size={size}
       onClick={handleFollow}
       disabled={actionLoading}
-      className={isFollowing 
-        ? `border-border text-foreground hover:bg-background hover:text-red-500 ${className}`
-        : `bg-primary hover:bg-primary/90 text-primary-foreground ${className}`
-      }
+      aria-label={isFollowing ? 'Dejar de seguir' : 'Seguir'}
+      className={cn(
+        'min-h-[44px] min-w-[44px]',
+        isFollowing
+          ? 'border-border text-foreground hover:bg-background hover:text-red-500'
+          : 'bg-primary hover:bg-primary/90 text-primary-foreground',
+        className
+      )}
     >
       {actionLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : isFollowing ? (
         <>
-          <UserCheck className="h-4 w-4 mr-2" />
-          Siguiendo
+          <UserCheck className="h-4 w-4" />
+          {!iconOnly && <span className="ml-2">Siguiendo</span>}
         </>
       ) : (
         <>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Seguir
+          <UserPlus className="h-4 w-4" />
+          {!iconOnly && <span className="ml-2">Seguir</span>}
         </>
       )}
     </Button>

@@ -1,27 +1,23 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Skeleton } from '@/components/ui/skeleton';
-import { usePortfolioPermissions } from '@/hooks/usePortfolioPermissions';
-import { useSavedItems } from '@/hooks/useSavedItems';
-import { useFeedEvents } from '@/hooks/useFeedEvents';
-import { useInterestExtractor } from '@/hooks/useInterestExtractor';
-import { useRecommendations } from '@/hooks/useRecommendations';
-import { usePersistedValue } from '@/hooks/useStatePersistence';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useFeedPosts, FeedTab, FeedPost } from '@/hooks/useFeedPosts';
+import { SocialFeed } from '@/components/social/SocialFeed';
+import { SocialFeedItem } from '@/components/social/SocialFeedCard';
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch';
 import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
-import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { TrendingSection } from '@/components/social/TrendingSection';
-import { CollaborationsFilter } from '@/components/portfolio/feed/CollaborationsFilter';
-import { RefreshCw, Sparkles, Plus, ImageIcon, Film, Compass, Users, TrendingUp, Handshake } from 'lucide-react';
+import { RefreshCw, Plus, ImageIcon, Film, Compass, Grid3x3, Rows3, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,439 +25,245 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-interface FeedItem {
-  id: string;
-  type: 'work' | 'post';
-  title?: string;
-  caption?: string;
-  media_url: string;
-  media_type: 'image' | 'video';
-  thumbnail_url?: string;
-  user_id: string;
-  user_name?: string;
-  user_avatar?: string;
-  client_name?: string;
-  client_username?: string;
-  views_count: number;
-  likes_count: number;
-  comments_count: number;
-  created_at: string;
-  is_liked?: boolean;
-  is_saved?: boolean;
-  is_collaborative?: boolean;
-  creator_name?: string;
+// La tab "Colaboraciones" del feed anterior (shared_on_kreoon/is_collaborative sobre `content`)
+// no tiene equivalente en get_feed_posts todavia (RPC unifica portfolio_items + portfolio_posts,
+// no `content` directo). Se oculta con este flag hasta decidir si se re-integra. Documentado en
+// el reporte de Fase 1.4 — NO se borro codigo, solo se dejo de montar la tab.
+const SHOW_COLLABORATIONS_TAB = false;
+
+// Grid local FeedItem shape (misma forma que espera FeedGridCard/FeedGridModal)
+function toGridItem(post: FeedPost) {
+  return {
+    id: post.post_id,
+    type: (post.post_source === 'portfolio_item' ? 'work' : 'post') as 'work' | 'post',
+    title: post.title || undefined,
+    caption: post.title || undefined,
+    media_url: post.media_url,
+    media_type: (post.media_type === 'video' ? 'video' : 'image') as 'video' | 'image',
+    thumbnail_url: post.thumbnail_url || undefined,
+    user_id: post.author_user_id || '',
+    user_name: post.author_name || undefined,
+    user_avatar: post.author_avatar || undefined,
+    views_count: post.views_count,
+    likes_count: post.post_source === 'portfolio_item' ? post.reactions_count : post.likes_count,
+    comments_count: 0,
+    created_at: post.created_at,
+    is_saved: post.is_saved,
+  };
 }
 
-type FeedTab = 'for-you' | 'following' | 'collaborations';
+function toSocialFeedItem(post: FeedPost): SocialFeedItem {
+  return {
+    id: post.post_id,
+    title: post.title || '',
+    mediaType: post.media_type === 'video' ? 'video' : 'image',
+    mediaUrl: post.media_url,
+    thumbnailUrl: post.thumbnail_url,
+    viewsCount: post.views_count,
+    likesCount: post.post_source === 'portfolio_item' ? post.reactions_count : post.likes_count,
+    isLiked: post.is_liked,
+    creatorId: post.author_user_id,
+    creatorName: post.author_name,
+    creatorAvatar: post.author_avatar,
+    createdAt: post.created_at,
+    supportsReactions: post.post_source === 'portfolio_item',
+    myReaction: post.my_reaction as SocialFeedItem['myReaction'],
+    reactionsCount: post.reactions_count,
+    isSaved: post.is_saved,
+  };
+}
 
 export default function FeedPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { can } = usePortfolioPermissions();
-  const { isSaved, toggleSave } = useSavedItems();
-  const { startViewTimer, endViewTimer, trackLike, trackSave } = useFeedEvents();
-  const { trackEvent: trackInterestEvent } = useInterestExtractor();
-  
-  // Persist tab and scroll position to avoid losing state on tab change/blur
-  const [activeTab, setActiveTab] = usePersistedValue<FeedTab>('feed_active_tab', 'for-you');
-  const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const isMobileDevice = useIsMobile();
+  const isOnline = useOnlineStatus();
+
+  const [activeTab, setActiveTab] = useState<FeedTab>('for_you');
+  const [niche, setNiche] = useState<string | null>(null);
+  const [niches, setNiches] = useState<string[]>([]);
+  const [mobileViewMode, setMobileViewMode] = useState<'immersive' | 'grid'>('immersive');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [showSuggestions, setShowSuggestions] = usePersistedValue('feed_show_suggestions', true);
-  const [showStoryUploader, setShowStoryUploader] = useState(false);
   const [showPostUploader, setShowPostUploader] = useState(false);
-  const [useAIRecommendations, setUseAIRecommendations] = useState(true);
+  const [showStoryUploader, setShowStoryUploader] = useState(false);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const touchStartYRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Collaboration filters
-  const [collabCreatorFilter, setCollabCreatorFilter] = useState<string | null>(null);
-  const [collabClientFilter, setCollabClientFilter] = useState<string | null>(null);
-  
-  // AI Recommendations hook
-  const { 
-    recommendations, 
-    loading: loadingRecs, 
-    hasPersonalization,
-    fetchRecommendations 
-  } = useRecommendations({ followingIds, limit: 50 });
-  
-  // Persist scroll position
-  const scrollPositionRef = useRef(0);
-  
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    
-    const handleScroll = () => {
-      scrollPositionRef.current = container.scrollTop;
-      sessionStorage.setItem('feed_scroll', String(container.scrollTop));
-    };
-    
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Restore scroll position
-    const savedScroll = sessionStorage.getItem('feed_scroll');
-    if (savedScroll) {
-      requestAnimationFrame(() => {
-        container.scrollTop = parseInt(savedScroll, 10);
-      });
-    }
-    
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [loading]);
+  const { posts, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, refetch, react, toggleLikeLegacyPost, toggleSaved } =
+    useFeedPosts(activeTab, activeTab === 'niche' ? niche : null);
 
-  // Fetch following users
   useEffect(() => {
     if (!user?.id) return;
-
-    const fetchFollowing = async () => {
-      const { data } = await supabase
-        .from('followers')
-        .select('following_id')
-        .eq('follower_id', user.id);
-      
-      setFollowingIds(data?.map(f => f.following_id) || []);
-    };
-
-    fetchFollowing();
+    supabase
+      .from('followers')
+      .select('following_id')
+      .eq('follower_id', user.id)
+      .then(({ data }) => setFollowingIds((data || []).map((f) => f.following_id)));
   }, [user?.id]);
 
-  const fetchFeed = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-
-    try {
-      // For "Following" tab: chronological order
-      // For "For You" tab: we'll rely on AI recommendations hook separately
-      // For "Collaborations" tab: only collaborative content
-      const isFollowing = activeTab === 'following';
-      const isCollaborations = activeTab === 'collaborations';
-
-      // Fetch work content (published videos) - from ALL organizations
-      // Include video_urls array for direct Bunny CDN access
-      let workQuery = supabase
-        .from('content')
-        .select(`
-          id,
-          title,
-          video_url,
-          video_urls,
-          bunny_embed_url,
-          thumbnail_url,
-          creator_id,
-          client_id,
-          views_count,
-          likes_count,
-          created_at,
-          shared_on_kreoon,
-          is_collaborative
-        `)
-        .or('video_url.not.is.null,bunny_embed_url.not.is.null,video_urls.not.is.null')
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      // Filter based on tab
-      if (isCollaborations) {
-        // For collaborations tab: show content shared on Kreoon Social
-        workQuery = workQuery.eq('shared_on_kreoon', true);
-
-        // Apply collaboration filters
-        if (collabCreatorFilter) {
-          workQuery = workQuery.eq('creator_id', collabCreatorFilter);
-        }
-        if (collabClientFilter) {
-          workQuery = workQuery.eq('client_id', collabClientFilter);
-        }
-      } else {
-        // For other tabs: show published content
-        workQuery = workQuery.eq('is_published', true);
-      }
-
-      if (isFollowing && followingIds.length > 0) {
-        workQuery = workQuery.in('creator_id', followingIds);
-      }
-
-      // Fetch portfolio posts
-      let postsQuery = supabase
-        .from('portfolio_posts')
-        .select(`
-          id,
-          user_id,
-          media_url,
-          media_type,
-          thumbnail_url,
-          caption,
-          views_count,
-          likes_count,
-          comments_count,
-          created_at
-        `)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (isFollowing && followingIds.length > 0) {
-        postsQuery = postsQuery.in('user_id', followingIds);
-      }
-
-      const [{ data: workData }, { data: postsData }] = await Promise.all([
-        workQuery,
-        postsQuery,
-      ]);
-
-      // Fetch user profiles (for posts + work creators)
-      const postUserIds = [...new Set((postsData || []).map(p => p.user_id))];
-      const workCreatorIds = [...new Set((workData || []).map(w => w.creator_id).filter(Boolean))] as string[];
-      const allUserIds = [...new Set([...postUserIds, ...workCreatorIds])];
-
-      const { data: profilesData } = allUserIds.length > 0
-        ? await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_url')
-            .in('id', allUserIds)
-        : { data: [] };
-
-      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
-
-      // Fetch client names and usernames for work items
-      const clientIds = [...new Set((workData || []).map(w => (w as any).client_id).filter(Boolean))] as string[];
-      const { data: clientsData } = clientIds.length > 0
-        ? await supabase
-            .from('clients')
-            .select('id, name, username')
-            .in('id', clientIds)
-        : { data: [] };
-
-      const clientsMap = new Map((clientsData || []).map(c => [c.id, c]));
-
-      // Transform and merge
-      const workItems: FeedItem[] = (workData || [])
-        .filter(w => w.video_url || (w as any).bunny_embed_url || ((w as any).video_urls && (w as any).video_urls.length > 0))
-        .map(w => {
-          const profile = profilesMap.get(w.creator_id);
-          const client = clientsMap.get((w as any).client_id);
-
-          // Prioritize direct Bunny CDN URLs for better loading
-          // video_urls array contains direct CDN links, video_url may be embed URL
-          const videoUrls = (w as any).video_urls as string[] | null;
-          const directVideoUrl = videoUrls && videoUrls.length > 0
-            ? videoUrls[0] // First video URL from array (direct CDN)
-            : w.video_url || (w as any).bunny_embed_url;
-
-          return {
-            id: w.id,
-            type: 'work' as const,
-            title: w.title,
-            media_url: directVideoUrl,
-            media_type: 'video' as const,
-            thumbnail_url: w.thumbnail_url || undefined,
-            user_id: w.creator_id,
-            user_name: profile?.full_name,
-            user_avatar: profile?.avatar_url,
-            client_name: client?.name,
-            client_username: client?.username || undefined,
-            views_count: w.views_count || 0,
-            likes_count: w.likes_count || 0,
-            comments_count: 0,
-            created_at: w.created_at,
-            is_saved: isSaved('work_video', w.id),
-            is_collaborative: (w as any).is_collaborative || false,
-            creator_name: profile?.full_name,
-          };
-        });
-
-      const postItems: FeedItem[] = (postsData || []).map(p => {
-        const profile = profilesMap.get(p.user_id);
-        return {
-          id: p.id,
-          type: 'post' as const,
-          caption: p.caption || undefined,
-          media_url: p.media_url,
-          media_type: p.media_type as 'image' | 'video',
-          thumbnail_url: p.thumbnail_url || undefined,
-          user_id: p.user_id,
-          user_name: profile?.full_name,
-          user_avatar: profile?.avatar_url,
-          views_count: p.views_count || 0,
-          likes_count: p.likes_count || 0,
-          comments_count: p.comments_count || 0,
-          created_at: p.created_at,
-          is_saved: isSaved('post', p.id),
-        };
+  // Categorias reales presentes en portfolio_items, para la tab "Por nicho"
+  useEffect(() => {
+    supabase
+      .from('portfolio_items')
+      .select('category')
+      .eq('is_public', true)
+      .not('category', 'is', null)
+      .limit(500)
+      .then(({ data }) => {
+        const unique = Array.from(new Set((data || []).map((d) => d.category).filter(Boolean))) as string[];
+        setNiches(unique.slice(0, 12));
       });
+  }, []);
 
-      // Merge items first (unsorted)
-      const merged = [...workItems, ...postItems];
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetch();
+    setRefreshing(false);
+  }, [refetch]);
 
-      // Deterministic shuffle for variety (seeded by current timestamp rounded to minutes)
-      const shuffleSeeded = <T,>(arr: T[], seedStr: string): T[] => {
-        let seed = 0;
-        for (let i = 0; i < seedStr.length; i++) {
-          seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
-          seed |= 0;
-        }
-        const rand = () => {
-          seed ^= seed << 13;
-          seed ^= seed >> 17;
-          seed ^= seed << 5;
-          return ((seed >>> 0) % 1_000_000) / 1_000_000;
-        };
-        const out = [...arr];
-        for (let i = out.length - 1; i > 0; i--) {
-          const j = Math.floor(rand() * (i + 1));
-          [out[i], out[j]] = [out[j], out[i]];
-        }
-        return out;
-      };
-
-      // Seed changes every minute so refresh button gives new order
-      const seed = `feed-${activeTab}-${Math.floor(Date.now() / 60000)}`;
-      const shuffled = shuffleSeeded(merged, seed);
-
-      // Apply shuffled data for Following/Collaborations tabs or as fallback for For You
-      if (activeTab === 'following' || activeTab === 'collaborations' || !useAIRecommendations) {
-        // For collaborations tab: only include work items (collaborative content)
-        if (activeTab === 'collaborations') {
-          setItems(workItems.sort((a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          ));
-        } else {
-          setItems(shuffled);
-        }
-      } else {
-        // For "For You" with AI enabled: only set fallback if we don't have items yet.
-        // This prevents fetchFeed() from overwriting the AI-sorted order.
-        if (items.length === 0) {
-          setItems(shuffled);
-        }
-      }
-    } catch (error) {
-      console.error('[FeedPage] Error fetching feed:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  // Pull-to-refresh (solo movil, solo cuando el scroll ya esta en el tope)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop <= 0) {
+      touchStartYRef.current = e.touches[0].clientY;
     }
-  }, [activeTab, followingIds, isSaved, useAIRecommendations, items.length, collabCreatorFilter, collabClientFilter]);
-
-  // Fetch AI recommendations for "For You" tab and apply them
-  useEffect(() => {
-    if (activeTab === 'for-you' && useAIRecommendations) {
-      const viewedIds = items.filter(i => i.type === 'work').map(i => i.id);
-      fetchRecommendations([], viewedIds);
-    }
-  }, [activeTab, useAIRecommendations, followingIds]);
-
-  // When AI recommendations arrive, reorder items based on recommendation order
-  // IMPORTANT: make the order "definitive" by also shuffling any non-recommended leftovers,
-  // and avoid depending on `items` to prevent re-application loops.
-  const appliedRecsRef = useRef<string>('');
-
-  useEffect(() => {
-    if (activeTab !== 'for-you' || recommendations.length === 0) return;
-
-    // Create a stable key for this set of recommendations
-    const recsKey = recommendations.map((r) => r.id).join('|');
-    if (appliedRecsRef.current === recsKey) return;
-
-    // Deterministic shuffle based on the recommendation set (so it stays stable until refresh)
-    const shuffleSeeded = <T,>(arr: T[], seedStr: string) => {
-      let seed = 0;
-      for (let i = 0; i < seedStr.length; i++) {
-        seed = ((seed << 5) - seed) + seedStr.charCodeAt(i);
-        seed |= 0;
-      }
-      const rand = () => {
-        seed ^= seed << 13;
-        seed ^= seed >> 17;
-        seed ^= seed << 5;
-        return ((seed >>> 0) % 1_000_000) / 1_000_000;
-      };
-      const out = [...arr];
-      for (let i = out.length - 1; i > 0; i--) {
-        const j = Math.floor(rand() * (i + 1));
-        [out[i], out[j]] = [out[j], out[i]];
-      }
-      return out;
-    };
-
-    appliedRecsRef.current = recsKey;
-
-    setItems((prev) => {
-      if (prev.length === 0) return prev;
-
-      const prevById = new Map(prev.map((it) => [it.id, it] as const));
-
-      // 1) Put recommended items first, in EXACT order returned by backend
-      const recommendedOrdered = recommendations
-        .map((r) => prevById.get(r.id))
-        .filter(Boolean) as FeedItem[];
-
-      // 2) Anything not recommended goes after, but SHUFFLED to avoid reverting to chronological
-      const recommendedIdSet = new Set(recommendedOrdered.map((it) => it.id));
-      const leftovers = prev.filter((it) => !recommendedIdSet.has(it.id));
-      const shuffledLeftovers = shuffleSeeded(leftovers, `leftovers:${recsKey}`);
-
-      const next = [...recommendedOrdered, ...shuffledLeftovers];
-
-      // Avoid unnecessary state writes
-      const changed = next.some((it, idx) => it.id !== prev[idx]?.id);
-      return changed ? next : prev;
-    });
-  }, [recommendations, activeTab]);
-
-  useEffect(() => {
-    fetchFeed();
-  }, [fetchFeed]);
-
-  // Track interaction for interest extraction
-  const handleInteraction = useCallback(() => {
-    trackInterestEvent();
-  }, [trackInterestEvent]);
-
-  const handleCardClick = (index: number) => {
-    const item = items[index];
-    if (item) {
-      startViewTimer(item.type === 'work' ? 'content' : 'post', item.id);
-      handleInteraction();
-    }
-    setSelectedIndex(index);
-    setModalOpen(true);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartYRef.current === null) return;
+    const delta = e.touches[0].clientY - touchStartYRef.current;
+    if (delta > 0) setPullDistance(Math.min(delta, 80));
+  };
+  const handleTouchEnd = () => {
+    if (pullDistance > 50) handleRefresh();
+    setPullDistance(0);
+    touchStartYRef.current = null;
   };
 
-  const handleModalClose = () => {
-    const item = items[selectedIndex];
-    if (item) {
-      endViewTimer(item.type === 'work' ? 'content' : 'post', item.id);
-    }
-    setModalOpen(false);
-  };
+  const handleReact = useCallback((postId: string, type: string | null) => {
+    const post = posts.find((p) => p.post_id === postId);
+    if (!post) return;
+    // type=null significa "quitar la reaccion actual" (tap de nuevo sobre la misma reaccion)
+    const targetType = type ?? post.my_reaction;
+    if (!targetType) return;
+    react(post, targetType);
+  }, [posts, react]);
 
-  const handleSave = async (item: FeedItem) => {
-    const itemType = item.type === 'work' ? 'work_video' : 'post';
-    await toggleSave(itemType, item.id);
-    trackSave(item.type === 'work' ? 'content' : 'post', item.id);
-  };
+  const handleSave = useCallback((postId: string) => {
+    const post = posts.find((p) => p.post_id === postId);
+    if (post) toggleSaved(post);
+  }, [posts, toggleSaved]);
 
-  const checkIsSaved = (item: FeedItem) => {
-    const itemType = item.type === 'work' ? 'work_video' : 'post';
-    return isSaved(itemType, item.id);
-  };
+  const handleLikeLegacy = useCallback((postId: string) => {
+    const post = posts.find((p) => p.post_id === postId);
+    if (post) toggleLikeLegacyPost(post);
+  }, [posts, toggleLikeLegacyPost]);
 
+  const socialFeedItems = useMemo(() => posts.map(toSocialFeedItem), [posts]);
+  const gridItems = useMemo(() => posts.map(toGridItem), [posts]);
+
+  if (!isOnline) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center gap-3 bg-background px-6 text-center md:pl-20 lg:pl-64">
+        <WifiOff className="h-10 w-10 text-muted-foreground" />
+        <p className="text-foreground font-medium">Sin conexión</p>
+        <p className="text-sm text-muted-foreground">Revisa tu internet y reintenta.</p>
+        <Button onClick={() => window.location.reload()} size="sm" className="mt-2 h-11">
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
+  // ── Modo inmersivo movil (TikTok-style) ──
+  if (isMobileDevice && mobileViewMode === 'immersive') {
+    return (
+      <div className="relative h-[100dvh] w-full bg-black">
+        <div
+          className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
+        >
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
+            <TabsList className="bg-black/40 border border-white/10">
+              <TabsTrigger value="for_you" className="text-xs text-white data-[state=active]:bg-primary">Para ti</TabsTrigger>
+              <TabsTrigger value="following" className="text-xs text-white data-[state=active]:bg-primary">Siguiendo</TabsTrigger>
+              <TabsTrigger value="niche" className="text-xs text-white data-[state=active]:bg-primary">Por nicho</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <button
+            onClick={() => setMobileViewMode('grid')}
+            className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white"
+            aria-label="Ver como grilla"
+          >
+            <Grid3x3 className="h-5 w-5" />
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="h-full w-full flex items-center justify-center bg-black">
+            <KreoonSkeleton variant="rectangular" className="h-full w-full" animation="pulse" />
+          </div>
+        ) : (
+          <SocialFeed
+            items={socialFeedItems}
+            onReact={handleReact}
+            onLike={handleLikeLegacy}
+            onSave={handleSave}
+            onProfileClick={(creatorId) => navigate(`/profile/${creatorId}`)}
+            onLoadMore={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
+          />
+        )}
+
+        <MobileBottomNav onPublishClick={() => setShowPostUploader(true)} />
+
+        {user?.id && (
+          <MediaUploader
+            userId={user.id}
+            type="post"
+            isOpen={showPostUploader}
+            onClose={() => setShowPostUploader(false)}
+            onSuccess={() => {
+              setShowPostUploader(false);
+              refetch();
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // ── Grid (movil-grid, tablet, desktop) ──
   return (
-    <div ref={containerRef} className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-background">
-      {/* Header with glassmorphism */}
-      <header className="sticky top-0 z-30 bg-card border border-border border-b border-white/5">
+    <div
+      ref={containerRef}
+      onTouchStart={isMobileDevice ? handleTouchStart : undefined}
+      onTouchMove={isMobileDevice ? handleTouchMove : undefined}
+      onTouchEnd={isMobileDevice ? handleTouchEnd : undefined}
+      className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-background pb-16 md:pb-0"
+    >
+      {pullDistance > 0 && (
+        <div
+          className="flex items-center justify-center text-muted-foreground text-xs"
+          style={{ height: pullDistance }}
+        >
+          <RefreshCw className={pullDistance > 50 ? 'animate-spin h-4 w-4' : 'h-4 w-4'} />
+        </div>
+      )}
+
+      <header
+        className="sticky top-0 z-30 bg-card border-b border-white/5"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-6xl mx-auto px-4 py-3">
-          {/* Search + actions (desktop) */}
           <div className="flex items-center gap-2 mb-3">
             <EnhancedSmartSearch className="mb-0 flex-1" />
             <div className="hidden md:flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-foreground hover:bg-white/10 rounded-sm"
+                className="h-11 w-11 text-foreground hover:bg-white/10 rounded-sm"
                 onClick={() => navigate('/explore')}
                 aria-label="Explorar"
               >
@@ -469,177 +271,103 @@ export default function FeedPage() {
               </Button>
               <SocialNotificationsDropdown />
             </div>
-          </div>
-          
-          {/* Tab switcher with glassmorphism */}
-          <div className="flex items-center justify-between">
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
-              <TabsList className="bg-white/5 border border-white/10 rounded-sm">
-                <TabsTrigger
-                  value="for-you"
-                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm transition-all"
-                >
-                  Para Ti
-                  {hasPersonalization && activeTab === 'for-you' && (
-                    <Sparkles className="h-3 w-3" />
-                  )}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="following"
-                  className="text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm transition-all"
-                >
-                  Siguiendo
-                </TabsTrigger>
-                <TabsTrigger
-                  value="collaborations"
-                  className="text-sm flex items-center gap-1.5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-500 data-[state=active]:text-white rounded-sm transition-all"
-                >
-                  <Handshake className="h-3.5 w-3.5" />
-                  Colaboraciones
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <div className="flex items-center gap-1">
-              {hasPersonalization && (
-                <Badge variant="secondary" className="text-xs">
-                  <Sparkles className="h-3 w-3 mr-1" />
-                  IA
-                </Badge>
-              )}
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => {
-                  if (activeTab === 'for-you' && useAIRecommendations) {
-                    const viewedIds = items.filter(i => i.type === 'work').map(i => i.id);
-                    fetchRecommendations([], viewedIds);
-                    return;
-                  }
-                  fetchFeed(true);
-                }}
-                disabled={refreshing}
+            {isMobileDevice && (
+              <button
+                onClick={() => setMobileViewMode('immersive')}
+                className="h-11 w-11 flex items-center justify-center rounded-sm border border-border text-foreground"
+                aria-label="Ver inmersivo"
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Suggested profiles */}
-      {activeTab === 'for-you' && (
-        showSuggestions ? (
-          <SuggestedProfiles 
-            variant="carousel" 
-            limit={5}
-            onDismiss={() => setShowSuggestions(false)}
-          />
-        ) : (
-          <div className="max-w-4xl mx-auto px-4 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground hover:text-foreground"
-              onClick={() => setShowSuggestions(true)}
-            >
-              <Users className="h-3 w-3 mr-1" />
-              Mostrar sugerencias de perfiles
-            </Button>
-          </div>
-        )
-      )}
-
-      {/* Collaborations filter */}
-      {activeTab === 'collaborations' && (
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <CollaborationsFilter
-            selectedCreatorId={collabCreatorFilter}
-            selectedClientId={collabClientFilter}
-            onCreatorChange={setCollabCreatorFilter}
-            onClientChange={setCollabClientFilter}
-          />
-        </div>
-      )}
-
-      <StoriesBar
-        followingIds={followingIds}
-        onAddStory={() => setShowStoryUploader(true)}
-      />
-
-      {/* Feed content - responsive layout with sidebar for desktop */}
-      <div className="max-w-6xl mx-auto px-1 py-2 pb-20">
-        <div className="flex gap-6">
-          {/* Main feed - 3 column grid */}
-          <div className="flex-1 max-w-4xl">
-            {loading ? (
-              <div className="grid grid-cols-3 gap-1">
-                {Array.from({ length: 12 }).map((_, i) => (
-                  <Skeleton key={i} className="aspect-[4/5] rounded-sm" />
-                ))}
-              </div>
-            ) : items.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                {activeTab === 'following'
-                  ? 'Sigue a creadores para ver su contenido aquí'
-                  : activeTab === 'collaborations'
-                  ? 'No hay contenido colaborativo disponible aún'
-                  : 'No hay contenido disponible'}
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-1">
-                {items.map((item, index) => (
-                  <FeedGridCard
-                    key={`${item.type}-${item.id}`}
-                    item={item}
-                    priority={index < 9}
-                    onClick={() => handleCardClick(index)}
-                  />
-                ))}
-              </div>
+                <Rows3 className="h-5 w-5" />
+              </button>
             )}
           </div>
 
-          {/* Sidebar - Trending section (desktop only) */}
-          <aside className="hidden lg:block w-80 shrink-0">
-            <div className="sticky top-20 space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-sm bg-gradient-to-br from-primary to-pink-500">
-                  <TrendingUp className="h-4 w-4 text-white" />
-                </div>
-                <h3 className="font-semibold text-foreground">Tendencias</h3>
-              </div>
-              <TrendingSection variant="sidebar" />
+          <div className="flex items-center justify-between gap-2">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
+              <TabsList className="bg-white/5 border border-white/10 rounded-sm">
+                <TabsTrigger value="for_you" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm">Para ti</TabsTrigger>
+                <TabsTrigger value="following" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm">Siguiendo</TabsTrigger>
+                <TabsTrigger value="niche" className="text-sm data-[state=active]:bg-primary data-[state=active]:text-white rounded-sm">Por nicho</TabsTrigger>
+              </TabsList>
+            </Tabs>
+
+            <Button variant="ghost" size="icon" onClick={handleRefresh} disabled={refreshing} className="h-11 w-11">
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {activeTab === 'niche' && niches.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pt-3 pb-1 scrollbar-hide">
+              {niches.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => setNiche(n === niche ? null : n)}
+                  className={`shrink-0 h-9 px-3 rounded-full text-xs font-medium border ${
+                    niche === n
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-transparent text-muted-foreground border-border'
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
             </div>
-          </aside>
+          )}
         </div>
+      </header>
+
+      <StoriesBar followingIds={followingIds} onAddStory={() => setShowStoryUploader(true)} />
+
+      <div className="max-w-6xl mx-auto px-1 py-2">
+        {isLoading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <KreoonSkeleton key={i} variant="rectangular" className="aspect-[4/5] rounded-sm" />
+            ))}
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            {activeTab === 'following'
+              ? 'Sigue a creadores para ver su contenido aquí'
+              : 'No hay contenido disponible'}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
+              {gridItems.map((item, index) => (
+                <FeedGridCard
+                  key={item.id}
+                  item={item}
+                  priority={index < 8}
+                  onClick={() => { setSelectedIndex(index); setModalOpen(true); }}
+                />
+              ))}
+            </div>
+            {hasNextPage && (
+              <div className="flex justify-center py-6">
+                <Button
+                  variant="outline"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                  className="h-11"
+                >
+                  {isFetchingNextPage ? 'Cargando...' : 'Cargar más'}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Fullscreen modal */}
       <FeedGridModal
-        items={items}
+        items={gridItems}
         initialIndex={selectedIndex}
         isOpen={modalOpen}
-        onClose={handleModalClose}
-        onSave={handleSave}
-        isSaved={checkIsSaved}
+        onClose={() => setModalOpen(false)}
+        onSave={(item) => handleSave(item.id)}
+        isSaved={(item) => !!item.is_saved}
       />
 
-      {/* Story Uploader */}
-      {user?.id && (
-        <MediaUploader
-          userId={user.id}
-          type="story"
-          isOpen={showStoryUploader}
-          onClose={() => setShowStoryUploader(false)}
-          onSuccess={() => {
-            setShowStoryUploader(false);
-            fetchFeed(true);
-          }}
-        />
-      )}
-
-      {/* Post Uploader */}
       {user?.id && (
         <MediaUploader
           userId={user.id}
@@ -648,36 +376,42 @@ export default function FeedPage() {
           onClose={() => setShowPostUploader(false)}
           onSuccess={() => {
             setShowPostUploader(false);
-            fetchFeed(true);
+            refetch();
           }}
         />
       )}
 
-      {/* FAB for creating content */}
-      {can('portfolio.posts.create') && (
-        <div className="fixed bottom-24 right-4 z-40 md:bottom-8">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button 
-                size="lg" 
-                className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <Plus className="h-6 w-6" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => setShowPostUploader(true)}>
-                <ImageIcon className="h-4 w-4 mr-2" />
-                Crear post
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setShowStoryUploader(true)}>
-                <Film className="h-4 w-4 mr-2" />
-                Agregar historia
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+      {user?.id && (
+        <MediaUploader
+          userId={user.id}
+          type="story"
+          isOpen={showStoryUploader}
+          onClose={() => setShowStoryUploader(false)}
+          onSuccess={() => setShowStoryUploader(false)}
+        />
       )}
+
+      <div className="fixed bottom-24 right-4 z-40 md:bottom-8">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="lg" className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setShowPostUploader(true)}>
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Crear post
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowStoryUploader(true)}>
+              <Film className="h-4 w-4 mr-2" />
+              Agregar historia
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {isMobileDevice && <MobileBottomNav onPublishClick={() => setShowPostUploader(true)} />}
     </div>
   );
 }

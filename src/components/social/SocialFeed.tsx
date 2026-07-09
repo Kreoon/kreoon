@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { SocialFeedCard, SocialFeedItem, SocialFeedCardRef } from './SocialFeedCard';
+import type { ReactionType } from './ReactionButton';
 import { useGlobalMute } from '@/contexts/VideoPlayerContext';
 import { Loader2 } from 'lucide-react';
 import { preloadHLSVideo, clearPreloadCache } from '@/hooks/useHLSPlayer';
@@ -8,21 +9,31 @@ import { preloadHLSVideo, clearPreloadCache } from '@/hooks/useHLSPlayer';
 interface SocialFeedProps {
   items: SocialFeedItem[];
   onLike?: (id: string) => void;
+  onReact?: (id: string, type: ReactionType | null) => void;
+  onSave?: (id: string) => void;
   onComment?: (id: string) => void;
   onShare?: (item: SocialFeedItem) => void;
   onView?: (id: string) => void;
   onProfileClick?: (creatorId: string) => void;
+  onLoadMore?: () => void;
   className?: string;
   loading?: boolean;
 }
 
+// Ventana de virtualizacion: solo estos slides montan el reproductor de video real.
+// El resto queda como placeholder (thumbnail) para no acumular decenas de HLS/iframes en DOM.
+const RENDER_WINDOW = 2;
+
 export function SocialFeed({
   items,
   onLike,
+  onReact,
+  onSave,
   onComment,
   onShare,
   onView,
   onProfileClick,
+  onLoadMore,
   className,
   loading = false,
 }: SocialFeedProps) {
@@ -104,9 +115,16 @@ export function SocialFeed({
     }
   }, []);
 
+  // Pedir la siguiente pagina cuando el usuario se acerca al final del feed cargado
+  useEffect(() => {
+    if (onLoadMore && activeIndex >= items.length - 3) {
+      onLoadMore();
+    }
+  }, [activeIndex, items.length, onLoadMore]);
+
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-black">
+      <div className="h-[100dvh] w-full flex items-center justify-center bg-black">
         <Loader2 className="h-8 w-8 text-white/40 animate-spin" />
       </div>
     );
@@ -114,40 +132,59 @@ export function SocialFeed({
 
   if (items.length === 0) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-black">
+      <div className="h-[100dvh] w-full flex items-center justify-center bg-black">
         <p className="text-white/60 text-center px-4">No hay contenido disponible</p>
       </div>
     );
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className={cn(
-        "h-screen w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide",
+        "h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide",
         className
       )}
     >
-      {items.map((item, index) => (
-        <div 
-          key={item.id} 
-          data-index={index}
-          className="h-screen w-full"
-        >
-          <SocialFeedCard
-            ref={(ref) => setCardRef(item.id, ref)}
-            item={item}
-            isActive={index === activeIndex}
-            audioUnlocked={audioUnlocked}
-            onLike={onLike ? () => onLike(item.id) : undefined}
-            onComment={onComment ? () => onComment(item.id) : undefined}
-            onShare={onShare ? () => onShare(item) : undefined}
-            onView={onView ? () => onView(item.id) : undefined}
-            onProfileClick={item.creatorId && onProfileClick ? () => onProfileClick(item.creatorId!) : undefined}
-            onUnlockAudio={handleUnlockAudio}
-          />
-        </div>
-      ))}
+      {items.map((item, index) => {
+        const inRenderWindow = Math.abs(index - activeIndex) <= RENDER_WINDOW;
+        return (
+          <div
+            key={item.id}
+            data-index={index}
+            className="h-[100dvh] w-full"
+          >
+            {inRenderWindow ? (
+              <SocialFeedCard
+                ref={(ref) => setCardRef(item.id, ref)}
+                item={item}
+                isActive={index === activeIndex}
+                audioUnlocked={audioUnlocked}
+                onLike={onLike ? () => onLike(item.id) : undefined}
+                onReact={onReact ? (type) => onReact(item.id, type) : undefined}
+                onSave={onSave ? () => onSave(item.id) : undefined}
+                onComment={onComment ? () => onComment(item.id) : undefined}
+                onShare={onShare ? () => onShare(item) : undefined}
+                onView={onView ? () => onView(item.id) : undefined}
+                onProfileClick={item.creatorId && onProfileClick ? () => onProfileClick(item.creatorId!) : undefined}
+                onUnlockAudio={handleUnlockAudio}
+              />
+            ) : (
+              // Placeholder fuera de la ventana de render: mantiene el alto/snap sin montar video/HLS
+              <div className="h-full w-full bg-black relative">
+                {item.thumbnailUrl && (
+                  <img
+                    src={item.thumbnailUrl}
+                    alt=""
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                  />
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

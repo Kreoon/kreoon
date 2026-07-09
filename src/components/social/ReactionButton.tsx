@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Heart, Flame, HandMetal, Sparkles, Frown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +41,21 @@ export function ReactionButton({
   const [showPicker, setShowPicker] = useState(false);
   const [animateHeart, setAnimateHeart] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout>();
+  const longPressTimerRef = useRef<NodeJS.Timeout>();
+  const didLongPressRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Cierra el picker con un tap fuera (mobile no dispara onMouseLeave)
+  useEffect(() => {
+    if (!showPicker) return;
+    const handleOutsideTouch = (e: TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener('touchstart', handleOutsideTouch);
+    return () => document.removeEventListener('touchstart', handleOutsideTouch);
+  }, [showPicker]);
 
   const sizes = {
     sm: 'h-4 w-4',
@@ -76,6 +90,28 @@ export function ReactionButton({
     }
   };
 
+  const handleTouchStart = () => {
+    didLongPressRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      didLongPressRef.current = true;
+      setShowPicker(true);
+      navigator.vibrate?.(10);
+    }, 450);
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+  };
+
+  const handleMainClick = () => {
+    // Si el long-press ya abrio el picker, el tap de cierre no debe disparar el quick-react
+    if (didLongPressRef.current) {
+      didLongPressRef.current = false;
+      return;
+    }
+    handleQuickReact();
+  };
+
   const handleSelectReaction = (type: ReactionType) => {
     setAnimateHeart(true);
     setTimeout(() => setAnimateHeart(false), 400);
@@ -94,9 +130,13 @@ export function ReactionButton({
     >
       {/* Main button */}
       <button
-        onClick={handleQuickReact}
+        onClick={handleMainClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={clearLongPress}
+        onTouchMove={clearLongPress}
+        aria-label={currentReactionData ? `Reaccion: ${currentReactionData.label}` : 'Reaccionar'}
         className={cn(
-          "flex items-center gap-1 transition-all duration-200 hover:scale-110 active:scale-95",
+          "flex items-center gap-1 transition-all duration-200 hover:scale-110 active:scale-95 min-w-[44px] min-h-[44px] justify-center",
           currentReactionData?.color || "text-muted-foreground hover:text-red-400"
         )}
       >
@@ -139,8 +179,9 @@ export function ReactionButton({
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: index * 0.05, type: 'spring', stiffness: 500, damping: 15 }}
                   onClick={() => handleSelectReaction(reaction.type)}
+                  aria-label={reaction.label}
                   className={cn(
-                    "p-1.5 rounded-full transition-all duration-200",
+                    "min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200",
                     "hover:scale-125 hover:bg-white/10",
                     currentReaction === reaction.type && reaction.bgColor
                   )}
