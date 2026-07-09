@@ -34,7 +34,6 @@ const ZONE_PLACEHOLDERS: Record<KiroZone, string> = {
   'casting': '¿Qué tipo de creador necesitas?',
   'sala-de-prensa': 'Pregúntame sobre analytics...',
   'escuela': 'Pregúntame sobre formación...',
-  'live-stage': 'Pregúntame sobre streaming...',
   'general': 'Escríbele a KIRO...',
 };
 

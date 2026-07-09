@@ -9,16 +9,11 @@ import type { LucideIcon } from 'lucide-react';
 import {
   Trophy,
   TrendingUp,
-  Radio,
   Users,
   BarChart3,
   ImagePlus,
-  Search,
-  Radar,
-  GitBranch,
   Megaphone,
-  Wallet,
-  CalendarDays
+  Wallet
 } from 'lucide-react';
 
 /** Email del usuario root con acceso a módulos en desarrollo */
@@ -77,28 +72,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     ]
   },
   {
-    id: 'streaming',
-    name: 'Streaming',
-    description: 'Hub de transmisiones en vivo y estudios virtuales',
-    icon: Radio,
-    status: 'development',
-    routes: ['/streaming', '/streaming/studio', '/streaming/recap'],
-    sidebarItems: [
-      { label: 'Streaming', path: '/streaming', icon: Radio }
-    ]
-  },
-  {
-    id: 'live-hosting',
-    name: 'Live Hosting',
-    description: 'Contratación de hosts para transmisiones en vivo',
-    icon: Users,
-    status: 'development',
-    routes: ['/streaming/hosting', '/streaming/hosting/new'],
-    sidebarItems: [
-      { label: 'Live Hosting', path: '/streaming/hosting', icon: Users }
-    ]
-  },
-  {
     id: 'marketing-ads',
     name: 'Marketing Ads',
     description: 'Gestión de campañas publicitarias multi-plataforma',
@@ -121,39 +94,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     ]
   },
   {
-    id: 'ad-intelligence',
-    name: 'Ad Intelligence',
-    description: 'Análisis de competencia y tendencias en publicidad',
-    icon: Search,
-    status: 'development',
-    routes: ['/admin/ad-intelligence'],
-    sidebarItems: [
-      { label: 'Ad Intelligence', path: '/admin/ad-intelligence', icon: Search }
-    ]
-  },
-  {
-    id: 'social-scraper',
-    name: 'Social Scraper',
-    description: 'Extracción de datos de redes sociales',
-    icon: Radar,
-    status: 'development',
-    routes: ['/admin/social-scraper'],
-    sidebarItems: [
-      { label: 'Social Scraper', path: '/admin/social-scraper', icon: Radar }
-    ]
-  },
-  {
-    id: 'pipelines',
-    name: 'Pipelines',
-    description: 'Gestión de pipelines de ventas CRM',
-    icon: GitBranch,
-    status: 'development',
-    routes: ['/org-crm/pipelines'],
-    sidebarItems: [
-      { label: 'Pipelines', path: '/org-crm/pipelines', icon: GitBranch }
-    ]
-  },
-  {
     id: 'email-marketing',
     name: 'Email Marketing',
     description: 'Campañas de email y automatizaciones',
@@ -173,17 +113,6 @@ export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
     routes: ['/wallet', '/wallet/transactions', '/wallet/withdrawals', '/wallet/payment-methods', '/wallet/settings', '/admin/wallets'],
     sidebarItems: [
       { label: 'Wallet', path: '/wallet', icon: Wallet }
-    ]
-  },
-  {
-    id: 'booking',
-    name: 'Booking',
-    description: 'Sistema de reservas y agendamiento de citas',
-    icon: CalendarDays,
-    status: 'development',
-    routes: ['/booking/settings', '/booking/calendar', '/book'],
-    sidebarItems: [
-      { label: 'Booking', path: '/booking/calendar', icon: CalendarDays }
     ]
   }
 ];

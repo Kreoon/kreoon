@@ -455,10 +455,6 @@ const SECTION_ROUTES: Record<string, { route: string; label: string; icon: strin
   perfil: { route: '/profile', label: 'Perfil', icon: '👤' },
   profile: { route: '/profile', label: 'Profile', icon: '👤' },
 
-  // Live
-  live: { route: '/live', label: 'Live', icon: '📺' },
-  streaming: { route: '/live', label: 'Streaming', icon: '📺' },
-
   // Analytics
   analytics: { route: '/analytics', label: 'Analytics', icon: '📈' },
   métricas: { route: '/analytics', label: 'Métricas', icon: '📈' },

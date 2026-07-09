@@ -339,10 +339,6 @@ export class PromptTester {
         functionName = "portfolio-ai";
         action = testCase.promptId.split(".")[1] || "search";
         break;
-      case "streaming":
-        functionName = "streaming-ai-generate";
-        action = testCase.promptId.split(".")[1] || "generate_event_content";
-        break;
       default:
         throw new Error(`Unknown module for promptId: ${testCase.promptId}`);
     }

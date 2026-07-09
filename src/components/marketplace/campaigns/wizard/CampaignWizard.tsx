@@ -731,38 +731,6 @@ export default function CampaignWizard({ editCampaignId }: { editCampaignId?: st
                     <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300">+30 roles</span>
                   </div>
                 </button>
-
-                {/* Live Shopping Campaign */}
-                <button
-                  onClick={() => {
-                    setCampaignPurpose('live_shopping');
-                    // Redirect to Live Hosting module
-                    window.location.href = '/streaming/hosting/new?channel=marketplace';
-                  }}
-                  className={cn(
-                    'text-left p-4 rounded-sm border-2 transition-all relative overflow-hidden',
-                    campaignPurpose === 'live_shopping'
-                      ? 'border-red-500 bg-red-500/10 ring-1 ring-red-500/30'
-                      : 'border-white/10 bg-white/5 hover:border-white/20',
-                  )}
-                >
-                  {campaignPurpose === 'live_shopping' && (
-                    <div className="absolute top-2.5 right-2.5">
-                      <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                      </div>
-                    </div>
-                  )}
-                  <Video className="h-7 w-7 text-red-400 mb-2" />
-                  <p className="text-white font-semibold text-sm">Live Shopping</p>
-                  <p className="text-gray-400 text-xs mt-1 leading-relaxed">
-                    Contrata un host para vender productos en transmisiones en vivo
-                  </p>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300">En vivo</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300">Ventas</span>
-                  </div>
-                </button>
               </div>
             </div>
 

@@ -45,7 +45,6 @@ const ZONE_LABELS: Record<KiroZone, string> = {
   'casting': 'Casting',
   'sala-de-prensa': 'Prensa',
   'escuela': 'Escuela',
-  'live-stage': 'Live',
   'general': 'General',
 };
 

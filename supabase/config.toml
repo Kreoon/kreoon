@@ -1,8 +1,5 @@
 project_id = "wjkbqcrxwsmvtxmqgiqc"
 
-[functions.extension-video-capture]
-verify_jwt = true
-
 [functions.notify-signature]
 verify_jwt = false
 
@@ -118,9 +115,6 @@ verify_jwt = false
 [functions.upload-campaign-media]
 verify_jwt = true
 
-[functions.analyze-product-dna]
-verify_jwt = true
-
 [functions.kreoon-bootstrap]
 verify_jwt = false
 
@@ -128,9 +122,6 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.migrate-to-kreoon]
-verify_jwt = false
-
-[functions.migrate-storage]
 verify_jwt = false
 
 [functions.multi-ai]
@@ -220,15 +211,6 @@ verify_jwt = false
 [functions.suggest-role]
 verify_jwt = false
 
-[functions.streaming-ai-generate]
-verify_jwt = false
-
-[functions.streaming-webhook]
-verify_jwt = false
-
-[functions.restream-api]
-verify_jwt = true
-
 [functions.analyze-video-content]
 verify_jwt = true
 
@@ -305,12 +287,6 @@ verify_jwt = true
 # Esta función es invocada exclusivamente desde el frontend via
 # supabase.functions.invoke (useBunnyStorage.ts, usePortfolioItems.ts),
 # que adjunta el JWT automáticamente. No es un webhook externo.
-verify_jwt = true
-
-[functions.bunny-status-v2]
-verify_jwt = true
-
-[functions.bunny-thumbnail-v2]
 verify_jwt = true
 
 [functions.ai-creator-matching]
@@ -442,14 +418,6 @@ verify_jwt = true
 [functions.wallet-mercury-payout]
 verify_jwt = true
 
-# ── Marketing Module ──
-
-[functions.marketing-metrics]
-verify_jwt = true
-
-[functions.marketing-reports]
-verify_jwt = true
-
 # ── Social Hub Module ──
 
 [functions.social-auth]
@@ -467,23 +435,9 @@ verify_jwt = false
 [functions.social-ai-generator]
 verify_jwt = false
 
-[functions.marketing-auth]
-verify_jwt = false
-
-[functions.marketing-campaigns]
-verify_jwt = false
-
 # ── Campaign Checkout ──
 
 [functions.campaign-checkout]
-verify_jwt = true
-
-# ── Ad Intelligence Module ──
-
-[functions.ad-intelligence]
-verify_jwt = true
-
-[functions.social-scraper]
 verify_jwt = true
 
 # ── Portfolio Image Upload ──
@@ -504,46 +458,10 @@ verify_jwt = false
 # La autenticación se verifica internamente para las acciones que lo requieren
 verify_jwt = false
 
-# ── Booking System ──
-
-[functions.booking-create]
-# Público para permitir reservas sin login
-verify_jwt = false
-
-[functions.booking-confirm]
-# Público para confirmaciones/cancelaciones via token
-verify_jwt = false
-
-[functions.booking-reminder]
-# Ejecutado via cron, no requiere JWT
-verify_jwt = false
-
 # ── Marketplace AI Search ──
 
 [functions.marketplace-ai-search]
 # Búsqueda en lenguaje natural, público
-verify_jwt = false
-
-# ── Booking Webhooks & Calendar ──
-
-[functions.booking-webhook-test]
-# Probar webhooks configurados
-verify_jwt = true
-
-[functions.booking-webhook-dispatch]
-# Disparar webhooks cuando hay eventos de booking (llamado internamente)
-verify_jwt = false
-
-[functions.calendar-oauth-start]
-# Iniciar OAuth para conectar calendario externo
-verify_jwt = true
-
-[functions.calendar-sync]
-# Sincronizar eventos con calendario externo
-verify_jwt = true
-
-[functions.calendar-check-conflicts]
-# Verificar conflictos con calendario externo (público para reservas)
 verify_jwt = false
 
 # ── Google Calendar OAuth ──
@@ -560,57 +478,6 @@ verify_jwt = false
 [functions.calendar-google-sync]
 # Sincronizar eventos de Google Calendar como blocked_events
 verify_jwt = true
-
-# ── Live Hosting System ──
-
-[functions.live-hosting-service]
-# Gestión de contratación de hosts para transmisiones en vivo
-# JWT verificado internamente para mayor flexibilidad
-verify_jwt = true
-
-# ── Streaming V2 Module ──
-
-[functions.streaming-hub]
-# API principal para gestión de sesiones de streaming
-verify_jwt = true
-
-[functions.streaming-ai]
-# IA para generación de guiones y sugerencias de streaming
-verify_jwt = true
-
-[functions.streaming-chat-aggregator]
-# Agregación de chat multi-plataforma (YouTube, TikTok, etc.)
-verify_jwt = false
-
-[functions.streaming-shopping]
-# Lógica de Live Shopping (productos, flash offers, compras)
-verify_jwt = true
-
-[functions.streaming-obs-bridge]
-# Proxy WebSocket para control remoto de OBS Studio
-verify_jwt = true
-
-[functions.streaming-webhook-v2]
-# Webhooks de plataformas de streaming (YouTube, TikTok, Twitch)
-verify_jwt = false
-
-# ── Cloudflare Stream - Live Broadcasting ──
-
-[functions.cloudflare-live-service]
-# API principal para transmisiones en vivo directas desde el navegador
-# Usa WHIP (WebRTC-HTTP Ingestion Protocol) con Cloudflare Stream
-# JWT verificado internamente por la función (supabase.auth.getUser)
-# Gateway verify_jwt causaba 401 por inconsistencias con header merging
-verify_jwt = false
-
-[functions.cloudflare-live-webhook]
-# Webhooks de Cloudflare Stream (live_input.connected, disconnected, etc.)
-# No requiere JWT porque Cloudflare envía directamente
-verify_jwt = false
-
-[functions.cloudflare-test]
-# Función temporal para probar conexión con Cloudflare
-verify_jwt = false
 
 # ── Talent DNA (ADN de Talento para Freelancers) ──
 
@@ -668,30 +535,7 @@ verify_jwt = false
 # Ejecutar como cron diario
 verify_jwt = false
 
-[functions.intelligence-gatherer]
-# Social + Ad Intelligence gathering
-# Llamado internamente por orchestrator
-verify_jwt = false
-
-# ── LinkedIn Ads Integration ──
-
-[functions.marketing-linkedin]
-# Integración con LinkedIn Ads API
-# OAuth flow, campañas, métricas y CAPI
-# JWT verificado internamente para mayor flexibilidad
-verify_jwt = true
-
 # ── Social Verification & Instagram/TikTok APIs ──
-
-[functions.social-instagram]
-# Instagram Basic Display + Graph API integration
-# OAuth flow requires verify_jwt = false
-verify_jwt = false
-
-[functions.social-tiktok]
-# TikTok API integration for creator verification
-# OAuth flow requires verify_jwt = false
-verify_jwt = false
 
 [functions.verify-influencer]
 # Influencer verification service

@@ -56,7 +56,6 @@ export const EdgeFunctions = {
   // AI Functions
   CONTENT_AI: "content-ai",
   AI_ASSISTANT: "ai-assistant",
-  STREAMING_AI: "streaming-ai-generate",
   PORTFOLIO_AI: "portfolio-ai",
   TALENT_AI: "talent-ai",
   BOARD_AI: "board-ai",
@@ -87,7 +86,6 @@ export const EdgeFunctions = {
   // Integration Functions
   N8N_PROXY: "n8n-proxy",
   GHL_SYNC: "ghl-sync",
-  RESTREAM_API: "restream-api",
 
   // Utility Functions
   GENERATE_ACHIEVEMENT_ICON: "generate-achievement-icon",

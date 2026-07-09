@@ -17,9 +17,7 @@ import {
   RefreshCw,
   Trophy,
   Video,
-  TrendingUp,
   Megaphone,
-  BarChart3,
   Wallet,
   Store,
   Play,
@@ -32,9 +30,7 @@ import {
   DollarSign,
   Crown,
   Share2,
-  Radar,
   ImagePlus,
-  CalendarDays,
   Trash2,
   Dna,
   Package,
@@ -43,6 +39,7 @@ import {
   Heart,
   Receipt,
   GraduationCap,
+  LayoutList,
 } from "lucide-react";
 import { filterDevModuleItems } from '@/lib/developmentModules';
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
@@ -84,19 +81,12 @@ interface NavSection {
 // ── Shared section definitions ──
 
 const MARKETING_ITEMS: NavItem[] = [
-  { name: "Marketing", href: "/marketing", icon: TrendingUp, tourId: "sidebar-marketing", requiresOrg: true },
   { name: "Social Hub", href: "/social-hub", icon: Share2, tourId: "sidebar-social-hub" },
-  { name: "Streaming", href: "/streaming", icon: Video, tourId: "sidebar-live", adminOnly: true },
-  { name: "Hosting en Vivo", href: "/streaming/hosting", icon: Users, tourId: "sidebar-live-hosting", adminOnly: true },
-  { name: "Anuncios", href: "/marketing-ads", icon: BarChart3, tourId: "sidebar-marketing-ads" },
   { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus, tourId: "sidebar-ad-generator" },
-  { name: "Inteligencia de Anuncios", href: "/admin/ad-intelligence", icon: Search, tourId: "sidebar-ad-intel" },
-  { name: "Análisis de Redes", href: "/admin/social-scraper", icon: Radar, tourId: "sidebar-social-scraper" },
 ];
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-  { name: "Booking", href: "/booking/calendar", icon: CalendarDays, tourId: "sidebar-booking" },
   { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
   { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
@@ -136,6 +126,8 @@ const adminSections: NavSection[] = [
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
       { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, tourId: "sidebar-pending-payments", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
+      { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
+      { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, tourId: "sidebar-qa-pages", platformRootOnly: true },
     ]
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
@@ -181,7 +173,7 @@ const editorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for editors
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];
@@ -199,7 +191,7 @@ const creatorSections: NavSection[] = [
   },
   {
     label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS.filter(i => i.href !== '/marketing'), // Marketing strategy not for creators
+    items: MARKETING_ITEMS,
   },
   { label: "CONFIG", items: CONFIG_ITEMS }
 ];

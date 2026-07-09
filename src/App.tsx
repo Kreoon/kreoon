@@ -11,7 +11,6 @@ import {
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
-import { DemoModeProvider } from "@/contexts/DemoModeContext";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -116,9 +115,6 @@ const StrategistDashboard = lazyWithRetry(
   () => import("./pages/StrategistDashboard"),
 );
 const ClientDashboard = lazyWithRetry(() => import("./pages/ClientDashboard"));
-const DemoClientDashboard = lazyWithRetry(
-  () => import("./pages/DemoClientDashboard"),
-);
 const ClientContentBoard = lazyWithRetry(
   () => import("./pages/ClientContentBoard"),
 );
@@ -152,34 +148,6 @@ const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
 const Register = lazyWithRetry(() => import("./pages/Register"));
 const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
-// Streaming V2
-const StreamingHubPage = lazyWithRetry(
-  () => import("./pages/streaming/StreamingHubPage"),
-);
-const StreamingStudioPage = lazyWithRetry(
-  () => import("./pages/streaming/StreamingStudioPage"),
-);
-const StreamingRecapPage = lazyWithRetry(
-  () => import("./pages/streaming/StreamingRecapPage"),
-);
-// Live Hosting
-const LiveHostingDashboard = lazyWithRetry(
-  () => import("./pages/streaming/hosting/LiveHostingDashboard"),
-);
-const LiveHostingRequest = lazyWithRetry(
-  () => import("./pages/streaming/hosting/LiveHostingRequest"),
-);
-// Live Broadcasting (Cloudflare Stream)
-const LiveDiscoverPage = lazyWithRetry(
-  () => import("./pages/live/LiveDiscoverPage"),
-);
-const LiveViewerPage = lazyWithRetry(
-  () => import("./pages/live/LiveViewerPage"),
-);
-const LiveBroadcastPage = lazyWithRetry(
-  () => import("./pages/live/LiveBroadcastPage"),
-);
-const Marketing = lazyWithRetry(() => import("./pages/Marketing"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazyWithRetry(
   () => import("./pages/OrgPortfolioPage"),
@@ -281,9 +249,6 @@ const PlatformCRMCommunities = lazyWithRetry(
   () => import("./pages/crm/platform/PlatformCRMCommunities"),
 );
 // CRM Org
-const OrgCRMDashboard = lazyWithRetry(
-  () => import("./pages/crm/org/OrgCRMDashboard"),
-);
 const OrgCRMFinances = lazyWithRetry(
   () => import("./pages/crm/org/OrgCRMFinances"),
 );
@@ -304,6 +269,9 @@ const KAEAnalyticsDashboard = lazyWithRetry(
 const PapeleraPage = lazyWithRetry(() => import("./pages/admin/PapeleraPage"));
 const DevModulesPage = lazyWithRetry(
   () => import("./pages/admin/DevModulesPage"),
+);
+const AllPagesQAPage = lazyWithRetry(
+  () => import("./pages/admin/AllPagesQAPage"),
 );
 const PendingPaymentsPage = lazyWithRetry(
   () => import("./pages/admin/PendingPaymentsPage"),
@@ -331,9 +299,6 @@ const CampanasGestionadasPage = lazyWithRetry(
 );
 const CreatorPricingPage = lazyWithRetry(
   () => import("./pages/CreatorPricingPage"),
-);
-const FreelancerDashboard = lazyWithRetry(
-  () => import("./pages/FreelancerDashboard"),
 );
 const PartnerCommunityLanding = lazyWithRetry(
   () => import("./pages/PartnerCommunityLanding"),
@@ -363,19 +328,6 @@ const ReceiptPage = lazyWithRetry(() => import("./pages/legal/ReceiptPage"));
 const SocialHubPage = lazy(
   () => import("./modules/social/pages/SocialHubPage"),
 );
-const MarketingAdsPage = lazy(
-  () => import("./modules/marketing/pages/MarketingPage"),
-);
-
-// Ad Intelligence Module
-const AdIntelligencePage = lazy(
-  () => import("./modules/ad-intelligence/pages/AdIntelligencePage"),
-);
-
-// Social Scraper Module
-const SocialScraperPage = lazy(
-  () => import("./modules/social-scraper/pages/SocialScraperPage"),
-);
 
 // Ad Generator Module
 const AdGeneratorPage = lazy(
@@ -383,33 +335,6 @@ const AdGeneratorPage = lazy(
 );
 const ProductBannersPage = lazy(
   () => import("./modules/ad-generator/pages/ProductBannersPage"),
-);
-
-// Booking Module
-const BookingSettingsPage = lazy(() =>
-  import("./modules/booking/pages/BookingSettingsPage").then((m) => ({
-    default: m.BookingSettingsPage,
-  })),
-);
-const BookingCalendarPage = lazy(() =>
-  import("./modules/booking/pages/BookingCalendarPage").then((m) => ({
-    default: m.BookingCalendarPage,
-  })),
-);
-const PublicBookingPage = lazy(() =>
-  import("./modules/booking/components/Public/PublicBookingPage").then((m) => ({
-    default: m.PublicBookingPage,
-  })),
-);
-const CancelBookingPage = lazy(() =>
-  import("./modules/booking/pages/CancelBookingPage").then((m) => ({
-    default: m.CancelBookingPage,
-  })),
-);
-const RescheduleBookingPage = lazy(() =>
-  import("./modules/booking/pages/RescheduleBookingPage").then((m) => ({
-    default: m.RescheduleBookingPage,
-  })),
 );
 
 // Ambassador Module
@@ -1026,125 +951,6 @@ function AppRoutes() {
           path="/team"
           element={<Navigate to="/talent?tab=sin-asignar" replace />}
         />
-        {/* Streaming V2 - Unified Module */}
-        <Route
-          path="/streaming"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature
-                  featureName="Streaming"
-                  description="Estamos perfeccionando nuestro sistema de streaming para ofrecerte la mejor experiencia."
-                >
-                  <StreamingHubPage />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/streaming/studio/:sessionId"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature featureName="Estudio de Streaming">
-                  <StreamingStudioPage />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        {/* Live Broadcasting (Cloudflare Stream) */}
-        <Route
-          path="/live"
-          element={
-            <AdminOnlyFeature
-              featureName="En Vivo"
-              description="Muy pronto podrás ver y crear transmisiones en vivo. ¡Estamos trabajando en ello!"
-            >
-              <LiveDiscoverPage />
-            </AdminOnlyFeature>
-          }
-        />
-        <Route
-          path="/live/broadcast"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <AdminOnlyFeature featureName="Transmisión en Vivo">
-                <LiveBroadcastPage />
-              </AdminOnlyFeature>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/live/:creatorSlug"
-          element={
-            <AdminOnlyFeature featureName="Ver Transmisión">
-              <LiveViewerPage />
-            </AdminOnlyFeature>
-          }
-        />
-        <Route
-          path="/streaming/recap/:sessionId"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature featureName="Resumen de Stream">
-                  <StreamingRecapPage />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/streaming/hosting"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature
-                  featureName="Live Hosting"
-                  description="Sistema de contratación de hosts para transmisiones en vivo."
-                >
-                  <LiveHostingDashboard />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/streaming/hosting/new"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature featureName="Live Hosting">
-                  <LiveHostingRequest />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/streaming/hosting/:requestId"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdminOnlyFeature featureName="Live Hosting">
-                  <LiveHostingRequest />
-                </AdminOnlyFeature>
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketing"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "digital_strategist"]}>
-              <MainLayout>
-                <Marketing />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
         {/* CRM Plataforma */}
         <Route
           path="/crm"
@@ -1259,19 +1065,6 @@ function AppRoutes() {
           }
         />
         {/* CRM Organización */}
-        <Route path="/org-crm" element={<Navigate to="/talent" replace />} />
-        <Route
-          path="/org-crm/contactos"
-          element={<Navigate to="/clientes" replace />}
-        />
-        <Route
-          path="/org-crm/creadores"
-          element={<Navigate to="/talent?tab=externo" replace />}
-        />
-        <Route
-          path="/org-crm/pipelines"
-          element={<Navigate to="/talent" replace />}
-        />
         <Route
           path="/org-crm/finanzas"
           element={
@@ -1294,41 +1087,11 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/marketing-ads"
-          element={
-            <ProtectedRoute allowedRoles={["admin", "client"]}>
-              <MainLayout>
-                <MarketingAdsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/admin/analytics"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
               <MainLayout>
                 <KAEAnalyticsDashboard />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/ad-intelligence"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <AdIntelligencePage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/social-scraper"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <SocialScraperPage />
               </MainLayout>
             </ProtectedRoute>
           }
@@ -1349,6 +1112,16 @@ function AppRoutes() {
             <RootOnlyRoute>
               <MainLayout>
                 <DevModulesPage />
+              </MainLayout>
+            </RootOnlyRoute>
+          }
+        />
+        <Route
+          path="/admin/qa-paginas"
+          element={
+            <RootOnlyRoute>
+              <MainLayout>
+                <AllPagesQAPage />
               </MainLayout>
             </RootOnlyRoute>
           }
@@ -1383,37 +1156,6 @@ function AppRoutes() {
               </MainLayout>
             </ProtectedRoute>
           }
-        />
-        {/* Booking Module */}
-        <Route
-          path="/booking/settings"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <BookingSettingsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/booking/calendar"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <BookingCalendarPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/book/:username" element={<PublicBookingPage />} />
-        <Route
-          path="/book/:username/:eventSlug"
-          element={<PublicBookingPage />}
-        />
-        <Route path="/book/cancel/:bookingId" element={<CancelBookingPage />} />
-        <Route
-          path="/book/reschedule/:bookingId"
-          element={<RescheduleBookingPage />}
         />
         <Route
           path="/settings"
@@ -1486,14 +1228,6 @@ function AppRoutes() {
               <MainLayout>
                 <ClientDashboard />
               </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/demo"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <DemoClientDashboard />
             </ProtectedRoute>
           }
         />
@@ -1732,49 +1466,47 @@ function AppContent() {
         <BrandingProvider>
           <AuthProvider>
             <AuthStoreBridge />
-            <DemoModeProvider>
-              <OnboardingGateProvider>
-                <RoleLegalGateProvider>
-                  <CurrencyProvider>
-                    <AnalyticsProvider>
-                      <ImpersonationProvider>
-                        <TrialProvider>
-                          <UnsavedChangesProvider>
-                            <AchievementNotificationProvider>
-                              <StrategistClientProvider>
-                                <AICopilotProvider>
-                                  <KiroProvider>
-                                    <GenerationJobProvider>
-                                      <TooltipProvider delayDuration={0}>
-                                        <ImpersonationBanner />
-                                        <Toaster />
-                                        <Sonner />
-                                        <AcademyLiveToaster />
-                                        <UpdatePrompt />
-                                        <PageLoader />
-                                        <MarketplaceReadinessPopup />
-                                        <CookieConsentBanner />
-                                        <ScrollToTop />
-                                        <FloatingGenerationBadge />
-                                        <ErrorBoundary>
-                                          <CreatorFavoritesProvider>
-                                            <AppRoutes />
-                                          </CreatorFavoritesProvider>
-                                        </ErrorBoundary>
-                                      </TooltipProvider>
-                                    </GenerationJobProvider>
-                                  </KiroProvider>
-                                </AICopilotProvider>
-                              </StrategistClientProvider>
-                            </AchievementNotificationProvider>
-                          </UnsavedChangesProvider>
-                        </TrialProvider>
-                      </ImpersonationProvider>
-                    </AnalyticsProvider>
-                  </CurrencyProvider>
-                </RoleLegalGateProvider>
-              </OnboardingGateProvider>
-            </DemoModeProvider>
+            <OnboardingGateProvider>
+              <RoleLegalGateProvider>
+                <CurrencyProvider>
+                  <AnalyticsProvider>
+                    <ImpersonationProvider>
+                      <TrialProvider>
+                        <UnsavedChangesProvider>
+                          <AchievementNotificationProvider>
+                            <StrategistClientProvider>
+                              <AICopilotProvider>
+                                <KiroProvider>
+                                  <GenerationJobProvider>
+                                    <TooltipProvider delayDuration={0}>
+                                      <ImpersonationBanner />
+                                      <Toaster />
+                                      <Sonner />
+                                      <AcademyLiveToaster />
+                                      <UpdatePrompt />
+                                      <PageLoader />
+                                      <MarketplaceReadinessPopup />
+                                      <CookieConsentBanner />
+                                      <ScrollToTop />
+                                      <FloatingGenerationBadge />
+                                      <ErrorBoundary>
+                                        <CreatorFavoritesProvider>
+                                          <AppRoutes />
+                                        </CreatorFavoritesProvider>
+                                      </ErrorBoundary>
+                                    </TooltipProvider>
+                                  </GenerationJobProvider>
+                                </KiroProvider>
+                              </AICopilotProvider>
+                            </StrategistClientProvider>
+                          </AchievementNotificationProvider>
+                        </UnsavedChangesProvider>
+                      </TrialProvider>
+                    </ImpersonationProvider>
+                  </AnalyticsProvider>
+                </CurrencyProvider>
+              </RoleLegalGateProvider>
+            </OnboardingGateProvider>
           </AuthProvider>
         </BrandingProvider>
       </AccessGateProvider>

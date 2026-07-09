@@ -103,10 +103,6 @@ export { useCompanyProfile } from './useCompanyProfile';
 export { useContactReveal } from './useContactReveal';
 export { useClientDNA } from './useClientDNA';
 
-// ─── Streaming ──────────────────────────────────────────────────────────────
-export { useLiveHosting } from './useLiveHosting';
-export { useLiveStream } from './useLiveStream';
-export { useLiveViewer } from './useLiveViewer';
 export { useHLSPlayer } from './useHLSPlayer';
 
 // ─── Storage & Media ────────────────────────────────────────────────────────
@@ -145,7 +141,6 @@ export { useJoinRequests } from './useJoinRequests';
 // ─── Other ──────────────────────────────────────────────────────────────────
 export { useDigitalSignature } from './useDigitalSignature';
 export { useEmailMarketing } from './useEmailMarketing';
-export { useLinkedInAds } from './useLinkedInAds';
 
 // ─── Subdirectories ─────────────────────────────────────────────────────────
 export * from './marketplace';

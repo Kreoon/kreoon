@@ -55,7 +55,7 @@ Esto convierte casi todo el reporte de "juicio" a "hecho". Conteo de filas real:
 
 ## 0. Veredicto estratégico (lo más importante)
 
-**El problema central no es calidad de código — es SOBRE-CONSTRUCCIÓN.** KREOON tiene 168 rutas, 199 edge functions y ~500 componentes para una visión que se puede expresar en UN loop: **estrategia → contenido → talento → ejecución → cobro.**
+**El problema central no es calidad de código — es SOBRE-CONSTRUCCIÓN.** KREOON tiene 168 rutas, 199 edge functions y ~500 componentes para una visión que se puede expresar en UN loop cash-first: **cobro al cliente → estrategia → contenido → talento → ejecución → aprobación → pago al talento.** (El cobro es el gate de entrada, no el cierre.)
 
 Hoy la plataforma es **5 productos distintos cohabitando**:
 1. **Núcleo (la visión):** pipeline de contenido + marketplace de creadores/editores + campañas. ~40% del código.
@@ -175,7 +175,7 @@ La visión es **"se hace toda una estrategia de marketing automática"**. Hoy NO
 **Archivos:** 24 páginas en `pages/academia/`, `components/academy/` (79 comps), `points/`, `ambassador/`, 30+ tablas `academy_*`.
 
 ### Veredicto estratégico **[reforzado por datos: 5 enrollments, 2 cursos, 1 space]**
-Academia es un **LMS + red social completa** (cursos, spaces, feed, DM, challenges, leaderboard, calendario, mapa) que **casi no toca el loop central** (estrategia→contenido→talento→cobro). Es ~20% del código y 30+ tablas. **Y en producción tiene 5 inscripciones, 2 cursos y 1 space.** No hay comunidad real que proteger — reducir ahora es barato; en 6 meses con 5.000 estudiantes sería carísimo. **Momento ideal para decidir.**
+Academia es un **LMS + red social completa** (cursos, spaces, feed, DM, challenges, leaderboard, calendario, mapa) que **casi no toca el loop central** (cobro→estrategia→contenido→talento→ejecución→pago). Es ~20% del código y 30+ tablas. **Y en producción tiene 5 inscripciones, 2 cursos y 1 space.** No hay comunidad real que proteger — reducir ahora es barato; en 6 meses con 5.000 estudiantes sería carísimo. **Momento ideal para decidir.**
 
 **Tres caminos:**
 - **(A) Mantener completo:** solo si Academia es el mecanismo de "autosostenible" — formar creadores que luego ejecutan campañas en el marketplace. Pero eso requiere que Academia esté COSIDA al marketplace (un graduado se vuelve creador contratable). Hoy `student` es un rol GLOBAL aislado sin org — es decir, **está desconectado del loop**.

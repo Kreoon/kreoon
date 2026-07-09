@@ -49,10 +49,10 @@ const SYSTEM_WEBHOOKS: SystemWebhook[] = [
   {
     key: "n8n_script_generator",
     label: "n8n - Generador de Scripts",
-    description: "Webhook de n8n para generación de scripts con IA. Usado en ScriptGenerator y StrategistScriptForm.",
+    description: "Webhook de n8n para generación de scripts con IA. Usado en StrategistScriptForm.",
     testUrl: "https://n8n.infinygroup.com/webhook-test/787fcfa6-f590-458f-94b6-7b9f0ecd1be7",
     productionUrlKey: "n8n_script_generator_prod_url",
-    usedIn: ["ScriptGenerator.tsx", "StrategistScriptForm.tsx"],
+    usedIn: ["StrategistScriptForm.tsx"],
     docsUrl: "https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
   },
   {
@@ -352,24 +352,6 @@ const INTEGRATION_CATEGORIES: IntegrationCategory[] = [
         placeholder: "G-XXXXXXXXXX",
         isSecret: false,
         docsUrl: "https://analytics.google.com/"
-      },
-      {
-        key: "meta_pixel_id",
-        label: "Meta Pixel ID",
-        description: "ID del píxel de Facebook/Meta para tracking.",
-        type: "config",
-        placeholder: "1234567890123456",
-        isSecret: false,
-        docsUrl: "https://business.facebook.com/events_manager"
-      },
-      {
-        key: "tiktok_pixel_id",
-        label: "TikTok Pixel ID",
-        description: "ID del píxel de TikTok para tracking.",
-        type: "config",
-        placeholder: "XXXXXXXXXXXXXXXXX",
-        isSecret: false,
-        docsUrl: "https://ads.tiktok.com/help/article/tiktok-pixel"
       },
       {
         key: "hotjar_id",

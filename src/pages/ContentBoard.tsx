@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
-import { DroppableKanbanColumn } from "@/components/dashboard/DroppableKanbanColumn";
-import { DraggableContentCard } from "@/components/dashboard/DraggableContentCard";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
 import { FillmakerDialog } from "@/components/clients/FillmakerDialog";
 import { Search, Plus, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
@@ -39,7 +37,6 @@ import {
   BoardAIPanel,
   MarketingInfoPanel,
   CampaignAssignmentDialog,
-  MarketplaceBoardView,
   ViewSelector
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";

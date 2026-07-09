@@ -16,7 +16,7 @@ import type {
   ContentDailyTrend,
   ContentTypeDistribution,
   TopPerformingContent,
-} from '@/components/marketing/types';
+} from '@/types/marketing.types';
 
 // ── Types ──
 

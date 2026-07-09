@@ -48,17 +48,6 @@ export const TALENT_AI_MODULES = {
 } as const;
 
 // ============================================
-// LIVE COMMERCE / STREAMING
-// ============================================
-export const LIVE_AI_MODULES = {
-  CONTROL: 'live.control.ai',
-  PRODUCTS: 'live.products.ai',
-  ANALYTICS: 'live.analytics.ai',
-  STREAMING: 'streaming_ai',              // IA para generación de contenido streaming
-  STREAMING_TITLES: 'streaming.titles.ai', // IA para títulos y descripciones de eventos
-} as const;
-
-// ============================================
 // GENERAL / ORGANIZACIÓN
 // ============================================
 export const GENERAL_AI_MODULES = {
@@ -74,7 +63,7 @@ export interface AIModuleDefinition {
   key: string;
   name: string;
   description: string;
-  category: 'board' | 'content' | 'up' | 'live' | 'talent' | 'general' | 'organization';
+  category: 'board' | 'content' | 'up' | 'talent' | 'general' | 'organization';
   icon?: string;
 }
 
@@ -194,39 +183,7 @@ export const AI_MODULE_DEFINITIONS: AIModuleDefinition[] = [
     description: 'Evaluación de embajadores, métricas de red, ascensos/descensos y alertas',
     category: 'talent',
   },
-  
-  // LIVE COMMERCE / STREAMING
-  {
-    key: LIVE_AI_MODULES.CONTROL,
-    name: 'Live – Control',
-    description: 'Control en tiempo real de transmisiones en vivo',
-    category: 'live',
-  },
-  {
-    key: LIVE_AI_MODULES.PRODUCTS,
-    name: 'Live – Productos',
-    description: 'Gestión y recomendación de productos en live',
-    category: 'live',
-  },
-  {
-    key: LIVE_AI_MODULES.ANALYTICS,
-    name: 'Live – Analytics',
-    description: 'Métricas y análisis de rendimiento de lives',
-    category: 'live',
-  },
-  {
-    key: LIVE_AI_MODULES.STREAMING,
-    name: 'Streaming – Generación de Contenido',
-    description: 'IA para generar títulos, descripciones y contenido para eventos de streaming',
-    category: 'live',
-  },
-  {
-    key: LIVE_AI_MODULES.STREAMING_TITLES,
-    name: 'Streaming – Títulos y Descripciones',
-    description: 'IA especializada en mejorar títulos y descripciones de eventos en vivo',
-    category: 'live',
-  },
-  
+
   // ORGANIZACIÓN / GENERAL
   {
     key: GENERAL_AI_MODULES.REGISTRATION,
@@ -286,7 +243,6 @@ export type AIModuleKey =
   | typeof CONTENT_AI_MODULES[keyof typeof CONTENT_AI_MODULES]
   | typeof UP_AI_MODULES[keyof typeof UP_AI_MODULES]
   | typeof TALENT_AI_MODULES[keyof typeof TALENT_AI_MODULES]
-  | typeof LIVE_AI_MODULES[keyof typeof LIVE_AI_MODULES]
   | typeof GENERAL_AI_MODULES[keyof typeof GENERAL_AI_MODULES];
 
 // All module keys as array
@@ -295,6 +251,5 @@ export const ALL_AI_MODULE_KEYS: AIModuleKey[] = [
   ...Object.values(CONTENT_AI_MODULES),
   ...Object.values(UP_AI_MODULES),
   ...Object.values(TALENT_AI_MODULES),
-  ...Object.values(LIVE_AI_MODULES),
   ...Object.values(GENERAL_AI_MODULES),
 ];

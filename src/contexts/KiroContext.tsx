@@ -92,7 +92,6 @@ export type KiroZone =
   | 'casting'
   | 'sala-de-prensa'
   | 'escuela'
-  | 'live-stage'
   | 'general';
 
 /** Interfaz del contexto de KIRO */
@@ -241,10 +240,6 @@ const ROUTE_TO_ZONE: Record<string, KiroZone> = {
   '/training': 'escuela',
   '/academy': 'escuela',
   '/ranking': 'escuela',
-
-  // Live Stage - Streaming en vivo
-  '/live': 'live-stage',
-  '/streaming': 'live-stage',
 };
 
 /** Información descriptiva de cada zona */
@@ -283,11 +278,6 @@ export const ZONE_INFO: Record<KiroZone, { label: string; description: string; i
     label: 'Escuela',
     description: 'Formación y ranking',
     icon: '🎓',
-  },
-  'live-stage': {
-    label: 'Live Stage',
-    description: 'Streaming y eventos en vivo',
-    icon: '🔴',
   },
   'general': {
     label: 'General',

@@ -169,10 +169,6 @@ const ENTITY_TYPE_TO_ZONE: Record<string, KiroZone> = {
   // Comunicación
   comment: 'sala-de-prensa',
 
-  // Live y Streaming
-  stream: 'live-stage',
-  live: 'live-stage',
-
   // Educación
   course: 'escuela',
   lesson: 'escuela',
@@ -323,9 +319,6 @@ function generateActionRoute(entityType: string, entityId: string): string {
       return `/campaigns/${entityId}`;
     case 'board':
       return `/content-board`;
-    case 'stream':
-    case 'live':
-      return `/live/${entityId}`;
     case 'profile':
       return `/profile/${entityId}`;
     default:
