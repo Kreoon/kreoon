@@ -260,3 +260,16 @@ Required environment variables in `.env`:
 - Primary language: Spanish (role labels, UI text)
 - Ambassador levels: "Embajador Bronce/Plata/Oro"
 - Role labels in `src/lib/roles.ts`
+
+## PROTOCOLO CAVEMAN — ahorro de tokens
+
+Regla base: NO re-explorar lo ya sabido.
+
+1. **Ledger primero.** Antes de explorar arquitectura/schema, leer `ARCHITECTURE_LEDGER.md`. Si el dato está ahí, no grep/read para confirmarlo. Confiar en el ledger.
+2. **Schema vía MCP, quirúrgico.** Nunca volcar el schema completo. Usar el MCP de Supabase por tabla puntual (`execute_sql` con query a `information_schema.columns`/`pg_policies` filtrado por `table_name`, o `list_tables` en el schema específico). Una tabla a la vez.
+3. **Grep antes de Read.** No leer archivos >300 líneas completos. Grep el símbolo/función → leer ventana ±40 líneas. Solo leer completo si el archivo se va a reescribir entero.
+4. **Cero reads de confirmación.** No re-leer un archivo recién editado "para verificar que quedó bien" — confiar en el Edit. Solo re-leer si tsc/build falló y apunta ahí.
+5. **Verificación al final, en lote.** Un tsc al final de la sesión, no por archivo. Un build si se tocó config. No correr checks intermedios repetidos.
+6. **Output telegráfico.** Reporte = bullets de hechos. Cero relleno, cero prosa de cortesía, cero re-explicar lo que ya está en el prompt.
+7. **Ledger vivo.** Al descubrir un hecho nuevo de arquitectura (tabla, trigger, bug, convención), apendear una línea en la sección UPDATES de `ARCHITECTURE_LEDGER.md`. Nunca re-descubrir lo mismo dos veces.
+8. **No preguntar lo decidible.** Si el prompt trae regla de decisión, decidir y seguir. Solo frenar ante riesgo de pérdida de datos o cuando un check obligatorio falla sin regla.

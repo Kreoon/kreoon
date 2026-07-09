@@ -128,7 +128,7 @@ export function MainLayout({
 
   // Solo creator/editor tienen bottom nav movil fija -> unica llamada incondicional
   // (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo, que hacen return temprano)
-  const hasMobileBottomNav = (activeRole === 'creator' || activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin;
+  const hasMobileBottomNav = (activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin;
   useBottomNavCssVar(hasMobileBottomNav);
 
   // For content creators, show creator-specific layout with bottom nav on mobile
