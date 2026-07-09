@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,6 +32,10 @@ const PAGE_SIZE = 12;
 export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  // Seed estable durante toda la sesion de scroll (mismo orden entre paginas), pero se
+  // regenera en cada refresh explicito (pull-to-refresh) para variar el intercalado —
+  // ver refetchWithNewOrder mas abajo.
+  const seedRef = useRef(crypto.randomUUID());
 
   const query = useInfiniteQuery({
     queryKey: ['feed-posts', tab, niche, user?.id ?? 'anon'],
@@ -44,6 +48,7 @@ export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
         p_cursor_created_at: pageParam?.createdAt ?? undefined,
         p_cursor_id: pageParam?.id ?? undefined,
         p_limit: PAGE_SIZE,
+        p_seed: seedRef.current,
       });
       if (error) throw error;
       return (data || []) as FeedPost[];
@@ -58,6 +63,11 @@ export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
   });
 
   const posts = query.data?.pages.flat() ?? [];
+
+  const refetchWithNewOrder = useCallback(() => {
+    seedRef.current = crypto.randomUUID();
+    return query.refetch();
+  }, [query]);
 
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['feed-posts'] });
@@ -204,7 +214,7 @@ export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
     isFetchingNextPage: query.isFetchingNextPage,
     hasNextPage: query.hasNextPage,
     fetchNextPage: query.fetchNextPage,
-    refetch: query.refetch,
+    refetch: refetchWithNewOrder,
     isRefetching: query.isRefetching,
     react,
     toggleLikeLegacyPost,

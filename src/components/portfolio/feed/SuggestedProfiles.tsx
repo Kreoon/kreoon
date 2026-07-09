@@ -81,9 +81,42 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss, 
         // Remove already following
         alreadyFollowing.forEach(id => candidateIds.delete(id));
 
-        // Fetch final profiles
-        const candidateArray = [...candidateIds].slice(0, limit * 2);
-        
+        // Solo sugerir creadores/editores reales (tienen fila en creator_profiles) — antes se
+        // sugerian TODOS los profiles sin filtrar, incluyendo clients/marcas ("Yonaidys — client").
+        const rawCandidateArray = [...candidateIds];
+        if (rawCandidateArray.length === 0) {
+          setProfiles([]);
+          setLoading(false);
+          return;
+        }
+
+        const { data: creatorRows } = await supabase
+          .from('creator_profiles')
+          .select('user_id, categories')
+          .in('user_id', rawCandidateArray)
+          .eq('is_active', true);
+
+        const creatorCategoriesMap = new Map(
+          (creatorRows ?? []).map((c) => [c.user_id, (c.categories as string[] | null) ?? []])
+        );
+
+        // Nicho propio del usuario, para priorizar sugerencias del mismo nicho
+        const { data: ownProfile } = await supabase
+          .from('creator_profiles')
+          .select('categories')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        const ownCategories = new Set((ownProfile?.categories as string[] | null) ?? []);
+
+        const candidateArray = rawCandidateArray
+          .filter((id) => creatorCategoriesMap.has(id))
+          .sort((a, b) => {
+            const aMatch = (creatorCategoriesMap.get(a) ?? []).some((c) => ownCategories.has(c)) ? 1 : 0;
+            const bMatch = (creatorCategoriesMap.get(b) ?? []).some((c) => ownCategories.has(c)) ? 1 : 0;
+            return bMatch - aMatch;
+          })
+          .slice(0, limit * 2);
+
         if (candidateArray.length === 0) {
           setProfiles([]);
           setLoading(false);
@@ -91,11 +124,15 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss, 
         }
 
         // Fetch final profiles with organization info
-        const { data: finalProfiles } = await supabase
+        const { data: finalProfilesRaw } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url, bio')
-          .in('id', candidateArray)
-          .limit(limit);
+          .in('id', candidateArray);
+        // Mantener el orden de prioridad por nicho (el .in() de supabase no garantiza orden)
+        const finalProfiles = candidateArray
+          .map((id) => finalProfilesRaw?.find((p) => p.id === id))
+          .filter((p): p is NonNullable<typeof p> => Boolean(p))
+          .slice(0, limit);
 
         // Fetch organization membership for these profiles (sin embed para evitar 400)
         const { data: membershipData } = await supabase
@@ -121,6 +158,7 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss, 
             const membership = membershipMap.get(p.id);
             return {
               ...p,
+              full_name: p.full_name ?? '',
               reason: mutualCandidates.has(p.id) ? 'Seguido por personas que sigues' : 'Popular',
               role: membership?.role,
               organization_name: membership?.organization_name,

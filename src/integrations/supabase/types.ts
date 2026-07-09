@@ -37263,35 +37263,66 @@ export type Database = {
           renewal_rate: number
         }[]
       }
-      get_feed_posts: {
-        Args: {
-          p_cursor_created_at?: string
-          p_cursor_id?: string
-          p_limit?: number
-          p_niche?: string
-          p_tab?: string
-        }
-        Returns: {
-          author_avatar: string
-          author_name: string
-          author_user_id: string
-          category: string
-          created_at: string
-          is_following_author: boolean
-          is_liked: boolean
-          is_saved: boolean
-          likes_count: number
-          media_type: string
-          media_url: string
-          my_reaction: string
-          post_id: string
-          post_source: string
-          reactions_count: number
-          thumbnail_url: string
-          title: string
-          views_count: number
-        }[]
-      }
+      get_feed_posts:
+        | {
+            Args: {
+              p_cursor_created_at?: string
+              p_cursor_id?: string
+              p_limit?: number
+              p_niche?: string
+              p_tab?: string
+            }
+            Returns: {
+              author_avatar: string
+              author_name: string
+              author_user_id: string
+              category: string
+              created_at: string
+              is_following_author: boolean
+              is_liked: boolean
+              is_saved: boolean
+              likes_count: number
+              media_type: string
+              media_url: string
+              my_reaction: string
+              post_id: string
+              post_source: string
+              reactions_count: number
+              thumbnail_url: string
+              title: string
+              views_count: number
+            }[]
+          }
+        | {
+            Args: {
+              p_cursor_created_at?: string
+              p_cursor_id?: string
+              p_limit?: number
+              p_niche?: string
+              p_seed?: string
+              p_tab?: string
+            }
+            Returns: {
+              author_avatar: string
+              author_name: string
+              author_user_id: string
+              category: string
+              created_at: string
+              is_following_author: boolean
+              is_liked: boolean
+              is_saved: boolean
+              likes_count: number
+              media_type: string
+              media_url: string
+              my_reaction: string
+              post_id: string
+              post_source: string
+              reactions_count: number
+              thumbnail_url: string
+              title: string
+              views_count: number
+            }[]
+          }
       get_financial_period_summary: {
         Args: {
           p_currency?: string

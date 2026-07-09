@@ -97,6 +97,14 @@ export default function FeedPage() {
   const { posts, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, refetch, react, toggleLikeLegacyPost, toggleSaved } =
     useFeedPosts(activeTab, activeTab === 'niche' ? niche : null);
 
+  // "Por nicho" sin nicho seleccionado = niche null = get_feed_posts no filtra nada,
+  // se ve identico a "Para ti" (bug reportado). Autoseleccionar el primero disponible.
+  useEffect(() => {
+    if (activeTab === 'niche' && !niche && niches.length > 0) {
+      setNiche(niches[0]);
+    }
+  }, [activeTab, niche, niches]);
+
   useEffect(() => {
     if (!user?.id) return;
     supabase
