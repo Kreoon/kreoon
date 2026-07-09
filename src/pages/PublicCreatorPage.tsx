@@ -1,10 +1,16 @@
-import { useParams } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { AlertCircle, User } from 'lucide-react';
+import { AlertCircle, User, Briefcase } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ProfilePageRenderer } from '@/components/profile-viewer/ProfilePageRenderer';
 import { ProfileShareButton } from '@/components/marketplace/profile/ProfileShareButton';
 import { Helmet } from 'react-helmet-async';
+import { useAuth } from '@/hooks/useAuth';
+import { useCreatorProfile } from '@/hooks/useCreatorProfile';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { FollowButton } from '@/components/social/FollowButton';
+import { getPermissionGroup } from '@/lib/permissionGroups';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -17,11 +23,13 @@ interface PortfolioItem {
 
 interface CreatorProfile {
   id: string;
+  user_id: string;
   display_name: string;
   bio: string | null;
   avatar_url: string | null;
   slug: string;
   username: string | null;
+  level: string | null;
   // Datos adicionales para meta tags
   primary_role: string | null;
   rating_avg: number | null;
@@ -31,6 +39,13 @@ interface CreatorProfile {
   // Primer item del portafolio para OG image
   featured_media: PortfolioItem | null;
 }
+
+const LEVEL_LABELS: Record<string, string> = {
+  bronze: 'Bronce',
+  silver: 'Plata',
+  gold: 'Oro',
+  elite: 'Elite',
+};
 
 // ─── Helper: obtener mejor imagen para OG ──────────────────────────────────────
 
@@ -54,7 +69,32 @@ function getOgImage(profile: CreatorProfile): string {
 
 // ─── Error Component ───────────────────────────────────────────────────────────
 
-function ProfileNotFound() {
+function ProfileNotFound({ isOwnEmptyProfile }: { isOwnEmptyProfile: boolean }) {
+  const navigate = useNavigate();
+
+  if (isOwnEmptyProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <div className="text-center space-y-4 max-w-sm" role="alert" aria-live="assertive">
+          <div className="flex justify-center">
+            <User className="h-12 w-12 text-primary" aria-hidden="true" />
+          </div>
+          <h1 className="text-xl font-semibold text-foreground">Completa tu perfil</h1>
+          <p className="text-sm text-muted-foreground">
+            Aun no tienes un perfil publico. Completalo para que las marcas te encuentren y puedas
+            compartir tu link en tus redes.
+          </p>
+          <button
+            onClick={() => navigate('/settings?section=profile')}
+            className="inline-block text-sm font-medium text-primary hover:underline mt-2"
+          >
+            Completar mi perfil
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="text-center space-y-4 max-w-sm" role="alert" aria-live="assertive">
@@ -139,6 +179,13 @@ function generateDescription(profile: CreatorProfile): string {
 
 export default function PublicCreatorPage() {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
+  const { user, roles } = useAuth();
+  const { track } = useAnalytics();
+  const trackedProfileIdRef = useRef<string | null>(null);
+  // Perfil propio del visitante (si tiene sesion) — para distinguir "perfil no encontrado"
+  // de "todavia no completaste tu perfil" cuando el visitante logueado no tiene slug propio.
+  const { profile: viewerCreatorProfile, loading: viewerProfileLoading } = useCreatorProfile();
 
   // Limpiar @ del username si viene en la URL (/@username)
   const cleanUsername = username?.startsWith('@') ? username.slice(1) : username;
@@ -161,12 +208,14 @@ export default function PublicCreatorPage() {
         .from('creator_profiles')
         .select(`
           id,
+          user_id,
           display_name,
           bio,
           avatar_url,
           banner_url,
           slug,
           username,
+          level,
           primary_role,
           rating_avg,
           rating_count,
@@ -195,12 +244,14 @@ export default function PublicCreatorPage() {
 
       return {
         id: data.id,
+        user_id: data.user_id,
         display_name: data.display_name,
         bio: data.bio,
         avatar_url: data.avatar_url,
         banner_url: data.banner_url,
         slug: data.slug,
         username: data.username,
+        level: data.level,
         primary_role: data.primary_role,
         rating_avg: data.rating_avg,
         rating_count: data.rating_count,
@@ -213,10 +264,23 @@ export default function PublicCreatorPage() {
     retry: false,
   });
 
+  // profile_view (KAE) — una vez por profile.id cargado, visitante puede ser anonimo
+  useEffect(() => {
+    if (!profile?.id || trackedProfileIdRef.current === profile.id) return;
+    trackedProfileIdRef.current = profile.id;
+    track({
+      event_name: 'profile_view',
+      event_category: 'engagement',
+      properties: { creator_id: profile.id, is_own_profile: viewerCreatorProfile?.id === profile.id },
+    });
+  }, [profile?.id, track, viewerCreatorProfile?.id]);
+
   // ── Render states ──
 
+  const isOwnEmptyProfile = !!user && !viewerProfileLoading && !viewerCreatorProfile?.slug;
+
   if (!cleanUsername) {
-    return <ProfileNotFound />;
+    return <ProfileNotFound isOwnEmptyProfile={isOwnEmptyProfile} />;
   }
 
   if (isLoading) {
@@ -232,7 +296,7 @@ export default function PublicCreatorPage() {
   }
 
   if (!profile) {
-    return <ProfileNotFound />;
+    return <ProfileNotFound isOwnEmptyProfile={isOwnEmptyProfile} />;
   }
 
   // ── Generar meta tags ──
@@ -280,8 +344,31 @@ export default function PublicCreatorPage() {
       {/* Profile content */}
       <ProfilePageRenderer profileId={profile.id} isPreview={false} />
 
-      {/* Floating share button */}
-      <div className="fixed bottom-6 right-6 z-40">
+      {/* Badge de nivel UP — overlay fijo, no forma parte del builder de bloques */}
+      {profile.level && LEVEL_LABELS[profile.level] && (
+        <div className="fixed top-3 left-3 z-40 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-xs font-medium text-white">
+          Nivel {LEVEL_LABELS[profile.level]}
+        </div>
+      )}
+
+      {/* Acciones flotantes: Contratar / Seguir / Compartir — ocultas si es el propio perfil */}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+        {viewerCreatorProfile?.id !== profile.id && (
+          <>
+            {(!user || getPermissionGroup(roles[0]) === 'client') && (
+              <button
+                onClick={() => navigate(`/marketplace/creator/${profile.id}`)}
+                className="flex items-center gap-1.5 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-4 py-2 text-sm font-medium"
+              >
+                <Briefcase className="h-4 w-4" />
+                Contratar
+              </button>
+            )}
+            {user && (
+              <FollowButton profileId={profile.user_id} variant="outline" className="shadow-lg bg-background" />
+            )}
+          </>
+        )}
         <ProfileShareButton
           profile={{
             slug: profile.slug,

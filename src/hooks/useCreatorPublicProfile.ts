@@ -7,6 +7,19 @@ import type { Specialization } from '@/types/database';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 import { fetchUserSpecializations } from './useUserSpecializations';
 
+// Whitelist de columnas seguras para el perfil PUBLICO (sin sesion). creator_profiles tiene
+// columnas privadas (stripe_account_id, whatsapp_phone, payout_method, trust_score_breakdown, etc.)
+// que un select('*') expondria a cualquier visitante — la RLS solo filtra filas, no columnas.
+// Debe incluir exactamente lo que mapProfileRow() lee, nada mas.
+const PUBLIC_CREATOR_PROFILE_COLUMNS =
+  'id, user_id, display_name, slug, bio, bio_full, avatar_url, banner_url, location_city, ' +
+  'location_country, country_flag, categories, content_types, languages, platforms, social_links, ' +
+  'level, is_verified, is_available, rating_avg, rating_count, completed_projects, base_price, ' +
+  'currency, accepts_product_exchange, exchange_conditions, response_time_hours, ' +
+  'on_time_delivery_pct, repeat_clients_pct, marketplace_roles, is_active, profile_customization, ' +
+  'showreel_video_id, showreel_url, showreel_thumbnail, created_at, updated_at, has_talent_dna, ' +
+  'experience_level, content_style';
+
 export interface CreatorReviewData {
   id: string;
   reviewer_user_id: string;
@@ -192,7 +205,7 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
           // Try by creator_profiles.id
           const { data: byId } = await (supabase as any)
             .from('creator_profiles')
-            .select('*')
+            .select(PUBLIC_CREATOR_PROFILE_COLUMNS)
             .eq('id', creatorProfileId)
             .maybeSingle();
 
@@ -202,7 +215,7 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
             // Try by user_id
             const { data: byUserId } = await (supabase as any)
               .from('creator_profiles')
-              .select('*')
+              .select(PUBLIC_CREATOR_PROFILE_COLUMNS)
               .eq('user_id', creatorProfileId)
               .maybeSingle();
             profileRow = byUserId;
@@ -211,7 +224,7 @@ export function useCreatorPublicProfile(creatorProfileId: string | undefined) {
           // Try by slug
           const { data: bySlug } = await (supabase as any)
             .from('creator_profiles')
-            .select('*')
+            .select(PUBLIC_CREATOR_PROFILE_COLUMNS)
             .eq('slug', creatorProfileId)
             .maybeSingle();
           profileRow = bySlug;
