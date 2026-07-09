@@ -37071,7 +37071,6 @@ export type Database = {
           p_limit?: number
           p_niche?: string
           p_tab?: string
-          p_viewer_id?: string
         }
         Returns: {
           author_avatar: string

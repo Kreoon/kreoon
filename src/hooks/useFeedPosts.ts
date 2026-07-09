@@ -36,8 +36,9 @@ export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
   const query = useInfiniteQuery({
     queryKey: ['feed-posts', tab, niche, user?.id ?? 'anon'],
     queryFn: async ({ pageParam }: { pageParam: { createdAt: string; id: string } | null }) => {
+      // El viewer se resuelve server-side via auth.uid() dentro de la RPC (SECURITY DEFINER) —
+      // nunca se pasa un id de usuario desde el cliente (evita IDOR sobre saved/reactions/follows).
       const { data, error } = await supabase.rpc('get_feed_posts', {
-        p_viewer_id: user?.id ?? undefined,
         p_tab: tab,
         p_niche: niche ?? undefined,
         p_cursor_created_at: pageParam?.createdAt ?? undefined,
