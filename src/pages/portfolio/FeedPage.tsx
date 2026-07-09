@@ -17,6 +17,8 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
+import { StreakWidget } from '@/components/gamification/StreakWidget';
+import { DailyMissionsSheet } from '@/components/gamification/DailyMissionsSheet';
 import { RefreshCw, Plus, ImageIcon, Film, Compass, Grid3x3, Rows3, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -193,13 +195,17 @@ export default function FeedPage() {
               <TabsTrigger value="niche" className="text-xs text-white data-[state=active]:bg-primary">Por nicho</TabsTrigger>
             </TabsList>
           </Tabs>
-          <button
-            onClick={() => setMobileViewMode('grid')}
-            className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white"
-            aria-label="Ver como grilla"
-          >
-            <Grid3x3 className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <StreakWidget size="sm" className="bg-black/40 border-white/10" />
+            <DailyMissionsSheet className="bg-black/40 border-white/10" />
+            <button
+              onClick={() => setMobileViewMode('grid')}
+              className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white"
+              aria-label="Ver como grilla"
+            >
+              <Grid3x3 className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -268,6 +274,8 @@ export default function FeedPage() {
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 mb-3">
             <EnhancedSmartSearch className="mb-0 flex-1" />
+            <StreakWidget size="sm" />
+            <DailyMissionsSheet />
             <div className="hidden md:flex items-center gap-1">
               <Button
                 variant="ghost"

@@ -20649,6 +20649,48 @@ export type Database = {
           },
         ]
       }
+      mission_templates: {
+        Row: {
+          action_type: string
+          audience: string
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          target_count: number
+          title: string
+          up_reward: number
+          weight: number
+        }
+        Insert: {
+          action_type: string
+          audience?: string
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          target_count?: number
+          title: string
+          up_reward?: number
+          weight?: number
+        }
+        Update: {
+          action_type?: string
+          audience?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          target_count?: number
+          title?: string
+          up_reward?: number
+          weight?: number
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           channel_email: boolean
@@ -32125,6 +32167,8 @@ export type Database = {
           quality_multiplier: number | null
           season_duration_days: number | null
           speed_multiplier: number | null
+          streak_multiplier_30d: number
+          streak_multiplier_7d: number
           updated_at: string | null
           volume_multiplier: number | null
         }
@@ -32142,6 +32186,8 @@ export type Database = {
           quality_multiplier?: number | null
           season_duration_days?: number | null
           speed_multiplier?: number | null
+          streak_multiplier_30d?: number
+          streak_multiplier_7d?: number
           updated_at?: string | null
           volume_multiplier?: number | null
         }
@@ -32159,6 +32205,8 @@ export type Database = {
           quality_multiplier?: number | null
           season_duration_days?: number | null
           speed_multiplier?: number | null
+          streak_multiplier_30d?: number
+          streak_multiplier_7d?: number
           updated_at?: string | null
           volume_multiplier?: number | null
         }
@@ -33683,6 +33731,47 @@ export type Database = {
         }
         Relationships: []
       }
+      user_daily_missions: {
+        Row: {
+          assigned_date: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          mission_template_id: string
+          progress: number
+          reward_claimed: boolean
+          user_id: string
+        }
+        Insert: {
+          assigned_date: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_template_id: string
+          progress?: number
+          reward_claimed?: boolean
+          user_id: string
+        }
+        Update: {
+          assigned_date?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_template_id?: string
+          progress?: number
+          reward_claimed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_missions_mission_template_id_fkey"
+            columns: ["mission_template_id"]
+            isOneToOne: false
+            referencedRelation: "mission_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_feed_events: {
         Row: {
           created_at: string
@@ -34394,6 +34483,33 @@ export type Database = {
           created_at?: string | null
           id?: string
           specialization?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          current_streak: number
+          last_activity_date: string | null
+          longest_streak: number
+          streak_started_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          current_streak?: number
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_started_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          current_streak?: number
+          last_activity_date?: string | null
+          longest_streak?: number
+          streak_started_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -36219,6 +36335,7 @@ export type Database = {
         Args: { p_cutoff_date?: string; p_organization_id: string }
         Returns: Json
       }
+      fn_bump_user_streak: { Args: { p_user_id: string }; Returns: number }
       fn_cash_flow_forecast: {
         Args: {
           p_currency?: string
@@ -36236,6 +36353,10 @@ export type Database = {
           week_number: number
           week_start: string
         }[]
+      }
+      fn_match_daily_missions: {
+        Args: { p_event_type: string; p_user_id: string }
+        Returns: undefined
       }
       fn_monthly_talent_payroll: {
         Args: { p_organization_id: string; p_period_label?: string }
@@ -36966,6 +37087,20 @@ export type Database = {
       get_current_organization_id: {
         Args: { _user_id: string }
         Returns: string
+      }
+      get_daily_missions: {
+        Args: never
+        Returns: {
+          code: string
+          completed_at: string
+          description: string
+          id: string
+          progress: number
+          reward_claimed: boolean
+          target_count: number
+          title: string
+          up_reward: number
+        }[]
       }
       get_dashboard_stats: {
         Args: { end_date: string; org_id: string; start_date: string }
@@ -38732,6 +38867,7 @@ export type Database = {
         Args: { p_dup_id: string; p_master_id: string }
         Returns: string
       }
+      kreoon_today: { Args: never; Returns: string }
       leave_live_viewer: {
         Args: { p_session_id: string; p_stream_id: string }
         Returns: boolean
