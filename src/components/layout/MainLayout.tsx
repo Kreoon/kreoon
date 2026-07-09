@@ -210,7 +210,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "px-3 py-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -309,7 +309,7 @@ export function MainLayout({
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "px-3 py-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -437,7 +437,7 @@ export function MainLayout({
           )}
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
         >
-          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "px-3 py-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -528,7 +528,7 @@ export function MainLayout({
           "md:pt-14"
         )}
       >
-        <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
+        <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "px-3 py-4 md:p-6")}>
           <Suspense fallback={<ContentAreaLoader />}>
             <PageWrapper locationKey={location.pathname}>
               {children}
