@@ -15,6 +15,7 @@ import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch'
 import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
 import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
+import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
 import { RefreshCw, Plus, ImageIcon, Film, Compass, Grid3x3, Rows3, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -205,6 +206,14 @@ export default function FeedPage() {
           <div className="h-full w-full flex items-center justify-center bg-black">
             <KreoonSkeleton variant="rectangular" className="h-full w-full" animation="pulse" />
           </div>
+        ) : activeTab === 'following' && posts.length === 0 ? (
+          <div className="h-full w-full overflow-y-auto bg-background flex flex-col items-center justify-center px-4 pt-24 pb-20">
+            <p className="text-foreground font-medium mb-1">Aún no sigues a nadie</p>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Descubre creadores de tu nicho y arma tu feed
+            </p>
+            <SuggestedProfiles variant="carousel" limit={8} onFollowed={() => refetch()} />
+          </div>
         ) : (
           <SocialFeed
             items={socialFeedItems}
@@ -325,11 +334,17 @@ export default function FeedPage() {
               <KreoonSkeleton key={i} variant="rectangular" className="aspect-[4/5] rounded-sm" />
             ))}
           </div>
+        ) : posts.length === 0 && activeTab === 'following' ? (
+          <div className="flex flex-col items-center py-8">
+            <p className="text-foreground font-medium mb-1">Aún no sigues a nadie</p>
+            <p className="text-sm text-muted-foreground mb-2 text-center">
+              Descubre creadores de tu nicho y arma tu feed
+            </p>
+            <SuggestedProfiles variant="carousel" limit={8} onFollowed={() => refetch()} />
+          </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            {activeTab === 'following'
-              ? 'Sigue a creadores para ver su contenido aquí'
-              : 'No hay contenido disponible'}
+            No hay contenido disponible
           </div>
         ) : (
           <>

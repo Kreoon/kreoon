@@ -9,6 +9,7 @@ import { UserPlus, X, Building2, UserCircle, Palette, Film, Target } from 'lucid
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
 
 interface SuggestedProfile {
   id: string;
@@ -25,9 +26,11 @@ interface SuggestedProfilesProps {
   variant?: 'card' | 'carousel';
   limit?: number;
   onDismiss?: () => void;
+  /** Se dispara despues de seguir a alguien con exito (para refrescar el feed/tab que lo monta) */
+  onFollowed?: (profileId: string) => void;
 }
 
-export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }: SuggestedProfilesProps) {
+export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss, onFollowed }: SuggestedProfilesProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<SuggestedProfile[]>([]);
@@ -146,6 +149,7 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
 
       setFollowingIds(prev => new Set([...prev, profileId]));
       toast.success('Ahora sigues a este usuario');
+      onFollowed?.(profileId);
     } catch (error) {
       console.error('[SuggestedProfiles] Follow error:', error);
       toast.error('No se pudo seguir al usuario');
@@ -156,7 +160,26 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss }
     navigate(`/profile/${profileId}`);
   };
 
-  if (loading || profiles.length === 0) return null;
+  if (loading) {
+    return (
+      <div className="py-4 border-b border-border">
+        <div className="px-4 mb-3">
+          <KreoonSkeleton variant="text" className="h-4 w-40" />
+        </div>
+        <div className="flex gap-3 px-4 pb-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-36 rounded-sm p-3 space-y-2">
+              <KreoonSkeleton variant="circular" className="h-16 w-16 mx-auto" />
+              <KreoonSkeleton variant="text" className="h-3 w-24 mx-auto" />
+              <KreoonSkeleton variant="rectangular" className="h-8 w-full rounded-sm" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (profiles.length === 0) return null;
 
   if (variant === 'card') {
     return (
