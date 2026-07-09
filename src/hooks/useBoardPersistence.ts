@@ -57,7 +57,7 @@ export function useBoardPersistence({ organizationId, debounceMs = 500 }: UseBoa
   // Initialize state from localStorage
   const [state, setState] = useState<BoardState>(() => {
     if (typeof window === 'undefined') return defaultState;
-    
+
     try {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
@@ -69,7 +69,8 @@ export function useBoardPersistence({ organizationId, debounceMs = 500 }: UseBoa
     } catch (error) {
       console.error('Error loading board state:', error);
     }
-    return defaultState;
+    // Sin preferencia guardada: mobile arranca en 'list' (kanban no es usable <768px), desktop en 'kanban'
+    return window.innerWidth < 768 ? { ...defaultState, currentView: 'list' } : defaultState;
   });
 
   const [isDirty, setIsDirty] = useState(false);

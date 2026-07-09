@@ -548,22 +548,22 @@ function KpiCard({
   badge?: React.ReactNode;
 }) {
   return (
-    <Card className={`bg-gradient-to-br ${ACCENT_GRADIENTS[accent]} p-5`}>
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`p-2 rounded ${accent === 'green' ? 'bg-green-500/20' : accent === 'blue' ? 'bg-blue-500/20' : accent === 'orange' ? 'bg-orange-500/20' : accent === 'purple' ? 'bg-purple-500/20' : 'bg-red-500/20'}`}>
+    <Card className={`bg-gradient-to-br ${ACCENT_GRADIENTS[accent]} p-3 sm:p-5 min-w-0`}>
+      <div className="flex items-center gap-2 mb-2 min-w-0">
+        <div className={`shrink-0 p-2 rounded ${accent === 'green' ? 'bg-green-500/20' : accent === 'blue' ? 'bg-blue-500/20' : accent === 'orange' ? 'bg-orange-500/20' : accent === 'purple' ? 'bg-purple-500/20' : 'bg-red-500/20'}`}>
           {icon}
         </div>
-        <span className="text-white/60 text-xs uppercase tracking-wide">{label}</span>
+        <span className="text-white/60 text-[11px] sm:text-xs uppercase tracking-wide truncate min-w-0">{label}</span>
         {help && <HelpTip text={help} />}
       </div>
       {loading ? (
         <div className="h-7 w-24 bg-white/5 rounded animate-pulse" />
       ) : (
-        <p className="text-2xl font-bold text-white">{value}</p>
+        <p className="text-lg sm:text-2xl font-bold text-white whitespace-nowrap tabular-nums truncate">{value}</p>
       )}
-      <div className="flex items-center justify-between gap-2 mt-1">
+      <div className="flex items-center justify-between gap-2 mt-1 min-w-0">
         {subtitle && (
-          <p className={`text-xs ${ACCENT_TEXT[accent]}`}>{subtitle}</p>
+          <p className={`text-xs ${ACCENT_TEXT[accent]} truncate min-w-0`}>{subtitle}</p>
         )}
         {badge}
       </div>

@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import {
   LayoutGrid, Video, Dumbbell, Shirt, Laptop, Sparkles,
   UtensilsCrossed, Home, GraduationCap, Gamepad2, PawPrint,
-  Baby, Heart, Music, Plane, TrendingUp, ChevronLeft, ChevronRight, SlidersHorizontal,
+  Baby, Heart, Music, Plane, TrendingUp, SlidersHorizontal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MARKETPLACE_CATEGORIES } from './types/marketplace';
@@ -20,6 +20,9 @@ interface CategoryBarProps {
   activeFilterCount: number;
 }
 
+// Fix (Fase 2.5.B.7): el boton de flecha derecha (antes en right-20, "intermedio") quedaba
+// encima de los chips y los cortaba visualmente. Se reemplaza por scroll horizontal nativo +
+// fade en los bordes como affordance (patron TikTok/Instagram: sin botones de scroll).
 export function CategoryBar({
   activeCategory,
   onCategoryChange,
@@ -27,14 +30,14 @@ export function CategoryBar({
   activeFilterCount,
 }: CategoryBarProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showLeft, setShowLeft] = useState(false);
-  const [showRight, setShowRight] = useState(false);
+  const [showLeftFade, setShowLeftFade] = useState(false);
+  const [showRightFade, setShowRightFade] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    setShowLeft(el.scrollLeft > 10);
-    setShowRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+    setShowLeftFade(el.scrollLeft > 10);
+    setShowRightFade(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
   }, []);
 
   useEffect(() => {
@@ -49,60 +52,46 @@ export function CategoryBar({
     };
   }, [checkScroll]);
 
-  const scroll = useCallback((dir: 'left' | 'right') => {
-    scrollRef.current?.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' });
-  }, []);
-
   return (
     <div className="relative flex items-center gap-3 border-b border-border">
-      {/* Left arrow */}
-      {showLeft && (
-        <button
-          onClick={() => scroll('left')}
-          className="absolute left-0 z-10 w-8 h-8 rounded-[0.125rem] bg-card border border-border flex items-center justify-center hover:bg-secondary transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4 text-foreground" />
-        </button>
-      )}
-
       {/* Categories scroll container */}
-      <div
-        ref={scrollRef}
-        className="flex gap-6 overflow-x-auto scrollbar-hide py-4 px-2 flex-1"
-      >
-        {MARKETPLACE_CATEGORIES.map(cat => {
-          const Icon = ICON_MAP[cat.icon];
-          const isActive =
-            (cat.id === 'all' && activeCategory === null) ||
-            cat.id === activeCategory;
-
-          return (
-            <button
-              key={cat.id}
-              onClick={() => onCategoryChange(cat.id === 'all' ? null : cat.id)}
-              className={cn(
-                'flex flex-col items-center gap-1.5 min-w-[56px] pb-2 border-b-2 transition-all duration-200',
-                isActive
-                  ? 'border-primary text-white'
-                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
-              )}
-            >
-              {Icon && <Icon className="h-6 w-6" />}
-              <span className="text-xs whitespace-nowrap font-medium">{cat.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Right arrow */}
-      {showRight && (
-        <button
-          onClick={() => scroll('right')}
-          className="absolute right-20 z-10 w-8 h-8 rounded-[0.125rem] bg-card border border-border flex items-center justify-center hover:bg-secondary transition-colors"
+      <div className="relative flex-1 min-w-0">
+        <div
+          ref={scrollRef}
+          className="flex gap-6 overflow-x-auto scrollbar-hide py-4 px-2"
         >
-          <ChevronRight className="h-4 w-4 text-foreground" />
-        </button>
-      )}
+          {MARKETPLACE_CATEGORIES.map(cat => {
+            const Icon = ICON_MAP[cat.icon];
+            const isActive =
+              (cat.id === 'all' && activeCategory === null) ||
+              cat.id === activeCategory;
+
+            return (
+              <button
+                key={cat.id}
+                onClick={() => onCategoryChange(cat.id === 'all' ? null : cat.id)}
+                className={cn(
+                  'flex flex-col items-center gap-1.5 min-w-[56px] pb-2 border-b-2 transition-all duration-200',
+                  isActive
+                    ? 'border-primary text-white'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+                )}
+              >
+                {Icon && <Icon className="h-6 w-6" />}
+                <span className="text-xs whitespace-nowrap font-medium">{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Fade affordance — indica que hay mas chips, sin tapar contenido */}
+        {showLeftFade && (
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" aria-hidden="true" />
+        )}
+        {showRightFade && (
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" aria-hidden="true" />
+        )}
+      </div>
 
       {/* Filters button - solo visible en mobile/tablet, oculto en desktop (lg+) donde hay sidebar */}
       <button

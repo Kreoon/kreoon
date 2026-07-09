@@ -13,6 +13,8 @@ interface NovaKpiCardProps {
   subtitle?: string;
   onClick?: () => void;
   className?: string;
+  /** CTA mostrado solo si value === 0 — para guiar al usuario cuando la tarjeta esta vacia */
+  emptyCta?: { label: string; onClick: () => void };
 }
 
 // Animated counter using requestAnimationFrame
@@ -101,14 +103,16 @@ export function NovaKpiCard({
   subtitle,
   onClick,
   className,
+  emptyCta,
 }: NovaKpiCardProps) {
   const styles = variantStyles[variant];
+  const isEmpty = value === 0;
 
   return (
     <div
       onClick={onClick}
       className={cn(
-        "relative overflow-hidden rounded-lg p-4",
+        "relative overflow-hidden rounded-lg p-3 sm:p-4 min-w-0",
         "bg-white dark:bg-[#14141f]",
         "border border-zinc-200 dark:border-zinc-800",
         "shadow-sm dark:shadow-none",
@@ -119,24 +123,35 @@ export function NovaKpiCard({
     >
       {/* Icon container */}
       <div className={cn(
-        "absolute right-3 top-3 p-2 rounded-lg",
+        "absolute right-2 top-2 sm:right-3 sm:top-3 p-1.5 sm:p-2 rounded-lg",
         styles.iconBg,
       )}>
-        <Icon className={cn("h-5 w-5", styles.iconColor)} />
+        <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", styles.iconColor)} />
       </div>
 
       {/* Content */}
-      <div className="pr-12">
-        <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1">
+      <div className="pr-9 sm:pr-12 min-w-0">
+        <p className="text-[10px] sm:text-xs font-medium text-zinc-500 uppercase tracking-wide mb-1 leading-tight">
           {title}
         </p>
-        <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+        <p className="text-lg sm:text-2xl font-bold text-zinc-900 dark:text-zinc-100 whitespace-nowrap tabular-nums truncate">
           <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
         </p>
         {subtitle && (
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-zinc-500 mt-1 truncate">
             {subtitle}
           </p>
+        )}
+        {isEmpty && emptyCta && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              emptyCta.onClick();
+            }}
+            className="mt-2 text-xs font-medium text-primary hover:underline"
+          >
+            {emptyCta.label} →
+          </button>
         )}
       </div>
     </div>
