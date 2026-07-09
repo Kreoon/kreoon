@@ -14,7 +14,8 @@ export function useClientRealtimeNotifications() {
   const { user, roles } = useAuth();
   const isClient = roles.includes('client');
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-  
+  const instanceIdRef = useRef(crypto.randomUUID());
+
   // Track clientId in state to properly react to changes
   const [clientId, setClientId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
@@ -93,7 +94,7 @@ export function useClientRealtimeNotifications() {
 
     // Set up realtime channel with unique name based on clientId
     const channel = supabase
-      .channel(`client-realtime-${clientId}`)
+      .channel(`client-realtime-${clientId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

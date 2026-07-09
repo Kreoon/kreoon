@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -39,6 +39,7 @@ export function useSeasonLeaderboard(organizationId?: string, roleFilter: RoleFi
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch leaderboard data
   const fetchLeaderboard = useCallback(async () => {
@@ -223,7 +224,7 @@ export function useSeasonLeaderboard(organizationId?: string, roleFilter: RoleFi
     if (!organizationId) return;
 
     const channel = supabase
-      .channel('leaderboard-changes')
+      .channel(`leaderboard-changes-${organizationId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

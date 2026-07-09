@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -77,6 +77,7 @@ export function useCampaignNotifications() {
   const [notifications, setNotifications] = useState<CampaignNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const instanceIdRef = useRef(crypto.randomUUID());
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
 
   // ── Fetch notifications ────────────────────────────────────────────
@@ -218,7 +219,7 @@ export function useCampaignNotifications() {
     if (!user) return;
 
     const channel = supabase
-      .channel(`campaign-notif-${user.id}`)
+      .channel(`campaign-notif-${user.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

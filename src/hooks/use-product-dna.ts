@@ -3,7 +3,7 @@
 // Adapted to actual product_dna table schema
 // ============================================
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { ProductDNARecord } from '@/components/product-dna/ProductDNADisplay';
@@ -77,6 +77,7 @@ export function useProductDNA(options: UseProductDNAOptions = {}): UseProductDNA
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentId, setCurrentId] = useState<string | null>(initialId || null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // ---- Derived state ----
 
@@ -297,7 +298,7 @@ export function useProductDNA(options: UseProductDNAOptions = {}): UseProductDNA
     if (!currentId) return;
 
     const channel = supabase
-      .channel(`product_dna:${currentId}`)
+      .channel(`product_dna:${currentId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

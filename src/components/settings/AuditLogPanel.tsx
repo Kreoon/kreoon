@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
@@ -69,6 +69,7 @@ export function AuditLogPanel() {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const instanceIdRef = useRef(crypto.randomUUID());
   const [entityFilter, setEntityFilter] = useState<string>('all');
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [orgMemberIds, setOrgMemberIds] = useState<string[]>([]);
@@ -99,7 +100,7 @@ export function AuditLogPanel() {
       
       // Subscribe to realtime updates
       const channel = supabase
-        .channel('audit-logs-changes')
+        .channel(`audit-logs-changes-${currentOrgId}-${instanceIdRef.current}`)
         .on(
           'postgres_changes',
           {

@@ -21,6 +21,7 @@ interface NewContentPayload {
 export function useNewContentNotifications() {
   const { user, roles } = useAuth();
   const notifiedIds = useRef<Set<string>>(new Set());
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Only notify strategists, admins, and team leaders
   const shouldNotify = roles?.some(role => 
@@ -31,7 +32,7 @@ export function useNewContentNotifications() {
     if (!user || !shouldNotify) return;
 
     const channel = supabase
-      .channel('new-content-notifications')
+      .channel(`new-content-notifications-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

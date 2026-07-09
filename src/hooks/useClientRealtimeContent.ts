@@ -18,6 +18,7 @@ export function useClientRealtimeContent(
   onCommentChange?: () => void
 ) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const setupChannel = useCallback(() => {
     if (!clientId) return;
@@ -28,7 +29,7 @@ export function useClientRealtimeContent(
     }
 
     const channel = supabase
-      .channel(`client-content-realtime-${clientId}`)
+      .channel(`client-content-realtime-${clientId}-${instanceIdRef.current}`)
       // Listen to content changes (INSERT, UPDATE, DELETE)
       .on(
         'postgres_changes',
@@ -98,12 +99,13 @@ export function useRealtimeNotifications(
   onNotificationChange: () => void
 ) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel(`notifications-realtime-${userId}`)
+      .channel(`notifications-realtime-${userId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

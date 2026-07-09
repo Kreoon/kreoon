@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Achievement } from '@/hooks/useAchievements';
@@ -20,13 +20,14 @@ export const AchievementNotificationProvider: React.FC<{ children: React.ReactNo
   const { user } = useAuth();
   const [queue, setQueue] = useState<Achievement[]>([]);
   const [currentAchievement, setCurrentAchievement] = useState<Achievement | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Subscribe to new achievements for current user
   useEffect(() => {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('new-achievements')
+      .channel(`new-achievements-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

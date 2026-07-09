@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
@@ -20,6 +20,7 @@ export function useUserNotifications() {
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const organizationId = profile?.current_organization_id;
 
@@ -57,7 +58,7 @@ export function useUserNotifications() {
     if (!user?.id || !organizationId) return;
 
     const channel = supabase
-      .channel('user_notifications_realtime')
+      .channel(`user_notifications_realtime-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

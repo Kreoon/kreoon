@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -28,6 +28,7 @@ export function useGlobalRanking(filters?: RankingFilters) {
   const [entries, setEntries] = useState<GlobalRankingEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch global ranking
   const fetchRanking = useCallback(async () => {
@@ -209,7 +210,7 @@ export function useGlobalRanking(filters?: RankingFilters) {
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
-      .channel('global-ranking-changes')
+      .channel(`global-ranking-changes-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

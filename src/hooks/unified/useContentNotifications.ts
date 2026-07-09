@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
@@ -42,6 +42,7 @@ export function useContentNotifications(options: UseContentNotificationsOptions 
   const { enabled = true, showToasts = true, clientId, creatorId } = options;
 
   const [notifications, setNotifications] = useState<ContentNotification[]>([]);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Load notifications from localStorage on mount
   useEffect(() => {
@@ -101,7 +102,7 @@ export function useContentNotifications(options: UseContentNotificationsOptions 
 
     // Subscribe to content table changes
     const channel = supabase
-      .channel('content_notifications')
+      .channel(`content_notifications-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

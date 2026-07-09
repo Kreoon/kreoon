@@ -122,6 +122,7 @@ export function useGlobalBadges(userId?: string) {
   const [error, setError] = useState<string | null>(null);
 
   const badgesRef = useRef<GlobalBadge[]>([]);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch all global badges
   const fetchBadges = useCallback(async () => {
@@ -237,7 +238,7 @@ export function useGlobalBadges(userId?: string) {
     if (!userId) return;
 
     const channel = supabase
-      .channel('global-badges-changes')
+      .channel(`global-badges-changes-${userId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

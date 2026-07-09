@@ -153,6 +153,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [filterProductId, setFilterProductId] = useState<string | null>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const handleCampaignChange = async (contentId: string, packageId: string | null) => {
     const { error } = await supabase
@@ -251,7 +252,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
     }
 
     const channel = supabase
-      .channel(`client-videos-dialog-${clientId}`)
+      .channel(`client-videos-dialog-${clientId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'content', filter: `client_id=eq.${clientId}` },

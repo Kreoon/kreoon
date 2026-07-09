@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useToast } from '@/hooks/use-toast';
@@ -107,6 +107,7 @@ export function useUPEngine(organizationId?: string) {
   const [seasons, setSeasons] = useState<UPSeason[]>([]);
   const [aiConfig, setAIConfig] = useState<UPAIConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   useEffect(() => {
     if (orgId) {
@@ -114,7 +115,7 @@ export function useUPEngine(organizationId?: string) {
       
       // Subscribe to realtime updates
       const eventsChannel = supabase
-        .channel('up-events-realtime')
+        .channel(`up-events-realtime-${orgId}-${instanceIdRef.current}`)
         .on(
           'postgres_changes',
           {

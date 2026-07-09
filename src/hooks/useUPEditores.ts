@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { calculateDaysInColombia } from './useUPCreadores';
@@ -88,6 +88,7 @@ export function useUPEditores(userId?: string) {
   const [records, setRecords] = useState<UPEditorRecord[]>([]);
   const [totals, setTotals] = useState<UPEditorTotals | null>(null);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const fetchRecords = useCallback(async () => {
     if (!userId) return;
@@ -137,7 +138,7 @@ export function useUPEditores(userId?: string) {
 
     // Realtime subscription
     const channel = supabase
-      .channel('up-editores-changes')
+      .channel(`up-editores-changes-${userId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
@@ -331,6 +332,7 @@ export function useEditorLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<(UPEditorTotals & { profile?: { full_name: string; avatar_url: string | null } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch active season
   useEffect(() => {
@@ -399,7 +401,7 @@ export function useEditorLeaderboard() {
     fetchLeaderboard();
 
     const channel = supabase
-      .channel('editor-leaderboard')
+      .channel(`editor-leaderboard-${currentOrgId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

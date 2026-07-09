@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +7,7 @@ import type { MarketplaceNotification } from '@/types/marketplace';
 export function useMarketplaceNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch notifications
   const {
@@ -97,7 +98,7 @@ export function useMarketplaceNotifications() {
     if (!user?.id) return;
 
     const channel = supabase
-      .channel('marketplace-notifications')
+      .channel(`marketplace-notifications-${user.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

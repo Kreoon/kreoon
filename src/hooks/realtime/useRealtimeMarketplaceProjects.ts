@@ -59,6 +59,7 @@ export function useRealtimeMarketplaceProjects({
   onProjectChange,
 }: UseRealtimeMarketplaceProjectsOptions) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
@@ -147,7 +148,7 @@ export function useRealtimeMarketplaceProjects({
 
     // Crear canal - para marketplace no podemos filtrar por OR en servidor
     // Entonces suscribimos a todos y filtramos en cliente
-    const channelName = `marketplace-projects-${userId}-${role}`;
+    const channelName = `marketplace-projects-${userId}-${role}-${instanceIdRef.current}`;
 
     // Intentar filtro específico según rol para reducir payload
     let filter: string | undefined;

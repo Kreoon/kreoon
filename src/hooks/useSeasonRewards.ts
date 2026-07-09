@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -117,6 +117,7 @@ export function useSeasonRewards(seasonId?: string, organizationId?: string) {
   const [userClaims, setUserClaims] = useState<SeasonRewardClaim[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch rewards for a season
   const fetchRewards = useCallback(async () => {
@@ -356,7 +357,7 @@ export function useSeasonRewards(seasonId?: string, organizationId?: string) {
     if (!seasonId) return;
 
     const channel = supabase
-      .channel('season-rewards-changes')
+      .channel(`season-rewards-changes-${seasonId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

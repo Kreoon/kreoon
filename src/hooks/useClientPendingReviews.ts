@@ -3,7 +3,7 @@
  * Se usa en el layout global para mostrar el banner de revisión
  * Soporta modo impersonation
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBrandClient } from '@/hooks/useBrandClient';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
@@ -21,6 +21,7 @@ export function useClientPendingReviews(): PendingReviewCounts {
   const { user, isClient } = useAuth();
   const { brandClient } = useBrandClient();
   const { isImpersonating, effectiveClientId, effectiveRole } = useImpersonation();
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const [counts, setCounts] = useState<PendingReviewCounts>({
     scriptCount: 0,
@@ -106,7 +107,7 @@ export function useClientPendingReviews(): PendingReviewCounts {
 
     // Subscribe to content changes for this client
     const channel = supabase
-      .channel('client-pending-reviews')
+      .channel(`client-pending-reviews-${user?.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

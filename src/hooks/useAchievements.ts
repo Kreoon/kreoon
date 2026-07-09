@@ -50,6 +50,7 @@ export function useAchievements(userId?: string) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Ref para acceder al state actual de achievements sin causar re-renders
   // ni closures obsoletos en fetchUserAchievements
@@ -59,7 +60,7 @@ export function useAchievements(userId?: string) {
     fetchAchievements();
     if (userId) {
       const channel = supabase
-        .channel('user-achievements-changes')
+        .channel(`user-achievements-changes-${userId}-${instanceIdRef.current}`)
         .on(
           'postgres_changes',
           {

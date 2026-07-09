@@ -112,6 +112,7 @@ export function useKiroPlatformSync({
   // Notificaciones de plataforma transformadas
   const [platformNotifications, setPlatformNotifications] = useState<KiroNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Refs para evitar dependencias en efectos
   const callbacksRef = useRef({
@@ -197,7 +198,7 @@ export function useKiroPlatformSync({
     setState(prev => ({ ...prev, connectionStatus: 'connecting' }));
 
     const channel = supabase
-      .channel(`kiro_platform_sync_${user.id}`)
+      .channel(`kiro_platform_sync_${user.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

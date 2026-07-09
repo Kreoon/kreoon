@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -290,6 +290,7 @@ export function useMarketplaceProposals(options: UseMarketplaceProposalsOptions 
 export function useMarketplaceProposal(proposalId: string | undefined) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const {
     data: proposal,
@@ -411,7 +412,7 @@ export function useMarketplaceProposal(proposalId: string | undefined) {
     if (!proposalId) return;
 
     const channel = supabase
-      .channel(`proposal-messages-${proposalId}`)
+      .channel(`proposal-messages-${proposalId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {

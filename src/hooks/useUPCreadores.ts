@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { formatInTimeZone } from 'date-fns-tz';
@@ -107,6 +107,7 @@ export function useUPCreadores(userId?: string) {
   const [records, setRecords] = useState<UPCreadorRecord[]>([]);
   const [totals, setTotals] = useState<UPCreadorTotals | null>(null);
   const [loading, setLoading] = useState(true);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const fetchRecords = useCallback(async () => {
     if (!userId) return;
@@ -156,7 +157,7 @@ export function useUPCreadores(userId?: string) {
 
     // Realtime subscription
     const channel = supabase
-      .channel('up-creadores-changes')
+      .channel(`up-creadores-changes-${userId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
@@ -350,6 +351,7 @@ export function useCreatorLeaderboard() {
   const [leaderboard, setLeaderboard] = useState<(UPCreadorTotals & { profile?: { full_name: string; avatar_url: string | null } })[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSeasonId, setActiveSeasonId] = useState<string | null>(null);
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   // Fetch active season
   useEffect(() => {
@@ -418,7 +420,7 @@ export function useCreatorLeaderboard() {
     fetchLeaderboard();
 
     const channel = supabase
-      .channel('creator-leaderboard')
+      .channel(`creator-leaderboard-${currentOrgId}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
