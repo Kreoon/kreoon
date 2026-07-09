@@ -60,6 +60,18 @@ export interface ProfileCustomization {
   sections_visible?: Record<string, boolean>;
 }
 
+// Whitelist explicita — este hook acepta options.userId de OTRO usuario (modo "view"), asi que
+// un select('*') podria devolver stripe_account_id/whatsapp_phone/payout_method a quien lo llame
+// con un userId ajeno. RLS solo filtra filas, no columnas. Debe calzar con CreatorProfileData.
+const CREATOR_PROFILE_COLUMNS =
+  'id, user_id, display_name, slug, bio, bio_full, avatar_url, banner_url, location_city, ' +
+  'location_country, country_flag, categories, content_types, languages, platforms, social_links, ' +
+  'level, is_verified, is_available, rating_avg, rating_count, completed_projects, base_price, ' +
+  'currency, accepts_product_exchange, exchange_conditions, response_time_hours, ' +
+  'on_time_delivery_pct, repeat_clients_pct, marketplace_roles, is_active, profile_customization, ' +
+  'showreel_video_id, showreel_url, showreel_thumbnail, created_at, updated_at, has_talent_dna, ' +
+  'experience_level, content_style';
+
 const DEFAULT_CUSTOMIZATION: ProfileCustomization = {
   theme: 'dark_purple',
   card_style: 'glass',
@@ -159,7 +171,7 @@ export function useCreatorProfile(options: UseCreatorProfileOptions = {}): UseCr
     try {
       const { data, error } = await (supabase as any)
         .from('creator_profiles')
-        .select('*')
+        .select(CREATOR_PROFILE_COLUMNS)
         .eq('user_id', targetUserId)
         .maybeSingle();
 
