@@ -62,7 +62,7 @@ const defaultPreferences: NotificationPreferences = {
 
 export function KiroNotificationSettingsTab() {
   const { toast } = useToast();
-  const { isSupported, permission, requestPermission } = usePushNotifications();
+  const { isSupported, permission, requestPermission, isSubscribed, needsIOSInstall, subscribeToPush, unsubscribeFromPush } = usePushNotifications();
   const { kiroSettings, updateKiroSettings, kiroVoice } = useKiro();
   const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
 
@@ -101,8 +101,13 @@ export function KiroNotificationSettingsTab() {
     try {
       const granted = await requestPermission();
       if (granted) {
+        const subscribed = await subscribeToPush();
         updatePreference('pushEnabled', true);
-        toast({ title: "Notificaciones push activadas", description: "Recibirás notificaciones en este dispositivo." });
+        toast(
+          subscribed
+            ? { title: "Notificaciones push activadas", description: "Recibirás notificaciones en este dispositivo, incluso con la app cerrada." }
+            : { title: "Permiso concedido, pero falló la suscripción", description: "Intenta de nuevo o recarga la página.", variant: "destructive" }
+        );
       } else {
         toast({
           title: "Permiso no concedido",
@@ -113,6 +118,12 @@ export function KiroNotificationSettingsTab() {
     } catch {
       toast({ title: "Error al solicitar permisos", variant: "destructive" });
     }
+  };
+
+  const handleDisablePush = async () => {
+    await unsubscribeFromPush();
+    updatePreference('pushEnabled', false);
+    toast({ title: "Notificaciones push desactivadas" });
   };
 
   const testNotification = () => {
@@ -315,7 +326,15 @@ export function KiroNotificationSettingsTab() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!isSupported ? (
+          {needsIOSInstall ? (
+            <div className="p-4 rounded-sm bg-primary/5 border border-primary/20 text-center space-y-2">
+              <BellRing className="h-8 w-8 mx-auto text-primary" />
+              <p className="text-sm font-medium">Instala KREOON en tu iPhone primero</p>
+              <p className="text-sm text-muted-foreground">
+                En Safari, toca el botón compartir <span aria-hidden="true">⬆️</span> y elige "Agregar a pantalla de inicio". Luego abre la app instalada para activar las notificaciones (requiere iOS 16.4+).
+              </p>
+            </div>
+          ) : !isSupported ? (
             <div className="p-4 rounded-sm bg-muted text-center">
               <p className="text-muted-foreground">Tu navegador no soporta notificaciones push</p>
             </div>
@@ -344,8 +363,17 @@ export function KiroNotificationSettingsTab() {
                   <p className="text-sm text-muted-foreground">Activa o desactiva todas las notificaciones push</p>
                 </div>
                 <Switch
-                  checked={preferences.pushEnabled}
-                  onCheckedChange={(checked) => updatePreference('pushEnabled', checked)}
+                  checked={preferences.pushEnabled && isSubscribed}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      subscribeToPush().then((ok) => {
+                        updatePreference('pushEnabled', ok);
+                        if (!ok) toast({ title: "No se pudo activar", variant: "destructive" });
+                      });
+                    } else {
+                      handleDisablePush();
+                    }
+                  }}
                 />
               </div>
 

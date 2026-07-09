@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -25,6 +25,10 @@ export function useSocialNotifications() {
   const [notifications, setNotifications] = useState<SocialNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  // Sufijo unico por instancia/mount — evita colision de topic cuando React StrictMode
+  // (dev) remonta el efecto antes de que el removeChannel() anterior termine de cerrarse,
+  // lo que hacia que supabase-js reusara el canal ya suscrito y explotara en .on().
+  const instanceIdRef = useRef(crypto.randomUUID());
 
   const fetchNotifications = useCallback(async () => {
     if (!user?.id) return;
@@ -118,7 +122,7 @@ export function useSocialNotifications() {
     fetchNotifications();
 
     const channel = supabase
-      .channel('social-notifications')
+      .channel(`social-notifications-${user.id}-${instanceIdRef.current}`)
       .on(
         'postgres_changes',
         {
@@ -153,6 +157,16 @@ export function useSocialNotifications() {
       supabase.removeChannel(channel);
     };
   }, [user?.id, fetchNotifications]);
+
+  // Sync app badge (icono PWA) con el conteo de no leidas — push-sw.js escucha SET_BADGE/CLEAR_BADGE
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.ready.then((registration) => {
+      registration.active?.postMessage(
+        unreadCount > 0 ? { type: 'SET_BADGE', count: unreadCount } : { type: 'CLEAR_BADGE' }
+      );
+    }).catch(() => {});
+  }, [unreadCount]);
 
   return {
     notifications,

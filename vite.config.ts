@@ -157,6 +157,9 @@ export default defineConfig(({ mode }) => ({
         cacheId: 'kreoon-v6',
         // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
+        // Fase 2.5 Frente C: generateSW no permite listeners custom directos (push/notificationclick),
+        // pero importScripts() inyecta ese codigo desde un archivo aparte servido desde /public.
+        importScripts: ['push-sw.js'],
         runtimeCaching: [
           {
             // Supabase Edge Functions - ALWAYS go to network, never cache
