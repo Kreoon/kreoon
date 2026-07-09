@@ -35,7 +35,7 @@
 ## BUGS CONOCIDOS / PATRONES
 - 🔴 REALTIME CHANNEL + StrictMode: topic literal crashea ("cannot add postgres_changes callbacks after subscribe"). FIX = topic único por mount: `nombre-{user.id}-{uuid}`. EXISTE EN ~30 HOOKS (useAchievements, useGlobalRanking, useMarketplaceNotifications, etc.) — bomba latente.
 - VideoPlayerProvider: SocialFeed/useGlobalMute lo requiere. Envolver cualquier vista que renderice SocialFeed.
-- `portfolio_items_select_policy` = qual:true (fuga: cualquier auth lee todo). PENDIENTE endurecer.
+- ~~`portfolio_items_select_policy` = qual:true~~ RESUELTO Y VERIFICADO 2026-07-09: esa policy ya no existe, fue reemplazada (Fase 1 Cierre) por `portfolio_items_select_anon` (TO anon, solo public) + `portfolio_items_select_authenticated` (TO authenticated, 4 ramas: public/owner/org/followers + admin). Verificado en vivo con 2 usuarios reales (set role authenticated + request.jwt.claims): usuario ajeno lee 0 filas de un item privado, el owner lee 1. El dato de "pendiente" en el ledger estaba desactualizado.
 - tsc baseline: ~1565-1568 errores PREEXISTENTES. No son nuestros. Solo validar cero-nuevos en archivos tocados (grep contra paths propios).
 - 188/291 organization_members.role en legacy 'creator'.
 
@@ -52,15 +52,15 @@
 - Móvil: useIsMobile() = 768px. safe-area env(). targets 44px. Kanban default vista lista <768.
 
 ## PENDIENTES ABIERTOS (carryover)
-- [ ] Endurecer portfolio_items_select_policy (qual:true).
-- [ ] npm run build NO corrido tras cambio workbox.importScripts en vite.config.ts (riesgo deploy).
-- [ ] ~30 hooks con topic realtime literal (fix preventivo por lote).
+- [x] Endurecer portfolio_items_select_policy — RESUELTO Y VERIFICADO 2026-07-09 (ver BUGS CONOCIDOS).
+- [x] `useCreatorProfile.ts` select('*') sobre creator_profiles — RESUELTO 2026-07-09, whitelist aplicada (mismo patron que useCreatorPublicProfile).
+- [x] npm run build tras workbox.importScripts — VERIFICADO 2026-07-09 (2 corridas independientes): pasa, `dist/sw.js` genera correctamente `importScripts("push-sw.js")`. Sin warnings de PWA/workbox.
+- [x] ~37 hooks/componentes con topic realtime literal — RESUELTO 2026-07-09 (commit `4f3d3398`, subagente refactor-realtime). Verificado grep = 0 literales sin interpolar en src/hooks y src/components.
+- [x] tsc verificado 2026-07-09 (corrida completa, ~35min, 3925 líneas): 59 errores en archivos tocados de la consolidación, los 59 confirmados 100% baseline preexistente vía diff exacto contra los commits de hoy (no solo heurística — se revisó línea por línea contra el diff real). Cero errores nuevos introducidos.
 - [ ] Env var Vercel: VITE_VAPID_PUBLIC_KEY (manual Alexander).
 - [ ] Conectar academy_lesson_completed / campaign_application a rachas (localizados, no wireados).
 - [ ] Auditar 137 portfolio_posts no migrados (autores activos vs muertos).
 - [ ] Mostrar racha en perfil público requiere columna pública nueva (current_streak no expuesto hoy) — no se hizo, spec lo marcaba opcional.
-- [ ] `useCreatorProfile.ts` select('*') sobre creator_profiles — no explotable hoy (solo se llama con userId propio) pero riesgo latente si un caller futuro pasa userId ajeno.
-- [ ] npm run build no corrido tras cambios de Fase 3 (mismo riesgo pendiente de Fase 2.5, workbox.importScripts).
 
 ## UPDATES (append-only — Claude Code agrega descubrimientos aquí)
 2026-07-09 | Perfil público real: rutas `/p/:username` y `/@:username` -> `PublicCreatorPage.tsx` (NO existe `/talent/:username`). Campo real = `creator_profiles.slug` (433/433 poblado); `username` es columna muerta (0/433 filas, nunca escrita).
@@ -71,5 +71,6 @@
 2026-07-09 | KAE = Kreoon Analytics Events. Hook `useAnalytics()` (`src/hooks/useAnalytics.ts`), método `track({event_name, event_category, properties})`, funciona sin sesión (anonymous_id via localStorage), envía a edge fn `kae-track`. Ya usado para profile_view en `PublicCreatorPage.tsx`.
 2026-07-09 | `hero_banner` block (builder) NO tiene nivel/racha — se agregó como overlay fijo fuera del sistema de bloques (`PublicCreatorPage.tsx`, badge `Nivel {level}` top-left) en vez de modificar el bloque genérico. `StreakWidget`/`useStreak()` están hardcoded a "mi propia racha" (auth.uid()) — NO sirven para mostrar la racha de OTRO usuario visto públicamente; requeriría exponer `current_streak` vía columna pública nueva. Se dejó pendiente (spec lo marcaba opcional: "racha si aplica").
 2026-07-09 | Hire desde perfil público NO reimplementa el flujo — solo navega a `/marketplace/creator/:id` (ya existe `HiringWizard`/`stripe-creator-hire` ahí). Gating: visible si `!user` (CTA lleva a login/registro implícito en esa página) o si `getPermissionGroup(roles[0]) === 'client'`; oculto si es el propio perfil.
-2026-07-09 | `useCreatorProfile.ts` (perfil PROPIO, no público) también hace `select('*')` sobre `creator_profiles` en 2 lugares — hoy no es explotable porque el único caller pasa `userId` propio (nunca ajeno), pero es un riesgo latente si algún caller futuro pasa `options.userId` de otro usuario. No se tocó (fuera de scope del hallazgo actual, pero queda anotado).
--->
+2026-07-09 | `useCreatorProfile.ts` select('*') — RESUELTO (consolidación pre-merge): whitelist `CREATOR_PROFILE_COLUMNS` aplicada al select por `user_id` (linea ~161). El insert().select('*') (linea ~233) se dejó intacto, es seguro (siempre devuelve la fila que el propio caller acaba de crear con su propio user_id).
+2026-07-09 | Consolidación pre-merge (subagentes verificador-tsc + builder-prod + refactor-realtime): tsc corrida completa tarda ~35min en esta máquina (proceso llega a ~2.8GB RAM) — es normal, NO matar el proceso, esperar. `npm run build` en cambio es rápido y confirmó 2 veces que `workbox.importScripts: ['push-sw.js']` (vite.config.ts) genera correctamente `dist/sw.js` con `importScripts("push-sw.js")` embebido, sin warnings de PWA.
+2026-07-09 | Bug baseline real detectado (NO se tocó, fuera de scope): `useGlobalRanking.ts` tiene 17 errores TS por columna `youtube` que no existe en `profiles` según los tipos generados (SelectQueryError) — sugiere un select con columna renombrada/eliminada del schema real. Revisar en una sesión futura si el ranking global funciona en runtime o está silenciosamente roto.
