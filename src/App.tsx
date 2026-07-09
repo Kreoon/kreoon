@@ -1451,6 +1451,24 @@ function AppRoutes() {
             </RequireAcademyAccess>
           }
         />
+        {/* Redirects de URLs de módulos eliminados (evitar 404 en links/bookmarks viejos) */}
+        <Route path="/marketing" element={<Navigate to="/social-hub" replace />} />
+        <Route path="/marketing-ads" element={<Navigate to="/ad-generator" replace />} />
+        <Route path="/demo" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/admin/ad-intelligence" element={<Navigate to="/admin/analytics" replace />} />
+        <Route path="/admin/social-scraper" element={<Navigate to="/admin/analytics" replace />} />
+        <Route path="/streaming/*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/live" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/live/*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/booking/*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/book/*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/org-crm" element={<Navigate to="/clientes" replace />} />
+        <Route path="/org-crm/contactos" element={<Navigate to="/clientes" replace />} />
+        <Route path="/org-crm/creadores" element={<Navigate to="/clientes" replace />} />
+        <Route path="/org-crm/pipelines" element={<Navigate to="/clientes" replace />} />
+        <Route path="/wallet" element={<Navigate to="/creator-dashboard" replace />} />
+        <Route path="/wallet/*" element={<Navigate to="/creator-dashboard" replace />} />
+        <Route path="/admin/wallets" element={<Navigate to="/admin/payouts" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
