@@ -583,3 +583,10 @@ verify_jwt = false
 # verify_jwt=false porque corre ANTES de tener sesion (arranque) y en signup anonimo.
 # Solo lee estados de bloqueo (is_ip_blocked/is_email_blocked/is_user_banned) y falla-abierto.
 verify_jwt = false
+
+# -- Web Push (Fase 2.5 Frente C) --
+
+[functions.push-send]
+# Envia push notifications via VAPID a las suscripciones del usuario.
+# Llamado por trigger pg_net en social_notifications — usa anon key, sin JWT de usuario.
+verify_jwt = false
