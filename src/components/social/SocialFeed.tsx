@@ -40,8 +40,9 @@ export function SocialFeed({
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, SocialFeedCardRef>>(new Map());
   const [activeIndex, setActiveIndex] = useState(0);
-  const [audioUnlocked, setAudioUnlocked] = useState(false);
-  const { setGlobalMuted } = useGlobalMute();
+  // Fuente unica de verdad del mute — antes habia 3 estados desincronizados
+  // (contexto global sin usar, audioUnlocked local, y el estado interno de useHLSPlayer).
+  const { isGlobalMuted, toggleGlobalMute } = useGlobalMute();
 
   // Track active item using IntersectionObserver
   useEffect(() => {
@@ -98,14 +99,6 @@ export function SocialFeed({
     };
   }, [activeIndex, items]);
 
-  // Handle audio unlock
-  const handleUnlockAudio = useCallback(() => {
-    if (!audioUnlocked) {
-      setAudioUnlocked(true);
-      setGlobalMuted(false);
-    }
-  }, [audioUnlocked, setGlobalMuted]);
-
   // Store card refs
   const setCardRef = useCallback((id: string, ref: SocialFeedCardRef | null) => {
     if (ref) {
@@ -159,7 +152,7 @@ export function SocialFeed({
                 ref={(ref) => setCardRef(item.id, ref)}
                 item={item}
                 isActive={index === activeIndex}
-                audioUnlocked={audioUnlocked}
+                isGlobalMuted={isGlobalMuted}
                 onLike={onLike ? () => onLike(item.id) : undefined}
                 onReact={onReact ? (type) => onReact(item.id, type) : undefined}
                 onSave={onSave ? () => onSave(item.id) : undefined}
@@ -167,7 +160,7 @@ export function SocialFeed({
                 onShare={onShare ? () => onShare(item) : undefined}
                 onView={onView ? () => onView(item.id) : undefined}
                 onProfileClick={item.creatorId && onProfileClick ? () => onProfileClick(item.creatorId!) : undefined}
-                onUnlockAudio={handleUnlockAudio}
+                onToggleMute={toggleGlobalMute}
               />
             ) : (
               // Placeholder fuera de la ventana de render: mantiene el alto/snap sin montar video/HLS

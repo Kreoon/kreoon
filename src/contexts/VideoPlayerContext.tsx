@@ -15,7 +15,8 @@ const VideoPlayerContext = createContext<VideoPlayerContextType | undefined>(und
 
 export function VideoPlayerProvider({ children }: { children: ReactNode }) {
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
-  const [isGlobalMuted, setIsGlobalMuted] = useState(false); // Audio ON by default
+  // Muted por default: autoplay en iOS/Safari EXIGE muted=true para arrancar sin gesto del usuario.
+  const [isGlobalMuted, setIsGlobalMuted] = useState(true);
 
   const playVideo = useCallback((id: string) => {
     setCurrentPlayingId(id);

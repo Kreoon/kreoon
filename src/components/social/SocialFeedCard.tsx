@@ -71,7 +71,8 @@ interface FloatingHeart {
 interface SocialFeedCardProps {
   item: SocialFeedItem;
   isActive: boolean;
-  audioUnlocked: boolean;
+  /** Fuente unica de verdad del mute (VideoPlayerContext) — reemplaza el audioUnlocked local desincronizado */
+  isGlobalMuted: boolean;
   onLike?: () => void;
   onReact?: (type: ReactionType | null) => void;
   onSave?: () => void;
@@ -79,7 +80,7 @@ interface SocialFeedCardProps {
   onShare?: () => void;
   onView?: () => void;
   onProfileClick?: () => void;
-  onUnlockAudio?: () => void;
+  onToggleMute?: () => void;
 }
 
 export interface SocialFeedCardRef {
@@ -118,7 +119,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
     {
       item,
       isActive,
-      audioUnlocked,
+      isGlobalMuted,
       onLike,
       onReact,
       onSave,
@@ -126,7 +127,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       onShare,
       onView,
       onProfileClick,
-      onUnlockAudio,
+      onToggleMute,
     },
     ref
   ) {
@@ -144,16 +145,13 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
 
     const canInteract = item.canInteract !== false;
     const isVideo = item.mediaType === 'video';
-    const isMuted = !audioUnlocked;
+    const isMuted = isGlobalMuted;
 
     useImperativeHandle(ref, () => ({
       play: () => {
         setIsPaused(false);
         playerRef.current?.play();
-        // Ensure audio is unmuted when playing if audio is unlocked
-        if (audioUnlocked) {
-          playerRef.current?.setMuted(false);
-        }
+        playerRef.current?.setMuted(isGlobalMuted);
       },
       pause: () => {
         setIsPaused(true);
@@ -173,13 +171,12 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       }
     }, [isActive, isVideo, isPaused]);
 
-    // Sync mute state with audioUnlocked - ensure active video always has correct audio state
+    // Unica fuente de verdad: cada vez que isGlobalMuted cambia (toggle del boton) o el
+    // slide se vuelve activo (nuevo video hereda el mute actual), se empuja al elemento real.
     useEffect(() => {
       if (!isVideo || !isActive) return;
-      
-      // When audioUnlocked changes or when becoming active, set the correct mute state
-      playerRef.current?.setMuted(!audioUnlocked);
-    }, [audioUnlocked, isActive, isVideo]);
+      playerRef.current?.setMuted(isGlobalMuted);
+    }, [isGlobalMuted, isActive, isVideo]);
 
     // Track view after 3 seconds
     useEffect(() => {
@@ -257,23 +254,18 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       }, 300);
     }, [item.isLiked, onLike, spawnFloatingHeart, canInteract, isVideo]);
 
-    // Handle mute toggle
+    // Toggle via el estado global (React state) — nunca tocar el player imperativamente
+    // desde el click, el useEffect de arriba es el unico que escribe en el video real.
     const handleMuteToggle = (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!audioUnlocked && onUnlockAudio) {
-        onUnlockAudio();
-        playerRef.current?.setMuted(false);
-      } else if (onUnlockAudio) {
-        // Toggle mute
-        playerRef.current?.toggleMute();
-      }
+      onToggleMute?.();
     };
 
     const handleVideoLoadComplete = useCallback(() => {
       if (playerRef.current) {
-        playerRef.current.setMuted(!audioUnlocked);
+        playerRef.current.setMuted(isGlobalMuted);
       }
-    }, [audioUnlocked]);
+    }, [isGlobalMuted]);
 
     return (
       <div 
@@ -374,7 +366,9 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         )}
 
         {/* Right side actions - TikTok style */}
-        <div className="absolute right-3 bottom-28 z-20 flex flex-col items-center gap-4">
+        {/* bottom usa la altura real de la bottom nav (--kreoon-bottom-nav-h, Fase 2.5) para no
+            quedar tapado — antes bottom-28 fijo se metia debajo de la nav en creator/editor */}
+        <div className="absolute right-3 bottom-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom)+16px)] z-20 flex flex-col items-center gap-4">
           {/* Creator avatar + Follow */}
           {item.creatorAvatar && onProfileClick && (
             <div className="flex flex-col items-center gap-1.5 mb-2">
@@ -472,7 +466,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         </div>
 
         {/* Bottom info */}
-        <div className="absolute bottom-8 left-4 right-16 z-20">
+        <div className="absolute bottom-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom)+16px)] left-4 right-16 z-20">
           <div className="flex items-center gap-2 mb-1">
             {item.creatorName && (
               <button 
