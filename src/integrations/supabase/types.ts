@@ -335,6 +335,4406 @@ export type Database = {
         }
         Relationships: []
       }
+      academy_abandoned_carts: {
+        Row: {
+          amount_usd: number | null
+          course_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_phone: string | null
+          id: string
+          payment_status: string
+          reminder_sent_at: string | null
+          session_id: string
+          space_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount_usd?: number | null
+          course_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          id?: string
+          payment_status?: string
+          reminder_sent_at?: string | null
+          session_id: string
+          space_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount_usd?: number | null
+          course_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_phone?: string | null
+          id?: string
+          payment_status?: string
+          reminder_sent_at?: string | null
+          session_id?: string
+          space_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_abandoned_carts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_abandoned_carts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_affiliate_clicks: {
+        Row: {
+          created_at: string
+          day: string
+          id: string
+          ip_hash: string
+          link_id: string
+          user_agent_hash: string | null
+        }
+        Insert: {
+          created_at?: string
+          day?: string
+          id?: string
+          ip_hash: string
+          link_id: string
+          user_agent_hash?: string | null
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          id?: string
+          ip_hash?: string
+          link_id?: string
+          user_agent_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_affiliate_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "academy_affiliate_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_affiliate_conversions: {
+        Row: {
+          amount_paid_usd: number
+          commission_usd: number
+          created_at: string
+          id: string
+          link_id: string
+          paid_to_affiliate_at: string | null
+          referred_user_id: string
+          space_id: string
+          stripe_charge_id: string | null
+        }
+        Insert: {
+          amount_paid_usd: number
+          commission_usd: number
+          created_at?: string
+          id?: string
+          link_id: string
+          paid_to_affiliate_at?: string | null
+          referred_user_id: string
+          space_id: string
+          stripe_charge_id?: string | null
+        }
+        Update: {
+          amount_paid_usd?: number
+          commission_usd?: number
+          created_at?: string
+          id?: string
+          link_id?: string
+          paid_to_affiliate_at?: string | null
+          referred_user_id?: string
+          space_id?: string
+          stripe_charge_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_affiliate_conversions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "academy_affiliate_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_affiliate_conversions_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_affiliate_links: {
+        Row: {
+          clicks: number
+          code: string
+          commission_pct: number
+          conversions: number
+          created_at: string
+          earned_total_usd: number
+          id: string
+          is_active: boolean
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          clicks?: number
+          code: string
+          commission_pct?: number
+          conversions?: number
+          created_at?: string
+          earned_total_usd?: number
+          id?: string
+          is_active?: boolean
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          clicks?: number
+          code?: string
+          commission_pct?: number
+          conversions?: number
+          created_at?: string
+          earned_total_usd?: number
+          id?: string
+          is_active?: boolean
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_affiliate_links_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_attempt_answers: {
+        Row: {
+          attempt_id: string
+          created_at: string | null
+          file_name: string | null
+          file_url: string | null
+          graded_at: string | null
+          id: string
+          instructor_feedback: string | null
+          is_correct: boolean | null
+          matching_pairs: Json | null
+          ordering_sequence: string[] | null
+          points_awarded: number | null
+          question_id: string
+          selected_option_ids: string[] | null
+          self_eval_checked: Json | null
+          text_answer: string | null
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          graded_at?: string | null
+          id?: string
+          instructor_feedback?: string | null
+          is_correct?: boolean | null
+          matching_pairs?: Json | null
+          ordering_sequence?: string[] | null
+          points_awarded?: number | null
+          question_id: string
+          selected_option_ids?: string[] | null
+          self_eval_checked?: Json | null
+          text_answer?: string | null
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string | null
+          file_name?: string | null
+          file_url?: string | null
+          graded_at?: string | null
+          id?: string
+          instructor_feedback?: string | null
+          is_correct?: boolean | null
+          matching_pairs?: Json | null
+          ordering_sequence?: string[] | null
+          points_awarded?: number | null
+          question_id?: string
+          selected_option_ids?: string[] | null
+          self_eval_checked?: Json | null
+          text_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_attempt_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quiz_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_attempt_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "academy_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_badges: {
+        Row: {
+          category: string | null
+          color: string | null
+          description: string
+          emoji: string
+          id: string
+          name: string
+          rarity: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          description: string
+          emoji: string
+          id: string
+          name: string
+          rarity?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          description?: string
+          emoji?: string
+          id?: string
+          name?: string
+          rarity?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
+      academy_bundles: {
+        Row: {
+          compare_at_price_usd: number | null
+          course_ids: string[]
+          cover_image_url: string | null
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          includes_membership_tier_id: string | null
+          is_active: boolean
+          membership_duration_months: number | null
+          name: string
+          price_usd: number
+          slug: string
+          space_id: string
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          compare_at_price_usd?: number | null
+          course_ids?: string[]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          includes_membership_tier_id?: string | null
+          is_active?: boolean
+          membership_duration_months?: number | null
+          name: string
+          price_usd: number
+          slug: string
+          space_id: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          compare_at_price_usd?: number | null
+          course_ids?: string[]
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          includes_membership_tier_id?: string | null
+          is_active?: boolean
+          membership_duration_months?: number | null
+          name?: string
+          price_usd?: number
+          slug?: string
+          space_id?: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_bundles_includes_membership_tier_id_fkey"
+            columns: ["includes_membership_tier_id"]
+            isOneToOne: false
+            referencedRelation: "academy_membership_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_bundles_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_certificate_requirements: {
+        Row: {
+          cert_accent_color: string | null
+          cert_background_color: string | null
+          cert_logo_url: string | null
+          cert_signature_name: string | null
+          cert_signature_title: string | null
+          cert_subtitle: string | null
+          cert_title: string | null
+          course_id: string
+          created_at: string | null
+          id: string
+          min_avg_score: number | null
+          min_final_exam_score: number | null
+          min_lessons_completed_pct: number | null
+          min_time_spent_minutes: number | null
+          require_all_manual_reviews: boolean | null
+          require_all_module_exams: boolean | null
+          require_final_exam: boolean | null
+          require_live_attendance: boolean | null
+          require_self_evaluations: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          cert_accent_color?: string | null
+          cert_background_color?: string | null
+          cert_logo_url?: string | null
+          cert_signature_name?: string | null
+          cert_signature_title?: string | null
+          cert_subtitle?: string | null
+          cert_title?: string | null
+          course_id: string
+          created_at?: string | null
+          id?: string
+          min_avg_score?: number | null
+          min_final_exam_score?: number | null
+          min_lessons_completed_pct?: number | null
+          min_time_spent_minutes?: number | null
+          require_all_manual_reviews?: boolean | null
+          require_all_module_exams?: boolean | null
+          require_final_exam?: boolean | null
+          require_live_attendance?: boolean | null
+          require_self_evaluations?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          cert_accent_color?: string | null
+          cert_background_color?: string | null
+          cert_logo_url?: string | null
+          cert_signature_name?: string | null
+          cert_signature_title?: string | null
+          cert_subtitle?: string | null
+          cert_title?: string | null
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          min_avg_score?: number | null
+          min_final_exam_score?: number | null
+          min_lessons_completed_pct?: number | null
+          min_time_spent_minutes?: number | null
+          require_all_manual_reviews?: boolean | null
+          require_all_module_exams?: boolean | null
+          require_final_exam?: boolean | null
+          require_live_attendance?: boolean | null
+          require_self_evaluations?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_certificate_requirements_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_certificates: {
+        Row: {
+          cert_code: string
+          course_id: string
+          course_title: string
+          enrollment_id: string
+          expires_at: string | null
+          final_score_pct: number | null
+          id: string
+          instructor_name: string
+          is_valid: boolean | null
+          issued_at: string | null
+          revoke_reason: string | null
+          revoked_at: string | null
+          space_name: string
+          student_name: string
+          user_id: string
+          verification_hash: string | null
+          verification_url: string | null
+        }
+        Insert: {
+          cert_code?: string
+          course_id: string
+          course_title: string
+          enrollment_id: string
+          expires_at?: string | null
+          final_score_pct?: number | null
+          id?: string
+          instructor_name: string
+          is_valid?: boolean | null
+          issued_at?: string | null
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          space_name: string
+          student_name: string
+          user_id: string
+          verification_hash?: string | null
+          verification_url?: string | null
+        }
+        Update: {
+          cert_code?: string
+          course_id?: string
+          course_title?: string
+          enrollment_id?: string
+          expires_at?: string | null
+          final_score_pct?: number | null
+          id?: string
+          instructor_name?: string
+          is_valid?: boolean | null
+          issued_at?: string | null
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          space_name?: string
+          student_name?: string
+          user_id?: string
+          verification_hash?: string | null
+          verification_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_certificates_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_challenge_checkpoints: {
+        Row: {
+          challenge_id: string
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_welcome: boolean
+          requires_review: boolean
+          sort_order: number
+          submission_prompt: string | null
+          submission_type: string
+          title: string
+          video_url: string | null
+          xp_reward: number
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_welcome?: boolean
+          requires_review?: boolean
+          sort_order: number
+          submission_prompt?: string | null
+          submission_type?: string
+          title: string
+          video_url?: string | null
+          xp_reward?: number
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_welcome?: boolean
+          requires_review?: boolean
+          sort_order?: number
+          submission_prompt?: string | null
+          submission_type?: string
+          title?: string
+          video_url?: string | null
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_challenge_checkpoints_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "academy_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_challenge_participants: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          current_checkpoint_order: number
+          id: string
+          joined_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          current_checkpoint_order?: number
+          id?: string
+          joined_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          current_checkpoint_order?: number
+          id?: string
+          joined_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "academy_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_challenge_submissions: {
+        Row: {
+          checkpoint_id: string
+          feedback: string | null
+          file_url: string | null
+          id: string
+          link_url: string | null
+          participant_id: string
+          reviewed_at: string | null
+          reviewer_id: string | null
+          status: string
+          submission_text: string | null
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          checkpoint_id: string
+          feedback?: string | null
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          participant_id: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submission_text?: string | null
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          checkpoint_id?: string
+          feedback?: string | null
+          file_url?: string | null
+          id?: string
+          link_url?: string | null
+          participant_id?: string
+          reviewed_at?: string | null
+          reviewer_id?: string | null
+          status?: string
+          submission_text?: string | null
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_challenge_submissions_checkpoint_id_fkey"
+            columns: ["checkpoint_id"]
+            isOneToOne: false
+            referencedRelation: "academy_challenge_checkpoints"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_challenge_submissions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "academy_challenge_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_challenges: {
+        Row: {
+          badge_id: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_days: number | null
+          end_date: string | null
+          id: string
+          mode: string
+          slug: string
+          space_id: string
+          start_date: string | null
+          status: string
+          title: string
+          updated_at: string
+          xp_reward: number
+        }
+        Insert: {
+          badge_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          mode?: string
+          slug: string
+          space_id: string
+          start_date?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          xp_reward?: number
+        }
+        Update: {
+          badge_id?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number | null
+          end_date?: string | null
+          id?: string
+          mode?: string
+          slug?: string
+          space_id?: string
+          start_date?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_challenges_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_checkout_intents: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          currency: string
+          expected_amount_cents: number
+          expires_at: string
+          gateway: string
+          intent_type: string
+          metadata: Json
+          paid_at: string | null
+          reference: string
+          rejected_reason: string | null
+          space_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          currency: string
+          expected_amount_cents: number
+          expires_at?: string
+          gateway: string
+          intent_type?: string
+          metadata?: Json
+          paid_at?: string | null
+          reference: string
+          rejected_reason?: string | null
+          space_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          currency?: string
+          expected_amount_cents?: number
+          expires_at?: string
+          gateway?: string
+          intent_type?: string
+          metadata?: Json
+          paid_at?: string | null
+          reference?: string
+          rejected_reason?: string | null
+          space_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_checkout_intents_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_checkout_intents_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_cohorts: {
+        Row: {
+          course_id: string
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          id: string
+          instructor_id: string | null
+          name: string
+          seats_taken: number
+          seats_total: number | null
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          instructor_id?: string | null
+          name: string
+          seats_taken?: number
+          seats_total?: number | null
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          instructor_id?: string | null
+          name?: string
+          seats_taken?: number
+          seats_total?: number | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_cohorts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          reaction: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          reaction?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          reaction?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_post_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_coupon_redemptions: {
+        Row: {
+          coupon_id: string
+          id: string
+          plan: string
+          redeemed_at: string
+          space_id: string
+          stripe_subscription_id: string | null
+          user_id: string
+        }
+        Insert: {
+          coupon_id: string
+          id?: string
+          plan: string
+          redeemed_at?: string
+          space_id: string
+          stripe_subscription_id?: string | null
+          user_id: string
+        }
+        Update: {
+          coupon_id?: string
+          id?: string
+          plan?: string
+          redeemed_at?: string
+          space_id?: string
+          stripe_subscription_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "academy_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_coupon_redemptions_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_coupons: {
+        Row: {
+          applies_to: string[]
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          duration: string
+          duration_in_months: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_redemptions: number | null
+          max_redemptions_per_user: number | null
+          redemptions_count: number
+          space_id: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to?: string[]
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          duration: string
+          duration_in_months?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          max_redemptions_per_user?: number | null
+          redemptions_count?: number
+          space_id: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to?: string[]
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          duration?: string
+          duration_in_months?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_redemptions?: number | null
+          max_redemptions_per_user?: number | null
+          redemptions_count?: number
+          space_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_coupons_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_course_prices: {
+        Row: {
+          amount: number
+          course_id: string
+          currency: string
+          external_price_id: string | null
+        }
+        Insert: {
+          amount: number
+          course_id: string
+          currency: string
+          external_price_id?: string | null
+        }
+        Update: {
+          amount?: number
+          course_id?: string
+          currency?: string
+          external_price_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_course_prices_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_course_reviews: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          enrollment_id: string
+          id: string
+          is_public: boolean | null
+          rating: number
+          review_text: string | null
+          user_id: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          enrollment_id: string
+          id?: string
+          is_public?: boolean | null
+          rating: number
+          review_text?: string | null
+          user_id: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          enrollment_id?: string
+          id?: string
+          is_public?: boolean | null
+          rating?: number
+          review_text?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_course_reviews_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_course_reviews_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_courses: {
+        Row: {
+          avg_rating: number | null
+          certificate_enabled: boolean | null
+          cohort_capacity: number | null
+          completion_rate: number | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          enrolled_count: number | null
+          id: string
+          instructor_id: string
+          is_free: boolean | null
+          language: string | null
+          mode: string
+          price_usd: number | null
+          review_count: number | null
+          slug: string
+          sort_order: number | null
+          space_id: string
+          status: string | null
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          tags: string[] | null
+          title: string
+          total_duration_minutes: number | null
+          trailer_url: string | null
+          unlock_logic: string
+          updated_at: string | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          certificate_enabled?: boolean | null
+          cohort_capacity?: number | null
+          completion_rate?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          enrolled_count?: number | null
+          id?: string
+          instructor_id: string
+          is_free?: boolean | null
+          language?: string | null
+          mode?: string
+          price_usd?: number | null
+          review_count?: number | null
+          slug: string
+          sort_order?: number | null
+          space_id: string
+          status?: string | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          tags?: string[] | null
+          title: string
+          total_duration_minutes?: number | null
+          trailer_url?: string | null
+          unlock_logic?: string
+          updated_at?: string | null
+        }
+        Update: {
+          avg_rating?: number | null
+          certificate_enabled?: boolean | null
+          cohort_capacity?: number | null
+          completion_rate?: number | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          enrolled_count?: number | null
+          id?: string
+          instructor_id?: string
+          is_free?: boolean | null
+          language?: string | null
+          mode?: string
+          price_usd?: number | null
+          review_count?: number | null
+          slug?: string
+          sort_order?: number | null
+          space_id?: string
+          status?: string | null
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          tags?: string[] | null
+          title?: string
+          total_duration_minutes?: number | null
+          trailer_url?: string | null
+          unlock_logic?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_courses_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_courses_instructor_profile"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_dm_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_read: boolean
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "academy_dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_dm_threads: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string
+          last_message_preview: string | null
+          space_id: string
+          unread_count_a: number
+          unread_count_b: number
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          space_id: string
+          unread_count_a?: number
+          unread_count_b?: number
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          space_id?: string
+          unread_count_a?: number
+          unread_count_b?: number
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_dm_threads_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_enrollments: {
+        Row: {
+          amount_paid_usd: number | null
+          certificate_issued_at: string | null
+          cohort_id: string | null
+          completed_at: string | null
+          completion_pct: number | null
+          course_id: string
+          enrolled_at: string | null
+          gateway: string | null
+          id: string
+          last_accessed_at: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          stripe_payment_intent_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid_usd?: number | null
+          certificate_issued_at?: string | null
+          cohort_id?: string | null
+          completed_at?: string | null
+          completion_pct?: number | null
+          course_id: string
+          enrolled_at?: string | null
+          gateway?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid_usd?: number | null
+          certificate_issued_at?: string | null
+          cohort_id?: string | null
+          completed_at?: string | null
+          completion_pct?: number | null
+          course_id?: string
+          enrolled_at?: string | null
+          gateway?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          stripe_payment_intent_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_enrollments_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "academy_cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_event_invitations: {
+        Row: {
+          email: string
+          event_id: string
+          google_calendar_added: boolean | null
+          id: string
+          invite_sent_at: string | null
+          responded_at: string | null
+          space_id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          email: string
+          event_id: string
+          google_calendar_added?: boolean | null
+          id?: string
+          invite_sent_at?: string | null
+          responded_at?: string | null
+          space_id: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          email?: string
+          event_id?: string
+          google_calendar_added?: boolean | null
+          id?: string
+          invite_sent_at?: string | null
+          responded_at?: string | null
+          space_id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_event_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "academy_space_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_event_invitations_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_event_log: {
+        Row: {
+          created_at: string
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          retry_count: number
+          space_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          event_type: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          space_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          space_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_event_log_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_event_reminders_sent: {
+        Row: {
+          event_id: string
+          reminder_type: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          reminder_type: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          reminder_type?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_event_reminders_sent_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "academy_space_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_event_rsvps: {
+        Row: {
+          attended: boolean | null
+          attended_at: string | null
+          created_at: string | null
+          event_id: string
+          id: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          attended?: boolean | null
+          attended_at?: string | null
+          created_at?: string | null
+          event_id: string
+          id?: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          attended?: boolean | null
+          attended_at?: string | null
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_event_rsvps_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "academy_space_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_google_calendar_tokens: {
+        Row: {
+          access_token: string
+          calendar_id: string | null
+          calendar_name: string | null
+          connected_at: string | null
+          id: string
+          is_active: boolean | null
+          last_synced_at: string | null
+          owner_id: string
+          refresh_token: string
+          space_id: string
+          token_expiry: string | null
+        }
+        Insert: {
+          access_token: string
+          calendar_id?: string | null
+          calendar_name?: string | null
+          connected_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          owner_id: string
+          refresh_token: string
+          space_id: string
+          token_expiry?: string | null
+        }
+        Update: {
+          access_token?: string
+          calendar_id?: string | null
+          calendar_name?: string | null
+          connected_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_synced_at?: string | null
+          owner_id?: string
+          refresh_token?: string
+          space_id?: string
+          token_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_google_calendar_tokens_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: true
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_hotmart_coproductions: {
+        Row: {
+          accepted_at: string | null
+          active: boolean
+          connected_by: string | null
+          coproduction_status: string
+          course_id: string | null
+          created_at: string
+          hotmart_offer_code: string | null
+          hotmart_product_id: string
+          hotmart_product_ucode: string | null
+          id: string
+          is_subscription: boolean
+          kreoon_account_id: string
+          kreoon_commission_percent: number
+          producer_hottok: string
+          space_id: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          active?: boolean
+          connected_by?: string | null
+          coproduction_status?: string
+          course_id?: string | null
+          created_at?: string
+          hotmart_offer_code?: string | null
+          hotmart_product_id: string
+          hotmart_product_ucode?: string | null
+          id?: string
+          is_subscription?: boolean
+          kreoon_account_id: string
+          kreoon_commission_percent: number
+          producer_hottok: string
+          space_id: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          active?: boolean
+          connected_by?: string | null
+          coproduction_status?: string
+          course_id?: string | null
+          created_at?: string
+          hotmart_offer_code?: string | null
+          hotmart_product_id?: string
+          hotmart_product_ucode?: string | null
+          id?: string
+          is_subscription?: boolean
+          kreoon_account_id?: string
+          kreoon_commission_percent?: number
+          producer_hottok?: string
+          space_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_hotmart_coproductions_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_hotmart_coproductions_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_hotmart_pending_claims: {
+        Row: {
+          amount_paid_usd: number | null
+          buyer_email: string
+          buyer_name: string | null
+          claimed_at: string | null
+          claimed_by: string | null
+          coproduction_id: string
+          course_id: string
+          created_at: string
+          expires_at: string
+          hotmart_transaction: string | null
+          id: string
+          space_id: string
+          status: string
+        }
+        Insert: {
+          amount_paid_usd?: number | null
+          buyer_email: string
+          buyer_name?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          coproduction_id: string
+          course_id: string
+          created_at?: string
+          expires_at?: string
+          hotmart_transaction?: string | null
+          id?: string
+          space_id: string
+          status?: string
+        }
+        Update: {
+          amount_paid_usd?: number | null
+          buyer_email?: string
+          buyer_name?: string | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          coproduction_id?: string
+          course_id?: string
+          created_at?: string
+          expires_at?: string
+          hotmart_transaction?: string | null
+          id?: string
+          space_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_hotmart_pending_claims_coproduction_id_fkey"
+            columns: ["coproduction_id"]
+            isOneToOne: false
+            referencedRelation: "academy_hotmart_coproductions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_hotmart_pending_claims_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_hotmart_pending_claims_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_instructor_plans: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_slug: string
+          status: string | null
+          stripe_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_slug?: string
+          status?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_slug?: string
+          status?: string | null
+          stripe_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_instructor_plans_plan_slug_fkey"
+            columns: ["plan_slug"]
+            isOneToOne: false
+            referencedRelation: "academy_plans"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      academy_lesson_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lesson_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_lesson_comments: {
+        Row: {
+          author_id: string
+          body: string
+          body_html: string | null
+          course_id: string
+          created_at: string | null
+          id: string
+          is_deleted: boolean | null
+          is_featured: boolean | null
+          is_pinned: boolean | null
+          is_reported: boolean | null
+          lesson_id: string
+          like_count: number | null
+          parent_id: string | null
+          report_reason: string | null
+          space_id: string
+          updated_at: string | null
+          video_timestamp_label: string | null
+          video_timestamp_seconds: number | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          body_html?: string | null
+          course_id: string
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_featured?: boolean | null
+          is_pinned?: boolean | null
+          is_reported?: boolean | null
+          lesson_id: string
+          like_count?: number | null
+          parent_id?: string | null
+          report_reason?: string | null
+          space_id: string
+          updated_at?: string | null
+          video_timestamp_label?: string | null
+          video_timestamp_seconds?: number | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          body_html?: string | null
+          course_id?: string
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          is_featured?: boolean | null
+          is_pinned?: boolean | null
+          is_reported?: boolean | null
+          lesson_id?: string
+          like_count?: number | null
+          parent_id?: string | null
+          report_reason?: string | null
+          space_id?: string
+          updated_at?: string | null
+          video_timestamp_label?: string | null
+          video_timestamp_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_comments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_comments_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_comments_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons_gated"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lesson_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_comments_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_lesson_comments_author_profile"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_lesson_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          enrollment_id: string
+          id: string
+          last_position_seconds: number | null
+          lesson_id: string
+          status: string | null
+          time_spent_seconds: number | null
+          updated_at: string | null
+          user_id: string
+          video_watch_pct: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          enrollment_id: string
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id: string
+          status?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id: string
+          video_watch_pct?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          enrollment_id?: string
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id?: string
+          status?: string | null
+          time_spent_seconds?: number | null
+          updated_at?: string | null
+          user_id?: string
+          video_watch_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lesson_progress_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons_gated"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_lessons: {
+        Row: {
+          content: string | null
+          course_id: string
+          created_at: string | null
+          description: string | null
+          drip_days_after_enroll: number | null
+          drip_mode: string
+          drip_release_date: string | null
+          end_lesson_quiz_id: string | null
+          has_midlesson_quiz: boolean | null
+          id: string
+          is_free_preview: boolean | null
+          is_required: boolean | null
+          midlesson_quiz_timestamp_seconds: number | null
+          module_id: string
+          resources: Json
+          sort_order: number | null
+          title: string
+          type: string
+          unlock_after_days: number
+          unlock_logic: string
+          updated_at: string | null
+          video_bunny_id: string | null
+          video_duration_seconds: number | null
+          video_source: string | null
+          video_thumbnail_url: string | null
+          video_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          drip_days_after_enroll?: number | null
+          drip_mode?: string
+          drip_release_date?: string | null
+          end_lesson_quiz_id?: string | null
+          has_midlesson_quiz?: boolean | null
+          id?: string
+          is_free_preview?: boolean | null
+          is_required?: boolean | null
+          midlesson_quiz_timestamp_seconds?: number | null
+          module_id: string
+          resources?: Json
+          sort_order?: number | null
+          title: string
+          type?: string
+          unlock_after_days?: number
+          unlock_logic?: string
+          updated_at?: string | null
+          video_bunny_id?: string | null
+          video_duration_seconds?: number | null
+          video_source?: string | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          drip_days_after_enroll?: number | null
+          drip_mode?: string
+          drip_release_date?: string | null
+          end_lesson_quiz_id?: string | null
+          has_midlesson_quiz?: boolean | null
+          id?: string
+          is_free_preview?: boolean | null
+          is_required?: boolean | null
+          midlesson_quiz_timestamp_seconds?: number | null
+          module_id?: string
+          resources?: Json
+          sort_order?: number | null
+          title?: string
+          type?: string
+          unlock_after_days?: number
+          unlock_logic?: string
+          updated_at?: string | null
+          video_bunny_id?: string | null
+          video_duration_seconds?: number | null
+          video_source?: string | null
+          video_thumbnail_url?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "academy_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_end_lesson_quiz"
+            columns: ["end_lesson_quiz_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_level_tiers: {
+        Row: {
+          emoji: string
+          level: number
+          max_xp: number | null
+          min_xp: number
+          perk_description: string | null
+          title: string
+        }
+        Insert: {
+          emoji: string
+          level: number
+          max_xp?: number | null
+          min_xp: number
+          perk_description?: string | null
+          title: string
+        }
+        Update: {
+          emoji?: string
+          level?: number
+          max_xp?: number | null
+          min_xp?: number
+          perk_description?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      academy_manual_reviews: {
+        Row: {
+          answer_id: string
+          attempt_id: string
+          course_id: string
+          created_at: string | null
+          feedback: string | null
+          id: string
+          instructor_id: string | null
+          max_score: number | null
+          question_id: string
+          reviewed_at: string | null
+          score_awarded: number | null
+          status: string | null
+          student_id: string
+        }
+        Insert: {
+          answer_id: string
+          attempt_id: string
+          course_id: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          instructor_id?: string | null
+          max_score?: number | null
+          question_id: string
+          reviewed_at?: string | null
+          score_awarded?: number | null
+          status?: string | null
+          student_id: string
+        }
+        Update: {
+          answer_id?: string
+          attempt_id?: string
+          course_id?: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          instructor_id?: string | null
+          max_score?: number | null
+          question_id?: string
+          reviewed_at?: string | null
+          score_awarded?: number | null
+          status?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_manual_reviews_answer_id_fkey"
+            columns: ["answer_id"]
+            isOneToOne: false
+            referencedRelation: "academy_attempt_answers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_manual_reviews_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quiz_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_manual_reviews_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_manual_reviews_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "academy_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_member_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_member_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "academy_badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_member_badges_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_member_calendar_tokens: {
+        Row: {
+          access_token: string
+          connected_at: string | null
+          id: string
+          is_active: boolean | null
+          refresh_token: string
+          token_expiry: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          connected_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          refresh_token: string
+          token_expiry?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          connected_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          refresh_token?: string
+          token_expiry?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      academy_member_follows: {
+        Row: {
+          created_at: string | null
+          follower_id: string
+          following_id: string
+          id: string
+          space_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_id: string
+          following_id: string
+          id?: string
+          space_id: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_id?: string
+          following_id?: string
+          id?: string
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_member_follows_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_follows_follower_profile"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_follows_following_profile"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_member_locations: {
+        Row: {
+          city: string | null
+          country: string | null
+          country_code: string | null
+          created_at: string | null
+          id: string
+          is_public: boolean | null
+          lat: number | null
+          lng: number | null
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          lat?: number | null
+          lng?: number | null
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_member_locations_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_member_presence: {
+        Row: {
+          current_page: string | null
+          id: string
+          last_seen_at: string | null
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          current_page?: string | null
+          id?: string
+          last_seen_at?: string | null
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          current_page?: string | null
+          id?: string
+          last_seen_at?: string | null
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_member_presence_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_presence_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_membership_answers: {
+        Row: {
+          answers: Json
+          id: string
+          space_id: string
+          submitted_at: string | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          id?: string
+          space_id: string
+          submitted_at?: string | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          id?: string
+          space_id?: string
+          submitted_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_membership_answers_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_membership_tiers: {
+        Row: {
+          badge_color: string | null
+          created_at: string
+          description: string | null
+          features: Json
+          id: string
+          is_active: boolean
+          monthly_price_usd: number | null
+          name: string
+          sort_order: number
+          space_id: string
+          stripe_monthly_price_id: string | null
+          stripe_yearly_price_id: string | null
+          tier_slug: string
+          updated_at: string
+          yearly_price_usd: number | null
+        }
+        Insert: {
+          badge_color?: string | null
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          monthly_price_usd?: number | null
+          name: string
+          sort_order?: number
+          space_id: string
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
+          tier_slug: string
+          updated_at?: string
+          yearly_price_usd?: number | null
+        }
+        Update: {
+          badge_color?: string | null
+          created_at?: string
+          description?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean
+          monthly_price_usd?: number | null
+          name?: string
+          sort_order?: number
+          space_id?: string
+          stripe_monthly_price_id?: string | null
+          stripe_yearly_price_id?: string | null
+          tier_slug?: string
+          updated_at?: string
+          yearly_price_usd?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_membership_tiers_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_memberships: {
+        Row: {
+          country: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          joined_at: string | null
+          lead_source: string | null
+          lifecycle_stage: string | null
+          marketing_consent: boolean | null
+          objective: string | null
+          onboarding_completed_at: string | null
+          referrer_user_id: string | null
+          role: string
+          space_id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier_id: string | null
+          user_id: string
+        }
+        Insert: {
+          country?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          lead_source?: string | null
+          lifecycle_stage?: string | null
+          marketing_consent?: boolean | null
+          objective?: string | null
+          onboarding_completed_at?: string | null
+          referrer_user_id?: string | null
+          role?: string
+          space_id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier_id?: string | null
+          user_id: string
+        }
+        Update: {
+          country?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string | null
+          lead_source?: string | null
+          lifecycle_stage?: string | null
+          marketing_consent?: boolean | null
+          objective?: string | null
+          onboarding_completed_at?: string | null
+          referrer_user_id?: string | null
+          role?: string
+          space_id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_memberships_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_memberships_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "academy_membership_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_memberships_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_modules: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_free_preview: boolean | null
+          sort_order: number | null
+          title: string
+          unlock_logic: string
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free_preview?: boolean | null
+          sort_order?: number | null
+          title: string
+          unlock_logic?: string
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_free_preview?: boolean | null
+          sort_order?: number | null
+          title?: string
+          unlock_logic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_notification_settings: {
+        Row: {
+          admin_broadcast: boolean | null
+          created_at: string | null
+          daily_notifications: boolean | null
+          desktop_push_enabled: boolean
+          id: string
+          notify_event_reminder: boolean | null
+          notify_level_up: boolean
+          notify_membership_request: boolean | null
+          notify_new_comment_on_my_post: boolean | null
+          notify_new_customer_email: boolean | null
+          notify_new_lesson: boolean | null
+          notify_new_member: boolean
+          notify_new_post: boolean | null
+          notify_new_post_in_category: boolean | null
+          notify_payment_received: boolean
+          notify_reaction_on_my_post: boolean | null
+          notify_reply_to_my_comment: boolean | null
+          notify_reported_content: boolean | null
+          sound_enabled: boolean
+          space_id: string
+          updated_at: string | null
+          user_id: string
+          weekly_digest: boolean | null
+        }
+        Insert: {
+          admin_broadcast?: boolean | null
+          created_at?: string | null
+          daily_notifications?: boolean | null
+          desktop_push_enabled?: boolean
+          id?: string
+          notify_event_reminder?: boolean | null
+          notify_level_up?: boolean
+          notify_membership_request?: boolean | null
+          notify_new_comment_on_my_post?: boolean | null
+          notify_new_customer_email?: boolean | null
+          notify_new_lesson?: boolean | null
+          notify_new_member?: boolean
+          notify_new_post?: boolean | null
+          notify_new_post_in_category?: boolean | null
+          notify_payment_received?: boolean
+          notify_reaction_on_my_post?: boolean | null
+          notify_reply_to_my_comment?: boolean | null
+          notify_reported_content?: boolean | null
+          sound_enabled?: boolean
+          space_id: string
+          updated_at?: string | null
+          user_id: string
+          weekly_digest?: boolean | null
+        }
+        Update: {
+          admin_broadcast?: boolean | null
+          created_at?: string | null
+          daily_notifications?: boolean | null
+          desktop_push_enabled?: boolean
+          id?: string
+          notify_event_reminder?: boolean | null
+          notify_level_up?: boolean
+          notify_membership_request?: boolean | null
+          notify_new_comment_on_my_post?: boolean | null
+          notify_new_customer_email?: boolean | null
+          notify_new_lesson?: boolean | null
+          notify_new_member?: boolean
+          notify_new_post?: boolean | null
+          notify_new_post_in_category?: boolean | null
+          notify_payment_received?: boolean
+          notify_reaction_on_my_post?: boolean | null
+          notify_reply_to_my_comment?: boolean | null
+          notify_reported_content?: boolean | null
+          sound_enabled?: boolean
+          space_id?: string
+          updated_at?: string | null
+          user_id?: string
+          weekly_digest?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_notification_settings_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_notifications: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          link: string | null
+          payload: Json | null
+          recipient_id: string
+          reference_id: string | null
+          reference_type: string | null
+          sender_id: string | null
+          space_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          payload?: Json | null
+          recipient_id: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sender_id?: string | null
+          space_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          link?: string | null
+          payload?: Json | null
+          recipient_id?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          sender_id?: string | null
+          space_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_notifications_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_notifications_sender_profile"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_order_bumps: {
+        Row: {
+          active: boolean
+          bump_course_id: string
+          created_at: string
+          discount_percent: number
+          headline: string
+          id: string
+          image_url: string | null
+          parent_course_id: string
+          position: number
+          subheadline: string | null
+        }
+        Insert: {
+          active?: boolean
+          bump_course_id: string
+          created_at?: string
+          discount_percent?: number
+          headline: string
+          id?: string
+          image_url?: string | null
+          parent_course_id: string
+          position?: number
+          subheadline?: string | null
+        }
+        Update: {
+          active?: boolean
+          bump_course_id?: string
+          created_at?: string
+          discount_percent?: number
+          headline?: string
+          id?: string
+          image_url?: string | null
+          parent_course_id?: string
+          position?: number
+          subheadline?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_order_bumps_bump_course_id_fkey"
+            columns: ["bump_course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_order_bumps_parent_course_id_fkey"
+            columns: ["parent_course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_plans: {
+        Row: {
+          created_at: string | null
+          features: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          price_usd: number
+          slug: string
+          transaction_fee_pct: number
+        }
+        Insert: {
+          created_at?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_usd: number
+          slug: string
+          transaction_fee_pct: number
+        }
+        Update: {
+          created_at?: string | null
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_usd?: number
+          slug?: string
+          transaction_fee_pct?: number
+        }
+        Relationships: []
+      }
+      academy_poll_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_ids: string[]
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_ids: string[]
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_ids?: string[]
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_poll_votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "academy_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_post_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          emoji: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          requires_approval: boolean | null
+          slug: string
+          sort_order: number | null
+          space_id: string
+          who_can_post: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          requires_approval?: boolean | null
+          slug: string
+          sort_order?: number | null
+          space_id: string
+          who_can_post?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          emoji?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          requires_approval?: boolean | null
+          slug?: string
+          sort_order?: number | null
+          space_id?: string
+          who_can_post?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_post_categories_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_post_comments: {
+        Row: {
+          author_id: string
+          body: string
+          body_html: string | null
+          created_at: string | null
+          id: string
+          is_deleted: boolean | null
+          like_count: number | null
+          media_urls: string[]
+          parent_id: string | null
+          post_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          body_html?: string | null
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          like_count?: number | null
+          media_urls?: string[]
+          parent_id?: string | null
+          post_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          body_html?: string | null
+          created_at?: string | null
+          id?: string
+          is_deleted?: boolean | null
+          like_count?: number | null
+          media_urls?: string[]
+          parent_id?: string | null
+          post_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "academy_post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "academy_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_post_comments_author_profile"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_post_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "academy_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_post_shares: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          shared_to: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          shared_to?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          shared_to?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_post_shares_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "academy_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_posts: {
+        Row: {
+          author_id: string
+          body: string
+          body_html: string | null
+          category_id: string | null
+          comment_count: number | null
+          created_at: string | null
+          featured_until: string | null
+          id: string
+          is_announcement: boolean | null
+          is_pinned: boolean | null
+          like_count: number | null
+          link_preview: Json | null
+          media_urls: string[] | null
+          poll_allows_multiple: boolean | null
+          poll_ends_at: string | null
+          poll_options: Json | null
+          space_id: string
+          status: string | null
+          title: string | null
+          type: string | null
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          author_id: string
+          body: string
+          body_html?: string | null
+          category_id?: string | null
+          comment_count?: number | null
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_announcement?: boolean | null
+          is_pinned?: boolean | null
+          like_count?: number | null
+          link_preview?: Json | null
+          media_urls?: string[] | null
+          poll_allows_multiple?: boolean | null
+          poll_ends_at?: string | null
+          poll_options?: Json | null
+          space_id: string
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          body_html?: string | null
+          category_id?: string | null
+          comment_count?: number | null
+          created_at?: string | null
+          featured_until?: string | null
+          id?: string
+          is_announcement?: boolean | null
+          is_pinned?: boolean | null
+          like_count?: number | null
+          link_preview?: Json | null
+          media_urls?: string[] | null
+          poll_allows_multiple?: boolean | null
+          poll_ends_at?: string | null
+          poll_options?: Json | null
+          space_id?: string
+          status?: string | null
+          title?: string | null
+          type?: string | null
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "academy_post_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_posts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_posts_author_profile"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_question_options: {
+        Row: {
+          explanation: string | null
+          id: string
+          is_correct: boolean | null
+          media_url: string | null
+          option_text: string
+          question_id: string
+          sort_order: number | null
+        }
+        Insert: {
+          explanation?: string | null
+          id?: string
+          is_correct?: boolean | null
+          media_url?: string | null
+          option_text: string
+          question_id: string
+          sort_order?: number | null
+        }
+        Update: {
+          explanation?: string | null
+          id?: string
+          is_correct?: boolean | null
+          media_url?: string | null
+          option_text?: string
+          question_id?: string
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_question_options_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "academy_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_questions: {
+        Row: {
+          created_at: string | null
+          explanation: string | null
+          id: string
+          is_required: boolean | null
+          media_url: string | null
+          points: number | null
+          question_text: string
+          quiz_id: string
+          sort_order: number | null
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          is_required?: boolean | null
+          media_url?: string | null
+          points?: number | null
+          question_text: string
+          quiz_id: string
+          sort_order?: number | null
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          is_required?: boolean | null
+          media_url?: string | null
+          points?: number | null
+          question_text?: string
+          quiz_id?: string
+          sort_order?: number | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_quiz_attempts: {
+        Row: {
+          attempt_number: number
+          enrollment_id: string
+          id: string
+          points_earned: number | null
+          quiz_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_feedback: string | null
+          score_pct: number | null
+          started_at: string | null
+          status: string | null
+          submitted_at: string | null
+          time_spent_seconds: number | null
+          total_points_possible: number | null
+          user_id: string
+        }
+        Insert: {
+          attempt_number?: number
+          enrollment_id: string
+          id?: string
+          points_earned?: number | null
+          quiz_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_feedback?: string | null
+          score_pct?: number | null
+          started_at?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          time_spent_seconds?: number | null
+          total_points_possible?: number | null
+          user_id: string
+        }
+        Update: {
+          attempt_number?: number
+          enrollment_id?: string
+          id?: string
+          points_earned?: number | null
+          quiz_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_feedback?: string | null
+          score_pct?: number | null
+          started_at?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          time_spent_seconds?: number | null
+          total_points_possible?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_quiz_attempts_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "academy_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_quizzes: {
+        Row: {
+          blocks_next_lesson: boolean | null
+          cooldown_minutes: number | null
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_required_for_cert: boolean | null
+          lesson_id: string | null
+          max_attempts: number | null
+          module_id: string | null
+          passing_score_pct: number
+          randomize_options: boolean | null
+          randomize_questions: boolean | null
+          scope: string
+          show_correct_answers: string | null
+          time_limit_minutes: number | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          blocks_next_lesson?: boolean | null
+          cooldown_minutes?: number | null
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_required_for_cert?: boolean | null
+          lesson_id?: string | null
+          max_attempts?: number | null
+          module_id?: string | null
+          passing_score_pct?: number
+          randomize_options?: boolean | null
+          randomize_questions?: boolean | null
+          scope: string
+          show_correct_answers?: string | null
+          time_limit_minutes?: number | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          blocks_next_lesson?: boolean | null
+          cooldown_minutes?: number | null
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_required_for_cert?: boolean | null
+          lesson_id?: string | null
+          max_attempts?: number | null
+          module_id?: string | null
+          passing_score_pct?: number
+          randomize_options?: boolean | null
+          randomize_questions?: boolean | null
+          scope?: string
+          show_correct_answers?: string | null
+          time_limit_minutes?: number | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "academy_lessons_gated"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "academy_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_analytics: {
+        Row: {
+          about_page_views: number | null
+          active_members: number | null
+          churned_members: number | null
+          churned_mrr_usd: number | null
+          comments_created: number | null
+          created_at: string | null
+          date: string
+          id: string
+          lessons_completed: number | null
+          new_members: number | null
+          new_mrr_usd: number | null
+          posts_created: number | null
+          reactions_given: number | null
+          signups: number | null
+          space_id: string
+          traffic_sources: Json | null
+          unique_visitors: number | null
+        }
+        Insert: {
+          about_page_views?: number | null
+          active_members?: number | null
+          churned_members?: number | null
+          churned_mrr_usd?: number | null
+          comments_created?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          lessons_completed?: number | null
+          new_members?: number | null
+          new_mrr_usd?: number | null
+          posts_created?: number | null
+          reactions_given?: number | null
+          signups?: number | null
+          space_id: string
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+        }
+        Update: {
+          about_page_views?: number | null
+          active_members?: number | null
+          churned_members?: number | null
+          churned_mrr_usd?: number | null
+          comments_created?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          lessons_completed?: number | null
+          new_members?: number | null
+          new_mrr_usd?: number | null
+          posts_created?: number | null
+          reactions_given?: number | null
+          signups?: number | null
+          space_id?: string
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_analytics_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_discovery: {
+        Row: {
+          category: string | null
+          discovery_rank: number | null
+          discovery_views: number | null
+          id: string
+          is_discoverable: boolean | null
+          keywords: string[] | null
+          language: string | null
+          meta_description: string | null
+          meta_title: string | null
+          space_id: string
+          subcategory: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          discovery_rank?: number | null
+          discovery_views?: number | null
+          id?: string
+          is_discoverable?: boolean | null
+          keywords?: string[] | null
+          language?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          space_id: string
+          subcategory?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          discovery_rank?: number | null
+          discovery_views?: number | null
+          id?: string
+          is_discoverable?: boolean | null
+          keywords?: string[] | null
+          language?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
+          space_id?: string
+          subcategory?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_discovery_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: true
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_events: {
+        Row: {
+          auto_invite_all_members: boolean | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cover_image_url: string | null
+          created_at: string | null
+          description: string | null
+          ends_at: string
+          google_calendar_id: string | null
+          google_event_id: string | null
+          google_meet_link: string | null
+          id: string
+          is_published: boolean | null
+          is_recurring: boolean | null
+          max_attendees: number | null
+          meeting_url: string | null
+          organizer_id: string
+          recording_url: string | null
+          recurrence_rule: string | null
+          reminder_sent_1h: boolean | null
+          reminder_sent_24h: boolean | null
+          rsvp_count: number | null
+          space_id: string
+          starts_at: string
+          tags: string[] | null
+          timezone: string | null
+          title: string
+          type: string | null
+        }
+        Insert: {
+          auto_invite_all_members?: boolean | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          ends_at: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_meet_link?: string | null
+          id?: string
+          is_published?: boolean | null
+          is_recurring?: boolean | null
+          max_attendees?: number | null
+          meeting_url?: string | null
+          organizer_id: string
+          recording_url?: string | null
+          recurrence_rule?: string | null
+          reminder_sent_1h?: boolean | null
+          reminder_sent_24h?: boolean | null
+          rsvp_count?: number | null
+          space_id: string
+          starts_at: string
+          tags?: string[] | null
+          timezone?: string | null
+          title: string
+          type?: string | null
+        }
+        Update: {
+          auto_invite_all_members?: boolean | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cover_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          ends_at?: string
+          google_calendar_id?: string | null
+          google_event_id?: string | null
+          google_meet_link?: string | null
+          id?: string
+          is_published?: boolean | null
+          is_recurring?: boolean | null
+          max_attendees?: number | null
+          meeting_url?: string | null
+          organizer_id?: string
+          recording_url?: string | null
+          recurrence_rule?: string | null
+          reminder_sent_1h?: boolean | null
+          reminder_sent_24h?: boolean | null
+          rsvp_count?: number | null
+          space_id?: string
+          starts_at?: string
+          tags?: string[] | null
+          timezone?: string | null
+          title?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_events_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_events_organizer_profile"
+            columns: ["organizer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_leads: {
+        Row: {
+          converted_at: string | null
+          converted_user_id: string | null
+          country: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          marketing_consent: boolean
+          source: string | null
+          space_id: string
+          utm_data: Json | null
+        }
+        Insert: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          country?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          marketing_consent?: boolean
+          source?: string | null
+          space_id: string
+          utm_data?: Json | null
+        }
+        Update: {
+          converted_at?: string | null
+          converted_user_id?: string | null
+          country?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          marketing_consent?: boolean
+          source?: string | null
+          space_id?: string
+          utm_data?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_leads_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_plugins: {
+        Row: {
+          auto_dm_enabled: boolean | null
+          auto_dm_message: string | null
+          cancellation_video_enabled: boolean | null
+          cancellation_video_url: string | null
+          created_at: string | null
+          google_ads_conversion_label: string | null
+          google_ads_enabled: boolean | null
+          google_ads_tag: string | null
+          hyros_api_key: string | null
+          hyros_enabled: boolean | null
+          id: string
+          instant_approval_enabled: boolean | null
+          kreoon_webhook_enabled: boolean | null
+          kreoon_webhook_secret: string | null
+          kreoon_webhook_url: string | null
+          membership_questions: Json | null
+          membership_questions_enabled: boolean | null
+          meta_pixel_enabled: boolean | null
+          meta_pixel_id: string | null
+          onboarding_video_enabled: boolean | null
+          onboarding_video_url: string | null
+          sidebar_links: Json | null
+          space_id: string
+          unlock_chat_level: number | null
+          unlock_posting_level: number | null
+          updated_at: string | null
+          zapier_enabled: boolean | null
+          zapier_webhook_url: string | null
+        }
+        Insert: {
+          auto_dm_enabled?: boolean | null
+          auto_dm_message?: string | null
+          cancellation_video_enabled?: boolean | null
+          cancellation_video_url?: string | null
+          created_at?: string | null
+          google_ads_conversion_label?: string | null
+          google_ads_enabled?: boolean | null
+          google_ads_tag?: string | null
+          hyros_api_key?: string | null
+          hyros_enabled?: boolean | null
+          id?: string
+          instant_approval_enabled?: boolean | null
+          kreoon_webhook_enabled?: boolean | null
+          kreoon_webhook_secret?: string | null
+          kreoon_webhook_url?: string | null
+          membership_questions?: Json | null
+          membership_questions_enabled?: boolean | null
+          meta_pixel_enabled?: boolean | null
+          meta_pixel_id?: string | null
+          onboarding_video_enabled?: boolean | null
+          onboarding_video_url?: string | null
+          sidebar_links?: Json | null
+          space_id: string
+          unlock_chat_level?: number | null
+          unlock_posting_level?: number | null
+          updated_at?: string | null
+          zapier_enabled?: boolean | null
+          zapier_webhook_url?: string | null
+        }
+        Update: {
+          auto_dm_enabled?: boolean | null
+          auto_dm_message?: string | null
+          cancellation_video_enabled?: boolean | null
+          cancellation_video_url?: string | null
+          created_at?: string | null
+          google_ads_conversion_label?: string | null
+          google_ads_enabled?: boolean | null
+          google_ads_tag?: string | null
+          hyros_api_key?: string | null
+          hyros_enabled?: boolean | null
+          id?: string
+          instant_approval_enabled?: boolean | null
+          kreoon_webhook_enabled?: boolean | null
+          kreoon_webhook_secret?: string | null
+          kreoon_webhook_url?: string | null
+          membership_questions?: Json | null
+          membership_questions_enabled?: boolean | null
+          meta_pixel_enabled?: boolean | null
+          meta_pixel_id?: string | null
+          onboarding_video_enabled?: boolean | null
+          onboarding_video_url?: string | null
+          sidebar_links?: Json | null
+          space_id?: string
+          unlock_chat_level?: number | null
+          unlock_posting_level?: number | null
+          updated_at?: string | null
+          zapier_enabled?: boolean | null
+          zapier_webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_plugins_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: true
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_point_events: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          space_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          space_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          space_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_point_events_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_points: {
+        Row: {
+          current_month_points: number | null
+          current_week_points: number | null
+          energy: number | null
+          id: string
+          last_active_date: string | null
+          level: number | null
+          points_from_comments: number | null
+          points_from_courses: number | null
+          points_from_lessons: number | null
+          points_from_posts: number | null
+          points_from_reactions_received: number | null
+          space_id: string
+          streak_days: number | null
+          title: string | null
+          total_points: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          current_month_points?: number | null
+          current_week_points?: number | null
+          energy?: number | null
+          id?: string
+          last_active_date?: string | null
+          level?: number | null
+          points_from_comments?: number | null
+          points_from_courses?: number | null
+          points_from_lessons?: number | null
+          points_from_posts?: number | null
+          points_from_reactions_received?: number | null
+          space_id: string
+          streak_days?: number | null
+          title?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          current_month_points?: number | null
+          current_week_points?: number | null
+          energy?: number | null
+          id?: string
+          last_active_date?: string | null
+          level?: number | null
+          points_from_comments?: number | null
+          points_from_courses?: number | null
+          points_from_lessons?: number | null
+          points_from_posts?: number | null
+          points_from_reactions_received?: number | null
+          space_id?: string
+          streak_days?: number | null
+          title?: string | null
+          total_points?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_points_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_space_points_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_profiles: {
+        Row: {
+          bio: string | null
+          id: string
+          instagram_url: string | null
+          intro_completed: boolean | null
+          intro_post_id: string | null
+          joined_at: string | null
+          linkedin_url: string | null
+          space_id: string
+          tiktok_url: string | null
+          title: string | null
+          user_id: string
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string | null
+          id?: string
+          instagram_url?: string | null
+          intro_completed?: boolean | null
+          intro_post_id?: string | null
+          joined_at?: string | null
+          linkedin_url?: string | null
+          space_id: string
+          tiktok_url?: string | null
+          title?: string | null
+          user_id: string
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string | null
+          id?: string
+          instagram_url?: string | null
+          intro_completed?: boolean | null
+          intro_post_id?: string | null
+          joined_at?: string | null
+          linkedin_url?: string | null
+          space_id?: string
+          tiktok_url?: string | null
+          title?: string | null
+          user_id?: string
+          website_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_profiles_intro_post_id_fkey"
+            columns: ["intro_post_id"]
+            isOneToOne: false
+            referencedRelation: "academy_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_space_profiles_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_academy_space_profiles_user_profile"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_space_whatsapp_groups: {
+        Row: {
+          auto_invite_on_join: boolean
+          connected_by: string | null
+          created_at: string
+          group_id: string | null
+          group_invite_url: string
+          group_name: string | null
+          space_id: string
+          tier_required: string | null
+          updated_at: string
+        }
+        Insert: {
+          auto_invite_on_join?: boolean
+          connected_by?: string | null
+          created_at?: string
+          group_id?: string | null
+          group_invite_url: string
+          group_name?: string | null
+          space_id: string
+          tier_required?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auto_invite_on_join?: boolean
+          connected_by?: string | null
+          created_at?: string
+          group_id?: string | null
+          group_invite_url?: string
+          group_name?: string | null
+          space_id?: string
+          tier_required?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_space_whatsapp_groups_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: true
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_spaces: {
+        Row: {
+          accent_color: string | null
+          affiliates_default_commission_pct: number
+          affiliates_enabled: boolean
+          attribution_model: string
+          avg_rating: number | null
+          category: string | null
+          cover_image_url: string | null
+          cover_position: number
+          created_at: string | null
+          custom_domain: string | null
+          default_currency: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          landing_faqs: Json | null
+          landing_headline: string | null
+          landing_instructors: Json | null
+          landing_og_image_url: string | null
+          landing_seo_description: string | null
+          landing_seo_title: string | null
+          landing_subheadline: string | null
+          landing_testimonials: Json | null
+          landing_video_url: string | null
+          language_code: string
+          logo_url: string | null
+          member_count: number | null
+          membership_price_usd: number | null
+          metadata: Json | null
+          name: string
+          owner_id: string
+          plan_slug: string
+          preferred_gateways: string[]
+          rating_count: number
+          slug: string
+          status: string
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          stripe_yearly_price_id: string | null
+          updated_at: string | null
+          yearly_price_usd: number | null
+        }
+        Insert: {
+          accent_color?: string | null
+          affiliates_default_commission_pct?: number
+          affiliates_enabled?: boolean
+          attribution_model?: string
+          avg_rating?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          cover_position?: number
+          created_at?: string | null
+          custom_domain?: string | null
+          default_currency?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          landing_faqs?: Json | null
+          landing_headline?: string | null
+          landing_instructors?: Json | null
+          landing_og_image_url?: string | null
+          landing_seo_description?: string | null
+          landing_seo_title?: string | null
+          landing_subheadline?: string | null
+          landing_testimonials?: Json | null
+          landing_video_url?: string | null
+          language_code?: string
+          logo_url?: string | null
+          member_count?: number | null
+          membership_price_usd?: number | null
+          metadata?: Json | null
+          name: string
+          owner_id: string
+          plan_slug?: string
+          preferred_gateways?: string[]
+          rating_count?: number
+          slug: string
+          status?: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          stripe_yearly_price_id?: string | null
+          updated_at?: string | null
+          yearly_price_usd?: number | null
+        }
+        Update: {
+          accent_color?: string | null
+          affiliates_default_commission_pct?: number
+          affiliates_enabled?: boolean
+          attribution_model?: string
+          avg_rating?: number | null
+          category?: string | null
+          cover_image_url?: string | null
+          cover_position?: number
+          created_at?: string | null
+          custom_domain?: string | null
+          default_currency?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          landing_faqs?: Json | null
+          landing_headline?: string | null
+          landing_instructors?: Json | null
+          landing_og_image_url?: string | null
+          landing_seo_description?: string | null
+          landing_seo_title?: string | null
+          landing_subheadline?: string | null
+          landing_testimonials?: Json | null
+          landing_video_url?: string | null
+          language_code?: string
+          logo_url?: string | null
+          member_count?: number | null
+          membership_price_usd?: number | null
+          metadata?: Json | null
+          name?: string
+          owner_id?: string
+          plan_slug?: string
+          preferred_gateways?: string[]
+          rating_count?: number
+          slug?: string
+          status?: string
+          stripe_price_id?: string | null
+          stripe_product_id?: string | null
+          stripe_yearly_price_id?: string | null
+          updated_at?: string | null
+          yearly_price_usd?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_spaces_plan_slug_fkey"
+            columns: ["plan_slug"]
+            isOneToOne: false
+            referencedRelation: "academy_plans"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
+      academy_unlock_rules: {
+        Row: {
+          created_at: string
+          id: string
+          int_value: number | null
+          ref_id: string | null
+          rule_type: string
+          space_id: string
+          target_id: string
+          target_type: string
+          text_value: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          int_value?: number | null
+          ref_id?: string | null
+          rule_type: string
+          space_id: string
+          target_id: string
+          target_type: string
+          text_value?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          int_value?: number | null
+          ref_id?: string | null
+          rule_type?: string
+          space_id?: string
+          target_id?: string
+          target_type?: string
+          text_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_unlock_rules_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_upsells: {
+        Row: {
+          active: boolean
+          created_at: string
+          discount_percent: number
+          display_seconds: number
+          from_product_id: string
+          headline: string
+          id: string
+          to_product_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number
+          display_seconds?: number
+          from_product_id: string
+          headline: string
+          id?: string
+          to_product_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          discount_percent?: number
+          display_seconds?: number
+          from_product_id?: string
+          headline?: string
+          id?: string
+          to_product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_upsells_from_product_id_fkey"
+            columns: ["from_product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_upsells_to_product_id_fkey"
+            columns: ["to_product_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_wa_broadcasts: {
+        Row: {
+          audience_filter: Json
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          estimated_count: number | null
+          failed_count: number
+          id: string
+          message_text: string
+          opened_count: number
+          sender_user_id: string
+          sent_count: number
+          space_id: string
+          started_at: string | null
+          status: string
+          variables: Json
+        }
+        Insert: {
+          audience_filter?: Json
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          estimated_count?: number | null
+          failed_count?: number
+          id?: string
+          message_text: string
+          opened_count?: number
+          sender_user_id: string
+          sent_count?: number
+          space_id: string
+          started_at?: string | null
+          status?: string
+          variables?: Json
+        }
+        Update: {
+          audience_filter?: Json
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          estimated_count?: number | null
+          failed_count?: number
+          id?: string
+          message_text?: string
+          opened_count?: number
+          sender_user_id?: string
+          sent_count?: number
+          space_id?: string
+          started_at?: string | null
+          status?: string
+          variables?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_wa_broadcasts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_wa_messages_log: {
+        Row: {
+          group_id: string | null
+          id: string
+          media_url: string | null
+          message_text: string | null
+          message_type: string
+          raw_payload: Json | null
+          received_at: string
+          sender_phone: string
+          sender_user_id: string | null
+          space_id: string
+        }
+        Insert: {
+          group_id?: string | null
+          id?: string
+          media_url?: string | null
+          message_text?: string | null
+          message_type?: string
+          raw_payload?: Json | null
+          received_at?: string
+          sender_phone: string
+          sender_user_id?: string | null
+          space_id: string
+        }
+        Update: {
+          group_id?: string | null
+          id?: string
+          media_url?: string | null
+          message_text?: string | null
+          message_type?: string
+          raw_payload?: Json | null
+          received_at?: string
+          sender_phone?: string
+          sender_user_id?: string | null
+          space_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_wa_messages_log_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_wa_summaries: {
+        Row: {
+          active_members: number
+          created_at: string
+          id: string
+          sent_to_owner_at: string | null
+          space_id: string
+          summary_date: string
+          summary_md: string
+          top_contributors: Json
+          total_messages: number
+          unanswered_questions: Json
+        }
+        Insert: {
+          active_members?: number
+          created_at?: string
+          id?: string
+          sent_to_owner_at?: string | null
+          space_id: string
+          summary_date: string
+          summary_md: string
+          top_contributors?: Json
+          total_messages?: number
+          unanswered_questions?: Json
+        }
+        Update: {
+          active_members?: number
+          created_at?: string
+          id?: string
+          sent_to_owner_at?: string | null
+          space_id?: string
+          summary_date?: string
+          summary_md?: string
+          top_contributors?: Json
+          total_messages?: number
+          unanswered_questions?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_wa_summaries_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      academy_weekly_missions: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          emoji: string
+          energy_reward: number
+          goal: number
+          id: string
+          mission_type: string
+          progress: number | null
+          space_id: string
+          title: string
+          user_id: string
+          week_start: string
+          xp_reward: number
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          emoji: string
+          energy_reward: number
+          goal: number
+          id?: string
+          mission_type: string
+          progress?: number | null
+          space_id: string
+          title: string
+          user_id: string
+          week_start: string
+          xp_reward: number
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          emoji?: string
+          energy_reward?: number
+          goal?: number
+          id?: string
+          mission_type?: string
+          progress?: number | null
+          space_id?: string
+          title?: string
+          user_id?: string
+          week_start?: string
+          xp_reward?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_weekly_missions_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       account_payment_blocks: {
         Row: {
           block_type: string
@@ -1942,6 +6342,7 @@ export type Database = {
           balance_after: number
           balance_id: string
           created_at: string | null
+          description: string | null
           executed_by: string | null
           id: string
           purchase_amount: number | null
@@ -1955,6 +6356,7 @@ export type Database = {
           balance_after: number
           balance_id: string
           created_at?: string | null
+          description?: string | null
           executed_by?: string | null
           id?: string
           purchase_amount?: number | null
@@ -1968,6 +6370,7 @@ export type Database = {
           balance_after?: number
           balance_id?: string
           created_at?: string | null
+          description?: string | null
           executed_by?: string | null
           id?: string
           purchase_amount?: number | null
@@ -2470,6 +6873,69 @@ export type Database = {
           ip_address?: string | null
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      blocked_devices: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          device_id: string
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          device_id: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          device_id?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+        }
+        Relationships: []
+      }
+      blocked_emails: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          pattern: string
+          pattern_type: string
+          reason: string | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          pattern: string
+          pattern_type?: string
+          reason?: string | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          pattern?: string
+          pattern_type?: string
+          reason?: string | null
         }
         Relationships: []
       }
@@ -3392,6 +7858,48 @@ export type Database = {
           },
         ]
       }
+      brand_organization_links: {
+        Row: {
+          brand_id: string
+          id: string
+          linked_at: string | null
+          linked_by: string | null
+          organization_id: string
+          status: string | null
+        }
+        Insert: {
+          brand_id: string
+          id?: string
+          linked_at?: string | null
+          linked_by?: string | null
+          organization_id: string
+          status?: string | null
+        }
+        Update: {
+          brand_id?: string
+          id?: string
+          linked_at?: string | null
+          linked_by?: string | null
+          organization_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_organization_links_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_organization_links_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_profiles: {
         Row: {
           colors: Json | null
@@ -3708,6 +8216,7 @@ export type Database = {
           estimated_delivery_days: number | null
           id: string
           includes_editing: boolean | null
+          organization_id: string | null
           payment_status: string | null
           portfolio_links: string[] | null
           proposed_price: number | null
@@ -3736,6 +8245,7 @@ export type Database = {
           estimated_delivery_days?: number | null
           id?: string
           includes_editing?: boolean | null
+          organization_id?: string | null
           payment_status?: string | null
           portfolio_links?: string[] | null
           proposed_price?: number | null
@@ -3764,6 +8274,7 @@ export type Database = {
           estimated_delivery_days?: number | null
           id?: string
           includes_editing?: boolean | null
+          organization_id?: string | null
           payment_status?: string | null
           portfolio_links?: string[] | null
           proposed_price?: number | null
@@ -3791,6 +8302,13 @@ export type Database = {
             columns: ["escrow_hold_id"]
             isOneToOne: false
             referencedRelation: "escrow_holds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_applications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -3875,6 +8393,7 @@ export type Database = {
           file_url: string
           id: string
           max_revisions: number | null
+          organization_id: string | null
           reviewed_at: string | null
           revision_number: number | null
           status: string
@@ -3896,6 +8415,7 @@ export type Database = {
           file_url: string
           id?: string
           max_revisions?: number | null
+          organization_id?: string | null
           reviewed_at?: string | null
           revision_number?: number | null
           status?: string
@@ -3917,6 +8437,7 @@ export type Database = {
           file_url?: string
           id?: string
           max_revisions?: number | null
+          organization_id?: string | null
           reviewed_at?: string | null
           revision_number?: number | null
           status?: string
@@ -3947,6 +8468,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_deliverables_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaign_invitations: {
@@ -3957,6 +8485,7 @@ export type Database = {
           invited_by: string
           invited_profile_id: string
           message: string | null
+          organization_id: string | null
           responded_at: string | null
           sent_at: string | null
           status: string
@@ -3968,6 +8497,7 @@ export type Database = {
           invited_by: string
           invited_profile_id: string
           message?: string | null
+          organization_id?: string | null
           responded_at?: string | null
           sent_at?: string | null
           status?: string
@@ -3979,6 +8509,7 @@ export type Database = {
           invited_by?: string
           invited_profile_id?: string
           message?: string | null
+          organization_id?: string | null
           responded_at?: string | null
           sent_at?: string | null
           status?: string
@@ -3998,6 +8529,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaign_mappings: {
@@ -4012,6 +8550,7 @@ export type Database = {
           last_synced_at: string | null
           metadata: Json | null
           objective: string | null
+          organization_id: string | null
           platform: string
           platform_ad_id: string | null
           platform_adset_id: string | null
@@ -4031,6 +8570,7 @@ export type Database = {
           last_synced_at?: string | null
           metadata?: Json | null
           objective?: string | null
+          organization_id?: string | null
           platform: string
           platform_ad_id?: string | null
           platform_adset_id?: string | null
@@ -4050,6 +8590,7 @@ export type Database = {
           last_synced_at?: string | null
           metadata?: Json | null
           objective?: string | null
+          organization_id?: string | null
           platform?: string
           platform_ad_id?: string | null
           platform_adset_id?: string | null
@@ -4064,6 +8605,13 @@ export type Database = {
             columns: ["connected_account_id"]
             isOneToOne: false
             referencedRelation: "connected_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_mappings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -4137,6 +8685,7 @@ export type Database = {
           date: string
           id: string
           impressions: number | null
+          organization_id: string | null
           platform_data: Json | null
           revenue: number | null
           roas: number | null
@@ -4153,6 +8702,7 @@ export type Database = {
           date: string
           id?: string
           impressions?: number | null
+          organization_id?: string | null
           platform_data?: Json | null
           revenue?: number | null
           roas?: number | null
@@ -4169,6 +8719,7 @@ export type Database = {
           date?: string
           id?: string
           impressions?: number | null
+          organization_id?: string | null
           platform_data?: Json | null
           revenue?: number | null
           roas?: number | null
@@ -4180,6 +8731,13 @@ export type Database = {
             columns: ["campaign_mapping_id"]
             isOneToOne: false
             referencedRelation: "campaign_mappings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_metrics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -4194,6 +8752,7 @@ export type Database = {
           message: string | null
           metadata: Json | null
           notification_type: string
+          organization_id: string | null
           sent_at: string | null
           title: string
           user_id: string | null
@@ -4207,6 +8766,7 @@ export type Database = {
           message?: string | null
           metadata?: Json | null
           notification_type: string
+          organization_id?: string | null
           sent_at?: string | null
           title: string
           user_id?: string | null
@@ -4220,6 +8780,7 @@ export type Database = {
           message?: string | null
           metadata?: Json | null
           notification_type?: string
+          organization_id?: string | null
           sent_at?: string | null
           title?: string
           user_id?: string | null
@@ -4232,6 +8793,13 @@ export type Database = {
             referencedRelation: "marketplace_campaigns"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "campaign_notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       campaign_redemptions: {
@@ -4241,6 +8809,7 @@ export type Database = {
           created_at: string
           free_months_granted: number
           id: string
+          organization_id: string | null
           referral_code_used: string | null
           user_id: string
         }
@@ -4250,6 +8819,7 @@ export type Database = {
           created_at?: string
           free_months_granted?: number
           id?: string
+          organization_id?: string | null
           referral_code_used?: string | null
           user_id: string
         }
@@ -4259,6 +8829,7 @@ export type Database = {
           created_at?: string
           free_months_granted?: number
           id?: string
+          organization_id?: string | null
           referral_code_used?: string | null
           user_id?: string
         }
@@ -4268,6 +8839,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "promotional_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_redemptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -4628,6 +9206,79 @@ export type Database = {
         }
         Relationships: []
       }
+      client_closings: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          payment_date: string | null
+          payment_method: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          payment_date?: string | null
+          payment_method?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_closings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_closings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_closings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_dna: {
         Row: {
           audience_locations: Json | null
@@ -4758,17 +9409,85 @@ export type Database = {
         }
         Relationships: []
       }
+      client_package_payments: {
+        Row: {
+          amount: number
+          client_package_id: string
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_date: string
+          payment_method: string
+          receipt_url: string | null
+          recorded_by: string | null
+          reference_number: string | null
+        }
+        Insert: {
+          amount: number
+          client_package_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_date?: string
+          payment_method?: string
+          receipt_url?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Update: {
+          amount?: number
+          client_package_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_date?: string
+          payment_method?: string
+          receipt_url?: string | null
+          recorded_by?: string | null
+          reference_number?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_package_payments_client_package_id_fkey"
+            columns: ["client_package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_package_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_packages: {
         Row: {
+          agency_commission_pct: number
+          barter_market_value: number | null
+          campaign_number: number
           client_id: string
           content_quantity: number
           created_at: string
           creators_count: number | null
           currency: Database["public"]["Enums"]["currency_type"]
           description: string | null
+          dian_cufe: string | null
           hooks_per_video: number | null
           id: string
+          invoice_type: string
           is_active: boolean
+          is_barter: boolean
+          iva_amount: number | null
+          iva_rate: number
           name: string
           notes: string | null
           paid_amount: number
@@ -4777,19 +9496,30 @@ export type Database = {
           payment_status: string
           product_ids: string[] | null
           products_count: number | null
+          retention_amount: number | null
+          retention_rate: number
+          subtotal: number | null
           total_value: number
           updated_at: string
         }
         Insert: {
+          agency_commission_pct?: number
+          barter_market_value?: number | null
+          campaign_number?: number
           client_id: string
           content_quantity?: number
           created_at?: string
           creators_count?: number | null
           currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
+          dian_cufe?: string | null
           hooks_per_video?: number | null
           id?: string
+          invoice_type?: string
           is_active?: boolean
+          is_barter?: boolean
+          iva_amount?: number | null
+          iva_rate?: number
           name: string
           notes?: string | null
           paid_amount?: number
@@ -4798,19 +9528,30 @@ export type Database = {
           payment_status?: string
           product_ids?: string[] | null
           products_count?: number | null
+          retention_amount?: number | null
+          retention_rate?: number
+          subtotal?: number | null
           total_value?: number
           updated_at?: string
         }
         Update: {
+          agency_commission_pct?: number
+          barter_market_value?: number | null
+          campaign_number?: number
           client_id?: string
           content_quantity?: number
           created_at?: string
           creators_count?: number | null
           currency?: Database["public"]["Enums"]["currency_type"]
           description?: string | null
+          dian_cufe?: string | null
           hooks_per_video?: number | null
           id?: string
+          invoice_type?: string
           is_active?: boolean
+          is_barter?: boolean
+          iva_amount?: number | null
+          iva_rate?: number
           name?: string
           notes?: string | null
           paid_amount?: number
@@ -4819,10 +9560,28 @@ export type Database = {
           payment_status?: string
           product_ids?: string[] | null
           products_count?: number | null
+          retention_amount?: number | null
+          retention_rate?: number
+          subtotal?: number | null
           total_value?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_client_packages_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "fk_client_packages_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_strategists: {
         Row: {
@@ -4858,7 +9617,36 @@ export type Database = {
           strategist_id?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "client_strategists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_strategists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_strategist_id_fkey"
+            columns: ["strategist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_trust_scores: {
         Row: {
@@ -4927,6 +9715,7 @@ export type Database = {
           id: string
           role: string | null
           user_id: string
+          whatsapp_notify: boolean
         }
         Insert: {
           client_id: string
@@ -4935,6 +9724,7 @@ export type Database = {
           id?: string
           role?: string | null
           user_id: string
+          whatsapp_notify?: boolean
         }
         Update: {
           client_id?: string
@@ -4943,6 +9733,7 @@ export type Database = {
           id?: string
           role?: string | null
           user_id?: string
+          whatsapp_notify?: boolean
         }
         Relationships: []
       }
@@ -4953,6 +9744,9 @@ export type Database = {
           brand_id: string | null
           category: string | null
           city: string | null
+          community_badge_color: string | null
+          community_badge_text: string | null
+          community_name: string | null
           contact_email: string | null
           contact_phone: string | null
           country: string | null
@@ -4968,14 +9762,17 @@ export type Database = {
           is_internal_brand: boolean | null
           is_public: boolean | null
           is_vip: boolean | null
+          lead_source: string | null
           linkedin: string | null
           logo_url: string | null
           main_contact: string | null
           name: string
           notes: string | null
           organization_id: string | null
+          partner_community_id: string | null
           portfolio_url: string | null
           profile_completed: boolean | null
+          referred_by: string | null
           strategy_service_enabled: boolean | null
           strategy_service_started_at: string | null
           tiktok: string | null
@@ -4985,6 +9782,8 @@ export type Database = {
           user_id: string | null
           username: string | null
           website: string | null
+          whatsapp_enabled: boolean
+          whatsapp_phone: string | null
         }
         Insert: {
           address?: string | null
@@ -4992,6 +9791,9 @@ export type Database = {
           brand_id?: string | null
           category?: string | null
           city?: string | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
+          community_name?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -5007,14 +9809,17 @@ export type Database = {
           is_internal_brand?: boolean | null
           is_public?: boolean | null
           is_vip?: boolean | null
+          lead_source?: string | null
           linkedin?: string | null
           logo_url?: string | null
           main_contact?: string | null
           name: string
           notes?: string | null
           organization_id?: string | null
+          partner_community_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          referred_by?: string | null
           strategy_service_enabled?: boolean | null
           strategy_service_started_at?: string | null
           tiktok?: string | null
@@ -5024,6 +9829,8 @@ export type Database = {
           user_id?: string | null
           username?: string | null
           website?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Update: {
           address?: string | null
@@ -5031,6 +9838,9 @@ export type Database = {
           brand_id?: string | null
           category?: string | null
           city?: string | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
+          community_name?: string | null
           contact_email?: string | null
           contact_phone?: string | null
           country?: string | null
@@ -5046,14 +9856,17 @@ export type Database = {
           is_internal_brand?: boolean | null
           is_public?: boolean | null
           is_vip?: boolean | null
+          lead_source?: string | null
           linkedin?: string | null
           logo_url?: string | null
           main_contact?: string | null
           name?: string
           notes?: string | null
           organization_id?: string | null
+          partner_community_id?: string | null
           portfolio_url?: string | null
           profile_completed?: boolean | null
+          referred_by?: string | null
           strategy_service_enabled?: boolean | null
           strategy_service_started_at?: string | null
           tiktok?: string | null
@@ -5063,6 +9876,8 @@ export type Database = {
           user_id?: string | null
           username?: string | null
           website?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Relationships: [
           {
@@ -5077,6 +9892,13 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clients_partner_community_id_fkey"
+            columns: ["partner_community_id"]
+            isOneToOne: false
+            referencedRelation: "partner_communities"
             referencedColumns: ["id"]
           },
         ]
@@ -5300,16 +10122,24 @@ export type Database = {
           approved_at_v2: string | null
           approved_by: string | null
           assigned_at: string | null
+          billing_currency: string | null
+          billing_price: number | null
+          billing_status: string | null
+          broll_output: string | null
           bunny_embed_url: string | null
           campaign_week: string | null
           caption: string | null
+          captions: string | null
           change_request_status: string | null
           change_requests: Json | null
+          client_closing_id: string | null
           client_id: string | null
+          client_package_id: string | null
           content_objective: string | null
           content_type: string | null
           corrected_at: string | null
           created_at: string | null
+          creation_mode: string | null
           creator_assigned_at: string | null
           creator_id: string | null
           creator_paid: boolean | null
@@ -5318,6 +10148,7 @@ export type Database = {
           creator_rated_at: string | null
           creator_rated_by: string | null
           creator_rating: number | null
+          creator_type: string | null
           cta: string | null
           custom_status_id: string | null
           deadline: string | null
@@ -5327,6 +10158,7 @@ export type Database = {
           delivered_at: string | null
           description: string | null
           designer_guidelines: string | null
+          director_output: string | null
           draft_at: string | null
           drive_url: string | null
           editing_at: string | null
@@ -5355,6 +10187,7 @@ export type Database = {
           marketing_approved_at: string | null
           marketing_approved_by: string | null
           marketing_campaign_id: string | null
+          marketing_output: string | null
           marketing_rejected_at: string | null
           marketing_rejected_by: string | null
           marketing_rejection_reason: string | null
@@ -5404,6 +10237,7 @@ export type Database = {
           trafficker_guidelines: string | null
           updated_at: string | null
           video_duration: string | null
+          video_pov: string | null
           video_processing_started_at: string | null
           video_processing_status: string | null
           video_url: string | null
@@ -5422,16 +10256,24 @@ export type Database = {
           approved_at_v2?: string | null
           approved_by?: string | null
           assigned_at?: string | null
+          billing_currency?: string | null
+          billing_price?: number | null
+          billing_status?: string | null
+          broll_output?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
+          captions?: string | null
           change_request_status?: string | null
           change_requests?: Json | null
+          client_closing_id?: string | null
           client_id?: string | null
+          client_package_id?: string | null
           content_objective?: string | null
           content_type?: string | null
           corrected_at?: string | null
           created_at?: string | null
+          creation_mode?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
           creator_paid?: boolean | null
@@ -5440,6 +10282,7 @@ export type Database = {
           creator_rated_at?: string | null
           creator_rated_by?: string | null
           creator_rating?: number | null
+          creator_type?: string | null
           cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
@@ -5449,6 +10292,7 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           designer_guidelines?: string | null
+          director_output?: string | null
           draft_at?: string | null
           drive_url?: string | null
           editing_at?: string | null
@@ -5477,6 +10321,7 @@ export type Database = {
           marketing_approved_at?: string | null
           marketing_approved_by?: string | null
           marketing_campaign_id?: string | null
+          marketing_output?: string | null
           marketing_rejected_at?: string | null
           marketing_rejected_by?: string | null
           marketing_rejection_reason?: string | null
@@ -5526,6 +10371,7 @@ export type Database = {
           trafficker_guidelines?: string | null
           updated_at?: string | null
           video_duration?: string | null
+          video_pov?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
@@ -5544,16 +10390,24 @@ export type Database = {
           approved_at_v2?: string | null
           approved_by?: string | null
           assigned_at?: string | null
+          billing_currency?: string | null
+          billing_price?: number | null
+          billing_status?: string | null
+          broll_output?: string | null
           bunny_embed_url?: string | null
           campaign_week?: string | null
           caption?: string | null
+          captions?: string | null
           change_request_status?: string | null
           change_requests?: Json | null
+          client_closing_id?: string | null
           client_id?: string | null
+          client_package_id?: string | null
           content_objective?: string | null
           content_type?: string | null
           corrected_at?: string | null
           created_at?: string | null
+          creation_mode?: string | null
           creator_assigned_at?: string | null
           creator_id?: string | null
           creator_paid?: boolean | null
@@ -5562,6 +10416,7 @@ export type Database = {
           creator_rated_at?: string | null
           creator_rated_by?: string | null
           creator_rating?: number | null
+          creator_type?: string | null
           cta?: string | null
           custom_status_id?: string | null
           deadline?: string | null
@@ -5571,6 +10426,7 @@ export type Database = {
           delivered_at?: string | null
           description?: string | null
           designer_guidelines?: string | null
+          director_output?: string | null
           draft_at?: string | null
           drive_url?: string | null
           editing_at?: string | null
@@ -5599,6 +10455,7 @@ export type Database = {
           marketing_approved_at?: string | null
           marketing_approved_by?: string | null
           marketing_campaign_id?: string | null
+          marketing_output?: string | null
           marketing_rejected_at?: string | null
           marketing_rejected_by?: string | null
           marketing_rejection_reason?: string | null
@@ -5648,6 +10505,7 @@ export type Database = {
           trafficker_guidelines?: string | null
           updated_at?: string | null
           video_duration?: string | null
+          video_pov?: string | null
           video_processing_started_at?: string | null
           video_processing_status?: string | null
           video_url?: string | null
@@ -5655,6 +10513,13 @@ export type Database = {
           views_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "content_client_closing_id_fkey"
+            columns: ["client_closing_id"]
+            isOneToOne: false
+            referencedRelation: "client_closings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_client_id_fkey"
             columns: ["client_id"]
@@ -5667,6 +10532,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_client_package_id_fkey"
+            columns: ["client_package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
             referencedColumns: ["id"]
           },
           {
@@ -6509,6 +11381,7 @@ export type Database = {
           platform: string | null
           primary_text: string | null
           status: string | null
+          thumbnail_url: string | null
           variation_index: number | null
         }
         Insert: {
@@ -6526,6 +11399,7 @@ export type Database = {
           platform?: string | null
           primary_text?: string | null
           status?: string | null
+          thumbnail_url?: string | null
           variation_index?: number | null
         }
         Update: {
@@ -6543,6 +11417,7 @@ export type Database = {
           platform?: string | null
           primary_text?: string | null
           status?: string | null
+          thumbnail_url?: string | null
           variation_index?: number | null
         }
         Relationships: [
@@ -6858,6 +11733,72 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_package_assignments: {
+        Row: {
+          agreed_amount: number
+          client_package_id: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          notes: string | null
+          organization_id: string
+          paid_at: string | null
+          paid_via_talent_payment_id: string | null
+          payment_status: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agreed_amount?: number
+          client_package_id: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          paid_at?: string | null
+          paid_via_talent_payment_id?: string | null
+          payment_status?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agreed_amount?: number
+          client_package_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          paid_at?: string | null
+          paid_via_talent_payment_id?: string | null
+          payment_status?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_package_assignments_client_package_id_fkey"
+            columns: ["client_package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_package_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_payout_settings: {
         Row: {
           auto_payout: boolean
@@ -6930,6 +11871,8 @@ export type Database = {
           builder_has_draft: boolean | null
           builder_template: string | null
           categories: string[] | null
+          community_badge_color: string | null
+          community_badge_text: string | null
           completed_projects: number | null
           content_style: Json | null
           content_types: string[] | null
@@ -6957,9 +11900,11 @@ export type Database = {
           level: string | null
           location_city: string | null
           location_country: string | null
+          marketplace_paused_until: string | null
           marketplace_roles: string[] | null
           niches: string[] | null
           on_time_delivery_pct: number | null
+          partner_community_id: string | null
           payout_method: string | null
           platforms: string[] | null
           portfolio_count: number | null
@@ -6986,10 +11931,15 @@ export type Database = {
           subscription_tier: string | null
           talent_dna_id: string | null
           total_projects: number | null
+          trust_score: number | null
+          trust_score_breakdown: Json | null
+          trust_score_updated_at: string | null
           unique_factor: string | null
           updated_at: string | null
           user_id: string
           username: string | null
+          whatsapp_enabled: boolean
+          whatsapp_phone: string | null
         }
         Insert: {
           accent_color?: string | null
@@ -7005,6 +11955,8 @@ export type Database = {
           builder_has_draft?: boolean | null
           builder_template?: string | null
           categories?: string[] | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
           completed_projects?: number | null
           content_style?: Json | null
           content_types?: string[] | null
@@ -7032,9 +11984,11 @@ export type Database = {
           level?: string | null
           location_city?: string | null
           location_country?: string | null
+          marketplace_paused_until?: string | null
           marketplace_roles?: string[] | null
           niches?: string[] | null
           on_time_delivery_pct?: number | null
+          partner_community_id?: string | null
           payout_method?: string | null
           platforms?: string[] | null
           portfolio_count?: number | null
@@ -7061,10 +12015,15 @@ export type Database = {
           subscription_tier?: string | null
           talent_dna_id?: string | null
           total_projects?: number | null
+          trust_score?: number | null
+          trust_score_breakdown?: Json | null
+          trust_score_updated_at?: string | null
           unique_factor?: string | null
           updated_at?: string | null
           user_id: string
           username?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Update: {
           accent_color?: string | null
@@ -7080,6 +12039,8 @@ export type Database = {
           builder_has_draft?: boolean | null
           builder_template?: string | null
           categories?: string[] | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
           completed_projects?: number | null
           content_style?: Json | null
           content_types?: string[] | null
@@ -7107,9 +12068,11 @@ export type Database = {
           level?: string | null
           location_city?: string | null
           location_country?: string | null
+          marketplace_paused_until?: string | null
           marketplace_roles?: string[] | null
           niches?: string[] | null
           on_time_delivery_pct?: number | null
+          partner_community_id?: string | null
           payout_method?: string | null
           platforms?: string[] | null
           portfolio_count?: number | null
@@ -7136,10 +12099,15 @@ export type Database = {
           subscription_tier?: string | null
           talent_dna_id?: string | null
           total_projects?: number | null
+          trust_score?: number | null
+          trust_score_breakdown?: Json | null
+          trust_score_updated_at?: string | null
           unique_factor?: string | null
           updated_at?: string | null
           user_id?: string
           username?: string | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Relationships: [
           {
@@ -7154,6 +12122,13 @@ export type Database = {
             columns: ["featured_media_id"]
             isOneToOne: false
             referencedRelation: "portfolio_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_profiles_partner_community_id_fkey"
+            columns: ["partner_community_id"]
+            isOneToOne: false
+            referencedRelation: "partner_communities"
             referencedColumns: ["id"]
           },
           {
@@ -7179,6 +12154,7 @@ export type Database = {
           is_featured: boolean | null
           is_public: boolean | null
           is_verified: boolean | null
+          organization_id: string | null
           project_id: string
           quality_rating: number | null
           rating: number
@@ -7203,6 +12179,7 @@ export type Database = {
           is_featured?: boolean | null
           is_public?: boolean | null
           is_verified?: boolean | null
+          organization_id?: string | null
           project_id: string
           quality_rating?: number | null
           rating: number
@@ -7227,6 +12204,7 @@ export type Database = {
           is_featured?: boolean | null
           is_public?: boolean | null
           is_verified?: boolean | null
+          organization_id?: string | null
           project_id?: string
           quality_rating?: number | null
           rating?: number
@@ -7251,6 +12229,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creator_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
@@ -8602,6 +13587,124 @@ export type Database = {
             columns: ["generation_id"]
             isOneToOne: false
             referencedRelation: "generations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feed_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fillmaker_services: {
+        Row: {
+          billing_status: string
+          client_closing_id: string | null
+          client_id: string
+          cost_own: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          editor_id: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          price_client: number
+          service_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          billing_status?: string
+          client_closing_id?: string | null
+          client_id: string
+          cost_own?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          editor_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          price_client?: number
+          service_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          billing_status?: string
+          client_closing_id?: string | null
+          client_id?: string
+          cost_own?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          editor_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          price_client?: number
+          service_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fillmaker_services_client_closing_id_fkey"
+            columns: ["client_closing_id"]
+            isOneToOne: false
+            referencedRelation: "client_closings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fillmaker_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "fillmaker_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fillmaker_services_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -10749,6 +15852,39 @@ export type Database = {
         }
         Relationships: []
       }
+      lc_avatars: {
+        Row: {
+          age_group: string
+          age_hint: number | null
+          country: string
+          created_at: string | null
+          gender: string
+          id: string
+          style: string
+          url: string
+        }
+        Insert: {
+          age_group: string
+          age_hint?: number | null
+          country?: string
+          created_at?: string | null
+          gender: string
+          id?: string
+          style?: string
+          url: string
+        }
+        Update: {
+          age_group?: string
+          age_hint?: number | null
+          country?: string
+          created_at?: string | null
+          gender?: string
+          id?: string
+          style?: string
+          url?: string
+        }
+        Relationships: []
+      }
       legal_consent_requirements: {
         Row: {
           account_type: string | null
@@ -12135,6 +17271,57 @@ export type Database = {
         }
         Relationships: []
       }
+      managed_campaign_subscriptions: {
+        Row: {
+          created_at: string
+          currency: string
+          duration_months: number
+          id: string
+          plan: string
+          starts_at: string | null
+          status: string
+          stripe_payment_intent: string | null
+          stripe_session_id: string
+          total_paid: number
+          updated_at: string
+          user_email: string
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          duration_months: number
+          id?: string
+          plan: string
+          starts_at?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id: string
+          total_paid: number
+          updated_at?: string
+          user_email: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          duration_months?: number
+          id?: string
+          plan?: string
+          starts_at?: string | null
+          status?: string
+          stripe_payment_intent?: string | null
+          stripe_session_id?: string
+          total_paid?: number
+          updated_at?: string
+          user_email?: string
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       marketing_ad_accounts: {
         Row: {
           access_token_encrypted: string | null
@@ -13305,12 +18492,15 @@ export type Database = {
           campaign_start_date: string | null
           campaign_type: string
           category: string
+          client_id: string | null
+          collaboration_type: string | null
           commission_rate: number | null
           compensation_description: string | null
           compensation_type: string | null
           completed_at: string | null
           content_deadline: string | null
           content_guidelines: string | null
+          content_management_type: string | null
           content_requirements: Json | null
           cover_image_url: string | null
           created_at: string | null
@@ -13381,12 +18571,15 @@ export type Database = {
           campaign_start_date?: string | null
           campaign_type?: string
           category: string
+          client_id?: string | null
+          collaboration_type?: string | null
           commission_rate?: number | null
           compensation_description?: string | null
           compensation_type?: string | null
           completed_at?: string | null
           content_deadline?: string | null
           content_guidelines?: string | null
+          content_management_type?: string | null
           content_requirements?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
@@ -13457,12 +18650,15 @@ export type Database = {
           campaign_start_date?: string | null
           campaign_type?: string
           category?: string
+          client_id?: string | null
+          collaboration_type?: string | null
           commission_rate?: number | null
           compensation_description?: string | null
           compensation_type?: string | null
           completed_at?: string | null
           content_deadline?: string | null
           content_guidelines?: string | null
+          content_management_type?: string | null
           content_requirements?: Json | null
           cover_image_url?: string | null
           created_at?: string | null
@@ -13521,6 +18717,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "marketplace_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "marketplace_campaigns_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marketplace_campaigns_escrow_hold_id_fkey"
             columns: ["escrow_hold_id"]
             isOneToOne: false
@@ -13553,6 +18763,7 @@ export type Database = {
           feedback: string | null
           files: Json | null
           id: string
+          organization_id: string | null
           status: string
           submitted_at: string | null
           title: string
@@ -13567,6 +18778,7 @@ export type Database = {
           feedback?: string | null
           files?: Json | null
           id?: string
+          organization_id?: string | null
           status?: string
           submitted_at?: string | null
           title: string
@@ -13581,6 +18793,7 @@ export type Database = {
           feedback?: string | null
           files?: Json | null
           id?: string
+          organization_id?: string | null
           status?: string
           submitted_at?: string | null
           title?: string
@@ -13594,6 +18807,13 @@ export type Database = {
             referencedRelation: "marketplace_contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_contract_deliverables_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_contract_messages: {
@@ -13604,6 +18824,7 @@ export type Database = {
           id: string
           is_system_message: boolean
           message: string
+          organization_id: string | null
           sender_id: string
         }
         Insert: {
@@ -13613,6 +18834,7 @@ export type Database = {
           id?: string
           is_system_message?: boolean
           message: string
+          organization_id?: string | null
           sender_id: string
         }
         Update: {
@@ -13622,6 +18844,7 @@ export type Database = {
           id?: string
           is_system_message?: boolean
           message?: string
+          organization_id?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -13630,6 +18853,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "marketplace_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_contract_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -13804,6 +19034,7 @@ export type Database = {
           id: string
           interaction_type: string
           metadata: Json | null
+          organization_id: string | null
           source: string | null
           user_id: string | null
         }
@@ -13814,6 +19045,7 @@ export type Database = {
           id?: string
           interaction_type: string
           metadata?: Json | null
+          organization_id?: string | null
           source?: string | null
           user_id?: string | null
         }
@@ -13824,6 +19056,7 @@ export type Database = {
           id?: string
           interaction_type?: string
           metadata?: Json | null
+          organization_id?: string | null
           source?: string | null
           user_id?: string | null
         }
@@ -13833,6 +19066,13 @@ export type Database = {
             columns: ["creator_id"]
             isOneToOne: false
             referencedRelation: "creator_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_interactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -14032,6 +19272,7 @@ export type Database = {
           currency: string
           id: string
           metadata: Json | null
+          organization_id: string | null
           paid_at: string | null
           payee_id: string | null
           payer_id: string | null
@@ -14048,6 +19289,7 @@ export type Database = {
           currency?: string
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           paid_at?: string | null
           payee_id?: string | null
           payer_id?: string | null
@@ -14064,6 +19306,7 @@ export type Database = {
           currency?: string
           id?: string
           metadata?: Json | null
+          organization_id?: string | null
           paid_at?: string | null
           payee_id?: string | null
           payer_id?: string | null
@@ -14081,6 +19324,13 @@ export type Database = {
             referencedRelation: "marketplace_contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_projects: {
@@ -14089,8 +19339,10 @@ export type Database = {
           brand_id: string | null
           brief: Json | null
           campaign_id: string | null
+          client_user_id: string | null
           completed_at: string | null
           created_at: string | null
+          creation_mode: string | null
           creator_id: string
           creator_payout: number | null
           currency: string | null
@@ -14124,6 +19376,8 @@ export type Database = {
           status:
             | Database["public"]["Enums"]["marketplace_project_status"]
             | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           title: string
           total_price: number | null
           unread_brand_messages: number | null
@@ -14135,8 +19389,10 @@ export type Database = {
           brand_id?: string | null
           brief?: Json | null
           campaign_id?: string | null
+          client_user_id?: string | null
           completed_at?: string | null
           created_at?: string | null
+          creation_mode?: string | null
           creator_id: string
           creator_payout?: number | null
           currency?: string | null
@@ -14170,6 +19426,8 @@ export type Database = {
           status?:
             | Database["public"]["Enums"]["marketplace_project_status"]
             | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           title: string
           total_price?: number | null
           unread_brand_messages?: number | null
@@ -14181,8 +19439,10 @@ export type Database = {
           brand_id?: string | null
           brief?: Json | null
           campaign_id?: string | null
+          client_user_id?: string | null
           completed_at?: string | null
           created_at?: string | null
+          creation_mode?: string | null
           creator_id?: string
           creator_payout?: number | null
           currency?: string | null
@@ -14216,6 +19476,8 @@ export type Database = {
           status?:
             | Database["public"]["Enums"]["marketplace_project_status"]
             | null
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           title?: string
           total_price?: number | null
           unread_brand_messages?: number | null
@@ -14273,6 +19535,7 @@ export type Database = {
           created_at: string
           id: string
           message: string
+          organization_id: string | null
           proposal_id: string
           sender_id: string
         }
@@ -14281,6 +19544,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          organization_id?: string | null
           proposal_id: string
           sender_id: string
         }
@@ -14289,10 +19553,18 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          organization_id?: string | null
           proposal_id?: string
           sender_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketplace_proposal_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketplace_proposal_messages_proposal_id_fkey"
             columns: ["proposal_id"]
@@ -14429,6 +19701,7 @@ export type Database = {
           created_at: string
           id: string
           is_public: boolean
+          organization_id: string | null
           rating: number
           responded_at: string | null
           response: string | null
@@ -14444,6 +19717,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_public?: boolean
+          organization_id?: string | null
           rating: number
           responded_at?: string | null
           response?: string | null
@@ -14459,6 +19733,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_public?: boolean
+          organization_id?: string | null
           rating?: number
           responded_at?: string | null
           response?: string | null
@@ -14474,6 +19749,13 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "marketplace_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -14580,6 +19862,187 @@ export type Database = {
         }
         Relationships: []
       }
+      mcp_api_keys: {
+        Row: {
+          created_at: string
+          creator_id: string
+          expires_at: string
+          id: string
+          is_revoked: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          organization_id: string | null
+          rate_limit_per_hour: number
+          scopes: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          expires_at?: string
+          id?: string
+          is_revoked?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          organization_id?: string | null
+          rate_limit_per_hour?: number
+          scopes?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          expires_at?: string
+          id?: string
+          is_revoked?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          organization_id?: string | null
+          rate_limit_per_hour?: number
+          scopes?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_api_keys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_audit_logs: {
+        Row: {
+          action: string
+          ai_tokens_used: number | null
+          created_at: string
+          error_code: string | null
+          id: string
+          ip_address: unknown
+          key_id: string | null
+          organization_id: string | null
+          request_payload: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          response_status: number
+          response_time_ms: number | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          ai_tokens_used?: number | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          ip_address?: unknown
+          key_id?: string | null
+          organization_id?: string | null
+          request_payload?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          response_status: number
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          ai_tokens_used?: number | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          ip_address?: unknown
+          key_id?: string | null
+          organization_id?: string | null
+          request_payload?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          response_status?: number
+          response_time_ms?: number | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_audit_logs_key_id_fkey"
+            columns: ["key_id"]
+            isOneToOne: false
+            referencedRelation: "mcp_api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_webhooks: {
+        Row: {
+          created_at: string
+          delivery_failures: number
+          events: string[]
+          id: string
+          is_active: boolean
+          last_delivered_at: string | null
+          last_failure_at: string | null
+          last_failure_reason: string | null
+          name: string
+          organization_id: string
+          secret_hash: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_failures?: number
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          last_delivered_at?: string | null
+          last_failure_at?: string | null
+          last_failure_reason?: string | null
+          name: string
+          organization_id: string
+          secret_hash: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          delivery_failures?: number
+          events?: string[]
+          id?: string
+          is_active?: boolean
+          last_delivered_at?: string | null
+          last_failure_at?: string | null
+          last_failure_reason?: string | null
+          name?: string
+          organization_id?: string
+          secret_hash?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_webhooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_reactions: {
         Row: {
           created_at: string
@@ -14603,6 +20066,588 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      mi_achievements: {
+        Row: {
+          code: string
+          description: string
+          icon: string
+          name: string
+          xp_reward: number
+        }
+        Insert: {
+          code: string
+          description: string
+          icon: string
+          name: string
+          xp_reward?: number
+        }
+        Update: {
+          code?: string
+          description?: string
+          icon?: string
+          name?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      mi_initiatives: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          impact: string
+          owner_id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact?: string
+          owner_id: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          impact?: string
+          owner_id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_initiatives_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_initiatives_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          id: string
+          last_active: string | null
+          links: Json
+          name: string
+          role: string
+          streak_days: number
+          xp: number
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          id: string
+          last_active?: string | null
+          links?: Json
+          name: string
+          role?: string
+          streak_days?: number
+          xp?: number
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          last_active?: string | null
+          links?: Json
+          name?: string
+          role?: string
+          streak_days?: number
+          xp?: number
+        }
+        Relationships: []
+      }
+      mi_req_history: {
+        Row: {
+          comment: string | null
+          created_at: string
+          from_status: string | null
+          id: string
+          requirement_id: string
+          to_status: string
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          requirement_id: string
+          to_status: string
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          from_status?: string | null
+          id?: string
+          requirement_id?: string
+          to_status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_req_history_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "mi_req_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_req_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          payload: Json | null
+          read_at: string | null
+          requirement_id: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          read_at?: string | null
+          requirement_id: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          payload?: Json | null
+          read_at?: string | null
+          requirement_id?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_req_notifications_requirement_id_fkey"
+            columns: ["requirement_id"]
+            isOneToOne: false
+            referencedRelation: "mi_req_requirements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_req_requirements: {
+        Row: {
+          acceptance_criteria: Json
+          archived_at: string | null
+          area: string | null
+          attachments: Json
+          author_id: string
+          created_at: string
+          description: string | null
+          dynamic_values: Json
+          exclusions: string | null
+          id: string
+          impact: string | null
+          owner_id: string | null
+          priority: string
+          problem: string | null
+          quality_flag: string | null
+          quality_score: number | null
+          scope: string | null
+          status: string
+          template_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acceptance_criteria?: Json
+          archived_at?: string | null
+          area?: string | null
+          attachments?: Json
+          author_id: string
+          created_at?: string
+          description?: string | null
+          dynamic_values?: Json
+          exclusions?: string | null
+          id?: string
+          impact?: string | null
+          owner_id?: string | null
+          priority?: string
+          problem?: string | null
+          quality_flag?: string | null
+          quality_score?: number | null
+          scope?: string | null
+          status?: string
+          template_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acceptance_criteria?: Json
+          archived_at?: string | null
+          area?: string | null
+          attachments?: Json
+          author_id?: string
+          created_at?: string
+          description?: string | null
+          dynamic_values?: Json
+          exclusions?: string | null
+          id?: string
+          impact?: string | null
+          owner_id?: string | null
+          priority?: string
+          problem?: string | null
+          quality_flag?: string | null
+          quality_score?: number | null
+          scope?: string | null
+          status?: string
+          template_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_req_requirements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_requirements_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_requirements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_requirements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_requirements_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mi_req_template_stats"
+            referencedColumns: ["template_id"]
+          },
+          {
+            foreignKeyName: "mi_req_requirements_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "mi_req_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_req_templates: {
+        Row: {
+          author_id: string
+          category: string | null
+          created_at: string
+          deleted_at: string | null
+          description: string | null
+          fields: Json
+          id: string
+          justification: string | null
+          name: string
+          status: string
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          author_id: string
+          category?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          justification?: string | null
+          name: string
+          status?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          author_id?: string
+          category?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          description?: string | null
+          fields?: Json
+          id?: string
+          justification?: string | null
+          name?: string
+          status?: string
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_req_templates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_req_templates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_tasks: {
+        Row: {
+          assignee_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string
+          status: string
+          title: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_tickets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          platform: string
+          reported_by: string
+          severity: string
+          status: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform: string
+          reported_by: string
+          severity?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          platform?: string
+          reported_by?: string
+          severity?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_tickets_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_tickets_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_user_achievements: {
+        Row: {
+          achievement_code: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_code: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_code?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_user_achievements_achievement_code_fkey"
+            columns: ["achievement_code"]
+            isOneToOne: false
+            referencedRelation: "mi_achievements"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "mi_user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mi_xp_events: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          reason?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mi_xp_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mi_xp_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "mi_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {
@@ -14859,6 +20904,134 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "org_creator_relationships_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_financial_closings: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          status: string
+          total_costs: number
+          total_income: number
+          updated_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          status?: string
+          total_costs?: number
+          total_income?: number
+          updated_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+          total_costs?: number
+          total_income?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_financial_closings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_financial_costs: {
+        Row: {
+          amount: number
+          category: string
+          client_package_id: string | null
+          cost_date: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          name: string
+          notes: string | null
+          organization_id: string
+          receipt_filename: string | null
+          receipt_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string
+          client_package_id?: string | null
+          cost_date?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          client_package_id?: string | null
+          cost_date?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          receipt_filename?: string | null
+          receipt_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_financial_costs_client_package_id_fkey"
+            columns: ["client_package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_financial_costs_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -15711,6 +21884,114 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_join_requests: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string | null
+          organization_id: string
+          rejection_reason: string | null
+          requested_role: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id: string
+          rejection_reason?: string | null
+          requested_role?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string
+          rejection_reason?: string | null
+          requested_role?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_join_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_marketplace_creators: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          creator_user_id: string
+          id: string
+          organization_id: string
+          source: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          creator_user_id: string
+          id?: string
+          organization_id: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          creator_user_id?: string
+          id?: string
+          organization_id?: string
+          source?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_marketplace_creators_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_marketplace_creators_creator_user_id_fkey"
+            columns: ["creator_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_marketplace_creators_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_member_badges: {
         Row: {
           badge: string
@@ -16235,6 +22516,7 @@ export type Database = {
           blocked_reason: string | null
           city: string | null
           client_marketplace_enabled: boolean | null
+          content_auto_approve_days: number | null
           country: string | null
           created_at: string | null
           created_by: string | null
@@ -16248,6 +22530,7 @@ export type Database = {
           id: string
           instagram: string | null
           is_blocked: boolean | null
+          is_official_agency: boolean | null
           is_registration_open: boolean | null
           linkedin: string | null
           logo_dark_url: string | null
@@ -16323,6 +22606,7 @@ export type Database = {
           blocked_reason?: string | null
           city?: string | null
           client_marketplace_enabled?: boolean | null
+          content_auto_approve_days?: number | null
           country?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -16336,6 +22620,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_blocked?: boolean | null
+          is_official_agency?: boolean | null
           is_registration_open?: boolean | null
           linkedin?: string | null
           logo_dark_url?: string | null
@@ -16411,6 +22696,7 @@ export type Database = {
           blocked_reason?: string | null
           city?: string | null
           client_marketplace_enabled?: boolean | null
+          content_auto_approve_days?: number | null
           country?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -16424,6 +22710,7 @@ export type Database = {
           id?: string
           instagram?: string | null
           is_blocked?: boolean | null
+          is_official_agency?: boolean | null
           is_registration_open?: boolean | null
           linkedin?: string | null
           logo_dark_url?: string | null
@@ -16493,6 +22780,229 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_costs: {
+        Row: {
+          amount: number
+          cost_type: string
+          created_at: string
+          created_by: string | null
+          creator_id: string | null
+          currency: string
+          id: string
+          invoice_url: string | null
+          linked_content_id: string | null
+          notes: string | null
+          organization_id: string
+          package_id: string
+          paid_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          creator_id?: string | null
+          currency?: string
+          id?: string
+          invoice_url?: string | null
+          linked_content_id?: string | null
+          notes?: string | null
+          organization_id: string
+          package_id: string
+          paid_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cost_type?: string
+          created_at?: string
+          created_by?: string | null
+          creator_id?: string | null
+          currency?: string
+          id?: string
+          invoice_url?: string | null
+          linked_content_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          package_id?: string
+          paid_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_costs_creator_id_fkey"
+            columns: ["creator_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_costs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_costs_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_installments: {
+        Row: {
+          created_at: string
+          currency: string
+          due_date: string
+          expected_amount: number
+          id: string
+          installment_number: number
+          notes: string | null
+          organization_id: string
+          package_id: string
+          paid_amount: number
+          paid_date: string | null
+          paid_via_payment_id: string | null
+          reminder_count: number
+          reminder_sent_at: string | null
+          status: string
+          total_installments: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          due_date: string
+          expected_amount: number
+          id?: string
+          installment_number: number
+          notes?: string | null
+          organization_id: string
+          package_id: string
+          paid_amount?: number
+          paid_date?: string | null
+          paid_via_payment_id?: string | null
+          reminder_count?: number
+          reminder_sent_at?: string | null
+          status?: string
+          total_installments: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          due_date?: string
+          expected_amount?: number
+          id?: string
+          installment_number?: number
+          notes?: string | null
+          organization_id?: string
+          package_id?: string
+          paid_amount?: number
+          paid_date?: string | null
+          paid_via_payment_id?: string | null
+          reminder_count?: number
+          reminder_sent_at?: string | null
+          status?: string
+          total_installments?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_installments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_installments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_milestones: {
+        Row: {
+          amount_due: number | null
+          created_at: string
+          currency: string
+          id: string
+          milestone_type: string
+          name: string
+          notes: string | null
+          organization_id: string
+          package_id: string
+          payment_id: string | null
+          percentage: number | null
+          status: string
+          trigger_condition: string
+          trigger_date: string | null
+          triggered_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_due?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          milestone_type?: string
+          name: string
+          notes?: string | null
+          organization_id: string
+          package_id: string
+          payment_id?: string | null
+          percentage?: number | null
+          status?: string
+          trigger_condition?: string
+          trigger_date?: string | null
+          triggered_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_due?: number | null
+          created_at?: string
+          currency?: string
+          id?: string
+          milestone_type?: string
+          name?: string
+          notes?: string | null
+          organization_id?: string
+          package_id?: string
+          payment_id?: string | null
+          percentage?: number | null
+          status?: string
+          trigger_condition?: string
+          trigger_date?: string | null
+          triggered_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_milestones_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_milestones_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "client_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -16623,6 +23133,7 @@ export type Database = {
           owner_user_id: string | null
           owner_wallet_id: string | null
           partner_contact_email: string | null
+          redemption_count: number | null
           slug: string
           start_date: string | null
           target_types: string[] | null
@@ -16651,6 +23162,7 @@ export type Database = {
           owner_user_id?: string | null
           owner_wallet_id?: string | null
           partner_contact_email?: string | null
+          redemption_count?: number | null
           slug: string
           start_date?: string | null
           target_types?: string[] | null
@@ -16679,6 +23191,7 @@ export type Database = {
           owner_user_id?: string | null
           owner_wallet_id?: string | null
           partner_contact_email?: string | null
+          redemption_count?: number | null
           slug?: string
           start_date?: string | null
           target_types?: string[] | null
@@ -17081,6 +23594,83 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      pending_owner_payouts: {
+        Row: {
+          collected_at: string
+          created_at: string
+          currency: string
+          gross_amount_usd: number
+          id: string
+          net_owner_amount_usd: number
+          owner_user_id: string
+          paid_out_at: string | null
+          paid_out_method: string | null
+          paid_out_notes: string | null
+          paid_out_reference: string | null
+          platform_fee_amount_usd: number
+          platform_fee_percent: number
+          source_id: string | null
+          source_type: string
+          space_id: string | null
+          stripe_charge_id: string | null
+          stripe_invoice_id: string | null
+          stripe_session_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          collected_at?: string
+          created_at?: string
+          currency?: string
+          gross_amount_usd: number
+          id?: string
+          net_owner_amount_usd: number
+          owner_user_id: string
+          paid_out_at?: string | null
+          paid_out_method?: string | null
+          paid_out_notes?: string | null
+          paid_out_reference?: string | null
+          platform_fee_amount_usd: number
+          platform_fee_percent: number
+          source_id?: string | null
+          source_type: string
+          space_id?: string | null
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          collected_at?: string
+          created_at?: string
+          currency?: string
+          gross_amount_usd?: number
+          id?: string
+          net_owner_amount_usd?: number
+          owner_user_id?: string
+          paid_out_at?: string | null
+          paid_out_method?: string | null
+          paid_out_notes?: string | null
+          paid_out_reference?: string | null
+          platform_fee_amount_usd?: number
+          platform_fee_percent?: number
+          source_id?: string | null
+          source_type?: string
+          space_id?: string | null
+          stripe_charge_id?: string | null
+          stripe_invoice_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_owner_payouts_space_id_fkey"
+            columns: ["space_id"]
+            isOneToOne: false
+            referencedRelation: "academy_spaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_features: {
         Row: {
@@ -17910,6 +24500,8 @@ export type Database = {
           bunny_video_id: string | null
           campaign_id: string | null
           category: string | null
+          client_approved_showcase: boolean
+          content_id: string | null
           created_at: string | null
           creator_id: string
           deleted_at: string | null
@@ -17920,14 +24512,19 @@ export type Database = {
           id: string
           is_featured: boolean | null
           is_public: boolean | null
+          legacy_post_id: string | null
           likes_count: number | null
           media_type: string
           media_url: string
+          organization_id: string | null
+          reactions_count: number
+          source_type: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string | null
           updated_at: string | null
           views_count: number | null
+          visibility: string
         }
         Insert: {
           aspect_ratio?: string | null
@@ -17935,6 +24532,8 @@ export type Database = {
           bunny_video_id?: string | null
           campaign_id?: string | null
           category?: string | null
+          client_approved_showcase?: boolean
+          content_id?: string | null
           created_at?: string | null
           creator_id: string
           deleted_at?: string | null
@@ -17945,14 +24544,19 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_public?: boolean | null
+          legacy_post_id?: string | null
           likes_count?: number | null
           media_type?: string
           media_url: string
+          organization_id?: string | null
+          reactions_count?: number
+          source_type?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string | null
           updated_at?: string | null
           views_count?: number | null
+          visibility?: string
         }
         Update: {
           aspect_ratio?: string | null
@@ -17960,6 +24564,8 @@ export type Database = {
           bunny_video_id?: string | null
           campaign_id?: string | null
           category?: string | null
+          client_approved_showcase?: boolean
+          content_id?: string | null
           created_at?: string | null
           creator_id?: string
           deleted_at?: string | null
@@ -17970,16 +24576,42 @@ export type Database = {
           id?: string
           is_featured?: boolean | null
           is_public?: boolean | null
+          legacy_post_id?: string | null
           likes_count?: number | null
           media_type?: string
           media_url?: string
+          organization_id?: string | null
+          reactions_count?: number
+          source_type?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string | null
           updated_at?: string | null
           views_count?: number | null
+          visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "portfolio_items_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["content_id"]
+          },
+          {
+            foreignKeyName: "portfolio_items_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_items_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_available_content"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "portfolio_items_creator_id_fkey"
             columns: ["creator_id"]
@@ -17992,6 +24624,20 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_items_legacy_post_id_fkey"
+            columns: ["legacy_post_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -18973,6 +25619,9 @@ export type Database = {
           best_at: string | null
           bio: string | null
           city: string | null
+          community_badge_color: string | null
+          community_badge_text: string | null
+          community_name: string | null
           consent_bypass: boolean | null
           consent_bypass_granted_at: string | null
           consent_bypass_granted_by: string | null
@@ -19014,6 +25663,7 @@ export type Database = {
           is_public: boolean | null
           is_superadmin: boolean
           languages: string[]
+          lead_source: string | null
           legal_consents_completed: boolean | null
           legal_consents_completed_at: string | null
           marketplace_enabled: boolean | null
@@ -19023,6 +25673,8 @@ export type Database = {
           onboarding_completed: boolean | null
           onboarding_completed_at: string | null
           organization_status: string
+          pancake_contact_id: string | null
+          partner_community_id: string | null
           phone: string | null
           platform_access_unlocked: boolean | null
           portfolio_url: string | null
@@ -19033,6 +25685,8 @@ export type Database = {
           rate_currency: string | null
           rate_per_content: number | null
           referral_tier: string | null
+          referred_by: string | null
+          registration_source: string | null
           reliability_score: number | null
           response_rate: number | null
           reveal_tokens: number | null
@@ -19053,6 +25707,8 @@ export type Database = {
           user_type: string | null
           username: string | null
           velocity_score: number | null
+          whatsapp_enabled: boolean
+          whatsapp_phone: string | null
         }
         Insert: {
           active_brand_id?: string | null
@@ -19072,6 +25728,9 @@ export type Database = {
           best_at?: string | null
           bio?: string | null
           city?: string | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
+          community_name?: string | null
           consent_bypass?: boolean | null
           consent_bypass_granted_at?: string | null
           consent_bypass_granted_by?: string | null
@@ -19113,6 +25772,7 @@ export type Database = {
           is_public?: boolean | null
           is_superadmin?: boolean
           languages?: string[]
+          lead_source?: string | null
           legal_consents_completed?: boolean | null
           legal_consents_completed_at?: string | null
           marketplace_enabled?: boolean | null
@@ -19122,6 +25782,8 @@ export type Database = {
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
           organization_status?: string
+          pancake_contact_id?: string | null
+          partner_community_id?: string | null
           phone?: string | null
           platform_access_unlocked?: boolean | null
           portfolio_url?: string | null
@@ -19132,6 +25794,8 @@ export type Database = {
           rate_currency?: string | null
           rate_per_content?: number | null
           referral_tier?: string | null
+          referred_by?: string | null
+          registration_source?: string | null
           reliability_score?: number | null
           response_rate?: number | null
           reveal_tokens?: number | null
@@ -19152,6 +25816,8 @@ export type Database = {
           user_type?: string | null
           username?: string | null
           velocity_score?: number | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Update: {
           active_brand_id?: string | null
@@ -19171,6 +25837,9 @@ export type Database = {
           best_at?: string | null
           bio?: string | null
           city?: string | null
+          community_badge_color?: string | null
+          community_badge_text?: string | null
+          community_name?: string | null
           consent_bypass?: boolean | null
           consent_bypass_granted_at?: string | null
           consent_bypass_granted_by?: string | null
@@ -19212,6 +25881,7 @@ export type Database = {
           is_public?: boolean | null
           is_superadmin?: boolean
           languages?: string[]
+          lead_source?: string | null
           legal_consents_completed?: boolean | null
           legal_consents_completed_at?: string | null
           marketplace_enabled?: boolean | null
@@ -19221,6 +25891,8 @@ export type Database = {
           onboarding_completed?: boolean | null
           onboarding_completed_at?: string | null
           organization_status?: string
+          pancake_contact_id?: string | null
+          partner_community_id?: string | null
           phone?: string | null
           platform_access_unlocked?: boolean | null
           portfolio_url?: string | null
@@ -19231,6 +25903,8 @@ export type Database = {
           rate_currency?: string | null
           rate_per_content?: number | null
           referral_tier?: string | null
+          referred_by?: string | null
+          registration_source?: string | null
           reliability_score?: number | null
           response_rate?: number | null
           reveal_tokens?: number | null
@@ -19251,6 +25925,8 @@ export type Database = {
           user_type?: string | null
           username?: string | null
           velocity_score?: number | null
+          whatsapp_enabled?: boolean
+          whatsapp_phone?: string | null
         }
         Relationships: [
           {
@@ -19258,6 +25934,13 @@ export type Database = {
             columns: ["active_brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_partner_community_id_fkey"
+            columns: ["partner_community_id"]
+            isOneToOne: false
+            referencedRelation: "partner_communities"
             referencedColumns: ["id"]
           },
         ]
@@ -19784,6 +26467,77 @@ export type Database = {
           last_attempt_at?: string | null
         }
         Relationships: []
+      }
+      recurring_expenses: {
+        Row: {
+          amount: number
+          auto_renew: boolean
+          category: string
+          created_at: string
+          created_by: string | null
+          currency: string
+          end_date: string | null
+          frequency: string
+          id: string
+          is_active: boolean
+          name: string
+          next_due_date: string | null
+          notes: string | null
+          organization_id: string
+          payment_method: string | null
+          start_date: string | null
+          updated_at: string
+          vendor: string | null
+        }
+        Insert: {
+          amount: number
+          auto_renew?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          next_due_date?: string | null
+          notes?: string | null
+          organization_id: string
+          payment_method?: string | null
+          start_date?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Update: {
+          amount?: number
+          auto_renew?: boolean
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          end_date?: string | null
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          next_due_date?: string | null
+          notes?: string | null
+          organization_id?: string
+          payment_method?: string | null
+          start_date?: string | null
+          updated_at?: string
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_codes: {
         Row: {
@@ -23575,6 +30329,27 @@ export type Database = {
           },
         ]
       }
+      stripe_connected_accounts: {
+        Row: {
+          created_at: string
+          stripe_account_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          stripe_account_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          stripe_account_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       suggested_profiles_cache: {
         Row: {
           created_at: string
@@ -23727,6 +30502,197 @@ export type Database = {
           version?: number | null
         }
         Relationships: []
+      }
+      talent_payment_accounts: {
+        Row: {
+          account_holder: string | null
+          account_number: string | null
+          account_type: string
+          bank_name: string | null
+          created_at: string | null
+          document_id: string | null
+          id: string
+          is_primary: boolean | null
+          label: string | null
+          notes: string | null
+          organization_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type: string
+          bank_name?: string | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          organization_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          account_holder?: string | null
+          account_number?: string | null
+          account_type?: string
+          bank_name?: string | null
+          created_at?: string | null
+          document_id?: string | null
+          id?: string
+          is_primary?: boolean | null
+          label?: string | null
+          notes?: string | null
+          organization_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_payment_accounts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talent_payment_notifications: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_type: string
+          organization_id: string
+          payment_id: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          organization_id: string
+          payment_id: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          organization_id?: string
+          payment_id?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_payment_notifications_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "talent_payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      talent_payments: {
+        Row: {
+          amount: number
+          closing_date: string | null
+          content_ids: string[] | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          cycle_label: string | null
+          description: string | null
+          due_payment_date: string | null
+          fillmaker_service_id: string | null
+          id: string
+          notes: string | null
+          organization_id: string
+          payment_account_id: string | null
+          payment_date: string | null
+          receipt_url: string | null
+          role: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          closing_date?: string | null
+          content_ids?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          cycle_label?: string | null
+          description?: string | null
+          due_payment_date?: string | null
+          fillmaker_service_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          payment_account_id?: string | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          closing_date?: string | null
+          content_ids?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          cycle_label?: string | null
+          description?: string | null
+          due_payment_date?: string | null
+          fillmaker_service_id?: string | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          payment_account_id?: string | null
+          payment_date?: string | null
+          receipt_url?: string | null
+          role?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "talent_payments_fillmaker_service_id_fkey"
+            columns: ["fillmaker_service_id"]
+            isOneToOne: false
+            referencedRelation: "fillmaker_services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talent_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "talent_payments_payment_account_id_fkey"
+            columns: ["payment_account_id"]
+            isOneToOne: false
+            referencedRelation: "talent_payment_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       talent_performance_history: {
         Row: {
@@ -26589,6 +33555,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bans: {
+        Row: {
+          banned_at: string
+          banned_by: string | null
+          created_at: string
+          email: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          reason: string | null
+          unbanned_at: string | null
+          unbanned_by: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          unbanned_at?: string | null
+          unbanned_by?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string | null
+          created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          reason?: string | null
+          unbanned_at?: string | null
+          unbanned_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_board_preferences: {
         Row: {
           active_view_id: string | null
@@ -26941,6 +33949,39 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           viewer_id?: string | null
+        }
+        Relationships: []
+      }
+      user_ip_log: {
+        Row: {
+          device_id: string
+          first_seen: string
+          hits: number
+          id: string
+          ip_address: string
+          last_seen: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          device_id?: string
+          first_seen?: string
+          hits?: number
+          id?: string
+          ip_address?: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          first_seen?: string
+          hits?: number
+          id?: string
+          ip_address?: string
+          last_seen?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -27671,6 +34712,81 @@ export type Database = {
           },
         ]
       }
+      whatsapp_notification_logs: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          event_type: string
+          id: string
+          message: string
+          phone: string
+          provider_response: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          event_type: string
+          id?: string
+          message: string
+          phone: string
+          provider_response?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          event_type?: string
+          id?: string
+          message?: string
+          phone?: string
+          provider_response?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_notification_templates: {
+        Row: {
+          category: string
+          created_at: string
+          event_type: string
+          id: string
+          is_active: boolean
+          language: string
+          template_id: string
+          template_name: string
+          updated_at: string
+          variables_schema: Json
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          event_type: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          template_id: string
+          template_name: string
+          updated_at?: string
+          variables_schema?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          is_active?: boolean
+          language?: string
+          template_id?: string
+          template_name?: string
+          updated_at?: string
+          variables_schema?: Json
+        }
+        Relationships: []
+      }
       withdrawal_requests: {
         Row: {
           amount: number
@@ -27766,6 +34882,53 @@ export type Database = {
       }
     }
     Views: {
+      academy_lessons_gated: {
+        Row: {
+          content: string | null
+          course_id: string | null
+          description: string | null
+          drip_days_after_enroll: number | null
+          end_lesson_quiz_id: string | null
+          has_midlesson_quiz: boolean | null
+          id: string | null
+          is_free_preview: boolean | null
+          is_required: boolean | null
+          midlesson_quiz_timestamp_seconds: number | null
+          module_id: string | null
+          resources: Json | null
+          sort_order: number | null
+          title: string | null
+          type: string | null
+          video_bunny_id: string | null
+          video_duration_seconds: number | null
+          video_source: string | null
+          video_thumbnail_url: string | null
+          video_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "academy_courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "academy_modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_end_lesson_quiz"
+            columns: ["end_lesson_quiz_id"]
+            isOneToOne: false
+            referencedRelation: "academy_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_usage_daily: {
         Row: {
           avg_rating: number | null
@@ -27997,6 +35160,52 @@ export type Database = {
           },
         ]
       }
+      mi_leaderboard: {
+        Row: {
+          achievements_count: number | null
+          avatar_url: string | null
+          email: string | null
+          id: string | null
+          level: number | null
+          name: string | null
+          role: string | null
+          xp: number | null
+        }
+        Insert: {
+          achievements_count?: never
+          avatar_url?: string | null
+          email?: string | null
+          id?: string | null
+          level?: never
+          name?: string | null
+          role?: string | null
+          xp?: number | null
+        }
+        Update: {
+          achievements_count?: never
+          avatar_url?: string | null
+          email?: string | null
+          id?: string | null
+          level?: never
+          name?: string | null
+          role?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
+      mi_req_template_stats: {
+        Row: {
+          approval_rate: number | null
+          approved_count: number | null
+          name: string | null
+          rejected_count: number | null
+          status: string | null
+          template_id: string | null
+          total_requirements: number | null
+          usage_count: number | null
+        }
+        Relationships: []
+      }
       organization_ambassadors: {
         Row: {
           ambassador_note: string | null
@@ -28223,6 +35432,90 @@ export type Database = {
       }
     }
     Functions: {
+      _academy_wants_notification: {
+        Args: { p_category: string; p_space_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      _caller_owns_academy_space: {
+        Args: { p_space_id: string }
+        Returns: boolean
+      }
+      _can_dm_in_space: {
+        Args: { p_space_id: string; p_user_a: string; p_user_b: string }
+        Returns: boolean
+      }
+      _has_academy_access: { Args: { p_space_id: string }; Returns: boolean }
+      _is_active_member_of: { Args: { p_space_id: string }; Returns: boolean }
+      _stripe_sync_check_secret: {
+        Args: { p_caller_secret: string }
+        Returns: boolean
+      }
+      academy_calc_lesson_release_date: {
+        Args: { p_enrollment_id: string; p_lesson_id: string }
+        Returns: string
+      }
+      academy_claim_hotmart_purchases: { Args: never; Returns: number }
+      academy_complete_onboarding: {
+        Args: { p_space_id: string }
+        Returns: undefined
+      }
+      academy_emit_event: {
+        Args: {
+          p_payload?: Json
+          p_space_id?: string
+          p_type: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
+      academy_emit_event_safe: {
+        Args: {
+          p_payload?: Json
+          p_space_id?: string
+          p_type: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
+      academy_evaluate_unlock: {
+        Args: { p_target_id: string; p_target_type: string; p_user_id?: string }
+        Returns: Json
+      }
+      academy_evaluate_unlock_batch: {
+        Args: { p_targets: Json }
+        Returns: Json
+      }
+      academy_event_checkin: { Args: { p_event_id: string }; Returns: Json }
+      academy_event_log_reprocess: { Args: never; Returns: number }
+      academy_get_course_price_authoritative: {
+        Args: { p_course_id: string; p_currency: string }
+        Returns: Json
+      }
+      academy_join_space: {
+        Args: {
+          p_consent?: boolean
+          p_country?: string
+          p_referrer_id?: string
+          p_source?: string
+          p_space_slug: string
+        }
+        Returns: Json
+      }
+      academy_lesson_is_unlocked: {
+        Args: { p_lesson_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      academy_mark_event_processed: {
+        Args: { p_error?: string; p_event_id: string; p_status?: string }
+        Returns: undefined
+      }
+      academy_track_share: {
+        Args: { p_post_id: string; p_shared_to?: string }
+        Returns: Json
+      }
+      academy_v2_dispatch_cart_abandonment: { Args: never; Returns: number }
+      academy_v2_dispatch_cohort_starting_24h: { Args: never; Returns: number }
+      academy_v2_dispatch_event_reminders_24h: { Args: never; Returns: number }
       activate_campaign: {
         Args: { p_campaign_id: string; p_payment_intent_id?: string }
         Returns: Json
@@ -28257,6 +35550,35 @@ export type Database = {
         Args: { p_brand_id: string; p_campaign_id: string }
         Returns: Json
       }
+      apply_reconcile_result: {
+        Args: {
+          p_caller_secret: string
+          p_membership_id: string
+          p_should_be_active: boolean
+        }
+        Returns: undefined
+      }
+      apply_stripe_sync_result: {
+        Args: {
+          p_caller_secret: string
+          p_entity_id: string
+          p_entity_type: string
+          p_stripe_price_id: string
+          p_stripe_product_id: string
+        }
+        Returns: undefined
+      }
+      apply_stripe_sync_result_v2: {
+        Args: {
+          p_caller_secret: string
+          p_entity_id: string
+          p_entity_type: string
+          p_stripe_price_id: string
+          p_stripe_product_id: string
+          p_stripe_yearly_price_id?: string
+        }
+        Returns: undefined
+      }
       apply_talent_dna_to_profile: {
         Args: { p_dna_id: string; p_user_id: string }
         Returns: boolean
@@ -28265,11 +35587,26 @@ export type Database = {
         Args: { p_agreed_price?: number; p_application_id: string }
         Returns: Json
       }
+      approve_join_request: { Args: { request_id: string }; Returns: boolean }
+      assert_org_member: {
+        Args: { p_organization_id: string }
+        Returns: boolean
+      }
       assign_editor_to_project: {
         Args: {
           p_assigned_by?: string
           p_editor_profile_id?: string
           p_project_id: string
+        }
+        Returns: Json
+      }
+      auto_approve_stale_content: { Args: never; Returns: number }
+      award_kiro_points: {
+        Args: {
+          p_description?: string
+          p_new_total_points?: number
+          p_points: number
+          p_source: string
         }
         Returns: Json
       }
@@ -28282,6 +35619,32 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_reputation_event: {
+        Args: {
+          p_base_points?: number
+          p_breakdown?: Json
+          p_event_subtype?: string
+          p_event_type: string
+          p_multiplier?: number
+          p_organization_id: string
+          p_reference_id: string
+          p_reference_type: string
+          p_role_key: string
+          p_season_id?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      award_space_points: {
+        Args: {
+          p_action: string
+          p_points: number
+          p_reference_id?: string
+          p_space_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       block_account: {
         Args: {
           p_block_type?: string
@@ -28290,6 +35653,23 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      bump_member_streak: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      bump_mission_progress: {
+        Args: {
+          p_delta?: number
+          p_mission_type: string
+          p_space_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      calculate_creator_trust_score: {
+        Args: { creator_user_id: string }
+        Returns: Json
       }
       calculate_delivery_points: {
         Args: {
@@ -28344,6 +35724,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_manage_campaign: { Args: { _campaign_id: string }; Returns: boolean }
       can_move_content_status: {
         Args: {
           _content_id: string
@@ -28380,6 +35761,7 @@ export type Database = {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
+      can_view_campaign: { Args: { _campaign_id: string }; Returns: boolean }
       cancel_withdrawal_request: {
         Args: { p_user_id: string; p_withdrawal_id: string }
         Returns: boolean
@@ -28400,10 +35782,10 @@ export type Database = {
       check_and_award_global_badges: {
         Args: { p_user_id: string }
         Returns: {
-          badge_id: string
-          badge_key: string
-          badge_name: string
-          was_unlocked: boolean
+          out_badge_id: string
+          out_badge_key: string
+          out_badge_name: string
+          out_was_unlocked: boolean
         }[]
       }
       check_and_pause_chronometer: {
@@ -28429,6 +35811,10 @@ export type Database = {
       check_campaign_invitation: {
         Args: { p_campaign_id: string; p_profile_id: string }
         Returns: boolean
+      }
+      check_certificate_eligibility: {
+        Args: { p_course_id: string; p_user_id: string }
+        Returns: Json
       }
       check_overdue_projects: { Args: never; Returns: number }
       check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
@@ -28491,6 +35877,7 @@ export type Database = {
         Args: { retention_days?: number }
         Returns: number
       }
+      cleanup_stale_presence: { Args: never; Returns: undefined }
       clone_template_to_profile: {
         Args: {
           p_clone_content?: boolean
@@ -28499,6 +35886,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      close_expired_seasons: { Args: never; Returns: Json }
       close_season_and_distribute_rewards: {
         Args: { p_season_id: string }
         Returns: {
@@ -28568,6 +35956,19 @@ export type Database = {
         Args: { _is_group?: boolean; _name?: string; participant_ids: string[] }
         Returns: string
       }
+      create_client_closing: {
+        Args: {
+          p_client_id: string
+          p_content_ids: string[]
+          p_created_by: string
+          p_currency: string
+          p_fillmaker_ids: string[]
+          p_name: string
+          p_notes: string
+          p_org_id: string
+        }
+        Returns: string
+      }
       create_content_backup: {
         Args: {
           p_backup_type?: string
@@ -28586,6 +35987,15 @@ export type Database = {
           p_original_value?: number
           p_project_id?: string
           p_territory?: string
+        }
+        Returns: string
+      }
+      create_content_manual: {
+        Args: {
+          p_client_package_id?: string
+          p_creation_mode?: string
+          p_organization_id: string
+          p_title: string
         }
         Returns: string
       }
@@ -28648,6 +36058,23 @@ export type Database = {
         }
         Returns: Json
       }
+      create_space_event_with_invitations: {
+        Args: {
+          p_auto_invite_all?: boolean
+          p_cover_image_url?: string
+          p_description: string
+          p_ends_at: string
+          p_max_attendees?: number
+          p_meeting_url?: string
+          p_organizer_id: string
+          p_space_id: string
+          p_starts_at: string
+          p_timezone?: string
+          p_title: string
+          p_type: string
+        }
+        Returns: Json
+      }
       create_streaming_session_for_request: {
         Args: { p_request_id: string }
         Returns: string
@@ -28685,6 +36112,15 @@ export type Database = {
         Args: { p_balance_id: string; p_tokens: number }
         Returns: undefined
       }
+      days_until_lesson_unlock: {
+        Args: { p_lesson_id: string }
+        Returns: number
+      }
+      decay_member_energy: { Args: never; Returns: Json }
+      decrypt_oauth_token: {
+        Args: { p_ciphertext: string; p_key: string }
+        Returns: string
+      }
       deduct_ai_tokens: {
         Args: {
           p_action?: string
@@ -28700,6 +36136,7 @@ export type Database = {
         Returns: Json
       }
       delete_brand_complete: { Args: { p_brand_id: string }; Returns: boolean }
+      diagnose_onboarding: { Args: { p_user_email: string }; Returns: Json }
       emit_up_event:
         | {
             Args: {
@@ -28723,6 +36160,35 @@ export type Database = {
             }
             Returns: string
           }
+      encrypt_oauth_token: {
+        Args: { p_key: string; p_plaintext: string }
+        Returns: string
+      }
+      enroll_in_course: {
+        Args: { p_course_id: string }
+        Returns: {
+          amount_paid_usd: number | null
+          certificate_issued_at: string | null
+          cohort_id: string | null
+          completed_at: string | null
+          completion_pct: number | null
+          course_id: string
+          enrolled_at: string | null
+          gateway: string | null
+          id: string
+          last_accessed_at: string | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          stripe_payment_intent_id: string | null
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "academy_enrollments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       ensure_user_wallet: {
         Args: { p_user_id: string; p_wallet_type?: string }
         Returns: string
@@ -28740,6 +36206,86 @@ export type Database = {
       feature_streaming_product: {
         Args: { p_product_id: string; p_session_id: string }
         Returns: boolean
+      }
+      fix_stuck_onboarding_users: {
+        Args: never
+        Returns: {
+          email: string
+          status: string
+          user_id: string
+        }[]
+      }
+      fn_biweekly_talent_payroll: {
+        Args: { p_cutoff_date?: string; p_organization_id: string }
+        Returns: Json
+      }
+      fn_cash_flow_forecast: {
+        Args: {
+          p_currency?: string
+          p_organization_id: string
+          p_weeks?: number
+        }
+        Returns: {
+          confidence_score: number
+          inflow_confirmed: number
+          inflow_estimated: number
+          net_week: number
+          outflow_costs: number
+          outflow_recurring: number
+          week_end: string
+          week_number: number
+          week_start: string
+        }[]
+      }
+      fn_monthly_talent_payroll: {
+        Args: { p_organization_id: string; p_period_label?: string }
+        Returns: Json
+      }
+      fn_monthly_talent_payroll_all: { Args: never; Returns: Json }
+      fn_package_profitability: {
+        Args: { p_organization_id: string }
+        Returns: {
+          agency_commission_pct: number
+          campaign_number: number
+          client_id: string
+          client_name: string
+          content_count: number
+          content_quantity: number
+          currency: string
+          external_costs: number
+          gross_margin: number
+          gross_margin_pct: number
+          other_costs: number
+          package_id: string
+          package_name: string
+          paid_amount: number
+          revenue_neto: number
+          talent_cost: number
+          total_costs: number
+          total_value: number
+        }[]
+      }
+      fn_receivables_aging: {
+        Args: { p_organization_id: string }
+        Returns: {
+          aging_bucket: string
+          client_id: string
+          client_name: string
+          currency: string
+          days_overdue: number
+          due_date: string
+          package_id: string
+          package_name: string
+          paid_amount: number
+          pending_amount: number
+          risk_score: number
+          total_value: number
+        }[]
+      }
+      fn_run_biweekly_payroll_all_orgs: { Args: never; Returns: Json }
+      force_complete_onboarding: {
+        Args: { p_user_email: string }
+        Returns: Json
       }
       generate_ambassador_referral_code: {
         Args: { org_id: string; p_user_id: string }
@@ -28763,6 +36309,19 @@ export type Database = {
       generate_username_from_name: {
         Args: { full_name: string }
         Returns: string
+      }
+      generate_weekly_missions: { Args: never; Returns: Json }
+      get_academy_advanced_metrics: {
+        Args: { p_space_id: string }
+        Returns: Json
+      }
+      get_academy_financial_health: {
+        Args: { p_space_id: string }
+        Returns: Json
+      }
+      get_academy_presence_count: {
+        Args: { p_space_id: string }
+        Returns: Json
       }
       get_account_snapshots: {
         Args: { p_account_id: string; p_days?: number }
@@ -29047,6 +36606,55 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_client_activity_metrics: {
+        Args: { p_org_id: string }
+        Returns: {
+          activity_status: string
+          client_id: string
+          client_name: string
+          days_as_client: number
+          days_inactive: number
+          first_content_created_at: string
+          first_package_at: string
+          inactive_since: string
+          joined_at: string
+          last_approved_at: string
+          last_content_created_at: string
+          last_delivery_at: string
+          last_package_at: string
+          pending_content_count: number
+          total_content_approved: number
+          total_content_purchased: number
+          total_packages: number
+        }[]
+      }
+      get_client_billing_items: {
+        Args: { p_client_id: string; p_org_id: string }
+        Returns: {
+          billing_status: string
+          closing_id: string
+          cost_own: number
+          currency: string
+          description: string
+          editor_id: string
+          id: string
+          item_date: string
+          item_type: string
+          price_client: number
+          title: string
+        }[]
+      }
+      get_client_billing_totals: {
+        Args: { p_client_id?: string; p_organization_id: string }
+        Returns: {
+          client_id: string
+          client_name: string
+          currency: string
+          total_collected: number
+          total_pending: number
+          total_sold: number
+        }[]
+      }
       get_client_licenses: {
         Args: { p_client_id: string; p_status?: string }
         Returns: {
@@ -29076,6 +36684,19 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_client_packages_with_availability: {
+        Args: { p_client_id: string }
+        Returns: {
+          assigned_count: number
+          available_slots: number
+          campaign_number: number
+          content_quantity: number
+          hooks_per_video: number
+          id: string
+          is_active: boolean
+          name: string
+        }[]
       }
       get_community_earnings: {
         Args: { p_community_id: string }
@@ -29140,16 +36761,24 @@ export type Database = {
           approved_at_v2: string | null
           approved_by: string | null
           assigned_at: string | null
+          billing_currency: string | null
+          billing_price: number | null
+          billing_status: string | null
+          broll_output: string | null
           bunny_embed_url: string | null
           campaign_week: string | null
           caption: string | null
+          captions: string | null
           change_request_status: string | null
           change_requests: Json | null
+          client_closing_id: string | null
           client_id: string | null
+          client_package_id: string | null
           content_objective: string | null
           content_type: string | null
           corrected_at: string | null
           created_at: string | null
+          creation_mode: string | null
           creator_assigned_at: string | null
           creator_id: string | null
           creator_paid: boolean | null
@@ -29158,6 +36787,7 @@ export type Database = {
           creator_rated_at: string | null
           creator_rated_by: string | null
           creator_rating: number | null
+          creator_type: string | null
           cta: string | null
           custom_status_id: string | null
           deadline: string | null
@@ -29167,6 +36797,7 @@ export type Database = {
           delivered_at: string | null
           description: string | null
           designer_guidelines: string | null
+          director_output: string | null
           draft_at: string | null
           drive_url: string | null
           editing_at: string | null
@@ -29195,6 +36826,7 @@ export type Database = {
           marketing_approved_at: string | null
           marketing_approved_by: string | null
           marketing_campaign_id: string | null
+          marketing_output: string | null
           marketing_rejected_at: string | null
           marketing_rejected_by: string | null
           marketing_rejection_reason: string | null
@@ -29244,6 +36876,7 @@ export type Database = {
           trafficker_guidelines: string | null
           updated_at: string | null
           video_duration: string | null
+          video_pov: string | null
           video_processing_started_at: string | null
           video_processing_status: string | null
           video_url: string | null
@@ -29264,6 +36897,14 @@ export type Database = {
       get_content_paused_hours: {
         Args: { p_content_id: string; p_role: string }
         Returns: number
+      }
+      get_course_checkout_payload: {
+        Args: {
+          p_caller_secret: string
+          p_course_id: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       get_creator_availability: {
         Args: { p_user_id: string }
@@ -29421,6 +37062,52 @@ export type Database = {
           original_project_value: number
           project_id: string
           renewal_rate: number
+        }[]
+      }
+      get_feed_posts: {
+        Args: {
+          p_cursor_created_at?: string
+          p_cursor_id?: string
+          p_limit?: number
+          p_niche?: string
+          p_tab?: string
+          p_viewer_id?: string
+        }
+        Returns: {
+          author_avatar: string
+          author_name: string
+          author_user_id: string
+          category: string
+          created_at: string
+          is_following_author: boolean
+          is_liked: boolean
+          is_saved: boolean
+          likes_count: number
+          media_type: string
+          media_url: string
+          my_reaction: string
+          post_id: string
+          post_source: string
+          reactions_count: number
+          thumbnail_url: string
+          title: string
+          views_count: number
+        }[]
+      }
+      get_financial_period_summary: {
+        Args: {
+          p_currency?: string
+          p_end: string
+          p_org_id: string
+          p_start: string
+        }
+        Returns: {
+          costs_by_category: Json
+          income_by_client: Json
+          net_profit: number
+          packages_count: number
+          total_costs: number
+          total_income: number
         }[]
       }
       get_follow_counts: {
@@ -29736,6 +37423,10 @@ export type Database = {
         Args: { p_account_id: string; p_after?: string }
         Returns: string
       }
+      get_or_create_affiliate_link: {
+        Args: { p_space_id: string }
+        Returns: Json
+      }
       get_org_account_snapshots: {
         Args: { p_days?: number; p_org_id: string }
         Returns: {
@@ -29764,15 +37455,23 @@ export type Database = {
       get_org_client_packages: {
         Args: { p_organization_id: string }
         Returns: {
+          agency_commission_pct: number
+          barter_market_value: number | null
+          campaign_number: number
           client_id: string
           content_quantity: number
           created_at: string
           creators_count: number | null
           currency: Database["public"]["Enums"]["currency_type"]
           description: string | null
+          dian_cufe: string | null
           hooks_per_video: number | null
           id: string
+          invoice_type: string
           is_active: boolean
+          is_barter: boolean
+          iva_amount: number | null
+          iva_rate: number
           name: string
           notes: string | null
           paid_amount: number
@@ -29781,6 +37480,9 @@ export type Database = {
           payment_status: string
           product_ids: string[] | null
           products_count: number | null
+          retention_amount: number | null
+          retention_rate: number
+          subtotal: number | null
           total_value: number
           updated_at: string
         }[]
@@ -29811,6 +37513,7 @@ export type Database = {
           p_creator_id?: string
           p_editor_id?: string
           p_limit?: number
+          p_offset?: number
           p_organization_id: string
           p_role?: string
           p_user_id?: string
@@ -29827,16 +37530,24 @@ export type Database = {
           approved_at_v2: string | null
           approved_by: string | null
           assigned_at: string | null
+          billing_currency: string | null
+          billing_price: number | null
+          billing_status: string | null
+          broll_output: string | null
           bunny_embed_url: string | null
           campaign_week: string | null
           caption: string | null
+          captions: string | null
           change_request_status: string | null
           change_requests: Json | null
+          client_closing_id: string | null
           client_id: string | null
+          client_package_id: string | null
           content_objective: string | null
           content_type: string | null
           corrected_at: string | null
           created_at: string | null
+          creation_mode: string | null
           creator_assigned_at: string | null
           creator_id: string | null
           creator_paid: boolean | null
@@ -29845,6 +37556,7 @@ export type Database = {
           creator_rated_at: string | null
           creator_rated_by: string | null
           creator_rating: number | null
+          creator_type: string | null
           cta: string | null
           custom_status_id: string | null
           deadline: string | null
@@ -29854,6 +37566,7 @@ export type Database = {
           delivered_at: string | null
           description: string | null
           designer_guidelines: string | null
+          director_output: string | null
           draft_at: string | null
           drive_url: string | null
           editing_at: string | null
@@ -29882,6 +37595,7 @@ export type Database = {
           marketing_approved_at: string | null
           marketing_approved_by: string | null
           marketing_campaign_id: string | null
+          marketing_output: string | null
           marketing_rejected_at: string | null
           marketing_rejected_by: string | null
           marketing_rejection_reason: string | null
@@ -29931,6 +37645,7 @@ export type Database = {
           trafficker_guidelines: string | null
           updated_at: string | null
           video_duration: string | null
+          video_pov: string | null
           video_processing_started_at: string | null
           video_processing_status: string | null
           video_url: string | null
@@ -29944,15 +37659,92 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_org_costs_overview: {
+        Args: {
+          p_currency?: string
+          p_end: string
+          p_org_id: string
+          p_start: string
+        }
+        Returns: {
+          costs_by_category: Json
+          general_amount: number
+          income_in_period: number
+          linked_amount: number
+          pct_of_income: number
+          top_category: string
+          top_category_amount: number
+          total_costs: number
+        }[]
+      }
       get_org_creator_full_detail: {
         Args: { p_creator_id: string; p_org_id: string }
         Returns: Json
       }
       get_org_creator_stats: { Args: { p_org_id: string }; Returns: Json }
       get_org_crm_overview: { Args: { p_org_id: string }; Returns: Json }
+      get_org_finance_overview: {
+        Args: {
+          p_currency?: string
+          p_end: string
+          p_org_id: string
+          p_start: string
+        }
+        Returns: {
+          costs: number
+          margin_pct: number
+          net_profit: number
+          overdue_amount: number
+          overdue_count: number
+          packages_sold: number
+          payments_count: number
+          payroll: number
+          total_collected: number
+          total_pending: number
+          total_sold: number
+        }[]
+      }
       get_org_finance_stats: {
         Args: { p_days?: number; p_org_id: string }
         Returns: Json
+      }
+      get_org_financial_anomalies: {
+        Args: { p_currency?: string; p_org_id: string }
+        Returns: {
+          amount: number
+          anomaly_type: string
+          detail: string
+          related_id: string
+          severity: string
+          title: string
+        }[]
+      }
+      get_org_financial_health: {
+        Args: { p_currency?: string; p_org_id: string }
+        Returns: {
+          factors: Json
+          level: string
+          recommendations: Json
+          score: number
+        }[]
+      }
+      get_org_marketplace_creator_ids: {
+        Args: { p_org_id: string }
+        Returns: {
+          creator_user_id: string
+        }[]
+      }
+      get_org_payroll_overview: {
+        Args: { p_end: string; p_org_id: string; p_start: string }
+        Returns: {
+          avg_payment: number
+          in_transfer: number
+          overdue_amount: number
+          overdue_count: number
+          paid_in_period: number
+          talents_paid: number
+          to_settle: number
+        }[]
       }
       get_org_pipeline_summary: { Args: { p_org_id: string }; Returns: Json }
       get_org_products: {
@@ -30072,12 +37864,55 @@ export type Database = {
           total_revenue_usd: number
         }[]
       }
+      get_org_talent_roster: {
+        Args: { p_organization_id: string }
+        Returns: {
+          active_tasks: number
+          ai_recommended_level: string
+          ai_risk_flag: string
+          ambassador_level: string
+          avatar_url: string
+          avg_creator_rating: number
+          avg_editor_rating: number
+          avg_star_rating: number
+          avg_strategy_rating: number
+          bio: string
+          content_count: number
+          editor_completed_count: number
+          editor_on_time_count: number
+          editor_rating: number
+          email: string
+          full_name: string
+          id: string
+          is_ambassador: boolean
+          phone: string
+          quality_score_avg: number
+          rated_content_count: number
+          reliability_score: number
+          role: string
+          up_level: string
+          up_points: number
+          velocity_score: number
+        }[]
+      }
       get_org_upcoming_actions: {
         Args: { p_limit?: number; p_org_id: string }
         Returns: Json
       }
+      get_owner_payouts_summary: {
+        Args: never
+        Returns: {
+          has_stripe_connect: boolean
+          oldest_pending_at: string
+          owner_email: string
+          owner_full_name: string
+          owner_user_id: string
+          pending_count: number
+          pending_total_usd: number
+        }[]
+      }
       get_pending_consents: {
-        Args: { p_user_id: string }
+        Args: { p_trigger_event?: string; p_user_id: string }
         Returns: {
           account_type: string
           display_order: number
@@ -30112,6 +37947,47 @@ export type Database = {
           role: string
           user_id: string
         }[]
+      }
+      get_portfolio_items_random: {
+        Args: { p_creator_id: string; p_limit?: number }
+        Returns: {
+          aspect_ratio: string | null
+          brand_name: string | null
+          bunny_video_id: string | null
+          campaign_id: string | null
+          category: string | null
+          client_approved_showcase: boolean
+          content_id: string | null
+          created_at: string | null
+          creator_id: string
+          deleted_at: string | null
+          deleted_by: string | null
+          description: string | null
+          display_order: number | null
+          duration_seconds: number | null
+          id: string
+          is_featured: boolean | null
+          is_public: boolean | null
+          legacy_post_id: string | null
+          likes_count: number | null
+          media_type: string
+          media_url: string
+          organization_id: string | null
+          reactions_count: number
+          source_type: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string | null
+          views_count: number | null
+          visibility: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "portfolio_items"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_product_by_id: {
         Args: { p_product_id: string }
@@ -30159,6 +38035,7 @@ export type Database = {
         }
       }
       get_profile_builder_data: { Args: { profile_id: string }; Returns: Json }
+      get_public_academy_landing: { Args: { p_slug: string }; Returns: Json }
       get_public_org_content: {
         Args: { max_items?: number; org_slug: string }
         Returns: {
@@ -30258,6 +38135,10 @@ export type Database = {
           title: string
           version: string
         }[]
+      }
+      get_related_client_ids: {
+        Args: { p_client_id: string }
+        Returns: string[]
       }
       get_revenue_by_month: {
         Args: { p_months?: number }
@@ -30361,6 +38242,57 @@ export type Database = {
           token_expires_at: string
         }[]
       }
+      get_stripe_connect_for_course: {
+        Args: { p_caller_secret: string; p_course_id: string }
+        Returns: Json
+      }
+      get_stripe_connect_for_space: {
+        Args: { p_caller_secret: string; p_space_id: string }
+        Returns: Json
+      }
+      get_stripe_sync_payload:
+        | {
+            Args: {
+              p_caller_secret: string
+              p_entity_id: string
+              p_entity_type: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: { p_entity_id: string; p_entity_type: string }
+            Returns: Json
+          }
+      get_subscribe_payload: {
+        Args: {
+          p_caller_secret: string
+          p_space_slug: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      get_talent_activity_metrics: {
+        Args: { p_org_id: string }
+        Returns: {
+          active_content_count: number
+          activity_status: string
+          avatar_url: string
+          days_on_team: number
+          days_since_last_delivery: number
+          email: string
+          first_content_at: string
+          full_name: string
+          joined_at: string
+          last_approved_at: string
+          last_assigned_at: string
+          last_delivery_at: string
+          org_role: string
+          pending_payment_amount: number
+          pending_payment_count: number
+          talent_id: string
+          total_content_count: number
+        }[]
+      }
       get_talent_gate_config: { Args: never; Returns: Json }
       get_template_by_slug: { Args: { p_slug: string }; Returns: Json }
       get_trash_stats: {
@@ -30381,12 +38313,26 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_unassigned_members: {
+        Args: { p_org_id: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          org_role: string
+          phone: string
+        }[]
+      }
       get_unified_clients: {
         Args: { p_org_id: string }
         Returns: {
           active_projects: number
           avatar_url: string
+          brand_id: string
           client_notes: string
+          community_name: string
           company: string
           contact_notes: string
           contact_type: string
@@ -30400,10 +38346,12 @@ export type Database = {
           id: string
           is_internal_brand: boolean
           is_vip: boolean
+          lead_source: string
           name: string
           phone: string
           pipeline_stage: string
           position: string
+          referred_by: string
           relationship_strength: string
           tags: string[]
           updated_at: string
@@ -30424,6 +38372,7 @@ export type Database = {
           avg_star_rating: number
           bio: string
           categories: string[]
+          community_name: string
           content_count: number
           content_types: string[]
           creator_profile_id: string
@@ -30435,12 +38384,16 @@ export type Database = {
           is_ambassador: boolean
           is_owner: boolean
           last_collaboration_at: string
+          lead_source: string
           list_name: string
+          marketplace_is_active: boolean
+          marketplace_paused_until: string
           org_role: string
           phone: string
           platforms: string[]
           quality_score_avg: number
           rated_content_count: number
+          referred_by: string
           relationship_id: string
           relationship_type: string
           reliability_score: number
@@ -30454,6 +38407,7 @@ export type Database = {
         }[]
       }
       get_up_setting: { Args: { setting_key: string }; Returns: Json }
+      get_user_age_verification: { Args: { p_user_id: string }; Returns: Json }
       get_user_consents: { Args: { p_user_id: string }; Returns: Json }
       get_user_events: {
         Args: {
@@ -30626,6 +38580,14 @@ export type Database = {
         }
         Returns: string
       }
+      grant_badge_if_new: {
+        Args: { p_badge_id: string; p_space_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      grant_mentor_badge: {
+        Args: { p_space_id: string; p_target_user_id: string }
+        Returns: boolean
+      }
       grant_platform_access: {
         Args: { p_admin_id: string; p_target_user_id: string }
         Returns: Json
@@ -30652,6 +38614,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      increment_community_redemptions: {
+        Args: { community_slug: string }
+        Returns: undefined
+      }
       increment_content_views: {
         Args: { content_uuid: string }
         Returns: undefined
@@ -30673,12 +38639,21 @@ export type Database = {
         Args: { p_organization_id: string }
         Returns: undefined
       }
+      invoke_stripe_sync_product: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: undefined
+      }
+      is_academy_member: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: boolean
+      }
       is_ai_module_active: {
         Args: { _module_key: string; _org_id: string }
         Returns: boolean
       }
       is_brand_admin: { Args: { _brand_id: string }; Returns: boolean }
       is_brand_member: { Args: { _brand_id: string }; Returns: boolean }
+      is_campaign_invitee: { Args: { _campaign_id: string }; Returns: boolean }
       is_client_owner: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -30696,8 +38671,15 @@ export type Database = {
         Returns: boolean
       }
       is_creator_live: { Args: { p_user_id: string }; Returns: boolean }
+      is_device_blocked: { Args: { _device_id: string }; Returns: boolean }
+      is_email_blocked: { Args: { _email: string }; Returns: boolean }
       is_following: { Args: { _following_id: string }; Returns: boolean }
       is_following_company: { Args: { _company_id: string }; Returns: boolean }
+      is_ip_blocked: { Args: { _ip: string }; Returns: boolean }
+      is_lesson_unlocked_for_user: {
+        Args: { p_lesson_id: string; p_user_id?: string }
+        Returns: boolean
+      }
       is_org_admin: { Args: { _org_id: string }; Returns: boolean }
       is_org_configurer: {
         Args: { _org_id: string; _user_id: string }
@@ -30713,6 +38695,10 @@ export type Database = {
       is_platform_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
+      is_platform_admin_for_user: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       is_platform_root: { Args: { _user_id: string }; Returns: boolean }
       is_project_participant: {
         Args: { _project_id: string }
@@ -30726,6 +38712,11 @@ export type Database = {
         Args: { p_content_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_user_banned: { Args: { _uid: string }; Returns: boolean }
+      issue_academy_certificate: {
+        Args: { p_course_id: string; p_user_id: string }
+        Returns: Json
+      }
       kae_funnel_stats: {
         Args: {
           p_end_date: string
@@ -30736,6 +38727,57 @@ export type Database = {
           conversion_rate: number
           step: string
           visitor_count: number
+        }[]
+      }
+      kreoon_merge_client: {
+        Args: { p_dup_id: string; p_master_id: string }
+        Returns: string
+      }
+      leave_live_viewer: {
+        Args: { p_session_id: string; p_stream_id: string }
+        Returns: boolean
+      }
+      link_brand_to_org: {
+        Args: {
+          p_brand_id: string
+          p_existing_org_client_id?: string
+          p_org_id: string
+        }
+        Returns: string
+      }
+      list_my_dm_threads: {
+        Args: { p_space_id?: string }
+        Returns: {
+          last_message_at: string
+          last_message_preview: string
+          other_user_avatar: string
+          other_user_id: string
+          other_user_name: string
+          space_id: string
+          space_name: string
+          thread_id: string
+          unread_count: number
+        }[]
+      }
+      list_public_academies: {
+        Args: {
+          p_category?: string
+          p_language?: string
+          p_limit?: number
+          p_offset?: number
+          p_plan_slug?: string
+          p_price_max?: number
+        }
+        Returns: Json
+      }
+      list_subs_to_reconcile: {
+        Args: { p_caller_secret: string }
+        Returns: {
+          id: string
+          is_active: boolean
+          space_id: string
+          stripe_subscription_id: string
+          user_id: string
         }[]
       }
       log_activity: {
@@ -30788,6 +38830,15 @@ export type Database = {
         }
         Returns: string
       }
+      log_user_ip: {
+        Args: {
+          _device_id?: string
+          _ip: string
+          _user_agent?: string
+          _user_id: string
+        }
+        Returns: undefined
+      }
       log_user_login: {
         Args: {
           _device_type?: string
@@ -30797,6 +38848,11 @@ export type Database = {
         }
         Returns: string
       }
+      mark_client_closing_paid: {
+        Args: { p_closing_id: string; p_org_id: string }
+        Returns: undefined
+      }
+      mark_dm_thread_read: { Args: { p_thread_id: string }; Returns: undefined }
       mark_message_delivered: {
         Args: { _message_id: string }
         Returns: undefined
@@ -30804,6 +38860,25 @@ export type Database = {
       mark_messages_read: {
         Args: { _conversation_id: string; _user_id: string }
         Returns: undefined
+      }
+      mark_owner_payout_paid: {
+        Args: {
+          p_method: string
+          p_notes?: string
+          p_payout_id: string
+          p_reference: string
+        }
+        Returns: undefined
+      }
+      mcp_validate_api_key: {
+        Args: { p_key_hash: string; p_required_scope?: string }
+        Returns: {
+          creator_id: string
+          key_id: string
+          organization_id: string
+          rate_limit_per_hour: number
+          scopes: string[]
+        }[]
       }
       merge_research_tab: {
         Args: {
@@ -30814,6 +38889,68 @@ export type Database = {
           p_tokens_used?: number
         }
         Returns: Json
+      }
+      mi_award_xp: {
+        Args: { p_amount: number; p_reason: string; p_user: string }
+        Returns: undefined
+      }
+      mi_check_achievements: { Args: { p_user: string }; Returns: undefined }
+      mi_current_role: { Args: never; Returns: string }
+      mi_ensure_profile: {
+        Args: { p_name?: string }
+        Returns: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          id: string
+          last_active: string | null
+          links: Json
+          name: string
+          role: string
+          streak_days: number
+          xp: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "mi_profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      mi_req_award_xp: {
+        Args: { p_reason: string; p_user: string }
+        Returns: number
+      }
+      mi_req_is_staff: { Args: never; Returns: boolean }
+      mi_req_rpc_create_template: {
+        Args: {
+          p_category?: string
+          p_description?: string
+          p_fields?: Json
+          p_justification?: string
+          p_name: string
+        }
+        Returns: Json
+      }
+      mi_req_rpc_hard_delete_template: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      mi_req_rpc_list_deleted_templates: { Args: never; Returns: Json }
+      mi_req_rpc_list_template_stats: { Args: never; Returns: Json }
+      mi_req_rpc_list_templates: {
+        Args: { p_search?: string; p_status?: string }
+        Returns: Json
+      }
+      mi_req_rpc_restore_template: { Args: { p_id: string }; Returns: Json }
+      mi_req_rpc_soft_delete_template: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      mi_req_rpc_update_template_status: {
+        Args: { p_id: string; p_status: string }
+        Returns: undefined
       }
       ping_live_viewer: {
         Args: { p_session_id: string; p_stream_id: string }
@@ -30845,6 +38982,10 @@ export type Database = {
         Args: { p_creator_id: string }
         Returns: number
       }
+      recompute_academy_space_member_count: {
+        Args: { p_space_id: string }
+        Returns: undefined
+      }
       record_age_verification: {
         Args: {
           p_declared_age_18_plus: boolean
@@ -30863,6 +39004,44 @@ export type Database = {
         }
         Returns: string
       }
+      record_coupon_redemption: {
+        Args: {
+          p_caller_secret: string
+          p_coupon_id: string
+          p_plan: string
+          p_space_id: string
+          p_stripe_subscription_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      record_lesson_progress: {
+        Args: {
+          p_last_position_seconds?: number
+          p_lesson_id: string
+          p_status: string
+          p_video_watch_pct?: number
+        }
+        Returns: {
+          completed_at: string | null
+          created_at: string | null
+          enrollment_id: string
+          id: string
+          last_position_seconds: number | null
+          lesson_id: string
+          status: string | null
+          time_spent_seconds: number | null
+          updated_at: string | null
+          user_id: string
+          video_watch_pct: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "academy_lesson_progress"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       record_live_shopping_purchase: {
         Args: {
           p_amount_usd?: number
@@ -30871,6 +39050,22 @@ export type Database = {
           p_session_id: string
         }
         Returns: boolean
+      }
+      record_owner_payout: {
+        Args: {
+          p_caller_secret: string
+          p_currency?: string
+          p_gross_amount_usd: number
+          p_owner_user_id: string
+          p_platform_fee_percent: number
+          p_source_id: string
+          p_source_type: string
+          p_space_id: string
+          p_stripe_charge_id: string
+          p_stripe_invoice_id: string
+          p_stripe_session_id: string
+        }
+        Returns: string
       }
       refresh_client_trust_score: {
         Args: { p_client_user_id: string; p_org_id: string }
@@ -30926,6 +39121,10 @@ export type Database = {
         Args: { p_additional_months?: number; p_license_id: string }
         Returns: boolean
       }
+      replace_user_specializations: {
+        Args: { p_specializations: string[]; p_user_id: string }
+        Returns: undefined
+      }
       request_creator_payout: {
         Args: {
           p_amount: number
@@ -30975,6 +39174,14 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      rollback_client_closing_draft: {
+        Args: { p_closing_id: string; p_org_id: string }
+        Returns: undefined
+      }
+      save_academy_onboarding_data: {
+        Args: { p_country: string; p_objective: string; p_space_id: string }
+        Returns: undefined
       }
       save_profile_as_template: {
         Args: {
@@ -31088,10 +39295,29 @@ export type Database = {
           username: string
         }[]
       }
+      seed_default_post_categories: {
+        Args: { p_space_id: string }
+        Returns: undefined
+      }
+      send_academy_dm: {
+        Args: { p_body: string; p_space_id: string; p_to_user: string }
+        Returns: Json
+      }
+      send_event_reminders: { Args: never; Returns: Json }
+      set_creator_marketplace_pause: {
+        Args: {
+          p_creator_profile_id: string
+          p_is_active: boolean
+          p_paused_until: string
+        }
+        Returns: undefined
+      }
       set_featured_media: {
         Args: { p_creator_profile_id: string; p_media_id: string }
         Returns: Json
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       sign_legal_document: {
         Args: {
           p_browser_info?: Json
@@ -31126,6 +39352,15 @@ export type Database = {
         Args: { p_content_id: string; p_reason?: string }
         Returns: Json
       }
+      submit_quiz_attempt_atomic: {
+        Args: {
+          p_answers: Json
+          p_attempt_id: string
+          p_quiz_id: string
+          p_time_spent_seconds?: number
+        }
+        Returns: Json
+      }
       sync_all_users_health: { Args: never; Returns: number }
       sync_marketplace_reputation: {
         Args: { p_user_id: string }
@@ -31135,8 +39370,34 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: string
       }
+      sync_user_global_stats: {
+        Args: {
+          p_badges_completed_count?: number
+          p_bio_length?: number
+          p_days_since_signup?: number
+          p_early_deliveries_count?: number
+          p_has_avatar?: boolean
+          p_has_bio?: boolean
+          p_last_active_at?: string
+          p_late_deliveries_count?: number
+          p_on_time_deliveries_count?: number
+          p_profile_completeness?: number
+          p_social_networks_count?: number
+          p_total_badge_points?: number
+          p_total_projects_completed?: number
+        }
+        Returns: Json
+      }
       sync_user_health: { Args: { p_user_id: string }; Returns: undefined }
       sync_user_to_pancake: { Args: { p_user_id: string }; Returns: undefined }
+      toggle_ambassador_status: {
+        Args: {
+          p_new_status: boolean
+          p_organization_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       toggle_company_follow: { Args: { _company_id: string }; Returns: boolean }
       toggle_content_like: {
         Args: { content_uuid: string; viewer: string }
@@ -31151,6 +39412,19 @@ export type Database = {
       toggle_post_pin: { Args: { post_id: string }; Returns: boolean }
       toggle_template_interaction: {
         Args: { p_interaction_type: string; p_template_id: string }
+        Returns: boolean
+      }
+      touch_academy_presence: {
+        Args: { p_current_page?: string; p_space_id: string }
+        Returns: undefined
+      }
+      track_affiliate_click: {
+        Args: {
+          p_code: string
+          p_ip_hash: string
+          p_space_id: string
+          p_user_agent_hash?: string
+        }
         Returns: boolean
       }
       transfer_currency: {
@@ -31179,10 +39453,35 @@ export type Database = {
         Args: { p_reason?: string; p_record_id: string; p_table_name: string }
         Returns: Json
       }
+      unlink_brand_from_org: {
+        Args: { p_brand_id: string; p_org_id: string }
+        Returns: undefined
+      }
       update_content_by_id: {
         Args: { p_content_id: string; p_updates: Json }
         Returns: undefined
       }
+      update_content_status_rpc: {
+        Args: { p_content_id: string; p_new_status: string }
+        Returns: Json
+      }
+      update_content_status_with_up: {
+        Args: {
+          p_content_id: string
+          p_new_status: string
+          p_old_status: string
+        }
+        Returns: Json
+      }
+      update_member_energy: {
+        Args: { p_delta: number; p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      update_member_level: {
+        Args: { p_space_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      update_overdue_installments: { Args: never; Returns: undefined }
       update_referral_leaderboard: { Args: never; Returns: undefined }
       update_research_session_progress: {
         Args: {
@@ -31217,26 +39516,16 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
-      update_wallet_balance:
-        | {
-            Args: {
-              p_available_delta?: number
-              p_earned_delta?: number
-              p_pending_delta?: number
-              p_reserved_delta?: number
-              p_wallet_id: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_available_delta?: number
-              p_earned_delta?: number
-              p_reserved_delta?: number
-              p_wallet_id: string
-            }
-            Returns: undefined
-          }
+      update_wallet_balance: {
+        Args: {
+          p_available_delta?: number
+          p_earned_delta?: number
+          p_pending_delta?: number
+          p_reserved_delta?: number
+          p_wallet_id: string
+        }
+        Returns: undefined
+      }
       upsert_board_preferences: {
         Args: {
           p_active_view_id?: string
@@ -31263,6 +39552,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      upsert_stripe_connect_account: {
+        Args: {
+          p_caller_secret: string
+          p_stripe_account_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      user_holds_role: {
+        Args: { p_role: string; p_user_id: string }
+        Returns: boolean
+      }
+      validate_academy_coupon:
+        | {
+            Args: { p_code: string; p_plan: string; p_space_id: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_code: string
+              p_plan: string
+              p_space_id: string
+              p_user_id?: string
+            }
+            Returns: Json
+          }
       validate_preview_token: {
         Args: { preview_token: string }
         Returns: string
@@ -31282,6 +39597,25 @@ export type Database = {
           p_verified_by?: string
         }
         Returns: undefined
+      }
+      webhook_clear_by_customer: {
+        Args: { p_caller_secret: string; p_customer_id: string }
+        Returns: number
+      }
+      webhook_deactivate_by_subscription: {
+        Args: { p_caller_secret: string; p_subscription_id: string }
+        Returns: number
+      }
+      webhook_upsert_academy_membership: {
+        Args: {
+          p_caller_secret: string
+          p_customer_id: string
+          p_should_be_active: boolean
+          p_space_id: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: Json
       }
     }
     Enums: {
@@ -31353,6 +39687,7 @@ export type Database = {
         | "workshop_facilitator"
         | "content_creator"
         | "creative_strategist"
+        | "student"
       application_status:
         | "pending"
         | "approved"
@@ -31414,6 +39749,7 @@ export type Database = {
         | "issue"
         | "corrected"
         | "en_campaa"
+        | "archived"
       currency_type: "COP" | "USD"
       delivery_status:
         | "pending"
@@ -31928,6 +40264,7 @@ export const Constants = {
         "workshop_facilitator",
         "content_creator",
         "creative_strategist",
+        "student",
       ],
       application_status: [
         "pending",
@@ -31996,6 +40333,7 @@ export const Constants = {
         "issue",
         "corrected",
         "en_campaa",
+        "archived",
       ],
       currency_type: ["COP", "USD"],
       delivery_status: [

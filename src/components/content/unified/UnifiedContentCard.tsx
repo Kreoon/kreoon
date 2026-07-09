@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateContentStatusWithUP } from '@/hooks/useContentStatusWithUP';
 import { ContentStatus, STATUS_LABELS, STATUS_COLORS } from '@/types/database';
 import { ContentSettingsDialog } from '@/components/content/ContentSettingsDialog';
+import { PublishToPortfolioButton } from '@/components/content/PublishToPortfolioButton';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { extractBunnyIds, getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
@@ -550,6 +551,17 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
             </Button>
           )}
         </div>
+
+        {/* Publicar a mi portafolio - solo el creador, contenido aprobado */}
+        {isCreator && content.status === 'approved' && (
+          <PublishToPortfolioButton
+            contentId={content.id}
+            defaultTitle={content.title}
+            mediaUrl={currentVideoUrl || null}
+            thumbnailUrl={thumbnailSrc}
+            className="w-full"
+          />
+        )}
 
         {/* Feedback for Corrections */}
         {showFeedback && (

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-export type SavedItemType = 'work_video' | 'post' | 'profile' | 'company';
+export type SavedItemType = 'work_video' | 'post' | 'profile' | 'company' | 'portfolio_item';
 
 export interface SavedItem {
   id: string;

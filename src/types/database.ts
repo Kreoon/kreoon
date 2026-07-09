@@ -152,6 +152,9 @@ export type ContentStatus =
 
 export type PaymentStatus = 'pending' | 'partial' | 'paid';
 
+// Visibilidad de un item publicado en el feed/portfolio (portfolio_items.visibility)
+export type PortfolioVisibility = 'public' | 'followers' | 'org';
+
 export interface Profile {
   id: string;
   email: string;
