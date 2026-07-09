@@ -120,6 +120,7 @@ const ClientContentBoard = lazyWithRetry(
 );
 const VideosPage = lazyWithRetry(() => import("./pages/portfolio/VideosPage"));
 const SavedPage = lazyWithRetry(() => import("./pages/portfolio/SavedPage"));
+const FeedPage = lazyWithRetry(() => import("./pages/portfolio/FeedPage"));
 const CompanyProfilePage = lazyWithRetry(
   () => import("./pages/portfolio/CompanyProfilePage"),
 );
@@ -868,6 +869,26 @@ function AppRoutes() {
             >
               <MainLayout>
                 <ContentBoard />
+              </MainLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/feed"
+          element={
+            <ProtectedRoute
+              allowedRoles={[
+                "admin",
+                "content_creator",
+                "editor",
+                "digital_strategist",
+                "creative_strategist",
+                "community_manager",
+                "client",
+              ]}
+            >
+              <MainLayout>
+                <FeedPage />
               </MainLayout>
             </ProtectedRoute>
           }

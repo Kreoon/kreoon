@@ -71,11 +71,17 @@ function getClosestCorner(x: number, y: number): Corner {
 }
 
 /**
- * Obtiene la posición CSS para una esquina
+ * Obtiene la posición CSS para una esquina.
+ *
+ * Fix (Fase 2.5.A.2): el offset inferior sumaba solo MARGIN + safe-area, sin contar la
+ * bottom nav movil fija de creator/editor (~64px) -> KIRO tapaba el ultimo item de la nav.
+ * `--kreoon-bottom-nav-h` la setea MainLayout (0px si la ruta no tiene bottom nav), es la
+ * misma fuente unica que usa el padding-bottom del <main> (src/lib/layoutConstants.ts).
  */
 function getCornerPosition(corner: Corner): { top?: string; bottom?: string; left?: string; right?: string } {
   const safeAreaBottom = 'env(safe-area-inset-bottom, 0px)';
   const safeAreaTop = 'env(safe-area-inset-top, 0px)';
+  const bottomNavHeight = 'var(--kreoon-bottom-nav-h, 0px)';
 
   switch (corner) {
     case 'top-left':
@@ -90,13 +96,13 @@ function getCornerPosition(corner: Corner): { top?: string; bottom?: string; lef
       };
     case 'bottom-left':
       return {
-        bottom: `calc(${MARGIN}px + ${safeAreaBottom})`,
+        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight})`,
         left: `${MARGIN}px`,
       };
     case 'bottom-right':
     default:
       return {
-        bottom: `calc(${MARGIN}px + ${safeAreaBottom})`,
+        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight})`,
         right: `${MARGIN}px`,
       };
   }

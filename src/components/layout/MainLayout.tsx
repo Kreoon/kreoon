@@ -1,4 +1,4 @@
-import { ReactNode, Suspense, useState } from "react";
+import { ReactNode, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -7,6 +7,11 @@ import { IntegratedNotificationHeader } from "@/components/notifications/Integra
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
+import { AccountMenu } from "./AccountMenu";
+import { MoreMenuSheet } from "./MoreMenuSheet";
+import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotificationsDropdown";
+import { StreakWidget } from "@/components/gamification/StreakWidget";
+import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { usePresence } from "@/hooks/usePresence";
@@ -14,9 +19,23 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, LogOut, Sparkles, Scissors, Briefcase, Eye, Clapperboard } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+// Setea/limpia la CSS var que lee KiroFloatingButton para no tapar la bottom nav.
+// Fuente unica: MOBILE_BOTTOM_NAV_HEIGHT_PX (src/lib/layoutConstants.ts).
+function useBottomNavCssVar(hasBottomNav: boolean) {
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      MOBILE_BOTTOM_NAV_CSS_VAR,
+      hasBottomNav ? `${MOBILE_BOTTOM_NAV_HEIGHT_PX}px` : "0px"
+    );
+    return () => {
+      document.documentElement.style.setProperty(MOBILE_BOTTOM_NAV_CSS_VAR, "0px");
+    };
+  }, [hasBottomNav]);
+}
 
 // Page transition variants for smooth animations
 const pageVariants = {
@@ -41,21 +60,21 @@ interface MainLayoutProps {
 }
 
 // Editor navigation items for mobile bottom bar - Kreoon Tech theme
+// Frente 2.5.A: Feed entra (motor de retencion). Kreoon IA/Config salen -> viven en "Mas"
+// (MoreMenuSheet, 5to slot) para no perder acceso a nada.
 const editorMobileNavigation = [
   { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Feed", href: "/feed", icon: Compass },
   { name: "Producciones", href: "/board", icon: Kanban },
   { name: "Market", href: "/marketplace", icon: Briefcase },
-  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
-  { name: "Config", href: "/settings", icon: Settings },
 ];
 
 // Creator navigation items for mobile bottom bar
 const creatorMobileNavigation = [
   { name: "Hub", href: "/creator-dashboard", icon: LayoutDashboard },
+  { name: "Feed", href: "/feed", icon: Compass },
   { name: "Producciones", href: "/board", icon: Kanban },
   { name: "Market", href: "/marketplace", icon: Briefcase },
-  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
-  { name: "Config", href: "/settings", icon: Settings },
 ];
 
 // Minimal loader shown only in the content area while a lazy page chunk loads
@@ -88,7 +107,7 @@ export function MainLayout({
   children
 }: MainLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isClient, isAdmin, activeRole, signOut, profile, user } = useAuth();
+  const { isClient, isAdmin, activeRole, profile, user } = useAuth();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const location = useLocation();
   const navigate = useNavigate();
@@ -104,6 +123,13 @@ export function MainLayout({
 
   // Detect marketplace routes for dark styling
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
+  // Feed (modo inmersivo TikTok-style en movil) necesita el mismo full-bleed sin p-4/p-6
+  const isMarketplaceRouteOrFeed = isMarketplaceRoute || location.pathname === '/feed';
+
+  // Solo creator/editor tienen bottom nav movil fija -> unica llamada incondicional
+  // (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo, que hacen return temprano)
+  const hasMobileBottomNav = (activeRole === 'creator' || activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin;
+  useBottomNavCssVar(hasMobileBottomNav);
 
   // For content creators, show creator-specific layout with bottom nav on mobile
   if ((activeRole === 'creator' || activeRole === 'content_creator') && !isAdmin) {
@@ -122,35 +148,29 @@ export function MainLayout({
             </div>
             <span className="text-sm font-bold truncate">Panel Creador</span>
           </div>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/creator-dashboard')}
-              className="h-8 w-8 rounded-full p-0"
-            >
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-            {marketplaceEnabled && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/marketplace')}
-                className="h-8 w-8 rounded-full"
-              >
-                <Briefcase className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <StreakWidget size="sm" />
+            <SocialNotificationsDropdown />
+            <AccountMenu
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                    <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              }
+            />
           </div>
         </header>
 
         {/* Creator Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           <div className="flex justify-around py-2">
             {creatorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
               const isActive = item.href.startsWith('/marketplace')
@@ -161,7 +181,7 @@ export function MainLayout({
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors",
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors min-h-[44px]",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
@@ -170,6 +190,7 @@ export function MainLayout({
                 </NavLink>
               );
             })}
+            <MoreMenuSheet dashboardHref="/creator-dashboard" />
           </div>
         </nav>
 
@@ -184,12 +205,12 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "pb-16 md:pb-0 transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -226,35 +247,29 @@ export function MainLayout({
             </div>
             <span className="text-sm font-bold truncate">Panel Editor</span>
           </div>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/editor-dashboard')}
-              className="h-8 w-8 rounded-full p-0"
-            >
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-            {marketplaceEnabled && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/marketplace')}
-                className="h-8 w-8 rounded-full"
-              >
-                <Briefcase className="h-4 w-4" />
-              </Button>
-            )}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <StreakWidget size="sm" />
+            <SocialNotificationsDropdown />
+            <AccountMenu
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                    <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              }
+            />
           </div>
         </header>
 
         {/* Editor Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden">
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
           <div className="flex justify-around py-2">
             {editorMobileNavigation.filter(item => item.href !== '/marketplace' || marketplaceEnabled).map((item) => {
               const isActive = item.href.startsWith('/marketplace')
@@ -265,7 +280,7 @@ export function MainLayout({
                   key={item.name}
                   to={item.href}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors",
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors min-h-[44px]",
                     isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
@@ -274,6 +289,7 @@ export function MainLayout({
                 </NavLink>
               );
             })}
+            <MoreMenuSheet dashboardHref="/editor-dashboard" />
           </div>
         </nav>
 
@@ -288,12 +304,12 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "pb-16 md:pb-0 transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
             "md:pt-14"
           )}
         >
-          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -377,20 +393,20 @@ export function MainLayout({
               <span className="text-sm font-bold truncate">Portal Cliente</span>
             </div>
           </div>
-          <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(user?.id ? `/p/${user.id}` : '/client-dashboard')}
-              className="h-8 w-8 rounded-full p-0"
-            >
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-                <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                  {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <StreakWidget size="sm" />
+            <AccountMenu
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                    <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              }
+            />
             {clientMarketplaceEnabled && (
               <Button
                 variant="ghost"
@@ -421,7 +437,7 @@ export function MainLayout({
           )}
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
         >
-          <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
+          <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
             <Suspense fallback={<ContentAreaLoader />}>
               <PageWrapper locationKey={location.pathname}>
                 {children}
@@ -471,20 +487,20 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">KREOON</span>
           </div>
         </div>
-        <div className="flex items-center gap-0.5 flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(user?.id ? `/p/${user.id}` : '/marketplace')}
-            className="h-8 w-8 rounded-full p-0"
-          >
-            <Avatar className="h-7 w-7">
-              <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-              <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <StreakWidget size="sm" />
+          <AccountMenu
+            trigger={
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                  <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                    {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            }
+          />
           <Button
             variant="ghost"
             size="icon"
@@ -512,7 +528,7 @@ export function MainLayout({
           "md:pt-14"
         )}
       >
-        <div className={cn("min-h-screen", isMarketplaceRoute ? "bg-background" : "p-4 md:p-6")}>
+        <div className={cn("min-h-screen", isMarketplaceRouteOrFeed ? "bg-background" : "p-4 md:p-6")}>
           <Suspense fallback={<ContentAreaLoader />}>
             <PageWrapper locationKey={location.pathname}>
               {children}

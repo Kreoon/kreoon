@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { VideoPlayerProvider } from '@/contexts/VideoPlayerContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { KreoonSkeleton } from '@/components/ui/kreoon/KreoonSkeleton';
@@ -9,7 +10,6 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useFeedPosts, FeedTab, FeedPost } from '@/hooks/useFeedPosts';
 import { SocialFeed } from '@/components/social/SocialFeed';
 import { SocialFeedItem } from '@/components/social/SocialFeedCard';
-import { MobileBottomNav } from '@/components/layout/MobileBottomNav';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch';
 import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
@@ -17,8 +17,6 @@ import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
 import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
 import { SuggestedProfiles } from '@/components/portfolio/feed/SuggestedProfiles';
 import { MediaUploader } from '@/components/portfolio/MediaUploader';
-import { StreakWidget } from '@/components/gamification/StreakWidget';
-import { DailyMissionsSheet } from '@/components/gamification/DailyMissionsSheet';
 import { RefreshCw, Plus, ImageIcon, Film, Compass, Grid3x3, Rows3, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -181,13 +179,14 @@ export default function FeedPage() {
   }
 
   // ── Modo inmersivo movil (TikTok-style) ──
+  // Vive DENTRO del chrome real de MainLayout (header + bottom nav globales, Fase 2.5.A) —
+  // no duplica header/nav propios. Altura = viewport menos header (3.5rem = h-14) menos
+  // bottom nav (--kreoon-bottom-nav-h, seteada por MainLayout) menos safe-area.
   if (isMobileDevice && mobileViewMode === 'immersive') {
     return (
-      <div className="relative h-[100dvh] w-full bg-black">
-        <div
-          className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
-        >
+      <VideoPlayerProvider>
+      <div className="relative h-[calc(100dvh-3.5rem-var(--kreoon-bottom-nav-h,0px)-env(safe-area-inset-bottom))] w-full bg-black">
+        <div className="absolute top-2 left-0 right-0 z-30 flex items-center justify-between px-4">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FeedTab)}>
             <TabsList className="bg-black/40 border border-white/10">
               <TabsTrigger value="for_you" className="text-xs text-white data-[state=active]:bg-primary">Para ti</TabsTrigger>
@@ -195,17 +194,13 @@ export default function FeedPage() {
               <TabsTrigger value="niche" className="text-xs text-white data-[state=active]:bg-primary">Por nicho</TabsTrigger>
             </TabsList>
           </Tabs>
-          <div className="flex items-center gap-1.5">
-            <StreakWidget size="sm" className="bg-black/40 border-white/10" />
-            <DailyMissionsSheet className="bg-black/40 border-white/10" />
-            <button
-              onClick={() => setMobileViewMode('grid')}
-              className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white"
-              aria-label="Ver como grilla"
-            >
-              <Grid3x3 className="h-5 w-5" />
-            </button>
-          </div>
+          <button
+            onClick={() => setMobileViewMode('grid')}
+            className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white"
+            aria-label="Ver como grilla"
+          >
+            <Grid3x3 className="h-5 w-5" />
+          </button>
         </div>
 
         {isLoading ? (
@@ -213,7 +208,7 @@ export default function FeedPage() {
             <KreoonSkeleton variant="rectangular" className="h-full w-full" animation="pulse" />
           </div>
         ) : activeTab === 'following' && posts.length === 0 ? (
-          <div className="h-full w-full overflow-y-auto bg-background flex flex-col items-center justify-center px-4 pt-24 pb-20">
+          <div className="h-full w-full overflow-y-auto bg-background flex flex-col items-center justify-center px-4 pt-24 pb-4">
             <p className="text-foreground font-medium mb-1">Aún no sigues a nadie</p>
             <p className="text-sm text-muted-foreground mb-4 text-center">
               Descubre creadores de tu nicho y arma tu feed
@@ -231,8 +226,6 @@ export default function FeedPage() {
           />
         )}
 
-        <MobileBottomNav onPublishClick={() => setShowPostUploader(true)} />
-
         {user?.id && (
           <MediaUploader
             userId={user.id}
@@ -246,6 +239,7 @@ export default function FeedPage() {
           />
         )}
       </div>
+      </VideoPlayerProvider>
     );
   }
 
@@ -256,7 +250,7 @@ export default function FeedPage() {
       onTouchStart={isMobileDevice ? handleTouchStart : undefined}
       onTouchMove={isMobileDevice ? handleTouchMove : undefined}
       onTouchEnd={isMobileDevice ? handleTouchEnd : undefined}
-      className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-background pb-16 md:pb-0"
+      className="h-full overflow-y-auto md:pl-20 lg:pl-64 bg-background"
     >
       {pullDistance > 0 && (
         <div
@@ -267,15 +261,10 @@ export default function FeedPage() {
         </div>
       )}
 
-      <header
-        className="sticky top-0 z-30 bg-card border-b border-white/5"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      >
+      <header className="sticky top-0 z-30 bg-card border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center gap-2 mb-3">
             <EnhancedSmartSearch className="mb-0 flex-1" />
-            <StreakWidget size="sm" />
-            <DailyMissionsSheet />
             <div className="hidden md:flex items-center gap-1">
               <Button
                 variant="ghost"
@@ -414,7 +403,7 @@ export default function FeedPage() {
         />
       )}
 
-      <div className="fixed bottom-24 right-4 z-40 md:bottom-8">
+      <div className="fixed right-4 z-40 bottom-[calc(1rem+var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:bottom-8">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="lg" className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow">
@@ -433,8 +422,6 @@ export default function FeedPage() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      {isMobileDevice && <MobileBottomNav onPublishClick={() => setShowPostUploader(true)} />}
     </div>
   );
 }

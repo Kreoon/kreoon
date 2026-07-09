@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Loader2, Video, Clock, CheckCircle2, DollarSign, CreditCard,
   Star, Clapperboard, ArrowRight, Store, AlertTriangle
@@ -60,7 +60,11 @@ export default function CreatorDashboard() {
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
   const [videoViewer, setVideoViewer] = useState<Content | null>(null);
   const [thisMonthActive, setThisMonthActive] = useState(false);
-  const [dashboardTab, setDashboardTab] = useState<DashboardTab>('studio');
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab');
+  const [dashboardTab, setDashboardTab] = useState<DashboardTab>(
+    TABS.some((t) => t.id === initialTab) ? (initialTab as DashboardTab) : 'studio'
+  );
   const [kpiDialog, setKpiDialog] = useState<{
     open: boolean; title: string;
     studioContent: Content[]; marketplaceProjects: MarketplaceProject[];
