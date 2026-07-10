@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ export interface KreoonButtonProps
   size?: KreoonButtonSize;
   /** Muestra spinner y deshabilita interacción */
   loading?: boolean;
+  /** Renderiza el hijo directo como elemento raiz (patron shadcn/Radix Slot) — util para <a>/<Link> con estilos de boton */
+  asChild?: boolean;
   /** Clases CSS adicionales */
   className?: string;
 }
@@ -49,6 +52,7 @@ const KreoonButton = React.forwardRef<HTMLButtonElement, KreoonButtonProps>(
       size = "md",
       loading = false,
       disabled = false,
+      asChild = false,
       className,
       onClick,
       ...props
@@ -56,12 +60,14 @@ const KreoonButton = React.forwardRef<HTMLButtonElement, KreoonButtonProps>(
     ref,
   ) => {
     const isDisabled = disabled || loading;
+    // Slot exige UN solo hijo: con asChild no se inyecta el spinner (loading no aplica a
+    // links) ni atributos de <button> (type/disabled) que no existen en <a>.
+    const Comp = asChild ? Slot : "button";
 
     return (
-      <button
+      <Comp
         ref={ref}
-        type="button"
-        disabled={isDisabled}
+        {...(asChild ? {} : { type: "button" as const, disabled: isDisabled })}
         onClick={loading ? undefined : onClick}
         className={cn(
           "inline-flex items-center justify-center gap-2 whitespace-nowrap",
@@ -74,11 +80,15 @@ const KreoonButton = React.forwardRef<HTMLButtonElement, KreoonButtonProps>(
         )}
         {...props}
       >
-        {loading ? (
-          <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden />
-        ) : null}
-        {children}
-      </button>
+        {asChild ? (
+          children
+        ) : (
+          <>
+            {loading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden /> : null}
+            {children}
+          </>
+        )}
+      </Comp>
     );
   },
 );

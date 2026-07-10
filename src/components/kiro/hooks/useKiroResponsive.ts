@@ -63,17 +63,23 @@ function detectTouchDevice(): boolean {
  * Obtiene el valor de safe-area-inset-bottom
  */
 function getSafeAreaBottom(): number {
-  if (typeof window === 'undefined') return 0;
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !document.body) return 0;
 
-  // Crear elemento temporal para leer CSS env()
-  const div = document.createElement('div');
-  div.style.paddingBottom = 'env(safe-area-inset-bottom, 0px)';
-  document.body.appendChild(div);
-  const computedStyle = window.getComputedStyle(div);
-  const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-  document.body.removeChild(div);
-
-  return paddingBottom;
+  // Probe DOM temporal para leer CSS env(). Se llama tambien desde el initializer de useState
+  // (durante render, doble bajo StrictMode) — todo va en try/catch y el cleanup usa div.remove()
+  // (no lanza si el nodo ya no tiene padre), NUNCA document.body.removeChild(div) que crasheaba
+  // con NotFoundError si el probe ya habia sido removido/reparentado entre medio.
+  try {
+    const div = document.createElement('div');
+    div.style.cssText =
+      'position:fixed;bottom:0;left:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom, 0px);';
+    document.body.appendChild(div);
+    const paddingBottom = parseFloat(window.getComputedStyle(div).paddingBottom) || 0;
+    div.remove();
+    return paddingBottom;
+  } catch {
+    return 0;
+  }
 }
 
 /**
