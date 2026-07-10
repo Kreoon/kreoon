@@ -356,7 +356,8 @@ export default function FeedPage() {
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-1">
               {gridItems.map((item, index) => (
                 <FeedGridCard
-                  key={item.id}
+                  // Scroll infinito recicla contenido — key con index para evitar colision
+                  key={`${index}-${item.id}`}
                   item={item}
                   priority={index < 8}
                   onClick={() => { setSelectedIndex(index); setModalOpen(true); }}

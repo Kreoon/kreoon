@@ -143,7 +143,9 @@ export function SocialFeed({
         const inRenderWindow = Math.abs(index - activeIndex) <= RENDER_WINDOW;
         return (
           <div
-            key={item.id}
+            // Scroll infinito recicla contenido (mismo post_id puede repetirse mas adelante
+            // en el array) — la key debe incluir el index o React choca por keys duplicadas.
+            key={`${index}-${item.id}`}
             data-index={index}
             className="h-[100dvh] w-full"
           >

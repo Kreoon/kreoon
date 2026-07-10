@@ -54,10 +54,16 @@ export function useFeedPosts(tab: FeedTab, niche: string | null = null) {
       return (data || []) as FeedPost[];
     },
     initialPageParam: null as { createdAt: string; id: string } | null,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage || lastPage.length < PAGE_SIZE) return undefined;
-      const last = lastPage[lastPage.length - 1];
-      return { createdAt: last.created_at, id: last.post_id };
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage && lastPage.length === PAGE_SIZE) {
+        const last = lastPage[lastPage.length - 1];
+        return { createdAt: last.created_at, id: last.post_id };
+      }
+      // Fin real de contenido nuevo (pagina parcial o vacia). Scroll infinito estilo TikTok:
+      // si ya se cargo algo, reciclar desde el principio (mismo pageParam que initialPageParam)
+      // en vez de cortar el scroll. Si el feed esta genuinamente vacio, no reciclar en loop.
+      const totalLoaded = allPages.reduce((sum, p) => sum + (p?.length ?? 0), 0);
+      return totalLoaded > 0 ? null : undefined;
     },
     staleTime: 5 * 60 * 1000,
   });
