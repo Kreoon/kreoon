@@ -7,6 +7,7 @@ import { IntegratedNotificationHeader } from "@/components/notifications/Integra
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
+import { KiroHeaderButton } from "@/components/kiro/KiroHeaderButton";
 import { AccountMenu } from "./AccountMenu";
 import { MoreMenuSheet } from "./MoreMenuSheet";
 import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
@@ -174,6 +175,7 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Academia</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
+            <KiroHeaderButton />
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -227,7 +229,7 @@ export function MainLayout({
           </Suspense>
         </main>
 
-        <KiroWidget />
+        <KiroWidget hideFloatingButton />
       </div>
     );
   }
@@ -252,6 +254,7 @@ export function MainLayout({
           <div className="flex items-center gap-1 flex-shrink-0">
             <StreakWidget size="sm" />
             <SocialNotificationsDropdown />
+            <KiroHeaderButton />
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -321,7 +324,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget />
+        <KiroWidget hideFloatingButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -351,6 +354,7 @@ export function MainLayout({
           <div className="flex items-center gap-1 flex-shrink-0">
             <StreakWidget size="sm" />
             <SocialNotificationsDropdown />
+            <KiroHeaderButton />
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -420,7 +424,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget />
+        <KiroWidget hideFloatingButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -496,6 +500,7 @@ export function MainLayout({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <StreakWidget size="sm" />
+            <KiroHeaderButton />
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -548,7 +553,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget />
+        <KiroWidget hideFloatingButton />
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -590,6 +595,7 @@ export function MainLayout({
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <StreakWidget size="sm" />
+          <KiroHeaderButton />
           <AccountMenu
             trigger={
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -639,7 +645,7 @@ export function MainLayout({
       </main>
 
       {/* KIRO AI Assistant */}
-      <KiroWidget />
+      <KiroWidget hideFloatingButton />
 
       {/* Tour Provider */}
       <TourProvider />

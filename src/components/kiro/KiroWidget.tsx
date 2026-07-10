@@ -98,7 +98,13 @@ const NAV_ICONS: { id: ActivePanel; icon: typeof Zap; label: string }[] = [
 // MAIN WIDGET COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════
 
-export function KiroWidget() {
+interface KiroWidgetProps {
+  /** Oculta el boton flotante draggable en movil — se reemplaza por un icono fijo en el
+   * header (junto a notificaciones/avatar) para que no quede "perdido" sobre el contenido. */
+  hideFloatingButton?: boolean;
+}
+
+export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {}) {
   const location = useLocation();
   // ─── Context ───
   const {
@@ -521,20 +527,22 @@ export function KiroWidget() {
   if (isMobile) {
     return (
       <>
-        <KiroFloatingButton
-          kiroState={kiroState}
-          expression={expression}
-          unreadCount={unreadCount}
-          onOpen={() => {
-            kiroSounds.play('panel_open');
-            setIsOpen(true);
-            setActivePanel('chat');
-          }}
-          keyboardVisible={keyboardVisible}
-          preferredCorner={effectiveCorner}
-          onCornerChange={handleCornerChange}
-          extraBottomOffset={feedExtraBottomOffset}
-        />
+        {!hideFloatingButton && (
+          <KiroFloatingButton
+            kiroState={kiroState}
+            expression={expression}
+            unreadCount={unreadCount}
+            onOpen={() => {
+              kiroSounds.play('panel_open');
+              setIsOpen(true);
+              setActivePanel('chat');
+            }}
+            keyboardVisible={keyboardVisible}
+            preferredCorner={effectiveCorner}
+            onCornerChange={handleCornerChange}
+            extraBottomOffset={feedExtraBottomOffset}
+          />
+        )}
 
         <KiroBottomSheet
           isOpen={isOpen}
