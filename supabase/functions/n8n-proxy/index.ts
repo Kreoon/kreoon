@@ -5,8 +5,10 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// dev.kreoon.com ELIMINADO (2026-07-10): el VPS detras de ese subdominio se perdio y el DNS
+// fue borrado (incidente subdomain takeover). Nunca re-agregar dominios cuyo host no controlemos
+// — este proxy postea payloads server-side al dominio que se le pida de esta lista.
 const ALLOWED_WEBHOOK_DOMAINS = [
-  'dev.kreoon.com',
   'n8n.kreoon.com',
   'hooks.n8n.cloud',
 ];
