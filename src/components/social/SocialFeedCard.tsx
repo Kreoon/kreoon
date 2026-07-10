@@ -2,42 +2,11 @@ import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHand
 import { Heart, MessageCircle, Share2, Volume2, VolumeX, Play, Pause, Loader2, Bookmark } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ExpandableText } from '@/components/ui/expandable-text';
 import { HLSVideoPlayer, HLSVideoPlayerRef } from '@/components/video/HLSVideoPlayer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { getBunnyVideoUrls } from '@/hooks/useHLSPlayer';
 import { ReactionButton, ReactionType } from '@/components/social/ReactionButton';
 import { FollowButton } from '@/components/social/FollowButton';
 
-// Check if URL is a Bunny embed URL
-function isBunnyEmbed(url: string): boolean {
-  return url.includes('iframe.mediadelivery.net') || url.includes('video.bunnycdn.com');
-}
-
-// Extract video ID from Bunny embed URL
-function extractBunnyVideoId(url: string): string | null {
-  const patterns = [
-    /iframe\.mediadelivery\.net\/embed\/\d+\/([a-f0-9-]+)/i,
-    /video\.bunnycdn\.com\/embed\/\d+\/([a-f0-9-]+)/i,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) return match[1];
-  }
-  return null;
-}
-
-// Build Bunny embed URL with proper parameters
-function buildBunnyEmbedUrl(url: string, autoplay: boolean, muted: boolean, loop: boolean): string {
-  const baseUrl = url.split('?')[0];
-  const params = new URLSearchParams({
-    autoplay: autoplay ? 'true' : 'false',
-    muted: muted ? 'true' : 'false',
-    loop: loop ? 'true' : 'false',
-    preload: 'true',
-  });
-  return `${baseUrl}?${params.toString()}`;
-}
 export interface SocialFeedItem {
   id: string;
   title: string;
@@ -286,37 +255,23 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {/* Media Container - 100vh with proper aspect ratio */}
         <div className="relative w-full h-full flex items-center justify-center">
           {isVideo ? (
-            // Check if it's a Bunny embed URL - use iframe
-            isBunnyEmbed(item.videoUrls?.[0] || item.mediaUrl) ? (
-              <iframe
-                src={buildBunnyEmbedUrl(
-                  item.videoUrls?.[0] || item.mediaUrl,
-                  isActive && !isPaused,
-                  isMuted,
-                  true
-                )}
-                className="w-full h-full"
-                style={{ border: 'none' }}
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-              />
-            ) : (
-              // Native video with HLS support
-              <HLSVideoPlayer
-                ref={playerRef}
-                src={item.videoUrls?.[0] || item.mediaUrl}
-                poster={item.thumbnailUrl || undefined}
-                autoPlay={isActive && !isPaused}
-                muted={isMuted}
-                loop
-                showControls={false}
-                aspectRatio="auto"
-                objectFit="contain"
-                className="w-full h-full"
-                onLoadComplete={handleVideoLoadComplete}
-              />
-            )
+            // getBunnyVideoUrls() ya resuelve URLs de embed (iframe.mediadelivery.net/embed/...)
+            // a HLS/MP4 directo — el iframe embed de Bunny mostraba su propio nombre de archivo,
+            // controles nativos, y reiniciaba el video al mutear (el src del iframe cambiaba con
+            // cada toggle). Siempre usar el player propio, sin excepcion.
+            <HLSVideoPlayer
+              ref={playerRef}
+              src={item.videoUrls?.[0] || item.mediaUrl}
+              poster={item.thumbnailUrl || undefined}
+              autoPlay={isActive && !isPaused}
+              muted={isMuted}
+              loop
+              showControls={false}
+              aspectRatio="auto"
+              objectFit="contain"
+              className="w-full h-full"
+              onLoadComplete={handleVideoLoadComplete}
+            />
           ) : (
             <div className="relative w-full h-full flex items-center justify-center">
               {!imageLoaded && (
@@ -382,11 +337,13 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
             </div>
           )}
 
-          {/* Volumen — justo encima del boton de me gusta */}
+          {/* Volumen — justo encima del boton de me gusta. Todos los botones de esta columna
+              comparten el mismo tamaño fijo (h-11 w-11 = 44px, target minimo de accesibilidad)
+              en vez de padding+icon-size sueltos que quedaban todos de tamaño distinto. */}
           {isVideo && (
             <button
               onClick={handleMuteToggle}
-              className="p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+              className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
             >
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </button>
@@ -395,7 +352,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
           {/* Reaccion (5 tipos) o like binario legacy */}
           {canInteract && item.supportsReactions ? (
             <div className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <div className="p-2.5 rounded-full bg-black/40">
+              <div className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40">
                 <ReactionButton
                   currentReaction={item.myReaction}
                   onReact={(type) => onReact?.(type)}
@@ -412,12 +369,12 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               className="flex flex-col items-center gap-1"
             >
               <div className={cn(
-                "p-2.5 rounded-full transition-all duration-200 active:scale-90",
+                "h-11 w-11 flex items-center justify-center rounded-full transition-all duration-200 active:scale-90",
                 item.isLiked
                   ? "bg-red-500 text-white"
                   : "bg-black/40 text-white"
               )}>
-                <Heart className="h-6 w-6" fill={item.isLiked ? "currentColor" : "none"} />
+                <Heart className="h-5 w-5" fill={item.isLiked ? "currentColor" : "none"} />
               </div>
               <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(item.likesCount)}</span>
             </button>
@@ -430,10 +387,10 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               className="flex flex-col items-center gap-1"
             >
               <div className={cn(
-                "p-3 rounded-full transition-all duration-200 active:scale-90",
+                "h-11 w-11 flex items-center justify-center rounded-full transition-all duration-200 active:scale-90",
                 item.isSaved ? "bg-primary text-white" : "bg-black/40 text-white"
               )}>
-                <Bookmark className="h-7 w-7" fill={item.isSaved ? "currentColor" : "none"} />
+                <Bookmark className="h-5 w-5" fill={item.isSaved ? "currentColor" : "none"} />
               </div>
             </button>
           )}
@@ -444,8 +401,8 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               onClick={(e) => { e.stopPropagation(); onComment(); }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="p-3 rounded-full bg-black/40 text-white active:scale-90 transition-transform">
-                <MessageCircle className="h-7 w-7" />
+              <div className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white active:scale-90 transition-transform">
+                <MessageCircle className="h-5 w-5" />
               </div>
               {item.commentsCount !== undefined && (
                 <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(item.commentsCount)}</span>
@@ -459,8 +416,8 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               onClick={(e) => { e.stopPropagation(); onShare(); }}
               className="flex flex-col items-center gap-1"
             >
-              <div className="p-3 rounded-full bg-black/40 text-white active:scale-90 transition-transform">
-                <Share2 className="h-7 w-7" />
+              <div className="h-11 w-11 flex items-center justify-center rounded-full bg-black/40 text-white active:scale-90 transition-transform">
+                <Share2 className="h-5 w-5" />
               </div>
             </button>
           )}
@@ -478,7 +435,6 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               </button>
             )}
           </div>
-          <ExpandableText text={item.title} className="text-white text-sm drop-shadow-lg" maxLines={2} />
           {item.clientName && (
             <p className="text-white/80 text-xs mt-1 drop-shadow-lg">🏢 {item.clientName}</p>
           )}
