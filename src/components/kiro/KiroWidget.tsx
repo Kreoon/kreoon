@@ -508,14 +508,15 @@ export function KiroWidget() {
   // ═══════════════════════════════════════════════════════════════════════════
   // MOBILE RENDER
   // ═══════════════════════════════════════════════════════════════════════════
-  // En /feed inmersivo la columna de acciones (corazon/guardar/compartir) vive en
-  // right-3, bottom-right — mismo corner default de KIRO. Si el usuario nunca movio
-  // KIRO de su default (bottom-right), lo corremos a bottom-left solo en esta ruta;
-  // si ya lo arrastro a otro lado a proposito, se respeta esa eleccion.
-  const effectiveCorner =
-    location.pathname === '/feed' && kiroSettings.preferredCorner === 'bottom-right'
-      ? 'bottom-left'
-      : kiroSettings.preferredCorner;
+  // En /feed inmersivo, a pedido directo, KIRO se alinea en la MISMA columna que audio/me
+  // gusta/guardar/compartir (right-3, mismo lado) pero arriba de toda la pila — no se mueve
+  // a otro corner. Si el usuario arrastro KIRO a un corner distinto de bottom-right, se
+  // respeta esa eleccion (no se fuerza la alineacion).
+  const isOnFeed = location.pathname === '/feed';
+  const effectiveCorner = kiroSettings.preferredCorner;
+  // Alto aprox. de la columna de acciones (avatar+follow, audio, reaccion, guardar, compartir
+  // con sus gaps) — no hay medicion real del DOM, es un estimado para no tapar los botones.
+  const feedExtraBottomOffset = isOnFeed && effectiveCorner === 'bottom-right' ? 380 : 0;
 
   if (isMobile) {
     return (
@@ -532,6 +533,7 @@ export function KiroWidget() {
           keyboardVisible={keyboardVisible}
           preferredCorner={effectiveCorner}
           onCornerChange={handleCornerChange}
+          extraBottomOffset={feedExtraBottomOffset}
         />
 
         <KiroBottomSheet

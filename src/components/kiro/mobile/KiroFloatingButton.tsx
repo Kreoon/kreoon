@@ -26,6 +26,8 @@ interface KiroFloatingButtonProps {
   preferredCorner?: Corner;
   /** Callback al cambiar esquina preferida */
   onCornerChange?: (corner: Corner) => void;
+  /** Offset extra en px sumado al bottom (ej: para alinearlo arriba de la columna de acciones del feed) */
+  extraBottomOffset?: number;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -78,10 +80,14 @@ function getClosestCorner(x: number, y: number): Corner {
  * `--kreoon-bottom-nav-h` la setea MainLayout (0px si la ruta no tiene bottom nav), es la
  * misma fuente unica que usa el padding-bottom del <main> (src/lib/layoutConstants.ts).
  */
-function getCornerPosition(corner: Corner): { top?: string; bottom?: string; left?: string; right?: string } {
+function getCornerPosition(
+  corner: Corner,
+  extraBottomOffset = 0,
+): { top?: string; bottom?: string; left?: string; right?: string } {
   const safeAreaBottom = 'env(safe-area-inset-bottom, 0px)';
   const safeAreaTop = 'env(safe-area-inset-top, 0px)';
   const bottomNavHeight = 'var(--kreoon-bottom-nav-h, 0px)';
+  const extra = extraBottomOffset ? ` + ${extraBottomOffset}px` : '';
 
   switch (corner) {
     case 'top-left':
@@ -96,13 +102,13 @@ function getCornerPosition(corner: Corner): { top?: string; bottom?: string; lef
       };
     case 'bottom-left':
       return {
-        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight})`,
+        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight}${extra})`,
         left: `${MARGIN}px`,
       };
     case 'bottom-right':
     default:
       return {
-        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight})`,
+        bottom: `calc(${MARGIN}px + ${safeAreaBottom} + ${bottomNavHeight}${extra})`,
         right: `${MARGIN}px`,
       };
   }
@@ -120,6 +126,7 @@ export function KiroFloatingButton({
   keyboardVisible = false,
   preferredCorner: initialCorner,
   onCornerChange,
+  extraBottomOffset = 0,
 }: KiroFloatingButtonProps) {
   // Estado
   const [corner, setCorner] = useState<Corner>(() => {
@@ -240,7 +247,7 @@ export function KiroFloatingButton({
   // ─────────────────────────────────────────────────────────────────────────
 
   const stateColor = KIRO_STATES[kiroState]?.color || '#a78bfa';
-  const cornerPos = getCornerPosition(corner);
+  const cornerPos = getCornerPosition(corner, extraBottomOffset);
 
   // Estilo base vs estilo de drag
   const buttonStyle: React.CSSProperties = isDragging && dragPosition
