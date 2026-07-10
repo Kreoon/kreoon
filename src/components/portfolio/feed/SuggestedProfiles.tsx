@@ -195,7 +195,7 @@ export function SuggestedProfiles({ variant = 'carousel', limit = 5, onDismiss, 
   };
 
   const handleProfileClick = (profileId: string) => {
-    navigate(`/profile/${profileId}`);
+    navigate(`/marketplace/creator/${profileId}`);
   };
 
   if (loading) {

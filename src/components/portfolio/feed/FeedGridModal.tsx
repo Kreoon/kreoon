@@ -243,7 +243,7 @@ function FeedGridModalComponent({
 
   const handleProfileClick = useCallback((userId: string) => {
     onClose();
-    navigate(`/profile/${userId}`);
+    navigate(`/marketplace/creator/${userId}`);
   }, [navigate, onClose]);
 
   // Pause all background videos when modal opens and scroll to initial index

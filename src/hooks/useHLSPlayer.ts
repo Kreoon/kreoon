@@ -672,12 +672,9 @@ export function useHLSPlayer(
     if (autoPlay) {
       playWithFallback(video, currentMuted);
     } else {
+      // NO resetear currentTime aca — pausar (slide fuera de vista o tap manual via autoPlay
+      // pasando a false) debe conservar la posicion, retomar donde quedo al reactivarse.
       video.pause();
-      try {
-        video.currentTime = 0;
-      } catch {
-        // ignore
-      }
     }
   }, [autoPlay, hlsUrl, playWithFallback, currentMuted]);
 
@@ -744,12 +741,9 @@ export function useHLSPlayer(
   const pause = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
+    // NO resetear currentTime a 0 aca — pausar (tap manual o slide fuera de vista) debe
+    // conservar la posicion exacta; reanudar retoma desde ahi mismo, no reinicia el video.
     video.pause();
-    try {
-      video.currentTime = 0;
-    } catch {
-      // ignore
-    }
   }, []);
 
   const toggleMute = useCallback(() => {

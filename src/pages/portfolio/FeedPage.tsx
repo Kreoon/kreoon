@@ -264,7 +264,7 @@ export default function FeedPage() {
             onReact={handleReact}
             onLike={handleLikeLegacy}
             onSave={handleSave}
-            onProfileClick={(creatorId) => navigate(`/profile/${creatorId}`)}
+            onProfileClick={(creatorId) => navigate(`/marketplace/creator/${creatorId}`)}
             onLoadMore={() => hasNextPage && !isFetchingNextPage && fetchNextPage()}
           />
         )}
