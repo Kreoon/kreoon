@@ -355,16 +355,6 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none" />
 
-        {/* Volume toggle for videos */}
-        {isVideo && (
-          <button
-            onClick={handleMuteToggle}
-            className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-          >
-            {isMuted ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
-          </button>
-        )}
-
         {/* Right side actions - TikTok style */}
         {/* bottom usa la altura real de la bottom nav (--kreoon-bottom-nav-h, Fase 2.5) para no
             quedar tapado — antes bottom-28 fijo se metia debajo de la nav en creator/editor */}
@@ -391,14 +381,24 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
             </div>
           )}
 
+          {/* Volumen — justo encima del boton de me gusta */}
+          {isVideo && (
+            <button
+              onClick={handleMuteToggle}
+              className="p-2.5 rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
+            >
+              {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+            </button>
+          )}
+
           {/* Reaccion (5 tipos) o like binario legacy */}
           {canInteract && item.supportsReactions ? (
             <div className="flex flex-col items-center gap-1" onClick={(e) => e.stopPropagation()}>
-              <div className="p-3 rounded-full bg-black/40">
+              <div className="p-2.5 rounded-full bg-black/40">
                 <ReactionButton
                   currentReaction={item.myReaction}
                   onReact={(type) => onReact?.(type)}
-                  size="lg"
+                  size="md"
                 />
               </div>
               <span className="text-white text-xs font-semibold drop-shadow-lg">
@@ -411,12 +411,12 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               className="flex flex-col items-center gap-1"
             >
               <div className={cn(
-                "p-3 rounded-full transition-all duration-200 active:scale-90",
+                "p-2.5 rounded-full transition-all duration-200 active:scale-90",
                 item.isLiked
                   ? "bg-red-500 text-white"
                   : "bg-black/40 text-white"
               )}>
-                <Heart className="h-7 w-7" fill={item.isLiked ? "currentColor" : "none"} />
+                <Heart className="h-6 w-6" fill={item.isLiked ? "currentColor" : "none"} />
               </div>
               <span className="text-white text-xs font-semibold drop-shadow-lg">{formatCount(item.likesCount)}</span>
             </button>
