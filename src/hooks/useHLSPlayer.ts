@@ -664,7 +664,13 @@ export function useHLSPlayer(
     // useEffect de mas abajo ([currentMuted]) escribiendo video.muted directo, sin reload.
   }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, networkQuality, fastStart, connectionAware, fallbackToMp4, playWithFallback, candidates.length, sourceIndex]);
 
-  // React to autoPlay changes
+  // React to autoPlay changes — SOLO debe reaccionar a autoPlay (o cambio de fuente), NUNCA
+  // a currentMuted: antes currentMuted estaba en las deps y CADA toggle de audio volvia a
+  // llamar video.play() aca (ademas del play() sincrono que ya dispara el tap/boton). Ese
+  // play() async, disparado desde un efecto (no dentro del gesto de click), puede ser
+  // rechazado en silencio por la politica de autoplay de iOS Safari -> video se queda negro
+  // y no se recupera solo. El sync de mute en caliente lo maneja el efecto de mas abajo
+  // ([currentMuted]), que solo escribe video.muted, nunca llama play().
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -676,7 +682,8 @@ export function useHLSPlayer(
       // pasando a false) debe conservar la posicion, retomar donde quedo al reactivarse.
       video.pause();
     }
-  }, [autoPlay, hlsUrl, playWithFallback, currentMuted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlay, hlsUrl, playWithFallback]);
 
   // Clear error on successful playback
   useEffect(() => {
