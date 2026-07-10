@@ -30,6 +30,7 @@ import { AccessGateProvider } from "@/providers/AccessGateProvider";
 import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
+import { ImmersiveFeedProvider } from "@/contexts/ImmersiveFeedContext";
 import { GenerationJobProvider } from "@/contexts/GenerationJobContext";
 import { CreatorFavoritesProvider } from "@/contexts/CreatorFavoritesContext";
 import { FloatingGenerationBadge } from "@/components/ui/FloatingGenerationBadge";
@@ -1517,6 +1518,7 @@ function AppContent() {
                               <AICopilotProvider>
                                 <KiroProvider>
                                   <GenerationJobProvider>
+                                    <ImmersiveFeedProvider>
                                     <TooltipProvider delayDuration={0}>
                                       <ImpersonationBanner />
                                       <Toaster />
@@ -1534,6 +1536,7 @@ function AppContent() {
                                         </CreatorFavoritesProvider>
                                       </ErrorBoundary>
                                     </TooltipProvider>
+                                    </ImmersiveFeedProvider>
                                   </GenerationJobProvider>
                                 </KiroProvider>
                               </AICopilotProvider>

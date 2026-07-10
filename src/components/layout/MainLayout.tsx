@@ -15,6 +15,7 @@ import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotifi
 import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
 import { useAuth } from "@/hooks/useAuth";
+import { useImmersiveFeed } from "@/contexts/ImmersiveFeedContext";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { usePresence } from "@/hooks/usePresence";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
@@ -142,6 +143,11 @@ export function MainLayout({
   // Feed (modo inmersivo TikTok-style en movil) necesita el mismo full-bleed sin p-4/p-6
   const isMarketplaceRouteOrFeed = isMarketplaceRoute || location.pathname === '/feed';
 
+  // Modo pantalla completa del feed: FeedPage pide ocultar header + bottom nav via contexto
+  // (boton "esconder menus"). Solo aplica en /feed — el estado global no afecta otras rutas.
+  const { isChromeHidden } = useImmersiveFeed();
+  const hideChromeForFeed = isChromeHidden && location.pathname === '/feed';
+
   // Sesion activa dentro de un space de Academia (home/classroom/feed/dm/calendario/miembros) —
   // NO incluye publicas (/academia, /academia/explorar) ni gestion/admin/editor de curso/reproductor
   // de leccion (esas quedan full-screen a proposito, como el resto de la app con video inmersivo).
@@ -156,7 +162,8 @@ export function MainLayout({
   // Solo creator/editor tienen bottom nav movil fija -> unica llamada incondicional
   // (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo, que hacen return temprano)
   const hasMobileBottomNav =
-    ((activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin) || isAcademiaSpaceSession;
+    (((activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin) || isAcademiaSpaceSession) &&
+    !hideChromeForFeed;
   useBottomNavCssVar(hasMobileBottomNav);
 
   // Academia: sesion activa dentro de un space -> chrome propio (antes no llevaba MainLayout
@@ -243,7 +250,9 @@ export function MainLayout({
           <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
         </div>
 
-        {/* Creator Mobile Header */}
+        {/* Creator Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed */}
+        {!hideChromeForFeed && (
+        <>
         <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-pink-500 flex-shrink-0">
@@ -270,7 +279,6 @@ export function MainLayout({
           </div>
         </header>
 
-        {/* Creator Mobile Bottom Navigation */}
         <nav
           className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -297,6 +305,8 @@ export function MainLayout({
             <MoreMenuSheet dashboardHref="/creator-dashboard" />
           </div>
         </nav>
+        </>
+        )}
 
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
@@ -343,7 +353,9 @@ export function MainLayout({
           <Sidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
         </div>
         
-        {/* Editor Mobile Header */}
+        {/* Editor Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed */}
+        {!hideChromeForFeed && (
+        <>
         <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
             <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-blue-500 flex-shrink-0">
@@ -370,7 +382,6 @@ export function MainLayout({
           </div>
         </header>
 
-        {/* Editor Mobile Bottom Navigation */}
         <nav
           className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -397,6 +408,8 @@ export function MainLayout({
             <MoreMenuSheet dashboardHref="/editor-dashboard" />
           </div>
         </nav>
+        </>
+        )}
 
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
