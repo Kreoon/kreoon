@@ -4,7 +4,7 @@ import { SocialFeedCard, SocialFeedItem, SocialFeedCardRef } from './SocialFeedC
 import type { ReactionType } from './ReactionButton';
 import { useGlobalMute } from '@/contexts/VideoPlayerContext';
 import { Loader2 } from 'lucide-react';
-import { preloadHLSVideo, clearPreloadCache } from '@/hooks/useHLSPlayer';
+import { preloadHLSVideo, clearPreloadCache, preloadThumbnail } from '@/hooks/useHLSPlayer';
 
 interface SocialFeedProps {
   items: SocialFeedItem[];
@@ -76,6 +76,9 @@ export function SocialFeed({
       const nextIndex = activeIndex + i;
       if (nextIndex < items.length) {
         const nextItem = items[nextIndex];
+        // Poster instantaneo al swipe: precalentar el thumbnail del siguiente slide
+        // (aplica a video E imagen, el placeholder fuera de ventana tambien lo usa)
+        preloadThumbnail(nextItem.thumbnailUrl);
         if (nextItem.mediaType === 'video') {
           const videoUrl = nextItem.videoUrls?.[0] || nextItem.mediaUrl;
           if (videoUrl) {

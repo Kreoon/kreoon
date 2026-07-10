@@ -195,16 +195,19 @@ function buildHlsConfig(networkQuality: NetworkQuality, fastStart: boolean): Rec
   };
 
   if (fastStart) {
-    // Fast start with min 720p policy
+    // Fast start with min 720p policy.
+    // Buffers cortos (feed de swipe, no cine): 15s adelante bastan — el usuario abandona la
+    // mayoria de videos antes; 30s+ era datos moviles tirados y ABR lento para reaccionar.
     return {
       ...baseConfig,
-      maxBufferLength: 30,
-      maxMaxBufferLength: 60,
-      maxBufferSize: 60 * 1000000,   // 60MB for 720p+
+      maxBufferLength: 15,
+      maxMaxBufferLength: 30,
+      maxBufferSize: 30 * 1000000,   // 30MB
       maxBufferHole: 0.5,
       startLevel: 2,                  // Min 720p always
       autoLevelCapping: -1,           // No cap - seek max quality
       abrEwmaDefaultEstimate: networkQuality === 'fast' ? 5000000 : 2000000,
+      abrEwmaFastVoD: 2,              // media movil corta: ABR reacciona a los primeros fragments
       abrBandWidthFactor: 0.9,
       abrBandWidthUpFactor: 0.7,
       fragLoadingTimeOut: 10000,
@@ -442,6 +445,67 @@ function preloadManifestNative(hlsUrl: string): void {
   }
 }
 
+// Fase 3.7b: prefetch real de los primeros segmentos para iOS nativo. Los fetch() pasan por
+// el Service Worker -> manifest queda en bunny-hls-manifest-v1 y segmentos en
+// bunny-hls-segments-v1 (CacheFirst) -> el player nativo de Safari los encuentra en cache
+// al reproducir. Best-effort: cualquier fallo (CORS, red, parse) se traga en silencio.
+const nativePrefetchedUrls = new Set<string>();
+
+async function prefetchFirstSegmentsNative(hlsUrl: string, maxSegments: number): Promise<void> {
+  if (nativePrefetchedUrls.has(hlsUrl)) return;
+  nativePrefetchedUrls.add(hlsUrl);
+  try {
+    const masterRes = await fetch(hlsUrl, { credentials: 'omit' });
+    if (!masterRes.ok) return;
+    const master = await masterRes.text();
+
+    // Master playlist -> primera variante (Bunny lista de menor a mayor calidad); si ya es
+    // media playlist (sin STREAM-INF), usar directamente.
+    let mediaUrl = hlsUrl;
+    let mediaText = master;
+    if (master.includes('#EXT-X-STREAM-INF')) {
+      const lines = master.split('\n');
+      const infIdx = lines.findIndex((l) => l.startsWith('#EXT-X-STREAM-INF'));
+      const variant = lines.slice(infIdx + 1).find((l) => l.trim() && !l.startsWith('#'))?.trim();
+      if (!variant) return;
+      const base = hlsUrl.slice(0, hlsUrl.lastIndexOf('/') + 1);
+      mediaUrl = variant.startsWith('http') ? variant : base + variant;
+      const mediaRes = await fetch(mediaUrl, { credentials: 'omit' });
+      if (!mediaRes.ok) return;
+      mediaText = await mediaRes.text();
+    }
+
+    const mediaBase = mediaUrl.slice(0, mediaUrl.lastIndexOf('/') + 1);
+    const segments = mediaText
+      .split('\n')
+      .filter((l) => l.trim() && !l.startsWith('#'))
+      .slice(0, maxSegments);
+    await Promise.all(
+      segments.map((s) => {
+        const segUrl = s.trim().startsWith('http') ? s.trim() : mediaBase + s.trim();
+        return fetch(segUrl, { credentials: 'omit' }).catch(() => {});
+      })
+    );
+  } catch {
+    // best-effort
+  }
+}
+
+// Fase 3.7b: precalentar el thumbnail del siguiente slide — poster instantaneo al swipe
+// (el <img> del poster overlay sale del HTTP cache, cero flash negro). Dedupe simple.
+const preloadedThumbnails = new Set<string>();
+
+export function preloadThumbnail(thumbUrl: string | null | undefined): void {
+  if (!thumbUrl || preloadedThumbnails.has(thumbUrl)) return;
+  preloadedThumbnails.add(thumbUrl);
+  try {
+    const img = new Image();
+    img.src = thumbUrl;
+  } catch {
+    // best-effort
+  }
+}
+
 export async function preloadHLSVideo(url: string): Promise<void> {
   // Fase 3.7: en 2g/slow-2g/saveData no se precarga nada (ni manifest) — no gastar datos del usuario.
   const { allowed, bufferSeconds } = getPreloadPolicy();
@@ -450,9 +514,11 @@ export async function preloadHLSVideo(url: string): Promise<void> {
   const urls = getBunnyVideoUrls(url);
   if (!urls?.hls) return;
 
-  // iOS Safari (HLS nativo, sin MSE): hls.js no puede precargar — al menos calentar el manifest.
+  // iOS Safari (HLS nativo, sin MSE): hls.js no puede precargar — calentar manifest +
+  // primeros segmentos via SW cache (1-2 segun red).
   if (!isHlsSupported()) {
     preloadManifestNative(urls.hls);
+    prefetchFirstSegmentsNative(urls.hls, bufferSeconds >= 8 ? 2 : 1);
     return;
   }
 
