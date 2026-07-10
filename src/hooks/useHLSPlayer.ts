@@ -146,9 +146,42 @@ function detectNetworkQuality(): NetworkQuality {
 }
 
 /**
+ * Fase 3.7 (decision cerrada): startLevel hibrido.
+ * - Movil (viewport <768) + conexion celular/desconocida -> startLevel -1 (ABR arranca bajo,
+ *   pinta YA, escala solo) — prioridad velocidad de arranque estilo TikTok.
+ * - Desktop o WiFi/ethernet confirmado -> se mantiene el piso min-720p existente.
+ * navigator.connection.type solo existe en Chrome Android/ChromeOS; sin señal de wifi,
+ * movil se trata como celular. iOS Safari usa HLS nativo (no hls.js) — esto no le aplica.
+ */
+function shouldUseLowStartLevel(): boolean {
+  try {
+    if (typeof window === 'undefined') return false;
+    const isMobileViewport = window.innerWidth < 768;
+    if (!isMobileViewport) return false;
+    const connection = (navigator as any).connection ||
+                       (navigator as any).mozConnection ||
+                       (navigator as any).webkitConnection;
+    if (connection?.type === 'wifi' || connection?.type === 'ethernet') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Get optimal HLS config based on network quality
  */
 function getOptimalHlsConfig(networkQuality: NetworkQuality, fastStart: boolean): Record<string, any> {
+  const config = buildHlsConfig(networkQuality, fastStart);
+  // Override hibrido: movil+celular arranca en auto/bajo (ABR escala); desktop/wifi conserva
+  // el piso 720p que setea buildHlsConfig. Un solo punto de override, no tocar cada branch.
+  if (shouldUseLowStartLevel()) {
+    config.startLevel = -1;
+  }
+  return config;
+}
+
+function buildHlsConfig(networkQuality: NetworkQuality, fastStart: boolean): Record<string, any> {
   const baseConfig = {
     enableWorker: true,
     lowLatencyMode: false,
