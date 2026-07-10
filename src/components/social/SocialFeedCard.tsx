@@ -6,6 +6,7 @@ import { HLSVideoPlayer, HLSVideoPlayerRef } from '@/components/video/HLSVideoPl
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ReactionButton, ReactionType } from '@/components/social/ReactionButton';
 import { FollowButton } from '@/components/social/FollowButton';
+import { useAnalytics } from '@/hooks/useAnalytics';
 
 export interface SocialFeedItem {
   id: string;
@@ -50,6 +51,8 @@ interface SocialFeedCardProps {
   onView?: () => void;
   onProfileClick?: () => void;
   onToggleMute?: () => void;
+  /** Fase 3.7: se dispara si el autoplay con audio fue bloqueado por el browser — sincroniza el mute global persistido. */
+  onForcedMute?: () => void;
 }
 
 export interface SocialFeedCardRef {
@@ -97,10 +100,12 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       onView,
       onProfileClick,
       onToggleMute,
+      onForcedMute,
     },
     ref
   ) {
     const isMobile = useIsMobile();
+    const { track } = useAnalytics();
     const playerRef = useRef<HLSVideoPlayerRef>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const viewTrackedRef = useRef(false);
@@ -111,6 +116,11 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
     const [imageLoaded, setImageLoaded] = useState(false);
     const heartIdRef = useRef(0);
     const pauseIconTimerRef = useRef<NodeJS.Timeout | null>(null);
+    // Fase 3.7 Paso 6: KAE feed_video_start — arranca el cronometro cuando el slide se vuelve
+    // activo (swipe llego aca), NO en cada tap de pausa/reanuda manual (eso no es un "swipe").
+    const activeStartRef = useRef<number | null>(null);
+    const wasActiveRef = useRef(false);
+    const metricSentRef = useRef(false);
 
     const canInteract = item.canInteract !== false;
     const isVideo = item.mediaType === 'video';
@@ -131,7 +141,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
     // Handle active state changes - play/pause video
     useEffect(() => {
       if (!isVideo) return;
-      
+
       if (isActive && !isPaused) {
         playerRef.current?.play();
       } else {
@@ -139,6 +149,17 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         viewTrackedRef.current = false;
       }
     }, [isActive, isVideo, isPaused]);
+
+    // Fase 3.7 Paso 6: arranca el cronometro de "feed_video_start" solo en la transicion
+    // false->true de isActive (swipe llego a este slide) — un tap de pausa/reanuda manual
+    // NO debe re-arrancarlo (reportaria ms falsos, casi 0, porque ya esta buffereado).
+    useEffect(() => {
+      if (isActive && !wasActiveRef.current) {
+        activeStartRef.current = performance.now();
+        metricSentRef.current = false;
+      }
+      wasActiveRef.current = isActive;
+    }, [isActive]);
 
     // Unica fuente de verdad: cada vez que isGlobalMuted cambia (toggle del boton) o el
     // slide se vuelve activo (nuevo video hereda el mute actual), se empuja al elemento real.
@@ -230,11 +251,29 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
       onToggleMute?.();
     };
 
-    const handleVideoLoadComplete = useCallback(() => {
+    const handleVideoLoadComplete = useCallback((info?: { fromPreload: boolean }) => {
       if (playerRef.current) {
         playerRef.current.setMuted(isGlobalMuted);
       }
-    }, [isGlobalMuted]);
+
+      // Fase 3.7 Paso 6: KAE feed_video_start, sampleado 1 de cada 5 (no instrumentar cada video).
+      if (isActive && !metricSentRef.current && activeStartRef.current != null) {
+        metricSentRef.current = true;
+        if (Math.random() < 0.2) {
+          const msToFirstFrame = Math.round(performance.now() - activeStartRef.current);
+          const connection = (navigator as any).connection;
+          track({
+            event_name: 'feed_video_start',
+            event_category: 'engagement',
+            properties: {
+              ms_to_first_frame: msToFirstFrame,
+              from_cache: info?.fromPreload ?? false,
+              effective_type: connection?.effectiveType || 'unknown',
+            },
+          });
+        }
+      }
+    }, [isGlobalMuted, isActive, track]);
 
     return (
       <div 
@@ -271,6 +310,8 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
               objectFit="contain"
               className="w-full h-full"
               onLoadComplete={handleVideoLoadComplete}
+              resumeKey={item.id}
+              onForcedMute={onForcedMute}
             />
           ) : (
             <div className="relative w-full h-full flex items-center justify-center">

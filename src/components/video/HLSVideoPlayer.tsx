@@ -25,7 +25,11 @@ interface HLSVideoPlayerProps {
   onPause?: () => void;
   onError?: (error: string) => void;
   onLoadStart?: () => void;
-  onLoadComplete?: () => void;
+  onLoadComplete?: (info?: { fromPreload: boolean }) => void;
+  /** Fase 3.7: clave para el mapa de resume-position (normalmente el post_id del feed). */
+  resumeKey?: string;
+  /** Fase 3.7: se dispara si el autoplay con audio fue bloqueado y el player forzo mute — para sincronizar el mute global persistido. */
+  onForcedMute?: () => void;
 }
 
 export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerProps>(
@@ -44,12 +48,14 @@ export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerP
       onPause,
       onError,
       onLoadStart,
-      onLoadComplete
+      onLoadComplete,
+      resumeKey,
+      onForcedMute
     },
     ref
   ) {
     const [showPoster, setShowPoster] = useState(true);
-    
+
     const {
       videoRef,
       isPlaying,
@@ -60,8 +66,9 @@ export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerP
       play,
       pause,
       toggleMute,
-      setMuted
-    } = useHLSPlayer(src, { autoPlay, muted, loop, poster });
+      setMuted,
+      loadedFromPreload
+    } = useHLSPlayer(src, { autoPlay, muted, loop, poster, resumeKey, onForcedMute });
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
@@ -76,12 +83,12 @@ export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerP
       if (isLoading) {
         onLoadStart?.();
       } else {
-        onLoadComplete?.();
+        onLoadComplete?.({ fromPreload: loadedFromPreload });
         if (isPlaying) {
           setShowPoster(false);
         }
       }
-    }, [isLoading, onLoadStart, onLoadComplete, isPlaying]);
+    }, [isLoading, onLoadStart, onLoadComplete, isPlaying, loadedFromPreload]);
 
     useEffect(() => {
       if (isPlaying) {
@@ -108,9 +115,14 @@ export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerP
     const posterUrl = poster || thumbnailUrl;
     const objectFitClass = objectFit === 'contain' ? 'object-contain' : 'object-cover';
 
+    // Fase 3.7 fixes: si el thumbnail no existe o da 404, mostrar fallback de marca
+    // (gradiente + logo) en vez de pantalla negra hasta el primer frame.
+    const [posterFailed, setPosterFailed] = useState(false);
+
     // When showing native controls (manual playback), rely on the <video poster> attribute.
     // The custom poster overlay blocks user interaction with controls on top of the video.
-    const shouldShowPosterOverlay = Boolean(showPoster && posterUrl && !showControls);
+    const shouldShowPosterOverlay = Boolean(showPoster && posterUrl && !posterFailed && !showControls);
+    const shouldShowBrandFallback = Boolean(showPoster && (!posterUrl || posterFailed) && !showControls);
 
     return (
       <div className={cn('relative overflow-hidden bg-black', aspectClass, className)}>
@@ -136,7 +148,19 @@ export const HLSVideoPlayer = memo(forwardRef<HLSVideoPlayerRef, HLSVideoPlayerP
               src={posterUrl as string}
               alt="Video thumbnail"
               className={cn('w-full h-full', objectFitClass)}
-              onError={() => setShowPoster(false)}
+              onError={() => setPosterFailed(true)}
+              loading="lazy"
+            />
+          </div>
+        )}
+
+        {/* Fallback de marca: thumbnail ausente o 404 — gradiente nova + logo, nunca negro */}
+        {shouldShowBrandFallback && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center bg-gradient-to-br from-nova-accent-primary/30 via-nova-bg-void to-nova-accent-secondary/20">
+            <img
+              src="/favicon.png"
+              alt="KREOON"
+              className="h-16 w-16 opacity-40"
               loading="lazy"
             />
           </div>

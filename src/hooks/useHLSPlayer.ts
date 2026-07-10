@@ -10,6 +10,11 @@ interface UseHLSPlayerOptions {
   fastStart?: boolean;          // Enable aggressive fast start
   preloadNext?: boolean;        // Preload hint for next video
   connectionAware?: boolean;    // Adapt quality to network
+  // Fase 3.7 — feed nivel TikTok
+  /** Clave para el mapa de resume-position (normalmente el post_id). Sin esto, no se guarda/restaura posicion. */
+  resumeKey?: string;
+  /** Se llama cuando el autoplay con audio es bloqueado por el browser y el player tuvo que forzar mute — para que el caller sincronice el mute GLOBAL persistido (si no, queda desincronizado del estado real). */
+  onForcedMute?: () => void;
 }
 
 interface BunnyVideoUrls {
@@ -31,6 +36,58 @@ type NetworkQuality = 'slow' | 'medium' | 'fast' | 'unknown';
 // Cache for preloaded HLS instances
 const preloadCache = new Map<string, Hls>();
 const MAX_PRELOAD_CACHE = 3;
+
+// ── Fase 3.7: mapa de resume-position (post_id -> posicion) ────────────────
+// Modulo-level (NO localStorage a proposito): sobrevive mount/unmount de SocialFeedCard
+// dentro de la MISMA sesion de la app (navegar a perfil y volver al feed restaura),
+// pero se pierde en reload/pestaña nueva — evita reanudar videos de hace dias.
+interface ResumeEntry { time: number; savedAt: number }
+const resumePositions = new Map<string, ResumeEntry>();
+const MAX_RESUME_ENTRIES = 200;
+const RESUME_TTL_MS = 2 * 60 * 60 * 1000; // 2h — safety extra dentro de la misma sesion larga
+
+export function saveResumePosition(key: string | undefined, time: number): void {
+  if (!key || !Number.isFinite(time) || time < 1) return;
+  if (resumePositions.size >= MAX_RESUME_ENTRIES && !resumePositions.has(key)) {
+    const oldest = resumePositions.keys().next().value;
+    if (oldest) resumePositions.delete(oldest);
+  }
+  resumePositions.set(key, { time, savedAt: Date.now() });
+}
+
+export function getResumePosition(key: string | undefined): number | null {
+  if (!key) return null;
+  const entry = resumePositions.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.savedAt > RESUME_TTL_MS) {
+    resumePositions.delete(key);
+    return null;
+  }
+  return entry.time;
+}
+
+export function clearResumePosition(key: string | undefined): void {
+  if (key) resumePositions.delete(key);
+}
+
+// ── Fase 3.7: precarga condicional por red (2g/slow-2g/saveData -> no precargar) ──
+function getPreloadPolicy(): { allowed: boolean; bufferSeconds: number } {
+  try {
+    if (typeof navigator === 'undefined') return { allowed: true, bufferSeconds: 0 };
+    const connection = (navigator as any).connection ||
+                       (navigator as any).mozConnection ||
+                       (navigator as any).webkitConnection;
+    // Sin Network Information API (Safari/iOS): progressive enhancement, preload conservador
+    if (!connection) return { allowed: true, bufferSeconds: 4 };
+    if (connection.saveData) return { allowed: false, bufferSeconds: 0 };
+    const effectiveType = connection.effectiveType;
+    if (effectiveType === '2g' || effectiveType === 'slow-2g') return { allowed: false, bufferSeconds: 0 };
+    if (effectiveType === '3g') return { allowed: true, bufferSeconds: 4 };
+    return { allowed: true, bufferSeconds: 8 }; // 4g o desconocido-rapido
+  } catch {
+    return { allowed: true, bufferSeconds: 4 };
+  }
+}
 
 // Lazy-loaded HLS module reference
 let HlsModule: typeof import('hls.js').default | null = null;
@@ -95,6 +152,13 @@ function getOptimalHlsConfig(networkQuality: NetworkQuality, fastStart: boolean)
   const baseConfig = {
     enableWorker: true,
     lowLatencyMode: false,
+    // Fase 3.7 Paso 5: no cambia el piso de calidad (POLICY min-720p abajo se mantiene
+    // intacta a proposito — bajar startLevel a 0/-1 como pedia el spec original
+    // contradice esa politica de producto ya deliberada; ver reporte). Estas 3 SI son
+    // adiciones seguras que no bajan el startLevel:
+    capLevelToPlayerSize: true,  // no decodificar 1080p en una pantalla de 390px
+    capLevelOnFPSDrop: true,     // baja calidad sola si el dispositivo no da abasto
+    backBufferLength: 10,        // libera memoria del buffer YA reproducido (no toca el buffer hacia adelante)
   };
 
   if (fastStart) {
@@ -317,11 +381,47 @@ export function getBunnyVideoUrlCandidates(url: string): BunnyVideoUrls[] {
  * Preload an HLS video in the background (for next video in feed)
  * Now loads HLS.js dynamically
  */
+// Fase 3.7: preload de manifest para iOS Safari (HLS nativo, sin MSE — hls.js no aplica).
+// <link rel="preload" as="fetch"> calienta el manifest en el HTTP cache / SW cache; los
+// segmentos los precarga el propio SW cuando el player los pida. Cap chico, FIFO.
+const nativePreloadLinks = new Map<string, HTMLLinkElement>();
+const MAX_NATIVE_PRELOAD_LINKS = 4;
+
+function preloadManifestNative(hlsUrl: string): void {
+  try {
+    if (typeof document === 'undefined' || nativePreloadLinks.has(hlsUrl)) return;
+    if (nativePreloadLinks.size >= MAX_NATIVE_PRELOAD_LINKS) {
+      const oldest = nativePreloadLinks.keys().next().value;
+      if (oldest) {
+        nativePreloadLinks.get(oldest)?.remove();
+        nativePreloadLinks.delete(oldest);
+      }
+    }
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'fetch';
+    link.crossOrigin = 'anonymous';
+    link.href = hlsUrl;
+    document.head.appendChild(link);
+    nativePreloadLinks.set(hlsUrl, link);
+  } catch {
+    // preload es best-effort, nunca romper por esto
+  }
+}
+
 export async function preloadHLSVideo(url: string): Promise<void> {
-  if (!isHlsSupported()) return;
+  // Fase 3.7: en 2g/slow-2g/saveData no se precarga nada (ni manifest) — no gastar datos del usuario.
+  const { allowed, bufferSeconds } = getPreloadPolicy();
+  if (!allowed) return;
 
   const urls = getBunnyVideoUrls(url);
   if (!urls?.hls) return;
+
+  // iOS Safari (HLS nativo, sin MSE): hls.js no puede precargar — al menos calentar el manifest.
+  if (!isHlsSupported()) {
+    preloadManifestNative(urls.hls);
+    return;
+  }
 
   // Check if already cached
   if (preloadCache.has(urls.hls)) return;
@@ -339,11 +439,12 @@ export async function preloadHLSVideo(url: string): Promise<void> {
       }
     }
 
-    // Create HLS instance and load manifest only
+    // Fase 3.7: precarga real de los primeros segundos (no solo el manifest) cuando la red
+    // lo permite — bufferSeconds sale de getPreloadPolicy() segun effectiveType/saveData.
     const hls = new Hls({
       enableWorker: true,
-      maxBufferLength: 0, // Don't buffer, just load manifest
-      maxMaxBufferLength: 0,
+      maxBufferLength: bufferSeconds,
+      maxMaxBufferLength: bufferSeconds,
     });
 
     hls.loadSource(urls.hls);
@@ -384,6 +485,8 @@ export function useHLSPlayer(
     poster,
     fastStart = true,          // Enable fast start by default
     connectionAware = true,    // Enable network-aware quality
+    resumeKey,
+    onForcedMute,
   } = options;
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -396,7 +499,13 @@ export function useHLSPlayer(
   const [sourceIndex, setSourceIndex] = useState(0);
   const [networkQuality, setNetworkQuality] = useState<NetworkQuality>('unknown');
   const [currentQuality, setCurrentQuality] = useState<number>(-1);
+  const [loadedFromPreload, setLoadedFromPreload] = useState(false);
   const playbackStartedRef = useRef(false);
+  // Refs para no meter callbacks del caller en deps de efectos pesados (re-crearian HLS)
+  const onForcedMuteRef = useRef(onForcedMute);
+  onForcedMuteRef.current = onForcedMute;
+  const resumeKeyRef = useRef(resumeKey);
+  resumeKeyRef.current = resumeKey;
 
   // Detect network quality on mount and when connection changes
   useEffect(() => {
@@ -414,6 +523,7 @@ export function useHLSPlayer(
   useEffect(() => {
     setSourceIndex(0);
     playbackStartedRef.current = false;
+    setLoadedFromPreload(false);
   }, [videoUrl]);
 
   // Get candidate HLS URLs
@@ -433,6 +543,10 @@ export function useHLSPlayer(
     video.play().catch(() => {
       video.muted = true;
       setCurrentMuted(true);
+      // Fase 3.7: si el autoplay con audio fue bloqueado, el mute GLOBAL persistido queda
+      // desincronizado de la realidad (video real quedo muted aunque el usuario habia elegido
+      // "sonido activado" en una sesion anterior) — avisar al caller para que sincronice/persista.
+      onForcedMuteRef.current?.();
       video.play().catch(() => {
         console.warn('[HLS] Autoplay completely blocked');
       });
@@ -555,6 +669,7 @@ export function useHLSPlayer(
 
         // Check for preloaded HLS instance
         let hls: Hls | null = preloadCache.get(hlsUrl) || null;
+        setLoadedFromPreload(!!hls);
         if (hls) {
           preloadCache.delete(hlsUrl);
         }
@@ -699,6 +814,48 @@ export function useHLSPlayer(
     };
   }, [hlsUrl]);
 
+  // Fase 3.7 Paso 2: pausa/reanuda en el punto exacto. Un solo listener 'loadedmetadata' cubre
+  // los 3 codepaths (MP4 directo, HLS nativo Safari, hls.js) porque todos comparten el mismo
+  // elemento <video> — no hay que duplicar el seek en cada rama de inicializacion.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      const saved = getResumePosition(resumeKeyRef.current);
+      if (saved != null && Number.isFinite(video.duration) && saved < video.duration - 1) {
+        video.currentTime = saved;
+      }
+    };
+
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return () => video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+  }, [hlsUrl, videoUrl]);
+
+  // Guarda posicion on pause (inmediato) y cada ~5s durante playback (throttled, NO en cada
+  // 'timeupdate' que dispara ~4x/seg). Vive mientras el post este montado; para el resto de
+  // la ventana/feed, useHLSPlayer se desmonta y el ultimo valor guardado queda en el Map modulo-level.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let lastSaveAt = 0;
+    const handleTimeUpdate = () => {
+      const now = Date.now();
+      if (now - lastSaveAt < 5000) return;
+      lastSaveAt = now;
+      saveResumePosition(resumeKeyRef.current, video.currentTime);
+    };
+    const handlePause = () => saveResumePosition(resumeKeyRef.current, video.currentTime);
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('pause', handlePause);
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [hlsUrl, videoUrl]);
+
   // Sync muted state
   useEffect(() => {
     const video = videoRef.current;
@@ -790,6 +947,8 @@ export function useHLSPlayer(
     pause,
     toggleMute,
     setMuted,
+    // Fase 3.7: si el manifest/buffer ya venia precargado cuando este player arranco
+    loadedFromPreload,
     // New optimization features
     networkQuality,
     currentQuality,

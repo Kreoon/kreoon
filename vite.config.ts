@@ -232,6 +232,45 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
+            // Fase 3.7: manifests HLS de Bunny (.m3u8) - pueden cambiar (reprocesado de video),
+            // NetworkFirst con fallback a cache si no hay red. Los segmentos que referencia NO
+            // cambian una vez publicados (regla aparte abajo). NO hay token de Bunny Token Auth
+            // activo en esta libreria (BUNNY_LIBRARY_ID, distinta de BUNNY_ACADEMY_LIBRARY_ID) -
+            // verificado: getBunnyVideoUrls() nunca agrega query params, cache-key = URL completa
+            // sin conflicto. Si se activa Token Auth aca en el futuro, revisar esta regla.
+            urlPattern: /^https:\/\/.*\.b-cdn\.net\/.*\.m3u8(\?.*)?$/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'bunny-hls-manifest-v1',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 // 1h
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Fase 3.7: segmentos HLS (.ts/.m4s) - inmutables una vez publicados, CacheFirst.
+            // NO cachea los .mp4 de progressive download (play_*.mp4, fallback sin HLS) a
+            // proposito - serian descargas completas de video, no "lo que el reproductor pide".
+            urlPattern: /^https:\/\/.*\.b-cdn\.net\/.*\.(?:ts|m4s)(\?.*)?$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'bunny-hls-segments-v1',
+              expiration: {
+                maxEntries: 150,
+                maxAgeSeconds: 60 * 60 * 36, // 36h
+                purgeOnQuotaError: true
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
             urlPattern: /\.(?:woff2?|ttf|eot)$/i,
             handler: 'CacheFirst',
             options: {

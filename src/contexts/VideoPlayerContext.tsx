@@ -13,10 +13,32 @@ interface VideoPlayerContextType {
 
 const VideoPlayerContext = createContext<VideoPlayerContextType | undefined>(undefined);
 
+// Fase 3.7 Paso 3: mute persistente entre sesiones (antes se reseteaba a muted=true en cada
+// carga de pagina). Default true SOLO en la primera visita (autoplay iOS exige muted=true al
+// arrancar); si ya hay preferencia guardada, se respeta desde el primer render.
+const FEED_MUTE_STORAGE_KEY = 'kreoon_feed_muted';
+
+function getInitialMuted(): boolean {
+  if (typeof window === 'undefined') return true;
+  try {
+    const saved = window.localStorage.getItem(FEED_MUTE_STORAGE_KEY);
+    return saved === null ? true : saved === 'true';
+  } catch {
+    return true;
+  }
+}
+
+function persistMuted(muted: boolean): void {
+  try {
+    window.localStorage.setItem(FEED_MUTE_STORAGE_KEY, String(muted));
+  } catch {
+    // localStorage no disponible (modo privado, quota) — persistencia se pierde, no rompe la sesion
+  }
+}
+
 export function VideoPlayerProvider({ children }: { children: ReactNode }) {
   const [currentPlayingId, setCurrentPlayingId] = useState<string | null>(null);
-  // Muted por default: autoplay en iOS/Safari EXIGE muted=true para arrancar sin gesto del usuario.
-  const [isGlobalMuted, setIsGlobalMuted] = useState(true);
+  const [isGlobalMuted, setIsGlobalMuted] = useState(getInitialMuted);
 
   const playVideo = useCallback((id: string) => {
     setCurrentPlayingId(id);
@@ -32,10 +54,15 @@ export function VideoPlayerProvider({ children }: { children: ReactNode }) {
 
   const setGlobalMuted = useCallback((muted: boolean) => {
     setIsGlobalMuted(muted);
+    persistMuted(muted);
   }, []);
 
   const toggleGlobalMute = useCallback(() => {
-    setIsGlobalMuted(prev => !prev);
+    setIsGlobalMuted(prev => {
+      const next = !prev;
+      persistMuted(next);
+      return next;
+    });
   }, []);
 
   return (

@@ -12,6 +12,7 @@ import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { useFeedPosts, FeedTab, FeedPost } from '@/hooks/useFeedPosts';
 import { SocialFeed } from '@/components/social/SocialFeed';
 import { SocialFeedItem } from '@/components/social/SocialFeedCard';
+import { preloadHLSVideo } from '@/hooks/useHLSPlayer';
 import StoriesBar from '@/components/portfolio/feed/StoriesBar';
 import { EnhancedSmartSearch } from '@/components/portfolio/EnhancedSmartSearch';
 import { SocialNotificationsDropdown } from '@/components/portfolio/SocialNotificationsDropdown';
@@ -175,6 +176,22 @@ export default function FeedPage() {
 
   const socialFeedItems = useMemo(() => posts.map(toSocialFeedItem), [posts]);
   const gridItems = useMemo(() => posts.map(toGridItem), [posts]);
+
+  // Fase 3.7: precargar los primeros 2 videos apenas llegan los datos (antes la precarga
+  // arrancaba recien con el primer swipe via SocialFeed). A nivel FeedPage cubre tambien
+  // grid/desktop. preloadHLSVideo deduplica internamente y respeta 2g/saveData.
+  const firstPreloadDoneRef = useRef(false);
+  useEffect(() => {
+    if (firstPreloadDoneRef.current || socialFeedItems.length === 0) return;
+    firstPreloadDoneRef.current = true;
+    socialFeedItems
+      .filter((item) => item.mediaType === 'video')
+      .slice(0, 2)
+      .forEach((item) => {
+        const videoUrl = item.videoUrls?.[0] || item.mediaUrl;
+        if (videoUrl) preloadHLSVideo(videoUrl);
+      });
+  }, [socialFeedItems]);
 
   if (!isOnline) {
     return (

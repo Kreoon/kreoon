@@ -42,7 +42,7 @@ export function SocialFeed({
   const [activeIndex, setActiveIndex] = useState(0);
   // Fuente unica de verdad del mute — antes habia 3 estados desincronizados
   // (contexto global sin usar, audioUnlocked local, y el estado interno de useHLSPlayer).
-  const { isGlobalMuted, toggleGlobalMute } = useGlobalMute();
+  const { isGlobalMuted, toggleGlobalMute, setGlobalMuted } = useGlobalMute();
 
   // Track active item using IntersectionObserver
   useEffect(() => {
@@ -163,6 +163,7 @@ export function SocialFeed({
                 onView={onView ? () => onView(item.id) : undefined}
                 onProfileClick={item.creatorId && onProfileClick ? () => onProfileClick(item.creatorId!) : undefined}
                 onToggleMute={toggleGlobalMute}
+                onForcedMute={() => setGlobalMuted(true)}
               />
             ) : (
               // Placeholder fuera de la ventana de render: mantiene el alto/snap sin montar video/HLS
