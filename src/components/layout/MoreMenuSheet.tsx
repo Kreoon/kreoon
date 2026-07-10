@@ -9,26 +9,29 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer';
 
-interface MoreMenuItem {
+export interface MoreMenuItem {
   name: string;
   href: string;
   icon: typeof Sparkles;
 }
 
 interface MoreMenuSheetProps {
-  /** Ruta base del dashboard (creator-dashboard o editor-dashboard) para el deep-link de Mis Cobros */
-  dashboardHref: string;
+  /** Ruta base del dashboard (creator-dashboard o editor-dashboard) para el deep-link de Mis Cobros. Solo se usa si no se pasa `items`. */
+  dashboardHref?: string;
+  /** Override data-driven: lista de items propia del rol (client/admin). Si se pasa, reemplaza el set default de creator/editor. */
+  items?: MoreMenuItem[];
   className?: string;
 }
 
-// Bottom sheet "Mas": todo lo que salio de los 5 slots principales de la nav vive aca.
+// Bottom sheet "Mas": todo lo que salio de los slots principales de la nav vive aca.
 // Nadie pierde acceso a nada — solo cambia de un tap directo a dos taps. Notificaciones
 // NO esta aca: ya tiene su propio icono en el header (reemplazo del maletin, Frente A.3).
-export function MoreMenuSheet({ dashboardHref, className }: MoreMenuSheetProps) {
+// Data-driven (Fase 3.6): mismo componente para creator/editor (default) y client/admin (via `items`).
+export function MoreMenuSheet({ dashboardHref, items: itemsProp, className }: MoreMenuSheetProps) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
-  const items: MoreMenuItem[] = [
+  const items: MoreMenuItem[] = itemsProp ?? [
     { name: 'Academia', href: '/academia', icon: GraduationCap },
     { name: 'Kreoon IA', href: '/scripts', icon: Sparkles },
     { name: 'Mis Cobros', href: `${dashboardHref}?tab=wallet`, icon: Wallet },
@@ -53,7 +56,7 @@ export function MoreMenuSheet({ dashboardHref, className }: MoreMenuSheetProps) 
         <DrawerHeader className="text-left">
           <DrawerTitle>Más</DrawerTitle>
         </DrawerHeader>
-        <div className="grid grid-cols-3 gap-3 px-4 pb-6">
+        <div className="grid grid-cols-3 gap-3 px-4 pb-6 overflow-y-auto">
           {items.map((item) => (
             <button
               key={item.name}

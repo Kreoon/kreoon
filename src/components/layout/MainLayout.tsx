@@ -9,7 +9,7 @@ import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
 import { KiroHeaderButton } from "@/components/kiro/KiroHeaderButton";
 import { AccountMenu } from "./AccountMenu";
-import { MoreMenuSheet } from "./MoreMenuSheet";
+import { MoreMenuSheet, type MoreMenuItem } from "./MoreMenuSheet";
 import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
 import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotificationsDropdown";
 import { StreakWidget } from "@/components/gamification/StreakWidget";
@@ -17,12 +17,13 @@ import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/la
 import { useAuth } from "@/hooks/useAuth";
 import { useImmersiveFeed } from "@/contexts/ImmersiveFeedContext";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
+import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { usePresence } from "@/hooks/usePresence";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, ImagePlus, Crown, Trophy, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -80,6 +81,61 @@ const creatorMobileNavigation = [
   { name: "Market", href: "/marketplace", icon: Briefcase },
 ];
 
+// Client/marca navigation items for mobile bottom bar (Fase 3.6 — antes client no tenia bottom nav, solo sidebar)
+const brandMobileNavigation = [
+  { name: "Hub", href: "/client-dashboard", icon: LayoutDashboard },
+  { name: "Feed", href: "/feed", icon: Compass },
+  { name: "Talento", href: "/marketplace", icon: Store },
+  { name: "Campañas", href: "/marketplace/my-campaigns", icon: Megaphone },
+];
+
+// Items secundarios de "Mas" para client — todo lo que vivia en clientSections del Sidebar
+// y no entro en los 4 slots principales. CRM(org) del spec original se omitio: no existe
+// ruta de CRM para el rol client (el CRM de plataforma es admin-only, /crm).
+const clientMoreItems: MoreMenuItem[] = [
+  { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna },
+  { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
+  { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
+  { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
+  { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
+  { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
+  { name: "Crear Campaña", href: "/marketplace/campaigns/create", icon: ImagePlus },
+  { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone },
+  { name: "Academia", href: "/academia", icon: GraduationCap },
+  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+  { name: "Mi Plan", href: "/planes", icon: Crown },
+  { name: "Configuración", href: "/settings", icon: Settings },
+];
+
+// Admin navigation items for mobile bottom bar (Fase 3.6 — antes admin no tenia bottom nav)
+const adminMobileNavigation = [
+  { name: "Hub", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Feed", href: "/feed", icon: Compass },
+  { name: "CRM", href: "/crm", icon: Building2 },
+  { name: "Usuarios", href: "/talent", icon: Users },
+];
+
+// Items secundarios de "Mas" para admin — resto de adminSections del Sidebar que no entro
+// en los 4 slots. Los 4 marcados platformRootOnly en Sidebar.tsx se filtran igual aca via
+// isPlatformRoot (useOrgOwner) para no dar acceso de mas a admins de organizacion no-root.
+const ADMIN_MORE_ITEMS_BASE: Array<MoreMenuItem & { platformRootOnly?: boolean }> = [
+  { name: "Producciones", href: "/board", icon: Kanban },
+  { name: "Portafolio", href: "/content", icon: FileText },
+  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+  { name: "Academia", href: "/academia", icon: GraduationCap },
+  { name: "Ranking", href: "/ranking", icon: Trophy },
+  { name: "Clientes", href: "/clientes", icon: Building2 },
+  { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet },
+  { name: "Comunidades", href: "/crm/comunidades", icon: Users2 },
+  { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign },
+  { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
+  { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, platformRootOnly: true },
+  { name: "Papelera", href: "/admin/papelera", icon: Trash2, platformRootOnly: true },
+  { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, platformRootOnly: true },
+  { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, platformRootOnly: true },
+  { name: "Configuración", href: "/settings", icon: Settings },
+];
+
 // Nav de sesion de Academia (Fase 3.5 Bloque 4) — antes las paginas de Academia no llevaban
 // MainLayout, sin bottom nav ni AccountMenu, "se veia como web". Solo se usa en rutas de
 // sesion activa dentro de un space (ver isAcademiaSpaceSession en el componente); las
@@ -125,6 +181,7 @@ export function MainLayout({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { isClient, isAdmin, activeRole, profile, user } = useAuth();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
+  const { isPlatformRoot } = useOrgOwner();
   const location = useLocation();
   const navigate = useNavigate();
   const { spaceSlug: routeSpaceSlug } = useParams<{ spaceSlug?: string }>();
@@ -159,11 +216,20 @@ export function MainLayout({
     !ACADEMIA_EXCLUDED_SUFFIXES.some((suffix) => location.pathname.endsWith(suffix));
   const academiaSpaceSlug = isAcademiaSpaceSession ? routeSpaceSlug! : null;
 
-  // Solo creator/editor tienen bottom nav movil fija -> unica llamada incondicional
-  // (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo, que hacen return temprano)
+  // Fase 3.6: bottom nav movil ahora tambien para client y admin (antes solo creator/editor/Academia).
+  // Unica llamada incondicional (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo,
+  // que hacen return temprano). isClient/isAdmin ya vienen de getPermissionGroup() via useAuth.
   const hasMobileBottomNav =
-    (((activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin) || isAcademiaSpaceSession) &&
+    (((activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin) ||
+      isAcademiaSpaceSession ||
+      isClient ||
+      isAdmin) &&
     !hideChromeForFeed;
+
+  // Items de "Mas" para admin, filtrados por isPlatformRoot (paridad con Sidebar.tsx platformRootOnly)
+  const adminMoreItems: MoreMenuItem[] = ADMIN_MORE_ITEMS_BASE.filter(
+    (item) => !item.platformRootOnly || isPlatformRoot
+  );
   useBottomNavCssVar(hasMobileBottomNav);
 
   // Academia: sesion activa dentro de un space -> chrome propio (antes no llevaba MainLayout
@@ -497,7 +563,9 @@ export function MainLayout({
           </div>
         )}
 
-        {/* Client Mobile Header */}
+        {/* Client Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed (Fase 3.6) */}
+        {!hideChromeForFeed && (
+        <>
         <header
           className="sticky z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden"
           style={{ top: hasBanner ? bannerHeight : 0 }}
@@ -512,7 +580,7 @@ export function MainLayout({
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <StreakWidget size="sm" />
+            <SocialNotificationsDropdown />
             <KiroHeaderButton />
             <AccountMenu
               trigger={
@@ -539,6 +607,37 @@ export function MainLayout({
           </div>
         </header>
 
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex justify-around py-2">
+            {brandMobileNavigation.filter(item => !item.href.startsWith('/marketplace') || clientMarketplaceEnabled).map((item) => {
+              // Talento (/marketplace exacto) vs Campañas (/marketplace/my-campaigns) comparten
+              // prefijo — exact-match para Talento evita que ambos se marquen activos a la vez.
+              const isActive = item.href === '/marketplace'
+                ? location.pathname === '/marketplace'
+                : location.pathname.startsWith(item.href);
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors min-h-[44px]",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-[10px]">{item.name}</span>
+                </NavLink>
+              );
+            })}
+            <MoreMenuSheet items={clientMoreItems} />
+          </div>
+        </nav>
+        </>
+        )}
+
         {/* Desktop Integrated Notification Header */}
         <div className="hidden md:block">
           <IntegratedNotificationHeader
@@ -551,7 +650,7 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]"
           )}
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
@@ -607,7 +706,9 @@ export function MainLayout({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <StreakWidget size="sm" />
+          {/* Racha solo aplica a talento (creacion de contenido) — admin no la ve (Fase 3.6) */}
+          {!isAdmin && <StreakWidget size="sm" />}
+          <SocialNotificationsDropdown />
           <KiroHeaderButton />
           <AccountMenu
             trigger={
@@ -632,6 +733,36 @@ export function MainLayout({
         </div>
       </header>
 
+      {/* Admin Mobile Bottom Nav (Fase 3.6) — solo isAdmin; digital_strategist/creative_strategist/
+          community_manager caen en este branch pero no son admin, no ganan bottom nav aca (sin cambio
+          respecto al comportamiento previo para ellos) */}
+      {isAdmin && !hideChromeForFeed && (
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex justify-around py-2">
+            {adminMobileNavigation.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors min-h-[44px]",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-[10px]">{item.name}</span>
+                </NavLink>
+              );
+            })}
+            <MoreMenuSheet items={adminMoreItems} />
+          </div>
+        </nav>
+      )}
+
       {/* Desktop Integrated Notification Header */}
       <div className="hidden md:block">
         <IntegratedNotificationHeader
@@ -643,7 +774,7 @@ export function MainLayout({
       <main
         id="main-content"
         className={cn(
-          "transition-all duration-300",
+          "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
           sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
           "md:pt-14"
         )}
