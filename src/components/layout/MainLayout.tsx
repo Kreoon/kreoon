@@ -9,6 +9,7 @@ import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
 import { KiroWidget } from "@/components/kiro/KiroWidget";
 import { AccountMenu } from "./AccountMenu";
 import { MoreMenuSheet } from "./MoreMenuSheet";
+import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
 import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotificationsDropdown";
 import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
@@ -17,9 +18,9 @@ import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { usePresence } from "@/hooks/usePresence";
 import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotifications";
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -77,6 +78,19 @@ const creatorMobileNavigation = [
   { name: "Market", href: "/marketplace", icon: Briefcase },
 ];
 
+// Nav de sesion de Academia (Fase 3.5 Bloque 4) — antes las paginas de Academia no llevaban
+// MainLayout, sin bottom nav ni AccountMenu, "se veia como web". Solo se usa en rutas de
+// sesion activa dentro de un space (ver isAcademiaSpaceSession en el componente); las
+// paginas publicas (/academia, /academia/explorar, landing) NO llevan este nav.
+function buildAcademiaMobileNavigation(spaceSlug: string) {
+  return [
+    { name: "Inicio", href: `/academia/${spaceSlug}`, icon: GraduationCap },
+    { name: "Cursos", href: `/academia/${spaceSlug}/classroom`, icon: BookOpen },
+    { name: "Feed", href: `/academia/${spaceSlug}/feed`, icon: Rss },
+    { name: "Calendario", href: `/academia/${spaceSlug}/calendar`, icon: CalendarDays },
+  ];
+}
+
 // Minimal loader shown only in the content area while a lazy page chunk loads
 function ContentAreaLoader() {
   return (
@@ -111,6 +125,7 @@ export function MainLayout({
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const location = useLocation();
   const navigate = useNavigate();
+  const { spaceSlug: routeSpaceSlug } = useParams<{ spaceSlug?: string }>();
 
   // Track user presence
   usePresence();
@@ -126,10 +141,96 @@ export function MainLayout({
   // Feed (modo inmersivo TikTok-style en movil) necesita el mismo full-bleed sin p-4/p-6
   const isMarketplaceRouteOrFeed = isMarketplaceRoute || location.pathname === '/feed';
 
+  // Sesion activa dentro de un space de Academia (home/classroom/feed/dm/calendario/miembros) —
+  // NO incluye publicas (/academia, /academia/explorar) ni gestion/admin/editor de curso/reproductor
+  // de leccion (esas quedan full-screen a proposito, como el resto de la app con video inmersivo).
+  // Solo las 6 rutas que efectivamente envuelven <MainLayout> en App.tsx llegan a este chequeo.
+  const ACADEMIA_EXCLUDED_SUFFIXES = ['/gestionar', '/admin', '/edit', '/learn'];
+  const isAcademiaSpaceSession =
+    location.pathname.startsWith('/academia/') &&
+    !!routeSpaceSlug &&
+    !ACADEMIA_EXCLUDED_SUFFIXES.some((suffix) => location.pathname.endsWith(suffix));
+  const academiaSpaceSlug = isAcademiaSpaceSession ? routeSpaceSlug! : null;
+
   // Solo creator/editor tienen bottom nav movil fija -> unica llamada incondicional
   // (las Rules of Hooks prohiben llamar hooks dentro de los `if` de abajo, que hacen return temprano)
-  const hasMobileBottomNav = (activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin;
+  const hasMobileBottomNav =
+    ((activeRole === 'content_creator' || activeRole === 'editor') && !isAdmin) || isAcademiaSpaceSession;
   useBottomNavCssVar(hasMobileBottomNav);
+
+  // Academia: sesion activa dentro de un space -> chrome propio (antes no llevaba MainLayout
+  // en absoluto, sin header/AccountMenu/bottom nav, "se veia como web"). Toma prioridad sobre
+  // los branches por rol de abajo — cualquier rol navegando Academia ve este nav, no el suyo.
+  if (isAcademiaSpaceSession && academiaSpaceSlug) {
+    const academiaNav = buildAcademiaMobileNavigation(academiaSpaceSlug);
+    return (
+      <div className="min-h-screen bg-background">
+        {/* Academia Mobile Header */}
+        <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-violet-600 flex-shrink-0">
+              <GraduationCap className="h-4 w-4 text-white" />
+            </div>
+            <span className="text-sm font-bold truncate">Academia</span>
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <AccountMenu
+              trigger={
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
+                    <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
+                      {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              }
+            />
+          </div>
+        </header>
+
+        {/* Academia Mobile Bottom Navigation */}
+        <nav
+          className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          <div className="flex justify-around py-2">
+            {academiaNav.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={cn(
+                    "flex flex-col items-center gap-1 px-2 py-1.5 rounded-sm transition-colors min-h-[44px]",
+                    isActive ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="text-[10px]">{item.name}</span>
+                </NavLink>
+              );
+            })}
+            <AcademiaMoreMenuSheet spaceSlug={academiaSpaceSlug} />
+          </div>
+        </nav>
+
+        {/* Main Content */}
+        <main
+          id="main-content"
+          className="pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0"
+        >
+          <Suspense fallback={<ContentAreaLoader />}>
+            <PageWrapper locationKey={location.pathname}>
+              {children}
+            </PageWrapper>
+          </Suspense>
+        </main>
+
+        <KiroWidget />
+      </div>
+    );
+  }
 
   // For content creators, show creator-specific layout with bottom nav on mobile
   if ((activeRole === 'creator' || activeRole === 'content_creator') && !isAdmin) {

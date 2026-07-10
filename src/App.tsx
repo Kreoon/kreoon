@@ -1330,13 +1330,13 @@ function AppRoutes() {
         />
         <Route
           path="/academia/:spaceSlug"
-          element={<AcademiaSpaceHomePage />}
+          element={<MainLayout><AcademiaSpaceHomePage /></MainLayout>}
         />
         <Route
           path="/academia/:spaceSlug/classroom"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceClassroomPage />
+              <MainLayout><AcademiaSpaceClassroomPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
@@ -1353,7 +1353,7 @@ function AppRoutes() {
           path="/academia/:spaceSlug/feed"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceFeedPage />
+              <MainLayout><AcademiaSpaceFeedPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
@@ -1362,7 +1362,7 @@ function AppRoutes() {
           path="/academia/:spaceSlug/post/:postId"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceFeedPage />
+              <MainLayout><AcademiaSpaceFeedPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
@@ -1370,7 +1370,7 @@ function AppRoutes() {
           path="/academia/:spaceSlug/dm"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceDMPage />
+              <MainLayout><AcademiaSpaceDMPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
@@ -1378,7 +1378,7 @@ function AppRoutes() {
           path="/academia/:spaceSlug/calendar"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceCalendarPage />
+              <MainLayout><AcademiaSpaceCalendarPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
@@ -1428,7 +1428,7 @@ function AppRoutes() {
           path="/academia/:spaceSlug/members"
           element={
             <RequireAcademyAccess>
-              <AcademiaSpaceMembersPage />
+              <MainLayout><AcademiaSpaceMembersPage /></MainLayout>
             </RequireAcademyAccess>
           }
         />
