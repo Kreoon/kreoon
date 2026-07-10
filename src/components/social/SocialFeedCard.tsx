@@ -358,7 +358,7 @@ export const SocialFeedCard = forwardRef<SocialFeedCardRef, SocialFeedCardProps>
         {/* Right side actions - TikTok style */}
         {/* bottom usa la altura real de la bottom nav (--kreoon-bottom-nav-h, Fase 2.5) para no
             quedar tapado — antes bottom-28 fijo se metia debajo de la nav en creator/editor */}
-        <div className="absolute right-3 bottom-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom)+16px)] z-20 flex flex-col items-center gap-4">
+        <div className="absolute right-3 bottom-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom)+48px)] z-20 flex flex-col items-center gap-4">
           {/* Creator avatar + Follow */}
           {item.creatorAvatar && onProfileClick && (
             <div className="flex flex-col items-center gap-1.5 mb-2">
