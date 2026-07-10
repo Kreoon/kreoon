@@ -39,30 +39,16 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json()
-    const { content_id, video_urls } = body
+    const { items } = body
 
-    if (!content_id || !video_urls || !Array.isArray(video_urls) || video_urls.length === 0) {
+    if (!items || !Array.isArray(items) || items.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Missing content_id or video_urls array' }),
+        JSON.stringify({ error: 'Missing items array' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    console.log(`Creating ZIP for content ${content_id} with ${video_urls.length} videos`)
-
-    // Check permissions
-    const { data: content, error: contentError } = await supabase
-      .from('content')
-      .select('id, status, client_id, title')
-      .eq('id', content_id)
-      .single()
-
-    if (contentError || !content) {
-      return new Response(
-        JSON.stringify({ error: 'Content not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    console.log(`Creating ZIP with ${items.length} videos`)
 
     // Check user roles from organization_member_roles
     const { data: userRoles } = await supabase
@@ -75,12 +61,24 @@ Deno.serve(async (req) => {
     const isEditor = roles.includes('editor')
     const isCreator = roles.includes('creator')
 
-    if (!isAdmin && !isEditor && !isCreator) {
+    // Check if user is a client via client_users
+    const { data: clientUserData } = await supabase
+      .from('client_users')
+      .select('client_id')
+      .eq('user_id', user.id)
+
+    const clientIds = new Set((clientUserData || []).map(c => c.client_id))
+    const isClient = clientIds.size > 0
+
+    if (!isAdmin && !isEditor && !isCreator && !isClient) {
       return new Response(
         JSON.stringify({ error: 'No tiene permiso para descargar estos videos' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    // Un cliente solo puede descargar contenido propio en estados aprobados/pagados
+    const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected', 'archived']
 
     // Create ZIP file
     const blobWriter = new BlobWriter('application/zip')
@@ -89,10 +87,35 @@ Deno.serve(async (req) => {
     let successCount = 0
     const errors: string[] = []
 
-    for (let i = 0; i < video_urls.length; i++) {
-      const videoUrl = video_urls[i]
-      
+    for (let i = 0; i < items.length; i++) {
+      const { content_id, video_url: videoUrl, title: itemTitle } = items[i] || {}
+
+      if (!content_id || !videoUrl) {
+        errors.push(`Video ${i + 1}: falta content_id o video_url`)
+        continue
+      }
+
       try {
+        // Check permissions per item
+        const { data: content, error: contentError } = await supabase
+          .from('content')
+          .select('id, status, client_id, title')
+          .eq('id', content_id)
+          .single()
+
+        if (contentError || !content) {
+          errors.push(`Video ${i + 1}: contenido no encontrado`)
+          continue
+        }
+
+        const canAccessItem = isAdmin || isEditor || isCreator ||
+          (isClient && content.client_id && clientIds.has(content.client_id) && approvedStatuses.includes(content.status))
+
+        if (!canAccessItem) {
+          errors.push(`Video ${i + 1}: sin permiso para descargar`)
+          continue
+        }
+
         // Extract video ID from URL
         let videoId = ''
         const embedMatch = videoUrl.match(/\/embed\/[^/]+\/([^/?]+)/)
@@ -148,17 +171,17 @@ Deno.serve(async (req) => {
           }
           
           const videoBytes = new Uint8Array(await originalResponse.arrayBuffer())
-          const fileName = `${videoData.title || `video_${i + 1}`}.mp4`
+          const fileName = `${itemTitle || videoData.title || `video_${i + 1}`}.mp4`
           await zipWriter.add(fileName, new Uint8ArrayReader(videoBytes))
           successCount++
         } else {
           const videoBytes = new Uint8Array(await videoContentResponse.arrayBuffer())
-          const fileName = `${videoData.title || `video_${i + 1}`}.mp4`
+          const fileName = `${itemTitle || videoData.title || `video_${i + 1}`}.mp4`
           await zipWriter.add(fileName, new Uint8ArrayReader(videoBytes))
           successCount++
         }
 
-        console.log(`Added video ${i + 1} to ZIP: ${videoData.title || `video_${i + 1}`}`)
+        console.log(`Added video ${i + 1} to ZIP: ${itemTitle || videoData.title || `video_${i + 1}`}`)
 
       } catch (error) {
         console.error(`Error processing video ${i + 1}:`, error)
@@ -178,15 +201,15 @@ Deno.serve(async (req) => {
     const zipArrayBuffer = await zipBlob.arrayBuffer()
     const zipBase64 = btoa(String.fromCharCode(...new Uint8Array(zipArrayBuffer)))
 
-    console.log(`ZIP created successfully: ${successCount}/${video_urls.length} videos, size: ${zipArrayBuffer.byteLength} bytes`)
+    console.log(`ZIP created successfully: ${successCount}/${items.length} videos, size: ${zipArrayBuffer.byteLength} bytes`)
 
     return new Response(
       JSON.stringify({
         success: true,
         zip_data: zipBase64,
-        filename: `${content.title || 'videos'}_raw.zip`,
+        filename: `videos_${new Date().toISOString().split('T')[0]}.zip`,
         videos_included: successCount,
-        total_videos: video_urls.length,
+        total_videos: items.length,
         errors: errors.length > 0 ? errors : undefined
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

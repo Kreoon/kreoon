@@ -70,7 +70,7 @@ export function useDownload(): UseDownloadReturn {
     // Content can be downloaded if:
     // 1. Status is in approved/delivered states (matches bunny-download edge function)
     // 2. Content is_published is true
-    const allowedStatuses = ['approved', 'published', 'delivered', 'corrected', 'paid', 'completed', 'entregado', 'aprobado'];
+    const allowedStatuses = ['approved', 'published', 'delivered', 'corrected', 'paid', 'archived', 'completed', 'entregado', 'aprobado'];
     return allowedStatuses.includes(status.toLowerCase()) || isPublished === true;
   }, []);
 
@@ -285,14 +285,27 @@ export function useDownload(): UseDownloadReturn {
 
       if (error) throw error;
 
-      if (data?.downloadUrl) {
+      if (data?.zip_data) {
+        const binary = atob(data.zip_data);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'application/zip' });
+        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = data.downloadUrl;
-        a.download = `contenido_${new Date().toISOString().split('T')[0]}.zip`;
+        a.href = url;
+        a.download = data.filename || `contenido_${new Date().toISOString().split('T')[0]}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        toast.success('Descarga completada');
+        window.URL.revokeObjectURL(url);
+
+        if (data.errors?.length) {
+          toast.warning(`Descarga completada con ${data.errors.length} video(s) omitido(s)`);
+        } else {
+          toast.success('Descarga completada');
+        }
       } else {
         throw new Error('No se pudo generar el archivo ZIP');
       }

@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
     // - Editors can download anytime (to work on raw videos)
     // - Creators can download anytime (their own content)
     // - Clients can only download when status is approved, paid, or delivered
-    const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected']
+    const approvedStatuses = ['approved', 'paid', 'delivered', 'corrected', 'archived']
     const canDownload = isAdmin || isEditor || isCreator || (isContentClient && approvedStatuses.includes(content.status))
 
     if (!canDownload) {
