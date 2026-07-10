@@ -35,7 +35,7 @@ interface KiroFloatingButtonProps {
 const BUTTON_SIZE = KIRO_BREAKPOINTS.FLOATING_SIZE_MOBILE;
 const LONG_PRESS_DURATION = 500; // ms para habilitar drag
 const CORNER_STORAGE_KEY = 'kreoon_kiro_preferred_corner';
-const MARGIN = 28; // px desde los bordes — subido para no quedar sobre otros botones flotantes
+const MARGIN = 52; // px desde los bordes — subido para no quedar sobre otros botones flotantes
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UTILIDADES
