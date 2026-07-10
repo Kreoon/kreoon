@@ -658,7 +658,11 @@ export function useHLSPlayer(
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, currentMuted, networkQuality, fastStart, connectionAware, fallbackToMp4, playWithFallback, candidates.length, sourceIndex]);
+    // currentMuted NO va en las deps a proposito: es solo el valor inicial para el primer
+    // autoplay/load. Togglear mute despues NO debe re-disparar este efecto entero (recarga
+    // la fuente HLS/MP4 y reinicia el video) — el sync de mute en caliente ya lo maneja el
+    // useEffect de mas abajo ([currentMuted]) escribiendo video.muted directo, sin reload.
+  }, [hlsUrl, mp4Url, loop, isDirectMp4, videoUrl, autoPlay, networkQuality, fastStart, connectionAware, fallbackToMp4, playWithFallback, candidates.length, sourceIndex]);
 
   // React to autoPlay changes
   useEffect(() => {
