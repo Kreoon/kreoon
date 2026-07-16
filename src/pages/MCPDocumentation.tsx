@@ -17,7 +17,7 @@ y administrar el marketplace.
 
 **Endpoint principal:** https://mcp.kreoon.com
 **Versión:** v3.2.0
-**Herramientas disponibles:** 33
+**Herramientas disponibles:** 43
 
 ---
 
@@ -212,6 +212,54 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 
 **optimize_creator_profile** — Optimiza bio, especialidades y engagement del perfil con IA.
 - \`focus_area\` (enum): "bio" | "specialties" | "engagement" | "all"
+
+---
+
+### Portafolio del Marketplace (scope: profiles:write)
+
+Solo talento (su propio portafolio) y admin (el de cualquier miembro de su organización). \`creator_id\` se ignora si quien llama es talento — siempre opera sobre su propia cuenta.
+
+**get_my_portfolio** — Ve el perfil, items, servicios y bloques de diseño actuales.
+- \`creator_id\` (string, opcional, solo admin)
+
+**generate_portfolio** — Genera el portafolio COMPLETO con IA (bloques con diseño rico: gradientes, tipografía, sombras) usando datos reales del creador. Se guarda como borrador. Nunca inventa datos.
+- \`creator_id\` (string, opcional, solo admin)
+- \`vibe\` (string): estilo pedido, ej. "minimalista oscuro", "colorido y juvenil"
+
+**update_portfolio_block** — Edita un bloque puntual (texto, color, estilo, visibilidad) sin regenerar el resto.
+- \`block_id\` (string, required)
+- \`config\` / \`styles\` / \`content\` (object, opcionales)
+- \`is_visible\` (boolean, opcional)
+
+**publish_portfolio** — Publica el borrador y activa el perfil en el marketplace.
+- \`creator_id\` (string, opcional, solo admin)
+
+**add_portfolio_item** — Registra un trabajo (video/imagen) con una URL ya hosteada. No sube archivos.
+- \`media_url\` (string, required)
+- \`media_type\`, \`title\`, \`description\`, \`thumbnail_url\`, \`category\`, \`tags\` (opcionales)
+
+**list_portfolio_items** — Lista los trabajos actuales del portafolio.
+- \`creator_id\` (string, opcional, solo admin), \`limit\` (number, opcional)
+
+**import_external_design** — Importa un diseño externo como bloque del portafolio (borrador): un link de Figma (se embebe de forma segura) o una imagen ya exportada de Gamma/Stitch/Canva. No acepta HTML ni links genéricos — solo figma.com o una URL de imagen real (se verifica el content-type).
+- \`source_url\` (string, required): URL de Figma o de una imagen
+- \`title\` (string, opcional)
+
+---
+
+### Webhooks Salientes (scope: campaigns:read / campaigns:write) — solo admin
+
+Conectá n8n/Make/Zapier: KREOON hace un POST firmado (HMAC-SHA256) a tu URL cada vez que ocurre un evento suscrito.
+
+**register_webhook** — Registra un webhook. El secreto para validar la firma se muestra UNA sola vez.
+- \`name\`, \`url\` (HTTPS), \`events\` (array: "portfolio.published" | "script.generated")
+
+**list_webhooks** — Lista los webhooks de la organización (sin exponer el secreto).
+
+**revoke_webhook** — Desactiva un webhook.
+- \`webhook_id\` (string, required)
+
+Cada entrega incluye headers \`X-Kreoon-Event\` y \`X-Kreoon-Signature: sha256=<hmac>\` — validá la firma con el secreto antes de confiar en el payload.
 
 ---
 
@@ -423,6 +471,28 @@ const TOOL_GROUPS = [
     ],
   },
   {
+    name: "Portafolio del Marketplace",
+    count: 7,
+    tools: [
+      { name: "get_my_portfolio", desc: "Ve el perfil, items, servicios y bloques de diseño actuales (talento: el propio; admin: el de un miembro)", scope: "profiles:write" },
+      { name: "generate_portfolio", desc: "Genera el portafolio completo con IA (diseño rico según un 'vibe' pedido) usando solo datos reales, guarda como borrador", scope: "profiles:write" },
+      { name: "update_portfolio_block", desc: "Edita un bloque puntual (texto, color, estilo, visibilidad) sin regenerar el resto", scope: "profiles:write" },
+      { name: "publish_portfolio", desc: "Publica el borrador y activa el perfil en el marketplace", scope: "profiles:write" },
+      { name: "add_portfolio_item", desc: "Registra un trabajo (video/imagen) con una URL ya hosteada", scope: "profiles:write" },
+      { name: "list_portfolio_items", desc: "Lista los trabajos actuales del portafolio", scope: "profiles:write" },
+      { name: "import_external_design", desc: "Importa un diseño externo (Figma embebido o imagen de Gamma/Stitch/Canva) como bloque del portafolio", scope: "profiles:write" },
+    ],
+  },
+  {
+    name: "Webhooks Salientes",
+    count: 3,
+    tools: [
+      { name: "register_webhook", desc: "Registra un webhook HTTPS con firma HMAC-SHA256 para conectar n8n/Make/Zapier (solo admin)", scope: "campaigns:write" },
+      { name: "list_webhooks", desc: "Lista los webhooks de la organización sin exponer el secreto (solo admin)", scope: "campaigns:read" },
+      { name: "revoke_webhook", desc: "Desactiva un webhook (solo admin)", scope: "campaigns:write" },
+    ],
+  },
+  {
     name: "Social Media",
     count: 1,
     tools: [
@@ -527,7 +597,7 @@ export default function MCPDocumentation() {
             Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, campañas, content board y marketplace.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">33 herramientas</span>
+            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">43 herramientas</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
@@ -608,7 +678,7 @@ export default function MCPDocumentation() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "33 herramientas que cubren todo el flujo operativo de una agencia UGC" },
+              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "43 herramientas que cubren todo el flujo operativo de una agencia UGC" },
               { icon: <Shield className="w-4 h-4" />, title: "Multi-tenant seguro", desc: "Cada API key está vinculada a una organización. RLS en toda la base de datos." },
               { icon: <Code2 className="w-4 h-4" />, title: "Estándar abierto", desc: "Compatible con Claude, ChatGPT, Gemini y cualquier agente que soporte MCP o REST." },
             ].map((item) => (
@@ -685,7 +755,7 @@ curl -X POST \\
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Herramientas disponibles
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">33 tools</Badge>
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">43 tools</Badge>
           </h2>
 
           {TOOL_GROUPS.map((group) => (

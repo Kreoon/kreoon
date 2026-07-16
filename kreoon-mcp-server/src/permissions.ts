@@ -64,6 +64,12 @@ const ADMIN_ONLY_TOOLS = new Set<string>([
   "generate_product_dna_v1",
   "get_org_dashboard",
   "list_org_members",
+  // Webhooks salientes: definen a dónde fluye información de la org hacia
+  // afuera (n8n/Make) — decisión de integración a nivel organización, no
+  // de un talento individual.
+  "register_webhook",
+  "list_webhooks",
+  "revoke_webhook",
 ]);
 
 // Tools que un cliente (rol "client") puede usar: solo lectura + aprobación/feedback

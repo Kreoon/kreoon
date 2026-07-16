@@ -43,7 +43,8 @@ export type BlockType =
   | 'whatsapp_button'       // Boton flotante WhatsApp
   | 'case_study'            // Casos de exito con metricas (vertical)
   // Media avanzado
-  | 'carousel';
+  | 'carousel'
+  | 'external_design';      // Diseño importado (Figma embebido o imagen de Gamma/Stitch/Canva)
 
 export type BlockCategory = 'required' | 'core' | 'content' | 'media' | 'layout' | 'conversion';
 
@@ -989,6 +990,22 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       margin: 'md',
     },
     requiresPlan: 'creator_pro',
+  },
+  external_design: {
+    type: 'external_design',
+    label: 'Diseño Importado',
+    icon: 'LayoutTemplate',
+    description: 'Diseño de Figma embebido, o una imagen exportada de Gamma/Stitch/Canva',
+    category: 'media',
+    isRequired: false,
+    isDeletable: true,
+    maxInstances: 5,
+    defaultConfig: {},
+    defaultStyles: {
+      padding: 'md',
+      margin: 'md',
+      borderRadius: 'md',
+    },
   },
 };
 

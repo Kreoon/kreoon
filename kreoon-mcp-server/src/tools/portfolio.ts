@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { AuthContext, ToolResult } from "../types.js";
+import { emitWebhookEvent } from "../webhookEmitter.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -108,6 +109,23 @@ export const portfolioToolDefinitions = [
       required: [],
     },
   },
+  {
+    name: "import_external_design",
+    description:
+      "🎨 IMPORTA un diseño externo como bloque del portafolio (borrador): un link de Figma (se embebe de forma segura) " +
+      "o una imagen ya exportada de Gamma/Stitch/Canva/cualquier herramienta de diseño. " +
+      "Cuándo usarla: 'importá este diseño de Figma', 'agregá esta imagen que exporté de Gamma/Stitch'. " +
+      "NO acepta HTML ni links genéricos — solo figma.com o una URL de imagen real (se verifica el content-type).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        creator_id: { type: "string", description: "Solo admin: UUID del miembro de la org. Ignorado para talento." },
+        source_url: { type: "string", description: "URL de Figma (https://www.figma.com/...) o de una imagen (https://.../diseno.png)" },
+        title: { type: "string", description: "Título/alt del diseño, opcional" },
+      },
+      required: ["source_url"],
+    },
+  },
 ];
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -124,6 +142,7 @@ export async function handlePortfolioTool(
     case "publish_portfolio":       return publishPortfolio(args, auth);
     case "add_portfolio_item":      return addPortfolioItem(args, auth);
     case "list_portfolio_items":    return listPortfolioItems(args, auth);
+    case "import_external_design":  return importExternalDesign(args, auth);
     default: return { success: false, error: `Tool desconocida: ${toolName}` };
   }
 }
@@ -381,6 +400,8 @@ async function publishPortfolio(args: Record<string, unknown>, auth: AuthContext
   const { error } = await supabase.rpc("mcp_publish_portfolio_blocks", { p_profile_id: profile!.id });
   if (error) return { success: false, error: `publish_portfolio: ${error.message}` };
 
+  emitWebhookEvent(auth, "portfolio.published", { profile_id: profile!.id, user_id: target.userId });
+
   return {
     success: true,
     data: { profile_id: profile!.id, published: true, message: "Portafolio publicado. Ya es visible en el marketplace." },
@@ -433,4 +454,94 @@ async function listPortfolioItems(args: Record<string, unknown>, auth: AuthConte
 
   if (error) return { success: false, error: `list_portfolio_items: ${error.message}` };
   return { success: true, data: { items: data ?? [], count: data?.length ?? 0 } };
+}
+
+const ALLOWED_FIGMA_HOSTS = new Set(["www.figma.com", "figma.com"]);
+
+// No confía en la extensión de la URL sola: si no matchea un patrón de imagen
+// obvio, hace un HEAD real y valida el Content-Type — evita que alguien pase
+// una URL cualquiera (ej. una página HTML) disfrazada de ".png?x=1".
+async function looksLikeImage(url: string): Promise<boolean> {
+  if (/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(url)) return true;
+  try {
+    const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(5000) });
+    const contentType = res.headers.get("content-type") ?? "";
+    return contentType.startsWith("image/");
+  } catch {
+    return false;
+  }
+}
+
+async function importExternalDesign(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const target = await resolveTargetUserId(args, auth);
+  if (target.error) return { success: false, error: target.error };
+
+  const { profile, error: profileErr } = await ensureCreatorProfile(target.userId!);
+  if (profileErr) return { success: false, error: profileErr };
+
+  const sourceUrl = args.source_url as string | undefined;
+  if (!sourceUrl) return { success: false, error: "source_url requerido" };
+
+  let parsed: URL;
+  try {
+    parsed = new URL(sourceUrl);
+  } catch {
+    return { success: false, error: "source_url inválida" };
+  }
+  if (parsed.protocol !== "https:") return { success: false, error: "source_url debe ser HTTPS" };
+
+  const title = (args.title as string | undefined) ?? null;
+  let content: Record<string, unknown>;
+
+  if (ALLOWED_FIGMA_HOSTS.has(parsed.hostname.toLowerCase())) {
+    const embedUrl = `https://www.figma.com/embed?${new URLSearchParams({ embed_host: "kreoon", url: sourceUrl }).toString()}`;
+    content = { provider: "figma", source_url: sourceUrl, figma_embed_url: embedUrl, title };
+  } else {
+    // Único otro caso soportado: una imagen real (Gamma/Stitch/Canva no
+    // tienen un embed oficial como Figma, pero sus exports SÍ son imágenes).
+    // Nunca se acepta HTML/script arbitrario de un dominio no confiable.
+    if (!(await looksLikeImage(sourceUrl))) {
+      return {
+        success: false,
+        error: "Fuente no soportada. Usá un link de Figma (figma.com) o una URL de imagen ya exportada (Gamma, Stitch, Canva, etc.)",
+      };
+    }
+    content = { provider: "image", source_url: sourceUrl, image_url: sourceUrl, title };
+  }
+
+  const { count } = await supabase
+    .from("profile_builder_blocks")
+    .select("id", { count: "exact", head: true })
+    .eq("profile_id", profile!.id).eq("is_draft", true);
+
+  if ((count ?? 0) >= 15) {
+    return { success: false, error: "Ya tenés 15 bloques en el borrador (el máximo permitido). Quitá alguno antes de importar otro diseño." };
+  }
+
+  const { data: maxRow } = await supabase
+    .from("profile_builder_blocks")
+    .select("order_index")
+    .eq("profile_id", profile!.id).eq("is_draft", true)
+    .order("order_index", { ascending: false })
+    .limit(1).maybeSingle();
+
+  const nextOrder = ((maxRow?.order_index as number | undefined) ?? -1) + 1;
+
+  const { data, error } = await supabase
+    .from("profile_builder_blocks")
+    .insert({
+      profile_id: profile!.id,
+      block_type: "external_design",
+      order_index: nextOrder,
+      is_visible: true,
+      is_draft: true,
+      config: {},
+      styles: {},
+      content,
+    })
+    .select("id, block_type, order_index, content")
+    .single();
+
+  if (error) return { success: false, error: `import_external_design: ${error.message}` };
+  return { success: true, data };
 }

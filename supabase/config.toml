@@ -199,6 +199,12 @@ verify_jwt = true
 [functions.portfolio-ai]
 verify_jwt = false
 
+[functions.mcp-webhook-dispatch]
+# Server-to-server only (MCP server / otras edge functions) — se autentica
+# comparando el Authorization contra el secret de service role en código,
+# nunca requiere sesión de usuario.
+verify_jwt = false
+
 [functions.feed-recommendations]
 verify_jwt = false
 

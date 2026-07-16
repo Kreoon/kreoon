@@ -106,6 +106,9 @@ const VerifiedReviewsBlock = lazy(() =>
 const CarouselBlock = lazy(() =>
   import('./blocks/CarouselBlock').then((m) => ({ default: m.CarouselBlock })),
 );
+const ExternalDesignBlock = lazy(() =>
+  import('./blocks/ExternalDesignBlock').then((m) => ({ default: m.ExternalDesignBlock })),
+);
 
 // Mapa de tipo de bloque a componente lazy
 const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.ComponentType<BlockProps>>> = {
@@ -149,6 +152,7 @@ const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.Com
   case_study: CaseStudyBlock,
   // Media avanzado
   carousel: CarouselBlock,
+  external_design: ExternalDesignBlock,
 };
 
 function BlockSkeleton() {

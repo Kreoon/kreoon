@@ -6,6 +6,7 @@ import {
   GenerateScriptOutput,
   ImproveScriptInput,
 } from "../types.js";
+import { emitWebhookEvent } from "../webhookEmitter.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -179,6 +180,8 @@ async function generateScript(
       return { success: false, error: `Error generando guión: ${fnError.message}` };
     }
 
+    emitWebhookEvent(auth, "script.generated", { product_id, platform, mode: "product" });
+
     return {
       success: true,
       data: fnData as GenerateScriptOutput,
@@ -246,6 +249,8 @@ Formato de respuesta JSON:
   } catch {
     parsed = fnData as GenerateScriptOutput;
   }
+
+  emitWebhookEvent(auth, "script.generated", { brand_name, platform, mode: "brand" });
 
   return {
     success: true,

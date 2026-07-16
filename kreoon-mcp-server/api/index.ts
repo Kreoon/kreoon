@@ -11,6 +11,7 @@ import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/op
 import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
 import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
 import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
+import { handleWebhookTool, webhookToolDefinitions } from '../src/tools/webhooks.js';
 import { handleContentGenerationTool, contentGenerationToolDefinitions } from '../src/tools/content-generation.js';
 import { handleProductDnaTool, productDnaToolDefinitions } from '../src/tools/product-dna.js';
 import type { AuthContext, AuthScope } from '../src/types.js';
@@ -295,6 +296,7 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   publish_portfolio: 'profiles:write',
   add_portfolio_item: 'profiles:write',
   list_portfolio_items: 'profiles:write',
+  import_external_design: 'profiles:write',
   // Social
   publish_to_social: 'social:write',
   // Operations (content board)
@@ -331,6 +333,10 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   list_marketplace_projects: 'campaigns:read',
   assign_editor_to_project: 'campaigns:write',
   update_project_status: 'campaigns:write',
+  // Webhooks salientes (n8n/Make)
+  register_webhook: 'campaigns:write',
+  list_webhooks:    'campaigns:read',
+  revoke_webhook:   'campaigns:write',
 };
 
 const ALL_TOOL_DEFS = [
@@ -345,6 +351,7 @@ const ALL_TOOL_DEFS = [
   ...campaignsToolDefinitions,
   ...projectsToolDefinitions,
   ...orgToolDefinitions,
+  ...webhookToolDefinitions,
 ];
 
 // ─── Dispatcher ──────────────────────────────────────────────────────────────
@@ -379,6 +386,7 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (campaignsToolDefinitions.some(t => t.name === name))           return handleCampaignsTool(name, args, auth);
   if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
   if (orgToolDefinitions.some(t => t.name === name))         return handleOrgTool(name, args, auth);
+  if (webhookToolDefinitions.some(t => t.name === name))     return handleWebhookTool(name, args, auth);
   throw Object.assign(new Error(`Tool no manejada: ${name}`), { status: 500 });
 }
 

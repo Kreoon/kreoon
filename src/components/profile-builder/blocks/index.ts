@@ -20,6 +20,7 @@ export { SocialLinksBlock } from './SocialLinksBlock';
 // Media blocks
 export { VideoEmbedBlock } from './VideoEmbedBlock';
 export { ImageGalleryBlock } from './ImageGalleryBlock';
+export { ExternalDesignBlock } from './ExternalDesignBlock';
 
 // Layout blocks
 export { DividerBlock } from './DividerBlock';
@@ -67,6 +68,7 @@ import { TimelineBlock } from './TimelineBlock';
 import { SocialLinksBlock } from './SocialLinksBlock';
 import { VideoEmbedBlock } from './VideoEmbedBlock';
 import { ImageGalleryBlock } from './ImageGalleryBlock';
+import { ExternalDesignBlock } from './ExternalDesignBlock';
 import { DividerBlock } from './DividerBlock';
 import { SpacerBlock } from './SpacerBlock';
 // Advanced blocks v3
@@ -124,6 +126,7 @@ export const BLOCK_COMPONENTS: Partial<Record<BlockType, ComponentType<BlockProp
   verified_reviews: VerifiedReviewsBlock,
   // Media avanzado
   carousel: CarouselBlock,
+  external_design: ExternalDesignBlock,
   // Recommended talent
   recommended_talent: RecommendedTalentBlock,
 };
