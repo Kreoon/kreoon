@@ -611,8 +611,14 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     });
   }
 
-  // ── POST /mcp — MCP Streamable HTTP (protocolo nativo para Claude.ai web) ──
-  if (req.method === 'POST' && path === '/mcp') {
+  // ── POST /mcp (o raíz) — MCP Streamable HTTP (protocolo nativo para Claude.ai web) ──
+  // La raíz también responde este protocolo porque el conector de Claude.ai
+  // postea el handshake JSON-RPC exactamente a la URL que el usuario pega en
+  // "Agregar conector personalizado" (https://mcp.kreoon.com, sin /mcp). Antes
+  // esa ruta solo servía REST (/v1/tools), con forma de respuesta distinta a
+  // JSON-RPC — el cliente de Claude.ai lo interpretaba como "no es un servidor
+  // MCP válido" y fallaba la conexión antes de siquiera llegar a OAuth.
+  if (req.method === 'POST' && (path === '/mcp' || path === '')) {
     // Auth: header Authorization o query param ?key=
     const rawKey =
       (req.headers.authorization ?? '').replace('Bearer ', '') ||
