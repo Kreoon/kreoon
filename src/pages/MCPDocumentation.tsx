@@ -753,8 +753,8 @@ curl -X POST \\
             {[
               { step: "1", title: "Descubrimiento", desc: "Claude.ai lee /.well-known/oauth-authorization-server (incluye registration_endpoint)" },
               { step: "2", title: "Registro", desc: "POST /oauth/register — Claude.ai obtiene un client_id automáticamente" },
-              { step: "3", title: "Autorización", desc: "Formulario HTML de Kreoon — ingresas tu API key" },
-              { step: "4", title: "Redirección", desc: "Servidor genera un code opaco de un solo uso (con PKCE) y redirige" },
+              { step: "3", title: "Autorización", desc: "Formulario HTML de Kreoon — client_id, redirect_uri y PKCE (S256) son obligatorios y se validan contra el registro" },
+              { step: "4", title: "Redirección", desc: "Servidor genera un code opaco de un solo uso y redirige SOLO al redirect_uri registrado" },
               { step: "5", title: "Token", desc: "POST /oauth/token con code + code_verifier → access_token = tu API key" },
             ].map((item) => (
               <div key={item.step} className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-4 space-y-2">

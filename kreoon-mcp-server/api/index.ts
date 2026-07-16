@@ -142,6 +142,41 @@ function authorizeHtml(
 </html>`;
 }
 
+// ─── Validación de /oauth/authorize ─────────────────────────────────────────
+// Cierra dos huecos: (1) redirect_uri no se validaba contra lo registrado
+// para el client_id — cualquiera podía armar un link a este dominio legítimo
+// con redirect_uri=https://evil.com, la víctima entraba su API key real
+// pensando que hablaba con Kreoon, y el code terminaba en el sitio atacante
+// (authorization code interception). (2) PKCE era opcional — un cliente
+// atacante podía simplemente omitir code_challenge y saltarse esa defensa.
+// Ahora client_id + redirect_uri exacto contra lo registrado en DCR, y PKCE
+// (S256) son OBLIGATORIOS para emitir un code.
+async function validateAuthorizeRequest(
+  clientId: string,
+  redirectUri: string,
+  codeChallenge: string,
+  codeChallengeMethod: string
+): Promise<string | null> {
+  if (!clientId) return 'client_id requerido. Registra tu cliente vía POST /oauth/register primero.';
+  if (!redirectUri) return 'redirect_uri requerido.';
+  if (!codeChallenge || codeChallengeMethod !== 'S256') {
+    return 'PKCE requerido: code_challenge y code_challenge_method=S256 son obligatorios.';
+  }
+
+  const { data: client, error } = await supabase
+    .from('mcp_oauth_clients')
+    .select('redirect_uris')
+    .eq('client_id', clientId)
+    .maybeSingle();
+
+  if (error || !client) return 'client_id no registrado.';
+  if (!client.redirect_uris.includes(redirectUri)) {
+    return 'redirect_uri no coincide con ninguno registrado para este client_id.';
+  }
+
+  return null;
+}
+
 // ─── CORS helper ────────────────────────────────────────────────────────────
 
 function setCORS(res: ServerResponse) {
@@ -448,9 +483,12 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     const clientId              = url.searchParams.get('client_id') ?? '';
     const codeChallenge        = url.searchParams.get('code_challenge') ?? '';
     const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method') ?? '';
-    if (codeChallengeMethodRaw && codeChallengeMethodRaw !== 'S256') {
-      return json(response, 400, { error: 'invalid_request', error_description: 'code_challenge_method debe ser S256' });
+
+    const validationError = await validateAuthorizeRequest(clientId, redirectUri, codeChallenge, codeChallengeMethodRaw);
+    if (validationError) {
+      return json(response, 400, { error: 'invalid_request', error_description: validationError });
     }
+
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.statusCode = 200;
     response.end(authorizeHtml(redirectUri, state, clientId, codeChallenge, codeChallengeMethodRaw));
@@ -471,9 +509,10 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       ));
     };
 
-    if (code_challenge_method && code_challenge_method !== 'S256') {
-      return showError('code_challenge_method debe ser S256');
-    }
+    const validationError = await validateAuthorizeRequest(
+      client_id ?? '', redirect_uri ?? '', code_challenge ?? '', code_challenge_method ?? ''
+    );
+    if (validationError) return showError(validationError);
 
     if (!api_key?.startsWith('sk-kreoon-')) {
       return showError('API key inválida. Debe comenzar con sk-kreoon-');
@@ -539,14 +578,15 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       return json(response, 400, { error: 'invalid_grant', error_description: 'Code inválido, usado o expirado' });
     }
 
-    if (codeRow.code_challenge) {
-      if (!codeVerifier) {
-        return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier requerido (PKCE)' });
-      }
-      const computed = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
-      if (computed !== codeRow.code_challenge) {
-        return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier inválido' });
-      }
+    // PKCE es obligatorio (validado también al emitir el code en /oauth/authorize) —
+    // sin este chequeo, un atacante que intercepte el code podría canjearlo sin
+    // conocer el code_verifier original.
+    if (!codeRow.code_challenge || !codeVerifier) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier requerido (PKCE)' });
+    }
+    const computed = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+    if (computed !== codeRow.code_challenge) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier inválido' });
     }
 
     // Marcar el code como usado (un solo canje posible)
