@@ -12,7 +12,7 @@ import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 import { corsJsonResponse } from "../_shared/cors.ts";
 
 interface AIRequest {
-  action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks";
+  action: "search" | "caption" | "bio" | "recommendations" | "moderation" | "blocks" | "generate_portfolio";
   payload: Record<string, unknown>;
   organizationId?: string;
   model?: string;
@@ -86,17 +86,31 @@ serve(async (req) => {
     // ningún caller real la usaba (siempre viene de getPromptsFromDB).
     const authHeader = req.headers.get("Authorization");
     const authToken = authHeader?.replace(/^Bearer\s+/i, "").trim();
-    const { data: { user: callerUser } = { user: null } } = authToken
-      ? await supabase.auth.getUser(authToken)
-      : { data: { user: null } };
-    if (!callerUser) {
-      return corsJsonResponse(req, { error: "unauthorized" }, 401);
+
+    // Llamada server-to-server desde el MCP (kreoon-mcp-server): no tiene
+    // sesión de usuario Supabase, autentica con la API key del talento y ya
+    // validó ownership/membresía de org en TypeScript antes de invocar. Se
+    // reconoce por coincidencia EXACTA con el secreto de service role (nunca
+    // expuesto a clientes) — no por decodear el JWT sin verificar firma, que
+    // sería falsificable con verify_jwt=false en esta función.
+    const isServiceRoleCall = !!authToken && authToken === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    let userId: string;
+    if (isServiceRoleCall) {
+      userId = (payload?.mcp_caller_user_id as string | undefined) ?? "00000000-0000-0000-0000-000000000000";
+    } else {
+      const { data: { user: callerUser } = { user: null } } = authToken
+        ? await supabase.auth.getUser(authToken)
+        : { data: { user: null } };
+      if (!callerUser) {
+        return corsJsonResponse(req, { error: "unauthorized" }, 401);
+      }
+      if (organizationId) {
+        const membershipRejection = await assertOrgMembership(req, supabase, callerUser.id, organizationId);
+        if (membershipRejection) return membershipRejection;
+      }
+      userId = callerUser.id;
     }
-    if (organizationId) {
-      const membershipRejection = await assertOrgMembership(req, supabase, callerUser.id, organizationId);
-      if (membershipRejection) return membershipRejection;
-    }
-    const userId = callerUser.id;
 
     const dbPrompts = await getPromptsFromDB(supabase, action, payload ?? {});
     const systemPrompt = dbPrompts.system;

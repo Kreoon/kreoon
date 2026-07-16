@@ -125,6 +125,54 @@ Tiene media: ${p.has_media ?? false}
 Analiza posibles violaciones. Responde SOLO en JSON válido.`,
   },
 
+  generate_portfolio: {
+    system: `Eres un diseñador de portafolios para un marketplace de creadores UGC (KREOON). Generás la
+estructura COMPLETA de un perfil público a partir de datos reales del creador, usando el sistema de
+bloques nativo de la plataforma — no HTML libre.
+
+BLOQUES DISPONIBLES (usa "type" exacto):
+- Fijos/obligatorios: "hero_banner" (siempre primero), "recommended_talent" (siempre último, no lo generes vos, se agrega solo — NO lo incluyas en tu respuesta)
+- Core (recomendado incluir siempre que haya datos): "about", "portfolio", "services", "stats", "pricing"
+- Reseñas (solo si hay reviews reales): "reviews" o "verified_reviews"
+- Premium (SOLO si plan es "creator_pro" o "creator_premium"): "contact", "social_links"
+- Opcionales según el caso: "skills", "testimonials", "brands", "faq", "cta_banner", "whatsapp_button", "case_study", "text_block", "image_gallery", "timeline"
+- Layout: "section" (contenedor con fondo propio), "columns" (grid 2-6), "divider", "spacer"
+
+REGLAS DURAS:
+1. Máximo 15 bloques en total (sin contar "recommended_talent", que no generás vos).
+2. NUNCA inventes datos (precios, testimonios, métricas, nombres de marcas) que no vengan en el payload. Si un dato no existe, omití el bloque o usá un placeholder honesto tipo "Agregá tu primer proyecto" en vez de inventar contenido falso.
+3. Cada bloque es un objeto: { "type": string, "orderIndex": number, "isVisible": true, "config": object, "styles": object, "content": object }.
+4. "content" lleva el texto/datos reales YA redactados por vos (bio mejorada, títulos de servicios, etc. basados en el payload) — no dataBindings dinámicos, texto final listo para mostrar.
+5. "styles" es donde generás el LOOK — variá backgroundType ("color"|"gradient"|"image"), backgroundGradient (css gradient string), textColor, borderRadius, shadow, padding, animation, fontFamily/fontWeight en headlines, para que el conjunto se sienta diseñado (tipo Canva) y coherente con el "vibe" pedido — NO uses el mismo fondo blanco plano en todos los bloques, alterná color de fondo/gradiente entre secciones consecutivas para crear ritmo visual, pero mantené una paleta de 2-3 colores coherente en todo el perfil (no arcoíris).
+6. Respetá el "vibe"/estilo pedido (ej. "minimalista oscuro", "colorido energético y juvenil", "editorial elegante") en toda la paleta y tipografía.
+7. Si plan es "free", NO incluyas "contact" ni "social_links".
+
+Responde SOLO en JSON válido con la forma: { "blocks": [ ...bloques en orden... ] }. Sin texto fuera del JSON.`,
+
+    userTemplate: (p) => {
+      const profile = (p.profile ?? {}) as Record<string, unknown>;
+      const items = (p.portfolio_items ?? []) as unknown[];
+      const services = (p.services ?? []) as unknown[];
+      const reviews = (p.reviews ?? []) as unknown[];
+      return `Vibe/estilo pedido: ${p.vibe ?? "profesional y moderno"}
+Plan del creador: ${p.plan ?? "free"}
+
+Datos reales del perfil:
+${JSON.stringify(profile, null, 2)}
+
+Items de portafolio existentes (usalos para el bloque "portfolio", no inventes otros):
+${JSON.stringify(items, null, 2)}
+
+Servicios existentes (usalos para el bloque "services", no inventes precios):
+${JSON.stringify(services, null, 2)}
+
+Reseñas reales (solo incluí bloque de reviews si hay al menos una):
+${JSON.stringify(reviews, null, 2)}
+
+Generá el portafolio completo siguiendo las reglas. Responde SOLO en JSON válido: { "blocks": [...] }.`;
+    },
+  },
+
   recommendations: {
     system: `Eres un motor de recomendaciones para una plataforma de portafolios creativos.
 

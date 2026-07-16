@@ -5,6 +5,7 @@ import { resolveGroup, GROUP_SCOPES, GROUP_RATE_LIMIT, isToolAllowedForGroup } f
 import { handleScriptTool, scriptToolDefinitions } from '../src/tools/scripts.js';
 import { handleCreatorTool, creatorToolDefinitions } from '../src/tools/creators.js';
 import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles.js';
+import { handlePortfolioTool, portfolioToolDefinitions } from '../src/tools/portfolio.js';
 import { handleSocialTool, socialToolDefinitions } from '../src/tools/social.js';
 import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/operations.js';
 import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
@@ -287,6 +288,13 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   score_creator_for_campaign: 'creators:read',
   // Profiles
   optimize_creator_profile: 'profiles:write',
+  // Portfolio del marketplace (talento + admin)
+  get_my_portfolio: 'profiles:write',
+  generate_portfolio: 'profiles:write',
+  update_portfolio_block: 'profiles:write',
+  publish_portfolio: 'profiles:write',
+  add_portfolio_item: 'profiles:write',
+  list_portfolio_items: 'profiles:write',
   // Social
   publish_to_social: 'social:write',
   // Operations (content board)
@@ -329,6 +337,7 @@ const ALL_TOOL_DEFS = [
   ...scriptToolDefinitions,
   ...creatorToolDefinitions,
   ...profileToolDefinitions,
+  ...portfolioToolDefinitions,
   ...socialToolDefinitions,
   ...operationsToolDefinitions,
   ...contentGenerationToolDefinitions,
@@ -362,6 +371,7 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (scriptToolDefinitions.some(t => t.name === name))     return handleScriptTool(name, args, auth);
   if (creatorToolDefinitions.some(t => t.name === name))    return handleCreatorTool(name, args, auth);
   if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
+  if (portfolioToolDefinitions.some(t => t.name === name))  return handlePortfolioTool(name, args, auth);
   if (socialToolDefinitions.some(t => t.name === name))     return handleSocialTool(name, args, auth);
   if (operationsToolDefinitions.some(t => t.name === name))          return handleOperationsTool(name, args, auth);
   if (contentGenerationToolDefinitions.some(t => t.name === name))   return handleContentGenerationTool(name, args, auth);
