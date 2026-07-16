@@ -321,8 +321,9 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 | \`/v1/tools/{name}\` | POST | Ejecutar herramienta (con auth) |
 | \`/mcp\` | POST | MCP Streamable HTTP (JSON-RPC 2.0) |
 | \`/.well-known/oauth-authorization-server\` | GET | Metadatos OAuth 2.0 |
-| \`/oauth/authorize\` | GET/POST | Flujo de autorización OAuth |
-| \`/oauth/token\` | POST | Intercambio de code por access_token |
+| \`/oauth/register\` | POST | Registro dinámico de cliente OAuth (RFC 7591) |
+| \`/oauth/authorize\` | GET/POST | Flujo de autorización OAuth (con PKCE) |
+| \`/oauth/token\` | POST | Intercambio de code de un solo uso por access_token |
 
 ---
 
@@ -721,7 +722,7 @@ curl -X POST \\
             <Shield className="w-6 h-6 text-purple-400" />
             Scopes de autorización
           </h2>
-          <p className="text-gray-400 text-sm">Cada API key tiene scopes configurados desde Settings → MCP. Las herramientas verifican el scope antes de ejecutar.</p>
+          <p className="text-gray-400 text-sm">Los scopes se derivan automáticamente de tu rol en la organización en cada request — no se eligen al crear la key. Si tu rol cambia (o dejas la organización), la key se ajusta o se invalida en la siguiente llamada. Las herramientas verifican el scope y el rol antes de ejecutar.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -750,10 +751,11 @@ curl -X POST \\
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { step: "1", title: "Descubrimiento", desc: "Claude.ai lee /.well-known/oauth-authorization-server" },
-              { step: "2", title: "Autorización", desc: "Formulario HTML de Kreoon — ingresas tu API key" },
-              { step: "3", title: "Redirección", desc: "Servidor valida la key y redirige con ?code=key" },
-              { step: "4", title: "Token", desc: "POST /oauth/token → access_token = tu API key" },
+              { step: "1", title: "Descubrimiento", desc: "Claude.ai lee /.well-known/oauth-authorization-server (incluye registration_endpoint)" },
+              { step: "2", title: "Registro", desc: "POST /oauth/register — Claude.ai obtiene un client_id automáticamente" },
+              { step: "3", title: "Autorización", desc: "Formulario HTML de Kreoon — ingresas tu API key" },
+              { step: "4", title: "Redirección", desc: "Servidor genera un code opaco de un solo uso (con PKCE) y redirige" },
+              { step: "5", title: "Token", desc: "POST /oauth/token con code + code_verifier → access_token = tu API key" },
             ].map((item) => (
               <div key={item.step} className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-4 space-y-2">
                 <span className="text-purple-400 font-mono text-xs font-bold">Paso {item.step}</span>

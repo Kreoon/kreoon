@@ -195,11 +195,12 @@ async function manageCampaignApplication(args: Record<string, unknown>, auth: Au
 
   const { data: app, error: appErr } = await supabase
     .from("campaign_applications")
-    .select("id, creator_id, campaign_id, proposed_price, currency")
+    .select("id, creator_id, campaign_id, proposed_price, currency, marketplace_campaigns!inner(organization_id)")
     .eq("id", application_id)
+    .eq("marketplace_campaigns.organization_id", auth.org_id)
     .single();
 
-  if (appErr || !app) return { success: false, error: "Aplicación no encontrada" };
+  if (appErr || !app) return { success: false, error: "Aplicación no encontrada o sin acceso a esta organización" };
 
   const newStatus = action === "approve" ? "approved" : "rejected";
   const updates: Record<string, unknown> = { status: newStatus, updated_at: now };

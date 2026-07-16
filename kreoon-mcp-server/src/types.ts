@@ -1,11 +1,13 @@
+// Únicamente los 6 scopes que TOOL_SCOPES (api/index.ts) realmente verifica.
+// adn:*, wallet:*, scripts:read, profiles:read, creators:write, social:read y
+// analytics:read existían en versiones previas del modelo pero ningún tool los
+// usa — se eliminaron para no sugerir un control de acceso que no aplica.
 export type AuthScope =
-  | "scripts:read" | "scripts:write"
-  | "adn:read" | "adn:write"
-  | "profiles:read" | "profiles:write"
-  | "creators:read" | "creators:write"
-  | "campaigns:read" | "campaigns:write"
-  | "social:read" | "social:write"
-  | "analytics:read";
+  | "scripts:write"
+  | "creators:read"
+  | "profiles:write"
+  | "social:write"
+  | "campaigns:read" | "campaigns:write";
 
 export interface MCPAPIKey {
   id: string;
@@ -25,6 +27,8 @@ export interface AuthContext {
   org_id: string;
   user_id: string;
   scopes: AuthScope[];
+  /** Grupo de permisos derivado del rol REAL en organization_members, no del que tenía al crear la key. */
+  group: "admin" | "talent" | "client";
 }
 
 export interface ToolResult<T = unknown> {

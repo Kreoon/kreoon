@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { resolveGroup, GROUP_SCOPES, GROUP_RATE_LIMIT, isToolAllowedForGroup } from '../src/permissions.js';
 import { handleScriptTool, scriptToolDefinitions } from '../src/tools/scripts.js';
 import { handleCreatorTool, creatorToolDefinitions } from '../src/tools/creators.js';
 import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles.js';
@@ -69,9 +70,33 @@ Los outputs de generate_content_block son HTML estructurado (no markdown) listo 
 
 // ─── OAuth authorize page HTML ───────────────────────────────────────────────
 
-function authorizeHtml(redirectUri: string, state: string, error?: string) {
+// Escapa valores antes de interpolarlos en atributos/HTML — redirect_uri, state,
+// client_id y code_challenge vienen de query params / form body controlados por
+// quien inicia el flujo OAuth (potencialmente un atacante), no son valores server-side.
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+function authorizeHtml(
+  redirectUri: string,
+  state: string,
+  clientId: string,
+  codeChallenge: string,
+  codeChallengeMethod: string,
+  error?: string
+) {
+  redirectUri = escHtml(redirectUri);
+  state = escHtml(state);
+  clientId = escHtml(clientId);
+  codeChallenge = escHtml(codeChallenge);
+  codeChallengeMethod = escHtml(codeChallengeMethod);
   const errorBlock = error
-    ? `<p class="error">${error}</p>`
+    ? `<p class="error">${escHtml(error)}</p>`
     : '';
   return `<!DOCTYPE html>
 <html lang="es">
@@ -103,6 +128,9 @@ function authorizeHtml(redirectUri: string, state: string, error?: string) {
     <form method="POST" action="/oauth/authorize">
       <input type="hidden" name="redirect_uri" value="${redirectUri}"/>
       <input type="hidden" name="state" value="${state}"/>
+      <input type="hidden" name="client_id" value="${clientId}"/>
+      <input type="hidden" name="code_challenge" value="${codeChallenge}"/>
+      <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod}"/>
       <label>Tu API Key de Kreoon</label>
       <input type="password" name="api_key" placeholder="sk-kreoon-..." autocomplete="off" required/>
       ${errorBlock}
@@ -135,21 +163,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// In-memory rate limit (per Vercel function instance — stateless across deploys)
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+// Wrapper para promesas "fire and forget" (audit log, last_used_at) — evita
+// que un fallo silencioso quede como unhandled rejection sin traza.
+function fireAndForget(p: PromiseLike<{ error: unknown } | unknown>, label: string) {
+  Promise.resolve(p).catch(e => console.error(`[fire-and-forget:${label}]`, e));
+}
 
-async function authenticate(req: IncomingMessage, res: ServerResponse): Promise<AuthContext> {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer sk-kreoon-')) {
-    throw Object.assign(new Error('API key requerida. Formato: Bearer sk-kreoon-...'), { status: 401 });
-  }
-
-  const rawKey = auth.replace('Bearer ', '');
+/**
+ * Resuelve la key + el rol REAL del usuario en la organización, en cada request.
+ * A diferencia del modelo anterior (scopes congelados al crear la key), esto
+ * cierra dos gaps: (1) si al usuario le bajan el rol o lo sacan de la org, la
+ * key deja de tener esos permisos en la siguiente llamada, no cuando alguien
+ * la revoque a mano; (2) los scopes/rate-limit salen del rol actual, no de un
+ * valor elegido a mano al momento de generar la key.
+ */
+async function resolveAuthContext(rawKey: string): Promise<AuthContext> {
   const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
 
   const { data, error } = await supabase
     .from('mcp_api_keys')
-    .select('id, creator_id, organization_id, scopes, expires_at, is_revoked, rate_limit_per_hour')
+    .select('id, creator_id, organization_id, expires_at, is_revoked')
     .eq('key_hash', keyHash)
     .single();
 
@@ -157,23 +190,55 @@ async function authenticate(req: IncomingMessage, res: ServerResponse): Promise<
   if (data.is_revoked) throw Object.assign(new Error('API key revocada'), { status: 401 });
   if (new Date(data.expires_at) < new Date()) throw Object.assign(new Error('API key expirada'), { status: 401 });
 
-  // Rate limiting
-  const now = Date.now();
-  const entry = rateLimitStore.get(data.id);
-  if (!entry || entry.resetAt < now) {
-    rateLimitStore.set(data.id, { count: 1, resetAt: now + 3_600_000 });
-  } else if (entry.count >= data.rate_limit_per_hour) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    res.setHeader('Retry-After', String(retryAfter));
-    throw Object.assign(new Error(`Rate limit. Reintentar en ${retryAfter}s`), { status: 429 });
-  } else {
-    entry.count++;
+  const { data: membership, error: memErr } = await supabase
+    .from('organization_members')
+    .select('role, is_owner')
+    .eq('user_id', data.creator_id)
+    .eq('organization_id', data.organization_id)
+    .is('deleted_at', null)
+    .maybeSingle();
+
+  if (memErr || !membership) {
+    throw Object.assign(new Error('Ya no perteneces a esta organización. La key fue invalidada.'), { status: 401 });
   }
 
-  // Update last_used_at async
-  supabase.from('mcp_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id).then(() => {});
+  const group = resolveGroup(membership.role, membership.is_owner === true);
+  const scopes = GROUP_SCOPES[group];
+  const rateLimitPerHour = GROUP_RATE_LIMIT[group];
 
-  return { key_id: data.id, org_id: data.organization_id, user_id: data.creator_id, scopes: data.scopes };
+  const { data: rl, error: rlErr } = await supabase.rpc('mcp_check_rate_limit', {
+    p_key_id: data.id,
+    p_limit_per_hour: rateLimitPerHour,
+  }).single<{ allowed: boolean; retry_after_seconds: number }>();
+
+  if (rlErr) throw Object.assign(new Error(`Rate limit check falló: ${rlErr.message}`), { status: 500 });
+  if (!rl?.allowed) {
+    throw Object.assign(new Error(`Rate limit. Reintentar en ${rl?.retry_after_seconds ?? 3600}s`), {
+      status: 429,
+      retryAfter: rl?.retry_after_seconds ?? 3600,
+    });
+  }
+
+  fireAndForget(
+    supabase.from('mcp_api_keys').update({ last_used_at: new Date().toISOString() }).eq('id', data.id),
+    'last_used_at'
+  );
+
+  return { key_id: data.id, org_id: data.organization_id, user_id: data.creator_id, scopes, group };
+}
+
+async function authenticate(req: IncomingMessage, res: ServerResponse): Promise<AuthContext> {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith('Bearer sk-kreoon-')) {
+    throw Object.assign(new Error('API key requerida. Formato: Bearer sk-kreoon-...'), { status: 401 });
+  }
+  try {
+    return await resolveAuthContext(auth.replace('Bearer ', ''));
+  } catch (e) {
+    const err = e as Error & { status?: number; retryAfter?: number };
+    if (err.retryAfter) res.setHeader('Retry-After', String(err.retryAfter));
+    throw err;
+  }
 }
 
 // ─── Tool scope map ──────────────────────────────────────────────────────────
@@ -252,6 +317,13 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
     throw Object.assign(new Error(`Scope insuficiente. Se requiere: ${scope}`), { status: 403 });
   }
 
+  if (!isToolAllowedForGroup(name, auth.group)) {
+    throw Object.assign(
+      new Error(`Tu rol (${auth.group}) no tiene permiso para usar "${name}".`),
+      { status: 403 }
+    );
+  }
+
   if (scriptToolDefinitions.some(t => t.name === name))     return handleScriptTool(name, args, auth);
   if (creatorToolDefinitions.some(t => t.name === name))    return handleCreatorTool(name, args, auth);
   if (profileToolDefinitions.some(t => t.name === name))    return handleProfileTool(name, args, auth);
@@ -268,11 +340,14 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
 // ─── Audit logging ───────────────────────────────────────────────────────────
 
 function audit(auth: AuthContext, action: string, status: number, ms: number, tokens = 0) {
-  supabase.from('mcp_audit_logs').insert({
-    key_id: auth.key_id, organization_id: auth.org_id,
-    action, response_status: status, response_time_ms: ms,
-    ai_tokens_used: tokens, created_at: new Date().toISOString(),
-  }).then(() => {});
+  fireAndForget(
+    supabase.from('mcp_audit_logs').insert({
+      key_id: auth.key_id, organization_id: auth.org_id,
+      action, response_status: status, response_time_ms: ms,
+      ai_tokens_used: tokens, created_at: new Date().toISOString(),
+    }),
+    'audit_log'
+  );
 }
 
 // ─── Body parsers ────────────────────────────────────────────────────────────
@@ -333,32 +408,72 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       issuer: base,
       authorization_endpoint: `${base}/oauth/authorize`,
       token_endpoint: `${base}/oauth/token`,
+      registration_endpoint: `${base}/oauth/register`,
       response_types_supported: ['code'],
       grant_types_supported: ['authorization_code'],
-      code_challenge_methods_supported: [],
+      code_challenge_methods_supported: ['S256'],
+      token_endpoint_auth_methods_supported: ['none'],
+    });
+  }
+
+  // POST /oauth/register — Dynamic Client Registration (RFC 7591).
+  // Sin esto, claude.ai no puede auto-registrar el conector y pide un
+  // Client ID a mano. El server no valida client_secret (cliente público):
+  // solo guarda el registro para trazabilidad.
+  if (req.method === 'POST' && path === '/oauth/register') {
+    const body = await readBody(req).catch(() => ({} as Record<string, unknown>));
+    const clientName   = (body.client_name as string | undefined) ?? 'Cliente MCP';
+    const redirectUris = Array.isArray(body.redirect_uris) ? (body.redirect_uris as string[]) : [];
+    const clientId = `client_${crypto.randomUUID()}`;
+
+    const { error } = await supabase
+      .from('mcp_oauth_clients')
+      .insert({ client_id: clientId, client_name: clientName, redirect_uris: redirectUris });
+    if (error) return json(response, 500, { error: 'server_error', error_description: error.message });
+
+    return json(response, 201, {
+      client_id: clientId,
+      client_name: clientName,
+      redirect_uris: redirectUris,
+      token_endpoint_auth_method: 'none',
+      grant_types: ['authorization_code'],
+      response_types: ['code'],
     });
   }
 
   // GET /oauth/authorize — mostrar formulario HTML
   if (req.method === 'GET' && path === '/oauth/authorize') {
-    const redirectUri = url.searchParams.get('redirect_uri') ?? '';
-    const state       = url.searchParams.get('state') ?? '';
+    const redirectUri          = url.searchParams.get('redirect_uri') ?? '';
+    const state                = url.searchParams.get('state') ?? '';
+    const clientId              = url.searchParams.get('client_id') ?? '';
+    const codeChallenge        = url.searchParams.get('code_challenge') ?? '';
+    const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method') ?? '';
+    if (codeChallengeMethodRaw && codeChallengeMethodRaw !== 'S256') {
+      return json(response, 400, { error: 'invalid_request', error_description: 'code_challenge_method debe ser S256' });
+    }
     response.setHeader('Content-Type', 'text/html; charset=utf-8');
     response.statusCode = 200;
-    response.end(authorizeHtml(redirectUri, state));
+    response.end(authorizeHtml(redirectUri, state, clientId, codeChallenge, codeChallengeMethodRaw));
     return;
   }
 
-  // POST /oauth/authorize — validar key, redirigir con code
+  // POST /oauth/authorize — validar key, emitir code de un solo uso y redirigir
   if (req.method === 'POST' && path === '/oauth/authorize') {
     const form = await readFormBody(req);
-    const { api_key, redirect_uri, state } = form;
+    const { api_key, redirect_uri, state, client_id, code_challenge, code_challenge_method } = form;
 
     const showError = (msg: string) => {
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
       response.statusCode = 200;
-      response.end(authorizeHtml(redirect_uri ?? '', state ?? '', msg));
+      response.end(authorizeHtml(
+        redirect_uri ?? '', state ?? '', client_id ?? '',
+        code_challenge ?? '', code_challenge_method ?? '', msg
+      ));
     };
+
+    if (code_challenge_method && code_challenge_method !== 'S256') {
+      return showError('code_challenge_method debe ser S256');
+    }
 
     if (!api_key?.startsWith('sk-kreoon-')) {
       return showError('API key inválida. Debe comenzar con sk-kreoon-');
@@ -375,9 +490,18 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       return showError('API key no encontrada o expirada');
     }
 
-    // El code ES la api_key — redirigir de vuelta a Claude.ai
+    // El code es un valor opaco de un solo uso — la api_key nunca viaja en la URL.
+    const code = crypto.randomBytes(32).toString('base64url');
+    const { error: codeErr } = await supabase.from('mcp_oauth_codes').insert({
+      code, raw_key: api_key,
+      client_id: client_id || null,
+      code_challenge: code_challenge || null,
+      code_challenge_method: code_challenge_method || null,
+    });
+    if (codeErr) return showError(`Error generando code: ${codeErr.message}`);
+
     const redirectUrl = new URL(redirect_uri);
-    redirectUrl.searchParams.set('code', api_key);
+    redirectUrl.searchParams.set('code', code);
     if (state) redirectUrl.searchParams.set('state', state);
     response.setHeader('Location', redirectUrl.toString());
     response.statusCode = 302;
@@ -385,36 +509,63 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     return;
   }
 
-  // POST /oauth/token — intercambiar code por access_token
+  // POST /oauth/token — canjear code de un solo uso por access_token (con verificación PKCE)
   if (req.method === 'POST' && path === '/oauth/token') {
     const contentType = (req.headers['content-type'] ?? '');
     let code: string;
+    let codeVerifier: string | undefined;
 
     if (contentType.includes('application/json')) {
       const body = await readBody(req);
       code = (body.code as string) ?? '';
+      codeVerifier = body.code_verifier as string | undefined;
     } else {
       const form = await readFormBody(req);
       code = form.code ?? '';
+      codeVerifier = form.code_verifier;
     }
 
-    if (!code.startsWith('sk-kreoon-')) {
-      return json(response, 400, { error: 'invalid_grant', error_description: 'Code inválido' });
+    if (!code) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'Code requerido' });
     }
 
-    const keyHash = crypto.createHash('sha256').update(code).digest('hex');
-    const { data, error } = await supabase
+    const { data: codeRow, error: codeErr } = await supabase
+      .from('mcp_oauth_codes')
+      .select('raw_key, expires_at, used_at, code_challenge, code_challenge_method')
+      .eq('code', code)
+      .single();
+
+    if (codeErr || !codeRow || codeRow.used_at || new Date(codeRow.expires_at) < new Date()) {
+      return json(response, 400, { error: 'invalid_grant', error_description: 'Code inválido, usado o expirado' });
+    }
+
+    if (codeRow.code_challenge) {
+      if (!codeVerifier) {
+        return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier requerido (PKCE)' });
+      }
+      const computed = crypto.createHash('sha256').update(codeVerifier).digest('base64url');
+      if (computed !== codeRow.code_challenge) {
+        return json(response, 400, { error: 'invalid_grant', error_description: 'code_verifier inválido' });
+      }
+    }
+
+    // Marcar el code como usado (un solo canje posible)
+    await supabase.from('mcp_oauth_codes').update({ used_at: new Date().toISOString() }).eq('code', code);
+
+    const rawKey = codeRow.raw_key as string;
+    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const { data: keyData, error: keyErr } = await supabase
       .from('mcp_api_keys')
       .select('id, is_revoked, expires_at')
       .eq('key_hash', keyHash)
       .single();
 
-    if (error || !data || data.is_revoked || new Date(data.expires_at) < new Date()) {
+    if (keyErr || !keyData || keyData.is_revoked || new Date(keyData.expires_at) < new Date()) {
       return json(response, 400, { error: 'invalid_grant', error_description: 'API key inválida o expirada' });
     }
 
     return json(response, 200, {
-      access_token: code,
+      access_token: rawKey,
       token_type: 'bearer',
       expires_in: 31_536_000, // 1 año
     });
@@ -431,18 +582,15 @@ export default async function handler(req: IncomingMessage, response: ServerResp
       return json(response, 401, { jsonrpc: '2.0', error: { code: -32600, message: 'API key requerida' }, id: null });
     }
 
-    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
-    const { data: keyData, error: keyErr } = await supabase
-      .from('mcp_api_keys')
-      .select('id, creator_id, organization_id, scopes, expires_at, is_revoked, rate_limit_per_hour')
-      .eq('key_hash', keyHash)
-      .single();
-
-    if (keyErr || !keyData || keyData.is_revoked || new Date(keyData.expires_at) < new Date()) {
-      return json(response, 401, { jsonrpc: '2.0', error: { code: -32600, message: 'API key inválida o expirada' }, id: null });
+    let auth: AuthContext;
+    try {
+      auth = await resolveAuthContext(rawKey);
+    } catch (e) {
+      const err = e as Error & { status?: number; retryAfter?: number };
+      if (err.retryAfter) response.setHeader('Retry-After', String(err.retryAfter));
+      return json(response, err.status ?? 401, { jsonrpc: '2.0', error: { code: -32600, message: err.message }, id: null });
     }
 
-    const auth: AuthContext = { key_id: keyData.id, org_id: keyData.organization_id, user_id: keyData.creator_id, scopes: keyData.scopes };
     const msg = await readBody(req) as { jsonrpc: string; method: string; params?: Record<string, unknown>; id: unknown };
     const { method, params, id } = msg;
 
@@ -466,7 +614,8 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     if (method === 'tools/list') {
       const available = ALL_TOOL_DEFS.filter(t => {
         const scope = TOOL_SCOPES[t.name];
-        return !scope || auth.scopes.includes(scope as AuthScope);
+        const scopeOk = !scope || auth.scopes.includes(scope as AuthScope);
+        return scopeOk && isToolAllowedForGroup(t.name, auth.group);
       });
       return rpc({ tools: available });
     }
@@ -495,7 +644,8 @@ export default async function handler(req: IncomingMessage, response: ServerResp
     if (req.method === 'GET' && path === '/v1/tools') {
       const available = ALL_TOOL_DEFS.filter(t => {
         const scope = TOOL_SCOPES[t.name];
-        return !scope || auth.scopes.includes(scope);
+        const scopeOk = !scope || auth.scopes.includes(scope);
+        return scopeOk && isToolAllowedForGroup(t.name, auth.group);
       });
       return json(response, 200, { tools: available, total: available.length });
     }

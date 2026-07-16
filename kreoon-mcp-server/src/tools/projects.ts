@@ -128,7 +128,22 @@ export async function handleProjectsTool(
 
 // ─── Implementations ─────────────────────────────────────────────────────────
 
+// Valida que un user_id sea un perfil real y público del marketplace —
+// evita crear proyectos/asignaciones apuntando a UUIDs inexistentes o privados.
+async function validatePublicProfile(userId: string, label: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("profiles").select("id").eq("id", userId).eq("is_public", true).maybeSingle();
+  return data ? null : `${label} no encontrado o no es un perfil público del marketplace`;
+}
+
 async function createMarketplaceProject(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const creatorErr = await validatePublicProfile(args.creator_id as string, "creator_id");
+  if (creatorErr) return { success: false, error: creatorErr };
+  if (args.editor_id) {
+    const editorErr = await validatePublicProfile(args.editor_id as string, "editor_id");
+    if (editorErr) return { success: false, error: editorErr };
+  }
+
   const now = new Date().toISOString();
   const deliveryDays = args.delivery_days as number | undefined;
   const deadline = deliveryDays
@@ -194,6 +209,11 @@ async function listMarketplaceProjects(args: Record<string, unknown>, auth: Auth
 async function assignEditorToProject(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { project_id, editor_id, editor_payout } = args;
   const now = new Date().toISOString();
+
+  if (editor_id) {
+    const editorErr = await validatePublicProfile(editor_id as string, "editor_id");
+    if (editorErr) return { success: false, error: editorErr };
+  }
 
   const updates: Record<string, unknown> = {
     editor_id,

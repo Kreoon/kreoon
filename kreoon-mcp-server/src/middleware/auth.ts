@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import { MCPAPIKey, AuthContext, AuthScope } from "../types.js";
+import { resolveGroup, GROUP_SCOPES } from "../permissions.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -37,18 +38,35 @@ export async function validateAPIKey(rawKey: string): Promise<AuthContext> {
     throw new Error("API key expirada");
   }
 
+  // Rol real en la organización — mismo modelo rol-aware que api/index.ts.
+  // Sin membresía activa, la key no debe tener acceso aunque no esté revocada.
+  const { data: membership, error: memErr } = await supabase
+    .from("organization_members")
+    .select("role, is_owner")
+    .eq("user_id", key.creator_id)
+    .eq("organization_id", key.organization_id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  if (memErr || !membership) {
+    throw new Error("Ya no perteneces a esta organización. La key fue invalidada.");
+  }
+
+  const group = resolveGroup(membership.role, membership.is_owner === true);
+
   // Actualizar last_used_at de forma asíncrona (sin bloquear)
   supabase
     .from("mcp_api_keys")
     .update({ last_used_at: new Date().toISOString() })
     .eq("id", key.id)
-    .then(() => {});
+    .then(() => {}, (e) => console.error("[validateAPIKey] last_used_at update failed", e));
 
   return {
     key_id: key.id,
     org_id: key.organization_id,
     user_id: key.creator_id,
-    scopes: key.scopes,
+    scopes: GROUP_SCOPES[group],
+    group,
   };
 }
 

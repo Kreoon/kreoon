@@ -31,8 +31,8 @@ for (const key of REQUIRED_ENV) {
 const TOOL_SCOPES: Record<string, AuthScope> = {
   generate_script: "scripts:write",
   improve_script: "scripts:write",
-  start_adn_research: "adn:write",
-  get_adn_status: "adn:read",
+  start_adn_research: "campaigns:write",
+  get_adn_status: "campaigns:read",
   search_creators: "creators:read",
   score_creator_for_campaign: "creators:read",
   optimize_creator_profile: "profiles:write",

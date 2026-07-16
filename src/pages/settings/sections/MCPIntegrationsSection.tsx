@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Copy, Plus, Trash2, Zap, CheckCircle2, AlertCircle, ExternalLink, Eye, EyeOff, RefreshCw, Building2, Users, User } from 'lucide-react';
+import { Copy, Plus, Trash2, Zap, CheckCircle2, AlertCircle, ExternalLink, Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -23,20 +21,6 @@ interface MCPKey {
   created_at: string;
 }
 
-type TargetType = 'organization' | 'client' | 'talent';
-
-interface TargetOption {
-  value: TargetType;
-  label: string;
-  description: string;
-}
-
-const TARGET_ICONS: Record<TargetType, React.ElementType> = {
-  organization: Building2,
-  client: Users,
-  talent: User,
-};
-
 const MCP_SERVER_URL = 'https://mcp.kreoon.com';
 
 async function extractErrMsg(err: unknown): Promise<string> {
@@ -50,21 +34,12 @@ async function extractErrMsg(err: unknown): Promise<string> {
 }
 
 const SCOPE_LABELS: Record<string, string> = {
-  'scripts:read': 'Leer guiones',
   'scripts:write': 'Crear guiones',
-  'adn:read': 'Ver ADN',
-  'adn:write': 'Iniciar ADN',
-  'profiles:read': 'Ver perfil',
   'profiles:write': 'Editar perfil',
   'creators:read': 'Buscar creadores',
-  'creators:write': 'Contratar creadores',
   'campaigns:read': 'Ver campañas',
   'campaigns:write': 'Gestionar campañas',
-  'wallet:read': 'Ver billetera',
-  'wallet:write': 'Retirar fondos',
-  'social:read': 'Ver social',
   'social:write': 'Publicar en redes',
-  'analytics:read': 'Ver analytics',
 };
 
 export default function MCPIntegrationsSection() {
@@ -76,7 +51,6 @@ export default function MCPIntegrationsSection() {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [revoking, setRevoking] = useState<string | null>(null);
-  const [targetOptions, setTargetOptions] = useState<TargetOption[] | null>(null);
 
   const loadKeys = useCallback(async () => {
     setLoading(true);
@@ -99,23 +73,15 @@ export default function MCPIntegrationsSection() {
 
   useEffect(() => { loadKeys(); }, [loadKeys]);
 
-  const createKey = async (target_type?: TargetType) => {
+  const createKey = async () => {
     setCreating(true);
     setNewKey(null);
-    setTargetOptions(null);
     try {
-      const body: Record<string, string> = { action: 'create' };
-      if (target_type) body.target_type = target_type;
-
-      const { data, error } = await supabase.functions.invoke('mcp-key-manager', { body });
+      const { data, error } = await supabase.functions.invoke('mcp-key-manager', {
+        body: { action: 'create' },
+      });
 
       if (error) throw error;
-
-      // Admin sin selección → mostrar dialog de opciones
-      if (data.needs_target_selection) {
-        setTargetOptions(data.options as TargetOption[]);
-        return;
-      }
 
       setNewKey(data.key);
       setShowKey(true);
@@ -164,37 +130,6 @@ export default function MCPIntegrationsSection() {
           Genera guiones, lanza ADN Research y gestiona tu perfil desde cualquier plataforma.
         </p>
       </div>
-
-      {/* Dialog: selección de target para admins */}
-      <Dialog open={!!targetOptions} onOpenChange={(open) => { if (!open) setTargetOptions(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>¿Para quién es esta API Key?</DialogTitle>
-            <DialogDescription>
-              Como admin puedes crear keys con distintos permisos según el tipo de cuenta que la usará.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3 pt-2">
-            {targetOptions?.map((opt) => {
-              const Icon = TARGET_ICONS[opt.value];
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => createKey(opt.value)}
-                  disabled={creating}
-                  className="w-full flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 text-left transition-colors disabled:opacity-50"
-                >
-                  <Icon className="h-5 w-5 mt-0.5 text-primary shrink-0" />
-                  <div>
-                    <p className="font-medium text-sm">{opt.label}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Nueva key generada — aviso único */}
       {newKey && (

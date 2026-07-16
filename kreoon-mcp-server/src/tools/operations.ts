@@ -230,7 +230,45 @@ export async function handleOperationsTool(
 
 // ─── Implementations ─────────────────────────────────────────────────────────
 
+// Valida que client_id/product_id (si vienen en args) pertenezcan a esta organización.
+// Sin esto, cualquier key con campaigns:write podía colgar contenido de un
+// client_id/product_id ajeno a la org.
+async function validateContentFKs(args: Record<string, unknown>, auth: AuthContext): Promise<string | null> {
+  if (args.client_id) {
+    const { data: client } = await supabase
+      .from("clients").select("id").eq("id", args.client_id as string)
+      .eq("organization_id", auth.org_id).is("deleted_at", null).maybeSingle();
+    if (!client) return "client_id no encontrado o sin acceso a esta organización";
+  }
+  if (args.product_id) {
+    const { data: product } = await supabase
+      .from("products").select("id, clients!inner(organization_id)")
+      .eq("id", args.product_id as string)
+      .eq("clients.organization_id", auth.org_id).maybeSingle();
+    if (!product) return "product_id no encontrado o sin acceso a esta organización";
+  }
+  return null;
+}
+
+// Valida que un user_id sea miembro activo de esta organización (para creator_id/editor_id/strategist_id).
+async function validateOrgMember(userId: string, auth: AuthContext, label: string): Promise<string | null> {
+  const { data: member } = await supabase
+    .from("organization_members").select("id")
+    .eq("user_id", userId).eq("organization_id", auth.org_id)
+    .is("deleted_at", null).maybeSingle();
+  return member ? null : `${label} no es miembro de esta organización`;
+}
+
 async function createContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const fkError = await validateContentFKs(args, auth);
+  if (fkError) return { success: false, error: fkError };
+
+  for (const field of ["creator_id", "editor_id"] as const) {
+    if (!args[field]) continue;
+    const err = await validateOrgMember(args[field] as string, auth, field);
+    if (err) return { success: false, error: err };
+  }
+
   const now = new Date().toISOString();
   const insert: Record<string, unknown> = {
     title:           args.title,
@@ -268,6 +306,9 @@ async function createContentItem(args: Record<string, unknown>, auth: AuthContex
 async function updateContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { content_id, ...fields } = args;
   const allowed = ["client_id", "product_id", "title", "description", "target_platform", "content_type", "funnel_stage", "deadline", "notes", "script", "director_output", "broll_output", "captions"];
+
+  const fkError = await validateContentFKs(fields, auth);
+  if (fkError) return { success: false, error: fkError };
 
   const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
   for (const key of allowed) {
@@ -314,6 +355,12 @@ async function listContentItems(args: Record<string, unknown>, auth: AuthContext
 async function assignContentTeam(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { content_id, creator_id, editor_id, strategist_id, creator_payment, editor_payment } = args;
   const now = new Date().toISOString();
+
+  for (const [field, value] of Object.entries({ creator_id, editor_id, strategist_id })) {
+    if (!value) continue;
+    const err = await validateOrgMember(value as string, auth, field);
+    if (err) return { success: false, error: err };
+  }
 
   const updates: Record<string, unknown> = { updated_at: now };
   if (creator_id !== undefined)    { updates.creator_id = creator_id; updates.creator_assigned_at = creator_id ? now : null; }

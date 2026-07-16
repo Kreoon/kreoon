@@ -6,14 +6,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const SCOPES = {
-  client:       ["adn:read", "adn:write", "creators:read", "campaigns:read", "campaigns:write"],
-  talent:       ["scripts:read", "scripts:write", "adn:read", "profiles:read", "profiles:write", "wallet:read", "wallet:write"],
-  organization: ["scripts:read", "scripts:write", "adn:read", "adn:write", "profiles:read", "profiles:write", "creators:read", "creators:write", "campaigns:read", "campaigns:write", "social:read", "social:write", "wallet:read", "wallet:write", "analytics:read"],
+// Espejo de kreoon-mcp-server/src/permissions.ts. El MCP server vuelve a
+// derivar el grupo desde organization_members.role EN CADA REQUEST — lo que
+// se guarda acá es solo un snapshot inicial para mostrar en la UI de Settings,
+// nunca la fuente de autoridad de scopes.
+const ROLE_TO_GROUP: Record<string, "admin" | "talent" | "client"> = {
+  admin: "admin", team_leader: "admin",
+  content_creator: "talent", editor: "talent", digital_strategist: "talent",
+  creative_strategist: "talent", community_manager: "talent",
+  creator: "talent", ambassador: "talent", strategist: "talent", trafficker: "talent",
+  developer: "talent", educator: "talent",
+  client: "client", brand_manager: "client", marketing_director: "client",
 };
 
-const RATE   = { client: 500, talent: 300, organization: 1000 };
-const LABELS = { client: "Cliente", talent: "Talento", organization: "Organización" };
+const SCOPES = {
+  client:       ["creators:read", "campaigns:read", "campaigns:write"],
+  talent:       ["scripts:write", "creators:read", "profiles:write", "social:write", "campaigns:read", "campaigns:write"],
+  admin:        ["scripts:write", "creators:read", "profiles:write", "social:write", "campaigns:read", "campaigns:write"],
+};
+
+const RATE   = { client: 300, talent: 500, admin: 1000 };
+const LABELS = { client: "Cliente", talent: "Talento", admin: "Administrador" };
 
 function ok(data: unknown) {
   return new Response(JSON.stringify(data), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -40,9 +53,8 @@ serve(async (req) => {
 
     // Body
     const body = await req.json().catch(() => ({})) as Record<string, string>;
-    const action      = body.action ?? "";
-    const key_id      = body.key_id ?? "";
-    const target_type = body.target_type as keyof typeof SCOPES | "" ?? "";
+    const action = body.action ?? "";
+    const key_id = body.key_id ?? "";
 
     // ── LIST ─────────────────────────────────────────────────────────────────
     if (action === "list") {
@@ -56,31 +68,24 @@ serve(async (req) => {
     }
 
     // ── CREATE ───────────────────────────────────────────────────────────────
+    // Cualquier miembro activo de una organización puede crear su propia key —
+    // el grupo de permisos (y por lo tanto los scopes) sale de su ROL REAL en
+    // organization_members, no de una elección manual. El MCP server además
+    // re-deriva el grupo en cada request, así que esto es solo el snapshot
+    // inicial mostrado en Settings.
     if (action === "create") {
-      // Perfil
       const { data: profile, error: pe } = await supabase
         .from("profiles")
-        .select("user_type, current_organization_id, full_name")
+        .select("current_organization_id, full_name")
         .eq("id", user.id)
         .maybeSingle();
       if (pe) return err(500, `profile: ${pe.message}`);
       if (!profile) return err(404, "Perfil no encontrado");
 
-      // Org
       let orgId: string | null = profile.current_organization_id ?? null;
-      if (!orgId) {
-        const { data: m } = await supabase
-          .from("organization_members")
-          .select("organization_id")
-          .eq("user_id", user.id)
-          .is("deleted_at", null)
-          .limit(1)
-          .maybeSingle();
-        orgId = m?.organization_id ?? null;
-      }
+      let membershipRole: string | null = null;
+      let isOwner = false;
 
-      // Admin?
-      let isAdmin = false;
       if (orgId) {
         const { data: m } = await supabase
           .from("organization_members")
@@ -89,30 +94,27 @@ serve(async (req) => {
           .eq("organization_id", orgId)
           .is("deleted_at", null)
           .maybeSingle();
-        isAdmin = m?.role === "admin" || m?.is_owner === true;
+        membershipRole = m?.role ?? null;
+        isOwner = m?.is_owner === true;
       }
 
-      // Admin sin tipo → pedir selección
-      if (isAdmin && !target_type) {
-        return ok({
-          needs_target_selection: true,
-          options: [
-            { value: "organization", label: "Mi organización",   description: "Acceso completo — 15 scopes, 1000 req/hora" },
-            { value: "client",       label: "Cliente o marca",   description: "ADN, campañas y búsqueda de creadores — 500 req/hora" },
-            { value: "talent",       label: "Creador / Talento", description: "Guiones, perfil y billetera — 300 req/hora" },
-          ],
-        });
+      if (!orgId || !membershipRole) {
+        // Sin membresía activa: buscar cualquier org donde sí sea miembro
+        // (current_organization_id puede estar desactualizado).
+        const { data: m } = await supabase
+          .from("organization_members")
+          .select("organization_id, role, is_owner")
+          .eq("user_id", user.id)
+          .is("deleted_at", null)
+          .limit(1)
+          .maybeSingle();
+        if (!m) return err(403, "No perteneces a ninguna organización. El MCP requiere una membresía activa.");
+        orgId = m.organization_id;
+        membershipRole = m.role;
+        isOwner = m.is_owner === true;
       }
 
-      // Tipo resuelto
-      const validTypes = ["organization", "client", "talent"] as const;
-      const resolvedType: keyof typeof SCOPES =
-        isAdmin && target_type && validTypes.includes(target_type as typeof validTypes[number])
-          ? (target_type as keyof typeof SCOPES)
-          : validTypes.includes((profile.user_type ?? "") as typeof validTypes[number])
-            ? (profile.user_type as keyof typeof SCOPES)
-            : "talent";
-
+      const resolvedType: keyof typeof SCOPES = isOwner ? "admin" : (ROLE_TO_GROUP[membershipRole] ?? "talent");
       const scopes    = SCOPES[resolvedType];
       const rateLimit = RATE[resolvedType];
 
