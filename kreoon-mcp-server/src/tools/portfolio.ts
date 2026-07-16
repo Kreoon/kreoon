@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { AuthContext, ToolResult } from "../types.js";
 import { emitWebhookEvent } from "../webhookEmitter.js";
+import { isSafePublicHost } from "../ssrfGuard.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -460,11 +461,28 @@ const ALLOWED_FIGMA_HOSTS = new Set(["www.figma.com", "figma.com"]);
 
 // No confía en la extensión de la URL sola: si no matchea un patrón de imagen
 // obvio, hace un HEAD real y valida el Content-Type — evita que alguien pase
-// una URL cualquiera (ej. una página HTML) disfrazada de ".png?x=1".
+// una URL cualquiera (ej. una página HTML) disfrazada de ".png?x=1". Antes de
+// cualquier fetch, resuelve DNS y rechaza IPs privadas/loopback/link-local
+// (guard de SSRF). redirect:"manual" evita seguir un 3xx que podría reapuntar
+// a un destino interno no validado.
 async function looksLikeImage(url: string): Promise<boolean> {
-  if (/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(url)) return true;
+  let parsed: URL;
   try {
-    const res = await fetch(url, { method: "HEAD", signal: AbortSignal.timeout(5000) });
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (!(await isSafePublicHost(parsed.hostname))) return false;
+
+  if (/\.(png|jpe?g|webp|gif|svg)(\?.*)?$/i.test(url)) return true;
+
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      redirect: "manual",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.status >= 300 && res.status < 400) return false; // no seguir redirects
     const contentType = res.headers.get("content-type") ?? "";
     return contentType.startsWith("image/");
   } catch {

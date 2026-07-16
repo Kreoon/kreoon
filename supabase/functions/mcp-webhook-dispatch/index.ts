@@ -14,6 +14,57 @@ const corsHeaders = {
 
 const MAX_FAILURES_BEFORE_DISABLE = 5;
 
+// ─── SSRF guard ──────────────────────────────────────────────────────────────
+// webhook.url la eligió un admin de una org al registrar el webhook — no es
+// input confiable a nivel de infraestructura. Sin esto, este dispatcher es un
+// proxy para sondear red interna (IPs privadas, metadata de la nube en
+// 169.254.169.254, etc.) usando nuestra infra como origen. Se re-valida en
+// CADA entrega (no solo al registrar) porque el DNS puede cambiar entre el
+// registro y la entrega (rebinding).
+const PRIVATE_IPV4_RANGES: Array<[string, number]> = [
+  ["0.0.0.0", 8],
+  ["10.0.0.0", 8],
+  ["100.64.0.0", 10],  // CGNAT
+  ["127.0.0.0", 8],
+  ["169.254.0.0", 16], // link-local / metadata de nube
+  ["172.16.0.0", 12],
+  ["192.168.0.0", 16],
+];
+
+function ipv4ToLong(ip: string): number {
+  return ip.split(".").reduce((acc, oct) => (acc << 8) + parseInt(oct, 10), 0) >>> 0;
+}
+
+function isPrivateIPv4(ip: string): boolean {
+  const long = ipv4ToLong(ip);
+  return PRIVATE_IPV4_RANGES.some(([base, bits]) => {
+    const mask = bits === 0 ? 0 : (~0 << (32 - bits)) >>> 0;
+    return (long & mask) === (ipv4ToLong(base) & mask);
+  });
+}
+
+function isPrivateIPv6(ip: string): boolean {
+  const lower = ip.toLowerCase();
+  return lower === "::1" || lower.startsWith("fc") || lower.startsWith("fd") || lower.startsWith("fe80");
+}
+
+async function isSafePublicHost(hostname: string): Promise<boolean> {
+  try {
+    const [aRes, aaaaRes] = await Promise.allSettled([
+      Deno.resolveDns(hostname, "A"),
+      Deno.resolveDns(hostname, "AAAA"),
+    ]);
+    const addresses: string[] = [
+      ...(aRes.status === "fulfilled" ? aRes.value : []),
+      ...(aaaaRes.status === "fulfilled" ? aaaaRes.value : []),
+    ];
+    if (addresses.length === 0) return false;
+    return addresses.every((addr) => (addr.includes(":") ? !isPrivateIPv6(addr) : !isPrivateIPv4(addr)));
+  } catch {
+    return false;
+  }
+}
+
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -74,9 +125,15 @@ serve(async (req) => {
 
     for (const webhook of webhooks) {
       try {
+        const parsedUrl = new URL(webhook.url);
+        if (parsedUrl.protocol !== "https:" || !(await isSafePublicHost(parsedUrl.hostname))) {
+          throw new Error("Destino no permitido (guard SSRF)");
+        }
+
         const signature = await signPayload(webhook.secret, body);
         const res = await fetch(webhook.url, {
           method: "POST",
+          redirect: "manual", // no seguir redirects — podrían reapuntar a un destino interno no validado
           headers: {
             "Content-Type": "application/json",
             "X-Kreoon-Event": event,
@@ -85,6 +142,7 @@ serve(async (req) => {
           body,
         });
 
+        if (res.status >= 300 && res.status < 400) throw new Error(`Redirect rechazado (HTTP ${res.status})`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         delivered++;

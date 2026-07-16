@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 import type { AuthContext, ToolResult } from "../types.js";
+import { isSafePublicHost } from "../ssrfGuard.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -78,6 +79,20 @@ async function registerWebhook(args: Record<string, unknown>, auth: AuthContext)
 
   const invalid = events.filter(e => !(AVAILABLE_EVENTS as readonly string[]).includes(e));
   if (invalid.length) return { success: false, error: `Eventos desconocidos: ${invalid.join(", ")}` };
+
+  // Guard de SSRF: rechazar destinos que resuelvan a red interna. El
+  // dispatcher (mcp-webhook-dispatch) re-valida esto en CADA entrega, porque
+  // el DNS puede cambiar entre el registro y la entrega (rebinding) — este
+  // chequeo acá es solo para dar feedback inmediato al admin al registrar.
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname;
+  } catch {
+    return { success: false, error: "URL inválida" };
+  }
+  if (!(await isSafePublicHost(hostname))) {
+    return { success: false, error: "El destino no es un host público válido" };
+  }
 
   const secret = crypto.randomBytes(32).toString("hex");
 

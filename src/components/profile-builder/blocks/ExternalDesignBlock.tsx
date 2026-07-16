@@ -51,6 +51,34 @@ export function buildFigmaEmbedUrl(sourceUrl: string): string {
   return `https://www.figma.com/embed?${params.toString()}`;
 }
 
+// El contenido del bloque viene de la BD (podría haber sido escrito por otro
+// código, un bug futuro, o manipulación directa de la API) — nunca se confía
+// ciegamente en `figma_embed_url`/`image_url` guardados solo porque el MCP
+// los validó al escribirlos. Se re-valida SIEMPRE en el momento de renderizar,
+// antes de asignarlos a `src` de un iframe/img.
+function safeFigmaEmbedUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+    if (!ALLOWED_FIGMA_HOSTS.has(parsed.hostname.toLowerCase())) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+function safeImageUrl(url: string | undefined): string | null {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function ExternalDesignBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const content = block.content as ExternalDesignContent;
   const styles = block.styles;
@@ -59,6 +87,9 @@ function ExternalDesignBlockComponent({ block, isEditing, isSelected, onUpdate }
     () => content.provider ?? (content.source_url ? detectDesignProvider(content.source_url) : 'unknown'),
     [content.provider, content.source_url]
   );
+
+  const safeEmbed = useMemo(() => safeFigmaEmbedUrl(content.figma_embed_url), [content.figma_embed_url]);
+  const safeImage = useMemo(() => safeImageUrl(content.image_url), [content.image_url]);
 
   const handleUrlChange = (url: string) => {
     const detected = detectDesignProvider(url);
@@ -94,23 +125,25 @@ function ExternalDesignBlockComponent({ block, isEditing, isSelected, onUpdate }
         </div>
       )}
 
-      {provider === 'figma' && content.figma_embed_url ? (
+      {safeEmbed ? (
         <div className={cn('relative w-full overflow-hidden', containerBorderRadius)} style={{ minHeight: '480px' }}>
           <iframe
-            src={content.figma_embed_url}
+            src={safeEmbed}
             title={content.title || 'Diseño de Figma'}
             loading="lazy"
             allow="fullscreen"
-            // Restringe el iframe al mínimo que Figma necesita para renderizar
-            // (scripts propios + su mismo origen) — nunca top-navigation,
-            // forms, ni modals que puedan usarse para phishing.
-            sandbox="allow-scripts allow-same-origin allow-popups"
+            // Restringe el iframe al mínimo que Figma necesita para renderizar.
+            // Deliberadamente SIN allow-same-origin: aunque Figma no comparte
+            // origen con nosotros, es la combinación allow-scripts+allow-same-origin
+            // la que permite que un iframe se auto-libere del sandbox — se evita
+            // por completo, no hace falta para mostrar el diseño.
+            sandbox="allow-scripts allow-popups"
             className="absolute inset-0 w-full h-full border-0"
           />
         </div>
-      ) : provider === 'image' && content.image_url ? (
+      ) : safeImage ? (
         <img
-          src={content.image_url}
+          src={safeImage}
           alt={content.title || 'Diseño importado'}
           loading="lazy"
           className={cn('w-full h-auto', containerBorderRadius)}
