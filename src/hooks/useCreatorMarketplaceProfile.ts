@@ -4,7 +4,6 @@ import type {
   CreatorMarketplaceProfile,
   MarketplaceProfileStats,
   CreatorService,
-  CreatorAvailability,
   MarketplaceReview,
   MarketplaceBadge,
 } from '@/types/marketplace';
@@ -19,7 +18,6 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
       const [
         profileResult,
         servicesResult,
-        availabilityResult,
         verificationResult,
         reviewsResult,
         reviewsCountResult,
@@ -57,12 +55,6 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
           .eq('is_active', true)
           .order('is_featured', { ascending: false })
           .order('display_order', { ascending: true }),
-        // Availability
-        supabase
-          .from('creator_availability')
-          .select('*')
-          .eq('user_id', userId)
-          .maybeSingle(),
         // Verification
         supabase
           .from('marketplace_verifications')
@@ -104,7 +96,6 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
 
       // Extract data from parallel results
       const servicesData = servicesResult.data;
-      const availabilityData = availabilityResult.data;
       const verification = verificationResult.data;
       const reviewsData = reviewsResult.data;
       const reviewsCount = reviewsCountResult.count;
@@ -123,15 +114,6 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
         deliverables: s.deliverables || [],
         portfolio_items: s.portfolio_items || [],
       }));
-
-      // Process availability
-      const availability: CreatorAvailability | null = availabilityData
-        ? {
-            ...availabilityData,
-            preferred_industries: availabilityData.preferred_industries || [],
-            do_not_work_with: availabilityData.do_not_work_with || [],
-          }
-        : null;
 
       const recentReviews: MarketplaceReview[] = reviewsData || [];
 
@@ -165,7 +147,6 @@ export function useCreatorMarketplaceProfile(userId: string | undefined) {
         organization_id: organizationId,
         organization_name: organizationName,
         stats,
-        availability,
         services,
         recent_reviews: recentReviews,
       };

@@ -38,7 +38,6 @@ const TABLE_LABELS: Record<string, string> = {
   creator_services: 'Servicios de Creador',
   scheduled_posts: 'Posts Programados',
   social_accounts: 'Cuentas Sociales',
-  booking_event_types: 'Tipos de Evento',
   project_assignments: 'Asignaciones de Proyecto',
 };
 

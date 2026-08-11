@@ -143,17 +143,11 @@ Deno.serve(async (req) => {
     )
 
     // =========================================================
-    // PASO 3: Obtener disponibilidad
+    // PASO 3: (retirado) La disponibilidad ya no sale de la tabla
+    // creator_availability — eliminada con el módulo de booking en la
+    // simplificación 2026. Ahora se lee de creator_profiles.is_available,
+    // que es la disponibilidad real del marketplace (ver MarketplaceSettings).
     // =========================================================
-
-    const { data: availabilities } = await supabase
-      .from('creator_availability')
-      .select('*')
-      .in('user_id', creatorIds)
-
-    const availabilityMap = new Map(
-      (availabilities || []).map(a => [a.user_id, a])
-    )
 
     // =========================================================
     // PASO 4: Obtener servicios (para precio)
@@ -200,7 +194,6 @@ Deno.serve(async (req) => {
 
     for (const creator of baseCreators) {
       const profile = profileMap.get(creator.id)
-      const availability = availabilityMap.get(creator.id)
       const creatorServices = serviceMap.get(creator.id) || []
 
       let totalScore = 0
@@ -278,16 +271,15 @@ Deno.serve(async (req) => {
       }
 
       // ----- SCORE: Disponibilidad (0-10 puntos) -----
-      if (availability) {
-        if (availability.status === 'available') {
-          totalScore += 10
-          reasons.push({ type: 'availability', label: 'Disponible ahora', score: 10 })
-        } else if (availability.status === 'busy') {
-          totalScore += 5
-          reasons.push({ type: 'availability', label: 'Acepta proyectos', score: 5 })
-        }
+      // Fuente: creator_profiles.is_available (la tabla creator_availability se
+      // eliminó con el módulo de booking). Si el creador no lo ha configurado
+      // (null), se mantiene el comportamiento anterior: asumir disponible.
+      if (profile?.is_available === true) {
+        totalScore += 10
+        reasons.push({ type: 'availability', label: 'Disponible ahora', score: 10 })
+      } else if (profile?.is_available === false) {
+        // No disponible: no suma
       } else {
-        // Sin availability = asumimos disponible
         totalScore += 7
       }
 

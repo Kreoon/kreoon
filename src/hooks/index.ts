@@ -49,7 +49,6 @@ export { useBoardSettings } from './useBoardSettings';
 export { useBoardUserPreferences } from './useBoardUserPreferences';
 
 // ─── Creator ────────────────────────────────────────────────────────────────
-export { useCreatorAvailability } from './useCreatorAvailability';
 export { useCreatorMarketplaceProfile } from './useCreatorMarketplaceProfile';
 export { useCreatorMatching } from './useCreatorMatching';
 export { useCreatorPlanFeatures } from './useCreatorPlanFeatures';

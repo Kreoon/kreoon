@@ -276,54 +276,10 @@ export interface CreatorServiceInput {
   display_order?: number;
 }
 
-// Estados de disponibilidad
-export type AvailabilityStatus = 'available' | 'busy' | 'unavailable' | 'vacation';
-
-export const AVAILABILITY_STATUS_LABELS: Record<AvailabilityStatus, string> = {
-  available: 'Disponible',
-  busy: 'Ocupado',
-  unavailable: 'No disponible',
-  vacation: 'De vacaciones',
-};
-
-export const AVAILABILITY_STATUS_COLORS: Record<AvailabilityStatus, string> = {
-  available: 'text-green-500',
-  busy: 'text-yellow-500',
-  unavailable: 'text-red-500',
-  vacation: 'text-blue-500',
-};
-
-// Tamaño de proyecto preferido
-export type PreferredProjectSize = 'small' | 'medium' | 'large' | 'any';
-
-// Disponibilidad del creador
-export interface CreatorAvailability {
-  user_id: string;
-  status: AvailabilityStatus;
-  status_message: string | null;
-  vacation_until: string | null;
-  max_concurrent_projects: number;
-  current_projects_count: number;
-  typical_response_hours: number;
-  preferred_project_size: PreferredProjectSize;
-  preferred_industries: string[];
-  do_not_work_with: string[];
-  auto_busy_threshold: number;
-  updated_at: string;
-}
-
-// Input para actualizar disponibilidad
-export interface CreatorAvailabilityInput {
-  status?: AvailabilityStatus;
-  status_message?: string;
-  vacation_until?: string;
-  max_concurrent_projects?: number;
-  typical_response_hours?: number;
-  preferred_project_size?: PreferredProjectSize;
-  preferred_industries?: string[];
-  do_not_work_with?: string[];
-  auto_busy_threshold?: number;
-}
+// Simplificación 2026: los tipos de disponibilidad (AvailabilityStatus,
+// CreatorAvailability, CreatorAvailabilityInput, PreferredProjectSize) se
+// eliminaron con el módulo de booking. La disponibilidad real del marketplace
+// vive en creator_profiles.is_available (ver MarketplaceSettings).
 
 // Estados de verificación
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'suspended';
@@ -628,8 +584,6 @@ export interface CreatorMarketplaceProfile {
   organization_name: string | null;
   // Stats
   stats: MarketplaceProfileStats;
-  // Disponibilidad
-  availability: CreatorAvailability | null;
   // Servicios
   services: CreatorService[];
   // Reviews recientes
@@ -642,7 +596,6 @@ export interface CreatorSearchFilters {
   min_rating?: number;
   max_budget?: number;
   delivery_days?: number;
-  availability_status?: AvailabilityStatus;
   is_verified?: boolean;
   has_badge?: MarketplaceBadge;
   industry?: string;
@@ -665,7 +618,6 @@ export interface CreatorSearchResult {
     service_type: ServiceType;
     price_amount: number | null;
   }>;
-  availability_status: AvailabilityStatus;
   badges: MarketplaceBadge[];
   is_verified: boolean;
 }

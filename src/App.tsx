@@ -1490,8 +1490,6 @@ function AppRoutes() {
         <Route path="/streaming/*" element={<Navigate to="/dashboard" replace />} />
         <Route path="/live" element={<Navigate to="/dashboard" replace />} />
         <Route path="/live/*" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/booking/*" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/book/*" element={<Navigate to="/dashboard" replace />} />
         <Route path="/org-crm" element={<Navigate to="/clientes" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/clientes" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/clientes" replace />} />
