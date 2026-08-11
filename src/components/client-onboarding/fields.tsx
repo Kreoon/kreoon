@@ -190,9 +190,18 @@ interface Opcion {
   readonly value: string;
   readonly label: string;
   readonly emoji: string;
+  /** Aclaración corta bajo el label. Solo la usa CampoOpciones. */
+  readonly ayuda?: string;
 }
 
-/** Tarjetas grandes de selección única (emoji-first). */
+/**
+ * Tarjetas grandes de selección única (emoji-first).
+ *
+ * `permitirDeseleccionar` controla si reclicar la opción activa la limpia. Debe
+ * ir en false para campos obligatorios tipados como enum: dejarlos en cadena
+ * vacía produce un valor que el schema no acepta y el paso queda trabado sin
+ * que se vea por qué.
+ */
 export function CampoOpciones<T extends FieldValues>({
   control,
   name,
@@ -200,8 +209,10 @@ export function CampoOpciones<T extends FieldValues>({
   ayuda,
   opciones,
   opcional,
+  permitirDeseleccionar = true,
 }: Omit<BaseFieldProps<T>, 'placeholder'> & {
   opciones: readonly Opcion[];
+  permitirDeseleccionar?: boolean;
 }) {
   return (
     <FormField
@@ -217,7 +228,11 @@ export function CampoOpciones<T extends FieldValues>({
                 <button
                   key={opcion.value}
                   type="button"
-                  onClick={() => field.onChange(activa ? '' : opcion.value)}
+                  onClick={() =>
+                    field.onChange(
+                      activa && permitirDeseleccionar ? '' : opcion.value,
+                    )
+                  }
                   aria-pressed={activa}
                   className={cn(
                     'flex min-h-[44px] items-center gap-2.5 rounded-sm border p-3 text-left transition-all',
@@ -227,8 +242,15 @@ export function CampoOpciones<T extends FieldValues>({
                   )}
                 >
                   <span className="text-xl">{opcion.emoji}</span>
-                  <span className="flex-1 text-sm text-kreoon-text-primary">
-                    {opcion.label}
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm text-kreoon-text-primary">
+                      {opcion.label}
+                    </span>
+                    {opcion.ayuda && (
+                      <span className="mt-0.5 block text-xs leading-snug text-kreoon-text-muted">
+                        {opcion.ayuda}
+                      </span>
+                    )}
                   </span>
                   {activa && (
                     <Check className="h-4 w-4 shrink-0 text-kreoon-purple-400" />

@@ -1,7 +1,10 @@
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import type { OnboardingFormData } from '@/components/client-onboarding/schemas';
+import {
+  TIPOS_OFERTA,
+  type OnboardingFormData,
+} from '@/components/client-onboarding/schemas';
 
 interface OnboardingResponseViewProps {
   formData: OnboardingFormData;
@@ -115,15 +118,21 @@ export function OnboardingResponseView({
 
         <TabsContent value="producto" className="mt-4">
           <Seccion titulo="El producto" emoji="📦">
-            <Campo etiqueta="Nombre del producto" valor={producto?.nombre} />
-            <Campo etiqueta="Presentaciones o tamaños" valor={producto?.presentaciones} />
-            <Campo etiqueta="De qué está hecho o qué incluye" valor={producto?.componentes} multilinea />
+            <Campo
+              etiqueta="Tipo de oferta"
+              valor={
+                TIPOS_OFERTA.find((t) => t.value === producto?.tipo_oferta)?.label
+              }
+            />
+            <Campo etiqueta="Nombre" valor={producto?.nombre} />
+            <Campo etiqueta="Presentaciones / planes" valor={producto?.presentaciones} />
+            <Campo etiqueta="Qué incluye" valor={producto?.componentes} multilinea />
             <Campo etiqueta="Beneficios principales" valor={producto?.beneficios} multilinea />
             <Campo etiqueta="Qué lo hace distinto" valor={producto?.diferenciales} multilinea />
             <Campo etiqueta="Precio" valor={producto?.precio} />
             <Campo etiqueta="Promociones activas" valor={producto?.promociones} />
             <Campo etiqueta="Garantías" valor={producto?.garantias} />
-            <Campo etiqueta="Dónde se compra" valor={producto?.link_tienda} />
+            <Campo etiqueta="Dónde se compra o contrata" valor={producto?.link_tienda} />
           </Seccion>
           <Seccion titulo="Cliente ideal" emoji="📦">
             <Campo etiqueta="Edad" valor={producto?.audiencia?.edad} />

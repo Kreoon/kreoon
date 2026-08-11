@@ -19,6 +19,9 @@ import {
   OBJETIVOS,
   PLATAFORMAS,
   productoSchema,
+  requiereEnvio,
+  TIPOS_OFERTA,
+  type TipoOferta,
   type ContenidoData,
   type EquipoData,
   type LegalData,
@@ -384,6 +387,80 @@ export function PasoMarca({
 // ---------------------------------------------------------------------------
 // Paso 4 — Producto
 // ---------------------------------------------------------------------------
+/**
+ * Etiquetas y ejemplos del paso 4 según lo que venda el cliente.
+ * "Presentaciones o tamaños" no significa nada para una consultoría, y
+ * "de qué está hecho" no aplica a un curso online.
+ */
+const COPY_POR_TIPO: Record<
+  TipoOferta,
+  {
+    nombre: { label: string; ph: string };
+    presentaciones: { label: string; ayuda: string; ph: string };
+    componentes: { label: string; ayuda: string; ph: string };
+    precio: string;
+    donde: { label: string; ayuda: string; ph: string };
+  }
+> = {
+  producto: {
+    nombre: { label: 'Nombre del producto', ph: 'Café Andino Tostado' },
+    presentaciones: {
+      label: 'Presentaciones o tamaños',
+      ayuda: 'Los formatos en que se vende',
+      ph: 'Bolsa de 250g, 500g y 1kg',
+    },
+    componentes: {
+      label: 'De qué está hecho',
+      ayuda: 'Ingredientes, materiales o componentes',
+      ph: 'Grano 100% arábica de Antioquia, tueste medio',
+    },
+    precio: '$38.000 COP',
+    donde: {
+      label: 'Dónde se compra',
+      ayuda: 'Link de tu tienda, o dinos si solo vendes por WhatsApp',
+      ph: 'www.tutienda.com/producto',
+    },
+  },
+  servicio: {
+    nombre: { label: 'Nombre del servicio', ph: 'Consultoría de marca' },
+    presentaciones: {
+      label: 'Planes o modalidades',
+      ayuda: 'Las formas en que se puede contratar',
+      ph: 'Sesión suelta, plan mensual, retainer trimestral',
+    },
+    componentes: {
+      label: 'Qué incluye el servicio',
+      ayuda: 'Todo lo que recibe el cliente cuando te contrata',
+      ph: '4 sesiones al mes, manual de marca, soporte por WhatsApp',
+    },
+    precio: '$1.200.000 COP al mes',
+    donde: {
+      label: 'Cómo se contrata',
+      ayuda: 'Link de agenda, formulario, o dinos si es solo por WhatsApp',
+      ph: 'calendly.com/tumarca',
+    },
+  },
+  digital: {
+    nombre: { label: 'Nombre del producto digital', ph: 'Curso de Excel Avanzado' },
+    presentaciones: {
+      label: 'Planes o niveles',
+      ayuda: 'Las versiones en que se vende',
+      ph: 'Plan básico, plan pro con mentorías',
+    },
+    componentes: {
+      label: 'Qué incluye',
+      ayuda: 'Módulos, materiales, accesos, comunidad',
+      ph: '8 módulos en video, plantillas descargables, grupo privado',
+    },
+    precio: '$249.000 COP pago único',
+    donde: {
+      label: 'Dónde se compra',
+      ayuda: 'Link de tu página de ventas o plataforma',
+      ph: 'www.tumarca.com/curso',
+    },
+  },
+};
+
 export function PasoProducto({
   initialData,
   onNext,
@@ -393,6 +470,7 @@ export function PasoProducto({
   const form = useForm<ProductoData>({
     resolver: zodResolver(productoSchema),
     defaultValues: {
+      tipo_oferta: initialData.tipo_oferta ?? 'producto',
       nombre: initialData.nombre ?? '',
       presentaciones: initialData.presentaciones ?? '',
       componentes: initialData.componentes ?? '',
@@ -413,27 +491,40 @@ export function PasoProducto({
     },
   });
 
+  // El copy del paso se adapta a lo que el cliente elija arriba.
+  const tipo = (form.watch('tipo_oferta') ?? 'producto') as TipoOferta;
+  const copy = COPY_POR_TIPO[tipo] ?? COPY_POR_TIPO.producto;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="space-y-5">
+        <CampoOpciones
+          control={form.control}
+          name="tipo_oferta"
+          label="¿Qué vendes?"
+          ayuda="Con esto ajustamos las preguntas que siguen"
+          opciones={TIPOS_OFERTA}
+          permitirDeseleccionar={false}
+        />
         <CampoTexto
           control={form.control}
           name="nombre"
-          label="Nombre del producto"
-          placeholder="Crema Hidratante Nocturna"
+          label={copy.nombre.label}
+          placeholder={copy.nombre.ph}
         />
         <CampoTexto
           control={form.control}
           name="presentaciones"
-          label="Presentaciones o tamaños"
-          ayuda="Los formatos en que se vende"
-          placeholder="Frasco de 50ml y 100ml"
+          label={copy.presentaciones.label}
+          ayuda={copy.presentaciones.ayuda}
+          placeholder={copy.presentaciones.ph}
         />
         <CampoLargo
           control={form.control}
           name="componentes"
-          label="De qué está hecho o qué incluye"
-          placeholder="Ácido hialurónico, vitamina E, aloe vera"
+          label={copy.componentes.label}
+          ayuda={copy.componentes.ayuda}
+          placeholder={copy.componentes.ph}
           rows={2}
         />
         <CampoLargo
@@ -457,7 +548,7 @@ export function PasoProducto({
             control={form.control}
             name="precio"
             label="Precio"
-            placeholder="$89.000 COP"
+            placeholder={copy.precio}
           />
           <CampoTexto
             control={form.control}
@@ -476,9 +567,9 @@ export function PasoProducto({
         <CampoTexto
           control={form.control}
           name="link_tienda"
-          label="Dónde se compra"
-          ayuda="Link de tu tienda, o dinos si solo vendes por WhatsApp"
-          placeholder="www.tutienda.com/producto"
+          label={copy.donde.label}
+          ayuda={copy.donde.ayuda}
+          placeholder={copy.donde.ph}
         />
 
         <div className="rounded-sm border border-kreoon-border bg-kreoon-purple-500/5 p-3">
@@ -638,6 +729,10 @@ export function PasoLogistica({
   });
 
   const { legal, equipo, producto, contenido } = resumen;
+  const hayEnvio = requiereEnvio(producto?.tipo_oferta);
+  const etiquetaOferta = TIPOS_OFERTA.find(
+    (t) => t.value === producto?.tipo_oferta,
+  );
   const plataformas = (contenido?.plataformas ?? [])
     .map((p) => PLATAFORMAS.find((o) => o.value === p)?.label ?? p)
     .join(', ');
@@ -646,32 +741,71 @@ export function PasoLogistica({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="space-y-6">
-        <div className="space-y-5">
-          <CampoTexto
-            control={form.control}
-            name="unidades_disponibles"
-            label="Unidades para los creadores"
-            ayuda="Cuántos productos puedes enviar para que graben"
-            placeholder="10 unidades"
-            opcional
-          />
-          <CampoLargo
-            control={form.control}
-            name="direccion_despacho"
-            label="Desde dónde despachas"
-            placeholder="Bodega Calle 80 # 12-34, Bogotá"
-            rows={2}
-            opcional
-          />
-          <CampoTexto
-            control={form.control}
-            name="responsable_despacho"
-            label="Quién coordina los envíos"
-            ayuda="Nombre y celular de quien despacha"
-            placeholder="Carlos Pérez - 310 987 6543"
-            opcional
-          />
-        </div>
+        {/* La logística de envío solo aplica si hay algo físico que mandarle a
+            los creadores. Para un servicio o un producto digital, se pide el
+            acceso en su lugar. */}
+        {hayEnvio ? (
+          <div className="space-y-5">
+            <CampoTexto
+              control={form.control}
+              name="unidades_disponibles"
+              label="Unidades para los creadores"
+              ayuda="Cuántos productos puedes enviar para que graben"
+              placeholder="10 unidades"
+              opcional
+            />
+            <CampoLargo
+              control={form.control}
+              name="direccion_despacho"
+              label="Desde dónde despachas"
+              placeholder="Bodega Calle 80 # 12-34, Bogotá"
+              rows={2}
+              opcional
+            />
+            <CampoTexto
+              control={form.control}
+              name="responsable_despacho"
+              label="Quién coordina los envíos"
+              ayuda="Nombre y celular de quien despacha"
+              placeholder="Carlos Pérez - 310 987 6543"
+              opcional
+            />
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 p-3">
+              <p className="text-xs text-kreoon-text-muted">
+                Como no vendes un producto físico, no hay nada que despachar. Solo
+                necesitamos saber cómo le damos acceso a los creadores.
+              </p>
+            </div>
+            <CampoTexto
+              control={form.control}
+              name="unidades_disponibles"
+              label="Cuántos accesos puedes dar"
+              ayuda="Para que los creadores lo prueben antes de grabar"
+              placeholder="3 accesos de cortesía"
+              opcional
+            />
+            <CampoLargo
+              control={form.control}
+              name="direccion_despacho"
+              label="Cómo se les da el acceso"
+              ayuda="Link de invitación, cupón, o el paso a paso"
+              placeholder="Les creamos usuario en la plataforma y les mandamos la clave"
+              rows={2}
+              opcional
+            />
+            <CampoTexto
+              control={form.control}
+              name="responsable_despacho"
+              label="Quién coordina los accesos"
+              ayuda="Nombre y celular"
+              placeholder="Carlos Pérez - 310 987 6543"
+              opcional
+            />
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -697,8 +831,9 @@ export function PasoLogistica({
             <FilaResumen etiqueta="Correo del portal" valor={equipo?.correo_portal} />
           </BloqueResumen>
 
-          <BloqueResumen titulo="Tu producto" emoji="📦">
-            <FilaResumen etiqueta="Producto" valor={producto?.nombre} />
+          <BloqueResumen titulo="Qué vendes" emoji={etiquetaOferta?.emoji ?? '🛍️'}>
+            <FilaResumen etiqueta="Tipo" valor={etiquetaOferta?.label} />
+            <FilaResumen etiqueta="Nombre" valor={producto?.nombre} />
             <FilaResumen etiqueta="Precio" valor={producto?.precio} />
             <FilaResumen etiqueta="Beneficios" valor={producto?.beneficios} />
             <FilaResumen

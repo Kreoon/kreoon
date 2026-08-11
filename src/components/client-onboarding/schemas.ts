@@ -92,18 +92,56 @@ export const marcaSchema = z.object({
 });
 
 // ---------------------------------------------------------------------------
-// Paso 4 — Producto (obligatorio, salvo promociones y testimonios)
+// Paso 4 — Producto o servicio (obligatorio, salvo promociones y testimonios)
 // ---------------------------------------------------------------------------
+
+/**
+ * Qué vende el cliente. No es cosmético: cambia las etiquetas y los ejemplos de
+ * todo el paso 4 y del paso 6. "Presentaciones o tamaños" no significa nada
+ * para una consultoría, igual que "unidades para enviar a los creadores" no
+ * significa nada para un curso online.
+ */
+export const TIPOS_OFERTA = [
+  {
+    value: 'producto',
+    label: 'Un producto físico',
+    emoji: '📦',
+    ayuda: 'Algo que se empaca y se envía',
+  },
+  {
+    value: 'servicio',
+    label: 'Un servicio',
+    emoji: '🤝',
+    ayuda: 'Consultoría, agencia, atención, instalación',
+  },
+  {
+    value: 'digital',
+    label: 'Un producto digital',
+    emoji: '💻',
+    ayuda: 'Curso, membresía, software, plantilla',
+  },
+] as const;
+
+export type TipoOferta = (typeof TIPOS_OFERTA)[number]['value'];
+
+/** ¿Necesita envío físico? Decide si el paso de logística aplica. */
+export function requiereEnvio(tipo: string | undefined): boolean {
+  return tipo === 'producto';
+}
+
 export const productoSchema = z.object({
-  nombre: requerido('Escribe el nombre del producto'),
-  presentaciones: requerido('Escribe las presentaciones o tamaños'),
-  componentes: requerido('Escribe de qué está hecho o qué incluye'),
+  tipo_oferta: z
+    .enum(['producto', 'servicio', 'digital'])
+    .refine((v) => !!v, { message: 'Elige qué vendes' }),
+  nombre: requerido('Escribe el nombre'),
+  presentaciones: requerido('Completa este campo'),
+  componentes: requerido('Escribe qué incluye'),
   beneficios: requerido('Escribe los beneficios principales'),
   diferenciales: requerido('Escribe qué lo hace distinto de la competencia'),
   precio: requerido('Escribe el precio'),
   promociones: textoOpcional,
   garantias: requerido('Escribe las garantías que ofreces'),
-  link_tienda: requerido('Escribe dónde se compra (link o punto de venta)'),
+  link_tienda: requerido('Escribe dónde se contrata o se compra'),
   audiencia: z.object({
     edad: requerido('Escribe el rango de edad'),
     genero: requerido('Escribe a qué género le vendes'),
@@ -198,9 +236,9 @@ export const STEPS = [
   },
   {
     key: 'producto' as const,
-    titulo: 'Tu producto',
-    ayuda: 'Qué vendes y a quién',
-    emoji: '📦',
+    titulo: 'Qué vendes',
+    ayuda: 'Tu producto o servicio, y a quién le sirve',
+    emoji: '🛍️',
     obligatorio: true,
   },
   {
@@ -212,8 +250,8 @@ export const STEPS = [
   },
   {
     key: 'logistica' as const,
-    titulo: 'Envíos y resumen',
-    ayuda: 'Cómo le llega el producto a los creadores',
+    titulo: 'Cierre y resumen',
+    ayuda: 'Últimos detalles y revisión antes de enviar',
     emoji: '🚚',
     obligatorio: false,
   },
