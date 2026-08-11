@@ -2028,7 +2028,7 @@ function MercadoSection({ data }: { data: Seccion2Mercado }) {
       {data.tendencias_actuales && (
         <div className="p-4 bg-muted/50 rounded-sm">
           <p className="text-xs text-cyan-400 uppercase font-semibold mb-1">Tendencias Actuales</p>
-          <p className="text-foreground/80">{data.tendencias_actuales}</p>
+          <p className="text-foreground/80"><ValorIA valor={data.tendencias_actuales} /></p>
         </div>
       )}
 
@@ -2071,18 +2071,76 @@ function MercadoSection({ data }: { data: Seccion2Mercado }) {
       {data.gap_competitivo && (
         <div className="p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-sm border border-yellow-500/20">
           <p className="text-xs text-yellow-400 uppercase font-semibold mb-1">Gap Competitivo</p>
-          <p className="text-foreground/80 font-medium">{data.gap_competitivo}</p>
+          <p className="text-foreground/80 font-medium"><ValorIA valor={data.gap_competitivo} /></p>
         </div>
       )}
 
       {data.posicionamiento_sugerido && (
         <div className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-sm border border-purple-500/20">
           <p className="text-xs text-purple-400 uppercase font-semibold mb-1">Posicionamiento Sugerido</p>
-          <p className="text-foreground/80">{data.posicionamiento_sugerido}</p>
+          <p className="text-foreground/80"><ValorIA valor={data.posicionamiento_sugerido} /></p>
         </div>
       )}
     </div>
   );
+}
+
+/**
+ * Renderiza un valor que vino del LLM sin asumir que es texto.
+ *
+ * Las interfaces de este archivo declaran estos campos como `string`, pero el
+ * contenido llega en columnas jsonb: TypeScript no valida nada en runtime y el
+ * modelo devuelve a veces un objeto donde el tipo dice string. Cuando eso pasa,
+ * React lanza "Objects are not valid as a React child" y el error boundary se
+ * come la aplicación entera.
+ *
+ * Caso real (2026-08-11): `market_research.seccion_2_mercado.posicionamiento_sugerido`
+ * llegó como { mensaje_principal, diferenciadores_clave, propuesta_unica_venta }
+ * y tumbó la pantalla completa del cliente.
+ */
+export function ValorIA({ valor }: { valor: unknown }) {
+  if (valor === null || valor === undefined || valor === '') return null;
+
+  if (typeof valor === 'string' || typeof valor === 'number' || typeof valor === 'boolean') {
+    return <>{String(valor)}</>;
+  }
+
+  if (Array.isArray(valor)) {
+    const primitivos = valor.every(
+      (v) => typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean',
+    );
+    if (primitivos) return <>{valor.join(' · ')}</>;
+    return (
+      <span className="space-y-1">
+        {valor.map((item, i) => (
+          <span key={i} className="block">
+            <ValorIA valor={item} />
+          </span>
+        ))}
+      </span>
+    );
+  }
+
+  if (typeof valor === 'object') {
+    const entradas = Object.entries(valor as Record<string, unknown>).filter(
+      ([, v]) => v !== null && v !== undefined && v !== '',
+    );
+    if (entradas.length === 0) return null;
+    return (
+      <span className="block space-y-1">
+        {entradas.map(([clave, v]) => (
+          <span key={clave} className="block">
+            <span className="text-xs uppercase tracking-wide opacity-60">
+              {clave.replace(/_/g, ' ')}:
+            </span>{' '}
+            <ValorIA valor={v} />
+          </span>
+        ))}
+      </span>
+    );
+  }
+
+  return null;
 }
 
 /** Sección 3: Avatares de Cliente */
