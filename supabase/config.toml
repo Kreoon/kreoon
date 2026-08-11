@@ -596,3 +596,19 @@ verify_jwt = false
 # Envia push notifications via VAPID a las suscripciones del usuario.
 # Llamado por trigger pg_net en social_notifications — usa anon key, sin JWT de usuario.
 verify_jwt = false
+
+# -- Onboarding de Clientes (formulario publico por token) --
+
+[functions.client-onboarding-get]
+# Lectura del formulario de onboarding. verify_jwt=false porque el cliente que
+# lo llena NO tiene cuenta ni sesion: la unica credencial es el token de 64 chars
+# del link. La tabla client_onboarding_forms no tiene politicas para anon, asi
+# que esta funcion (service role) es la unica puerta de entrada publica.
+verify_jwt = false
+
+[functions.client-onboarding-submit]
+# Escritura del formulario (guardado por seccion + envio final). Mismo modelo de
+# auth que client-onboarding-get: token en el body, sin JWT.
+# Rate limit por token+IP via RPC check_rate_limit, payload maximo 100KB,
+# strings sanitizados (strip de tags + control chars) antes de persistir.
+verify_jwt = false
