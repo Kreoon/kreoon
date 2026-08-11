@@ -1,0 +1,25 @@
+-- Simplificación 2026 · Bloque 0 (pre-requisitos)
+--
+-- Desacopla el financiero del módulo de live streaming, que se elimina.
+--
+-- `trg_escrow_create_streaming_session` es un trigger AFTER UPDATE sobre `escrow_holds`
+-- (tabla del financiero, SE QUEDA) que ejecuta `create_streaming_session_for_hosting()`.
+-- Esa función lee `live_hosting_requests`, `live_hosting_hosts` y escribe en
+-- `streaming_sessions_v2` — las tres se dropean en el bloque 2.
+-- Si el trigger sigue vivo cuando desaparezcan esas tablas, CUALQUIER update de un
+-- escrow revienta en runtime.
+--
+-- Estado verificado el 2026-08-11 antes de este cambio:
+--   escrow_holds: 0 filas en total, 0 con project_type = 'live_shopping'.
+--   El cuerpo de la función solo actúa cuando status pasa a 'funded' Y
+--   project_type = 'live_shopping', así que hoy no ejecuta ninguna lógica.
+--   Quitar el trigger no cambia ningún comportamiento observable.
+--
+-- La FUNCIÓN se deja en pie a propósito: se dropea en el bloque 2 junto con el resto
+-- del árbol de live streaming. Una función sin trigger es inerte.
+--
+-- Los otros dos triggers de escrow_holds NO se tocan:
+--   escrow_auto_approve_trigger      -> check_escrow_auto_approve()
+--   trg_community_earning_on_escrow  -> trigger_community_earning_on_escrow_release()
+
+DROP TRIGGER IF EXISTS trg_escrow_create_streaming_session ON public.escrow_holds;

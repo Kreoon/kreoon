@@ -33,7 +33,7 @@ interface ProfileStats {
   following_count: number;
   views_count: number;
   likes_count: number;
-  achievements_count: number;
+  // Simplificación 2026: se elimina la señal de logros (módulo UP retirado)
 }
 
 serve(async (req) => {
@@ -104,8 +104,8 @@ serve(async (req) => {
           token_cost: profile.ai_token_cost || 5,
           reason: profile.ai_token_cost_reason || 'Fundador de la plataforma - Máximo nivel',
           factors: {
+            // Simplificación 2026: se elimina la señal de logros (módulo UP retirado)
             profile_completeness: 100,
-            achievements: 100,
             experience: 100,
             engagement: 100,
           },
@@ -116,7 +116,8 @@ serve(async (req) => {
     }
 
     // Get profile stats
-    const [postsRes, portfolioRes, followersRes, followingRes, achievementsRes] = await Promise.all([
+    // Simplificación 2026: se elimina la señal de logros (módulo UP retirado)
+    const [postsRes, portfolioRes, followersRes, followingRes] = await Promise.all([
       supabase
         .from('portfolio_posts')
         .select('id, views_count, likes_count', { count: 'exact' })
@@ -135,10 +136,6 @@ serve(async (req) => {
         .from('followers')
         .select('id', { count: 'exact', head: true })
         .eq('follower_id', profile_id),
-      supabase
-        .from('user_achievements')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', profile_id),
     ]);
 
     const totalViews = postsRes.data?.reduce((sum, p) => sum + (p.views_count || 0), 0) || 0;
@@ -151,7 +148,6 @@ serve(async (req) => {
       following_count: followingRes.count || 0,
       views_count: totalViews,
       likes_count: totalLikes,
-      achievements_count: achievementsRes.count || 0,
     };
 
     // Calculate profile completeness
@@ -178,7 +174,6 @@ serve(async (req) => {
 
 Criterios de evaluación (pesos configurados):
 - Completitud del perfil: ${config.weight_profile_completeness}%
-- Logros obtenidos: ${config.weight_achievements}%
 - Experiencia: ${config.weight_experience}%
 - Engagement (seguidores, likes, vistas): ${config.weight_engagement}%
 
@@ -195,7 +190,6 @@ DEBES responder SOLO con un JSON válido con esta estructura exacta:
   "reason": "<explicación breve de máximo 100 caracteres>",
   "factors": {
     "profile_completeness": <puntuación 0-100>,
-    "achievements": <puntuación 0-100>,
     "experience": <puntuación 0-100>,
     "engagement": <puntuación 0-100>
   }
@@ -253,7 +247,6 @@ ESTADÍSTICAS DE ACTIVIDAD:
 - Siguiendo: ${stats.following_count}
 - Vistas totales: ${stats.views_count}
 - Likes totales: ${stats.likes_count}
-- Logros obtenidos: ${stats.achievements_count}
 
 COMPLETITUD DEL PERFIL: ${completenessScore}%
 
@@ -329,8 +322,8 @@ ${config.evaluation_prompt || ''}`;
         token_cost: 3,
         reason: 'Evaluación automática basada en completitud del perfil',
         factors: {
+          // Simplificación 2026: se elimina la señal de logros (módulo UP retirado)
           profile_completeness: completenessScore,
-          achievements: stats.achievements_count > 0 ? 50 : 0,
           experience: profile.experience_level ? 50 : 25,
           engagement: Math.min(100, (stats.followers_count + stats.likes_count) / 10),
         }
