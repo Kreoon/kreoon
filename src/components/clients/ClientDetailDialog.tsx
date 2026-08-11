@@ -21,7 +21,7 @@ import {
   Building2, Video, Mail, Phone, Calendar, DollarSign,
   Package, Plus, Trash2, Edit2, ShoppingBag, CheckCircle,
   Star, Eye, Settings, Radio, Dna, Sparkles, FolderOpen, FileText, Target, Loader2, Handshake,
-  TrendingUp, MapPin, Save
+  TrendingUp, MapPin, Save, ClipboardList
 } from "lucide-react";
 import { LazyRichTextViewer as RichTextViewer } from "@/components/ui/lazy-rich-text-editor";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import { ClientStreamingChannels } from "@/components/clients/ClientStreamingCha
 import { ClientBillingTab } from "@/components/clients/ClientBillingTab";
 import { ClientServicesTab } from "@/components/clients/ClientServicesTab";
 import { ClientActivityPanel } from "@/components/clients/ClientActivityPanel";
+import { OnboardingTab } from "@/components/clients/onboarding/OnboardingTab";
 import { VipBadge } from "@/components/ui/vip-badge";
 
 // Lazy load ClientDNATab (424KB) - only loads when DNA tab is active
@@ -430,6 +431,10 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
             <TabsTrigger value="billing" className="flex-none gap-1">
               <DollarSign className="h-3 w-3" />
               Cobros
+            </TabsTrigger>
+            <TabsTrigger value="onboarding" className="flex-none gap-1">
+              <ClipboardList className="h-3 w-3" />
+              Onboarding
             </TabsTrigger>
           </TabsList>
 
@@ -1151,6 +1156,15 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
             ) : (
               <p className="text-sm text-muted-foreground text-center py-8">Cargando...</p>
             )}
+          </TabsContent>
+
+          {/* Onboarding: link para el cliente, su respuesta y el procesamiento */}
+          <TabsContent value="onboarding" className="mt-4">
+            <OnboardingTab
+              clientId={client.id}
+              clientName={client.name}
+              organizationId={fullClientData?.organization_id ?? client.organization_id}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
