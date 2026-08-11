@@ -606,6 +606,13 @@ verify_jwt = false
 # que esta funcion (service role) es la unica puerta de entrada publica.
 verify_jwt = false
 
+[functions.client-portal-invite]
+# Da acceso al portal al contacto del onboarding. verify_jwt=true: la invoca un
+# admin/estratega desde el panel. Ademas del JWT, el handler valida server-side
+# que el caller pertenezca a la organizacion DEL FORMULARIO con un rol
+# habilitado — no alcanza con estar logueado.
+verify_jwt = true
+
 [functions.client-onboarding-submit]
 # Escritura del formulario (guardado por seccion + envio final). Mismo modelo de
 # auth que client-onboarding-get: token en el body, sin JWT.
