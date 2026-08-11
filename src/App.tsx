@@ -289,6 +289,9 @@ const WelcomeUGCColombia = lazyWithRetry(
 const OnboardingProfile = lazyWithRetry(
   () => import("./pages/OnboardingProfile"),
 );
+const ClientOnboarding = lazyWithRetry(
+  () => import("./pages/ClientOnboarding"),
+);
 const SubscriptionSuccess = lazyWithRetry(
   () => import("./pages/subscription/SubscriptionSuccess"),
 );
@@ -820,6 +823,11 @@ function AppRoutes() {
         <Route path="/welcome-talent" element={<WelcomeTalent />} />
         <Route path="/welcome/ugc-colombia" element={<WelcomeUGCColombia />} />
         <Route path="/onboarding/profile" element={<OnboardingProfile />} />
+        {/* Formulario público de onboarding de clientes. Sin ProtectedRoute:
+            el enlace llega por WhatsApp y el cliente no tiene cuenta.
+            React Router prioriza el segmento estático /onboarding/profile
+            sobre este dinámico, así que no hay colisión entre ambas. */}
+        <Route path="/onboarding/:token" element={<ClientOnboarding />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
         <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/mcp-docs" element={<MCPDocumentation />} />
