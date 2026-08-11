@@ -77,6 +77,7 @@ ALTER TABLE public.client_onboarding_forms ENABLE ROW LEVEL SECURITY;
 -- En `clients` ese bug queda tapado por las otras 12 politicas; aqui, con una
 -- sola politica, quedaria expuesto. Por eso se incluyen ambos sets.
 -- (Mismo patron de deuda que el bug de rol legacy 'creator' vs 'content_creator'.)
+DROP POLICY IF EXISTS "Org staff can manage client onboarding forms" ON public.client_onboarding_forms;
 CREATE POLICY "Org staff can manage client onboarding forms"
   ON public.client_onboarding_forms
   FOR ALL
