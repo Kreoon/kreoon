@@ -61,11 +61,15 @@ Comando: `npm run build` · Resultado: **exitoso**, sin errores.
 | 14 | `vendor-radix` | 179,67 kB | 54,03 kB |
 | 15 | `OrgCRMFinances` | 171,81 kB | 39,74 kB |
 
-**Dato para medir el éxito de la simplificación:** `dash.all.min` (854 kB) y `hls` (525 kB) son
-los reproductores de video en vivo — **1,38 MB sin comprimir que deberían desaparecer completos**
-al eliminar live streaming. Otros chunks del alcance: `FeedPage` (73,17 kB), `SocialHubPage`
-(68,63 kB), `SeasonBanner` (105,79 kB), `PostComposer` (85,77 kB), `ActivationCampaignConfig`
-(75,32 kB).
+**Dato para medir el éxito de la simplificación:** los chunks del alcance real son `SeasonBanner`
+(105,79 kB), `ActivationCampaignConfig` (75,32 kB) y `FeedPage` (73,17 kB).
+
+> **Corrección (2026-08-11, tras el mapeo — ver `docs/MAPA_ELIMINACION.md`):** `dash.all.min`
+> (854 kB) y `hls` (525 kB) **NO desaparecen**. `dash.all.min` viene de `react-player` (player de
+> Academia) y `hls.js` lo usan el player de contenido/board y Academia. El frontend de live
+> streaming ya había sido eliminado en la Fase A+B (2026-07-08), así que borrar ese módulo **no
+> reduce el bundle**. `SocialHubPage` (68,63 kB) y `PostComposer` (85,77 kB) tampoco se van:
+> son del Social Hub (publicación a redes externas), que se queda.
 
 ---
 
