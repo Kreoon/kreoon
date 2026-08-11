@@ -1,0 +1,694 @@
+{
+  "project_ref": "wjkbqcrxwsmvtxmqgiqc",
+  "refreshed_at": "2026-08-11T21:46:33.955Z",
+  "modules": {
+    "live-streaming": {
+      "creator_live_streams": {
+        "rows": 9,
+        "bytes": 18788,
+        "via": "postgrest-service-role"
+      },
+      "live_client_settings": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_event_creators": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_event_monitoring": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_feature_flags": {
+        "rows": 4,
+        "bytes": 2064,
+        "via": "postgrest-service-role"
+      },
+      "live_hosting_hosts": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hosting_requests": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hosting_status_history": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hosting_templates": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hour_assignments": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hour_purchases": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_hour_wallets": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_org_oauth_tokens": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_packages": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_platform_config": {
+        "rows": 1,
+        "bytes": 1416,
+        "via": "postgrest-service-role"
+      },
+      "live_stream_comments": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_stream_history": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_stream_products": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_stream_reactions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_stream_viewers": {
+        "rows": 5,
+        "bytes": 3146,
+        "via": "postgrest-service-role"
+      },
+      "live_streaming_channels": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "live_usage_logs": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "organization_streaming_config": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_accounts": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_analytics_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_channels_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_chat_messages_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_event_products": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_events": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_guests_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_logs": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_overlays_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_products_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_providers_config": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_sales": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_session_channels_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "streaming_sessions_v2": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      }
+    },
+    "social-feed": {
+      "company_followers": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "content_likes": {
+        "rows": 45,
+        "bytes": 15376,
+        "via": "postgrest-service-role"
+      },
+      "favorites": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "feed_reactions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "followers": {
+        "rows": 36,
+        "bytes": 12449,
+        "via": "postgrest-service-role"
+      },
+      "hashtags": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "kreadores_content_likes": {
+        "rows": 4,
+        "bytes": 1422,
+        "via": "postgrest-service-role"
+      },
+      "link_previews": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "portfolio_post_comments": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "portfolio_post_likes": {
+        "rows": 14,
+        "bytes": 4762,
+        "via": "postgrest-service-role"
+      },
+      "portfolio_posts": {
+        "rows": 158,
+        "bytes": 152720,
+        "via": "postgrest-service-role"
+      },
+      "portfolio_stories": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "post_hashtags": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "post_metrics": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "profile_views": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "saved_collections": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "saved_creators": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "saved_items": {
+        "rows": 4,
+        "bytes": 1596,
+        "via": "postgrest-service-role"
+      },
+      "saved_searches": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "social_notifications": {
+        "rows": 68,
+        "bytes": 36299,
+        "via": "postgrest-service-role"
+      },
+      "story_views": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "suggested_profiles_cache": {
+        "rows": 3,
+        "bytes": 1582,
+        "via": "postgrest-service-role"
+      },
+      "user_feed_events": {
+        "rows": 48,
+        "bytes": 21580,
+        "via": "postgrest-service-role"
+      },
+      "user_interest_profile": {
+        "rows": 1,
+        "bytes": 1140,
+        "via": "postgrest-service-role"
+      }
+    },
+    "up-reputacion": {
+      "achievements": {
+        "rows": 24,
+        "bytes": 12333,
+        "via": "postgrest-service-role"
+      },
+      "chronometer_pauses": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "global_badges": {
+        "rows": 145,
+        "bytes": 107832,
+        "via": "postgrest-service-role"
+      },
+      "mission_templates": {
+        "rows": 5,
+        "bytes": 2660,
+        "via": "postgrest-service-role"
+      },
+      "point_transactions": {
+        "rows": 2644,
+        "bytes": 1537738,
+        "via": "postgrest-service-role"
+      },
+      "reputation_configs": {
+        "rows": 18,
+        "bytes": 6375,
+        "via": "mcp-postgres"
+      },
+      "reputation_events": {
+        "rows": 1702,
+        "bytes": 1535366,
+        "via": "postgrest-service-role"
+      },
+      "reputation_global": {
+        "rows": 9,
+        "bytes": 5509,
+        "via": "mcp-postgres"
+      },
+      "reputation_seasons": {
+        "rows": 4,
+        "bytes": 3138,
+        "via": "postgrest-service-role"
+      },
+      "role_multipliers": {
+        "rows": 17,
+        "bytes": 6963,
+        "via": "mcp-postgres"
+      },
+      "role_points_config": {
+        "rows": 4,
+        "bytes": 2393,
+        "via": "mcp-postgres"
+      },
+      "role_weight_config": {
+        "rows": 43,
+        "bytes": 21711,
+        "via": "mcp-postgres"
+      },
+      "season_goals": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "season_reward_claims": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "season_rewards": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "unified_reputation_config": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_ai_config": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_arbiter_log": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "up_chronometer_pauses": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "up_client_trust_scores": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "up_creadores": {
+        "rows": 44,
+        "bytes": 36347,
+        "via": "mcp-postgres"
+      },
+      "up_creadores_totals": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "up_currency_conversions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_editores": {
+        "rows": 71,
+        "bytes": 58798,
+        "via": "mcp-postgres"
+      },
+      "up_editores_totals": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "up_event_types": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_events": {
+        "rows": 3371,
+        "bytes": 3168695,
+        "via": "postgrest-service-role"
+      },
+      "up_fraud_alerts": {
+        "rows": 9,
+        "bytes": 16222,
+        "via": "postgrest-service-role"
+      },
+      "up_permissions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_quality_scores": {
+        "rows": 6,
+        "bytes": 13284,
+        "via": "postgrest-service-role"
+      },
+      "up_quest_progress": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_quests": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_rules": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_season_snapshots": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "up_seasons": {
+        "rows": 2,
+        "bytes": 1229,
+        "via": "postgrest-service-role"
+      },
+      "up_settings": {
+        "rows": 10,
+        "bytes": 6023,
+        "via": "postgrest-service-role"
+      },
+      "up_user_scores": {
+        "rows": 42,
+        "bytes": 35699,
+        "via": "mcp-postgres"
+      },
+      "user_achievements": {
+        "rows": 640,
+        "bytes": 220060,
+        "via": "postgrest-service-role"
+      },
+      "user_daily_missions": {
+        "rows": 3,
+        "bytes": 1452,
+        "via": "postgrest-service-role"
+      },
+      "user_global_badges": {
+        "rows": 76125,
+        "bytes": 41275034,
+        "via": "postgrest-service-role"
+      },
+      "user_global_stats": {
+        "rows": 525,
+        "bytes": 761768,
+        "via": "postgrest-service-role"
+      },
+      "user_points": {
+        "rows": 85,
+        "bytes": 44296,
+        "via": "postgrest-service-role"
+      },
+      "user_reputation_totals": {
+        "rows": 48,
+        "bytes": 47481,
+        "via": "postgrest-service-role"
+      },
+      "user_streaks": {
+        "rows": 7,
+        "bytes": 2186,
+        "via": "postgrest-service-role"
+      }
+    },
+    "marketplace-campanas": {
+      "activation_publications": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "campaign_applications": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "campaign_case_studies": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "campaign_deliverables": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "campaign_invitations": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "campaign_mappings": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "campaign_media": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "campaign_metrics": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "campaign_notifications": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "campaign_redemptions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "campaign_templates": {
+        "rows": 6,
+        "bytes": 6145,
+        "via": "postgrest-service-role"
+      },
+      "managed_campaign_subscriptions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      },
+      "marketplace_campaigns": {
+        "rows": 8,
+        "bytes": 33759,
+        "via": "postgrest-service-role"
+      },
+      "promotional_campaigns": {
+        "rows": 1,
+        "bytes": 1220,
+        "via": "postgrest-service-role"
+      },
+      "publication_verification_queue": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      }
+    },
+    "booking": {
+      "booking_availability": {
+        "rows": 5,
+        "bytes": 1938,
+        "via": "postgrest-service-role"
+      },
+      "booking_branding": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_custom_questions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_event_types": {
+        "rows": 1,
+        "bytes": 1288,
+        "via": "postgrest-service-role"
+      },
+      "booking_exceptions": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_question_answers": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_reminder_logs": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_reminder_settings": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_webhook_logs": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "booking_webhooks": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "bookings": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "calendar_blocked_events": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "calendar_event_mappings": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "calendar_integrations": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "postgrest-service-role"
+      },
+      "creator_availability": {
+        "rows": 0,
+        "bytes": 2,
+        "via": "mcp-postgres"
+      }
+    }
+  },
+  "total_tables": 135,
+  "total_rows": 86024,
+  "total_bytes": 49249462
+}

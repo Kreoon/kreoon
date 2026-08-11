@@ -93,3 +93,13 @@ service-account*.json
 .npmrc
 .yarnrc
 .pypirc
+
+# Respaldo pre-simplificación: los dumps planos NO se versionan (48 MB).
+# Lo versionado es backups/pre-simplificacion/datos-pre-simplificacion.zip.
+# Para recuperar los archivos sueltos, descomprime ese ZIP en su misma carpeta.
+backups/pre-simplificacion/live-streaming/
+backups/pre-simplificacion/social-feed/
+backups/pre-simplificacion/up-reputacion/
+backups/pre-simplificacion/marketplace-campanas/
+backups/pre-simplificacion/booking/
+backups/pre-simplificacion/restore/
