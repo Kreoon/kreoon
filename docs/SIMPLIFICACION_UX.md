@@ -188,9 +188,113 @@ Eliminar el tour `ambassador` completo. Reducir `WelcomeDialog.tsx` (hoy 3 viñe
 
 ---
 
+## Consistencia visual
+
+Auditadas las 6 pantallas supervivientes contra el tema (tokens HSL de
+`src/index.css` + `tailwind.config.ts`).
+
+### El hallazgo grave: texto invisible en modo claro
+
+`text-white` dentro de contenedores que sí cambian con el tema (`bg-muted`,
+`border-border`). En modo oscuro no se nota; en **modo claro se escribía blanco
+sobre fondo claro**.
+
+| Dónde | Qué pasaba |
+|---|---|
+| `UnifiedClientsPage.tsx`, `UnifiedTalentPage.tsx` | El texto tecleado en el buscador y su lupa, invisibles |
+| Los mismos, estado vacío | Iconos a `text-white/20`, invisibles |
+| `StrategistDashboard.tsx` | Dos textos dentro de una tarjeta con tema |
+
+Corregido a `text-foreground` / `text-muted-foreground`, que es el patrón que ya
+seguían `Team.tsx` y `ContentBoard.tsx`.
+
+### Valores crudos sustituidos por su token
+
+| Dónde | Antes | Ahora |
+|---|---|---|
+| `StrategistDashboard.tsx` (3 usos) | `text-[hsl(270,100%,60%)]` | `text-primary` (valor idéntico en claro y oscuro) |
+| `settings/SettingsSidebar.tsx` (3 usos) | `dark:bg-[#1a1a24]` | `dark:bg-kreoon-bg-card` |
+
+### Glassmorphism
+
+Ninguna de las 6 pantallas usa `backdrop-blur`: todas siguen el estilo plano del
+tema, de forma consistente. Con `--radius: 0.125rem`, la diferencia entre
+`rounded-sm/md/lg` es imperceptible. **No había nada que unificar.**
+
+### Pendiente de decisión — los colores de estado en modo oscuro
+
+`src/index.css` define el semáforo dos veces, y en oscuro los tres colores
+colapsan en morado:
+
+| Token | Modo claro | Modo oscuro |
+|---|---|---|
+| `--success` | `150°` verde | **`270°` morado** |
+| `--warning` | `35°` ámbar | **`280°` morado** |
+| `--info` | `210°` azul | **`260°` morado** |
+
+Quien use la app en modo oscuro **no distingue un aviso de un error por el
+color**. Por eso las pantallas usan verde/rojo/ámbar sueltos en los distintivos
+de estado: no es descuido, es que los tokens no sirven para semáforo. Arreglarlo
+son tres líneas, pero repinta distintivos en toda la app — **requiere decisión
+del dueño**, no se toca por iniciativa propia.
+
+---
+
+## Performance
+
+### Bundle contra la línea base
+
+| Medida | Fase 0 | Tras simplificar | Tras esta pasada |
+|---|---|---|---|
+| `dist` total | 23.307.089 B | 22.612.913 B | 22.591.977 B |
+| Fragmentos JS | 390 | 350 | 349 |
+
+**Honestidad sobre la cifra**: el total baja un 3,1 % y esta pasada aporta solo
+20 kB. Lo que mejora aquí no es *cuánto pesa* el conjunto, sino **cuándo se
+carga cada cosa** — y eso el peso total no lo mide.
+
+### Lo que cargaba la portada pública sin necesitarlo
+
+1. **`vendor-charts`, ~503 kB de librería de gráficas, en una página sin una sola
+   gráfica.** Causa: el orbe 3D del hero depende de un paquete `d3-*` pequeño, y
+   `vite.config.ts` metía *todo* `d3-*` en el mismo fragmento que `recharts`. Un
+   paquete de 60 kB arrastraba medio megabyte. **Separados.**
+
+2. **El canvas 3D del hero, 877 kB — el fragmento más grande de toda la app —
+   se importaba de forma estática** en `HomePage.tsx` y bloqueaba el pintado.
+   **Ahora carga aparte**: el texto del hero aparece primero.
+
+### Lo que NO era problema (comprobado antes de tocar)
+
+- **Troceado por ruta**: ya resuelto. 112 de 144 rutas cargan bajo demanda, y
+  ninguna página se importa de forma estática en `App.tsx`.
+- **`hls.js` (525 kB) y `dash.js` (854 kB)**: *no* son residuo del streaming
+  eliminado. Los usan de verdad el tablero y Academia, y ya cargan bajo demanda.
+  **No tocar.**
+
+### Causa raíz pendiente — por qué `vendor-charts` sigue precargándose
+
+Separar `d3` no bastó: `vendor-charts` sigue en el `modulepreload` de la
+portada. El culpable es `src/components/ui/lazy-charts.tsx`, que hace carga
+diferida en las líneas 41-61 y luego, **en la línea 95, reexporta 26 símbolos de
+`recharts` de forma estática**. El comentario dice que son "más livianos", pero
+salen del mismo paquete: cualquiera que importe de ahí se trae la librería
+entera, y son 10 archivos.
+
+Arreglarlo es real pero toca esos 10 importadores: **no es un cambio de bajo
+riesgo**, queda propuesto y sin aplicar.
+
+Menores, sin aplicar: `SocialHubPage`, `AdGeneratorPage` y `ProductBannersPage`
+usan `lazy()` en vez de `lazyWithRetry()` (pierden la recarga automática cuando
+el fragmento queda obsoleto). `src/components/ui/chart.tsx` no lo importa nadie:
+código muerto.
+
+---
+
 ## Antes / después
 
-*(capturas a cargo del dueño — 375px y 1440px)*
+*(capturas a cargo del dueño — 375px y 1440px. No se pueden generar desde aquí:
+requieren sesión iniciada.)*
 
 | Pantalla | Antes | Después |
 |---|---|---|
