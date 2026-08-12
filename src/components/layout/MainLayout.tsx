@@ -557,8 +557,10 @@ export function MainLayout({
           className="sticky z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden"
           style={{ top: hasBanner ? bannerHeight : 0 }}
         >
-          <MobileNav />
-          <div className="flex-1 flex justify-center min-w-0">
+          {/* Sin menú hamburguesa: en móvil el cliente navega por la barra
+              inferior, que ya lleva sus mismos destinos. Un segundo menú con
+              lo mismo dentro solo añade un sitio más donde buscar. */}
+          <div className="flex-1 flex justify-start min-w-0">
             <div className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden flex-shrink-0">
                 <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
@@ -581,16 +583,8 @@ export function MainLayout({
                 </Button>
               }
             />
-            {clientMarketplaceEnabled && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/marketplace')}
-                className="h-8 w-8 rounded-full"
-              >
-                <Briefcase className="h-4 w-4" />
-              </Button>
-            )}
+            {/* El acceso al marketplace sale de aquí: ya está en el menú
+                lateral y en la barra inferior como "Buscar talento". */}
           </div>
         </header>
 
