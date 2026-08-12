@@ -207,7 +207,6 @@ const freelanceSections: NavSection[] = [
     label: "MARKETING & MEDIA",
     items: [
       { name: "Social Hub", href: "/social-hub", icon: Share2 },
-      // Live module coming soon
     ]
   },
   {

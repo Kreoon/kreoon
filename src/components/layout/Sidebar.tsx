@@ -629,7 +629,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         let filteredItems = section.items.filter(item => {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
-          // Hide adminOnly items (streaming/live) for non-admins - feature en construcción
+          // Hide adminOnly items for non-admins - feature en construcción
           if (item.adminOnly && !activeIsAdmin && !isPlatformAdmin) return false;
           // Hide marketplace link from role sections when org has it disabled
           const effectiveMkt = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;

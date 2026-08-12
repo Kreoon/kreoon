@@ -1,7 +1,7 @@
 // src/config/service-catalog.ts
 
 import {
-  Video, Camera, Layout, Image, Radio, Mic, FileText, Headphones,
+  Video, Camera, Layout, Image, Mic, FileText, Headphones,
   Users, Palette, Scissors, Sparkles, Frame, Music, Paintbrush,
   Clapperboard, Film, TrendingUp, Share2, MessageCircle, Target,
   DollarSign, Search, Mail, Rocket, Database, BarChart3,
@@ -83,17 +83,6 @@ export const SERVICE_GROUPS: ServiceGroupConfig[] = [
         gradient: 'from-amber-500 to-yellow-500',
         complexity: 'moderate',
         estimatedTime: '5-7 días',
-        questions: [],
-      },
-      {
-        id: 'live_streaming',
-        name: 'Live Streaming',
-        description: 'Transmisiones en vivo para ventas o engagement',
-        icon: Radio,
-        color: 'red',
-        gradient: 'from-red-500 to-pink-500',
-        complexity: 'complex',
-        estimatedTime: 'Por definir',
         questions: [],
       },
       {

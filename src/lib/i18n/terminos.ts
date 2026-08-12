@@ -246,12 +246,6 @@ export const MODULOS = {
   notificaciones_conf: 'Notificaciones',
   apariencia:          'Apariencia',
   idioma:              'Idioma y Región',
-
-  // Streaming
-  transmision_vivo:    'Transmisión en Vivo',
-  sala_espera:         'Sala de Espera',
-  estudio:             'Estudio de Transmisión',
-  grabaciones:         'Grabaciones',
 } as const;
 
 // ─── MENSAJES DE ESTADO ───────────────────────────────────────────────

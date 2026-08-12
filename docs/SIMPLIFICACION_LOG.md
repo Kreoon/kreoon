@@ -124,3 +124,88 @@ Probar en el navegador el flujo core (login → clientes → board → mover tar
 Se intentó automatizar con la extensión de Chrome y falló al fijar la pestaña; queda para
 verificación manual. Riesgo bajo: `npm run build` y `tsc --noEmit` están en verde, no queda
 ninguna referencia a tablas borradas y las consultas del perfil público responden.
+
+---
+
+## Bloque 2 · Live streaming — 2026-08-11
+
+**Estado previo:** igual que booking, el frontend ya estaba desmontado (`/live`, `/live/*` y
+`/streaming/*` eran redirects). Quedaban 2 componentes residuales y las 37 tablas.
+
+### Archivos borrados (2)
+
+| Archivo | Qué era |
+|---|---|
+| `src/components/clients/ClientStreamingChannels.tsx` | CRUD de canales de streaming en el detalle de cliente (tab "Canales") |
+| `src/components/landing/LiveShoppingComingSoon.tsx` | Banner "Live Shopping — próximamente" de la landing, ya sin consumidores |
+
+### Archivos modificados (11)
+
+| Archivo | Cambio |
+|---|---|
+| `src/App.tsx` | Fuera los 3 redirects (`/streaming/*`, `/live`, `/live/*`) |
+| `src/components/clients/ClientDetailDialog.tsx` | Fuera el import, el tab "Canales" y su contenido; fuera el icono `Radio`, ya huérfano |
+| `src/components/landing/index.ts` | Fuera los 2 re-exports |
+| `src/components/ProtectedRoute.tsx` | Fuera `/live` de `CLIENT_ALLOWED_ROUTES` y de `SHARED_ROUTES` |
+| `src/lib/i18n/terminos.ts` | Fuera el bloque de términos de streaming |
+| `src/lib/finance/constants.ts` | Fuera 3 tarifas de `COMMISSION_RATES`: `live_shopping`, `live_hosting_direct`, `live_hosting_whitelabel`. Verificado: `CommissionType` se deriva de ese objeto pero nadie usaba esas 3 claves, y `ambassador_commission_config` no tiene ninguna fila con ellas |
+| `src/config/service-catalog.ts` | Fuera el servicio `live_streaming` (0 productos lo habían elegido) y el icono `Radio` |
+| `src/lib/profile-builder/generateBlocksFromTemplate.ts` | Fuera el mapeo `live_streaming: 'Video'` (0 bloques guardados de ese tipo) |
+| `src/components/layout/Sidebar.tsx`, `MobileNav.tsx` | Comentarios que mencionaban el módulo |
+| `src/integrations/supabase/types.ts` | Regenerado |
+
+**Se conserva `live_streamer`**: es una etiqueta de especialidad de perfil de creador, no el módulo.
+
+### Base de datos
+
+Migración `20260812000000_drop_live_streaming_module.sql`, más una de cola para un huérfano.
+
+- **96 políticas RLS** (van primero: `org_members_select_hosting_requests` referencia
+  `live_hosting_hosts`, que a su vez tiene una FK hacia `live_hosting_requests` — sin soltar la
+  política antes no existe ningún orden de DROP posible entre esas dos tablas)
+- **3 tablas fuera de `supabase_realtime`** antes del DROP
+- **37 tablas** (19 filas en total: `creator_live_streams` 9, `live_stream_viewers` 5,
+  `live_feature_flags` 4, `live_platform_config` 1; las otras 33 vacías)
+- **29 funciones** (28 + `is_streaming_org_member`, un helper de RLS que quedó huérfano y se
+  detectó al regenerar los tipos)
+- **17 enums** y la columna `custom_pricing_agreements.live_shopping_fee_override` (0 filas con valor)
+
+Verificado antes: 0 FKs entrantes, 0 vistas, 0 cron jobs, ningún enum usado por tablas que se
+quedan, y `complete_live_hosting` —la única función que tocaba `escrow_holds`— sin callers y con
+0 filas en ambas tablas. Verificado después: 0 objetos restantes; la única mención que queda es
+un comentario dentro de `kreoon_merge_client`, sin ninguna sentencia real.
+
+**El "ciclo" que anunciaba el mapa no existía**: solo hay FK en un sentido
+(`live_hosting_requests.streaming_session_id` → `streaming_sessions_v2`). La bidireccionalidad
+era lógica, del trigger, no declarativa.
+
+### Rollback
+
+Documentado al final de la migración: estructura desde `backups/pre-simplificacion/schema/01..05`,
+datos con `make-restore-sql.mjs live-streaming <tabla>` (solo 4 tablas tenían filas), y los
+cuerpos de las 29 funciones desde el historial de git (`git show pre-simplificacion`), porque el
+respaldo de esquema cubre tablas, índices, políticas y triggers, pero no funciones.
+
+### Verificación
+
+| Chequeo | Resultado |
+|---|---|
+| `npm run build` | ✅ en verde |
+| Referencias a las 37 tablas en `src/` y `supabase/functions/` | ✅ ninguna (grep post-DROP) |
+| `live_shopping_fee_override` en código | ✅ ninguna |
+| Objetos rotos en la base | ✅ ninguno |
+| `escrow_holds`, `custom_pricing_agreements` | ✅ intactas (0 y 10 filas) |
+
+### Números
+
+| Métrica | Línea base | Tras bloque 1 | Tras bloque 2 | Δ acumulado |
+|---|---:|---:|---:|---:|
+| Peso de `dist/` | 23.307.089 B | 23.306.902 B | 23.299.180 B | −7.909 B |
+| Rutas | 165 | 163 | 160 | −5 |
+| Archivos en `src` | 1.946 | 1.945 | 1.943 | −3 |
+| Componentes | 1.035 | 1.035 | 1.033 | −2 |
+| Edge functions | 169 | 166 | 166 | −3 |
+| Tablas dropeadas | — | 15 | 52 | −52 |
+
+Sigue sin haber ahorro de peso real: los dos módulos eliminados hasta ahora ya no cargaban nada
+en el navegador. Lo que baja es la base de datos: **52 tablas menos**.

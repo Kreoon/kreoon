@@ -34,5 +34,3 @@ export { UseCasesSection } from "./sections/UseCasesSection";
 export type { UseCasesSectionProps } from "./sections/UseCasesSection";
 
 // Feature Components
-export { LiveShoppingComingSoon, useLiveShoppingModal } from "./LiveShoppingComingSoon";
-export type { LiveShoppingComingSoonProps } from "./LiveShoppingComingSoon";

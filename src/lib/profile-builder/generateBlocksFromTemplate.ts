@@ -115,7 +115,6 @@ const ICON_BY_SERVICE_TYPE: Record<string, string> = {
   tutorial: 'BookOpen',
   vsl: 'PlayCircle',
   photography: 'Camera',
-  live_streaming: 'Video',
   consulting: 'MessageSquare',
   other: 'Video',
 };

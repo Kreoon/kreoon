@@ -1487,9 +1487,6 @@ function AppRoutes() {
         <Route path="/demo" element={<Navigate to="/dashboard" replace />} />
         <Route path="/admin/ad-intelligence" element={<Navigate to="/admin/analytics" replace />} />
         <Route path="/admin/social-scraper" element={<Navigate to="/admin/analytics" replace />} />
-        <Route path="/streaming/*" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/live" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/live/*" element={<Navigate to="/dashboard" replace />} />
         <Route path="/org-crm" element={<Navigate to="/clientes" replace />} />
         <Route path="/org-crm/contactos" element={<Navigate to="/clientes" replace />} />
         <Route path="/org-crm/creadores" element={<Navigate to="/clientes" replace />} />
