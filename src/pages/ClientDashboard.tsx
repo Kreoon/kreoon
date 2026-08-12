@@ -53,6 +53,7 @@ import {
   EmptyBrandClientState,
 } from '@/components/client-dashboard';
 import { ClientInvoicesTab } from '@/components/client-dashboard/ClientInvoicesTab';
+import { ClientPipelineChecklist } from '@/components/client-portal';
 import { useClientPaymentStatus } from '@/hooks/useClientPaymentStatus';
 import {
   LogOut,
@@ -1038,8 +1039,18 @@ export default function ClientDashboard() {
       )}
 
       <div className="relative z-10 p-4 md:p-6 space-y-6">
-        {/* Overview Tab - Nova Design */}
+        {/* Vista principal: el checklist de 5 pasos del cliente */}
         {activeTab === 'overview' && (
+          <ClientPipelineChecklist
+            clientId={selectedClientId}
+            clientName={profile?.full_name?.split(' ')[0] || clientInfo.name}
+            content={content}
+            onGoToTab={setActiveTab}
+          />
+        )}
+
+        {/* Resumen anterior (métricas, videos recientes, alertas de pago) */}
+        {activeTab === 'resumen' && (
           <ClientDashboardOverview
             clientName={clientInfo.name}
             userName={profile?.full_name}
