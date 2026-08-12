@@ -21,7 +21,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, UserCircle, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -80,26 +80,25 @@ const creatorMobileNavigation = [
 // Simplificación 2026 (decisión 6): rediseñado, no rellenado. Al irse el Feed, en vez
 // de dejar 2 slots o meter un ítem cualquiera, la nav pasa a lo que el cliente
 // realmente hace: ver su avance, revisar sus videos y consultar su perfil.
+// ESPEJO EXACTO de `clientSections` en Sidebar.tsx — mismos destinos, mismo
+// orden y mismos nombres. En móvil el cliente debe encontrar lo mismo que en
+// escritorio: cuando las dos listas se escriben aparte, se desincronizan (aquí
+// sobrevivieron "Academia" y "Mi Plan" meses después de sacarlos del sidebar).
+// Si cambias una, cambia la otra.
 const brandMobileNavigation = [
   { name: "Inicio", href: "/client-dashboard", icon: LayoutDashboard },
   { name: "Mis videos", href: "/board?view=marketplace", icon: Kanban },
-  { name: "Talento", href: "/marketplace", icon: Store },
-  { name: "Mi perfil", href: "/settings?section=profile", icon: UserCircle },
+  { name: "Mi marca", href: "/client-dashboard?tab=dna", icon: Dna },
+  { name: "Buscar talento", href: "/marketplace", icon: Store },
 ];
 
-// Items secundarios de "Mas" para client — todo lo que vivia en clientSections del Sidebar
-// y no entro en los 4 slots principales. CRM(org) del spec original se omitio: no existe
-// ruta de CRM para el rol client (el CRM de plataforma es admin-only, /crm).
+// El resto de `clientSections` que no cabe en los 4 huecos de la barra.
+// "Mi Plan" NO va suelto: vive dentro de Configuración, por decisión propia.
 const clientMoreItems: MoreMenuItem[] = [
-  { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna },
+  { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
   { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
   { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
-  { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
-  { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
   { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
-  { name: "Academia", href: "/academia", icon: GraduationCap },
-  { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
-  { name: "Mi Plan", href: "/planes", icon: Crown },
   { name: "Configuración", href: "/settings", icon: Settings },
 ];
 
