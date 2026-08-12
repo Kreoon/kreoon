@@ -42,7 +42,6 @@ export const PERPLEXITY_FEATURES = [
   { key: 'research', label: 'Investigación de mercado', description: 'Enriquecer briefs con datos actuales' },
   { key: 'board', label: 'Análisis de tablero', description: 'Contexto de tendencias en tarjetas' },
   { key: 'talent', label: 'Matching de talento', description: 'Sugerir tipo de creador por tendencias' },
-  { key: 'live', label: 'Live Shopping', description: 'Tendencias para eventos en vivo' },
 ] as const;
 
 export interface AIUsageLog {
@@ -116,8 +115,6 @@ export const AI_MODULES = [
   { key: 'tablero', label: 'Tablero (Kanban)', description: 'Análisis de tarjetas, detección de cuellos de botella, recomendaciones' },
   { key: 'scripts', label: 'Generación de Guiones', description: 'Creación y mejora de guiones para contenido' },
   { key: 'thumbnails', label: 'Miniaturas', description: 'Generación de prompts para thumbnails' },
-  { key: 'sistema_up', label: 'Sistema UP', description: 'Copiloto de puntos y logros' },
-  { key: 'live_assistant', label: 'Asistente Live', description: 'Asistente en tiempo real para transmisiones' },
 ];
 
 export function useOrganizationAI(organizationId?: string) {

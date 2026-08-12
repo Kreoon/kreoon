@@ -15,6 +15,7 @@ import { ClientDetailDialog } from "@/components/clients/ClientDetailDialog";
 import { ClientUsersDialog } from "@/components/clients/ClientUsersDialog";
 import { AssignStrategistsDialog } from "@/components/clients/AssignStrategistsDialog";
 import { ClientCard } from "@/components/clients/ClientCard";
+import { useClientPipelineRuns } from "@/hooks/useClientPipelineRuns";
 import { ClientServicesDialog } from "@/components/clients/ClientServicesDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,6 +70,8 @@ export function ClientsContent() {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const { isPlatformRoot, currentOrgId, currentOrgName, loading: orgLoading } = useOrgOwner();
+  // Estado del pipeline autónomo de cada cliente (una sola consulta para toda la lista)
+  const { data: pipelineRuns } = useClientPipelineRuns(currentOrgId);
   const { guardAction, isReadOnly } = useTrialGuard();
   const [clients, setClients] = useState<Client[]>([]);
   const [clientUsers, setClientUsers] = useState<ClientUser[]>([]);
@@ -504,6 +507,7 @@ export function ClientsContent() {
                 key={client.id}
                 client={client}
                 isAdmin={isAdmin || false}
+                pipeline={pipelineRuns?.[client.id] ?? null}
                 onSelect={setSelectedClient}
                 onDelete={handleDelete}
                 onOpenUsers={(c) => {

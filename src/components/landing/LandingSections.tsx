@@ -338,7 +338,7 @@ export function ForWhomSection() {
       icon: UserCircle, 
       title: 'Creadores',
       problem: 'Falta de visibilidad y herramientas profesionales',
-      solution: 'Portafolio, métricas y red social integrada',
+      solution: 'Portafolio público, métricas y marketplace integrado',
       result: 'Crecimiento y reconocimiento medible'
     },
     { 

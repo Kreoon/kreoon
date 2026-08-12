@@ -297,7 +297,7 @@ export default function TeamTab({ project, formData, setFormData, editMode, read
             <span className="font-medium text-amber-700 dark:text-amber-300">Contenido Interno</span>
           </div>
           <p className="text-sm text-amber-600 dark:text-amber-400">
-            Los participantes reciben puntos UP en lugar de pago monetario.
+            Este contenido no genera pago monetario a los participantes.
           </p>
         </div>
       )}

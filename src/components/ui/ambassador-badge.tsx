@@ -129,7 +129,7 @@ export function AmbassadorBadge({
         <TooltipContent>
           <p className="font-medium">Embajador {levelLabel}</p>
           <p className="text-xs text-muted-foreground max-w-xs">
-            Este usuario puede crear contenido interno para la organización y recibe recompensas en puntos UP.
+            Este usuario puede crear contenido interno para la organización.
           </p>
         </TooltipContent>
       </Tooltip>

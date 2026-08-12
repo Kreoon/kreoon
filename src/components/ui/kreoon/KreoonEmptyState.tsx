@@ -2,7 +2,6 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import {
   Inbox,
-  Megaphone,
   Users,
   MessageSquare,
   Bell,
@@ -175,28 +174,6 @@ export interface KreoonEmptyStateVariantProps
   description?: string;
   /** Sobrescribe título */
   title?: string;
-}
-
-/** Sin campañas activas */
-export function KreoonEmptyStateNoCampaigns({
-  title = "No tienes campañas activas",
-  description = "Crea tu primera campaña para conectar con creadores",
-  action,
-  ...props
-}: KreoonEmptyStateVariantProps) {
-  return (
-    <KreoonEmptyState
-      icon={<Megaphone className="h-9 w-9" />}
-      title={title}
-      description={description}
-      action={
-        action
-          ? { label: action.label ?? "Crear campaña", onClick: action.onClick, variant: action.variant }
-          : undefined
-      }
-      {...props}
-    />
-  );
 }
 
 /** Sin creadores (filtros) */

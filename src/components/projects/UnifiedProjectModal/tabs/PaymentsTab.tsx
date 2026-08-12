@@ -72,8 +72,7 @@ export default function PaymentsTab({ project, formData, setFormData, editMode, 
               <span className="font-medium text-amber-700 dark:text-amber-300">Contenido Interno de la Organizacion</span>
             </div>
             <p className="text-sm text-amber-600 dark:text-amber-400">
-              Este contenido es de la marca interna. Los participantes reciben puntos UP en lugar de pago monetario.
-              Los puntos se asignan automaticamente segun las transiciones de estado.
+              Este contenido es de la marca interna, por lo que no genera pago monetario a los participantes.
             </p>
           </div>
 

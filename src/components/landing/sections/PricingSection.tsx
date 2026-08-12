@@ -519,13 +519,18 @@ function PlanCard({
         {/* Key metrics pills */}
         {plan.keyMetrics && plan.keyMetrics.length > 0 && (
           <div className="mb-5 grid grid-cols-2 gap-2">
-            {plan.keyMetrics.map((m) => {
+            {plan.keyMetrics.map((m, mi) => {
               const MIcon = m.icon;
+              // Con un número impar de pills, la última ocupa la fila completa
+              // para no dejar un hueco suelto en la grilla de 2 columnas.
+              const isLoneLast =
+                mi === plan.keyMetrics!.length - 1 && plan.keyMetrics!.length % 2 === 1;
               return (
                 <div
                   key={m.label}
                   className={cn(
                     "flex flex-col items-center justify-center rounded-lg px-2 py-2.5 text-center",
+                    isLoneLast && "col-span-2",
                     m.disabled ? "bg-kreoon-bg-secondary/40 opacity-50" : tier.metricBg,
                   )}
                 >

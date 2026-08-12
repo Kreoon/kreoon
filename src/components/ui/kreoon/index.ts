@@ -48,7 +48,6 @@ export {
 
 export { KreoonEmptyState } from "./KreoonEmptyState";
 export {
-  KreoonEmptyStateNoCampaigns,
   KreoonEmptyStateNoCreators,
   KreoonEmptyStateNoMessages,
   KreoonEmptyStateNoNotifications,

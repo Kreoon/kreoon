@@ -1404,9 +1404,19 @@ Deno.serve(async (req) => {
       const actor: Actor = ctx.esServiceRole ? "system" : rolCaller;
       const actorId = ctx.userId ?? (body.actor_id ? String(body.actor_id) : null);
 
-      const intentosPrevios = Number(run.stage_attempts?.[stage] ?? 0);
+      // Con `content_id` los cambios son sobre UN guion: el contador de
+      // intentos también es por guion (clave "guiones:<uuid>"), para que
+      // rechazar el guion 1 no consuma los intentos del guion 2.
+      const contentId = typeof body.content_id === "string" ? body.content_id : null;
+      const porGuion = stage === "guiones" && !!contentId;
+      if (porGuion && !await guionDelRun(admin, run.id, contentId!)) {
+        return json(req, { error: "content_id no pertenece a este run" }, 403);
+      }
+
+      const clave = porGuion ? `guiones:${contentId}` : stage;
+      const intentosPrevios = Number(run.stage_attempts?.[clave] ?? 0);
       const intento = intentosPrevios + 1;
-      const attempts = { ...(run.stage_attempts ?? {}), [stage]: intento };
+      const attempts = { ...(run.stage_attempts ?? {}), [clave]: intento };
 
       // El 4º intento no se regenera: se escala a un humano.
       if (intento >= LIMITE_REGENERACIONES) {
@@ -1416,15 +1426,17 @@ Deno.serve(async (req) => {
           stage_status: "error",
         });
         await registrarEvento(admin, run.id, stage, "changes_requested", {
-          feedback, actor, actorId, payload: { intento },
+          feedback, actor, actorId, payload: { intento, content_id: contentId },
         });
         await registrarEvento(admin, run.id, stage, "escalated", {
-          feedback, actor: "system", payload: { intento, limite: LIMITE_REGENERACIONES },
+          feedback,
+          actor: "system",
+          payload: { intento, limite: LIMITE_REGENERACIONES, content_id: contentId },
         });
         await notificarEquipo(
           admin, run.organization_id,
           "Pipeline escalado: 4º pedido de cambios",
-          `El cliente pidió cambios por ${intento}ª vez en la etapa "${stage}". La IA ya no regenera: hace falta que un estratega intervenga. Último comentario: "${feedback.slice(0, 300)}"`,
+          `El cliente pidió cambios por ${intento}ª vez en ${porGuion ? "un guion" : `la etapa "${stage}"`}. La IA ya no regenera: hace falta que un estratega intervenga. Último comentario: "${feedback.slice(0, 300)}"`,
           run.id,
         );
         return json(req, { ok: true, run: escalado, escalado: true });
@@ -1436,15 +1448,14 @@ Deno.serve(async (req) => {
         stage_status: "changes_requested",
       });
       await registrarEvento(admin, run.id, stage, "changes_requested", {
-        feedback, actor, actorId, payload: { intento },
+        feedback, actor, actorId, payload: { intento, content_id: contentId },
       });
 
-      // Se regenera SOLO esa etapa, incorporando el feedback.
-      const actualizado = await ejecutarEtapa(admin, marcado, stage, ctx, {
-        feedback,
-        regenerar: true,
-      });
-      return json(req, { ok: true, run: actualizado, intento });
+      // Se regenera SOLO lo que el cliente rechazó: ese guion, o esa etapa.
+      const actualizado = porGuion
+        ? await regenerarGuionIndividual(admin, marcado, ctx, contentId!, feedback)
+        : await ejecutarEtapa(admin, marcado, stage, ctx, { feedback, regenerar: true });
+      return json(req, { ok: true, run: actualizado, intento, content_id: contentId });
     }
 
     return json(req, { error: "action_desconocida", action: accion }, 400);

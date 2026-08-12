@@ -45,6 +45,8 @@ interface AssignedStrategist {
   is_primary: boolean;
 }
 
+import { ClientPipelineBadge, type PipelineStage, type PipelineStageStatus } from "@/components/clients/ClientPipelineBadge";
+
 interface ClientCardProps {
   client: Client;
   isAdmin: boolean;
@@ -53,11 +55,14 @@ interface ClientCardProps {
   onOpenUsers: (client: Client) => void;
   onOpenStrategists: (client: Client) => void;
   onOpenServices: (client: Client) => void;
+  /** Estado del pipeline autónomo. Si no llega, la tarjeta muestra "Sin iniciar". */
+  pipeline?: { stage: PipelineStage; stage_status: PipelineStageStatus } | null;
 }
 
 export function ClientCard({
   client,
   isAdmin,
+  pipeline,
   onSelect,
   onDelete,
   onOpenUsers,
@@ -153,6 +158,9 @@ if (!error && data?.length) {
           {client.contact_email && (
             <p className="text-xs text-muted-foreground truncate mt-0.5">{client.contact_email}</p>
           )}
+          <div className="mt-1.5">
+            <ClientPipelineBadge stage={pipeline?.stage} stageStatus={pipeline?.stage_status} />
+          </div>
         </div>
 
         {/* Delete Button */}

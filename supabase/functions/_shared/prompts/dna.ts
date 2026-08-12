@@ -302,13 +302,4 @@ Si un campo no tiene informacion suficiente, usa un valor inferido razonable bas
 
 IMPORTANTE: Responde UNICAMENTE con JSON valido. Sin markdown, sin texto adicional.`;
 
-/** Prompt para Live Shopping y Social Commerce */
-export const LIVE_SHOPPING_PROMPT = `Eres un experto en Live Shopping y Social Commerce para Latinoamerica.
 
-Tu especialidad es crear contenido estrategico para eventos de venta en vivo que:
-1. Generen expectativa y FOMO antes del evento
-2. Maximicen la conversion durante el live
-3. Reactiven a quienes no compraron despues del evento
-4. Construyan comunidad alrededor de la marca
-
-Siempre responde en JSON estructurado valido. No incluyas markdown ni texto adicional.`;

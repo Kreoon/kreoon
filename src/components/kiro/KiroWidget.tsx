@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion';
 import { X, GripVertical, Wifi, WifiOff, Zap, Bell, Gamepad2, Settings, MessageCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -105,7 +104,6 @@ interface KiroWidgetProps {
 }
 
 export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {}) {
-  const location = useLocation();
   // ─── Context ───
   const {
     kiroState,

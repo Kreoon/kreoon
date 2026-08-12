@@ -11,7 +11,6 @@ import {
   TALENT_DNA_PROMPT,
   PRODUCT_EMOTIONS_PROMPT,
   PRODUCT_EXTRACTION_PROMPT,
-  LIVE_SHOPPING_PROMPT,
 } from "./dna.ts";
 import { KIRO_MASTER_PROMPT } from "./research.ts";
 
@@ -146,13 +145,6 @@ REGLAS:
       system_prompt: KIRO_MASTER_PROMPT,
       temperature: 0.3,
       max_tokens: 16384,
-    },
-  },
-  streaming: {
-    live_shopping: {
-      system_prompt: LIVE_SHOPPING_PROMPT,
-      temperature: 0.7,
-      max_tokens: 2000,
     },
   },
   board: {

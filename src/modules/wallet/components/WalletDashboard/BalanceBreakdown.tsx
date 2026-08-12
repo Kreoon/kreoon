@@ -60,7 +60,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
       color: 'bg-[hsl(270,100%,60%)]',
       bgColor: 'bg-[hsl(270,100%,60%,0.1)]',
       icon: Lock,
-      tooltip: 'Fondos comprometidos en campañas activas (escrow)',
+      tooltip: 'Fondos comprometidos en proyectos activos (escrow)',
     },
   ];
 
