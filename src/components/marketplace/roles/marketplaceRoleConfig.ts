@@ -1,4 +1,4 @@
-import type { MarketplaceRoleDefinition, MarketplaceRoleCategory, MarketplaceRoleId, CampaignPricingMode } from '../types/marketplace';
+import type { MarketplaceRoleDefinition, MarketplaceRoleCategory, MarketplaceRoleId } from '../types/marketplace';
 
 // --- Role Categories (4 principales) ---
 
@@ -115,11 +115,3 @@ export function getMinBudgetForRoles(roleIds: MarketplaceRoleId[]): number {
   // Return the highest rate among selected roles
   return rates[0];
 }
-
-// --- Pricing Mode Config ---
-
-export const PRICING_MODE_CONFIG: Record<CampaignPricingMode, { label: string; description: string; icon: string; color: string }> = {
-  fixed: { label: 'Precio Fijo', description: 'Precio definido por la marca', icon: 'DollarSign', color: 'text-green-400' },
-  auction: { label: 'Subasta Abierta', description: 'Los creadores hacen ofertas libremente', icon: 'Gavel', color: 'text-orange-400' },
-  range: { label: 'Rango de Presupuesto', description: 'Marca define min/max, creadores pujan dentro del rango', icon: 'ArrowUpDown', color: 'text-blue-400' },
-};

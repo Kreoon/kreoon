@@ -23,7 +23,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, ImagePlus, Crown, Trophy, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Trophy, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -86,7 +86,6 @@ const brandMobileNavigation = [
   { name: "Hub", href: "/client-dashboard", icon: LayoutDashboard },
   { name: "Feed", href: "/feed", icon: Compass },
   { name: "Talento", href: "/marketplace", icon: Store },
-  { name: "Campañas", href: "/marketplace/my-campaigns", icon: Megaphone },
 ];
 
 // Items secundarios de "Mas" para client — todo lo que vivia en clientSections del Sidebar
@@ -99,8 +98,6 @@ const clientMoreItems: MoreMenuItem[] = [
   { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
   { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
   { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
-  { name: "Crear Campaña", href: "/marketplace/campaigns/create", icon: ImagePlus },
-  { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone },
   { name: "Academia", href: "/academia", icon: GraduationCap },
   { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
   { name: "Mi Plan", href: "/planes", icon: Crown },
@@ -129,7 +126,6 @@ const ADMIN_MORE_ITEMS_BASE: Array<MoreMenuItem & { platformRootOnly?: boolean }
   { name: "Comunidades", href: "/crm/comunidades", icon: Users2 },
   { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign },
   { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
-  { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, platformRootOnly: true },
   { name: "Papelera", href: "/admin/papelera", icon: Trash2, platformRootOnly: true },
   { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, platformRootOnly: true },
   { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, platformRootOnly: true },
@@ -613,8 +609,7 @@ export function MainLayout({
         >
           <div className="flex justify-around py-2">
             {brandMobileNavigation.filter(item => !item.href.startsWith('/marketplace') || clientMarketplaceEnabled).map((item) => {
-              // Talento (/marketplace exacto) vs Campañas (/marketplace/my-campaigns) comparten
-              // prefijo — exact-match para Talento evita que ambos se marquen activos a la vez.
+              // Talento usa exact-match (/marketplace) para no activarse en subrutas.
               const isActive = item.href === '/marketplace'
                 ? location.pathname === '/marketplace'
                 : location.pathname.startsWith(item.href);

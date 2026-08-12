@@ -114,32 +114,6 @@ export interface CreatorPublicProfile {
   avatar_url: string | null;
 }
 
-export interface ScoreCreatorInput {
-  creator_id: string;
-  campaign_requirements: {
-    platform: string;
-    content_type: string;
-    budget?: number;
-    timeline_days?: number;
-    specialization?: string;
-  };
-}
-
-export interface CreatorScoreOutput {
-  creator_id: string;
-  overall_score: number;
-  breakdown: {
-    profile_completeness: number;
-    portfolio_quality: number;
-    response_rate: number;
-    projects_completed: number;
-    platform_match: number;
-    availability: number;
-  };
-  recommendation: "highly_recommended" | "recommended" | "consider" | "not_recommended";
-  reasoning: string;
-}
-
 // ─── Profiles ───────────────────────────────────────────────────────────────
 
 export interface OptimizeProfileInput {

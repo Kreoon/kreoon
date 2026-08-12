@@ -8,19 +8,17 @@ import { OrgServicesSection } from './OrgServicesSection';
 import { OrgTeamSection } from './OrgTeamSection';
 import { OrgReviewsSection } from './OrgReviewsSection';
 import { OrgPortfolioSection } from './OrgPortfolioSection';
-import { OrgCampaignsSection } from './OrgCampaignsSection';
 import { OrgContactDialog } from './OrgContactDialog';
 import { OrgProfileSkeleton } from './OrgProfileSkeleton';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import type { OrgFullProfile, OrgService, OrgReview, OrgMemberContent, Campaign } from '../types/marketplace';
+import type { OrgFullProfile, OrgService, OrgReview, OrgMemberContent } from '../types/marketplace';
 import { getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
 
-type OrgTab = 'about' | 'portfolio' | 'services' | 'team' | 'reviews' | 'campaigns';
+type OrgTab = 'about' | 'portfolio' | 'services' | 'team' | 'reviews';
 
 const TABS: { id: OrgTab; label: string }[] = [
   { id: 'about', label: 'Nosotros' },
-  { id: 'campaigns', label: 'Campañas' },
   { id: 'portfolio', label: 'Portafolio' },
   { id: 'services', label: 'Servicios' },
   { id: 'team', label: 'Equipo' },
@@ -36,7 +34,6 @@ export default function OrgProfilePage() {
   const [reviews, setReviews] = useState<OrgReview[]>([]);
   const [teamMembers, setTeamMembers] = useState<any[]>([]);
   const [memberContent, setMemberContent] = useState<OrgMemberContent[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [showContact, setShowContact] = useState(false);
@@ -60,8 +57,8 @@ export default function OrgProfilePage() {
       const orgInfo = orgData[0] as OrgFullProfile;
       setOrg(orgInfo);
 
-      // Fetch services, reviews, team, campaigns in parallel
-      const [servicesRes, reviewsRes, teamRes, campaignsRes] = await Promise.all([
+      // Fetch services, reviews, team in parallel
+      const [servicesRes, reviewsRes, teamRes] = await Promise.all([
         (supabase as any)
           .from('org_services')
           .select('*')
@@ -75,55 +72,11 @@ export default function OrgProfilePage() {
           .order('created_at', { ascending: false }),
         (supabase as any)
           .rpc('get_portfolio_creators', { org_id_param: orgInfo.id }),
-        (supabase as any)
-          .from('marketplace_campaigns')
-          .select('*')
-          .eq('organization_id', orgInfo.id)
-          .in('status', ['active', 'in_progress', 'completed'])
-          .order('created_at', { ascending: false }),
       ]);
 
       if (servicesRes.data) setServices(servicesRes.data);
       if (reviewsRes.data) setReviews(reviewsRes.data);
       if (teamRes.data) setTeamMembers(teamRes.data);
-      if (campaignsRes.data) {
-        const orgDisplayName = orgInfo.org_display_name || orgInfo.name;
-        setCampaigns(campaignsRes.data.map((row: any) => ({
-          id: row.id,
-          brand_user_id: row.brand_id || '',
-          brand_name: row.brand_name_override || orgDisplayName,
-          brand_logo: row.brand_logo_override || orgInfo.logo_url || undefined,
-          title: row.title || '',
-          description: row.description || '',
-          category: row.category || '',
-          campaign_type: row.campaign_type || 'paid',
-          budget_mode: row.budget_mode || 'per_video',
-          budget_per_video: row.budget_per_video != null ? Number(row.budget_per_video) : undefined,
-          total_budget: row.total_budget != null ? Number(row.total_budget) : undefined,
-          currency: row.currency || 'USD',
-          platform_fee_pct: Number(row.platform_fee_pct) || 10,
-          content_requirements: row.content_requirements || [],
-          creator_requirements: row.creator_requirements || {},
-          max_creators: Number(row.max_creators) || 5,
-          applications_count: Number(row.applications_count) || 0,
-          approved_count: Number(row.approved_count) || 0,
-          status: row.status,
-          deadline: row.deadline || '',
-          created_at: row.created_at || '',
-          updated_at: row.updated_at || '',
-          tags: row.tags || [],
-          pricing_mode: row.pricing_mode || 'fixed',
-          min_bid: row.min_bid != null ? Number(row.min_bid) : undefined,
-          max_bid: row.max_bid != null ? Number(row.max_bid) : undefined,
-          visibility: row.visibility || 'public',
-          organization_id: row.organization_id,
-          organization_name: orgDisplayName,
-          desired_roles: row.desired_roles || [],
-          is_urgent: row.is_urgent || false,
-          cover_image_url: row.cover_image_url || undefined,
-        } as Campaign)));
-      }
-
       // Fetch published content from org members
       const members = teamRes.data || [];
       if (members.length > 0) {
@@ -285,9 +238,6 @@ export default function OrgProfilePage() {
               )}
             >
               {tab.label}
-              {tab.id === 'campaigns' && campaigns.length > 0 && (
-                <span className="ml-1.5 text-xs text-gray-500">({campaigns.length})</span>
-              )}
               {tab.id === 'reviews' && reviews.length > 0 && (
                 <span className="ml-1.5 text-xs text-gray-500">({reviews.length})</span>
               )}
@@ -305,7 +255,6 @@ export default function OrgProfilePage() {
           {/* Main content */}
           <div className="flex-1 min-w-0">
             {activeTab === 'about' && <OrgAboutSection org={org} />}
-            {activeTab === 'campaigns' && <OrgCampaignsSection campaigns={campaigns} accentColor={accentColor} />}
             {activeTab === 'portfolio' && <OrgPortfolioSection gallery={org.org_gallery || []} memberContent={memberContent} accentColor={accentColor} />}
             {activeTab === 'services' && <OrgServicesSection services={services} accentColor={accentColor} />}
             {activeTab === 'team' && <OrgTeamSection members={teamMembers} accentColor={accentColor} />}

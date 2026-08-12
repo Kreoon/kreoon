@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Users, Building2, Megaphone } from 'lucide-react';
+import { Users, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { MarketplaceTab } from './types/marketplace';
 
@@ -8,21 +8,19 @@ interface MarketplaceTabBarProps {
   onTabChange: (tab: MarketplaceTab) => void;
   creatorsCount?: number;
   agenciesCount?: number;
-  campaignsCount?: number;
 }
 
 const TABS: { id: MarketplaceTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'creators', label: 'Creadores', icon: Users },
   { id: 'agencies', label: 'Agencias & Estudios', icon: Building2 },
-  { id: 'campaigns', label: 'Campañas', icon: Megaphone },
 ];
 
-function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount, campaignsCount }: MarketplaceTabBarProps) {
+function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount }: MarketplaceTabBarProps) {
   return (
     <div className="flex items-center gap-1 pb-3 border-b border-white/5">
       {TABS.map(tab => {
         const isActive = activeTab === tab.id;
-        const count = tab.id === 'creators' ? creatorsCount : tab.id === 'agencies' ? agenciesCount : campaignsCount;
+        const count = tab.id === 'creators' ? creatorsCount : agenciesCount;
         return (
           <button
             key={tab.id}

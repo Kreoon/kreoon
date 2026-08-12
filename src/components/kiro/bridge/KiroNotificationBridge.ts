@@ -161,8 +161,7 @@ const ENTITY_TYPE_TO_ZONE: Record<string, KiroZone> = {
   talent: 'casting',
   profile: 'camerino',
 
-  // Campañas y Proyectos
-  campaign: 'sala-de-control',
+  // Proyectos
   project: 'sala-de-control',
   board: 'sala-de-control',
 
@@ -314,9 +313,8 @@ function generateActionRoute(entityType: string, entityId: string): string {
     case 'creator':
     case 'talent':
       return `/creators/${entityId}`;
-    case 'campaign':
     case 'project':
-      return `/campaigns/${entityId}`;
+      return `/board?view=marketplace`;
     case 'board':
       return `/content-board`;
     case 'profile':

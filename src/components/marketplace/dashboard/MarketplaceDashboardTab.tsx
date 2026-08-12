@@ -1,11 +1,11 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Inbox, Briefcase, Clapperboard, CheckCircle2, DollarSign,
-  Film, FolderKanban, ArrowRight, Megaphone, Search, Loader2,
-  AlertTriangle, Calendar, CalendarPlus, Wallet, Clock, Send,
-  Eye, ChevronRight, BarChart3, Share2,
+  Film, FolderKanban, ArrowRight, Search, Loader2,
+  AlertTriangle, Calendar, CalendarPlus, Wallet, Clock,
+  Eye, BarChart3, Share2,
 } from 'lucide-react';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import { useMarketplaceStats } from '@/hooks/useMarketplaceStats';
@@ -42,14 +42,12 @@ const ROLE_CONFIG = {
     } as Record<ProjectStatus, string>,
     kpis: (stats: any) => [
       { icon: Inbox, label: 'Nuevas ofertas', value: stats.pendingOffers, color: 'bg-purple-500/20 text-purple-400' },
-      { icon: Megaphone, label: 'Campanas disponibles', value: stats.availableCampaigns, color: 'bg-blue-500/20 text-blue-400' },
       { icon: Clapperboard, label: 'En produccion', value: stats.inProgress, color: 'bg-yellow-500/20 text-yellow-400' },
       { icon: CheckCircle2, label: 'Completados', value: stats.completedProjects, color: 'bg-green-500/20 text-green-400' },
       { icon: DollarSign, label: 'Ganancias', value: `$${stats.creatorEarnings.toLocaleString()}`, color: 'bg-cyan-500/20 text-cyan-400' },
     ],
     quickActions: (navigate: any) => [
       { label: 'Ver Ofertas', icon: FolderKanban, onClick: () => navigate('/board?view=marketplace'), primary: true },
-      { label: 'Explorar Campanas', icon: Search, onClick: () => navigate('/marketplace/campaigns'), primary: false },
     ],
   },
   editor: {
@@ -78,7 +76,6 @@ const ROLE_CONFIG = {
     } as Record<ProjectStatus, string>,
     kpis: (stats: any) => [
       { icon: Briefcase, label: 'Proyectos activos', value: stats.activeProjects, color: 'bg-purple-500/20 text-purple-400' },
-      { icon: Megaphone, label: 'Campanas activas', value: stats.activeCampaigns, color: 'bg-blue-500/20 text-blue-400' },
       { icon: Clapperboard, label: 'En revision', value: stats.inRevision, color: 'bg-pink-500/20 text-pink-400' },
       { icon: CheckCircle2, label: 'Completados', value: stats.completedProjects, color: 'bg-green-500/20 text-green-400' },
       { icon: DollarSign, label: 'Total invertido', value: `$${stats.totalInvested.toLocaleString()}`, color: 'bg-cyan-500/20 text-cyan-400' },
@@ -97,7 +94,6 @@ const ROLE_CONFIG = {
     } as Record<ProjectStatus, string>,
     kpis: (stats: any) => [
       { icon: Briefcase, label: 'Proyectos activos', value: stats.activeProjects, color: 'bg-purple-500/20 text-purple-400' },
-      { icon: Megaphone, label: 'Campanas activas', value: stats.activeCampaigns, color: 'bg-blue-500/20 text-blue-400' },
       { icon: Clapperboard, label: 'En revision', value: stats.inRevision, color: 'bg-pink-500/20 text-pink-400' },
       { icon: CheckCircle2, label: 'Completados', value: stats.completedProjects, color: 'bg-green-500/20 text-green-400' },
       { icon: DollarSign, label: 'Total invertido', value: `$${stats.totalInvested.toLocaleString()}`, color: 'bg-cyan-500/20 text-cyan-400' },
@@ -172,68 +168,10 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
     enabled: !!user?.id && isFreelancer,
   });
 
-  // Query de campañas públicas para freelancers
-  const { data: publicCampaigns } = useQuery({
-    queryKey: ['public-campaigns-dashboard'],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from('marketplace_campaigns')
-        .select('id, title, description, status, deadline, total_budget, currency, cover_image_url')
-        .in('status', ['open', 'active'])
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(3);
-      return data || [];
-    },
-    enabled: isFreelancer,
-  });
-
-  // Query de aplicaciones del creador
-  const { data: creatorProfile } = useQuery({
-    queryKey: ['creator-profile-dashboard', user?.id],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from('creator_profiles')
-        .select('id')
-        .eq('user_id', user!.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!user?.id && isFreelancer,
-  });
-
-  const { data: applications } = useQuery({
-    queryKey: ['campaign-applications-dashboard', creatorProfile?.id],
-    queryFn: async () => {
-      const { data: apps } = await (supabase as any)
-        .from('campaign_applications')
-        .select('id, campaign_id, status, created_at')
-        .eq('creator_id', creatorProfile?.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (!apps?.length) return [];
-
-      const campaignIds = [...new Set(apps.map((a: any) => a.campaign_id))];
-      const { data: campaigns } = await (supabase as any)
-        .from('marketplace_campaigns')
-        .select('id, title, total_budget, deadline, status')
-        .in('id', campaignIds);
-
-      const campaignsMap = new Map((campaigns || []).map((c: any) => [c.id, c]));
-      return apps.map((app: any) => ({
-        ...app,
-        campaign: campaignsMap.get(app.campaign_id) || null,
-      }));
-    },
-    enabled: !!creatorProfile?.id,
-  });
-
   const config = ROLE_CONFIG[role];
   const recentProjects = projects.slice(0, 5);
 
   // Stats calculados para freelancers
-  const pendingApplications = applications?.filter((a: any) => a.status === 'pending').length || 0;
   const availableBalance = wallet?.available_balance || 0;
   const pendingBalance = wallet?.pending_balance || 0;
 
@@ -293,7 +231,7 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
 
       {/* Freelancer Stats — solo cuando no está embebido en dashboard padre (hideKpis=false) */}
       {isFreelancer && !hideKpis && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <div className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/20 rounded-sm p-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-sm flex items-center justify-center bg-green-500/20 text-green-400">
@@ -315,114 +253,6 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
                 <p className="text-gray-500 text-xs">Por Cobrar</p>
               </div>
             </div>
-          </div>
-          <div className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 rounded-sm p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-sm flex items-center justify-center bg-blue-500/20 text-blue-400">
-                <Send className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-xl font-bold text-white">{pendingApplications}</p>
-                <p className="text-gray-500 text-xs">Aplicaciones Pendientes</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Campañas Públicas - Solo para freelancers */}
-      {isFreelancer && publicCampaigns && publicCampaigns.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">
-              <Megaphone className="h-4 w-4 text-blue-400" />
-              Nuevas Campañas
-            </h3>
-            <Link
-              to="/marketplace/campaigns"
-              className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-colors"
-            >
-              Ver todas <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid gap-2">
-            {publicCampaigns.map((campaign: any) => (
-              <Link
-                key={campaign.id}
-                to={`/marketplace/campaigns/${campaign.id}`}
-                className="bg-card/60 border border-white/5 rounded-sm p-4 hover:border-purple-500/30 transition-all flex items-center gap-4"
-              >
-                <div className="w-10 h-10 rounded-sm bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <Megaphone className="h-5 w-5 text-blue-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white text-sm font-medium truncate">{campaign.title}</p>
-                  <p className="text-gray-500 text-xs truncate">{campaign.description?.slice(0, 60)}...</p>
-                </div>
-                {campaign.total_budget && (
-                  <span className="text-green-400 text-sm font-semibold flex-shrink-0">
-                    ${campaign.total_budget.toLocaleString()}
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Mis Aplicaciones - Solo para freelancers */}
-      {isFreelancer && applications && applications.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">
-              <Send className="h-4 w-4 text-cyan-400" />
-              Mis Aplicaciones
-            </h3>
-            <Link
-              to="/marketplace/creator-campaigns"
-              className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-colors"
-            >
-              Ver todas <ChevronRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-          <div className="grid gap-2">
-            {applications.slice(0, 3).map((app: any) => {
-              const statusColors: Record<string, string> = {
-                pending: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-                approved: 'bg-green-500/20 text-green-400 border-green-500/30',
-                rejected: 'bg-red-500/20 text-red-400 border-red-500/30',
-                in_progress: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-              };
-              const statusLabels: Record<string, string> = {
-                pending: 'Pendiente',
-                approved: 'Aprobada',
-                rejected: 'Rechazada',
-                in_progress: 'En Progreso',
-              };
-              return (
-                <div
-                  key={app.id}
-                  className="bg-card/60 border border-white/5 rounded-sm p-4 flex items-center gap-4"
-                >
-                  <div className="w-10 h-10 rounded-sm bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                    <Send className="h-5 w-5 text-cyan-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">
-                      {app.campaign?.title || 'Campaña'}
-                    </p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[app.status] || statusColors.pending}`}>
-                      {statusLabels[app.status] || app.status}
-                    </span>
-                  </div>
-                  {app.campaign?.total_budget && (
-                    <span className="text-green-400 text-xs font-medium flex-shrink-0">
-                      ${app.campaign.total_budget.toLocaleString()}
-                    </span>
-                  )}
-                </div>
-              );
-            })}
           </div>
         </div>
       )}

@@ -34,7 +34,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   start_adn_research: "campaigns:write",
   get_adn_status: "campaigns:read",
   search_creators: "creators:read",
-  score_creator_for_campaign: "creators:read",
   optimize_creator_profile: "profiles:write",
   publish_to_social: "social:write",
 };
@@ -57,7 +56,6 @@ const TOOL_RATE_LIMITS: Record<string, number> = {
   start_adn_research: 5,
   get_adn_status: 500,
   search_creators: 200,
-  score_creator_for_campaign: 100,
   optimize_creator_profile: 30,
   publish_to_social: 20,
 };

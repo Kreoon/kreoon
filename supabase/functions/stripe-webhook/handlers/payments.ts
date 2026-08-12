@@ -49,8 +49,8 @@ export async function handleInvoiceFailed(supabase: any, invoice: Stripe.Invoice
 export async function handlePaymentIntentSucceeded(supabase: any, paymentIntent: Stripe.PaymentIntent) {
   const metadata = paymentIntent.metadata;
 
-  // Campaign payments are handled in checkout.session.completed
-  if (metadata.type?.startsWith("campaign_")) return;
+  // Simplificación 2026: los pagos de campañas (metadata.type = "campaign_*")
+  // ya no existen; el módulo de campañas del marketplace se eliminó.
 
   // Determinar tipo de pago por metadata
   if (metadata.type === "escrow") {

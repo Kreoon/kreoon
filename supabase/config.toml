@@ -106,15 +106,6 @@ verify_jwt = false
 [functions.generate-ad-banner]
 verify_jwt = false
 
-[functions.campaign-notifications]
-verify_jwt = true
-
-[functions.verify-campaign-access]
-verify_jwt = false
-
-[functions.upload-campaign-media]
-verify_jwt = true
-
 [functions.kreoon-bootstrap]
 verify_jwt = false
 
@@ -185,9 +176,6 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.board-ai]
-verify_jwt = false
-
-[functions.campaign-wizard-ai]
 verify_jwt = false
 
 [functions.up-ai-copilot]
@@ -388,9 +376,6 @@ verify_jwt = false
 [functions.stripe-client-checkout]
 verify_jwt = true
 
-[functions.stripe-campaign-checkout]
-verify_jwt = true
-
 [functions.stripe-creator-hire]
 verify_jwt = true
 
@@ -442,9 +427,6 @@ verify_jwt = false
 verify_jwt = false
 
 # ── Campaign Checkout ──
-
-[functions.campaign-checkout]
-verify_jwt = true
 
 # ── Portfolio Image Upload ──
 # verify_jwt = false porque la función maneja auth internamente con userClient.auth.getUser()

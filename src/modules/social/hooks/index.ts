@@ -2,7 +2,6 @@ export { useSocialAccounts } from './useSocialAccounts';
 export { useScheduledPosts } from './useScheduledPosts';
 export { useSocialMetrics, useOrgSnapshots } from './useSocialMetrics';
 export type { AccountSnapshot, AccountMetricsSummary } from './useSocialMetrics';
-export { useCampaignSocialMetrics } from './useCampaignSocialMetrics';
 export { useAccountGroups } from './useAccountGroups';
 export { useAccountPermissions } from './useAccountPermissions';
 export { useContentQueue } from './useContentQueue';

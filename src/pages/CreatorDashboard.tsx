@@ -104,32 +104,6 @@ export default function CreatorDashboard() {
     enabled: !!targetUserId && isFreelancer,
   });
 
-  // Aplicaciones pendientes del creador
-  const { data: creatorProfileRow } = useQuery({
-    queryKey: ['creator-profile-id', targetUserId],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from('creator_profiles')
-        .select('id')
-        .eq('user_id', targetUserId!)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!targetUserId && isFreelancer,
-  });
-  const { data: pendingAppsCount } = useQuery({
-    queryKey: ['pending-apps-count', creatorProfileRow?.id],
-    queryFn: async () => {
-      const { count } = await (supabase as any)
-        .from('campaign_applications')
-        .select('id', { count: 'exact', head: true })
-        .eq('creator_id', creatorProfileRow!.id)
-        .eq('status', 'pending');
-      return count || 0;
-    },
-    enabled: !!creatorProfileRow?.id,
-  });
-
   const openKpiDialog = (title: string, studio: Content[], marketplace: MarketplaceProject[] = []) =>
     setKpiDialog({ open: true, title, studioContent: studio, marketplaceProjects: marketplace });
 
@@ -450,15 +424,6 @@ export default function CreatorDashboard() {
                 icon={CreditCard}
                 variant="success"
                 subtitle={(wallet.pending_balance ?? 0) > 0 ? `+ $${(wallet.pending_balance ?? 0).toLocaleString()} pendiente` : 'disponible'}
-              />
-            )}
-            {isFreelancer && (pendingAppsCount ?? 0) > 0 && (
-              <NovaKpiCard
-                title="Aplicaciones"
-                value={pendingAppsCount ?? 0}
-                icon={Star}
-                variant="info"
-                subtitle="pendientes de respuesta"
               />
             )}
           </div>

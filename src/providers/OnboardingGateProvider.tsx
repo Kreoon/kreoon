@@ -19,7 +19,6 @@ const PUBLIC_ROUTES = [
   '/marketplace',
   '/marketplace/creator/',
   '/marketplace/org/',
-  '/marketplace/campaigns',
   '/unete',
   '/unete/',
   '/register',

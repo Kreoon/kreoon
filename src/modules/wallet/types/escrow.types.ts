@@ -15,13 +15,12 @@ export type EscrowStatus =
 export interface EscrowMetadata {
   [key: string]: unknown;
   content_title?: string;
-  campaign_name?: string;
   creator_name?: string;
   editor_name?: string;
   dispute_reason?: string;
 }
 
-export type EscrowProjectType = 'marketplace_direct' | 'campaign_managed' | 'live_shopping' | 'professional_service' | 'corporate_package';
+export type EscrowProjectType = 'marketplace_direct' | 'live_shopping' | 'professional_service' | 'corporate_package';
 
 export interface EscrowDistribution {
   user_id: string;

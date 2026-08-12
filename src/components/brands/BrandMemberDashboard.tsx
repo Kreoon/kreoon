@@ -4,7 +4,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useBrand } from '@/hooks/useBrand';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
-import { useMarketplaceCampaigns } from '@/hooks/useMarketplaceCampaigns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,8 +17,6 @@ import {
   Building2,
   Plus,
   Briefcase,
-  Megaphone,
-  Users,
   Wallet,
   Settings,
   ExternalLink,
@@ -150,11 +147,6 @@ export function BrandMemberDashboard() {
     role: 'brand',
     brandId,
     isBrandMember: true,
-  });
-
-  // Fetch campaigns
-  const { campaigns, loading: campaignsLoading } = useMarketplaceCampaigns({
-    brandId,
   });
 
   // Loading state
@@ -297,7 +289,6 @@ export function BrandMemberDashboard() {
   // Has brand - show dashboard
   const activeProjects = projects.filter(p => !['completed', 'cancelled'].includes(p.status));
   const completedProjects = projects.filter(p => p.status === 'completed');
-  const activeCampaigns = campaigns.filter(c => c.status === 'active');
 
   return (
     <div className="min-h-screen relative">
@@ -355,7 +346,7 @@ export function BrandMemberDashboard() {
       {/* Main Content */}
       <main className="relative z-10 p-4 md:p-6 max-w-7xl mx-auto">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
             <TabsTrigger value="overview" className="gap-2">
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline">Resumen</span>
@@ -363,10 +354,6 @@ export function BrandMemberDashboard() {
             <TabsTrigger value="projects" className="gap-2">
               <FolderKanban className="h-4 w-4" />
               <span className="hidden sm:inline">Proyectos</span>
-            </TabsTrigger>
-            <TabsTrigger value="campaigns" className="gap-2">
-              <Megaphone className="h-4 w-4" />
-              <span className="hidden sm:inline">Campanas</span>
             </TabsTrigger>
             <TabsTrigger value="company" className="gap-2">
               <Building2 className="h-4 w-4" />
@@ -377,7 +364,7 @@ export function BrandMemberDashboard() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Stats */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <StatCard
                 title="Proyectos Activos"
                 value={activeProjects.length}
@@ -385,14 +372,6 @@ export function BrandMemberDashboard() {
                 icon={Briefcase}
                 color="primary"
                 onClick={() => setActiveTab('projects')}
-              />
-              <StatCard
-                title="Campanas Activas"
-                value={activeCampaigns.length}
-                subtitle={`${campaigns.length} total`}
-                icon={Megaphone}
-                color="info"
-                onClick={() => setActiveTab('campaigns')}
               />
               <StatCard
                 title="Creadores"
@@ -416,7 +395,7 @@ export function BrandMemberDashboard() {
                 <CardTitle className="text-base">Acciones Rapidas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <Button
                     variant="outline"
                     className="h-auto py-4 flex-col gap-2"
@@ -424,14 +403,6 @@ export function BrandMemberDashboard() {
                   >
                     <Store className="h-5 w-5 text-purple-400" />
                     <span className="text-sm">Buscar Talento</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="h-auto py-4 flex-col gap-2"
-                    onClick={() => navigate('/marketplace/my-campaigns')}
-                  >
-                    <Megaphone className="h-5 w-5 text-blue-400" />
-                    <span className="text-sm">Crear Campana</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -612,86 +583,6 @@ export function BrandMemberDashboard() {
                           />
                         </div>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Campaigns Tab */}
-          <TabsContent value="campaigns" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Mis Campanas</h2>
-                <p className="text-sm text-muted-foreground">
-                  Crea campanas para recibir propuestas de creadores
-                </p>
-              </div>
-              <Button onClick={() => navigate('/marketplace/my-campaigns')} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Nueva Campana
-              </Button>
-            </div>
-
-            {campaignsLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : campaigns.length === 0 ? (
-              <Card>
-                <CardContent className="py-12">
-                  <EmptyState
-                    icon={Megaphone}
-                    title="Sin campanas"
-                    description="Crea una campana para recibir propuestas de creadores interesados"
-                    action={{
-                      label: 'Crear Campana',
-                      onClick: () => navigate('/marketplace/my-campaigns'),
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {campaigns.map(campaign => (
-                  <Card key={campaign.id} className="hover:border-blue-500/30 transition-colors">
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-semibold">{campaign.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {campaign.description}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="secondary"
-                          className={cn(
-                            'text-xs',
-                            campaign.status === 'active' && 'bg-green-500/20 text-green-400',
-                            campaign.status === 'draft' && 'bg-gray-500/20 text-gray-400',
-                            campaign.status === 'completed' && 'bg-blue-500/20 text-blue-400'
-                          )}
-                        >
-                          {campaign.status === 'active' ? 'Activa' :
-                           campaign.status === 'draft' ? 'Borrador' :
-                           campaign.status === 'completed' ? 'Completada' :
-                           campaign.status}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
-                          <span>{campaign.applications_count || 0} postulaciones</span>
-                        </div>
-                        {campaign.budget && (
-                          <div className="flex items-center gap-1">
-                            <TrendingUp className="h-4 w-4" />
-                            <span>${campaign.budget.toLocaleString()}</span>
-                          </div>
-                        )}
-                      </div>
                     </CardContent>
                   </Card>
                 ))}

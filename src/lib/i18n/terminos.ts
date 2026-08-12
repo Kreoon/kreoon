@@ -198,10 +198,6 @@ export const MODULOS = {
   marcas:              'Marcas',
   contactos:           'Contactos',
 
-  // Campañas
-  campanas:            'Campañas',
-  campana_nueva:       'Nueva Campaña',
-  mis_campanas:        'Mis Campañas',
   aplicaciones:        'Postulaciones',
   proyecto:            'Proyecto',
   proyectos:           'Proyectos',
@@ -292,7 +288,6 @@ export const MENSAJES = {
   // Vacíos
   lista_vacia:         'Aún no hay nada aquí.',
   primera_vez:         '¡Comienza creando tu primer elemento!',
-  sin_campanas:        'Aún no tienes campañas activas.',
   sin_contenido:       'No hay contenido en producción.',
   sin_clientes:        'Aún no tienes clientes registrados.',
   sin_notificaciones:  'Estás al día. Sin notificaciones nuevas.',
@@ -323,7 +318,6 @@ export const PLACEHOLDERS = {
   buscar:              'Buscar...',
   buscar_cliente:      'Buscar cliente...',
   buscar_creador:      'Buscar creador...',
-  buscar_campana:      'Buscar campaña...',
   nombre:              'Escribe el nombre...',
   descripcion:         'Escribe una descripción...',
   email:               'correo@ejemplo.com',

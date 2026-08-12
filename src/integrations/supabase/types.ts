@@ -4858,186 +4858,6 @@ export type Database = {
         }
         Relationships: []
       }
-      activation_publications: {
-        Row: {
-          application_id: string
-          base_payment: number | null
-          bonus_calculated_at: string | null
-          campaign_id: string
-          caption: string | null
-          comments_count: number | null
-          content_approved_at: string | null
-          content_submitted_at: string | null
-          created_at: string | null
-          creator_id: string
-          deliverable_id: string | null
-          engagement_bonus: number | null
-          engagement_rate: number | null
-          followers_at_post: number | null
-          hashtags_used: string[] | null
-          id: string
-          impressions_count: number | null
-          insights_screenshot_url: string | null
-          is_still_live: boolean | null
-          likes_count: number | null
-          mentions_used: string[] | null
-          metrics_captured_at: string | null
-          metrics_last_updated: string | null
-          must_stay_until: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          publication_id: string | null
-          publication_screenshot_url: string | null
-          publication_url: string | null
-          published_at: string | null
-          reach_count: number | null
-          removed_detected_at: string | null
-          saves_count: number | null
-          shares_count: number | null
-          total_payment: number | null
-          updated_at: string | null
-          verification_method:
-            | Database["public"]["Enums"]["verification_method"]
-            | null
-          verification_notes: string | null
-          verification_status:
-            | Database["public"]["Enums"]["publication_verification_status"]
-            | null
-          verified_at: string | null
-          verified_by: string | null
-          views_count: number | null
-        }
-        Insert: {
-          application_id: string
-          base_payment?: number | null
-          bonus_calculated_at?: string | null
-          campaign_id: string
-          caption?: string | null
-          comments_count?: number | null
-          content_approved_at?: string | null
-          content_submitted_at?: string | null
-          created_at?: string | null
-          creator_id: string
-          deliverable_id?: string | null
-          engagement_bonus?: number | null
-          engagement_rate?: number | null
-          followers_at_post?: number | null
-          hashtags_used?: string[] | null
-          id?: string
-          impressions_count?: number | null
-          insights_screenshot_url?: string | null
-          is_still_live?: boolean | null
-          likes_count?: number | null
-          mentions_used?: string[] | null
-          metrics_captured_at?: string | null
-          metrics_last_updated?: string | null
-          must_stay_until?: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          publication_id?: string | null
-          publication_screenshot_url?: string | null
-          publication_url?: string | null
-          published_at?: string | null
-          reach_count?: number | null
-          removed_detected_at?: string | null
-          saves_count?: number | null
-          shares_count?: number | null
-          total_payment?: number | null
-          updated_at?: string | null
-          verification_method?:
-            | Database["public"]["Enums"]["verification_method"]
-            | null
-          verification_notes?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["publication_verification_status"]
-            | null
-          verified_at?: string | null
-          verified_by?: string | null
-          views_count?: number | null
-        }
-        Update: {
-          application_id?: string
-          base_payment?: number | null
-          bonus_calculated_at?: string | null
-          campaign_id?: string
-          caption?: string | null
-          comments_count?: number | null
-          content_approved_at?: string | null
-          content_submitted_at?: string | null
-          created_at?: string | null
-          creator_id?: string
-          deliverable_id?: string | null
-          engagement_bonus?: number | null
-          engagement_rate?: number | null
-          followers_at_post?: number | null
-          hashtags_used?: string[] | null
-          id?: string
-          impressions_count?: number | null
-          insights_screenshot_url?: string | null
-          is_still_live?: boolean | null
-          likes_count?: number | null
-          mentions_used?: string[] | null
-          metrics_captured_at?: string | null
-          metrics_last_updated?: string | null
-          must_stay_until?: string | null
-          platform?: Database["public"]["Enums"]["social_platform"]
-          publication_id?: string | null
-          publication_screenshot_url?: string | null
-          publication_url?: string | null
-          published_at?: string | null
-          reach_count?: number | null
-          removed_detected_at?: string | null
-          saves_count?: number | null
-          shares_count?: number | null
-          total_payment?: number | null
-          updated_at?: string | null
-          verification_method?:
-            | Database["public"]["Enums"]["verification_method"]
-            | null
-          verification_notes?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["publication_verification_status"]
-            | null
-          verified_at?: string | null
-          verified_by?: string | null
-          views_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activation_publications_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activation_publications_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activation_publications_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creator_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activation_publications_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creator_reach_stats"
-            referencedColumns: ["creator_profile_id"]
-          },
-          {
-            foreignKeyName: "activation_publications_deliverable_id_fkey"
-            columns: ["deliverable_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_deliverables"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ad_conversion_log: {
         Row: {
           booking_config_id: string | null
@@ -7186,7 +7006,6 @@ export type Database = {
           description: string | null
           id: string
           related_brand_id: string | null
-          related_campaign_id: string | null
           source: string
           type: string
         }
@@ -7197,7 +7016,6 @@ export type Database = {
           description?: string | null
           id?: string
           related_brand_id?: string | null
-          related_campaign_id?: string | null
           source: string
           type: string
         }
@@ -7208,7 +7026,6 @@ export type Database = {
           description?: string | null
           id?: string
           related_brand_id?: string | null
-          related_campaign_id?: string | null
           source?: string
           type?: string
         }
@@ -7225,13 +7042,6 @@ export type Database = {
             columns: ["related_brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_credit_transactions_related_campaign_id_fkey"
-            columns: ["related_campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -7502,357 +7312,6 @@ export type Database = {
           },
         ]
       }
-      campaign_applications: {
-        Row: {
-          agreed_price: number | null
-          availability_date: string | null
-          bid_amount: number | null
-          bid_message: string | null
-          brand_notes: string | null
-          brand_rating: number | null
-          campaign_id: string
-          completed_at: string | null
-          counter_offer_amount: number | null
-          counter_offer_message: string | null
-          counter_offer_response: string | null
-          counter_offer_response_at: string | null
-          cover_letter: string | null
-          created_at: string | null
-          creator_id: string
-          delivered_at: string | null
-          escrow_hold_id: string | null
-          estimated_delivery_days: number | null
-          id: string
-          includes_editing: boolean | null
-          organization_id: string | null
-          payment_status: string | null
-          portfolio_links: string[] | null
-          proposed_price: number | null
-          rating: number | null
-          status: Database["public"]["Enums"]["application_status"] | null
-          updated_at: string | null
-        }
-        Insert: {
-          agreed_price?: number | null
-          availability_date?: string | null
-          bid_amount?: number | null
-          bid_message?: string | null
-          brand_notes?: string | null
-          brand_rating?: number | null
-          campaign_id: string
-          completed_at?: string | null
-          counter_offer_amount?: number | null
-          counter_offer_message?: string | null
-          counter_offer_response?: string | null
-          counter_offer_response_at?: string | null
-          cover_letter?: string | null
-          created_at?: string | null
-          creator_id: string
-          delivered_at?: string | null
-          escrow_hold_id?: string | null
-          estimated_delivery_days?: number | null
-          id?: string
-          includes_editing?: boolean | null
-          organization_id?: string | null
-          payment_status?: string | null
-          portfolio_links?: string[] | null
-          proposed_price?: number | null
-          rating?: number | null
-          status?: Database["public"]["Enums"]["application_status"] | null
-          updated_at?: string | null
-        }
-        Update: {
-          agreed_price?: number | null
-          availability_date?: string | null
-          bid_amount?: number | null
-          bid_message?: string | null
-          brand_notes?: string | null
-          brand_rating?: number | null
-          campaign_id?: string
-          completed_at?: string | null
-          counter_offer_amount?: number | null
-          counter_offer_message?: string | null
-          counter_offer_response?: string | null
-          counter_offer_response_at?: string | null
-          cover_letter?: string | null
-          created_at?: string | null
-          creator_id?: string
-          delivered_at?: string | null
-          escrow_hold_id?: string | null
-          estimated_delivery_days?: number | null
-          id?: string
-          includes_editing?: boolean | null
-          organization_id?: string | null
-          payment_status?: string | null
-          portfolio_links?: string[] | null
-          proposed_price?: number | null
-          rating?: number | null
-          status?: Database["public"]["Enums"]["application_status"] | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_applications_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_applications_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creator_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_applications_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "creator_reach_stats"
-            referencedColumns: ["creator_profile_id"]
-          },
-          {
-            foreignKeyName: "campaign_applications_escrow_hold_id_fkey"
-            columns: ["escrow_hold_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_holds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_applications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_case_studies: {
-        Row: {
-          brand_id: string
-          campaign_id: string
-          created_at: string
-          creator_highlights: Json | null
-          gallery_urls: string[] | null
-          id: string
-          is_featured: boolean
-          is_published: boolean
-          metrics: Json | null
-          published_at: string | null
-          slug: string | null
-          summary_html: string | null
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          brand_id: string
-          campaign_id: string
-          created_at?: string
-          creator_highlights?: Json | null
-          gallery_urls?: string[] | null
-          id?: string
-          is_featured?: boolean
-          is_published?: boolean
-          metrics?: Json | null
-          published_at?: string | null
-          slug?: string | null
-          summary_html?: string | null
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          brand_id?: string
-          campaign_id?: string
-          created_at?: string
-          creator_highlights?: Json | null
-          gallery_urls?: string[] | null
-          id?: string
-          is_featured?: boolean
-          is_published?: boolean
-          metrics?: Json | null
-          published_at?: string | null
-          slug?: string | null
-          summary_html?: string | null
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_case_studies_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_case_studies_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: true
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_deliverables: {
-        Row: {
-          application_id: string | null
-          approved_by: string | null
-          campaign_id: string
-          creator_id: string
-          description: string | null
-          duration_seconds: number | null
-          feedback: string | null
-          file_size_mb: number | null
-          file_type: string | null
-          file_url: string
-          id: string
-          max_revisions: number | null
-          organization_id: string | null
-          reviewed_at: string | null
-          revision_number: number | null
-          status: string
-          submitted_at: string | null
-          thumbnail_url: string | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          application_id?: string | null
-          approved_by?: string | null
-          campaign_id: string
-          creator_id: string
-          description?: string | null
-          duration_seconds?: number | null
-          feedback?: string | null
-          file_size_mb?: number | null
-          file_type?: string | null
-          file_url: string
-          id?: string
-          max_revisions?: number | null
-          organization_id?: string | null
-          reviewed_at?: string | null
-          revision_number?: number | null
-          status?: string
-          submitted_at?: string | null
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          application_id?: string | null
-          approved_by?: string | null
-          campaign_id?: string
-          creator_id?: string
-          description?: string | null
-          duration_seconds?: number | null
-          feedback?: string | null
-          file_size_mb?: number | null
-          file_type?: string | null
-          file_url?: string
-          id?: string
-          max_revisions?: number | null
-          organization_id?: string | null
-          reviewed_at?: string | null
-          revision_number?: number | null
-          status?: string
-          submitted_at?: string | null
-          thumbnail_url?: string | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_deliverables_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_applications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_deliverables_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_deliverables_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_deliverables_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_invitations: {
-        Row: {
-          campaign_id: string
-          expires_at: string | null
-          id: string
-          invited_by: string
-          invited_profile_id: string
-          message: string | null
-          organization_id: string | null
-          responded_at: string | null
-          sent_at: string | null
-          status: string
-        }
-        Insert: {
-          campaign_id: string
-          expires_at?: string | null
-          id?: string
-          invited_by: string
-          invited_profile_id: string
-          message?: string | null
-          organization_id?: string | null
-          responded_at?: string | null
-          sent_at?: string | null
-          status?: string
-        }
-        Update: {
-          campaign_id?: string
-          expires_at?: string | null
-          id?: string
-          invited_by?: string
-          invited_profile_id?: string
-          message?: string | null
-          organization_id?: string | null
-          responded_at?: string | null
-          sent_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_invitations_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_invitations_invited_profile_id_fkey"
-            columns: ["invited_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_invitations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       campaign_mappings: {
         Row: {
           budget_amount: number | null
@@ -7931,192 +7390,6 @@ export type Database = {
           },
         ]
       }
-      campaign_media: {
-        Row: {
-          campaign_id: string | null
-          created_at: string
-          description: string | null
-          id: string
-          media_type: string
-          metadata: Json | null
-          organization_id: string | null
-          sort_order: number
-          thumbnail_url: string | null
-          title: string | null
-          url: string
-        }
-        Insert: {
-          campaign_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          media_type?: string
-          metadata?: Json | null
-          organization_id?: string | null
-          sort_order?: number
-          thumbnail_url?: string | null
-          title?: string | null
-          url: string
-        }
-        Update: {
-          campaign_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          media_type?: string
-          metadata?: Json | null
-          organization_id?: string | null
-          sort_order?: number
-          thumbnail_url?: string | null
-          title?: string | null
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_media_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_media_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_metrics: {
-        Row: {
-          campaign_mapping_id: string
-          clicks: number | null
-          conversions: number | null
-          cpc: number | null
-          cpm: number | null
-          created_at: string | null
-          ctr: number | null
-          date: string
-          id: string
-          impressions: number | null
-          organization_id: string | null
-          platform_data: Json | null
-          revenue: number | null
-          roas: number | null
-          spend: number | null
-        }
-        Insert: {
-          campaign_mapping_id: string
-          clicks?: number | null
-          conversions?: number | null
-          cpc?: number | null
-          cpm?: number | null
-          created_at?: string | null
-          ctr?: number | null
-          date: string
-          id?: string
-          impressions?: number | null
-          organization_id?: string | null
-          platform_data?: Json | null
-          revenue?: number | null
-          roas?: number | null
-          spend?: number | null
-        }
-        Update: {
-          campaign_mapping_id?: string
-          clicks?: number | null
-          conversions?: number | null
-          cpc?: number | null
-          cpm?: number | null
-          created_at?: string | null
-          ctr?: number | null
-          date?: string
-          id?: string
-          impressions?: number | null
-          organization_id?: string | null
-          platform_data?: Json | null
-          revenue?: number | null
-          roas?: number | null
-          spend?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_metrics_campaign_mapping_id_fkey"
-            columns: ["campaign_mapping_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_mappings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_metrics_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      campaign_notifications: {
-        Row: {
-          campaign_id: string | null
-          created_at: string
-          id: string
-          is_read: boolean
-          link: string | null
-          message: string | null
-          metadata: Json | null
-          notification_type: string
-          organization_id: string | null
-          sent_at: string | null
-          title: string
-          user_id: string | null
-        }
-        Insert: {
-          campaign_id?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          link?: string | null
-          message?: string | null
-          metadata?: Json | null
-          notification_type: string
-          organization_id?: string | null
-          sent_at?: string | null
-          title: string
-          user_id?: string | null
-        }
-        Update: {
-          campaign_id?: string | null
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          link?: string | null
-          message?: string | null
-          metadata?: Json | null
-          notification_type?: string
-          organization_id?: string | null
-          sent_at?: string | null
-          title?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "campaign_notifications_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "campaign_notifications_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       campaign_redemptions: {
         Row: {
           bonus_coins_granted: number
@@ -8164,66 +7437,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      campaign_templates: {
-        Row: {
-          category: string
-          created_at: string
-          default_budget_max: number
-          default_budget_min: number
-          default_content_types: Json
-          default_currency: string
-          default_deliverables: Json
-          default_platforms: Json
-          default_timeline_days: number
-          description: string
-          icon_emoji: string
-          id: string
-          is_active: boolean
-          name: string
-          slug: string
-          sort_order: number
-          suggested_creator_count: number
-        }
-        Insert: {
-          category: string
-          created_at?: string
-          default_budget_max?: number
-          default_budget_min?: number
-          default_content_types?: Json
-          default_currency?: string
-          default_deliverables?: Json
-          default_platforms?: Json
-          default_timeline_days?: number
-          description: string
-          icon_emoji?: string
-          id?: string
-          is_active?: boolean
-          name: string
-          slug: string
-          sort_order?: number
-          suggested_creator_count?: number
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          default_budget_max?: number
-          default_budget_min?: number
-          default_content_types?: Json
-          default_currency?: string
-          default_deliverables?: Json
-          default_platforms?: Json
-          default_timeline_days?: number
-          description?: string
-          icon_emoji?: string
-          id?: string
-          is_active?: boolean
-          name?: string
-          slug?: string
-          sort_order?: number
-          suggested_creator_count?: number
-        }
-        Relationships: []
       }
       chat_attachment_metadata: {
         Row: {
@@ -15521,57 +14734,6 @@ export type Database = {
         }
         Relationships: []
       }
-      managed_campaign_subscriptions: {
-        Row: {
-          created_at: string
-          currency: string
-          duration_months: number
-          id: string
-          plan: string
-          starts_at: string | null
-          status: string
-          stripe_payment_intent: string | null
-          stripe_session_id: string
-          total_paid: number
-          updated_at: string
-          user_email: string
-          user_id: string | null
-          user_name: string | null
-        }
-        Insert: {
-          created_at?: string
-          currency?: string
-          duration_months: number
-          id?: string
-          plan: string
-          starts_at?: string | null
-          status?: string
-          stripe_payment_intent?: string | null
-          stripe_session_id: string
-          total_paid: number
-          updated_at?: string
-          user_email: string
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Update: {
-          created_at?: string
-          currency?: string
-          duration_months?: number
-          id?: string
-          plan?: string
-          starts_at?: string | null
-          status?: string
-          stripe_payment_intent?: string | null
-          stripe_session_id?: string
-          total_paid?: number
-          updated_at?: string
-          user_email?: string
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Relationships: []
-      }
       marketing_ad_accounts: {
         Row: {
           access_token_encrypted: string | null
@@ -16720,289 +15882,6 @@ export type Database = {
         }
         Relationships: []
       }
-      marketplace_campaigns: {
-        Row: {
-          activated_at: string | null
-          activation_config: Json | null
-          allow_counter_offers: boolean | null
-          application_deadline: string | null
-          applications_count: number | null
-          approved_count: number | null
-          auto_approve_applications: boolean | null
-          bid_deadline: string | null
-          bid_visibility: string | null
-          brand_id: string | null
-          brand_logo_override: string | null
-          brand_name_override: string | null
-          brief: string | null
-          budget_mode: string | null
-          budget_per_video: number | null
-          campaign_end_date: string | null
-          campaign_purpose: string
-          campaign_start_date: string | null
-          campaign_type: string
-          category: string
-          client_id: string | null
-          collaboration_type: string | null
-          commission_rate: number | null
-          compensation_description: string | null
-          compensation_type: string | null
-          completed_at: string | null
-          content_deadline: string | null
-          content_guidelines: string | null
-          content_management_type: string | null
-          content_requirements: Json | null
-          cover_image_url: string | null
-          created_at: string | null
-          created_by: string
-          creator_requirements: Json | null
-          currency: string | null
-          current_applications: number | null
-          deadline: string | null
-          description: string
-          desired_roles: string[] | null
-          escrow_hold_id: string | null
-          exchange_product_description: string | null
-          exchange_product_name: string | null
-          exchange_product_value: number | null
-          gallery_urls: string[] | null
-          id: string
-          is_brand_activation: boolean | null
-          is_featured: boolean | null
-          is_quick_campaign: boolean
-          is_urgent: boolean | null
-          max_applications: number | null
-          max_bid: number | null
-          max_creators: number | null
-          min_bid: number | null
-          nda_required: boolean | null
-          organization_id: string | null
-          payment_status: string | null
-          platform_fee_pct: number | null
-          pricing_mode: string | null
-          product_value: number | null
-          published_at: string | null
-          reference_urls: string[] | null
-          requires_agency_support: boolean | null
-          requires_portfolio: boolean | null
-          slug: string | null
-          smart_match_score: Json | null
-          status: Database["public"]["Enums"]["campaign_status"] | null
-          stripe_payment_intent_id: string | null
-          tags: string[] | null
-          template_id: string | null
-          title: string
-          total_budget: number | null
-          total_paid: number | null
-          updated_at: string | null
-          usage_rights: string | null
-          usage_rights_description: string | null
-          views_count: number | null
-          visibility: string
-        }
-        Insert: {
-          activated_at?: string | null
-          activation_config?: Json | null
-          allow_counter_offers?: boolean | null
-          application_deadline?: string | null
-          applications_count?: number | null
-          approved_count?: number | null
-          auto_approve_applications?: boolean | null
-          bid_deadline?: string | null
-          bid_visibility?: string | null
-          brand_id?: string | null
-          brand_logo_override?: string | null
-          brand_name_override?: string | null
-          brief?: string | null
-          budget_mode?: string | null
-          budget_per_video?: number | null
-          campaign_end_date?: string | null
-          campaign_purpose?: string
-          campaign_start_date?: string | null
-          campaign_type?: string
-          category: string
-          client_id?: string | null
-          collaboration_type?: string | null
-          commission_rate?: number | null
-          compensation_description?: string | null
-          compensation_type?: string | null
-          completed_at?: string | null
-          content_deadline?: string | null
-          content_guidelines?: string | null
-          content_management_type?: string | null
-          content_requirements?: Json | null
-          cover_image_url?: string | null
-          created_at?: string | null
-          created_by: string
-          creator_requirements?: Json | null
-          currency?: string | null
-          current_applications?: number | null
-          deadline?: string | null
-          description: string
-          desired_roles?: string[] | null
-          escrow_hold_id?: string | null
-          exchange_product_description?: string | null
-          exchange_product_name?: string | null
-          exchange_product_value?: number | null
-          gallery_urls?: string[] | null
-          id?: string
-          is_brand_activation?: boolean | null
-          is_featured?: boolean | null
-          is_quick_campaign?: boolean
-          is_urgent?: boolean | null
-          max_applications?: number | null
-          max_bid?: number | null
-          max_creators?: number | null
-          min_bid?: number | null
-          nda_required?: boolean | null
-          organization_id?: string | null
-          payment_status?: string | null
-          platform_fee_pct?: number | null
-          pricing_mode?: string | null
-          product_value?: number | null
-          published_at?: string | null
-          reference_urls?: string[] | null
-          requires_agency_support?: boolean | null
-          requires_portfolio?: boolean | null
-          slug?: string | null
-          smart_match_score?: Json | null
-          status?: Database["public"]["Enums"]["campaign_status"] | null
-          stripe_payment_intent_id?: string | null
-          tags?: string[] | null
-          template_id?: string | null
-          title: string
-          total_budget?: number | null
-          total_paid?: number | null
-          updated_at?: string | null
-          usage_rights?: string | null
-          usage_rights_description?: string | null
-          views_count?: number | null
-          visibility?: string
-        }
-        Update: {
-          activated_at?: string | null
-          activation_config?: Json | null
-          allow_counter_offers?: boolean | null
-          application_deadline?: string | null
-          applications_count?: number | null
-          approved_count?: number | null
-          auto_approve_applications?: boolean | null
-          bid_deadline?: string | null
-          bid_visibility?: string | null
-          brand_id?: string | null
-          brand_logo_override?: string | null
-          brand_name_override?: string | null
-          brief?: string | null
-          budget_mode?: string | null
-          budget_per_video?: number | null
-          campaign_end_date?: string | null
-          campaign_purpose?: string
-          campaign_start_date?: string | null
-          campaign_type?: string
-          category?: string
-          client_id?: string | null
-          collaboration_type?: string | null
-          commission_rate?: number | null
-          compensation_description?: string | null
-          compensation_type?: string | null
-          completed_at?: string | null
-          content_deadline?: string | null
-          content_guidelines?: string | null
-          content_management_type?: string | null
-          content_requirements?: Json | null
-          cover_image_url?: string | null
-          created_at?: string | null
-          created_by?: string
-          creator_requirements?: Json | null
-          currency?: string | null
-          current_applications?: number | null
-          deadline?: string | null
-          description?: string
-          desired_roles?: string[] | null
-          escrow_hold_id?: string | null
-          exchange_product_description?: string | null
-          exchange_product_name?: string | null
-          exchange_product_value?: number | null
-          gallery_urls?: string[] | null
-          id?: string
-          is_brand_activation?: boolean | null
-          is_featured?: boolean | null
-          is_quick_campaign?: boolean
-          is_urgent?: boolean | null
-          max_applications?: number | null
-          max_bid?: number | null
-          max_creators?: number | null
-          min_bid?: number | null
-          nda_required?: boolean | null
-          organization_id?: string | null
-          payment_status?: string | null
-          platform_fee_pct?: number | null
-          pricing_mode?: string | null
-          product_value?: number | null
-          published_at?: string | null
-          reference_urls?: string[] | null
-          requires_agency_support?: boolean | null
-          requires_portfolio?: boolean | null
-          slug?: string | null
-          smart_match_score?: Json | null
-          status?: Database["public"]["Enums"]["campaign_status"] | null
-          stripe_payment_intent_id?: string | null
-          tags?: string[] | null
-          template_id?: string | null
-          title?: string
-          total_budget?: number | null
-          total_paid?: number | null
-          updated_at?: string | null
-          usage_rights?: string | null
-          usage_rights_description?: string | null
-          views_count?: number | null
-          visibility?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "marketplace_campaigns_brand_id_fkey"
-            columns: ["brand_id"]
-            isOneToOne: false
-            referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_campaigns_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_context"
-            referencedColumns: ["client_id"]
-          },
-          {
-            foreignKeyName: "marketplace_campaigns_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_campaigns_escrow_hold_id_fkey"
-            columns: ["escrow_hold_id"]
-            isOneToOne: false
-            referencedRelation: "escrow_holds"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_campaigns_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_campaigns_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       marketplace_contract_deliverables: {
         Row: {
           approved_at: string | null
@@ -17339,7 +16218,6 @@ export type Database = {
           aspect_ratio: string | null
           bunny_library_id: string | null
           bunny_video_id: string | null
-          campaign_id: string | null
           cdn_url: string | null
           created_at: string | null
           delivery_id: string | null
@@ -17363,7 +16241,6 @@ export type Database = {
           aspect_ratio?: string | null
           bunny_library_id?: string | null
           bunny_video_id?: string | null
-          campaign_id?: string | null
           cdn_url?: string | null
           created_at?: string | null
           delivery_id?: string | null
@@ -17387,7 +16264,6 @@ export type Database = {
           aspect_ratio?: string | null
           bunny_library_id?: string | null
           bunny_video_id?: string | null
-          campaign_id?: string | null
           cdn_url?: string | null
           created_at?: string | null
           delivery_id?: string | null
@@ -17408,13 +16284,6 @@ export type Database = {
           width?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "marketplace_media_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "marketplace_media_delivery_id_fkey"
             columns: ["delivery_id"]
@@ -17743,24 +16612,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "marketplace_projects_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_applications"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "marketplace_projects_brand_id_fkey"
             columns: ["brand_id"]
             isOneToOne: false
             referencedRelation: "brands"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "marketplace_projects_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
             referencedColumns: ["id"]
           },
           {
@@ -24760,53 +23615,6 @@ export type Database = {
           },
         ]
       }
-      publication_verification_queue: {
-        Row: {
-          created_at: string | null
-          error_message: string | null
-          id: string
-          processed_at: string | null
-          publication_id: string
-          result: Json | null
-          retry_count: number | null
-          scheduled_for: string
-          status: string | null
-          verification_type: string
-        }
-        Insert: {
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          processed_at?: string | null
-          publication_id: string
-          result?: Json | null
-          retry_count?: number | null
-          scheduled_for: string
-          status?: string | null
-          verification_type: string
-        }
-        Update: {
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          processed_at?: string | null
-          publication_id?: string
-          result?: Json | null
-          retry_count?: number | null
-          scheduled_for?: string
-          status?: string | null
-          verification_type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "publication_verification_queue_publication_id_fkey"
-            columns: ["publication_id"]
-            isOneToOne: false
-            referencedRelation: "activation_publications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       push_dedup_log: {
         Row: {
           last_sent_at: string
@@ -26388,13 +25196,6 @@ export type Database = {
           visibility?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "scheduled_posts_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "scheduled_posts_deleted_by_fkey"
             columns: ["deleted_by"]
@@ -32387,34 +31188,6 @@ export type Database = {
         }
         Relationships: []
       }
-      campaign_social_summary: {
-        Row: {
-          avg_engagement_rate: number | null
-          campaign_id: string | null
-          published_posts: number | null
-          total_clicks: number | null
-          total_comments: number | null
-          total_engagement: number | null
-          total_impressions: number | null
-          total_likes: number | null
-          total_posts: number | null
-          total_reach: number | null
-          total_saves: number | null
-          total_shares: number | null
-          total_video_views: number | null
-          unique_creators: number | null
-          verified_posts: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "scheduled_posts_campaign_id_fkey"
-            columns: ["campaign_id"]
-            isOneToOne: false
-            referencedRelation: "marketplace_campaigns"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       creator_reach_stats: {
         Row: {
           creator_profile_id: string | null
@@ -32871,10 +31644,6 @@ export type Database = {
       academy_v2_dispatch_cart_abandonment: { Args: never; Returns: number }
       academy_v2_dispatch_cohort_starting_24h: { Args: never; Returns: number }
       academy_v2_dispatch_event_reminders_24h: { Args: never; Returns: number }
-      activate_campaign: {
-        Args: { p_campaign_id: string; p_payment_intent_id?: string }
-        Returns: Json
-      }
       add_user_points: {
         Args: {
           _content_id: string
@@ -32900,10 +31669,6 @@ export type Database = {
       append_raw_video_url: {
         Args: { _content_id: string; _url: string }
         Returns: string[]
-      }
-      apply_first_campaign_promo: {
-        Args: { p_brand_id: string; p_campaign_id: string }
-        Returns: Json
       }
       apply_reconcile_result: {
         Args: {
@@ -32937,10 +31702,6 @@ export type Database = {
       apply_talent_dna_to_profile: {
         Args: { p_dna_id: string; p_user_id: string }
         Returns: boolean
-      }
-      approve_campaign_application: {
-        Args: { p_agreed_price?: number; p_application_id: string }
-        Returns: Json
       }
       approve_join_request: { Args: { request_id: string }; Returns: boolean }
       assert_org_member: {
@@ -33039,10 +31800,6 @@ export type Database = {
         }
         Returns: number
       }
-      calculate_engagement_bonus: {
-        Args: { p_publication_id: string }
-        Returns: number
-      }
       calculate_level_progress: { Args: { p_points: number }; Returns: number }
       calculate_next_token_reset: {
         Args: { p_from_date?: string; p_registration_date: string }
@@ -33079,7 +31836,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      can_manage_campaign: { Args: { _campaign_id: string }; Returns: boolean }
       can_move_content_status: {
         Args: {
           _content_id: string
@@ -33094,10 +31850,6 @@ export type Database = {
           _target_status_id: string
           _user_id: string
         }
-        Returns: boolean
-      }
-      can_see_campaign: {
-        Args: { _campaign_id: string; _user_id: string }
         Returns: boolean
       }
       can_see_user_in_list: {
@@ -33116,7 +31868,6 @@ export type Database = {
         Args: { _user1_id: string; _user2_id: string }
         Returns: boolean
       }
-      can_view_campaign: { Args: { _campaign_id: string }; Returns: boolean }
       cancel_withdrawal_request: {
         Args: { p_user_id: string; p_withdrawal_id: string }
         Returns: boolean
@@ -33154,10 +31905,6 @@ export type Database = {
         Returns: undefined
       }
       check_and_unlock_access: { Args: { p_user_id: string }; Returns: boolean }
-      check_campaign_invitation: {
-        Args: { p_campaign_id: string; p_profile_id: string }
-        Returns: boolean
-      }
       check_certificate_eligibility: {
         Args: { p_course_id: string; p_user_id: string }
         Returns: Json
@@ -33239,10 +31986,6 @@ export type Database = {
           claims_created: number
           points_distributed: number
         }[]
-      }
-      complete_campaign_delivery: {
-        Args: { p_application_id: string; p_rating?: number }
-        Returns: Json
       }
       complete_onboarding: { Args: { p_user_id: string }; Returns: boolean }
       compute_creator_search_score: {
@@ -33350,10 +32093,6 @@ export type Database = {
         Returns: string
       }
       create_kae_partition: { Args: never; Returns: undefined }
-      create_project_from_application: {
-        Args: { p_application_id: string; p_approved_by: string }
-        Returns: string
-      }
       create_space_event_with_invitations: {
         Args: {
           p_auto_invite_all?: boolean
@@ -33391,14 +32130,6 @@ export type Database = {
           p_wallet_id: string
         }
         Returns: string
-      }
-      creator_meets_activation_requirements: {
-        Args: { p_campaign_id: string; p_creator_profile_id: string }
-        Returns: {
-          creator_stats: Json
-          meets_requirements: boolean
-          missing_requirements: Json
-        }[]
       }
       credit_purchased_tokens: {
         Args: { p_balance_id: string; p_tokens: number }
@@ -33842,10 +32573,6 @@ export type Database = {
         Returns: Json
       }
       get_campaign_context: { Args: { p_content_id: string }; Returns: Json }
-      get_campaign_social_metrics: {
-        Args: { p_campaign_id: string }
-        Returns: Json
-      }
       get_chat_visible_users: {
         Args: { _org_id: string; _user_id: string }
         Returns: {
@@ -34252,19 +32979,6 @@ export type Database = {
           can_create: boolean
           can_modify: boolean
           can_view: boolean
-        }[]
-      }
-      get_eligible_activation_campaigns: {
-        Args: { p_creator_profile_id: string }
-        Returns: {
-          brand_name: string
-          budget_per_creator: number
-          campaign_id: string
-          meets_requirements: boolean
-          min_followers: Json
-          missing_requirements: Json
-          required_platforms: string[]
-          title: string
         }[]
       }
       get_exchange_rate: {
@@ -35712,7 +34426,6 @@ export type Database = {
       }
       is_brand_admin: { Args: { _brand_id: string }; Returns: boolean }
       is_brand_member: { Args: { _brand_id: string }; Returns: boolean }
-      is_campaign_invitee: { Args: { _campaign_id: string }; Returns: boolean }
       is_client_owner: {
         Args: { _client_id: string; _user_id: string }
         Returns: boolean
@@ -36399,20 +35112,6 @@ export type Database = {
         }
         Returns: string
       }
-      smart_match_creators: {
-        Args: { p_campaign_id: string }
-        Returns: {
-          avatar_url: string
-          completed_projects: number
-          creator_id: string
-          display_name: string
-          match_reasons: string[]
-          match_score: number
-          rating_avg: number
-          slug: string
-          user_id: string
-        }[]
-      }
       soft_delete_content: {
         Args: { p_content_id: string; p_reason?: string }
         Returns: Json
@@ -36656,17 +35355,6 @@ export type Database = {
         Args: { code: string; ip?: string; org_slug: string }
         Returns: Json
       }
-      verify_campaign_post: {
-        Args: {
-          p_brand_mentioned?: boolean
-          p_brand_tagged?: boolean
-          p_collab_active?: boolean
-          p_hashtags_used?: string[]
-          p_post_id: string
-          p_verified_by?: string
-        }
-        Returns: undefined
-      }
       webhook_clear_by_customer: {
         Args: { p_caller_secret: string; p_customer_id: string }
         Returns: number
@@ -36757,14 +35445,6 @@ export type Database = {
         | "content_creator"
         | "creative_strategist"
         | "student"
-      application_status:
-        | "pending"
-        | "approved"
-        | "rejected"
-        | "assigned"
-        | "delivered"
-        | "completed"
-        | "withdrawn"
       badge_category:
         | "profile"
         | "portfolio"
@@ -36781,14 +35461,6 @@ export type Database = {
         | "epic"
         | "legendary"
         | "mythic"
-      campaign_status:
-        | "draft"
-        | "open"
-        | "active"
-        | "paused"
-        | "in_progress"
-        | "completed"
-        | "cancelled"
       chat_type: "direct" | "group" | "ai_assistant"
       content_status:
         | "draft"
@@ -36873,14 +35545,6 @@ export type Database = {
         | "strategy_marketing"
         | "technology"
         | "education"
-      publication_verification_status:
-        | "pending_content"
-        | "content_approved"
-        | "pending_publication"
-        | "pending_verification"
-        | "verified"
-        | "violation"
-        | "completed"
       scheduled_post_status:
         | "draft"
         | "scheduled"
@@ -37216,15 +35880,6 @@ export const Constants = {
         "creative_strategist",
         "student",
       ],
-      application_status: [
-        "pending",
-        "approved",
-        "rejected",
-        "assigned",
-        "delivered",
-        "completed",
-        "withdrawn",
-      ],
       badge_category: [
         "profile",
         "portfolio",
@@ -37242,15 +35897,6 @@ export const Constants = {
         "epic",
         "legendary",
         "mythic",
-      ],
-      campaign_status: [
-        "draft",
-        "open",
-        "active",
-        "paused",
-        "in_progress",
-        "completed",
-        "cancelled",
       ],
       chat_type: ["direct", "group", "ai_assistant"],
       content_status: [
@@ -37343,15 +35989,6 @@ export const Constants = {
         "strategy_marketing",
         "technology",
         "education",
-      ],
-      publication_verification_status: [
-        "pending_content",
-        "content_approved",
-        "pending_publication",
-        "pending_verification",
-        "verified",
-        "violation",
-        "completed",
       ],
       scheduled_post_status: [
         "draft",

@@ -55,8 +55,6 @@ export const GROUP_RATE_LIMIT: Record<PermissionGroup, number> = {
 const ADMIN_ONLY_TOOLS = new Set<string>([
   "create_client",
   "create_product",
-  "create_marketplace_campaign",
-  "manage_campaign_application",
   "assign_content_team",
   "assign_editor_to_project",
   "mark_content_payment",
@@ -83,10 +81,8 @@ const CLIENT_ALLOWED_TOOLS = new Set<string>([
   "list_products",
   "get_brand_dna",
   "get_product_dna_status",
-  "list_marketplace_campaigns",
   "list_marketplace_projects",
   "search_creators",
-  "score_creator_for_campaign",
 ]);
 
 export function isToolAllowedForGroup(toolName: string, group: PermissionGroup): boolean {

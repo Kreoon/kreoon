@@ -61,8 +61,7 @@ const actionsByRole: Record<RolUsuario, ActionConfig[]> = {
     { label: 'Hacer Casting', icon: Users, action: 'casting', color: '#10b981' },
   ],
   trafficker: [
-    { label: 'Ver Campañas', icon: Target, action: 'ver_campanas', statKey: 'pendientes', color: '#8b5cf6' },
-    { label: 'Gestionar Tráfico', icon: Play, action: 'gestionar_trafico', color: '#3b82f6' },
+    { label: 'Gestionar Tráfico', icon: Play, action: 'gestionar_trafico', statKey: 'pendientes', color: '#3b82f6' },
     { label: 'Métricas', icon: DollarSign, action: 'ver_metricas', color: '#fbbf24' },
     { label: 'Asistente IA', icon: Sparkles, action: 'abrir_ia', color: '#10b981' },
   ],

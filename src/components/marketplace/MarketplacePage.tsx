@@ -25,23 +25,12 @@ import type { MarketplaceFilters, MarketplaceViewMode, MarketplaceRoleId, Market
 
 // Lazy-load componentes pesados que solo se usan de forma condicional.
 // FilterModal: ~40KB, solo se abre al pulsar el botón de filtros.
-// CampaignsFeed: tab secundario con su propio árbol de dependencias.
 const FilterModal = lazy(() =>
   import('./FilterModal').then((m) => ({ default: m.FilterModal }))
-);
-const CampaignsFeed = lazy(() =>
-  import('./campaigns/feed/CampaignsFeed').then((m) => ({ default: m.CampaignsFeed }))
 );
 
 // Fallback liviano para Suspense de modales/tabs (no bloquea el render principal)
 const NullFallback = () => null;
-
-// Spinner pequeño para tabs que tardan en cargar
-const TabLoader = () => (
-  <div className="flex items-center justify-center py-20">
-    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-  </div>
-);
 
 export default function MarketplacePage() {
   const navigate = useNavigate();
@@ -242,7 +231,7 @@ export default function MarketplacePage() {
               />
             </div>
 
-            {/* Top-level tab bar: Creadores / Agencias / Campañas */}
+            {/* Top-level tab bar: Creadores / Agencias */}
             <MarketplaceTabBar
               activeTab={activeTab}
               onTabChange={(tab) => {
@@ -288,13 +277,6 @@ export default function MarketplacePage() {
 
         {/* Content */}
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-10 pb-24">
-          {/* Campaigns tab */}
-          {activeTab === 'campaigns' ? (
-            <Suspense fallback={<TabLoader />}>
-              <CampaignsFeed />
-            </Suspense>
-          ) : (
-          <>
           {/* Banner: invitar a crear perfil de marketplace */}
           {showCreatorBanner && (
             <div className="relative bg-gradient-to-r from-purple-600/20 via-purple-500/10 to-transparent border border-purple-500/20 rounded-sm p-5 flex items-center gap-4">
@@ -404,8 +386,6 @@ export default function MarketplacePage() {
                 priority={!showCarousels}
               />
             </>
-          )}
-          </>
           )}
         </div>
 

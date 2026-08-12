@@ -72,7 +72,6 @@ export const APP_CONFIG = {
 export const LIMITS = {
   maxFileSize: 10 * 1024 * 1024, // 10MB
   maxBioLength: 500,
-  maxCampaignTitle: 100,
   passwordMinLength: 8,
   maxUploadFiles: 10,
 } as const;
@@ -112,7 +111,6 @@ export const QUERY_KEYS = {
   user: "user",
   profile: "profile",
   organizations: "organizations",
-  campaigns: "campaigns",
   creators: "creators",
   notifications: "notifications",
   content: "content",

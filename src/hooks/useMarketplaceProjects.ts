@@ -121,8 +121,6 @@ interface UseMarketplaceProjectsOptions {
 }
 
 export interface CreateProjectParams {
-  campaign_id: string;
-  application_id: string;
   creator_id: string; // auth.users.id (NOT creator_profiles.id)
   brand_id?: string | null;
   organization_id?: string | null;
@@ -318,7 +316,7 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     onProjectChange: handleRealtimeChange,
   });
 
-  // ── Create project from approved application ────────────────────────
+  // ── Create project ──────────────────────────────────────────────────
 
   const createProject = useCallback(
     async (params: CreateProjectParams): Promise<string | null> => {
@@ -326,8 +324,6 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
         const { data: result, error: err } = await (supabase as any)
           .from('marketplace_projects')
           .insert({
-            campaign_id: params.campaign_id,
-            application_id: params.application_id,
             creator_id: params.creator_id,
             brand_id: params.brand_id || null,
             organization_id: params.organization_id || null,
@@ -351,24 +347,6 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     [],
   );
 
-  // ── Get projects by campaign ────────────────────────────────────────
-
-  const getProjectsByCampaign = useCallback(
-    async (campaignId: string): Promise<Array<{ id: string; application_id: string; status: string; creator_id: string }>> => {
-      try {
-        const { data, error: err } = await (supabase as any)
-          .from('marketplace_projects')
-          .select('id, application_id, status, creator_id')
-          .eq('campaign_id', campaignId);
-        if (err) throw err;
-        return data || [];
-      } catch (err) {
-        console.error('[useMarketplaceProjects] Get by campaign error:', err);
-        return [];
-      }
-    },
-    [],
-  );
 
   const updateProjectStatus = useCallback(
     async (projectId: string, newStatus: ProjectStatus): Promise<boolean> => {
@@ -416,7 +394,6 @@ export function useMarketplaceProjects(options: UseMarketplaceProjectsOptions = 
     loading,
     error,
     createProject,
-    getProjectsByCampaign,
     updateProjectStatus,
     getProjectById,
     refetch: fetchProjects,

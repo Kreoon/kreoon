@@ -114,11 +114,9 @@ function getPlanFeatures(plan: PlanDef): string[] {
     // Creadores
     case 'creadores-basico':
       features.push('Portafolio publico');
-      features.push('Postulacion a campanas');
       break;
     case 'creadores-pro':
       features.push('Badge verificado');
-      features.push('Prioridad en campanas');
       features.push('Estadisticas avanzadas');
       features.push('Soporte prioritario');
       break;

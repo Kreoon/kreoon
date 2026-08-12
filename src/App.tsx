@@ -166,24 +166,6 @@ const HiringWizardPage = lazyWithRetry(
 const MarketplaceDashboard = lazyWithRetry(
   () => import("./pages/MarketplaceDashboard"),
 );
-const CampaignsFeedPage = lazyWithRetry(
-  () => import("./pages/CampaignsFeedPage"),
-);
-const CampaignDetailPage = lazyWithRetry(
-  () => import("./pages/CampaignDetailPage"),
-);
-const CampaignWizardPage = lazyWithRetry(
-  () => import("./pages/CampaignWizardPage"),
-);
-const CampaignEditWizardPage = lazyWithRetry(
-  () => import("./pages/CampaignEditWizardPage"),
-);
-const BrandCampaignsPage = lazyWithRetry(
-  () => import("./pages/BrandCampaignsPage"),
-);
-const CreatorCampaignsPage = lazyWithRetry(
-  () => import("./pages/CreatorCampaignsPage"),
-);
 const MarketplaceBrowse = lazyWithRetry(
   () => import("./components/marketplace/MarketplacePage"),
 );
@@ -204,12 +186,6 @@ const MarketplaceInvitationsPage = lazyWithRetry(
 );
 const MarketplaceInquiriesPage = lazyWithRetry(
   () => import("./pages/marketplace/MarketplaceInquiriesPage"),
-);
-const CampaignPaymentSuccessPage = lazyWithRetry(
-  () => import("./pages/marketplace/CampaignPaymentSuccess"),
-);
-const CampaignPaymentCancelPage = lazyWithRetry(
-  () => import("./pages/marketplace/CampaignPaymentCancel"),
 );
 const FavoritosPage = lazyWithRetry(
   () => import("./pages/marketplace/FavoritosPage"),
@@ -275,9 +251,6 @@ const DevModulesPage = lazyWithRetry(
 const AllPagesQAPage = lazyWithRetry(
   () => import("./pages/admin/AllPagesQAPage"),
 );
-const PendingPaymentsPage = lazyWithRetry(
-  () => import("./pages/admin/PendingPaymentsPage"),
-);
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
@@ -299,9 +272,6 @@ const SubscriptionCancel = lazyWithRetry(
   () => import("./pages/subscription/SubscriptionCancel"),
 );
 const PlanesPage = lazyWithRetry(() => import("./pages/PlanesPage"));
-const CampanasGestionadasPage = lazyWithRetry(
-  () => import("./pages/CampanasGestionadasPage"),
-);
 const CreatorPricingPage = lazyWithRetry(
   () => import("./pages/CreatorPricingPage"),
 );
@@ -309,12 +279,10 @@ const PartnerCommunityLanding = lazyWithRetry(
   () => import("./pages/PartnerCommunityLanding"),
 );
 
-// Campaign Optimization pages
+
 const UGCPriceCalculator = lazyWithRetry(
   () => import("./components/marketplace/calculator/UGCPriceCalculator"),
 );
-const CaseStudies = lazyWithRetry(() => import("./pages/CaseStudies"));
-const CaseStudyDetail = lazyWithRetry(() => import("./pages/CaseStudyDetail"));
 
 // Legal pages
 const PrivacyPolicy = lazyWithRetry(
@@ -570,12 +538,10 @@ function AppRoutes() {
   return (
     <Suspense fallback={<SuspenseLoader />}>
       <Routes key={impersonationKey}>
-        {/* Campaign optimization: public pages */}
+
         {/* Pricing pages (public) */}
         <Route path="/pricing/creators" element={<CreatorPricingPage />} />
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
-        <Route path="/casos-de-exito" element={<CaseStudies />} />
-        <Route path="/casos-de-exito/:slug" element={<CaseStudyDetail />} />
         <Route path="/portafolio" element={<PortfolioShowcasePage />} />
         <Route path="/marca-referida" element={<BrandReferralRedirect />} />
         {/* Legal pages (public, required for Meta app review) */}
@@ -620,26 +586,6 @@ function AppRoutes() {
           element={
             <TalentGate>
               <OrgProfilePage_Marketplace />
-            </TalentGate>
-          }
-        />
-        <Route
-          path="/marketplace/campaigns"
-          element={
-            <TalentGate>
-              <MarketplaceLayout>
-                <CampaignsFeedPage />
-              </MarketplaceLayout>
-            </TalentGate>
-          }
-        />
-        <Route
-          path="/marketplace/campaigns/:id"
-          element={
-            <TalentGate>
-              <MarketplaceLayout>
-                <CampaignDetailPage />
-              </MarketplaceLayout>
             </TalentGate>
           }
         />
@@ -713,46 +659,6 @@ function AppRoutes() {
           element={<Navigate to="/content?view=marketplace" replace />}
         />
         <Route
-          path="/marketplace/campaigns/create"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <CampaignWizardPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/campaigns/:id/edit"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <CampaignEditWizardPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/my-campaigns"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <BrandCampaignsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/creator-campaigns"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <CreatorCampaignsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/marketplace/talent-lists"
           element={
             <ProtectedRoute allowNoRoles>
@@ -789,22 +695,6 @@ function AppRoutes() {
               <MainLayout>
                 <MarketplaceInquiriesPage />
               </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/campaign-payment/success"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <CampaignPaymentSuccessPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/marketplace/campaign-payment/cancel"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <CampaignPaymentCancelPage />
             </ProtectedRoute>
           }
         />
@@ -1156,16 +1046,6 @@ function AppRoutes() {
             </RootOnlyRoute>
           }
         />
-        <Route
-          path="/admin/pending-payments"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <MainLayout>
-                <PendingPaymentsPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
         {/* Ad Generator Module */}
         <Route
           path="/ad-generator"
@@ -1203,16 +1083,6 @@ function AppRoutes() {
             <ProtectedRoute allowNoRoles>
               <MainLayout>
                 <PlanesPage />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/campanas-gestionadas"
-          element={
-            <ProtectedRoute allowNoRoles>
-              <MainLayout>
-                <CampanasGestionadasPage />
               </MainLayout>
             </ProtectedRoute>
           }

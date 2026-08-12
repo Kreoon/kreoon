@@ -34,10 +34,8 @@ import {
 import {
   handleOrgAccessPurchase,
   handleClientPackagePaymentCompleted,
-  handleManagedCampaignPaymentCompleted,
   handleCreatorHirePaymentCompleted,
 } from "./handlers/marketplace.ts";
-import { handleCampaignCheckoutCompleted } from "./handlers/campaigns.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return handleCorsOptions(req);
@@ -116,12 +114,8 @@ serve(async (req) => {
           subscription: session.subscription,
           amount_total: session.amount_total,
         });
-        if (session.metadata?.type?.startsWith("campaign_")) {
-          await handleCampaignCheckoutCompleted(supabase, session);
-        } else if (session.metadata?.type === "client_package_payment") {
+        if (session.metadata?.type === "client_package_payment") {
           await handleClientPackagePaymentCompleted(supabase, session);
-        } else if (session.metadata?.type === "managed_campaign_payment") {
-          await handleManagedCampaignPaymentCompleted(supabase, session);
         } else if (session.metadata?.type === "creator_hire_payment") {
           await handleCreatorHirePaymentCompleted(supabase, session);
         } else if (session.metadata?.type === "academy_course_purchase") {

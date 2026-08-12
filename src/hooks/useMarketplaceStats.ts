@@ -11,7 +11,6 @@ export interface MarketplaceStats {
   pendingOffers: number;
   inProgress: number;
   creatorEarnings: number;
-  availableCampaigns: number;
 
   // Editor-specific
   pendingEdits: number;
@@ -19,7 +18,6 @@ export interface MarketplaceStats {
   editorEarnings: number;
 
   // Brand-specific
-  activeCampaigns: number;
   inRevision: number;
   totalInvested: number;
 }
@@ -30,11 +28,9 @@ const EMPTY_STATS: MarketplaceStats = {
   pendingOffers: 0,
   inProgress: 0,
   creatorEarnings: 0,
-  availableCampaigns: 0,
   pendingEdits: 0,
   delivered: 0,
   editorEarnings: 0,
-  activeCampaigns: 0,
   inRevision: 0,
   totalInvested: 0,
 };
@@ -105,32 +101,6 @@ export function useMarketplaceStats(options: UseMarketplaceStatsOptions = {}) {
           if (status === 'revision') result.inRevision++;
           if (isReleased) result.totalInvested += price;
         }
-      }
-
-      // Fetch campaign count
-      if (options.role === 'creator' || options.role === 'admin') {
-        const { count } = await (supabase as any)
-          .from('marketplace_campaigns')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'active');
-        result.availableCampaigns = count || 0;
-      }
-
-      if (options.role === 'brand' && options.brandId) {
-        const { count } = await (supabase as any)
-          .from('marketplace_campaigns')
-          .select('id', { count: 'exact', head: true })
-          .eq('brand_id', options.brandId)
-          .eq('status', 'active');
-        result.activeCampaigns = count || 0;
-      }
-
-      if (options.role === 'admin') {
-        const { count } = await (supabase as any)
-          .from('marketplace_campaigns')
-          .select('id', { count: 'exact', head: true })
-          .eq('status', 'active');
-        result.activeCampaigns = count || 0;
       }
 
       setStats(result);

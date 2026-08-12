@@ -13,8 +13,6 @@ export type KiroNotificationType =
   | 'production_overdue'     // Una producción pasó la fecha límite
   | 'review_pending'         // Contenido esperando revisión
   | 'creator_assigned'       // Un creador fue asignado
-  | 'campaign_started'       // Una campaña arrancó
-  | 'campaign_completed'     // Una campaña se completó
   | 'level_up'               // El usuario subió de nivel
   | 'badge_earned'           // El usuario ganó un badge
   | 'payment_received'       // Pago recibido
@@ -123,24 +121,6 @@ export const NOTIFICATION_CONFIGS: Record<KiroNotificationType, NotificationConf
     kiroState: 'speaking',
     autoDismissSeconds: 10,
     accentColor: '#8b5cf6', // violet-500
-  },
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Campañas
-  // ─────────────────────────────────────────────────────────────────────────
-  'campaign_started': {
-    icon: '🚀',
-    kiroExpression: 'happy',
-    kiroState: 'celebrating',
-    autoDismissSeconds: 10,
-    accentColor: '#3b82f6', // blue-500
-  },
-  'campaign_completed': {
-    icon: '🏆',
-    kiroExpression: 'happy',
-    kiroState: 'celebrating',
-    autoDismissSeconds: null,
-    accentColor: '#eab308', // yellow-500
   },
 
   // ─────────────────────────────────────────────────────────────────────────

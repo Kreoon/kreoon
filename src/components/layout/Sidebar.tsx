@@ -87,7 +87,6 @@ const MARKETING_ITEMS: NavItem[] = [
 
 const CONFIG_ITEMS: NavItem[] = [
   { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-  { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
   { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
   { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
 ];
@@ -124,7 +123,6 @@ const adminSections: NavSection[] = [
       { name: "Comunidades", href: "/crm/comunidades", icon: Users2, tourId: "sidebar-crm-communities" },
       { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign, tourId: "sidebar-crm-finances" },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone, tourId: "sidebar-crm-email" },
-      { name: "Pagos Pendientes", href: "/admin/pending-payments", icon: DollarSign, tourId: "sidebar-pending-payments", platformRootOnly: true },
       { name: "Papelera", href: "/admin/papelera", icon: Trash2, tourId: "sidebar-trash", platformRootOnly: true },
       { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, tourId: "sidebar-dev-modules", platformRootOnly: true },
       { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, tourId: "sidebar-qa-pages", platformRootOnly: true },
@@ -207,7 +205,6 @@ const clientSections: NavSection[] = [
       { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
       { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt, tourId: "sidebar-facturas" },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-projects" },
-      { name: "Campañas Gestionadas", href: "/campanas-gestionadas", icon: Megaphone, tourId: "sidebar-managed-campaigns" },
       { name: "Mi Plan", href: "/planes", icon: Crown, tourId: "sidebar-plan" },
       { name: "Configuración", href: "/settings", icon: Settings, tourId: "sidebar-settings" },
     ]
@@ -217,14 +214,12 @@ const clientSections: NavSection[] = [
     items: [
       { name: "Explorar Talento", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
       { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" },
-      { name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" },
-      { name: "Crear Campaña", href: "/marketplace/campaigns/create", icon: ImagePlus, tourId: "sidebar-mkt-create-campaign" },
     ]
   },
 ];
 
 // Talent users with basic/free plan in an org - Limited access
-// Only: Dashboard, Board, Content, Scripts, Social Hub, Marketplace, Campaigns, Wallet, Profile, Plan, Settings
+// Only: Dashboard, Board, Content, Scripts, Social Hub, Marketplace, Wallet, Profile, Plan, Settings
 const basicTalentInOrgSections: NavSection[] = [
   {
     label: "KREOON STUDIO",
@@ -246,7 +241,6 @@ const basicTalentInOrgSections: NavSection[] = [
     label: "MARKETPLACE",
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
     ]
   },
   {
@@ -260,7 +254,7 @@ const basicTalentInOrgSections: NavSection[] = [
 ];
 
 // Freelance users (no org) - Plan Básico Gratis
-// Dashboard, Tablero, Marketplace, Campañas, Wallet, Perfil, Social Hub
+// Dashboard, Tablero, Marketplace, Wallet, Perfil, Social Hub
 const freelanceSections: NavSection[] = [
   {
     label: "MI NEGOCIO",
@@ -274,7 +268,6 @@ const freelanceSections: NavSection[] = [
     label: "MARKETPLACE",
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" },
       { name: "Billetera", href: "/wallet", icon: Wallet, tourId: "sidebar-mkt-wallet" },
     ]
   },
@@ -371,15 +364,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
   ];
-
-  // Campaign items — feed visible for internal roles (not editor/client)
-  if (activeGroup !== 'editor' && activeGroup !== 'client') {
-    items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone, tourId: "sidebar-mkt-campaigns" });
-  }
-  // "Mis Campañas" for admin/talent/client
-  if (activeGroup === 'admin' || activeGroup === 'talent' || activeGroup === 'client') {
-    items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone, tourId: "sidebar-mkt-my-campaigns" });
-  }
 
   items.push({ name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" });
 

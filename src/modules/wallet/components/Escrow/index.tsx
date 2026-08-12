@@ -11,7 +11,6 @@ export { EscrowDistribution } from './EscrowDistribution';
 export { EscrowCard } from './EscrowCard';
 export { EscrowActions, type UserRole, type EscrowAction } from './EscrowActions';
 export { EscrowDetailDrawer } from './EscrowDetailDrawer';
-export { CampaignEscrowSection } from './CampaignEscrowSection';
 
 // Modals
 export {

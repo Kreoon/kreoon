@@ -234,3 +234,78 @@ los incluye como features. Se limpian al eliminar esos módulos.
 
 **Lección:** el grep de nombres de tabla no basta. Hay que buscar también el **nombre comercial**
 del módulo en la interfaz y en los planes de precios.
+
+---
+
+## Bloque 3 · Marketplace de campañas — 2026-08-12
+
+Primer módulo con frontend **vivo**. Aquí empieza el ahorro real de bundle.
+
+### Dinero: la decisión 4, resuelta sin tocar Stripe
+
+`stripe-campaign-checkout` construía los precios con `price_data` **inline** (planes inicio /
+crecimiento / escala, importes escritos en el propio código), no con productos ni precios
+persistentes del catálogo de Stripe. Al borrar la función desaparece el checkout: **no queda
+ningún link de pago vivo que desactivar**. Las sesiones ya creadas y no pagadas expiran solas.
+
+### Código
+
+**Borrados: 66 archivos** — 12 páginas, la carpeta `components/marketplace/campaigns/` entera,
+`MembershipGate`, `OrgCampaignsSection`, `CampaignEscrowSection`, `CampaignMetricsDashboard`,
+10 hooks, los tipos de activación de marca, y `useSmartMatch` (recibía un `campaignId`, 0 consumidores).
+
+**Modificados: ~25 archivos.** Los delicados:
+
+| Archivo | Cambio |
+|---|---|
+| `supabase/functions/stripe-webhook/index.ts` | Fuera la rama `campaign_*` y la de `managed_campaign_payment`, y sus dos imports. **Intactas las 5 ramas vivas**: paquetes de cliente, contratación directa, curso de Academia, suscripción de Academia y acceso de organización |
+| `handlers/campaigns.ts` | Borrado entero |
+| `handlers/marketplace.ts` | Fuera `handleManagedCampaignPaymentCompleted`. El resto (hire directo, paquetes) intacto |
+| `handlers/payments.ts` | Fuera el early-return de `campaign_*` |
+| `kreoon-mcp-server` | Fuera `tools/campaigns.ts`, `score_creator_for_campaign` (definición, dispatch, implementación y tipos), y las entradas de los 4 tools en permisos, scopes y registro. **El scope `campaigns:read/write` NO se toca**: lo reusan 20+ tools de contenido y ADN |
+| `src/hooks/useMarketplaceProjects.ts` | Fuera `getProjectsByCampaign` y los campos `campaign_id`/`application_id` del contrato de creación |
+| `src/App.tsx` | 12 rutas y 12 lazy imports |
+
+### Base de datos
+
+Migración `20260812010000_drop_campaigns_module.sql`:
+
+- **35 políticas RLS**, incluidas 2 de `marketplace_projects` (tabla que se queda) que
+  referenciaban `marketplace_campaigns`. **Se recrean acto seguido sin la rama de campañas**:
+  sin ellas nadie podría ver ni crear proyectos
+- **1 vista** (`campaign_social_summary`), **12 tablas**, **21 funciones**, **5 funciones de
+  trigger**, **3 enums**
+- **2 funciones reescritas** que se quedan: `sync_user_health` (contaba postulaciones) y
+  `assign_editor_to_project` (derivaba los tipos de contenido de la campaña; ahora busca entre
+  todos los editores libres)
+- **5 FKs entrantes**: se suelta la constraint pero **se conserva la columna** en
+  `marketplace_projects.campaign_id`, `.application_id` y `scheduled_posts.campaign_id` porque el
+  código las lee; se dropea la columna en `marketplace_media` y `brand_credit_transactions`,
+  donde nadie las nombra. Las 5 tenían 0 filas con valor
+
+**No se tocó**, pese al nombre: `promotional_campaigns`, `campaign_redemptions` y
+`campaign_mappings` (sistema de referidos), `marketing_campaigns` y el enum `ad_campaign_status`
+(módulo de ads), `marketplace_projects` y todo el flujo de contratación directa, escrow y wallets.
+
+### Verificación
+
+| Chequeo | Resultado |
+|---|---|
+| `npm run build` | ✅ verde |
+| Tablas del módulo restantes | ✅ 0 |
+| Tablas que debían quedar (8) | ✅ 8 |
+| Políticas RLS de `marketplace_projects` | ✅ 4 (incluidas las 2 recreadas) |
+| Funciones con referencias reales a lo borrado | ✅ 0 (solo comentarios) |
+| Grep en `src/`, `supabase/functions/` y `kreoon-mcp-server/` | ✅ ninguna |
+
+### Números
+
+| Métrica | Línea base | Tras bloque 2 | Tras bloque 3 | Δ acumulado |
+|---|---:|---:|---:|---:|
+| Peso de `dist/` | 23.307.089 B | 23.299.180 B | **22.933.107 B** | **−373.982 B (−1,6 %)** |
+| Chunks JS | 390 | 390 | 364 | −26 |
+| Rutas | 165 | 160 | 148 | −17 |
+| Archivos en `src` | 1.946 | 1.943 | 1.886 | −60 |
+| Componentes | 1.035 | 1.033 | 1.002 | −33 |
+| Edge functions | 169 | 166 | 160 | −9 |
+| Tablas dropeadas | — | 52 | **64** | −64 |

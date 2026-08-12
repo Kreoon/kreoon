@@ -56,15 +56,6 @@ function getAvailableActions(
         description: 'Reportar un problema con la entrega',
       });
     }
-    if (status === 'active') {
-      actions.push({
-        id: 'cancel_campaign',
-        label: 'Cancelar Campaña',
-        icon: XCircle,
-        variant: 'destructive',
-        description: 'Cancelar y solicitar reembolso',
-      });
-    }
     if (status === 'disputed') {
       actions.push({
         id: 'view_dispute',

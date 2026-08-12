@@ -256,7 +256,6 @@ const basicTalentInOrgSections: NavSection[] = [
     label: "MARKETPLACE",
     items: [
       { name: "Explorar", href: "/marketplace", icon: Store },
-      { name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone },
     ]
   },
   {
@@ -317,15 +316,6 @@ function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
   ];
-
-  if (activeGroup !== 'editor' && activeGroup !== 'client') {
-    items.push({ name: "Campañas", href: "/marketplace/campaigns", icon: Megaphone });
-  }
-  if (activeGroup === 'admin' || activeGroup === 'strategist' || activeGroup === 'client') {
-    items.push({ name: "Mis Campañas", href: "/marketplace/my-campaigns", icon: Megaphone });
-  }
-
-
 
   // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
   if (activeGroup === 'client' || isFreelance) {

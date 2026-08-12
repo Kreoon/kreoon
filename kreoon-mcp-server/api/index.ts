@@ -8,7 +8,6 @@ import { handleProfileTool, profileToolDefinitions } from '../src/tools/profiles
 import { handlePortfolioTool, portfolioToolDefinitions } from '../src/tools/portfolio.js';
 import { handleSocialTool, socialToolDefinitions } from '../src/tools/social.js';
 import { handleOperationsTool, operationsToolDefinitions } from '../src/tools/operations.js';
-import { handleCampaignsTool, campaignsToolDefinitions } from '../src/tools/campaigns.js';
 import { handleProjectsTool, projectsToolDefinitions } from '../src/tools/projects.js';
 import { handleOrgTool, orgToolDefinitions } from '../src/tools/org.js';
 import { handleWebhookTool, webhookToolDefinitions } from '../src/tools/webhooks.js';
@@ -286,7 +285,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   improve_script: 'scripts:write',
   // Creators
   search_creators: 'creators:read',
-  score_creator_for_campaign: 'creators:read',
   // Profiles
   optimize_creator_profile: 'profiles:write',
   // Portfolio del marketplace (talento + admin)
@@ -325,9 +323,6 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   create_product:    'campaigns:write',
   list_products:     'campaigns:read',
   // Campaigns (marketplace)
-  create_marketplace_campaign: 'campaigns:write',
-  list_marketplace_campaigns: 'campaigns:read',
-  manage_campaign_application: 'campaigns:write',
   // Projects (marketplace)
   create_marketplace_project: 'campaigns:write',
   list_marketplace_projects: 'campaigns:read',
@@ -348,7 +343,6 @@ const ALL_TOOL_DEFS = [
   ...operationsToolDefinitions,
   ...contentGenerationToolDefinitions,
   ...productDnaToolDefinitions,
-  ...campaignsToolDefinitions,
   ...projectsToolDefinitions,
   ...orgToolDefinitions,
   ...webhookToolDefinitions,
@@ -383,7 +377,6 @@ async function dispatchTool(name: string, args: Record<string, unknown>, auth: A
   if (operationsToolDefinitions.some(t => t.name === name))          return handleOperationsTool(name, args, auth);
   if (contentGenerationToolDefinitions.some(t => t.name === name))   return handleContentGenerationTool(name, args, auth);
   if (productDnaToolDefinitions.some(t => t.name === name))          return handleProductDnaTool(name, args, auth);
-  if (campaignsToolDefinitions.some(t => t.name === name))           return handleCampaignsTool(name, args, auth);
   if (projectsToolDefinitions.some(t => t.name === name))   return handleProjectsTool(name, args, auth);
   if (orgToolDefinitions.some(t => t.name === name))         return handleOrgTool(name, args, auth);
   if (webhookToolDefinitions.some(t => t.name === name))     return handleWebhookTool(name, args, auth);

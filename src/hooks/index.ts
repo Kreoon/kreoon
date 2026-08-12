@@ -25,7 +25,6 @@ export { useDateRangePreset } from './useDateRangePreset';
 
 // ─── Brand ──────────────────────────────────────────────────────────────────
 export { useBrand } from './useBrand';
-export { useBrandActivation } from './useBrandActivation';
 export { useBrandClient } from './useBrandClient';
 export { useBrandMembers } from './useBrandMembers';
 export { useBrandSearch } from './useBrandSearch';
@@ -70,7 +69,6 @@ export { useKaeConfig } from './useKaeConfig';
 export { useProductDNA } from './use-product-dna';
 
 // ─── Marketplace ────────────────────────────────────────────────────────────
-export { useMarketplaceCampaigns } from './useMarketplaceCampaigns';
 export { useMarketplaceCreators } from './useMarketplaceCreators';
 export { useMarketplaceEvents } from './useMarketplaceEvents';
 export { useMarketplaceExplore } from './useMarketplaceExplore';
@@ -89,11 +87,6 @@ export { useMarketplaceStats } from './useMarketplaceStats';
 export { useMarketplaceAISearch } from './useMarketplaceAISearch';
 export { useMarketplaceLCPPreload } from './useMarketplaceLCPPreload';
 
-// ─── Campaign ───────────────────────────────────────────────────────────────
-export { useCampaignDeliverables } from './useCampaignDeliverables';
-export { useCampaignInvitations } from './useCampaignInvitations';
-export { useCampaignNotifications } from './useCampaignNotifications';
-export { useCampaignROI } from './useCampaignROI';
 
 // ─── CRM ────────────────────────────────────────────────────────────────────
 export { useCrm } from './useCrm';

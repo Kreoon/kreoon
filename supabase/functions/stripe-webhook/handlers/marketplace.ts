@@ -294,41 +294,6 @@ export async function handleClientPackagePaymentCompleted(
 }
 
 // ============================================================================
-// HANDLER: PAGO PLAN CAMPAÑA GESTIONADA
-// ============================================================================
-
-export async function handleManagedCampaignPaymentCompleted(
-  supabase: any,
-  session: Stripe.Checkout.Session
-) {
-  const meta = session.metadata || {};
-  const { plan, currency, duration, cycle_total, user_id, user_email, user_name } = meta;
-
-  console.log(`[stripe-webhook] Managed campaign payment: ${plan} · ${duration}m · ${cycle_total} ${currency} · user=${user_id}`);
-
-  // Registrar en tabla managed_campaign_subscriptions (si existe) o en unified_transactions
-  try {
-    await supabase.from("managed_campaign_subscriptions").insert({
-      user_id,
-      user_email,
-      user_name,
-      plan,
-      currency: currency?.toUpperCase(),
-      duration_months: Number(duration),
-      total_paid: Number(cycle_total),
-      stripe_session_id: session.id,
-      stripe_payment_intent: session.payment_intent,
-      status: "active",
-      starts_at: new Date().toISOString(),
-    });
-    console.log(`[stripe-webhook] Managed campaign subscription recorded for user ${user_id}`);
-  } catch (err) {
-    // La tabla podría no existir aún — solo loguear
-    console.warn("[stripe-webhook] Could not insert managed_campaign_subscription:", (err as Error).message);
-  }
-}
-
-// ============================================================================
 // HANDLER: CONTRATACIÓN DE CREADOR
 // ============================================================================
 

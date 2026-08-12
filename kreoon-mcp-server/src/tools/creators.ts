@@ -4,8 +4,6 @@ import {
   ToolResult,
   SearchCreatorsInput,
   CreatorPublicProfile,
-  ScoreCreatorInput,
-  CreatorScoreOutput,
 } from "../types.js";
 
 const supabase = createClient(
@@ -58,62 +56,15 @@ export const creatorToolDefinitions = [
       required: ["query"],
     },
   },
-  {
-    name: "score_creator_for_campaign",
-    description:
-      "Calcula un score de compatibilidad (0-100) entre un creador y los requisitos " +
-      "de una campaña específica. Incluye breakdown por categoría y recomendación. " +
-      "Costo: 120 tokens IA.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        creator_id: {
-          type: "string",
-          description: "UUID del creador a evaluar",
-        },
-        campaign_requirements: {
-          type: "object",
-          description: "Requisitos de la campaña",
-          properties: {
-            platform: {
-              type: "string",
-              description: "Plataforma principal: instagram, tiktok, youtube",
-            },
-            content_type: {
-              type: "string",
-              description: "Tipo de contenido: ugc, reels, review, tutorial",
-            },
-            budget: {
-              type: "number",
-              description: "Presupuesto disponible en USD",
-            },
-            timeline_days: {
-              type: "number",
-              description: "Días disponibles para entrega",
-            },
-            specialization: {
-              type: "string",
-              description: "Especialización requerida",
-            },
-          },
-          required: ["platform", "content_type"],
-        },
-      },
-      required: ["creator_id", "campaign_requirements"],
-    },
-  },
 ];
 
 export async function handleCreatorTool(
   toolName: string,
   args: Record<string, unknown>,
   auth: AuthContext
-): Promise<ToolResult<CreatorPublicProfile[] | CreatorScoreOutput>> {
+): Promise<ToolResult<CreatorPublicProfile[]>> {
   if (toolName === "search_creators") {
     return searchCreators(args as unknown as SearchCreatorsInput, auth);
-  }
-  if (toolName === "score_creator_for_campaign") {
-    return scoreCreator(args as unknown as ScoreCreatorInput, auth);
   }
   return { success: false, error: `Tool desconocida: ${toolName}` };
 }
@@ -169,96 +120,5 @@ async function searchCreators(
     success: true,
     data: (data ?? []) as unknown as CreatorPublicProfile[],
     tokens_used: 0,
-  };
-}
-
-async function scoreCreator(
-  input: ScoreCreatorInput,
-  auth: AuthContext
-): Promise<ToolResult<CreatorScoreOutput>> {
-  const { creator_id, campaign_requirements } = input;
-
-  const { data: creator, error: creatorError } = await supabase
-    .from("profiles")
-    .select(
-      "id, display_name, specializations, marketplace_score, ranking_tier, " +
-      "portfolio_count, projects_completed, response_rate, is_available, pricing"
-    )
-    .eq("id", creator_id)
-    .eq("is_public", true)
-    .single();
-
-  if (creatorError || !creator) {
-    return { success: false, error: "Creador no encontrado" };
-  }
-
-  // Llamar a multi-ai para scoring inteligente
-  const { data: fnData, error: fnError } = await supabase.functions.invoke(
-    "multi-ai",
-    {
-      body: {
-        action: "score_creator",
-        creator: creator,
-        requirements: campaign_requirements,
-        organization_id: auth.org_id,
-      },
-    }
-  );
-
-  if (fnError) {
-    // Fallback: scoring algorítmico local
-    const score = computeLocalScore(creator as unknown as Record<string, unknown>, campaign_requirements);
-    return { success: true, data: score, tokens_used: 0 };
-  }
-
-  return {
-    success: true,
-    data: fnData as CreatorScoreOutput,
-    tokens_used: fnData?.tokens_used ?? 120,
-  };
-}
-
-function computeLocalScore(
-  creator: Record<string, unknown>,
-  requirements: ScoreCreatorInput["campaign_requirements"]
-): CreatorScoreOutput {
-  const profileScore = Math.min(
-    ((creator.portfolio_count as number) ?? 0) >= 5 ? 30 : 15,
-    30
-  );
-  const responseScore = Math.round(((creator.response_rate as number) ?? 0) * 0.25);
-  const projectsScore = Math.min(
-    ((creator.projects_completed as number) ?? 0) * 2,
-    25
-  );
-  const availabilityScore = (creator.is_available as boolean) ? 20 : 0;
-
-  const specMatch = ((creator.specializations as string[]) ?? []).includes(
-    requirements.specialization ?? requirements.content_type
-  );
-  const platformScore = specMatch ? 25 : 10;
-
-  const overall = profileScore + responseScore + projectsScore + availabilityScore;
-
-  return {
-    creator_id: creator.id as string,
-    overall_score: Math.min(overall, 100),
-    breakdown: {
-      profile_completeness: profileScore,
-      portfolio_quality: profileScore,
-      response_rate: responseScore,
-      projects_completed: projectsScore,
-      platform_match: platformScore,
-      availability: availabilityScore,
-    },
-    recommendation:
-      overall >= 80
-        ? "highly_recommended"
-        : overall >= 60
-        ? "recommended"
-        : overall >= 40
-        ? "consider"
-        : "not_recommended",
-    reasoning: "Score calculado algorítmicamente basado en métricas del perfil.",
   };
 }

@@ -48,8 +48,6 @@ export interface MarketplaceProject {
   brand_id?: string;
   creator_id: string;
   editor_id?: string;
-  campaign_id?: string;
-  application_id?: string;
   service_id?: string;
   organization_id?: string;
   package_name?: string;
@@ -77,12 +75,10 @@ export interface MarketplaceProject {
   updated_at: string;
 
   // Relaciones (pobladas según la consulta)
-  campaign?: ProjectCampaign;
   creator?: ProjectCreator;
   brand?: ProjectBrand;
   organization?: ProjectOrganization;
   deliverables?: ProjectDeliverable[];
-  application?: ProjectApplication;
 }
 
 export interface ProjectBrief {
@@ -102,17 +98,6 @@ export interface ProjectBrief {
   [key: string]: any;
 }
 
-export interface ProjectCampaign {
-  id: string;
-  title: string;
-  description?: string;
-  category?: string;
-  content_requirements?: ContentRequirement[];
-  brand_name_override?: string;
-  is_brand_activation?: boolean;
-  activation_config?: BrandActivationConfig;
-}
-
 export interface ContentRequirement {
   content_type: string;
   quantity: number;
@@ -123,26 +108,6 @@ export interface ContentRequirement {
     resolution?: string;
     format?: string;
   };
-}
-
-export interface BrandActivationConfig {
-  required_platforms: string[];
-  min_followers: Record<string, number>;
-  required_hashtags: string[];
-  required_mentions: string[];
-  min_post_duration_days: number;
-  content_approval_required: boolean;
-  allow_reshare_brand: boolean;
-  usage_rights_duration_days: number;
-  engagement_bonus: {
-    enabled: boolean;
-    per_1k_likes?: number;
-    per_1k_comments?: number;
-    per_1k_shares?: number;
-    max_bonus: number;
-  };
-  verification_method: 'manual' | 'api' | 'screenshot' | 'creator_confirm';
-  requires_insights_screenshot: boolean;
 }
 
 export interface ProjectCreator {
@@ -172,19 +137,9 @@ export interface ProjectOrganization {
   logo_url?: string;
 }
 
-export interface ProjectApplication {
-  id: string;
-  bid_amount?: number;
-  proposal?: string;
-  portfolio_links?: string[];
-  estimated_delivery_days?: number;
-}
-
 export interface ProjectDeliverable {
   id: string;
-  campaign_id: string;
   creator_id: string;
-  application_id?: string;
   title?: string;
   description?: string;
   file_url: string;

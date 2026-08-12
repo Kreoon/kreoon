@@ -100,7 +100,6 @@ export {
   EscrowCard,
   EscrowActions,
   EscrowDetailDrawer,
-  CampaignEscrowSection,
   // Modals
   ApproveContentModal,
   RequestChangesModal,
