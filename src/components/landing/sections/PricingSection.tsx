@@ -6,12 +6,8 @@ import {
   Sparkles,
   Building2,
   Users2,
-  Info,
-  Clock,
-  ArrowRight,
   Users,
   RefreshCw,
-  Megaphone,
   Brain,
   Crown,
   Rocket,
@@ -22,7 +18,6 @@ import {
 import { KreoonSectionTitle, KreoonCard, KreoonButton, KreoonBadge } from "@/components/ui/kreoon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 
 export type PricingSegment = "marcas" | "creadores" | "agencias";
 export type BillingPeriod = "monthly" | "annual";
@@ -122,12 +117,10 @@ const PLANS_MARCAS: PricingPlan[] = [
     keyMetrics: [
       { icon: Users, label: "Contacto/mes", value: "1" },
       { icon: RefreshCw, label: "Canjes/mes", value: "—", disabled: true },
-      { icon: Megaphone, label: "Campaña", value: "1" },
       { icon: Brain, label: "Tokens IA", value: "500" },
     ],
     features: [
       "Explorar perfiles y portafolios",
-      "1 campaña activa",
       "5 piezas de contenido",
       "Chat básico con creadores",
       "Pagos seguros",
@@ -140,7 +133,7 @@ const PLANS_MARCAS: PricingPlan[] = [
     id: "marcas-starter",
     name: "Starter",
     badge: "Para empezar",
-    description: "Lanza tus primeras campañas con creadores reales",
+    description: "Trabaja con tus primeros creadores reales",
     priceMonthly: "39",
     priceAnnual: "27",
     aiTokens: "4,000 tokens IA/mes",
@@ -149,13 +142,11 @@ const PLANS_MARCAS: PricingPlan[] = [
     keyMetrics: [
       { icon: Users, label: "Contactos/mes", value: "5" },
       { icon: RefreshCw, label: "Canjes/mes", value: "5" },
-      { icon: Megaphone, label: "Campañas", value: "5" },
       { icon: Brain, label: "Tokens IA", value: "4,000" },
     ],
     features: [
       "5 contactos revelados/mes",
       "5 canjes/mes con creadores",
-      "5 campañas activas",
       "Comprar contactos extra",
       "IA creativa básica",
       "Chat con creadores",
@@ -168,7 +159,7 @@ const PLANS_MARCAS: PricingPlan[] = [
     id: "marcas-growth",
     name: "Growth",
     badge: "Más popular",
-    description: "Escala tus campañas con más poder y creadores",
+    description: "Escala tu producción con más poder y creadores",
     priceMonthly: "69",
     priceAnnual: "48",
     aiTokens: "7,500 tokens IA/mes",
@@ -176,13 +167,11 @@ const PLANS_MARCAS: PricingPlan[] = [
     keyMetrics: [
       { icon: Users, label: "Contactos/mes", value: "10" },
       { icon: RefreshCw, label: "Canjes/mes", value: "10" },
-      { icon: Megaphone, label: "Campañas", value: "10" },
       { icon: Brain, label: "Tokens IA", value: "7,500" },
     ],
     features: [
       "10 contactos revelados/mes",
       "10 canjes/mes con creadores",
-      "10 campañas activas",
       "Comprar contactos extra",
       "IA creativa completa",
       "3 ADN Recargados/mes",
@@ -203,13 +192,11 @@ const PLANS_MARCAS: PricingPlan[] = [
     keyMetrics: [
       { icon: Users, label: "Contactos/mes", value: "20" },
       { icon: RefreshCw, label: "Canjes/mes", value: "20" },
-      { icon: Megaphone, label: "Campañas", value: "∞" },
       { icon: Brain, label: "Tokens IA", value: "12,000" },
     ],
     features: [
       "20 contactos revelados/mes",
       "20 canjes/mes con creadores",
-      "Campañas ilimitadas",
       "IA creativa avanzada",
       "5 ADN Recargados/mes",
       "Analytics avanzados",
@@ -231,13 +218,11 @@ const PLANS_MARCAS: PricingPlan[] = [
     keyMetrics: [
       { icon: Users, label: "Contactos/mes", value: "∞" },
       { icon: RefreshCw, label: "Canjes/mes", value: "∞" },
-      { icon: Megaphone, label: "Campañas", value: "∞" },
       { icon: Brain, label: "Tokens IA", value: "40,000" },
     ],
     features: [
       "Contactos revelados ilimitados",
       "Canjes ilimitados con creadores",
-      "Campañas ilimitadas",
       "API access + API propia IA",
       "Account manager dedicado",
       "Integraciones avanzadas",
@@ -258,8 +243,6 @@ const PLANS_CREADORES: PricingPlan[] = [
     aiTokens: "500 tokens IA/mes",
     features: [
       "Perfil y portafolio público",
-      "Aplicar a campañas",
-      "5 aplicaciones por mes",
       "Chat con marcas",
       "Acceso a comunidad",
     ],
@@ -275,7 +258,6 @@ const PLANS_CREADORES: PricingPlan[] = [
     priceAnnual: "17",
     aiTokens: "6,000 tokens IA/mes",
     features: [
-      "Aplicaciones ilimitadas",
       "Herramientas de IA creativa",
       "Posición destacada en búsquedas",
       "Badge verificado en perfil",
@@ -384,8 +366,7 @@ interface ComparisonFeature {
 const COMPARISON_FEATURES_MARCAS: ComparisonFeature[] = [
   { name: "Contactos revelados/mes", category: "Creadores y Canjes", values: { "marcas-free": "1", "marcas-starter": "5 (+extra)", "marcas-growth": "10 (+extra)", "marcas-pro": "20 (+extra)", "marcas-business": "Ilimitados" } },
   { name: "Canjes (producto × contenido)", values: { "marcas-free": false, "marcas-starter": "5/mes", "marcas-growth": "10/mes", "marcas-pro": "20/mes", "marcas-business": "Ilimitados" } },
-  { name: "Campañas activas", category: "Campañas y Contenido", values: { "marcas-free": "1", "marcas-starter": "5", "marcas-growth": "10", "marcas-pro": "Ilimitadas", "marcas-business": "Ilimitadas" } },
-  { name: "Piezas de contenido", values: { "marcas-free": "5", "marcas-starter": "30", "marcas-growth": "80", "marcas-pro": "Ilimitadas", "marcas-business": "Ilimitadas" } },
+  { name: "Piezas de contenido", category: "Contenido", values: { "marcas-free": "5", "marcas-starter": "30", "marcas-growth": "80", "marcas-pro": "Ilimitadas", "marcas-business": "Ilimitadas" } },
   { name: "Tokens IA mensuales", category: "IA y Analytics", values: { "marcas-free": "500", "marcas-starter": "4,000", "marcas-growth": "7,500", "marcas-pro": "12,000", "marcas-business": "40,000" } },
   { name: "ADN Recargados/mes", values: { "marcas-free": false, "marcas-starter": "2", "marcas-growth": "3", "marcas-pro": "5", "marcas-business": "Ilimitados" } },
   { name: "IA creativa", values: { "marcas-free": false, "marcas-starter": "Básica", "marcas-growth": "Completa", "marcas-pro": "Avanzada", "marcas-business": "Avanzada" } },
@@ -397,7 +378,6 @@ const COMPARISON_FEATURES_MARCAS: ComparisonFeature[] = [
 ];
 
 const COMPARISON_FEATURES_CREADORES: ComparisonFeature[] = [
-  { name: "Aplicaciones por mes", values: { "creadores-basico": "5", "creadores-pro": "Ilimitadas" } },
   { name: "Tokens IA mensuales", values: { "creadores-basico": "500", "creadores-pro": "6,000" } },
   { name: "IA creativa", values: { "creadores-basico": false, "creadores-pro": true } },
   { name: "Badge verificado", values: { "creadores-basico": false, "creadores-pro": true } },
@@ -612,15 +592,10 @@ export function PricingSection({ onSelectPlan, highlightedPlan }: PricingSection
   const [segment, setSegment] = React.useState<PricingSegment>("marcas");
   const sectionRef = React.useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
-  const navigate = useNavigate();
 
   const plans = SEGMENT_PLANS[segment];
   const comparisonFeatures = COMPARISON_BY_SEGMENT[segment];
   const effectiveHighlight = highlightedPlan ?? plans.find((p) => p.highlighted)?.id;
-
-  const handleLiveShoppingWaitlist = () => {
-    navigate("/coming-soon?feature=Live%20Shopping&description=Vende%20en%20tiempo%20real%20con%20creadores.%20Disponible%20como%20add-on%20para%20todos%20los%20planes.");
-  };
 
   // For marcas: split into 2 rows (3 + 2)
   const isMarcas = segment === "marcas";
@@ -785,33 +760,6 @@ export function PricingSection({ onSelectPlan, highlightedPlan }: PricingSection
         >
           ¿Necesitas más? Compra tokens adicionales o conecta tu propia API de IA
         </motion.p>
-
-        {/* Live Shopping notice */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ delay: 0.55 }}
-          className="mt-8 flex flex-col items-center justify-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-6 py-4 sm:flex-row"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/20 shrink-0">
-              <Clock className="h-4 w-4 text-amber-400" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Info className="h-4 w-4 text-amber-400 shrink-0" />
-              <span className="text-sm text-kreoon-text-secondary">
-                <strong className="text-white">Live Shopping</strong> estará disponible como add-on para todos los planes.
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={handleLiveShoppingWaitlist}
-            className="flex items-center gap-1.5 text-sm font-medium text-amber-400 transition-colors hover:text-amber-300 whitespace-nowrap"
-          >
-            Únete a la lista de espera
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </motion.div>
 
         {/* ── Comparison table (always visible) ── */}
         <motion.div

@@ -55,7 +55,7 @@ export const tourConfigs: Record<string, RoleTourConfig> = {
       },
       {
         target: "[data-tour='sidebar-portfolio']",
-        title: "🌐 Red Social / Portafolio",
+        title: "🌐 Portafolio",
         content: "Explora el portafolio público donde se comparte el mejor contenido de la agencia.",
         position: "right",
         action: "Haz clic para ver el portafolio"

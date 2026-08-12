@@ -12,7 +12,7 @@ const ROLES = [
     color: "from-blue-600 to-indigo-600",
     features: [
       { title: "AI Research", desc: "ADN de producto para guiones que convierten.", icon: Sparkles },
-      { title: "Gestión de Campañas", desc: "Control total sobre cientos de piezas UGC.", icon: Target },
+      { title: "Gestión de Contenido", desc: "Control total sobre cientos de piezas UGC.", icon: Target },
       { title: "ROI Analytics", desc: "Métricas de rendimiento en tiempo real.", icon: BarChart3 },
     ],
     cta: "Empieza a Escalar",

@@ -448,7 +448,7 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
             animation: 'kiro-feedback-float 2s ease-out forwards',
           }}
         >
-          <span>+{feedbackToast.points} UP</span>
+          <span>+{feedbackToast.points} pts</span>
           <span>⭐</span>
         </div>
       )}

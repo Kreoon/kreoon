@@ -1,6 +1,18 @@
 /**
  * Permission Groups - Simplified Role System
  *
+ * Simplificación 2026: el mapa pasó de 52 entradas a 14. Se retiraron los 33
+ * "marketplace roles" (ugc_creator, photographer, copywriter, live_streamer…):
+ * verificado en producción que NINGÚN usuario los tiene como rol de permiso
+ * (0 filas en organization_members y en user_roles), mientras que 111 perfiles
+ * de creador los usan como ETIQUETA DE ESPECIALIDAD. Ese es su sitio: viven en
+ * creator_profiles.marketplace_roles y en src/lib/specializations.ts, no aquí.
+ *
+ * Los grupos de permiso siguen siendo 4 — que ya es el mínimo razonable:
+ * separar creator/editor/estratega como grupos distintos obligaría a reescribir
+ * cada comprobación de permisos de la plataforma sin ganar nada, porque los tres
+ * ven las mismas pantallas.
+ *
  * Maps 8 base roles to 4 permission levels: admin, talent, client, student.
  * - admin: Full system access
  * - talent: All creative/operational roles (content_creator, editor, digital_strategist, creative_strategist, community_manager)
@@ -46,53 +58,6 @@ const ROLE_TO_PERMISSION_GROUP: Record<string, PermissionGroup> = {
   trafficker: 'talent',
   developer: 'talent',
   educator: 'talent',
-
-  // Legacy marketplace Content Creation → talent
-  ugc_creator: 'talent',
-  lifestyle_creator: 'talent',
-  micro_influencer: 'talent',
-  nano_influencer: 'talent',
-  macro_influencer: 'talent',
-  brand_ambassador: 'talent',
-  live_streamer: 'talent',
-  podcast_host: 'talent',
-  photographer: 'talent',
-  copywriter: 'talent',
-  graphic_designer: 'talent',
-  voice_artist: 'talent',
-
-  // Legacy marketplace Post-Production → talent
-  video_editor: 'talent',
-  motion_graphics: 'talent',
-  sound_designer: 'talent',
-  colorist: 'talent',
-  director: 'talent',
-  producer: 'talent',
-  animator_2d3d: 'talent',
-
-  // Legacy marketplace Strategy & Marketing → talent
-  content_strategist: 'talent',
-  social_media_manager: 'talent',
-  // community_manager already defined above
-  // digital_strategist already defined above
-  seo_specialist: 'talent',
-  email_marketer: 'talent',
-  growth_hacker: 'talent',
-  crm_specialist: 'talent',
-  conversion_optimizer: 'talent',
-
-  // Legacy marketplace Technology → talent
-  web_developer: 'talent',
-  app_developer: 'talent',
-  ai_specialist: 'talent',
-
-  // Legacy marketplace Education → talent
-  online_instructor: 'talent',
-  workshop_facilitator: 'talent',
-
-  // Legacy client roles → client
-  brand_manager: 'client',
-  marketing_director: 'client',
 };
 
 /** Get the permission group for any role (base or legacy) */
@@ -155,39 +120,6 @@ export const DEPRECATED_ROLES = [
   'trafficker',
   'developer',
   'educator',
-  'ugc_creator',
-  'lifestyle_creator',
-  'micro_influencer',
-  'nano_influencer',
-  'macro_influencer',
-  'brand_ambassador',
-  'live_streamer',
-  'podcast_host',
-  'photographer',
-  'copywriter',
-  'graphic_designer',
-  'voice_artist',
-  'video_editor',
-  'motion_graphics',
-  'sound_designer',
-  'colorist',
-  'director',
-  'producer',
-  'animator_2d3d',
-  'content_strategist',
-  'social_media_manager',
-  'seo_specialist',
-  'email_marketer',
-  'growth_hacker',
-  'crm_specialist',
-  'conversion_optimizer',
-  'web_developer',
-  'app_developer',
-  'ai_specialist',
-  'online_instructor',
-  'workshop_facilitator',
-  'brand_manager',
-  'marketing_director',
 ] as const;
 
 /** Check if a role is a base role */

@@ -14,7 +14,7 @@ const WHAT_AWAITS = [
   { icon: DollarSign, text: 'Conecta con marcas que pagan por contenido', color: 'text-emerald-400' },
   { icon: Users, text: 'Únete a la comunidad de creadores de LATAM', color: 'text-blue-400' },
   { icon: Star, text: 'Destaca con tu portafolio profesional', color: 'text-amber-400' },
-  { icon: Rocket, text: 'Accede a campañas exclusivas', color: 'text-purple-400' },
+  { icon: Rocket, text: 'Recibe propuestas de marcas', color: 'text-purple-400' },
 ];
 
 const WelcomeTalent = () => {

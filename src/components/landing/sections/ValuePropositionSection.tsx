@@ -21,7 +21,7 @@ const SEGMENTS = [
       "hover:shadow-[0_0_40px_rgba(16,185,129,0.2)] hover:border-emerald-500/30",
     benefits: [
       "Red de creadores verificados",
-      "Gestión de campañas simplificada",
+      "Gestión de contenido simplificada",
       "Métricas de performance en tiempo real",
       "Contenido optimizado para conversión",
     ],
@@ -39,7 +39,7 @@ const SEGMENTS = [
       "hover:shadow-kreoon-glow-lg hover:border-kreoon-purple-400/40",
     benefits: [
       "Proyectos pagados de marcas top",
-      "Sistema de reputación y ranking",
+      "Perfil público con reputación y rating",
       "Herramientas de IA creativa",
       "Comunidad que te impulsa",
     ],
@@ -69,7 +69,7 @@ const SEGMENTS = [
     segment: "agency" as const,
     title: "Para Agencias y Equipos",
     description:
-      "Gestiona tu equipo creativo, clientes y campañas desde una sola plataforma.",
+      "Gestiona tu equipo creativo, clientes y proyectos desde una sola plataforma.",
     icon: Users2,
     gradient: "from-amber-500 to-orange-500",
     glowClass:

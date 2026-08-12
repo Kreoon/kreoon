@@ -12,12 +12,12 @@ const TRAINING_MD = `# Kreoon MCP Server — Documentación Completa
 
 El Kreoon MCP Server es un servidor que implementa el Model Context Protocol (MCP) de Anthropic.
 Permite a cualquier agente de IA (Claude, ChatGPT con plugins, Gemini, etc.) controlar operativamente
-la plataforma Kreoon: crear campañas, gestionar creadores, aprobar guiones, manejar el content board
+la plataforma Kreoon: gestionar creadores, aprobar guiones, manejar el content board
 y administrar el marketplace.
 
 **Endpoint principal:** https://mcp.kreoon.com
 **Versión:** v3.2.0
-**Herramientas disponibles:** 43
+**Herramientas disponibles:** 39
 
 ---
 
@@ -134,12 +134,12 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 | \`creators:read\` | Buscar y calificar creadores |
 | \`profiles:write\` | Optimizar perfil del creador con IA |
 | \`social:write\` | Publicar en redes sociales |
-| \`campaigns:read\` | Ver campañas, proyectos, contenido, clientes, productos, miembros, ADN |
-| \`campaigns:write\` | Crear/modificar campañas, proyectos, contenido, productos, ADN, asignar equipo |
+| \`campaigns:read\` | Ver proyectos, contenido, clientes, productos, miembros, ADN |
+| \`campaigns:write\` | Crear/modificar proyectos, contenido, productos, ADN, asignar equipo |
 
 ---
 
-## Herramientas (35 en total)
+## Herramientas (39 en total)
 
 ### Scripts (scope: scripts:write)
 
@@ -200,11 +200,6 @@ curl -X POST -H "Authorization: Bearer sk-kreoon-..." \\
 - \`min_followers\` / \`max_followers\` (number)
 - \`min_engagement_rate\` (number): 0.0-1.0
 - \`limit\` (number): máx 100
-
-**score_creator_for_campaign** — Califica creador para campaña con score 0-100.
-- \`creator_id\` (string, required)
-- \`campaign_id\` (string, required)
-- \`campaign_brief\` (string): contexto adicional
 
 ---
 
@@ -276,15 +271,15 @@ Cada entrega incluye headers \`X-Kreoon-Event\` y \`X-Kreoon-Signature: sha256=<
 
 ### Content Board / Operaciones (scope: campaigns:read / campaigns:write)
 
-**list_content_items** — Lista ítems de contenido con filtros por estado, campaña, cliente, creador.
-- Filtros: \`campaign_id\`, \`client_id\`, \`status\`, \`creator_id\`, \`editor_id\`, \`limit\`
+**list_content_items** — Lista ítems de contenido con filtros por estado, cliente, creador.
+- Filtros: \`client_id\`, \`status\`, \`creator_id\`, \`editor_id\`, \`limit\`
 - Estados: draft | pending_script | script_approved | in_production | delivered | approved | published | paid
 
 **get_content_item** — Detalles completos de un ítem: estado, equipo, pagos, scripts, deliverables.
 - \`content_id\` (string, required)
 
 **create_content_item** — Crea un nuevo ítem de contenido con brief, equipo y presupuesto.
-- \`campaign_id\`, \`client_id\`, \`product_id\`, \`brief\`, \`platform\` (required)
+- \`client_id\`, \`product_id\`, \`brief\`, \`platform\` (required)
 - \`creator_id\`, \`editor_id\`, \`deadline\`, \`creator_payment\`, \`editor_payment\` (optional)
 
 **update_content_item** — Actualiza los campos de metadata de un ítem existente (cliente, producto, brief, equipo, plazos, pagos) sin cambiar su estado en el pipeline.
@@ -327,20 +322,6 @@ Cada entrega incluye headers \`X-Kreoon-Event\` y \`X-Kreoon-Signature: sha256=<
 
 **list_products** — Lista los productos registrados para un cliente o todos los de la organización.
 - \`client_id\` (string, optional), \`search\` (string), \`limit\`
-
----
-
-### Campañas Marketplace (scope: campaigns:read / campaigns:write)
-
-**list_marketplace_campaigns** — Lista campañas con filtros por estado y producto.
-- \`status\`: draft | active | closed | completed
-
-**create_marketplace_campaign** — Crea campaña donde creadores pueden ofertar.
-- \`title\`, \`description\`, \`product_id\`, \`platforms\`, \`budget\` (required)
-- \`application_deadline\`, \`delivery_deadline\`, \`creator_requirements\` (optional)
-
-**manage_campaign_application** — Aprueba, rechaza o retiene aplicación de un creador.
-- \`campaign_id\`, \`creator_id\`, \`action\` (approve | reject | hold), \`notes\`
 
 ---
 
@@ -460,7 +441,6 @@ const TOOL_GROUPS = [
     count: 2,
     tools: [
       { name: "search_creators", desc: "Busca creadores por categoría, ubicación, seguidores y engagement", scope: "creators:read" },
-      { name: "score_creator_for_campaign", desc: "Califica creador para campaña específica con score 0-100", scope: "creators:read" },
     ],
   },
   {
@@ -527,15 +507,6 @@ const TOOL_GROUPS = [
     ],
   },
   {
-    name: "Campañas Marketplace",
-    count: 3,
-    tools: [
-      { name: "list_marketplace_campaigns", desc: "Lista campañas con filtros por estado y producto", scope: "campaigns:read" },
-      { name: "create_marketplace_campaign", desc: "Crea campaña donde creadores pueden ofertar", scope: "campaigns:write" },
-      { name: "manage_campaign_application", desc: "Aprueba, rechaza o retiene aplicación de un creador", scope: "campaigns:write" },
-    ],
-  },
-  {
     name: "Proyectos Marketplace",
     count: 4,
     tools: [
@@ -552,8 +523,8 @@ const SCOPES = [
   { scope: "creators:read", desc: "Buscar y calificar creadores" },
   { scope: "profiles:write", desc: "Optimizar perfil del creador con IA" },
   { scope: "social:write", desc: "Publicar en redes sociales" },
-  { scope: "campaigns:read", desc: "Ver campañas, proyectos, contenido, clientes, productos, miembros y ADN" },
-  { scope: "campaigns:write", desc: "Crear y modificar campañas, proyectos, contenido, productos, ADN y asignaciones" },
+  { scope: "campaigns:read", desc: "Ver proyectos, contenido, clientes, productos, miembros y ADN" },
+  { scope: "campaigns:write", desc: "Crear y modificar proyectos, contenido, productos, ADN y asignaciones" },
 ];
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -594,10 +565,10 @@ export default function MCPDocumentation() {
             Kreoon MCP Server
           </h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, campañas, content board y marketplace.
+            Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, proyectos, content board y marketplace.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">43 herramientas</span>
+            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">39 herramientas</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
             <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
@@ -674,11 +645,11 @@ export default function MCPDocumentation() {
             ¿Qué es el MCP de Kreoon?
           </h2>
           <p className="text-gray-400 leading-relaxed">
-            MCP (Model Context Protocol) es el estándar abierto de Anthropic para conectar agentes de IA con herramientas externas. El servidor MCP de Kreoon expone el control operativo completo de la plataforma como herramientas que cualquier IA puede invocar: crear campañas, buscar creadores, generar guiones, aprobar scripts, registrar entregas y gestionar pagos, todo desde una conversación.
+            MCP (Model Context Protocol) es el estándar abierto de Anthropic para conectar agentes de IA con herramientas externas. El servidor MCP de Kreoon expone el control operativo completo de la plataforma como herramientas que cualquier IA puede invocar: crear proyectos, buscar creadores, generar guiones, aprobar scripts, registrar entregas y gestionar pagos, todo desde una conversación.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
-              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "43 herramientas que cubren todo el flujo operativo de una agencia UGC" },
+              { icon: <Zap className="w-4 h-4" />, title: "Acceso completo", desc: "39 herramientas que cubren todo el flujo operativo de una agencia UGC" },
               { icon: <Shield className="w-4 h-4" />, title: "Multi-tenant seguro", desc: "Cada API key está vinculada a una organización. RLS en toda la base de datos." },
               { icon: <Code2 className="w-4 h-4" />, title: "Estándar abierto", desc: "Compatible con Claude, ChatGPT, Gemini y cualquier agente que soporte MCP o REST." },
             ].map((item) => (
@@ -755,7 +726,7 @@ curl -X POST \\
           <h2 className="text-2xl font-bold text-white flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Herramientas disponibles
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">43 tools</Badge>
+            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">39 tools</Badge>
           </h2>
 
           {TOOL_GROUPS.map((group) => (

@@ -128,15 +128,15 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
       {
         icon: TrendingUp,
         label: 'Mi progreso',
-        description: 'Evolución y logros',
+        description: 'Evolución y resultados',
         prompt: '¿Cómo ha sido mi progreso como creador este mes?',
         priority: 3,
       },
       {
         icon: Target,
         label: 'Oportunidades',
-        description: 'Campañas que te encajan',
-        prompt: 'Busca oportunidades de campañas que encajen con mi perfil',
+        description: 'Marcas que te encajan',
+        prompt: 'Busca oportunidades con marcas que encajen con mi perfil',
         priority: 4,
       },
     ],
@@ -160,8 +160,8 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
       {
         icon: FileText,
         label: 'Crear brief',
-        description: 'Nueva campaña',
-        prompt: 'Necesito crear un nuevo brief para una campaña',
+        description: 'Nuevo proyecto',
+        prompt: 'Necesito crear un nuevo brief para un proyecto',
         priority: 2,
       },
       {
@@ -253,7 +253,7 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
         icon: UserCheck,
         label: 'Matching inteligente',
         description: 'IA recomienda',
-        prompt: 'Recomiéndame los mejores creadores para esta campaña',
+        prompt: 'Recomiéndame los mejores creadores para este proyecto',
         priority: 2,
       },
       {
@@ -283,9 +283,9 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
     actions: [
       {
         icon: FileText,
-        label: 'Reporte de campaña',
-        description: 'Última campaña',
-        prompt: 'Genera un reporte completo de la última campaña',
+        label: 'Reporte de proyecto',
+        description: 'Último proyecto',
+        prompt: 'Genera un reporte completo del último proyecto',
         priority: 1,
       },
       {
@@ -298,8 +298,8 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
       {
         icon: LineChart,
         label: 'Comparar performance',
-        description: 'Últimas campañas',
-        prompt: 'Compara el rendimiento de las últimas 3 campañas',
+        description: 'Últimos proyectos',
+        prompt: 'Compara el rendimiento de los últimos 3 proyectos',
         priority: 3,
       },
       {
@@ -363,8 +363,8 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
       {
         icon: FileText,
         label: 'Crear Brief',
-        description: 'Nueva campaña',
-        prompt: 'Ayúdame a crear un brief para una nueva campaña',
+        description: 'Nuevo proyecto',
+        prompt: 'Ayúdame a crear un brief para un nuevo proyecto',
         priority: 1,
       },
       {
@@ -385,7 +385,7 @@ export const ZONE_CONFIGS: Record<KiroZone, ZoneConfig> = {
         icon: BarChart3,
         label: 'Analizar Métricas',
         description: 'Rendimiento',
-        prompt: 'Analiza las métricas de rendimiento de mis campañas',
+        prompt: 'Analiza las métricas de rendimiento de mis proyectos',
         priority: 4,
       },
       {

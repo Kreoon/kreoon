@@ -285,16 +285,16 @@ const Content = () => {
                 <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
                   {mktFilter === 'all'
                     ? isCreator
-                      ? 'Explora campañas y acepta ofertas para comenzar a crear contenido'
-                      : 'Contrata creadores o publica campañas para recibir contenido'
+                      ? 'Explora el marketplace y acepta propuestas para comenzar a crear contenido'
+                      : 'Contrata creadores en el marketplace para recibir contenido'
                     : 'No hay contenido con este filtro'}
                 </p>
                 {mktFilter === 'all' && (
                   <button
-                    onClick={() => navigate(isCreator ? '/marketplace/campaigns' : '/marketplace')}
+                    onClick={() => navigate('/marketplace')}
                     className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors"
                   >
-                    {isCreator ? 'Explorar Campañas' : 'Buscar Creadores'}
+                    {isCreator ? 'Explorar Marketplace' : 'Buscar Creadores'}
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 )}

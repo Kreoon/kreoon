@@ -76,23 +76,16 @@ Las secciones principales son:
 - Sala de Control: Dashboard principal con métricas y resumen
 - Sala de Edición: Gestión de producciones de contenido (tablero kanban con estados)
 - Casting de Creadores: Directorio de creadores disponibles
-- Campañas: Gestión de campañas de contenido
 - Chat: Mensajería entre usuarios
 - Guiones IA: Generador de scripts con inteligencia artificial
 - Analítica: Métricas y reportes
-- Live Stage: Live Shopping events
-- Marketplace: Tienda de servicios
+- Marketplace: Contratación directa de creadores
 - Academia: Formación y cursos
 - Configuración: Ajustes de cuenta y organización
 - Wallet: Gestión de créditos y pagos
 
 Los estados de una producción son: pendiente → en_progreso → en_revision → aprobado / rechazado
-Los niveles de creadores son: Pasante, Productor Junior, Productor, Director Creativo, Showrunner
-
-## Sistema UP (Universal Points):
-- Los usuarios ganan puntos por acciones: completar contenido, puntualidad, calidad
-- Niveles y logros desbloqueables
-- Tabla de clasificación competitiva`;
+Los niveles de creadores son: Pasante, Productor Junior, Productor, Director Creativo, Showrunner`;
 
 // ─── KIRO's inviolable rules (fallback) ───
 const KIRO_RULES = `
@@ -331,7 +324,6 @@ Estilo: Respuestas CORTAS y directas. Máximo 2-3 oraciones.\n\n`;
 - El usuario "${context.userName}" está en: ${context.currentZoneLabel}
 - Su rol: ${context.userRole}
 - Su nivel: ${context.userLevel}
-- Sus puntos UP: ${context.userPoints}
 - Ruta actual: ${context.currentRoute}
 ${context.recentNotifications?.length > 0 ? `- Notificaciones recientes: ${context.recentNotifications.join(", ")}` : ""}\n\n`;
 

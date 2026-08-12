@@ -69,7 +69,7 @@ const USE_CASES: UseCase[] = [
       "Un creador quiere monetizar haciendo UGC para marcas sin necesitar seguidores masivos.",
     benefits: [
       "Crea tu perfil y portafolio profesional",
-      "Aplica a campañas pagadas de marcas reales",
+      "Recibe proyectos pagados de marcas reales",
       "Recibe feedback y mejora con cada proyecto",
       "Cobra de forma segura con protección escrow",
     ],

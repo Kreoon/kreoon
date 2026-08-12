@@ -96,8 +96,8 @@ const TESTIMONIALS: Testimonial[] = [
     handle: '@mateocrea',
     avatar: 'MG',
     plan: 'pro',
-    quote: 'Con Creator Pro puedo mostrar mis redes y contacto real. Ya cerré 3 campañas este mes gracias al perfil profesional.',
-    metric: '3 campañas cerradas / mes',
+    quote: 'Con Creator Pro puedo mostrar mis redes y contacto real. Ya cerré 3 proyectos este mes gracias al perfil profesional.',
+    metric: '3 proyectos cerrados / mes',
   },
   {
     name: 'Daniela Ruiz',
@@ -390,7 +390,7 @@ export default function CreatorPricingPage() {
                     Facturado anualmente (${annualPremium * 12} / año)
                   </p>
                 )}
-                <p className="mt-2 text-sm text-zinc-500">Para creadores que quieren destacar y cerrar mas campañas.</p>
+                <p className="mt-2 text-sm text-zinc-500">Para creadores que quieren destacar y cerrar mas proyectos.</p>
               </div>
 
               <div className="flex flex-col gap-2.5 mb-8 flex-1">

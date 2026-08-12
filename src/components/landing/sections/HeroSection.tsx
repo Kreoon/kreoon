@@ -184,7 +184,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
               <div className="mt-4 flex gap-3">
                 <div className="flex-1 rounded-sm bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-kreoon-purple-400">3</p>
-                  <p className="text-xs text-kreoon-text-muted">campañas activas</p>
+                  <p className="text-xs text-kreoon-text-muted">proyectos activos</p>
                 </div>
                 <div className="flex-1 rounded-sm bg-kreoon-bg-secondary/80 px-3 py-2 text-center">
                   <p className="text-lg font-bold text-kreoon-purple-400">12</p>
@@ -253,7 +253,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
               <p className="text-lg font-bold text-green-400">+45%</p>
             </motion.div>
             
-            {/* Card flotante 4 - Campaña aprobada */}
+            {/* Card flotante 4 - Entrega aprobada */}
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{
@@ -266,7 +266,7 @@ export function HeroSection({ onGetStarted, onWatchDemo }: HeroSectionProps) {
             >
               <p className="flex items-center gap-1.5 text-sm font-semibold text-green-400">
                 <CheckCircle className="h-4 w-4" />
-                Campaña aprobada
+                Entrega aprobada
               </p>
             </motion.div>
           </div>

@@ -17,7 +17,7 @@ const EARLY_BIRD_PERKS = [
   {
     icon: Gift,
     title: 'Acceso anticipado a todo',
-    description: 'Serás de los primeros en acceder a nuevas funciones, campañas exclusivas y herramientas antes que nadie.',
+    description: 'Serás de los primeros en acceder a nuevas funciones y herramientas antes que nadie.',
   },
   {
     icon: Trophy,
@@ -30,8 +30,8 @@ const EARLY_BIRD_PERKS = [
 const BENEFITS = [
   {
     icon: Megaphone,
-    title: 'Aplica a campañas pagadas',
-    description: 'Marcas y agencias publican campañas con presupuesto real. Tú aplicas con un clic — sin DMs fríos, sin negociar tarifas por chat.',
+    title: 'Recibe propuestas pagadas',
+    description: 'Marcas y agencias te encuentran en el marketplace y te contratan directo, con presupuesto real — sin DMs fríos, sin negociar tarifas por chat.',
     color: 'text-pink-400 bg-pink-500/10',
   },
   {
@@ -73,13 +73,13 @@ const BENEFITS = [
   {
     icon: Palette,
     title: 'Todo en un solo lugar',
-    description: 'Campañas, contratos, entregas, pagos, portfolio, redes y comunicación con marcas — todo centralizado. Adiós al caos de WhatsApp y Excel.',
+    description: 'Proyectos, contratos, entregas, pagos, portfolio, redes y comunicación con marcas — todo centralizado. Adiós al caos de WhatsApp y Excel.',
     color: 'text-rose-400 bg-rose-500/10',
   },
   {
     icon: Trophy,
     title: 'Reputación que te abre puertas',
-    description: 'Cada proyecto completado sube tu rating y nivel. Más reputación = mejores campañas, mejores marcas y mejores tarifas.',
+    description: 'Cada proyecto completado sube tu rating y nivel. Más reputación = mejores proyectos, mejores marcas y mejores tarifas.',
     color: 'text-amber-400 bg-amber-500/10',
   },
 ];
@@ -95,8 +95,8 @@ const STEPS = [
   {
     number: '02',
     icon: Search,
-    title: 'Aplica a campañas',
-    description: 'Explora campañas de marcas y agencias. Aplica a las que encajan con tu estilo y tarifa.',
+    title: 'Recibe propuestas',
+    description: 'Las marcas y agencias te descubren en el marketplace. Tú decides qué proyectos aceptar según tu estilo y tarifa.',
   },
   {
     number: '03',

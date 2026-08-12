@@ -48,8 +48,8 @@ const NEXT_STEPS = [
   {
     icon: Briefcase,
     title: 'Explora oportunidades',
-    description: 'Descubre campañas de marcas buscando creadores',
-    link: '/marketplace/campaigns',
+    description: 'Descubre marcas que están buscando creadores',
+    link: '/marketplace',
   },
   {
     icon: Users,

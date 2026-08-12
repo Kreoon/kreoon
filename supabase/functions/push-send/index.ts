@@ -66,7 +66,7 @@ Deno.serve(async (req: Request) => {
     const payload = JSON.stringify({
       title: copy?.title ?? "KREOON",
       body: copy ? copy.body(message) : "Tienes una nueva notificacion",
-      url: "/feed",
+      url: "/dashboard",
     });
 
     let sent = 0;

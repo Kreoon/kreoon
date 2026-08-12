@@ -353,7 +353,7 @@ Responde en JSON con:
   "strengths": ["fortaleza 1", "fortaleza 2"],
   "improvements": ["mejora 1", "mejora 2"],
   "on_time": true/false,
-  "bonus_points": 0-50 (puntos UP extra por excelencia)
+  "bonus_points": 0-50 (puntos de bonificación por excelencia)
 }`;
 
   const tools = [{

@@ -71,7 +71,6 @@ const MODULE_LABELS: Record<string, string> = {
   "talent-ai": "Talento IA",
   "build-image-prompt": "Prompts Imágenes",
   "analyze-video-content": "Análisis Video",
-  "feed-recommendations": "Recomendaciones Feed",
   "marketplace-ai-search": "Búsqueda Marketplace",
   "process-client-dna": "DNA Cliente",
   "generate-project-dna": "DNA Proyecto",

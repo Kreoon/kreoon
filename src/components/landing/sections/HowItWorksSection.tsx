@@ -39,7 +39,7 @@ const BRAND_STEPS: Step[] = [
   {
     number: "01",
     icon: FileText,
-    title: "Crea tu campaña",
+    title: "Define tu proyecto",
     description:
       "Define qué contenido necesitas, tu presupuesto y el estilo que buscas.",
     visual: "form",
@@ -65,7 +65,7 @@ const BRAND_STEPS: Step[] = [
     icon: TrendingUp,
     title: "Escala y vende",
     description:
-      "Publica, mide resultados y activa Live Shopping para convertir.",
+      "Publica, mide resultados y escala lo que mejor convierte.",
     visual: "chart",
   },
 ];
@@ -81,9 +81,9 @@ const CREATOR_STEPS: Step[] = [
   {
     number: "02",
     icon: Search,
-    title: "Aplica a campañas",
+    title: "Conecta con marcas",
     description: "Encuentra marcas que te necesitan. Una sola plataforma.",
-    visual: "campaigns",
+    visual: "brands",
   },
   {
     number: "03",
@@ -96,7 +96,7 @@ const CREATOR_STEPS: Step[] = [
     number: "04",
     icon: Wallet,
     title: "Cobra y crece",
-    description: "Recibe pagos seguros y sube de nivel con cada campaña.",
+    description: "Recibe pagos seguros y sube de nivel con cada proyecto.",
     visual: "growth",
   },
 ];
@@ -119,7 +119,7 @@ const AGENCY_STEPS: Step[] = [
   {
     number: "03",
     icon: GitBranch,
-    title: "Gestiona campañas",
+    title: "Gestiona proyectos",
     description: "Crea briefs, asigna creadores internos o externos, y trackea entregas.",
     visual: "kanban",
   },
@@ -220,7 +220,7 @@ function StepVisual({
   }
 
   // Creator visuals
-  if (type === "profile" || type === "campaigns" || type === "produce" || type === "growth") {
+  if (type === "profile" || type === "brands" || type === "produce" || type === "growth") {
     return (
       <div
         className={cn(

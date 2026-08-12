@@ -5,7 +5,8 @@ import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp,
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
-  Building2, Scissors, Zap, Trophy, Crown, Store
+  Building2, Scissors, Zap, Trophy, Crown, Store,
+  Clapperboard, AlertTriangle, PackageCheck
 } from "lucide-react";
 import { format, endOfMonth } from "date-fns";
 import { es } from "date-fns/locale";
@@ -362,6 +363,20 @@ function DashboardSkeleton() {
 }
 
 
+// ─── Reglas de los widgets operativos del dashboard ─────────────────────────
+// Valores tomados del enum `content_status` real; verificados contra los datos
+// de producción el 2026-08-11. No agregar estados que no existan en el enum.
+// Umbral de "parado": 14 días. Elegido sobre la distribución real de updated_at,
+// que separa limpio el backlog aparcado (guiones y asignaciones sin tocar desde
+// junio/julio) del trabajo que sí se movió en las últimas dos semanas.
+const DIAS_SIN_MOVIMIENTO = 14;
+// Producción: el trabajo está en manos del equipo. Se excluye 'draft' (aún no arranca).
+const ESTADOS_EN_PRODUCCION = ['script_pending', 'script_approved', 'assigned', 'recording', 'recorded', 'editing'];
+// La pelota está del lado del cliente (mismo criterio que useClientPendingReviews).
+const ESTADOS_ESPERANDO_CLIENTE = ['review', 'delivered', 'issue'];
+// Terminales: ya no se mueven, no cuentan como parados.
+const ESTADOS_TERMINALES = ['approved', 'archived', 'paid', 'rejected'];
+
 export default function Dashboard() {
   const { user, isAdmin, isClient, profile } = useAuth();
   const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
@@ -714,7 +729,34 @@ export default function Dashboard() {
   const inProgress = content.filter(c => ['recording', 'editing'].includes(c.status)).length;
   const completed = content.filter(c => c.status === 'approved').length;
   const pending = content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)).length;
-  
+
+  // ─── Widgets operativos ───────────────────────────────────────────────────
+  // Reglas verificadas contra los datos reales de producción (2026-08-11).
+  // `content` ya viene sin borrados (get_org_content filtra deleted_at) y
+  // acotado a la organización actual, así que aquí solo se filtra por estado/fecha.
+  const ahoraMs = Date.now();
+  const limiteEntregasMs = ahoraMs - 7 * 24 * 60 * 60 * 1000;
+  const limiteSinMovimientoMs = ahoraMs - DIAS_SIN_MOVIMIENTO * 24 * 60 * 60 * 1000;
+
+  // 1. Proyectos activos: contenido que el equipo está produciendo ahora mismo.
+  const proyectosActivos = content.filter(c => ESTADOS_EN_PRODUCCION.includes(c.status));
+  // 2. Esperando al cliente: entregado o con novedad, pendiente de que el cliente responda.
+  const esperandoCliente = content.filter(c => ESTADOS_ESPERANDO_CLIENTE.includes(c.status));
+  // 3. Entregas de la semana: se marcó delivered_at en los últimos 7 días
+  //    (delivered_at persiste aunque el ítem ya haya avanzado a aprobado o novedad).
+  const entregasSemana = content.filter(c => {
+    if (!c.delivered_at) return false;
+    const entregadoMs = new Date(c.delivered_at).getTime();
+    return entregadoMs >= limiteEntregasMs && entregadoMs <= ahoraMs;
+  });
+  // 4. Parados: no terminal y sin ningún cambio desde hace DIAS_SIN_MOVIMIENTO.
+  const contenidoParado = content.filter(c => {
+    if (ESTADOS_TERMINALES.includes(c.status)) return false;
+    if (!c.updated_at) return false;
+    return new Date(c.updated_at).getTime() < limiteSinMovimientoMs;
+  });
+
+
   // Payment stats - CORRECTED LOGIC - now separated by currency
   // Unpaid creator content: approved content where creator hasn't been paid AND has a payment value assigned
   const unpaidCreatorContent = content.filter(c => c.status === 'approved' && !c.creator_paid && (c.creator_payment || 0) > 0);
@@ -1015,6 +1057,61 @@ export default function Dashboard() {
 
           {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
           <TabsContent value="principal" className="space-y-3 mt-0">
+            {/* Row 0: Widgets operativos - qué está pasando ahora mismo */}
+            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
+              {/* Proyectos activos */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Proyectos activos"
+                  value={<AnimatedNumber value={proyectosActivos.length} />}
+                  icon={Clapperboard}
+                  iconColor="hsl(200 100% 50%)"
+                  borderColor="hsl(200 100% 50% / 0.3)"
+                  subtitle="En producción ahora"
+                  onClick={() => openKpiDialog('Proyectos activos', proyectosActivos)}
+                />
+              </StaggerItem>
+
+              {/* Esperando al cliente */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Esperando al cliente"
+                  value={<AnimatedNumber value={esperandoCliente.length} />}
+                  icon={Clock}
+                  iconColor="hsl(45 100% 50%)"
+                  borderColor="hsl(45 100% 50% / 0.3)"
+                  subtitle="Falta que el cliente responda"
+                  onClick={() => openKpiDialog('Esperando al cliente', esperandoCliente)}
+                />
+              </StaggerItem>
+
+              {/* Entregas esta semana */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title="Entregas esta semana"
+                  value={<AnimatedNumber value={entregasSemana.length} />}
+                  icon={PackageCheck}
+                  iconColor="hsl(160 100% 45%)"
+                  borderColor="hsl(160 100% 45% / 0.3)"
+                  subtitle="Entregado en los últimos 7 días"
+                  onClick={() => openKpiDialog('Entregas esta semana', entregasSemana)}
+                />
+              </StaggerItem>
+
+              {/* Parados */}
+              <StaggerItem>
+                <DashboardKpiCard
+                  title={`Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`}
+                  value={<AnimatedNumber value={contenidoParado.length} />}
+                  icon={AlertTriangle}
+                  iconColor="hsl(0 80% 55%)"
+                  borderColor="hsl(0 80% 55% / 0.3)"
+                  subtitle="Sin ningún cambio"
+                  onClick={() => openKpiDialog(`Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`, contenidoParado)}
+                />
+              </StaggerItem>
+            </StaggerContainer>
+
             {/* Row 1: Main KPIs - Tech Style */}
             <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
               {/* Total Contenidos */}

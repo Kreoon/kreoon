@@ -10,7 +10,7 @@ const PAIN_POINTS = [
     pain: 'Ingresos inconsistentes',
     painDetail: 'Un mes facturas bien, el siguiente no sabes de dónde saldrá.',
     solution: 'Marketplace con proyectos pagados',
-    solutionDetail: 'Accede a campañas activas de marcas que ya tienen presupuesto asignado.',
+    solutionDetail: 'Recibe proyectos de marcas que ya tienen presupuesto asignado.',
   },
   {
     icon: Eye,
@@ -34,7 +34,7 @@ const PAIN_POINTS = [
     pain: 'Conseguir clientes es agotador',
     painDetail: 'Pasas más tiempo buscando trabajo que creando.',
     solution: 'Las marcas vienen a ti',
-    solutionDetail: 'Marcas publican campañas y tú aplicas con un clic. Sin DMs fríos.',
+    solutionDetail: 'Las marcas te encuentran en el marketplace y te contratan. Sin DMs fríos.',
   },
 ];
 

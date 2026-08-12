@@ -42,7 +42,6 @@ interface NotificationPayload {
     | "content_recorded"
     | "content_approved"
     | "content_issue"
-    | "application_approved"
     | "project_created"
     | "script_pending"
     | "content_delivered"
@@ -92,8 +91,6 @@ async function handleNotification(
       return notifyContentApproved(supabase, payload.record);
     case "content_issue":
       return notifyContentIssue(supabase, payload.record, payload.old_record);
-    case "application_approved":
-      return notifyApplicationApproved(supabase, payload.record);
     case "project_created":
       return notifyProjectCreated(supabase, payload.record);
     case "script_pending":
@@ -637,60 +634,6 @@ async function notifyContentCorrected(
 }
 
 // ─── MARKETPLACE — KREOON Branding ──────────────────────
-
-async function notifyApplicationApproved(
-  supabase: any,
-  record: Record<string, any>
-): Promise<{ sent: boolean; to?: string }> {
-  const { data: creatorProfile } = await supabase
-    .from("creator_profiles")
-    .select("user_id, display_name, phone, whatsapp_phone, whatsapp_enabled")
-    .eq("id", record.creator_id)
-    .single();
-  if (creatorProfile) {
-    creatorProfile.whatsapp_phone = creatorProfile.whatsapp_phone || creatorProfile.phone;
-  }
-
-  if (!creatorProfile?.user_id) return { sent: false };
-
-  const profile = await getProfile(supabase, creatorProfile.user_id);
-  if (!profile?.email) return { sent: false };
-
-  const { data: campaign } = await supabase
-    .from("marketplace_campaigns")
-    .select("title, brand_id")
-    .eq("id", record.campaign_id)
-    .single();
-
-  const campaignTitle = campaign?.title || "Campaña";
-  let brandName = "una marca";
-  if (campaign?.brand_id) {
-    const { data: brand } = await supabase
-      .from("brands")
-      .select("name")
-      .eq("id", campaign.brand_id)
-      .single();
-    if (brand?.name) brandName = brand.name;
-  }
-
-  // Sin plantilla Meta para application_approved — omitido por ahora
-  const waPhone = creatorProfile.whatsapp_enabled ? creatorProfile.whatsapp_phone : null;
-  void waPhone; // declarado para uso futuro cuando exista template
-
-  const body = `<p style="color:#e2e8f0;font-size:16px;line-height:1.6">Hola <strong>${profile.full_name || creatorProfile.display_name || "Creador"}</strong>,</p><p style="color:#94a3b8;font-size:15px;line-height:1.6">Tu aplicación a una campaña del marketplace ha sido aprobada:</p><div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:8px;padding:16px;margin:16px 0"><p style="color:#e2e8f0;font-size:16px;margin:0 0 4px;font-weight:600">${campaignTitle}</p><p style="color:#94a3b8;font-size:13px;margin:0">Marca: ${brandName}</p><p style="color:#22c55e;font-size:14px;margin:8px 0 0;font-weight:500">Aplicación aprobada</p></div>${ctaButton("Ver en Marketplace", "https://kreoon.com/marketplace")}`;
-
-  const html = wrapKreoonEmail("Aprobado en campaña", body);
-
-  return sendAndNotify(
-    supabase, creatorProfile.user_id, profile.email,
-    `KREOON Marketplace — Aprobado: ${campaignTitle}`,
-    html,
-    "application_approved",
-    "Aplicación aprobada",
-    `Fuiste aprobado en la campaña "${campaignTitle}" de ${brandName}`,
-    "/marketplace"
-  );
-}
 
 async function notifyProjectCreated(
   supabase: any,

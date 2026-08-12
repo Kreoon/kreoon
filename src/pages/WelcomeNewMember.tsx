@@ -191,7 +191,7 @@ export default function WelcomeNewMember() {
             title={
               role === "creator"
                 ? "Publica tu primer contenido"
-                : "Crea tu primera campaña"
+                : "Contrata tu primer creador"
             }
             description={
               role === "creator"

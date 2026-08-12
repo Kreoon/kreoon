@@ -57,7 +57,7 @@ const MOCK_TESTIMONIALS: Testimonial[] = [
     company: "Content Creator",
     quote:
       "La comunidad y el sistema de reputación me ayudaron a conectar con marcas que encajan con mi estilo.",
-    metric: { label: "Campañas cerradas", value: "+48" },
+    metric: { label: "Proyectos cerrados", value: "+48" },
   },
   // Editores
   {

@@ -334,7 +334,7 @@ export default function OrgRegister() {
                   >
                     {pageConfig.stats_campaigns}+
                   </div>
-                  <div className="text-xs text-white/60 mt-1">Campañas</div>
+                  <div className="text-xs text-white/60 mt-1">Proyectos</div>
                 </div>
               )}
               {pageConfig.stats_videos && (

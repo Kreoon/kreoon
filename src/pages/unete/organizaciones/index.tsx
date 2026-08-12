@@ -19,7 +19,7 @@ const BENEFITS = [
 
 const FEATURES = [
   'Gestión de creadores y editores',
-  'Campañas para clientes externos',
+  'Proyectos para clientes externos',
   'Reclutamiento de talento',
   'Pagos centralizados',
   'Reportes y analytics',
@@ -78,7 +78,7 @@ export default function OrganizacionesLanding() {
             </span>
           </h1>
           <p className="text-white/60 max-w-2xl mx-auto text-lg mb-8">
-            Gestiona equipos, campañas y pagos desde una sola plataforma
+            Gestiona equipos, proyectos y pagos desde una sola plataforma
             diseñada para agencias y productoras
           </p>
 

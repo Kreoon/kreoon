@@ -23,7 +23,7 @@ interface MCPKey {
 }
 
 const MCP_SERVER_URL = 'https://mcp.kreoon.com';
-const TOTAL_SCOPES = 6; // scopes:write, creators:read, profiles:write, social:write, campaigns:read, campaigns:write
+const TOTAL_SCOPES = 4; // scripts:write, creators:read, profiles:write, social:write
 
 async function extractErrMsg(err: unknown): Promise<string> {
   if (err && typeof err === 'object' && 'context' in err) {
@@ -39,8 +39,6 @@ const SCOPE_LABELS: Record<string, string> = {
   'scripts:write': 'Crear guiones',
   'profiles:write': 'Editar perfil',
   'creators:read': 'Buscar creadores',
-  'campaigns:read': 'Ver campañas',
-  'campaigns:write': 'Gestionar campañas',
   'social:write': 'Publicar en redes',
 };
 

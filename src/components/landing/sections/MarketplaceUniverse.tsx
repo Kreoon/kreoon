@@ -225,7 +225,7 @@ export function MarketplaceUniverse() {
           {[
             { label: "Creadores", value: stats ? formatNumber(stats.creators_count) : "...", icon: Users },
             { label: "Marcas", value: stats ? formatNumber(stats.brands_count) : "...", icon: Heart },
-            { label: "Campañas", value: stats ? formatNumber(stats.campaigns_completed) : "...", icon: TrendingUp },
+            { label: "Entregas", value: stats ? formatNumber(stats.campaigns_completed) : "...", icon: TrendingUp },
             { label: "Videos", value: stats ? formatNumber(stats.videos_approved + 3200) : "...", icon: Video },
           ].map((stat, i) => (
             <motion.div

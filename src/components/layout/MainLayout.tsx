@@ -21,7 +21,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, UserCircle, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 

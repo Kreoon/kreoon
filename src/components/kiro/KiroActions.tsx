@@ -206,7 +206,7 @@ export function KiroActions({ onStateChange, onSendMessage, currentZone = 'gener
             animation: 'kiro-action-flash 2s ease-out forwards',
           }}
         >
-          <span>+{actionToast.points} UP</span>
+          <span>+{actionToast.points} pts</span>
           <span>✨</span>
         </div>
       )}

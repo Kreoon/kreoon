@@ -2,8 +2,6 @@ import * as React from "react";
 import { motion, useInView } from "framer-motion";
 import {
   Sparkles,
-  ShoppingBag,
-  Award,
   ShieldCheck,
   Users,
   MessageCircle,
@@ -76,14 +74,6 @@ const SECONDARY_FEATURES: SecondaryFeature[] = [
     comingSoonCta: "Únete a la lista de espera",
   },
   {
-    id: "rankings",
-    icon: Award,
-    title: "Rankings y Reputación",
-    description:
-      "Sistema de niveles e insignias que premia la excelencia.",
-    gradient: "from-kreoon-purple-500 to-kreoon-purple-700",
-  },
-  {
     id: "payments",
     icon: ShieldCheck,
     title: "Pagos Escrow Seguros",
@@ -100,16 +90,6 @@ const SECONDARY_FEATURES: SecondaryFeature[] = [
     description:
       "Red interna para conectar, aprender y crecer juntos.",
     gradient: "from-pink-500 to-rose-500",
-  },
-  {
-    id: "live-shopping",
-    icon: ShoppingBag,
-    title: "Live Shopping",
-    description:
-      "Vende en tiempo real con creadores. Convierte audiencia en clientes al instante.",
-    gradient: "from-kreoon-purple-500 to-kreoon-purple-700",
-    isComingSoon: true,
-    comingSoonCta: "Únete a la lista de espera",
   },
 ];
 

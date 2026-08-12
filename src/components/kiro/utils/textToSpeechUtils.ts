@@ -8,7 +8,7 @@ export type KiroVoiceEmotion = 'neutral' | 'happy' | 'excited' | 'thinking';
 /**
  * Clean text for voice synthesis:
  * - Removes markdown, emojis, URLs, special chars
- * - Converts "UP" points references for better pronunciation
+ * - Expands the "pts" abbreviation for better pronunciation
  * - Trims and normalizes whitespace
  */
 export function cleanTextForVoice(text: string): string {
@@ -35,7 +35,7 @@ export function cleanTextForVoice(text: string): string {
     .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')
     .replace(/[\u{200D}]/gu, '')
     // Improve pronunciation
-    .replace(/\bUP\b/g, 'puntos UP')
+    .replace(/\bpts\b/g, 'puntos')
     // Clean whitespace
     .replace(/\s+/g, ' ')
     .trim();

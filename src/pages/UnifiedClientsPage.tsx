@@ -965,7 +965,7 @@ export function UnifiedClientsContent() {
           organizationId={currentOrgId}
         />
 
-        {/* Campañas Dialog */}
+        {/* Paquetes Dialog */}
         {selectedForQuickDialog && (
           <ClientPackagesDialog
             clientId={selectedForQuickDialog.id}

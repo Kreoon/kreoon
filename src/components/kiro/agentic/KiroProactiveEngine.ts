@@ -189,7 +189,7 @@ const KIRO_MESSAGES: Record<ProactiveSuggestionType, string[]> = {
   achievement_close: [
     '¡Estás a {points} puntos del siguiente nivel!',
     'Un poco más y subes de nivel. ¡Vamos!',
-    '¡Casi lo logras! Te faltan {points} UP para el siguiente nivel.',
+    '¡Casi lo logras! Te faltan {points} puntos para el siguiente nivel.',
   ],
   tip_of_the_day: [
     '¿Sabías que puedes usar atajos de teclado?',

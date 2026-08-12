@@ -10,7 +10,7 @@ const COLUMNS = [
 ];
 
 const INITIAL_TASKS = [
-  { id: "t1", title: "Video Campaña Verano", brand: "Coca-Cola", status: "brief", creator: "Ana Tech" },
+  { id: "t1", title: "Video Lanzamiento Verano", brand: "Coca-Cola", status: "brief", creator: "Ana Tech" },
   { id: "t2", title: "Review Producto X", brand: "Nike", status: "strategy", creator: "Carlos Fit" },
   { id: "t3", title: "UGC Testimonial", brand: "L'Oréal", status: "production", creator: "Elena Creative" },
 ];

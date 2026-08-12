@@ -429,7 +429,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
             animation: 'kiro-notif-pop 1.5s ease-out forwards',
           }}
         >
-          <span>+{pointsToast.points} UP</span>
+          <span>+{pointsToast.points} pts</span>
           <span>✨</span>
         </div>
       )}

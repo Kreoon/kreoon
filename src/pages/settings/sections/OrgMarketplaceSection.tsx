@@ -153,7 +153,7 @@ export default function OrgMarketplaceSection() {
                 Marketplace para clientes
               </Label>
               <p className="text-xs text-muted-foreground">
-                Permite que los clientes de tu organización accedan al marketplace para buscar talento y crear campañas
+                Permite que los clientes de tu organización accedan al marketplace para buscar y contratar talento
               </p>
             </div>
             <Switch

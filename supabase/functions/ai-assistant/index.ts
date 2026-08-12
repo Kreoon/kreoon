@@ -45,12 +45,6 @@ Es un sistema integral de gestión de contenido UGC (User Generated Content) que
 4. Cliente revisa y solicita cambios si es necesario
 5. Admin aprueba final y publica
 
-### Sistema UP (Universal Points):
-- Los usuarios ganan puntos por acciones: completar contenido, puntualidad, calidad
-- Niveles y logros desbloqueables
-- Tabla de clasificación competitiva
-- Los embajadores ganan puntos adicionales por referidos activos
-
 ### Características del Chat:
 - Mensajes directos y grupos
 - Soporte para imágenes, videos, PDFs y audio

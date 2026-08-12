@@ -199,7 +199,7 @@ export function LevelUpCelebration({
                 'bg-yellow-500/20 border border-yellow-500/40'
               )}
             >
-              <span className="text-yellow-400 font-bold">+{pointsAwarded} UP</span>
+              <span className="text-yellow-400 font-bold">+{pointsAwarded} pts</span>
               <span className="text-lg">⭐</span>
             </div>
           )}

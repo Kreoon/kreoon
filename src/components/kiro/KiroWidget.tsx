@@ -514,15 +514,10 @@ export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {})
   // ═══════════════════════════════════════════════════════════════════════════
   // MOBILE RENDER
   // ═══════════════════════════════════════════════════════════════════════════
-  // En /feed inmersivo, a pedido directo, KIRO se alinea en la MISMA columna que audio/me
-  // gusta/guardar/compartir (right-3, mismo lado) pero arriba de toda la pila — no se mueve
-  // a otro corner. Si el usuario arrastro KIRO a un corner distinto de bottom-right, se
-  // respeta esa eleccion (no se fuerza la alineacion).
-  const isOnFeed = location.pathname === '/feed';
+  // Simplificacion 2026: al eliminarse el feed inmersivo ya no hay pila de acciones que
+  // esquivar, asi que KIRO se queda en el corner elegido por el usuario sin offset extra.
   const effectiveCorner = kiroSettings.preferredCorner;
-  // Alto aprox. de la columna de acciones (avatar+follow, audio, reaccion, guardar, compartir
-  // con sus gaps) — no hay medicion real del DOM, es un estimado para no tapar los botones.
-  const feedExtraBottomOffset = isOnFeed && effectiveCorner === 'bottom-right' ? 380 : 0;
+  const feedExtraBottomOffset = 0;
 
   if (isMobile) {
     return (

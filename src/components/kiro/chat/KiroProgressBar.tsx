@@ -69,7 +69,7 @@ export function KiroProgressBar({
   // Tooltip content
   const tooltipText = isMaxLevel
     ? `${level.emoji} ${level.name} | MAX`
-    : `Nivel ${level.level}: ${level.name} → Nivel ${nextLevel.level}: ${nextLevel.name} | Faltan ${formatPoints(pointsToNext)} UP`;
+    : `Nivel ${level.level}: ${level.name} → Nivel ${nextLevel.level}: ${nextLevel.name} | Faltan ${formatPoints(pointsToNext)} pts`;
 
   return (
     <>
@@ -175,7 +175,7 @@ export function KiroProgressBar({
           <span className="text-[11px] font-bold text-violet-300">
             {formatPoints(points)}
           </span>
-          <span className="text-[10px] text-violet-500">UP</span>
+          <span className="text-[10px] text-violet-500">pts</span>
         </div>
       </div>
     </>

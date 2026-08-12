@@ -90,12 +90,6 @@ const MODULE_CONFIG: Record<string, ModuleConfig> = {
     description: 'Evaluación y matching de creadores',
     color: 'amber',
   },
-  gamification: {
-    emoji: '🎮',
-    label: 'Gamificación',
-    description: 'Sistema UP: calidad, eventos, antifraude',
-    color: 'green',
-  },
   research: {
     emoji: '🔬',
     label: 'Investigación',
@@ -107,12 +101,6 @@ const MODULE_CONFIG: Record<string, ModuleConfig> = {
     label: 'ADN',
     description: 'ADN de marca, talento y producto',
     color: 'rose',
-  },
-  streaming: {
-    emoji: '📡',
-    label: 'Streaming',
-    description: 'Scripts para lives y live commerce',
-    color: 'orange',
   },
   social: {
     emoji: '📲',

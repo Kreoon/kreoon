@@ -6,10 +6,10 @@ import {
   Building2, UserCircle, Palette, Briefcase, UsersRound,
   Target, Settings, UserPlus, Layers, LineChart,
   TrendingUp,
-  Video, Bookmark, Sparkles, Globe, Search,
+  Video, Sparkles,
   CheckCircle2, ArrowRight, MessageSquare, Bell, Ticket, Ban,
   LayoutDashboard, FolderKanban, Network, Bot,
-  FileText, Play, Heart, Share2, Rocket, Clock, Wand2,
+  FileText, Play, Share2, Rocket, Clock, Wand2,
   Mic, Camera, Workflow, BarChart3, PieChart, Mail, Phone,
   CreditCard, Package, ShoppingBag, Gift,
   Code, Puzzle, Smartphone, Monitor, CloudUpload, Webhook,
@@ -159,14 +159,7 @@ export function ModulesSection() {
       name: 'Clients',
       status: 'live',
       description: 'CRM para marcas y clientes',
-      features: ['Campañas y contratos', 'Productos por cliente', 'Portal de cliente', 'Facturación']
-    },
-    {
-      icon: Globe,
-      name: 'Social Network',
-      status: 'live',
-      description: 'Red social profesional tipo TikTok/Instagram',
-      features: ['Feed vertical', 'Portafolios', 'Seguidos/Seguidores', 'Descubrimiento']
+      features: ['Productos por cliente', 'Portal de cliente', 'Facturación']
     },
     {
       icon: Bot,
@@ -285,7 +278,6 @@ export function WhatIsSection() {
   const capabilities = [
     { icon: LayoutDashboard, text: 'Tablero Kanban inteligente' },
     { icon: FolderKanban, text: 'Gestión completa de contenido' },
-    { icon: Globe, text: 'Red social profesional' },
     { icon: Bot, text: 'IA en cada módulo' },
     { icon: CreditCard, text: 'Control de pagos' },
     { icon: MessageSquare, text: 'Chat interno con IA' },
@@ -465,49 +457,6 @@ export function HowItWorksSection() {
   );
 }
 
-// Section 6: Social Creators - Mejorado
-export function SocialCreatorsSection() {
-  const features = [
-    { icon: UserCircle, label: 'Portafolios públicos', desc: 'Muestra tu mejor trabajo' },
-    { icon: Video, label: 'Feed vertical', desc: 'Videos estilo TikTok' },
-    { icon: Sparkles, label: 'Stories 24h', desc: 'Contenido efímero' },
-    { icon: Bookmark, label: 'Guardados', desc: 'Organiza inspiración' },
-    { icon: Heart, label: 'Likes y follows', desc: 'Construye audiencia' },
-    { icon: Search, label: 'Descubrimiento', desc: 'Encuentra talento' },
-  ];
-
-  return (
-    <section id="social" className="py-24 px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
-            <Globe className="h-3 w-3 mr-1" />
-            Red Social Profesional
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            Social Creators
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Tu perfil no es un CV, es un activo digital que trabaja por ti.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {features.map((f, i) => (
-            <Card key={i} className="bg-card/50 border-border/50 hover:border-primary/30 transition-all duration-300 group">
-              <CardContent className="p-6">
-                <f.icon className="h-8 w-8 text-primary mb-3 group-hover:scale-110 transition-transform" />
-                <span className="text-foreground font-medium block">{f.label}</span>
-                <span className="text-xs text-muted-foreground">{f.desc}</span>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // NEW Section: Roadmap - Lo que viene
 export function RoadmapSection() {
   const upcoming = [
@@ -646,7 +595,6 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: Lock, text: 'Permisos por rol' },
         { icon: Video, text: 'Gestión de contenido' },
         { icon: MessageSquare, text: 'Chat interno + IA' },
-        { icon: Globe, text: 'Red social' },
       ],
       cta: 'Empezar gratis',
       featured: false,
@@ -1063,7 +1011,6 @@ export function PrivacySection() {
   const features = [
     { icon: Database, title: 'Datos por Organización', desc: 'Base de datos aislada por cada org' },
     { icon: Eye, title: 'Control de Visibilidad', desc: 'Decide qué es público y qué privado' },
-    { icon: Globe, title: 'Red Social Configurable', desc: 'Pública o solo para tu organización' },
     { icon: Lock, title: 'Permisos Avanzados', desc: 'Control granular por rol y usuario' },
   ];
 

@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURACIÓN DE GAMIFICACIÓN PARA KIRO
-// Sistema de UP Points integrado con la mascota IA
+// Sistema de puntos local de KIRO integrado con la mascota IA
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ export const KIRO_LEVELS: KiroLevel[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Acciones que otorgan UP Points a través de KIRO.
+ * Acciones que otorgan puntos a través de KIRO.
  */
 export const KIRO_POINT_SOURCES: PointSource[] = [
   {
@@ -277,7 +277,7 @@ export function formatPoints(points: number): string {
 export const KIRO_GAME_PHRASES = [
   '¡A atrapar tokens! 🎯',
   '¿Listo para batir tu récord? 💪',
-  'Los tokens UP te esperan ⭐',
+  'Los tokens te esperan ⭐',
   '¡Hoy es tu día de suerte! 🍀',
   '¡Muestra tus reflejos! ⚡',
   '¡Vamos por esos puntos! 🚀',

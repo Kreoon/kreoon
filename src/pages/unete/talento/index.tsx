@@ -71,7 +71,7 @@ export default function TalentoLanding() {
               ¿Listo para empezar?
             </h2>
             <p className="text-kreoon-text-secondary text-lg mb-8 max-w-xl mx-auto">
-              Regístrate gratis, accede a campañas pagadas y herramientas de IA.
+              Regístrate gratis, recibe proyectos pagados y herramientas de IA.
               Tu talento merece ser visto.
             </p>
             <button

@@ -11,7 +11,6 @@ import {
   Kanban,
   RefreshCw,
   Store,
-  Play,
   Bookmark,
   FileText,
   Megaphone,
@@ -21,7 +20,6 @@ import {
   UserPlus,
   MessageSquare,
   ListChecks,
-  Video,
   DollarSign,
   Crown,
   Share2,
@@ -30,8 +28,13 @@ import {
   Key,
   Dna,
   Package,
-  CircleUser,
   Receipt,
+  Heart,
+  Users2,
+  Trash2,
+  Blocks,
+  LayoutList,
+  GraduationCap,
 } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -66,153 +69,151 @@ interface NavSection {
   items: NavItem[];
 }
 
-// ── Navigation sections — MUST mirror Sidebar.tsx exactly ──
+// ── Navegación simplificada 2026 — DEBE ser idéntica a Sidebar.tsx (contenido y orden) ──
+// Máximo 6 entradas principales por rol en una sección sin label; lo secundario vive en "MÁS".
 
-const MARKETING_ITEMS: NavItem[] = [
-  { name: "Social Hub", href: "/social-hub", icon: Share2 },
-  { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus },
+const SETTINGS_ITEM: NavItem = { name: "Configuración", href: "/settings", icon: Settings };
+const ACADEMIA_ITEM: NavItem = { name: "Academia", href: "/academia", icon: GraduationCap };
+const PLAN_ITEM: NavItem = { name: "Mi Plan", href: "/planes", icon: Crown };
+const SOCIAL_HUB_ITEM: NavItem = { name: "Social Hub", href: "/social-hub", icon: Share2 };
+const AD_GENERATOR_ITEM: NavItem = { name: "Generador de Anuncios", href: "/ad-generator", icon: ImagePlus };
+
+// Secundarios que comparten admin y estratega (mismo alcance de gestión)
+const ORG_MORE_ITEMS: NavItem[] = [
+  ACADEMIA_ITEM,
+  { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
+  { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
+  SOCIAL_HUB_ITEM,
+  AD_GENERATOR_ITEM,
+  PLAN_ITEM,
 ];
 
-const CONFIG_ITEMS: NavItem[] = [
-  { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-  { name: "Mi Plan", href: "/planes", icon: Crown },
-  { name: "Configuración", href: "/settings", icon: Settings },
+// Secundarios de creador y editor (no gestionan clientes, finanzas ni talento)
+const TALENT_MORE_ITEMS: NavItem[] = [
+  { name: "Portafolio", href: "/content", icon: FileText },
+  SOCIAL_HUB_ITEM,
+  AD_GENERATOR_ITEM,
+  PLAN_ITEM,
 ];
 
 const adminSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "",
     items: [
-      { name: "Centro de Control", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
-      { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
-      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-    ]
-  },
-  {
-    label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS,
-  },
-  {
-    label: "GESTIÓN",
-    items: [
-      { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Inicio", href: "/dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Proyectos", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Clientes", href: "/clientes", icon: Building2, requiresOrg: true },
-      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
+      { name: "Creadores", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Guiones", href: "/scripts", icon: Sparkles, requiresOrg: true },
+      SETTINGS_ITEM,
     ]
   },
+  { label: "MÁS", items: ORG_MORE_ITEMS },
   {
-    label: "CRM PLATAFORMA",
+    // CRM de plataforma: fuera de las 6 principales, pero no se pierde.
+    label: "PLATAFORMA",
     items: [
       { name: "CRM", href: "/crm", icon: LayoutDashboard },
       { name: "Organizaciones", href: "/crm/organizaciones", icon: Building2 },
       { name: "Personas", href: "/crm/personas", icon: Users },
+      { name: "Comunidades", href: "/crm/comunidades", icon: Users2 },
       { name: "Revenue Plataforma", href: "/crm/finanzas", icon: DollarSign },
       { name: "Email Marketing", href: "/crm/email-marketing", icon: Megaphone },
+      { name: "Papelera", href: "/admin/papelera", icon: Trash2, platformRootOnly: true },
+      { name: "Módulos en Desarrollo", href: "/admin/dev-modules", icon: Blocks, platformRootOnly: true },
+      { name: "Todas las Páginas (QA)", href: "/admin/qa-paginas", icon: LayoutList, platformRootOnly: true },
     ]
   },
-  { label: "CONFIG", items: CONFIG_ITEMS }
 ];
 
 const strategistSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "",
     items: [
-      { name: "Centro de Control", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
-      { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
-      { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-    ]
-  },
-  {
-    label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS,
-  },
-  {
-    label: "GESTIÓN",
-    items: [
-      { name: "Talento", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Inicio", href: "/strategist-dashboard", icon: LayoutDashboard, requiresOrg: true },
+      { name: "Proyectos", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Clientes", href: "/clientes", icon: Building2, requiresOrg: true },
-      { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet, requiresOrg: true },
+      { name: "Creadores", href: "/talent", icon: Users, requiresOrg: true },
+      { name: "Guiones", href: "/scripts", icon: Sparkles, requiresOrg: true },
+      SETTINGS_ITEM,
     ]
   },
-  { label: "CONFIG", items: CONFIG_ITEMS }
+  { label: "MÁS", items: ORG_MORE_ITEMS },
 ];
 
 const editorSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "",
     items: [
-      { name: "Centro de Editor", href: "/editor-dashboard", icon: LayoutDashboard },
-      { name: "Producciones", href: "/board", icon: Kanban },
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Inicio", href: "/editor-dashboard", icon: LayoutDashboard },
+      { name: "Proyectos", href: "/board", icon: Kanban },
+      { name: "Guiones", href: "/scripts", icon: Sparkles },
+      ACADEMIA_ITEM,
+      SETTINGS_ITEM,
     ]
   },
-  {
-    label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS,
-  },
-  { label: "CONFIG", items: CONFIG_ITEMS }
+  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const creatorSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "",
     items: [
-      { name: "Centro de Creador", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Producciones", href: "/board", icon: Kanban },
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Proyectos", href: "/board", icon: Kanban },
+      { name: "Guiones", href: "/scripts", icon: Sparkles },
+      ACADEMIA_ITEM,
+      SETTINGS_ITEM,
     ]
   },
-  {
-    label: "MARKETING & MEDIA",
-    items: MARKETING_ITEMS,
-  },
-  { label: "CONFIG", items: CONFIG_ITEMS }
+  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const clientSections: NavSection[] = [
   {
-    label: "", // Sin título de sección - MVP simplificado
+    label: "",
     items: [
       { name: "Inicio", href: "/client-dashboard", icon: LayoutDashboard },
-      { name: "ADN de Marca", href: "/client-dashboard?tab=dna", icon: Dna },
+      { name: "Mis videos", href: "/board?view=marketplace", icon: Kanban },
+      { name: "Mi marca", href: "/client-dashboard?tab=dna", icon: Dna },
+      { name: "Buscar talento", href: "/marketplace", icon: Store },
+      { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
+      SETTINGS_ITEM,
+    ]
+  },
+  {
+    label: "MÁS",
+    items: [
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
-      { name: "Facturas", href: "/client-dashboard?tab=facturas", icon: Receipt },
-      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
-      { name: "Mi Plan", href: "/planes", icon: Crown },
-      { name: "Configuración", href: "/settings", icon: Settings },
+      { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
+      ACADEMIA_ITEM,
+      PLAN_ITEM,
     ]
   },
 ];
 
-// Freelance users (no org) - full talent navigation
+// Freelance (sin org) — plan básico gratis. Igual que en Sidebar.tsx.
 const freelanceSections: NavSection[] = [
   {
-    label: "MI NEGOCIO",
+    label: "",
     items: [
-      { name: "Tablero", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
       { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
+      { name: "Guiones", href: "/scripts", icon: Sparkles },
+      ACADEMIA_ITEM,
+      SETTINGS_ITEM,
     ]
   },
   {
-    label: "MARKETING & MEDIA",
+    label: "MÁS",
     items: [
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
+      { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
+      SOCIAL_HUB_ITEM,
+      PLAN_ITEM,
     ]
   },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Mi Plan", href: "/planes", icon: Crown },
-      { name: "Configuración", href: "/settings", icon: Settings },
-    ]
-  }
 ];
 
 // Locked users (haven't completed referral gate) - only unlock access + profile
@@ -231,37 +232,28 @@ const lockedUserSections: NavSection[] = [
   }
 ];
 
-// Talent users with basic/free plan in an org - Limited access
+// Talento con plan básico/gratis dentro de una org — acceso limitado.
+// Devuelto tal cual (sin filtros ni marketplace añadido), por eso lleva su propio /marketplace.
 const basicTalentInOrgSections: NavSection[] = [
   {
-    label: "KREOON STUDIO",
+    label: "",
     items: [
-      { name: "Tablero", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Producciones", href: "/board", icon: Kanban },
+      { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
+      { name: "Proyectos", href: "/board", icon: Kanban },
+      { name: "Guiones", href: "/scripts", icon: Sparkles },
+      ACADEMIA_ITEM,
+      SETTINGS_ITEM,
+    ]
+  },
+  {
+    label: "MÁS",
+    items: [
       { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
+      { name: "Marketplace", href: "/marketplace", icon: Store },
+      SOCIAL_HUB_ITEM,
+      PLAN_ITEM,
     ]
   },
-  {
-    label: "SOCIAL",
-    items: [
-      { name: "Social Hub", href: "/social-hub", icon: Share2 },
-    ]
-  },
-  {
-    label: "MARKETPLACE",
-    items: [
-      { name: "Explorar", href: "/marketplace", icon: Store },
-    ]
-  },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle },
-      { name: "Mi Plan", href: "/planes", icon: Crown },
-      { name: "Configuración", href: "/settings", icon: Settings },
-    ]
-  }
 ];
 
 /**
@@ -298,40 +290,34 @@ function combineNavSections(sectionArrays: NavSection[][]): NavSection[] {
 function getSectionsForGroup(group: PermissionGroup): NavSection[] {
   switch (group) {
     case 'admin': return adminSections;
-    case 'team_leader': return adminSections;
-    case 'strategist': return strategistSections;
-    case 'editor': return editorSections;
-    case 'creator': return creatorSections;
+    case 'talent': return creatorSections;
     case 'client': return clientSections;
     default: return creatorSections;
   }
 }
 
-// Marketplace sections — mirrors Sidebar.tsx
-function getMarketplaceSections(activeGroup: PermissionGroup | null, isFreelance: boolean = false): NavSection[] {
+// Marketplace ya no es una sección propia: sus entradas se pliegan dentro de "MÁS".
+// Espejo de getMarketplaceMoreItems() en Sidebar.tsx.
+function getMarketplaceMoreItems(activeGroup: PermissionGroup | null): NavItem[] {
   const items: NavItem[] = [
     { name: "Marketplace", href: "/marketplace", icon: Store },
+    { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
   ];
 
-  // Talent management — only for organizations (admin/strategist), NOT for clients or freelancers
-  if (activeGroup === 'client' || isFreelance) {
-    return [{ label: "KREOON MARKETPLACE", items }];
-  }
+  // Gestión de talento — solo roles de org (admin/talent), NO clientes
+  if (activeGroup === 'client') return items;
 
-  const savedItems: NavItem[] = [
+  items.push(
     { name: "Guardados", href: "/marketplace/guardados", icon: Bookmark },
     { name: "Listas de Talento", href: "/marketplace/talent-lists", icon: ListChecks },
     { name: "Invitaciones", href: "/marketplace/invitations", icon: UserPlus },
-  ];
+  );
 
-  if (activeGroup === 'admin' || activeGroup === 'strategist') {
-    savedItems.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare });
+  if (activeGroup === 'admin' || activeGroup === 'talent') {
+    items.push({ name: "Consultas", href: "/marketplace/inquiries", icon: MessageSquare });
   }
 
-  return [
-    { label: "KREOON MARKETPLACE", items },
-    { label: "GESTIÓN TALENTO", items: savedItems },
-  ];
+  return items;
 }
 
 export function MobileNav() {
@@ -339,14 +325,19 @@ export function MobileNav() {
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);
   const [clientCount, setClientCount] = useState(0);
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  // "MÁS"/"PLATAFORMA" arrancan cerradas (lo principal manda); el efecto de abajo abre
+  // la que contenga la ruta activa.
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    'MÁS': true,
+    'PLATAFORMA': true,
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile, user, activeRole, roles, rolesLoaded, isPlatformAdmin } = useAuth();
   const { trackLogout } = useAuthAnalytics();
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
-  const { effectivePlatformName, effectiveStudioLabel, effectiveMarketplaceLabel, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
+  const { effectivePlatformName, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
   const { isImpersonating, effectiveRoles, impersonationTarget } = useImpersonation();
   const { isUnlocked, isGateLoading } = useReferralGate();
   const { shouldUseReducedMenu, usePersonalCoins } = useUserPlanContext();
@@ -388,7 +379,7 @@ export function MobileNav() {
   // DO NOT use roles.includes() as fallback - it causes multi-role users to see wrong panel
   // Example: user with ['creator', 'editor'] and activeRole='creator' should see creator panel, not editor
   const activeIsAdmin = activeRole === 'admin' || activeRole === 'team_leader';
-  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist';
+  const activeIsStrategist = activeRole === 'strategist' || activeRole === 'digital_strategist' || activeRole === 'creative_strategist' || activeRole === 'community_manager';
   const activeIsEditor = activeRole === 'editor';
   // Client detection: only if activeRole is client or activeGroup is client
   const activeIsClient = activeRole === 'client' || activeGroup === 'client';
@@ -497,22 +488,9 @@ export function MobileNav() {
     }
 
     // Independent users (no org) - differentiate between clients and freelancers
+    // Ambas listas ya llevan su entrada de marketplace en la sección principal
     if (isFreelanceUser && (isUnlocked || activeIsClient)) {
-      const mktSections = getMarketplaceSections(activeGroup, !activeIsClient);
-
-      // Brand members/clients get client sections, talents get freelance sections
-      if (activeIsClient) {
-        return [
-          ...mktSections,
-          ...clientSections,
-        ];
-      }
-
-      // Freelance talents
-      return [
-        ...mktSections,
-        ...freelanceSections,
-      ];
+      return activeIsClient ? clientSections : freelanceSections;
     }
 
     // When roles haven't loaded yet, show minimal nav to avoid flashing admin menu
@@ -539,19 +517,14 @@ export function MobileNav() {
       baseSections = isPlatformAdmin ? adminSections : creatorSections;
     }
 
-    const labelMap: Record<string, string> = {
-      'KREOON STUDIO': effectiveStudioLabel,
-      'KREOON MARKETPLACE': effectiveMarketplaceLabel,
-    };
-
     const filtered = baseSections
       .filter(section => {
-        if (section.label === 'CRM PLATAFORMA' && !isPlatformAdmin) return false;
+        // Solo admins (org o plataforma) ven el CRM de plataforma
+        if (section.label === 'PLATAFORMA' && !activeIsAdmin && !isPlatformAdmin) return false;
         return true;
       })
       .map(section => ({
         ...section,
-        label: labelMap[section.label] || section.label,
         items: section.items.filter(item => {
           if (!isPlatformRoot && item.platformRootOnly) return false;
           if (isPlatformRoot && !profile?.current_organization_id && item.requiresOrg) return false;
@@ -561,33 +534,27 @@ export function MobileNav() {
         })
       })).filter(section => section.items.length > 0);
 
-    // For clients, marketplace visibility depends on org's client_marketplace_enabled flag
-    const effectiveMktEnabled = activeIsClient ? clientMarketplaceEnabled : marketplaceEnabled;
-
-    const mktSections = effectiveMktEnabled
-      ? getMarketplaceSections(activeGroup, isFreelanceUser).map(s => ({ ...s, label: labelMap[s.label] || s.label }))
-      : [];
-
-    const recruitSection: NavSection = {
-      label: "RECLUTAMIENTO",
-      items: [{ name: "Buscar Talento", href: "/marketplace", icon: Search }],
-    };
-
-    // For clients, return sections as-is (already unified with all items including config)
+    // Los clientes ya llevan su marketplace ("Buscar talento") en la sección principal
     if (activeIsClient) {
       return filtered;
     }
 
-    const configSection = filtered.find(s => s.label === 'CONFIG');
-    const nonConfigSections = filtered.filter(s => s.label !== 'CONFIG');
+    // Marketplace se pliega dentro de "MÁS". Si la org lo tiene apagado queda solo
+    // "Buscar Talento": el reclutamiento sigue disponible siempre.
+    const extraItems: NavItem[] = marketplaceEnabled
+      ? getMarketplaceMoreItems(activeGroup)
+      : [{ name: "Buscar Talento", href: "/marketplace", icon: Search }];
 
-    return [
-      ...nonConfigSections,
-      ...mktSections,
-      ...(!effectiveMktEnabled ? [recruitSection] : []),
-      ...(configSection ? [configSection] : [{ label: "CONFIG", items: [{ name: "Configuración", href: "/settings", icon: Settings }] }]),
-    ];
-  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, effectiveStudioLabel, effectiveMarketplaceLabel, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
+    if (!filtered.some(s => s.label === 'MÁS')) {
+      return [...filtered, { label: "MÁS", items: extraItems }];
+    }
+
+    return filtered.map(section =>
+      section.label === 'MÁS'
+        ? { ...section, items: [...section.items, ...extraItems] }
+        : section
+    );
+  }, [activeIsAdmin, activeIsStrategist, activeIsEditor, activeIsCreator, activeIsClient, isPlatformRoot, isPlatformAdmin, rolesLoaded, profile?.current_organization_id, marketplaceEnabled, clientMarketplaceEnabled, activeGroup, isUnlocked, isGateLoading, isFreelanceUser, shouldUseReducedMenu, isMultiRoleUser, allUserGroups]);
 
   // Auto-expand section with active route
   const pathname = location.pathname;
@@ -693,7 +660,7 @@ export function MobileNav() {
                   <div className={cn(
                     "space-y-1 overflow-hidden transition-all duration-200",
                     section.label && isSectionCollapsed && "max-h-0 opacity-0",
-                    (!section.label || !isSectionCollapsed) && "max-h-[500px] opacity-100"
+                    (!section.label || !isSectionCollapsed) && "max-h-[900px] opacity-100"
                   )}>
                     {section.items.map((item) => {
                       const itemPath = item.href.split('?')[0];
