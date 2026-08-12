@@ -37,11 +37,7 @@ import { ReferralStats } from "@/components/dashboard/ReferralStats";
 import { MarketplaceDashboardTab } from "@/components/marketplace/dashboard/MarketplaceDashboardTab";
 import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
-import { UPSystemKPIs } from "@/components/dashboard/UPSystemKPIs";
-import { ActiveSeasonBanner } from "@/components/dashboard/ActiveSeasonBanner";
 import { CollaborativeStats } from "@/components/dashboard/CollaborativeStats";
-import { GlobalRankingWidget } from "@/components/points/GlobalRankingWidget";
-import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 
 // Optimized animated number counter using requestAnimationFrame (60fps, minimal re-renders)
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
@@ -1607,34 +1603,12 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {/* TAB 3: UP SYSTEM */}
+          {/* TAB 3: SOCIAL */}
           <TabsContent value="up" className="space-y-4 mt-0">
-            {/* Active Season Banner */}
-            {currentOrgId && (
-              <ActiveSeasonBanner />
-            )}
-
-            {/* UP System KPIs */}
-            {currentOrgId && (
-              <UPSystemKPIs organizationId={currentOrgId} />
-            )}
-
             {/* Kreoon Social Collaborative Stats */}
             {currentOrgId && (
               <CollaborativeStats organizationId={currentOrgId} />
             )}
-
-            {/* Gamification - Ranking & Achievements */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <GlobalRankingWidget showTopN={5} className="h-full" />
-              <div className="rounded-sm border border-border/50 bg-card p-5">
-                <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-amber-500" />
-                  Mis Insignias
-                </h3>
-                <SidebarAchievementsWidget />
-              </div>
-            </div>
           </TabsContent>
 
           {/* TAB 4: USUARIOS Y REFERIDOS */}

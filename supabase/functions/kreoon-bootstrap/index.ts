@@ -22,7 +22,6 @@ const CORE_TABLES = [
   'products',
   'content',
   'app_settings',
-  'achievements',
   'chat_conversations',
   'chat_participants',
   'chat_messages',

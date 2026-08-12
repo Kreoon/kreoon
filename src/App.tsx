@@ -16,7 +16,6 @@ import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TalentGate } from "@/components/TalentGate";
 import { RootOnlyRoute } from "@/components/RootOnlyRoute";
-import { AchievementNotificationProvider } from "@/components/points/AchievementNotificationProvider";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { ImpersonationBanner } from "@/components/impersonation/ImpersonationBanner";
@@ -128,7 +127,6 @@ const CompanyProfilePage = lazyWithRetry(
 const PublicProfilePage = lazyWithRetry(
   () => import("./pages/portfolio/PublicProfilePage"),
 );
-const Ranking = lazyWithRetry(() => import("./pages/Ranking"));
 const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const NoCompany = lazyWithRetry(() => import("./pages/NoCompany"));
@@ -137,7 +135,6 @@ const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
 const WelcomeNewMember = lazyWithRetry(
   () => import("./pages/WelcomeNewMember"),
 );
-const UPDocumentation = lazyWithRetry(() => import("./pages/UPDocumentation"));
 const MCPDocumentation = lazyWithRetry(
   () => import("./pages/MCPDocumentation"),
 );
@@ -719,7 +716,6 @@ function AppRoutes() {
             sobre este dinámico, así que no hay colisión entre ambas. */}
         <Route path="/onboarding/:token" element={<ClientOnboarding />} />
         <Route path="/welcome" element={<WelcomeNewMember />} />
-        <Route path="/up-documentation" element={<UPDocumentation />} />
         <Route path="/mcp-docs" element={<MCPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
@@ -1142,18 +1138,6 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/ranking"
-          element={
-            <ProtectedRoute
-              allowedRoles={["admin", "content_creator", "editor"]}
-            >
-              <MainLayout>
-                <Ranking />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/ambassador"
           element={
             <ProtectedRoute allowedRoles={["admin"]}>
@@ -1386,8 +1370,7 @@ function AppContent() {
                     <ImpersonationProvider>
                       <TrialProvider>
                         <UnsavedChangesProvider>
-                          <AchievementNotificationProvider>
-                            <StrategistClientProvider>
+                          <StrategistClientProvider>
                               <AICopilotProvider>
                                 <KiroProvider>
                                   <GenerationJobProvider>
@@ -1413,8 +1396,7 @@ function AppContent() {
                                   </GenerationJobProvider>
                                 </KiroProvider>
                               </AICopilotProvider>
-                            </StrategistClientProvider>
-                          </AchievementNotificationProvider>
+                          </StrategistClientProvider>
                         </UnsavedChangesProvider>
                       </TrialProvider>
                     </ImpersonationProvider>

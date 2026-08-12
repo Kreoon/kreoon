@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Loader2, Video, Clock, CheckCircle2, DollarSign, CreditCard,
-  Star, Clapperboard, ArrowRight, Store, AlertTriangle
+  Clapperboard, ArrowRight, Store, AlertTriangle
 } from 'lucide-react';
 import { TalentWalletView } from '@/components/talent/TalentWalletView';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,16 +19,10 @@ import type { MarketplaceProject } from '@/components/marketplace/types/marketpl
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
-import { RoleUPWidget } from '@/components/points/RoleUPWidget';
-import { SeasonUrgencyBanner } from '@/components/points/SeasonUrgencyBanner';
-import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
-import { UPHistoryTable } from '@/components/points/UPHistoryTable';
-import { GlobalRankingWidget } from '@/components/points/GlobalRankingWidget';
-import { SidebarAchievementsWidget } from '@/components/points/SidebarAchievementsWidget';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
 import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
-import { SeasonBanner, ProgressToNextLevel, VOCABULARIO_ROL } from '@/components/studio';
+import { VOCABULARIO_ROL } from '@/components/studio';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -194,9 +188,6 @@ export default function CreatorDashboard() {
   const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
   const pendingUSD = mktPendingByCurrency['USD'] || 0;
   const paidUSD = mktPaidByCurrency['USD'] || 0;
-  // Alias para compatibilidad con ProgressToNextLevel
-  const pendingPayment = studioPendingCOP;
-  const totalPaid = studioPaidCOP;
   const approvedVideos = useMemo(() =>
     [...content]
       .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
@@ -324,16 +315,6 @@ export default function CreatorDashboard() {
             );
           })()}
 
-          {/* Banners de temporada */}
-          {!isFreelancer && <SeasonUrgencyBanner />}
-          {!isFreelancer && <SeasonBanner variant="compact" showMetas={false} />}
-          {!isFreelancer && (
-            <ProgressToNextLevel
-              creditosActuales={totalPaid + (approvedContent.length * 50)}
-              size="md"
-            />
-          )}
-
           {/* KPI Cards — Studio + Marketplace fusionados */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <NovaKpiCard
@@ -428,33 +409,6 @@ export default function CreatorDashboard() {
             )}
           </div>
 
-          {/* UGC Points */}
-          {targetUserId && (
-            <RoleUPWidget
-              userId={targetUserId}
-              role="creator"
-              roles={hasEditorRole ? ['creator', 'editor'] : undefined}
-            />
-          )}
-
-          {/* Ranking y Logros */}
-          {targetUserId && !isFreelancer && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <GlobalRankingWidget showTopN={3} compact className="h-full" />
-              <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Star className="h-4 w-4 text-amber-500" />
-                  <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                    Mis Insignias
-                  </h3>
-                </div>
-                <SidebarAchievementsWidget />
-              </div>
-            </div>
-          )}
-
-
-
           {/* Videos aprobados */}
           {approvedVideos.length > 0 && (
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
@@ -478,14 +432,6 @@ export default function CreatorDashboard() {
                 onVideoClick={setVideoViewer}
                 maxItems={6}
               />
-            </div>
-          )}
-
-          {/* Ranking e historial de puntos */}
-          {targetUserId && !isFreelancer && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <RoleLeaderboard role="creator" currentUserId={targetUserId} maxItems={5} />
-              <UPHistoryTable userId={targetUserId} />
             </div>
           )}
 

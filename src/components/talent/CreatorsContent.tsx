@@ -1,6 +1,6 @@
 import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, Plus, Star, User, Sword, Users, Edit3, Trophy, TrendingUp } from "lucide-react";
+import { Search, Plus, Star, User, Sword, Users, Edit3, TrendingUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,7 +9,6 @@ import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CreatorDetailDialog } from "@/components/team/CreatorDetailDialog";
 import { TalentCard, TalentProfile } from "@/components/team/TalentCard";
-import { TalentRanking } from "@/components/team/TalentRanking";
 
 // Extracted grid component
 interface TalentGridProps {
@@ -228,14 +227,10 @@ export function CreatorsContent() {
               <span className="hidden sm:inline">Embajadores</span>
               <span className="text-xs opacity-70">({stats.ambassadors})</span>
             </TabsTrigger>
-            <TabsTrigger value="ranking" className="gap-1.5">
-              <Trophy className="h-4 w-4" />
-              <span className="hidden sm:inline">Ranking</span>
-            </TabsTrigger>
           </TabsList>
 
           {/* Search */}
-          {activeTab !== 'ranking' && (
+          {(
             <div className="relative w-full sm:max-w-xs">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
@@ -300,11 +295,6 @@ export function CreatorsContent() {
           />
         </TabsContent>
 
-        <TabsContent value="ranking" className="mt-0">
-          <div className="max-w-3xl">
-            <TalentRanking />
-          </div>
-        </TabsContent>
       </Tabs>
 
       <CreatorDetailDialog

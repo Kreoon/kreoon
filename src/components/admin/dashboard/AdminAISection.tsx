@@ -36,7 +36,6 @@ const MODULE_COLORS: Record<string, string> = {
   "content-ai": "#8b5cf6",
   "board-ai": "#3b82f6",
   "multi-ai": "#22c55e",
-  "up-ai-copilot": "#06b6d4",
   "kiro": "#10b981",
   // Nuevos módulos
   "ai-assistant": "#7c3aed",
@@ -66,7 +65,6 @@ const MODULE_LABELS: Record<string, string> = {
   "content-ai": "Contenido IA",
   "board-ai": "Board IA",
   "multi-ai": "Multi IA",
-  "up-ai-copilot": "Copilot IA",
   "kiro": "Kiro Chat",
   // Nuevos módulos
   "ai-assistant": "Asistente IA",

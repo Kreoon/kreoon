@@ -4816,48 +4816,6 @@ export type Database = {
           },
         ]
       }
-      achievements: {
-        Row: {
-          category: string
-          condition_type: string
-          condition_value: number
-          created_at: string
-          description: string
-          icon: string
-          id: string
-          key: string
-          name: string
-          points_required: number | null
-          rarity: string
-        }
-        Insert: {
-          category?: string
-          condition_type: string
-          condition_value?: number
-          created_at?: string
-          description: string
-          icon?: string
-          id?: string
-          key: string
-          name: string
-          points_required?: number | null
-          rarity?: string
-        }
-        Update: {
-          category?: string
-          condition_type?: string
-          condition_value?: number
-          created_at?: string
-          description?: string
-          icon?: string
-          id?: string
-          key?: string
-          name?: string
-          points_required?: number | null
-          rarity?: string
-        }
-        Relationships: []
-      }
       ad_conversion_log: {
         Row: {
           booking_config_id: string | null
@@ -7650,56 +7608,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      chronometer_pauses: {
-        Row: {
-          content_id: string
-          id: string
-          metadata: Json | null
-          organization_id: string
-          pause_reason: string
-          pause_source: string | null
-          paused_at: string
-          paused_hours: number | null
-          resumed_at: string | null
-          role: string
-          user_id: string
-        }
-        Insert: {
-          content_id: string
-          id?: string
-          metadata?: Json | null
-          organization_id: string
-          pause_reason: string
-          pause_source?: string | null
-          paused_at?: string
-          paused_hours?: number | null
-          resumed_at?: string | null
-          role: string
-          user_id: string
-        }
-        Update: {
-          content_id?: string
-          id?: string
-          metadata?: Json | null
-          organization_id?: string
-          pause_reason?: string
-          pause_source?: string | null
-          paused_at?: string
-          paused_hours?: number | null
-          resumed_at?: string | null
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "chronometer_pauses_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       cities: {
         Row: {
@@ -12276,80 +12184,6 @@ export type Database = {
           variations?: Json | null
         }
         Relationships: []
-      }
-      global_badges: {
-        Row: {
-          category: Database["public"]["Enums"]["badge_category"]
-          condition_config: Json
-          condition_type: string
-          created_at: string | null
-          description: string
-          display_order: number | null
-          icon: string
-          id: string
-          is_active: boolean | null
-          is_seasonal: boolean | null
-          is_secret: boolean | null
-          key: string
-          name: string
-          parent_badge_id: string | null
-          ranking_points: number
-          rarity: Database["public"]["Enums"]["badge_rarity"]
-          subcategory: string | null
-          tier: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          category: Database["public"]["Enums"]["badge_category"]
-          condition_config?: Json
-          condition_type: string
-          created_at?: string | null
-          description: string
-          display_order?: number | null
-          icon?: string
-          id?: string
-          is_active?: boolean | null
-          is_seasonal?: boolean | null
-          is_secret?: boolean | null
-          key: string
-          name: string
-          parent_badge_id?: string | null
-          ranking_points?: number
-          rarity?: Database["public"]["Enums"]["badge_rarity"]
-          subcategory?: string | null
-          tier?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          category?: Database["public"]["Enums"]["badge_category"]
-          condition_config?: Json
-          condition_type?: string
-          created_at?: string | null
-          description?: string
-          display_order?: number | null
-          icon?: string
-          id?: string
-          is_active?: boolean | null
-          is_seasonal?: boolean | null
-          is_secret?: boolean | null
-          key?: string
-          name?: string
-          parent_badge_id?: string | null
-          ranking_points?: number
-          rarity?: Database["public"]["Enums"]["badge_rarity"]
-          subcategory?: string | null
-          tier?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "global_badges_parent_badge_id_fkey"
-            columns: ["parent_badge_id"]
-            isOneToOne: false
-            referencedRelation: "global_badges"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       goals: {
         Row: {
@@ -17856,48 +17690,6 @@ export type Database = {
           },
         ]
       }
-      mission_templates: {
-        Row: {
-          action_type: string
-          audience: string
-          code: string
-          created_at: string
-          description: string | null
-          id: string
-          is_active: boolean
-          target_count: number
-          title: string
-          up_reward: number
-          weight: number
-        }
-        Insert: {
-          action_type: string
-          audience?: string
-          code: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          target_count?: number
-          title: string
-          up_reward?: number
-          weight?: number
-        }
-        Update: {
-          action_type?: string
-          audience?: string
-          code?: string
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_active?: boolean
-          target_count?: number
-          title?: string
-          up_reward?: number
-          weight?: number
-        }
-        Relationships: []
-      }
       notification_preferences: {
         Row: {
           channel_email: boolean
@@ -21597,39 +21389,6 @@ export type Database = {
         }
         Relationships: []
       }
-      point_transactions: {
-        Row: {
-          content_id: string | null
-          created_at: string
-          description: string | null
-          id: string
-          points: number
-          secondary_points: number | null
-          transaction_type: Database["public"]["Enums"]["point_transaction_type"]
-          user_id: string
-        }
-        Insert: {
-          content_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          points: number
-          secondary_points?: number | null
-          transaction_type: Database["public"]["Enums"]["point_transaction_type"]
-          user_id: string
-        }
-        Update: {
-          content_id?: string | null
-          created_at?: string
-          description?: string | null
-          id?: string
-          points?: number
-          secondary_points?: number | null
-          transaction_type?: Database["public"]["Enums"]["point_transaction_type"]
-          user_id?: string
-        }
-        Relationships: []
-      }
       portfolio_inquiries: {
         Row: {
           budget_range: string | null
@@ -24434,290 +24193,6 @@ export type Database = {
         }
         Relationships: []
       }
-      reputation_configs: {
-        Row: {
-          base_points: number
-          day_range_max: number | null
-          day_range_min: number | null
-          description: string | null
-          event_key: string
-          id: string
-          is_active: boolean | null
-          is_bonus: boolean | null
-          is_penalty: boolean | null
-          label: string
-          role: string
-        }
-        Insert: {
-          base_points?: number
-          day_range_max?: number | null
-          day_range_min?: number | null
-          description?: string | null
-          event_key: string
-          id?: string
-          is_active?: boolean | null
-          is_bonus?: boolean | null
-          is_penalty?: boolean | null
-          label: string
-          role: string
-        }
-        Update: {
-          base_points?: number
-          day_range_max?: number | null
-          day_range_min?: number | null
-          description?: string | null
-          event_key?: string
-          id?: string
-          is_active?: boolean | null
-          is_bonus?: boolean | null
-          is_penalty?: boolean | null
-          label?: string
-          role?: string
-        }
-        Relationships: []
-      }
-      reputation_events: {
-        Row: {
-          ai_decision_id: string | null
-          base_points: number
-          calculation_breakdown: Json | null
-          created_at: string | null
-          event_date: string
-          event_subtype: string | null
-          event_type: string
-          final_points: number | null
-          id: string
-          multiplier: number | null
-          organization_id: string | null
-          reference_id: string | null
-          reference_type: string | null
-          role_key: string | null
-          season_id: string | null
-          user_id: string
-        }
-        Insert: {
-          ai_decision_id?: string | null
-          base_points: number
-          calculation_breakdown?: Json | null
-          created_at?: string | null
-          event_date?: string
-          event_subtype?: string | null
-          event_type: string
-          final_points?: number | null
-          id?: string
-          multiplier?: number | null
-          organization_id?: string | null
-          reference_id?: string | null
-          reference_type?: string | null
-          role_key?: string | null
-          season_id?: string | null
-          user_id: string
-        }
-        Update: {
-          ai_decision_id?: string | null
-          base_points?: number
-          calculation_breakdown?: Json | null
-          created_at?: string | null
-          event_date?: string
-          event_subtype?: string | null
-          event_type?: string
-          final_points?: number | null
-          id?: string
-          multiplier?: number | null
-          organization_id?: string | null
-          reference_id?: string | null
-          reference_type?: string | null
-          role_key?: string | null
-          season_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reputation_events_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reputation_events_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "reputation_seasons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reputation_events_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "season_leaderboard_live"
-            referencedColumns: ["season_id"]
-          },
-        ]
-      }
-      reputation_global: {
-        Row: {
-          avg_quality: number | null
-          avg_reliability: number | null
-          avg_review_rating: number | null
-          avg_velocity: number | null
-          badges: string[] | null
-          composite_score: number | null
-          global_level: string
-          global_points: number
-          id: string
-          is_visible: boolean | null
-          normalized_composite: number | null
-          total_on_time_pct: number | null
-          total_projects_completed: number | null
-          total_reviews: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          avg_quality?: number | null
-          avg_reliability?: number | null
-          avg_review_rating?: number | null
-          avg_velocity?: number | null
-          badges?: string[] | null
-          composite_score?: number | null
-          global_level?: string
-          global_points?: number
-          id?: string
-          is_visible?: boolean | null
-          normalized_composite?: number | null
-          total_on_time_pct?: number | null
-          total_projects_completed?: number | null
-          total_reviews?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          avg_quality?: number | null
-          avg_reliability?: number | null
-          avg_review_rating?: number | null
-          avg_velocity?: number | null
-          badges?: string[] | null
-          composite_score?: number | null
-          global_level?: string
-          global_points?: number
-          id?: string
-          is_visible?: boolean | null
-          normalized_composite?: number | null
-          total_on_time_pct?: number | null
-          total_projects_completed?: number | null
-          total_reviews?: number | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      reputation_seasons: {
-        Row: {
-          compliance_fund_total: number | null
-          created_at: string | null
-          end_date: string
-          id: string
-          is_active: boolean | null
-          name: string
-          organization_id: string
-          rewards_config: Json | null
-          start_date: string
-        }
-        Insert: {
-          compliance_fund_total?: number | null
-          created_at?: string | null
-          end_date: string
-          id?: string
-          is_active?: boolean | null
-          name: string
-          organization_id: string
-          rewards_config?: Json | null
-          start_date: string
-        }
-        Update: {
-          compliance_fund_total?: number | null
-          created_at?: string | null
-          end_date?: string
-          id?: string
-          is_active?: boolean | null
-          name?: string
-          organization_id?: string
-          rewards_config?: Json | null
-          start_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reputation_seasons_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      role_archetypes: {
-        Row: {
-          archetype: string
-          base_weight: number | null
-          complexity_multiplier: number | null
-          created_at: string | null
-          expected_monthly_volume: number | null
-          id: string
-          is_active: boolean | null
-          metrics_config: Json | null
-          organization_id: string | null
-          point_actions: Json | null
-          role_category: string
-          role_display_name: string
-          role_key: string
-          updated_at: string | null
-          volume_normalization_cap: number | null
-        }
-        Insert: {
-          archetype: string
-          base_weight?: number | null
-          complexity_multiplier?: number | null
-          created_at?: string | null
-          expected_monthly_volume?: number | null
-          id?: string
-          is_active?: boolean | null
-          metrics_config?: Json | null
-          organization_id?: string | null
-          point_actions?: Json | null
-          role_category: string
-          role_display_name: string
-          role_key: string
-          updated_at?: string | null
-          volume_normalization_cap?: number | null
-        }
-        Update: {
-          archetype?: string
-          base_weight?: number | null
-          complexity_multiplier?: number | null
-          created_at?: string | null
-          expected_monthly_volume?: number | null
-          id?: string
-          is_active?: boolean | null
-          metrics_config?: Json | null
-          organization_id?: string | null
-          point_actions?: Json | null
-          role_category?: string
-          role_display_name?: string
-          role_key?: string
-          updated_at?: string | null
-          volume_normalization_cap?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_archetypes_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       role_legal_gates: {
         Row: {
           created_at: string | null
@@ -24750,47 +24225,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      role_multipliers: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
-          multiplier_key: string
-          multiplier_type: string
-          multiplier_value: number
-          organization_id: string
-          role_key: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          multiplier_key: string
-          multiplier_type: string
-          multiplier_value?: number
-          organization_id: string
-          role_key?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          multiplier_key?: string
-          multiplier_type?: string
-          multiplier_value?: number
-          organization_id?: string
-          role_key?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_multipliers_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       role_permissions: {
         Row: {
@@ -24825,59 +24259,6 @@ export type Database = {
         }
         Relationships: []
       }
-      role_points_config: {
-        Row: {
-          clean_approval_bonus: number
-          created_at: string | null
-          delivery_days: number
-          early_delivery_points: number
-          id: string
-          is_active: boolean | null
-          issue_penalty: number
-          late_delivery_points: number
-          on_time_delivery_points: number
-          organization_id: string
-          role_key: string
-          updated_at: string | null
-        }
-        Insert: {
-          clean_approval_bonus?: number
-          created_at?: string | null
-          delivery_days?: number
-          early_delivery_points?: number
-          id?: string
-          is_active?: boolean | null
-          issue_penalty?: number
-          late_delivery_points?: number
-          on_time_delivery_points?: number
-          organization_id: string
-          role_key: string
-          updated_at?: string | null
-        }
-        Update: {
-          clean_approval_bonus?: number
-          created_at?: string | null
-          delivery_days?: number
-          early_delivery_points?: number
-          id?: string
-          is_active?: boolean | null
-          issue_penalty?: number
-          late_delivery_points?: number
-          on_time_delivery_points?: number
-          organization_id?: string
-          role_key?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_points_config_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       role_specialties: {
         Row: {
           icon: string | null
@@ -24906,59 +24287,6 @@ export type Database = {
             columns: ["role_id"]
             isOneToOne: false
             referencedRelation: "creator_roles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      role_weight_config: {
-        Row: {
-          archetype: Database["public"]["Enums"]["effort_archetype"]
-          base_weight: number
-          category: string | null
-          complexity_multiplier: number
-          expected_monthly_tasks: number | null
-          id: string
-          is_active: boolean | null
-          is_marketplace_role: boolean | null
-          label: string
-          organization_id: string | null
-          role_key: string
-          updated_at: string | null
-        }
-        Insert: {
-          archetype?: Database["public"]["Enums"]["effort_archetype"]
-          base_weight?: number
-          category?: string | null
-          complexity_multiplier?: number
-          expected_monthly_tasks?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_marketplace_role?: boolean | null
-          label: string
-          organization_id?: string | null
-          role_key: string
-          updated_at?: string | null
-        }
-        Update: {
-          archetype?: Database["public"]["Enums"]["effort_archetype"]
-          base_weight?: number
-          category?: string | null
-          complexity_multiplier?: number
-          expected_monthly_tasks?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_marketplace_role?: boolean | null
-          label?: string
-          organization_id?: string | null
-          role_key?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "role_weight_config_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -25296,249 +24624,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
-      season_goals: {
-        Row: {
-          actual: number
-          created_at: string | null
-          id: string
-          nombre: string
-          objetivo: number
-          organization_id: string
-          temporada: string
-          tipo: string
-          updated_at: string | null
-        }
-        Insert: {
-          actual?: number
-          created_at?: string | null
-          id?: string
-          nombre: string
-          objetivo?: number
-          organization_id: string
-          temporada: string
-          tipo?: string
-          updated_at?: string | null
-        }
-        Update: {
-          actual?: number
-          created_at?: string | null
-          id?: string
-          nombre?: string
-          objetivo?: number
-          organization_id?: string
-          temporada?: string
-          tipo?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "season_goals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      season_reward_claims: {
-        Row: {
-          claim_data: Json | null
-          claimed_at: string | null
-          created_at: string | null
-          delivered_at: string | null
-          delivered_by: string | null
-          delivery_notes: string | null
-          final_level: string | null
-          final_points: number
-          final_rank: number
-          id: string
-          notification_sent: boolean | null
-          organization_id: string
-          payment_method: string | null
-          payment_reference: string | null
-          reward_id: string
-          role_key: string
-          season_id: string
-          status: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          claim_data?: Json | null
-          claimed_at?: string | null
-          created_at?: string | null
-          delivered_at?: string | null
-          delivered_by?: string | null
-          delivery_notes?: string | null
-          final_level?: string | null
-          final_points: number
-          final_rank: number
-          id?: string
-          notification_sent?: boolean | null
-          organization_id: string
-          payment_method?: string | null
-          payment_reference?: string | null
-          reward_id: string
-          role_key: string
-          season_id: string
-          status?: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          claim_data?: Json | null
-          claimed_at?: string | null
-          created_at?: string | null
-          delivered_at?: string | null
-          delivered_by?: string | null
-          delivery_notes?: string | null
-          final_level?: string | null
-          final_points?: number
-          final_rank?: number
-          id?: string
-          notification_sent?: boolean | null
-          organization_id?: string
-          payment_method?: string | null
-          payment_reference?: string | null
-          reward_id?: string
-          role_key?: string
-          season_id?: string
-          status?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "season_reward_claims_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_reward_claims_reward_id_fkey"
-            columns: ["reward_id"]
-            isOneToOne: false
-            referencedRelation: "season_rewards"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_reward_claims_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "reputation_seasons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_reward_claims_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "season_leaderboard_live"
-            referencedColumns: ["season_id"]
-          },
-        ]
-      }
-      season_rewards: {
-        Row: {
-          badge_id: string | null
-          created_at: string | null
-          custom_data: Json | null
-          description: string | null
-          display_color: string | null
-          display_icon: string | null
-          display_name: string
-          id: string
-          is_active: boolean | null
-          monetary_amount: number | null
-          monetary_currency: string | null
-          organization_id: string
-          points_amount: number | null
-          position_max: number | null
-          position_min: number
-          position_type: string
-          priority: number | null
-          reward_type: string
-          role_key: string | null
-          season_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          badge_id?: string | null
-          created_at?: string | null
-          custom_data?: Json | null
-          description?: string | null
-          display_color?: string | null
-          display_icon?: string | null
-          display_name: string
-          id?: string
-          is_active?: boolean | null
-          monetary_amount?: number | null
-          monetary_currency?: string | null
-          organization_id: string
-          points_amount?: number | null
-          position_max?: number | null
-          position_min: number
-          position_type: string
-          priority?: number | null
-          reward_type: string
-          role_key?: string | null
-          season_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          badge_id?: string | null
-          created_at?: string | null
-          custom_data?: Json | null
-          description?: string | null
-          display_color?: string | null
-          display_icon?: string | null
-          display_name?: string
-          id?: string
-          is_active?: boolean | null
-          monetary_amount?: number | null
-          monetary_currency?: string | null
-          organization_id?: string
-          points_amount?: number | null
-          position_max?: number | null
-          position_min?: number
-          position_type?: string
-          priority?: number | null
-          reward_type?: string
-          role_key?: string | null
-          season_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "season_rewards_badge_id_fkey"
-            columns: ["badge_id"]
-            isOneToOne: false
-            referencedRelation: "achievements"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_rewards_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_rewards_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "reputation_seasons"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "season_rewards_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "season_leaderboard_live"
-            referencedColumns: ["season_id"]
-          },
-        ]
       }
       security_events: {
         Row: {
@@ -28251,74 +27336,6 @@ export type Database = {
         }
         Relationships: []
       }
-      unified_reputation_config: {
-        Row: {
-          ai_auto_adjust: boolean | null
-          ai_fraud_detection: boolean | null
-          compliance_fund_enabled: boolean | null
-          compliance_fund_penalty_rate: number | null
-          config_version: number | null
-          created_at: string | null
-          current_season_start: string | null
-          id: string
-          levels: Json | null
-          organization_id: string
-          quality_multiplier: number | null
-          season_duration_days: number | null
-          speed_multiplier: number | null
-          streak_multiplier_30d: number
-          streak_multiplier_7d: number
-          updated_at: string | null
-          volume_multiplier: number | null
-        }
-        Insert: {
-          ai_auto_adjust?: boolean | null
-          ai_fraud_detection?: boolean | null
-          compliance_fund_enabled?: boolean | null
-          compliance_fund_penalty_rate?: number | null
-          config_version?: number | null
-          created_at?: string | null
-          current_season_start?: string | null
-          id?: string
-          levels?: Json | null
-          organization_id: string
-          quality_multiplier?: number | null
-          season_duration_days?: number | null
-          speed_multiplier?: number | null
-          streak_multiplier_30d?: number
-          streak_multiplier_7d?: number
-          updated_at?: string | null
-          volume_multiplier?: number | null
-        }
-        Update: {
-          ai_auto_adjust?: boolean | null
-          ai_fraud_detection?: boolean | null
-          compliance_fund_enabled?: boolean | null
-          compliance_fund_penalty_rate?: number | null
-          config_version?: number | null
-          created_at?: string | null
-          current_season_start?: string | null
-          id?: string
-          levels?: Json | null
-          organization_id?: string
-          quality_multiplier?: number | null
-          season_duration_days?: number | null
-          speed_multiplier?: number | null
-          streak_multiplier_30d?: number
-          streak_multiplier_7d?: number
-          updated_at?: string | null
-          volume_multiplier?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "unified_reputation_config_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       unified_transactions: {
         Row: {
           amount: number
@@ -28496,1158 +27513,6 @@ export type Database = {
           },
         ]
       }
-      up_ai_config: {
-        Row: {
-          anti_fraud_enabled: boolean | null
-          arbiter_auditor_enabled: boolean | null
-          arbiter_judge_enabled: boolean | null
-          arbiter_wizard_enabled: boolean | null
-          auto_approve_quality_threshold: number | null
-          auto_pause_review_hours: number | null
-          client_trust_enabled: boolean | null
-          created_at: string | null
-          event_detection_enabled: boolean | null
-          id: string
-          min_quality_for_approval: number | null
-          organization_id: string
-          quality_score_enabled: boolean | null
-          quest_generation_enabled: boolean | null
-          rule_recommendations_enabled: boolean | null
-          updated_at: string | null
-        }
-        Insert: {
-          anti_fraud_enabled?: boolean | null
-          arbiter_auditor_enabled?: boolean | null
-          arbiter_judge_enabled?: boolean | null
-          arbiter_wizard_enabled?: boolean | null
-          auto_approve_quality_threshold?: number | null
-          auto_pause_review_hours?: number | null
-          client_trust_enabled?: boolean | null
-          created_at?: string | null
-          event_detection_enabled?: boolean | null
-          id?: string
-          min_quality_for_approval?: number | null
-          organization_id: string
-          quality_score_enabled?: boolean | null
-          quest_generation_enabled?: boolean | null
-          rule_recommendations_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Update: {
-          anti_fraud_enabled?: boolean | null
-          arbiter_auditor_enabled?: boolean | null
-          arbiter_judge_enabled?: boolean | null
-          arbiter_wizard_enabled?: boolean | null
-          auto_approve_quality_threshold?: number | null
-          auto_pause_review_hours?: number | null
-          client_trust_enabled?: boolean | null
-          created_at?: string | null
-          event_detection_enabled?: boolean | null
-          id?: string
-          min_quality_for_approval?: number | null
-          organization_id?: string
-          quality_score_enabled?: boolean | null
-          quest_generation_enabled?: boolean | null
-          rule_recommendations_enabled?: boolean | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      up_arbiter_log: {
-        Row: {
-          action_type: string
-          actor: string
-          created_at: string | null
-          details: Json | null
-          id: string
-          organization_id: string
-          status: string | null
-          summary: string
-        }
-        Insert: {
-          action_type: string
-          actor?: string
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          organization_id: string
-          status?: string | null
-          summary: string
-        }
-        Update: {
-          action_type?: string
-          actor?: string
-          created_at?: string | null
-          details?: Json | null
-          id?: string
-          organization_id?: string
-          status?: string | null
-          summary?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_arbiter_log_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_chronometer_pauses: {
-        Row: {
-          content_id: string
-          id: string
-          metadata: Json | null
-          organization_id: string
-          pause_reason: string
-          pause_source: string | null
-          paused_at: string
-          paused_hours: number | null
-          resumed_at: string | null
-          role: string
-          user_id: string
-        }
-        Insert: {
-          content_id: string
-          id?: string
-          metadata?: Json | null
-          organization_id: string
-          pause_reason: string
-          pause_source?: string | null
-          paused_at?: string
-          paused_hours?: number | null
-          resumed_at?: string | null
-          role: string
-          user_id: string
-        }
-        Update: {
-          content_id?: string
-          id?: string
-          metadata?: Json | null
-          organization_id?: string
-          pause_reason?: string
-          pause_source?: string | null
-          paused_at?: string
-          paused_hours?: number | null
-          resumed_at?: string | null
-          role?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_chronometer_pauses_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_client_trust_scores: {
-        Row: {
-          avg_review_hours: number | null
-          brief_clarity_score: number | null
-          client_id: string
-          id: string
-          last_calculated_at: string | null
-          organization_id: string
-          rejection_rate: number | null
-          revision_rounds_avg: number | null
-          total_reviews: number | null
-          trust_level: string | null
-        }
-        Insert: {
-          avg_review_hours?: number | null
-          brief_clarity_score?: number | null
-          client_id: string
-          id?: string
-          last_calculated_at?: string | null
-          organization_id: string
-          rejection_rate?: number | null
-          revision_rounds_avg?: number | null
-          total_reviews?: number | null
-          trust_level?: string | null
-        }
-        Update: {
-          avg_review_hours?: number | null
-          brief_clarity_score?: number | null
-          client_id?: string
-          id?: string
-          last_calculated_at?: string | null
-          organization_id?: string
-          rejection_rate?: number | null
-          revision_rounds_avg?: number | null
-          total_reviews?: number | null
-          trust_level?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_client_trust_scores_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_creadores: {
-        Row: {
-          approved_at: string | null
-          content_id: string | null
-          created_at: string
-          created_by: string | null
-          days_to_deliver: number | null
-          description: string | null
-          event_type: string
-          id: string
-          is_recovered: boolean
-          issue_at: string | null
-          organization_id: string
-          points: number
-          recorded_at: string | null
-          recording_started_at: string | null
-          related_issue_id: string | null
-          user_id: string
-        }
-        Insert: {
-          approved_at?: string | null
-          content_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          days_to_deliver?: number | null
-          description?: string | null
-          event_type: string
-          id?: string
-          is_recovered?: boolean
-          issue_at?: string | null
-          organization_id: string
-          points?: number
-          recorded_at?: string | null
-          recording_started_at?: string | null
-          related_issue_id?: string | null
-          user_id: string
-        }
-        Update: {
-          approved_at?: string | null
-          content_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          days_to_deliver?: number | null
-          description?: string | null
-          event_type?: string
-          id?: string
-          is_recovered?: boolean
-          issue_at?: string | null
-          organization_id?: string
-          points?: number
-          recorded_at?: string | null
-          recording_started_at?: string | null
-          related_issue_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_creadores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_context"
-            referencedColumns: ["content_id"]
-          },
-          {
-            foreignKeyName: "up_creadores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_creadores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "marketing_available_content"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_creadores_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_creadores_totals: {
-        Row: {
-          clean_approvals: number
-          current_level: string
-          id: string
-          late_deliveries: number
-          on_time_deliveries: number
-          organization_id: string
-          reassignments: number
-          season_id: string | null
-          total_deliveries: number
-          total_issues: number
-          total_points: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          clean_approvals?: number
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          on_time_deliveries?: number
-          organization_id: string
-          reassignments?: number
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          clean_approvals?: number
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          on_time_deliveries?: number
-          organization_id?: string
-          reassignments?: number
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_creadores_totals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_creadores_totals_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "up_seasons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_currency_conversions: {
-        Row: {
-          conversion_rate: number
-          created_at: string | null
-          from_amount: number
-          from_currency: string
-          id: string
-          organization_id: string
-          to_amount: number
-          to_currency: string
-          user_id: string
-        }
-        Insert: {
-          conversion_rate?: number
-          created_at?: string | null
-          from_amount: number
-          from_currency: string
-          id?: string
-          organization_id: string
-          to_amount: number
-          to_currency: string
-          user_id: string
-        }
-        Update: {
-          conversion_rate?: number
-          created_at?: string | null
-          from_amount?: number
-          from_currency?: string
-          id?: string
-          organization_id?: string
-          to_amount?: number
-          to_currency?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      up_editores: {
-        Row: {
-          approved_at: string | null
-          content_id: string | null
-          created_at: string
-          created_by: string | null
-          days_to_deliver: number | null
-          delivered_at: string | null
-          description: string | null
-          editing_started_at: string | null
-          event_type: string
-          id: string
-          is_recovered: boolean
-          issue_at: string | null
-          organization_id: string
-          points: number
-          related_issue_id: string | null
-          user_id: string
-        }
-        Insert: {
-          approved_at?: string | null
-          content_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          days_to_deliver?: number | null
-          delivered_at?: string | null
-          description?: string | null
-          editing_started_at?: string | null
-          event_type: string
-          id?: string
-          is_recovered?: boolean
-          issue_at?: string | null
-          organization_id: string
-          points?: number
-          related_issue_id?: string | null
-          user_id: string
-        }
-        Update: {
-          approved_at?: string | null
-          content_id?: string | null
-          created_at?: string
-          created_by?: string | null
-          days_to_deliver?: number | null
-          delivered_at?: string | null
-          description?: string | null
-          editing_started_at?: string | null
-          event_type?: string
-          id?: string
-          is_recovered?: boolean
-          issue_at?: string | null
-          organization_id?: string
-          points?: number
-          related_issue_id?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_editores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "campaign_context"
-            referencedColumns: ["content_id"]
-          },
-          {
-            foreignKeyName: "up_editores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_editores_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "marketing_available_content"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_editores_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_editores_totals: {
-        Row: {
-          clean_approvals: number
-          current_level: string
-          id: string
-          late_deliveries: number
-          on_time_deliveries: number
-          organization_id: string
-          reassignments: number
-          season_id: string | null
-          total_deliveries: number
-          total_issues: number
-          total_points: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          clean_approvals?: number
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          on_time_deliveries?: number
-          organization_id: string
-          reassignments?: number
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          clean_approvals?: number
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          on_time_deliveries?: number
-          organization_id?: string
-          reassignments?: number
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_editores_totals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_editores_totals_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "up_seasons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_event_types: {
-        Row: {
-          color: string | null
-          created_at: string | null
-          description: string | null
-          event_key: string
-          icon: string | null
-          id: string
-          is_active: boolean | null
-          is_system: boolean | null
-          label: string
-          organization_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          color?: string | null
-          created_at?: string | null
-          description?: string | null
-          event_key: string
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_system?: boolean | null
-          label: string
-          organization_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          color?: string | null
-          created_at?: string | null
-          description?: string | null
-          event_key?: string
-          icon?: string | null
-          id?: string
-          is_active?: boolean | null
-          is_system?: boolean | null
-          label?: string
-          organization_id?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      up_events: {
-        Row: {
-          ai_confidence: number | null
-          ai_evidence: Json | null
-          ai_inferred: boolean | null
-          content_id: string | null
-          created_at: string | null
-          event_data: Json | null
-          event_type_key: string
-          id: string
-          organization_id: string
-          points_awarded: number | null
-          processed_at: string | null
-          rule_id: string | null
-          secondary_points_awarded: number | null
-          user_id: string
-        }
-        Insert: {
-          ai_confidence?: number | null
-          ai_evidence?: Json | null
-          ai_inferred?: boolean | null
-          content_id?: string | null
-          created_at?: string | null
-          event_data?: Json | null
-          event_type_key: string
-          id?: string
-          organization_id: string
-          points_awarded?: number | null
-          processed_at?: string | null
-          rule_id?: string | null
-          secondary_points_awarded?: number | null
-          user_id: string
-        }
-        Update: {
-          ai_confidence?: number | null
-          ai_evidence?: Json | null
-          ai_inferred?: boolean | null
-          content_id?: string | null
-          created_at?: string | null
-          event_data?: Json | null
-          event_type_key?: string
-          id?: string
-          organization_id?: string
-          points_awarded?: number | null
-          processed_at?: string | null
-          rule_id?: string | null
-          secondary_points_awarded?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      up_fraud_alerts: {
-        Row: {
-          alert_type: string
-          created_at: string | null
-          evidence: Json | null
-          id: string
-          is_resolved: boolean | null
-          organization_id: string
-          reason: string
-          resolution_notes: string | null
-          resolved_at: string | null
-          resolved_by: string | null
-          severity: string
-          user_id: string | null
-        }
-        Insert: {
-          alert_type: string
-          created_at?: string | null
-          evidence?: Json | null
-          id?: string
-          is_resolved?: boolean | null
-          organization_id: string
-          reason: string
-          resolution_notes?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          severity: string
-          user_id?: string | null
-        }
-        Update: {
-          alert_type?: string
-          created_at?: string | null
-          evidence?: Json | null
-          id?: string
-          is_resolved?: boolean | null
-          organization_id?: string
-          reason?: string
-          resolution_notes?: string | null
-          resolved_at?: string | null
-          resolved_by?: string | null
-          severity?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      up_permissions: {
-        Row: {
-          can_approve_ai_events: boolean | null
-          can_create_rules: boolean | null
-          can_edit_rules: boolean | null
-          can_manage_quests: boolean | null
-          can_manage_seasons: boolean | null
-          can_manual_adjust: boolean | null
-          can_toggle_ai: boolean | null
-          can_view_fraud_alerts: boolean | null
-          can_view_others_up: boolean | null
-          can_view_own_up: boolean | null
-          can_view_quality_scores: boolean | null
-          can_view_ranking: boolean | null
-          created_at: string | null
-          id: string
-          organization_id: string
-          role: string
-          updated_at: string | null
-        }
-        Insert: {
-          can_approve_ai_events?: boolean | null
-          can_create_rules?: boolean | null
-          can_edit_rules?: boolean | null
-          can_manage_quests?: boolean | null
-          can_manage_seasons?: boolean | null
-          can_manual_adjust?: boolean | null
-          can_toggle_ai?: boolean | null
-          can_view_fraud_alerts?: boolean | null
-          can_view_others_up?: boolean | null
-          can_view_own_up?: boolean | null
-          can_view_quality_scores?: boolean | null
-          can_view_ranking?: boolean | null
-          created_at?: string | null
-          id?: string
-          organization_id: string
-          role: string
-          updated_at?: string | null
-        }
-        Update: {
-          can_approve_ai_events?: boolean | null
-          can_create_rules?: boolean | null
-          can_edit_rules?: boolean | null
-          can_manage_quests?: boolean | null
-          can_manage_seasons?: boolean | null
-          can_manual_adjust?: boolean | null
-          can_toggle_ai?: boolean | null
-          can_view_fraud_alerts?: boolean | null
-          can_view_others_up?: boolean | null
-          can_view_own_up?: boolean | null
-          can_view_quality_scores?: boolean | null
-          can_view_ranking?: boolean | null
-          created_at?: string | null
-          id?: string
-          organization_id?: string
-          role?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      up_quality_scores: {
-        Row: {
-          ai_model: string | null
-          breakdown: Json | null
-          content_id: string
-          evaluated_at: string | null
-          id: string
-          organization_id: string
-          reasons: string[] | null
-          score: number
-          suggestions: string[] | null
-        }
-        Insert: {
-          ai_model?: string | null
-          breakdown?: Json | null
-          content_id: string
-          evaluated_at?: string | null
-          id?: string
-          organization_id: string
-          reasons?: string[] | null
-          score: number
-          suggestions?: string[] | null
-        }
-        Update: {
-          ai_model?: string | null
-          breakdown?: Json | null
-          content_id?: string
-          evaluated_at?: string | null
-          id?: string
-          organization_id?: string
-          reasons?: string[] | null
-          score?: number
-          suggestions?: string[] | null
-        }
-        Relationships: []
-      }
-      up_quest_progress: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          current_value: number | null
-          id: string
-          quest_id: string
-          reward_claimed: boolean | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          current_value?: number | null
-          id?: string
-          quest_id: string
-          reward_claimed?: boolean | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          current_value?: number | null
-          id?: string
-          quest_id?: string
-          reward_claimed?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      up_quests: {
-        Row: {
-          ai_reasoning: string | null
-          applies_to_roles: string[] | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          ends_at: string | null
-          goal_metric: string
-          goal_value: number
-          id: string
-          is_active: boolean | null
-          is_ai_generated: boolean | null
-          organization_id: string
-          reward_badge_id: string | null
-          reward_points: number
-          reward_secondary_points: number | null
-          starts_at: string | null
-          title: string
-        }
-        Insert: {
-          ai_reasoning?: string | null
-          applies_to_roles?: string[] | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          ends_at?: string | null
-          goal_metric: string
-          goal_value?: number
-          id?: string
-          is_active?: boolean | null
-          is_ai_generated?: boolean | null
-          organization_id: string
-          reward_badge_id?: string | null
-          reward_points?: number
-          reward_secondary_points?: number | null
-          starts_at?: string | null
-          title: string
-        }
-        Update: {
-          ai_reasoning?: string | null
-          applies_to_roles?: string[] | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          ends_at?: string | null
-          goal_metric?: string
-          goal_value?: number
-          id?: string
-          is_active?: boolean | null
-          is_ai_generated?: boolean | null
-          organization_id?: string
-          reward_badge_id?: string | null
-          reward_points?: number
-          reward_secondary_points?: number | null
-          starts_at?: string | null
-          title?: string
-        }
-        Relationships: []
-      }
-      up_rules: {
-        Row: {
-          applies_to_roles: string[] | null
-          conditions: Json | null
-          cooldown_minutes: number | null
-          created_at: string | null
-          created_by: string | null
-          description: string | null
-          event_type_key: string
-          id: string
-          is_active: boolean | null
-          is_bonus: boolean | null
-          is_penalty: boolean | null
-          max_per_content: number | null
-          max_per_day: number | null
-          max_per_week: number | null
-          name: string
-          organization_id: string
-          points: number
-          priority: number | null
-          secondary_points: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          applies_to_roles?: string[] | null
-          conditions?: Json | null
-          cooldown_minutes?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          event_type_key: string
-          id?: string
-          is_active?: boolean | null
-          is_bonus?: boolean | null
-          is_penalty?: boolean | null
-          max_per_content?: number | null
-          max_per_day?: number | null
-          max_per_week?: number | null
-          name: string
-          organization_id: string
-          points?: number
-          priority?: number | null
-          secondary_points?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          applies_to_roles?: string[] | null
-          conditions?: Json | null
-          cooldown_minutes?: number | null
-          created_at?: string | null
-          created_by?: string | null
-          description?: string | null
-          event_type_key?: string
-          id?: string
-          is_active?: boolean | null
-          is_bonus?: boolean | null
-          is_penalty?: boolean | null
-          max_per_content?: number | null
-          max_per_day?: number | null
-          max_per_week?: number | null
-          name?: string
-          organization_id?: string
-          points?: number
-          priority?: number | null
-          secondary_points?: number | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      up_season_snapshots: {
-        Row: {
-          achievements_unlocked: number | null
-          created_at: string | null
-          final_level: string | null
-          final_points: number | null
-          final_rank: number | null
-          id: string
-          organization_id: string | null
-          season_id: string
-          total_events: number | null
-          user_id: string
-          user_type: string | null
-        }
-        Insert: {
-          achievements_unlocked?: number | null
-          created_at?: string | null
-          final_level?: string | null
-          final_points?: number | null
-          final_rank?: number | null
-          id?: string
-          organization_id?: string | null
-          season_id: string
-          total_events?: number | null
-          user_id: string
-          user_type?: string | null
-        }
-        Update: {
-          achievements_unlocked?: number | null
-          created_at?: string | null
-          final_level?: string | null
-          final_points?: number | null
-          final_rank?: number | null
-          id?: string
-          organization_id?: string | null
-          season_id?: string
-          total_events?: number | null
-          user_id?: string
-          user_type?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_season_snapshots_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      up_seasons: {
-        Row: {
-          created_at: string | null
-          ends_at: string | null
-          id: string
-          is_active: boolean | null
-          mode: Database["public"]["Enums"]["up_season_mode"]
-          name: string
-          organization_id: string
-          reset_points: boolean | null
-          reset_ranking: boolean | null
-          reset_streaks: boolean | null
-          starts_at: string
-        }
-        Insert: {
-          created_at?: string | null
-          ends_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          mode?: Database["public"]["Enums"]["up_season_mode"]
-          name: string
-          organization_id: string
-          reset_points?: boolean | null
-          reset_ranking?: boolean | null
-          reset_streaks?: boolean | null
-          starts_at?: string
-        }
-        Update: {
-          created_at?: string | null
-          ends_at?: string | null
-          id?: string
-          is_active?: boolean | null
-          mode?: Database["public"]["Enums"]["up_season_mode"]
-          name?: string
-          organization_id?: string
-          reset_points?: boolean | null
-          reset_ranking?: boolean | null
-          reset_streaks?: boolean | null
-          starts_at?: string
-        }
-        Relationships: []
-      }
-      up_settings: {
-        Row: {
-          category: string
-          description: string | null
-          id: string
-          key: string
-          label: string
-          secondary_currency_enabled: boolean | null
-          secondary_currency_icon: string | null
-          secondary_currency_name: string | null
-          updated_at: string
-          updated_by: string | null
-          value: Json
-        }
-        Insert: {
-          category?: string
-          description?: string | null
-          id?: string
-          key: string
-          label: string
-          secondary_currency_enabled?: boolean | null
-          secondary_currency_icon?: string | null
-          secondary_currency_name?: string | null
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Update: {
-          category?: string
-          description?: string | null
-          id?: string
-          key?: string
-          label?: string
-          secondary_currency_enabled?: boolean | null
-          secondary_currency_icon?: string | null
-          secondary_currency_name?: string | null
-          updated_at?: string
-          updated_by?: string | null
-          value?: Json
-        }
-        Relationships: []
-      }
-      up_user_scores: {
-        Row: {
-          avg_rating: number | null
-          clean_approvals: number
-          created_at: string
-          current_level: string
-          id: string
-          late_deliveries: number
-          marketplace_role: string | null
-          normalized_score: number | null
-          on_time_deliveries: number
-          organization_id: string
-          quality_score: number | null
-          rating_count: number | null
-          reassignments: number
-          reliability_score: number | null
-          role: string
-          role_metrics: Json | null
-          season_id: string | null
-          total_deliveries: number
-          total_issues: number
-          total_points: number
-          updated_at: string
-          user_id: string
-          velocity_score: number | null
-        }
-        Insert: {
-          avg_rating?: number | null
-          clean_approvals?: number
-          created_at?: string
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          marketplace_role?: string | null
-          normalized_score?: number | null
-          on_time_deliveries?: number
-          organization_id: string
-          quality_score?: number | null
-          rating_count?: number | null
-          reassignments?: number
-          reliability_score?: number | null
-          role?: string
-          role_metrics?: Json | null
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id: string
-          velocity_score?: number | null
-        }
-        Update: {
-          avg_rating?: number | null
-          clean_approvals?: number
-          created_at?: string
-          current_level?: string
-          id?: string
-          late_deliveries?: number
-          marketplace_role?: string | null
-          normalized_score?: number | null
-          on_time_deliveries?: number
-          organization_id?: string
-          quality_score?: number | null
-          rating_count?: number | null
-          reassignments?: number
-          reliability_score?: number | null
-          role?: string
-          role_metrics?: Json | null
-          season_id?: string | null
-          total_deliveries?: number
-          total_issues?: number
-          total_points?: number
-          updated_at?: string
-          user_id?: string
-          velocity_score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "up_user_scores_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "up_user_scores_season_id_fkey"
-            columns: ["season_id"]
-            isOneToOne: false
-            referencedRelation: "up_seasons"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       usage_tracking: {
         Row: {
           api_calls: number | null
@@ -29677,27 +27542,6 @@ export type Database = {
           period?: string
           tokens_used?: number | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_achievements: {
-        Row: {
-          achievement_id: string
-          id: string
-          unlocked_at: string
-          user_id: string
-        }
-        Insert: {
-          achievement_id: string
-          id?: string
-          unlocked_at?: string
-          user_id: string
-        }
-        Update: {
-          achievement_id?: string
-          id?: string
-          unlocked_at?: string
           user_id?: string
         }
         Relationships: []
@@ -29830,47 +27674,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_daily_missions: {
-        Row: {
-          assigned_date: string
-          completed_at: string | null
-          created_at: string
-          id: string
-          mission_template_id: string
-          progress: number
-          reward_claimed: boolean
-          user_id: string
-        }
-        Insert: {
-          assigned_date: string
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          mission_template_id: string
-          progress?: number
-          reward_claimed?: boolean
-          user_id: string
-        }
-        Update: {
-          assigned_date?: string
-          completed_at?: string | null
-          created_at?: string
-          id?: string
-          mission_template_id?: string
-          progress?: number
-          reward_claimed?: boolean
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_daily_missions_mission_template_id_fkey"
-            columns: ["mission_template_id"]
-            isOneToOne: false
-            referencedRelation: "mission_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_feed_events: {
         Row: {
           created_at: string
@@ -29904,206 +27707,6 @@ export type Database = {
           metadata?: Json | null
           user_id?: string | null
           viewer_id?: string | null
-        }
-        Relationships: []
-      }
-      user_global_badges: {
-        Row: {
-          badge_id: string
-          created_at: string | null
-          current_progress: number | null
-          id: string
-          is_completed: boolean | null
-          progress_max: number | null
-          progress_updated_at: string | null
-          unlock_context: Json | null
-          unlocked_at: string | null
-          user_id: string
-        }
-        Insert: {
-          badge_id: string
-          created_at?: string | null
-          current_progress?: number | null
-          id?: string
-          is_completed?: boolean | null
-          progress_max?: number | null
-          progress_updated_at?: string | null
-          unlock_context?: Json | null
-          unlocked_at?: string | null
-          user_id: string
-        }
-        Update: {
-          badge_id?: string
-          created_at?: string | null
-          current_progress?: number | null
-          id?: string
-          is_completed?: boolean | null
-          progress_max?: number | null
-          progress_updated_at?: string | null
-          unlock_context?: Json | null
-          unlocked_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_global_badges_badge_id_fkey"
-            columns: ["badge_id"]
-            isOneToOne: false
-            referencedRelation: "global_badges"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_global_stats: {
-        Row: {
-          average_rating: number | null
-          avg_delivery_hours: number | null
-          badges_completed_count: number | null
-          bio_length: number | null
-          collaborations_count: number | null
-          comments_given: number | null
-          consecutive_active_days: number | null
-          days_since_signup: number | null
-          delivery_streak: number | null
-          early_deliveries_count: number | null
-          featured_works_count: number | null
-          first_content_at: string | null
-          five_star_count: number | null
-          followers_count: number | null
-          following_count: number | null
-          global_rank: number | null
-          has_avatar: boolean | null
-          has_banner: boolean | null
-          has_bio: boolean | null
-          last_active_at: string | null
-          late_deliveries_count: number | null
-          likes_given: number | null
-          no_revision_streak: number | null
-          on_time_deliveries_count: number | null
-          percentile: number | null
-          portfolio_hd_count: number | null
-          portfolio_images_count: number | null
-          portfolio_likes_total: number | null
-          portfolio_posts_count: number | null
-          portfolio_videos_count: number | null
-          portfolio_views_total: number | null
-          profile_completeness: number | null
-          profile_created_at: string
-          ratings_count: number | null
-          referrals_count: number | null
-          repeat_clients_count: number | null
-          revisions_count: number | null
-          seasons_participated: number | null
-          social_networks_count: number | null
-          successful_referrals: number | null
-          total_active_months: number | null
-          total_badge_points: number | null
-          total_clients_served: number | null
-          total_projects_completed: number | null
-          total_revenue_usd: number | null
-          unique_clients_count: number | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          average_rating?: number | null
-          avg_delivery_hours?: number | null
-          badges_completed_count?: number | null
-          bio_length?: number | null
-          collaborations_count?: number | null
-          comments_given?: number | null
-          consecutive_active_days?: number | null
-          days_since_signup?: number | null
-          delivery_streak?: number | null
-          early_deliveries_count?: number | null
-          featured_works_count?: number | null
-          first_content_at?: string | null
-          five_star_count?: number | null
-          followers_count?: number | null
-          following_count?: number | null
-          global_rank?: number | null
-          has_avatar?: boolean | null
-          has_banner?: boolean | null
-          has_bio?: boolean | null
-          last_active_at?: string | null
-          late_deliveries_count?: number | null
-          likes_given?: number | null
-          no_revision_streak?: number | null
-          on_time_deliveries_count?: number | null
-          percentile?: number | null
-          portfolio_hd_count?: number | null
-          portfolio_images_count?: number | null
-          portfolio_likes_total?: number | null
-          portfolio_posts_count?: number | null
-          portfolio_videos_count?: number | null
-          portfolio_views_total?: number | null
-          profile_completeness?: number | null
-          profile_created_at?: string
-          ratings_count?: number | null
-          referrals_count?: number | null
-          repeat_clients_count?: number | null
-          revisions_count?: number | null
-          seasons_participated?: number | null
-          social_networks_count?: number | null
-          successful_referrals?: number | null
-          total_active_months?: number | null
-          total_badge_points?: number | null
-          total_clients_served?: number | null
-          total_projects_completed?: number | null
-          total_revenue_usd?: number | null
-          unique_clients_count?: number | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          average_rating?: number | null
-          avg_delivery_hours?: number | null
-          badges_completed_count?: number | null
-          bio_length?: number | null
-          collaborations_count?: number | null
-          comments_given?: number | null
-          consecutive_active_days?: number | null
-          days_since_signup?: number | null
-          delivery_streak?: number | null
-          early_deliveries_count?: number | null
-          featured_works_count?: number | null
-          first_content_at?: string | null
-          five_star_count?: number | null
-          followers_count?: number | null
-          following_count?: number | null
-          global_rank?: number | null
-          has_avatar?: boolean | null
-          has_banner?: boolean | null
-          has_bio?: boolean | null
-          last_active_at?: string | null
-          late_deliveries_count?: number | null
-          likes_given?: number | null
-          no_revision_streak?: number | null
-          on_time_deliveries_count?: number | null
-          percentile?: number | null
-          portfolio_hd_count?: number | null
-          portfolio_images_count?: number | null
-          portfolio_likes_total?: number | null
-          portfolio_posts_count?: number | null
-          portfolio_videos_count?: number | null
-          portfolio_views_total?: number | null
-          profile_completeness?: number | null
-          profile_created_at?: string
-          ratings_count?: number | null
-          referrals_count?: number | null
-          repeat_clients_count?: number | null
-          revisions_count?: number | null
-          seasons_participated?: number | null
-          social_networks_count?: number | null
-          successful_referrals?: number | null
-          total_active_months?: number | null
-          total_badge_points?: number | null
-          total_clients_served?: number | null
-          total_projects_completed?: number | null
-          total_revenue_usd?: number | null
-          unique_clients_count?: number | null
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: []
       }
@@ -30317,51 +27920,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_points: {
-        Row: {
-          consecutive_on_time: number
-          created_at: string
-          current_level: string
-          id: string
-          secondary_points: number | null
-          total_completions: number
-          total_corrections: number
-          total_late: number
-          total_on_time: number
-          total_points: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          consecutive_on_time?: number
-          created_at?: string
-          current_level?: string
-          id?: string
-          secondary_points?: number | null
-          total_completions?: number
-          total_corrections?: number
-          total_late?: number
-          total_on_time?: number
-          total_points?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          consecutive_on_time?: number
-          created_at?: string
-          current_level?: string
-          id?: string
-          secondary_points?: number | null
-          total_completions?: number
-          total_corrections?: number
-          total_late?: number
-          total_on_time?: number
-          total_points?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_presence: {
         Row: {
           created_at: string
@@ -30394,110 +27952,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      user_reputation_totals: {
-        Row: {
-          ai_quality_score: number | null
-          approval_rate: number | null
-          avg_engagement_rate: number | null
-          avg_rating: number | null
-          best_streak_days: number | null
-          clean_approvals_count: number | null
-          current_level: string | null
-          current_level_progress: number | null
-          current_streak_days: number | null
-          early_deliveries_count: number | null
-          id: string
-          issues_count: number | null
-          last_activity_date: string | null
-          last_calculated_at: string | null
-          late_deliveries_count: number | null
-          lifetime_points: number | null
-          lifetime_tasks: number | null
-          normalized_score: number | null
-          on_time_rate: number | null
-          organization_id: string
-          revision_rate: number | null
-          role_key: string
-          rolling_30d_average: number | null
-          rolling_30d_points: number | null
-          rolling_30d_tasks: number | null
-          season_points: number | null
-          season_tasks: number | null
-          user_id: string
-          weekly_volume: number | null
-        }
-        Insert: {
-          ai_quality_score?: number | null
-          approval_rate?: number | null
-          avg_engagement_rate?: number | null
-          avg_rating?: number | null
-          best_streak_days?: number | null
-          clean_approvals_count?: number | null
-          current_level?: string | null
-          current_level_progress?: number | null
-          current_streak_days?: number | null
-          early_deliveries_count?: number | null
-          id?: string
-          issues_count?: number | null
-          last_activity_date?: string | null
-          last_calculated_at?: string | null
-          late_deliveries_count?: number | null
-          lifetime_points?: number | null
-          lifetime_tasks?: number | null
-          normalized_score?: number | null
-          on_time_rate?: number | null
-          organization_id: string
-          revision_rate?: number | null
-          role_key: string
-          rolling_30d_average?: number | null
-          rolling_30d_points?: number | null
-          rolling_30d_tasks?: number | null
-          season_points?: number | null
-          season_tasks?: number | null
-          user_id: string
-          weekly_volume?: number | null
-        }
-        Update: {
-          ai_quality_score?: number | null
-          approval_rate?: number | null
-          avg_engagement_rate?: number | null
-          avg_rating?: number | null
-          best_streak_days?: number | null
-          clean_approvals_count?: number | null
-          current_level?: string | null
-          current_level_progress?: number | null
-          current_streak_days?: number | null
-          early_deliveries_count?: number | null
-          id?: string
-          issues_count?: number | null
-          last_activity_date?: string | null
-          last_calculated_at?: string | null
-          late_deliveries_count?: number | null
-          lifetime_points?: number | null
-          lifetime_tasks?: number | null
-          normalized_score?: number | null
-          on_time_rate?: number | null
-          organization_id?: string
-          revision_rate?: number | null
-          role_key?: string
-          rolling_30d_average?: number | null
-          rolling_30d_points?: number | null
-          rolling_30d_tasks?: number | null
-          season_points?: number | null
-          season_tasks?: number | null
-          user_id?: string
-          weekly_volume?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reputation_totals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       user_roles: {
         Row: {
@@ -30582,33 +28036,6 @@ export type Database = {
           created_at?: string | null
           id?: string
           specialization?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_streaks: {
-        Row: {
-          current_streak: number
-          last_activity_date: string | null
-          longest_streak: number
-          streak_started_at: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          current_streak?: number
-          last_activity_date?: string | null
-          longest_streak?: number
-          streak_started_at?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          current_streak?: number
-          last_activity_date?: string | null
-          longest_streak?: number
-          streak_started_at?: string | null
-          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -31371,30 +28798,6 @@ export type Database = {
           },
         ]
       }
-      season_leaderboard_live: {
-        Row: {
-          avatar_url: string | null
-          current_level: string | null
-          full_name: string | null
-          organization_id: string | null
-          percentile: number | null
-          role_key: string | null
-          season_id: string | null
-          season_name: string | null
-          season_points: number | null
-          season_rank: number | null
-          user_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_reputation_totals_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       v_duplicate_content: {
         Row: {
           client_id: string | null
@@ -31644,16 +29047,6 @@ export type Database = {
       academy_v2_dispatch_cart_abandonment: { Args: never; Returns: number }
       academy_v2_dispatch_cohort_starting_24h: { Args: never; Returns: number }
       academy_v2_dispatch_event_reminders_24h: { Args: never; Returns: number }
-      add_user_points: {
-        Args: {
-          _content_id: string
-          _description?: string
-          _points: number
-          _transaction_type: Database["public"]["Enums"]["point_transaction_type"]
-          _user_id: string
-        }
-        Returns: undefined
-      }
       admin_delete_user_cascade: {
         Args: { target_user_id: string }
         Returns: Json
@@ -31717,15 +29110,6 @@ export type Database = {
         Returns: Json
       }
       auto_approve_stale_content: { Args: never; Returns: number }
-      award_kiro_points: {
-        Args: {
-          p_description?: string
-          p_new_total_points?: number
-          p_points: number
-          p_source: string
-        }
-        Returns: Json
-      }
       award_referral_coins: {
         Args: {
           p_amount: number
@@ -31734,22 +29118,6 @@ export type Database = {
           p_user_id: string
         }
         Returns: undefined
-      }
-      award_reputation_event: {
-        Args: {
-          p_base_points?: number
-          p_breakdown?: Json
-          p_event_subtype?: string
-          p_event_type: string
-          p_multiplier?: number
-          p_organization_id: string
-          p_reference_id: string
-          p_reference_type: string
-          p_role_key: string
-          p_season_id?: string
-          p_user_id: string
-        }
-        Returns: Json
       }
       award_space_points: {
         Args: {
@@ -31787,19 +29155,6 @@ export type Database = {
         Args: { creator_user_id: string }
         Returns: Json
       }
-      calculate_delivery_points: {
-        Args: {
-          p_client_tier?: string
-          p_complexity_key?: string
-          p_delivery_days: number
-          p_has_issues?: boolean
-          p_issue_count?: number
-          p_organization_id: string
-          p_role_key: string
-          p_user_id: string
-        }
-        Returns: number
-      }
       calculate_level_progress: { Args: { p_points: number }; Returns: number }
       calculate_next_token_reset: {
         Args: { p_from_date?: string; p_registration_date: string }
@@ -31827,7 +29182,15 @@ export type Database = {
         Returns: string
       }
       calculate_security_score: { Args: { _user_id: string }; Returns: number }
-      calculate_up_level: { Args: { points: number }; Returns: string }
+      calculate_talent_level: { Args: { p_score: number }; Returns: string }
+      calculate_talent_score: {
+        Args: {
+          p_avg_rating: number
+          p_deliveries: number
+          p_on_time_pct: number
+        }
+        Returns: number
+      }
       can_chat_with_user: {
         Args: {
           _org_id: string
@@ -31881,36 +29244,12 @@ export type Database = {
           is_blocked: boolean
         }[]
       }
-      check_and_award_achievements: {
-        Args: { _user_id: string }
-        Returns: undefined
-      }
-      check_and_award_global_badges: {
-        Args: { p_user_id: string }
-        Returns: {
-          out_badge_id: string
-          out_badge_key: string
-          out_badge_name: string
-          out_was_unlocked: boolean
-        }[]
-      }
-      check_and_pause_chronometer: {
-        Args: {
-          p_content_id: string
-          p_organization_id: string
-          p_reason?: string
-          p_role?: string
-          p_user_id?: string
-        }
-        Returns: undefined
-      }
       check_and_unlock_access: { Args: { p_user_id: string }; Returns: boolean }
       check_certificate_eligibility: {
         Args: { p_course_id: string; p_user_id: string }
         Returns: Json
       }
       check_overdue_projects: { Args: never; Returns: number }
-      check_perfect_streak: { Args: { _user_id: string }; Returns: boolean }
       check_profile_completion: { Args: { p_user_id: string }; Returns: Json }
       check_rate_limit: {
         Args: {
@@ -31977,15 +29316,6 @@ export type Database = {
           p_template_id: string
         }
         Returns: boolean
-      }
-      close_expired_seasons: { Args: never; Returns: Json }
-      close_season_and_distribute_rewards: {
-        Args: { p_season_id: string }
-        Returns: {
-          badges_awarded: number
-          claims_created: number
-          points_distributed: number
-        }[]
       }
       complete_onboarding: { Args: { p_user_id: string }; Returns: boolean }
       compute_creator_search_score: {
@@ -32070,15 +29400,6 @@ export type Database = {
         Args: { org_id: string }
         Returns: undefined
       }
-      create_default_up_config: {
-        Args: { _org_id: string }
-        Returns: undefined
-      }
-      create_default_up_event_types: {
-        Args: { _org_id: string }
-        Returns: undefined
-      }
-      create_default_up_rules: { Args: { _org_id: string }; Returns: undefined }
       create_escrow_hold: {
         Args: {
           p_campaign_id?: string
@@ -32160,29 +29481,6 @@ export type Database = {
       }
       delete_brand_complete: { Args: { p_brand_id: string }; Returns: boolean }
       diagnose_onboarding: { Args: { p_user_email: string }; Returns: Json }
-      emit_up_event:
-        | {
-            Args: {
-              _content_id?: string
-              _event_data?: Json
-              _event_type_key: string
-              _user_id: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _ai_confidence?: number
-              _ai_evidence?: Json
-              _ai_inferred?: boolean
-              _content_id?: string
-              _event_data?: Json
-              _event_type_key: string
-              _org_id: string
-              _user_id: string
-            }
-            Returns: string
-          }
       encrypt_oauth_token: {
         Args: { p_key: string; p_plaintext: string }
         Returns: string
@@ -32238,7 +29536,6 @@ export type Database = {
         Args: { p_cutoff_date?: string; p_organization_id: string }
         Returns: Json
       }
-      fn_bump_user_streak: { Args: { p_user_id: string }; Returns: number }
       fn_cash_flow_forecast: {
         Args: {
           p_currency?: string
@@ -32256,10 +29553,6 @@ export type Database = {
           week_number: number
           week_start: string
         }[]
-      }
-      fn_match_daily_missions: {
-        Args: { p_event_type: string; p_user_id: string }
-        Returns: undefined
       }
       fn_monthly_talent_payroll: {
         Args: { p_organization_id: string; p_period_label?: string }
@@ -32378,7 +29671,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_active_season: { Args: { org_id: string }; Returns: string }
       get_ai_module_config: {
         Args: { _module_key: string; _org_id: string }
         Returns: {
@@ -32870,10 +30162,6 @@ export type Database = {
         Args: { p_account_client_id?: string; p_content_id: string }
         Returns: Json
       }
-      get_content_paused_hours: {
-        Args: { p_content_id: string; p_role: string }
-        Returns: number
-      }
       get_course_checkout_payload: {
         Args: {
           p_caller_secret: string
@@ -32906,20 +30194,6 @@ export type Database = {
       get_current_organization_id: {
         Args: { _user_id: string }
         Returns: string
-      }
-      get_daily_missions: {
-        Args: never
-        Returns: {
-          code: string
-          completed_at: string
-          description: string
-          id: string
-          progress: number
-          reward_claimed: boolean
-          target_count: number
-          title: string
-          up_reward: number
-        }[]
       }
       get_dashboard_stats: {
         Args: { end_date: string; org_id: string; start_date: string }
@@ -33093,38 +30367,6 @@ export type Database = {
         Returns: Json
       }
       get_full_user_detail: { Args: { p_user_id: string }; Returns: Json }
-      get_global_badges_with_progress: {
-        Args: { p_user_id: string }
-        Returns: {
-          badge_category: string
-          badge_description: string
-          badge_icon: string
-          badge_id: string
-          badge_key: string
-          badge_name: string
-          badge_rarity: string
-          current_progress: number
-          is_completed: boolean
-          is_secret: boolean
-          progress_max: number
-          progress_percentage: number
-          ranking_points: number
-          tier: number
-          unlocked_at: string
-        }[]
-      }
-      get_global_ranking: {
-        Args: { p_limit?: number; p_offset?: number }
-        Returns: {
-          avatar_url: string
-          badges_completed_count: number
-          full_name: string
-          global_rank: number
-          percentile: number
-          total_badge_points: number
-          user_id: string
-        }[]
-      }
       get_latest_completed_research_session: {
         Args: { p_product_id: string }
         Returns: {
@@ -33560,56 +30802,6 @@ export type Database = {
           product_code: number
         }[]
       }
-      get_org_ranking: {
-        Args: {
-          p_archetype?: string
-          p_limit?: number
-          p_org_id: string
-          p_role?: string
-          p_sort_by?: string
-        }
-        Returns: {
-          archetype: string
-          avatar_url: string
-          base_weight: number
-          current_level: string
-          current_level_progress: number
-          current_streak_days: number
-          full_name: string
-          lifetime_points: number
-          lifetime_tasks: number
-          normalized_score: number
-          on_time_rate: number
-          role_key: string
-          season_points: number
-          user_id: string
-        }[]
-      }
-      get_org_ranking_normalized: {
-        Args: {
-          p_archetype?: string
-          p_org_id: string
-          p_role?: string
-          p_sort_by?: string
-        }
-        Returns: {
-          archetype: string
-          avatar_url: string
-          base_weight: number
-          clean_approvals: number
-          complexity_multiplier: number
-          current_level: string
-          full_name: string
-          late_deliveries: number
-          marketplace_role: string
-          normalized_score: number
-          on_time_deliveries: number
-          role: string
-          total_issues: number
-          total_points: number
-          user_id: string
-        }[]
-      }
       get_org_recent_activity: {
         Args: { p_limit?: number; p_org_id: string }
         Returns: Json
@@ -33948,56 +31140,6 @@ export type Database = {
           version: string
         }[]
       }
-      get_role_weight:
-        | {
-            Args: { p_organization_id?: string; p_role_key: string }
-            Returns: {
-              archetype: string
-              base_weight: number
-              complexity_multiplier: number
-              expected_monthly_volume: number
-              point_actions: Json
-              role_key: string
-              volume_normalization_cap: number
-            }[]
-          }
-        | {
-            Args: {
-              p_organization_id: string
-              p_system_role: string
-              p_user_id: string
-            }
-            Returns: {
-              archetype: Database["public"]["Enums"]["effort_archetype"]
-              base_weight: number
-              complexity_multiplier: number
-              role_key: string
-              source: string
-            }[]
-          }
-      get_season_rewards_with_eligibility: {
-        Args: { p_season_id: string; p_user_id: string }
-        Returns: {
-          claim_status: string
-          description: string
-          display_color: string
-          display_icon: string
-          display_name: string
-          is_claimed: boolean
-          is_eligible: boolean
-          monetary_amount: number
-          monetary_currency: string
-          points_amount: number
-          position_max: number
-          position_min: number
-          position_type: string
-          reward_id: string
-          reward_type: string
-          user_percentile: number
-          user_points: number
-          user_rank: number
-        }[]
-      }
       get_signature_receipt: {
         Args: { p_signature_id: string; p_user_id: string }
         Returns: Json
@@ -34179,30 +31321,8 @@ export type Database = {
           velocity_score: number
         }[]
       }
-      get_up_setting: { Args: { setting_key: string }; Returns: Json }
       get_user_age_verification: { Args: { p_user_id: string }; Returns: Json }
       get_user_consents: { Args: { p_user_id: string }; Returns: Json }
-      get_user_events: {
-        Args: {
-          p_limit?: number
-          p_org_id?: string
-          p_role?: string
-          p_user_id: string
-        }
-        Returns: {
-          calculation_breakdown: Json
-          created_at: string
-          event_date: string
-          event_subtype: string
-          event_type: string
-          final_points: number
-          id: string
-          organization_id: string
-          reference_id: string
-          reference_type: string
-          role_key: string
-        }[]
-      }
       get_user_legal_summary: { Args: { p_user_id: string }; Returns: Json }
       get_user_org_context: {
         Args: { p_organization_id: string }
@@ -34242,83 +31362,9 @@ export type Database = {
         }[]
       }
       get_user_referral_code: { Args: { _user_id: string }; Returns: string }
-      get_user_reputation: {
-        Args: { p_org_id: string; p_user_id: string }
-        Returns: {
-          ai_quality_score: number | null
-          approval_rate: number | null
-          avg_engagement_rate: number | null
-          avg_rating: number | null
-          best_streak_days: number | null
-          clean_approvals_count: number | null
-          current_level: string | null
-          current_level_progress: number | null
-          current_streak_days: number | null
-          early_deliveries_count: number | null
-          id: string
-          issues_count: number | null
-          last_activity_date: string | null
-          last_calculated_at: string | null
-          late_deliveries_count: number | null
-          lifetime_points: number | null
-          lifetime_tasks: number | null
-          normalized_score: number | null
-          on_time_rate: number | null
-          organization_id: string
-          revision_rate: number | null
-          role_key: string
-          rolling_30d_average: number | null
-          rolling_30d_points: number | null
-          rolling_30d_tasks: number | null
-          season_points: number | null
-          season_tasks: number | null
-          user_id: string
-          weekly_volume: number | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "user_reputation_totals"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
-      }
-      get_user_scores: {
-        Args: { p_org_id: string; p_user_id: string }
-        Returns: {
-          avg_rating: number | null
-          clean_approvals: number
-          created_at: string
-          current_level: string
-          id: string
-          late_deliveries: number
-          marketplace_role: string | null
-          normalized_score: number | null
-          on_time_deliveries: number
-          organization_id: string
-          quality_score: number | null
-          rating_count: number | null
-          reassignments: number
-          reliability_score: number | null
-          role: string
-          role_metrics: Json | null
-          season_id: string | null
-          total_deliveries: number
-          total_issues: number
-          total_points: number
-          updated_at: string
-          user_id: string
-          velocity_score: number | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "up_user_scores"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_user_signatures: { Args: { p_user_id: string }; Returns: Json }
       get_user_social_settings: {
@@ -34407,10 +31453,6 @@ export type Database = {
       initialize_default_blocks: {
         Args: { profile_id: string; template_name?: string }
         Returns: boolean
-      }
-      initialize_org_points_config: {
-        Args: { p_organization_id: string }
-        Returns: undefined
       }
       invoke_stripe_sync_product: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -34853,11 +31895,6 @@ export type Database = {
         Args: { p_client_user_id: string; p_org_id: string }
         Returns: undefined
       }
-      refresh_reputation_global: {
-        Args: { p_user_id: string }
-        Returns: undefined
-      }
-      refresh_season_leaderboard: { Args: never; Returns: undefined }
       refund_escrow: {
         Args: { p_escrow_id: string; p_reason?: string }
         Returns: boolean
@@ -34939,10 +31976,6 @@ export type Database = {
       restore_content_from_trash: {
         Args: { p_content_id: string }
         Returns: Json
-      }
-      resume_chronometer: {
-        Args: { p_content_id: string; p_resume_reason?: string }
-        Returns: undefined
       }
       revoke_badge: {
         Args: {
@@ -35133,24 +32166,6 @@ export type Database = {
       sync_profile_to_marketplace: {
         Args: { target_user_id: string }
         Returns: string
-      }
-      sync_user_global_stats: {
-        Args: {
-          p_badges_completed_count?: number
-          p_bio_length?: number
-          p_days_since_signup?: number
-          p_early_deliveries_count?: number
-          p_has_avatar?: boolean
-          p_has_bio?: boolean
-          p_last_active_at?: string
-          p_late_deliveries_count?: number
-          p_on_time_deliveries_count?: number
-          p_profile_completeness?: number
-          p_social_networks_count?: number
-          p_total_badge_points?: number
-          p_total_projects_completed?: number
-        }
-        Returns: Json
       }
       sync_user_health: { Args: { p_user_id: string }; Returns: undefined }
       sync_user_to_pancake: { Args: { p_user_id: string }; Returns: undefined }
@@ -35445,22 +32460,6 @@ export type Database = {
         | "content_creator"
         | "creative_strategist"
         | "student"
-      badge_category:
-        | "profile"
-        | "portfolio"
-        | "experience"
-        | "quality"
-        | "speed"
-        | "community"
-        | "veteran"
-        | "special"
-      badge_rarity:
-        | "common"
-        | "uncommon"
-        | "rare"
-        | "epic"
-        | "legendary"
-        | "mythic"
       chat_type: "direct" | "group" | "ai_assistant"
       content_status:
         | "draft"
@@ -35487,10 +32486,6 @@ export type Database = {
         | "revision_requested"
         | "approved"
         | "rejected"
-      effort_archetype:
-        | "high_volume"
-        | "medium_volume"
-        | "low_volume_high_complexity"
       escrow_status:
         | "created"
         | "funded"
@@ -35530,15 +32525,6 @@ export type Database = {
         | "corrected"
         | "paid"
         | "en_campaa"
-      point_transaction_type:
-        | "base_completion"
-        | "early_delivery"
-        | "late_delivery"
-        | "correction_needed"
-        | "perfect_streak"
-        | "five_star_rating"
-        | "viral_hook"
-        | "manual_adjustment"
       project_type:
         | "content_creation"
         | "post_production"
@@ -35622,34 +32608,6 @@ export type Database = {
         | "adjustment"
         | "chargeback"
         | "community_commission"
-      up_event_type:
-        | "status_change"
-        | "deadline_met"
-        | "deadline_missed"
-        | "content_approved"
-        | "content_delivered"
-        | "correction_requested"
-        | "assignment_received"
-        | "script_submitted"
-        | "script_approved"
-        | "video_uploaded"
-        | "thumbnail_uploaded"
-        | "client_feedback_positive"
-        | "client_feedback_negative"
-        | "streak_milestone"
-        | "quest_completed"
-        | "manual_adjustment"
-        | "ai_quality_bonus"
-        | "ai_quality_penalty"
-      up_level: "bronze" | "silver" | "gold" | "diamond"
-      up_rule_operator:
-        | "equals"
-        | "not_equals"
-        | "greater_than"
-        | "less_than"
-        | "contains"
-        | "in_list"
-      up_season_mode: "permanent" | "monthly" | "quarterly" | "custom"
       verification_method: "manual" | "api" | "screenshot" | "creator_confirm"
       wallet_type:
         | "creator"
@@ -35880,24 +32838,6 @@ export const Constants = {
         "creative_strategist",
         "student",
       ],
-      badge_category: [
-        "profile",
-        "portfolio",
-        "experience",
-        "quality",
-        "speed",
-        "community",
-        "veteran",
-        "special",
-      ],
-      badge_rarity: [
-        "common",
-        "uncommon",
-        "rare",
-        "epic",
-        "legendary",
-        "mythic",
-      ],
       chat_type: ["direct", "group", "ai_assistant"],
       content_status: [
         "draft",
@@ -35925,11 +32865,6 @@ export const Constants = {
         "revision_requested",
         "approved",
         "rejected",
-      ],
-      effort_archetype: [
-        "high_volume",
-        "medium_volume",
-        "low_volume_high_complexity",
       ],
       escrow_status: [
         "created",
@@ -35972,16 +32907,6 @@ export const Constants = {
         "corrected",
         "paid",
         "en_campaa",
-      ],
-      point_transaction_type: [
-        "base_completion",
-        "early_delivery",
-        "late_delivery",
-        "correction_needed",
-        "perfect_streak",
-        "five_star_rating",
-        "viral_hook",
-        "manual_adjustment",
       ],
       project_type: [
         "content_creation",
@@ -36074,36 +32999,6 @@ export const Constants = {
         "chargeback",
         "community_commission",
       ],
-      up_event_type: [
-        "status_change",
-        "deadline_met",
-        "deadline_missed",
-        "content_approved",
-        "content_delivered",
-        "correction_requested",
-        "assignment_received",
-        "script_submitted",
-        "script_approved",
-        "video_uploaded",
-        "thumbnail_uploaded",
-        "client_feedback_positive",
-        "client_feedback_negative",
-        "streak_milestone",
-        "quest_completed",
-        "manual_adjustment",
-        "ai_quality_bonus",
-        "ai_quality_penalty",
-      ],
-      up_level: ["bronze", "silver", "gold", "diamond"],
-      up_rule_operator: [
-        "equals",
-        "not_equals",
-        "greater_than",
-        "less_than",
-        "contains",
-        "in_list",
-      ],
-      up_season_mode: ["permanent", "monthly", "quarterly", "custom"],
       verification_method: ["manual", "api", "screenshot", "creator_confirm"],
       wallet_type: [
         "creator",

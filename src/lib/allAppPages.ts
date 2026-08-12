@@ -43,7 +43,6 @@ import {
   Settings,
   UserCircle,
   ReceiptText,
-  Trophy,
   Award,
   Palette,
   BookOpen,
@@ -150,9 +149,8 @@ export const ALL_APP_PAGES: QASection[] = [
     ],
   },
   {
-    label: 'Gamificación',
+    label: 'Embajadores',
     items: [
-      { name: 'Ranking', path: '/ranking', icon: Trophy },
       { name: 'Embajadores', path: '/ambassador', icon: Award },
     ],
   },
@@ -168,7 +166,6 @@ export const ALL_APP_PAGES: QASection[] = [
   {
     label: 'Recibos y Docs',
     items: [
-      { name: 'Documentación UP', path: '/up-documentation', icon: BookOpen },
       { name: 'Documentación MCP', path: '/mcp-docs', icon: ReceiptText },
     ],
   },

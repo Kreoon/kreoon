@@ -231,17 +231,14 @@ export function EnhancedSmartSearch({
         const userIds = uniqueUsers.map(u => u.id);
         
         // Fetch all enrichment data in parallel
-        const [pointsResult, achievementsResult, followersResult, contentCountResult] = await Promise.all([
+        // Simplificación 2026: up_creadores_totals y user_achievements eran del
+        // módulo UP, eliminado. La reputación sale ahora de marketplace_reputation.
+        const [pointsResult, followersResult, contentCountResult] = await Promise.all([
           supabase
-            .from('up_creadores_totals')
-            .select('user_id, total_points, current_level')
+            .from('marketplace_reputation')
+            .select('user_id, global_score, global_level')
             .in('user_id', userIds),
-          
-          supabase
-            .from('user_achievements')
-            .select('user_id')
-            .in('user_id', userIds),
-          
+
           supabase
             .from('followers')
             .select('following_id')
@@ -259,11 +256,8 @@ export function EnhancedSmartSearch({
           (pointsResult.data || []).map(p => [p.user_id, p])
         );
         
-        const achievementsCount = new Map<string, number>();
-        (achievementsResult.data || []).forEach(a => {
-          achievementsCount.set(a.user_id, (achievementsCount.get(a.user_id) || 0) + 1);
-        });
-        
+        const achievementsCount = new Map<string, number>(); // sin logros: el módulo UP se eliminó
+
         const followersCount = new Map<string, number>();
         (followersResult.data || []).forEach(f => {
           followersCount.set(f.following_id, (followersCount.get(f.following_id) || 0) + 1);
@@ -296,8 +290,8 @@ export function EnhancedSmartSearch({
             industries: user.industries as string[] | null,
             experience_level: user.experience_level,
             quality_score_avg: user.quality_score_avg,
-            current_level: points?.current_level,
-            total_points: points?.total_points,
+            current_level: (points as any)?.global_level,
+            total_points: Math.round((points as any)?.global_score || 0),
             achievements_count: achievementsCount.get(user.id) || 0,
             followers_count: followersCount.get(user.id) || 0,
             content_count: contentCount.get(user.id) || 0,

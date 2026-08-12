@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, LogOut, UserCircle, Flame } from 'lucide-react';
+import { Settings, LogOut, UserCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Drawer,
@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useCreatorProfile } from '@/hooks/useCreatorProfile';
-import { useStreak } from '@/hooks/useStreak';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AccountMenuProps {
@@ -29,7 +28,6 @@ export function AccountMenu({ trigger }: AccountMenuProps) {
   const isMobile = useIsMobile();
   const { profile, signOut } = useAuth();
   const { profile: creatorProfile } = useCreatorProfile();
-  const { currentStreak } = useStreak();
   const navigate = useNavigate();
 
   const hasPublicSlug = !!creatorProfile?.slug;
@@ -50,12 +48,6 @@ export function AccountMenu({ trigger }: AccountMenuProps) {
         </Avatar>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground truncate">{profile?.full_name || 'Usuario'}</p>
-          {currentStreak > 0 && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Flame className="h-3 w-3 text-kreoon-purple-400 fill-current" />
-              {currentStreak} {currentStreak === 1 ? 'día' : 'días'}
-            </p>
-          )}
         </div>
       </div>
 

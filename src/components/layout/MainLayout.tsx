@@ -12,7 +12,6 @@ import { AccountMenu } from "./AccountMenu";
 import { MoreMenuSheet, type MoreMenuItem } from "./MoreMenuSheet";
 import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
 import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotificationsDropdown";
-import { StreakWidget } from "@/components/gamification/StreakWidget";
 import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
 import { useAuth } from "@/hooks/useAuth";
 import { useImmersiveFeed } from "@/contexts/ImmersiveFeedContext";
@@ -23,7 +22,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Trophy, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Crown, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -120,7 +119,6 @@ const ADMIN_MORE_ITEMS_BASE: Array<MoreMenuItem & { platformRootOnly?: boolean }
   { name: "Portafolio", href: "/content", icon: FileText },
   { name: "Kreoon IA", href: "/scripts", icon: Sparkles },
   { name: "Academia", href: "/academia", icon: GraduationCap },
-  { name: "Ranking", href: "/ranking", icon: Trophy },
   { name: "Clientes", href: "/clientes", icon: Building2 },
   { name: "Finanzas", href: "/org-crm/finanzas", icon: Wallet },
   { name: "Comunidades", href: "/crm/comunidades", icon: Users2 },
@@ -323,7 +321,6 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Panel Creador</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <StreakWidget size="sm" />
             <SocialNotificationsDropdown />
             <KiroHeaderButton />
             <AccountMenu
@@ -426,7 +423,6 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Panel Editor</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <StreakWidget size="sm" />
             <SocialNotificationsDropdown />
             <KiroHeaderButton />
             <AccountMenu
@@ -701,8 +697,6 @@ export function MainLayout({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          {/* Racha solo aplica a talento (creacion de contenido) — admin no la ve (Fase 3.6) */}
-          {!isAdmin && <StreakWidget size="sm" />}
           <SocialNotificationsDropdown />
           <KiroHeaderButton />
           <AccountMenu

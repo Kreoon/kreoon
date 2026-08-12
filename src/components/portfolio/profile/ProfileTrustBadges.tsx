@@ -16,7 +16,6 @@ import {
 } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { UnifiedBadgesShowcase } from '@/components/points/UnifiedBadgesShowcase';
 
 interface ProfileTrustBadgesProps {
   userId: string;
@@ -129,21 +128,16 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch from V2 tables and user_achievements
-        const [creatorTotalsRes, achievementsRes, badgesRes] = await Promise.all([
+        // Simplificación 2026: user_reputation_totals y user_achievements eran del
+        // módulo UP, eliminado. La reputación vive ahora en marketplace_reputation
+        // (score 0-100) y los logros desaparecieron. Se conservan los badges de
+        // embajador (organization_member_badges), que son de otro sistema.
+        const [creatorTotalsRes, badgesRes] = await Promise.all([
           supabase
-            .from('user_reputation_totals' as any)
-            .select('lifetime_points, current_level, lifetime_tasks, on_time_rate')
+            .from('marketplace_reputation')
+            .select('global_score, global_level, total_projects_completed, on_time_delivery_rate')
             .eq('user_id', userId)
-            .order('lifetime_points', { ascending: false })
-            .limit(1)
             .maybeSingle(),
-          supabase
-            .from('user_achievements')
-            .select('id, unlocked_at, achievement_id')
-            .eq('user_id', userId)
-            .order('unlocked_at', { ascending: false })
-            .limit(10),
           supabase
             .from('organization_member_badges')
             .select('id, badge, level, is_active, granted_at')
@@ -152,27 +146,19 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
         ]);
 
         if (creatorTotalsRes.data) {
-          const d = creatorTotalsRes.data;
+          const d = creatorTotalsRes.data as {
+            global_score: number | null; global_level: string | null;
+            total_projects_completed: number | null; on_time_delivery_rate: number | null;
+          };
           const levelMap: Record<string, string> = { Novato: 'bronze', Pro: 'silver', Elite: 'gold', Master: 'diamond', Legend: 'diamond' };
+          const completions = d.total_projects_completed || 0;
           setUserPoints({
-            total_points: d.lifetime_points || 0,
-            current_level: levelMap[d.current_level] || 'bronze',
-            total_completions: d.lifetime_tasks || 0,
-            total_on_time: Math.round((d.on_time_rate || 0) * (d.lifetime_tasks || 0)),
+            total_points: Math.round(d.global_score || 0),
+            current_level: levelMap[d.global_level || 'Novato'] || 'bronze',
+            total_completions: completions,
+            total_on_time: Math.round(((d.on_time_delivery_rate || 0) / 100) * completions),
             consecutive_on_time: 0
           });
-        }
-        if (achievementsRes.data && achievementsRes.data.length > 0) {
-          const uaList = achievementsRes.data as { id: string; unlocked_at: string; achievement_id: string }[];
-          const achIds = [...new Set(uaList.map((u) => u.achievement_id).filter(Boolean))];
-          const { data: achData } = achIds.length > 0
-            ? await supabase.from('achievements').select('*').in('id', achIds)
-            : { data: [] };
-          const achMap = new Map((achData ?? []).map((a) => [a.id, a]));
-          const mapped: UserAchievement[] = uaList
-            .filter((u) => achMap.has(u.achievement_id))
-            .map((u) => ({ id: u.id, unlocked_at: u.unlocked_at, achievement: achMap.get(u.achievement_id)! }));
-          setAchievements(mapped);
         }
         if (badgesRes.data) setOrgBadges(badgesRes.data);
 
@@ -368,15 +354,8 @@ export function ProfileTrustBadges({ userId, compact = false }: ProfileTrustBadg
     );
   }
 
-  // Full view - Use unified component
-  return (
-    <UnifiedBadgesShowcase 
-      userId={userId} 
-      variant="full"
-      showOrgBadges={true}
-      showLevelProgress={true}
-    />
-  );
+  // Full view: el showcase unificado vivía en el módulo UP (eliminado).
+  return null;
 }
 
 function StatBlock({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {

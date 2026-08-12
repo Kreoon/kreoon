@@ -11,7 +11,6 @@ const TABLES_TO_SYNC = [
   // Core tables (no dependencies)
   'organizations',
   'app_settings',
-  'achievements',
   'ai_tokenization_config',
   
   // Profiles and users
@@ -66,13 +65,6 @@ const TABLES_TO_SYNC = [
   'ambassador_ai_evaluations',
   
   // UP/Points system
-  'up_creadores',
-  'up_creadores_totals',
-  'up_editores',
-  'up_editores_totals',
-  'user_achievements',
-  
-  // AI system
   'ai_assistant_config',
   'ai_assistant_knowledge',
   'ai_assistant_logs',

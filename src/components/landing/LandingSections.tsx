@@ -5,10 +5,10 @@ import {
   Shield, Lock, Users, Cpu, Database, Eye,
   Building2, UserCircle, Palette, Briefcase, UsersRound,
   Target, Settings, UserPlus, Layers, LineChart,
-  Trophy, Star, TrendingUp, Award, Zap,
+  TrendingUp,
   Video, Bookmark, Sparkles, Globe, Search,
   CheckCircle2, ArrowRight, MessageSquare, Bell, Ticket, Ban,
-  LayoutDashboard, FolderKanban, Network, Bot, Calendar,
+  LayoutDashboard, FolderKanban, Network, Bot,
   FileText, Play, Heart, Share2, Rocket, Clock, Wand2,
   Mic, Camera, Workflow, BarChart3, PieChart, Mail, Phone,
   CreditCard, Package, ShoppingBag, Gift,
@@ -169,13 +169,6 @@ export function ModulesSection() {
       features: ['Feed vertical', 'Portafolios', 'Seguidos/Seguidores', 'Descubrimiento']
     },
     {
-      icon: Trophy,
-      name: 'Sistema UP',
-      status: 'live',
-      description: 'Gamificación y ranking de rendimiento',
-      features: ['Puntos y niveles', 'Logros desbloqueables', 'Leaderboards', 'Temporadas']
-    },
-    {
       icon: Bot,
       name: 'IA Integrada',
       status: 'live',
@@ -293,7 +286,6 @@ export function WhatIsSection() {
     { icon: LayoutDashboard, text: 'Tablero Kanban inteligente' },
     { icon: FolderKanban, text: 'Gestión completa de contenido' },
     { icon: Globe, text: 'Red social profesional' },
-    { icon: Trophy, text: 'Sistema de gamificación' },
     { icon: Bot, text: 'IA en cada módulo' },
     { icon: CreditCard, text: 'Control de pagos' },
     { icon: MessageSquare, text: 'Chat interno con IA' },
@@ -375,7 +367,7 @@ export function ForWhomSection() {
       icon: UsersRound, 
       title: 'Comunidades',
       problem: 'Dificultad para organizar y motivar miembros',
-      solution: 'Sistema UP, rankings y logros',
+      solution: 'Espacios, contenido compartido y roles claros',
       result: 'Engagement y retención elevados'
     },
   ];
@@ -473,63 +465,7 @@ export function HowItWorksSection() {
   );
 }
 
-// Section 6: Sistema UP - Mejorado
-export function SistemaUPSection() {
-  const features = [
-    { icon: Trophy, title: 'Puntos', desc: 'Gana puntos por cada acción' },
-    { icon: Star, title: 'Niveles', desc: 'Desbloquea niveles de prestigio' },
-    { icon: Award, title: 'Logros', desc: 'Medallas y badges especiales' },
-    { icon: TrendingUp, title: 'Rankings', desc: 'Compite en tablas de líderes' },
-    { icon: Calendar, title: 'Temporadas', desc: 'Reseteos y competencias' },
-    { icon: Zap, title: 'Bonificaciones', desc: 'Multiplicadores y rewards' },
-  ];
-
-  return (
-    <section id="sistema-up" className="py-24 px-4 bg-gradient-to-b from-muted/20 to-background">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
-              <Trophy className="h-3 w-3 mr-1" />
-              Gamificación Profesional
-            </Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-              Sistema UP
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-              No es un juego, es motivación real. Un sistema que reconoce, mide y recompensa la excelencia de tu equipo.
-            </p>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {features.map((f, i) => (
-                <div key={i} className="p-4 rounded-sm bg-card/50 border border-border/50 text-center hover:border-amber-500/30 transition-colors">
-                  <f.icon className="h-6 w-6 text-amber-500 mx-auto mb-2" />
-                  <div className="font-semibold text-foreground text-sm">{f.title}</div>
-                  <div className="text-xs text-muted-foreground mt-1">{f.desc}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="relative">
-            <div className="aspect-[4/3] rounded-sm bg-gradient-to-br from-amber-500/20 via-amber-500/10 to-transparent p-8 border border-amber-500/20">
-              <div className="h-full w-full rounded-sm bg-card/80 border border-border/50 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
-                    UP
-                  </div>
-                  <p className="text-muted-foreground mt-2">Sistema de Prestigio</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-// Section 7: Social Creators - Mejorado
+// Section 6: Social Creators - Mejorado
 export function SocialCreatorsSection() {
   const features = [
     { icon: UserCircle, label: 'Portafolios públicos', desc: 'Muestra tu mejor trabajo' },
@@ -709,7 +645,6 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: Cpu, text: 'IA integrada' },
         { icon: Lock, text: 'Permisos por rol' },
         { icon: Video, text: 'Gestión de contenido' },
-        { icon: Trophy, text: 'Sistema UP' },
         { icon: MessageSquare, text: 'Chat interno + IA' },
         { icon: Globe, text: 'Red social' },
       ],
@@ -892,7 +827,6 @@ export function IndividualPlansSection({ onRegister }: SectionProps) {
         '🧠 IA para optimizar perfil',
         '🖼️ Portafolio avanzado',
         '🔗 Contacto profesional',
-        '🏆 Sistema UP personal',
       ],
       cta: 'Mejorar a Pro',
     },

@@ -11,7 +11,6 @@ import { AutoPauseVideo } from '@/components/content/AutoPauseVideo';
 import { supabase, SUPABASE_FUNCTIONS_URL } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
 import { useToast } from '@/hooks/use-toast';
-import { QualityScoreWidget } from '@/components/points/QualityScoreWidget';
 import type { UnifiedTabProps } from '../types';
 import type { BriefFieldConfig } from '@/types/unifiedProject.types';
 
@@ -164,15 +163,6 @@ export default function BriefTab({ project, formData, setFormData, editMode, per
 
   return (
     <div className="space-y-6">
-      {/* Quality Score Widget (content projects only) */}
-      {project.source === 'content' && project.id && (
-        <QualityScoreWidget
-          contentId={project.id}
-          organizationId={project.organizationId}
-          compact
-        />
-      )}
-
       {/* Project DNA section (standard mode) or Manual Script Input (manual mode) */}
       {typeConfig.sections.brief.hasProjectDNA && (
         isManualMode ? (

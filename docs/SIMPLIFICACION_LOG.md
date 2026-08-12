@@ -309,3 +309,84 @@ Migración `20260812010000_drop_campaigns_module.sql`:
 | Componentes | 1.035 | 1.033 | 1.002 | −33 |
 | Edge functions | 169 | 166 | 160 | −9 |
 | Tablas dropeadas | — | 52 | **64** | −64 |
+
+---
+
+## Bloque 4 · UP / Reputación / Gamificación — 2026-08-12
+
+El bloque más enredado hasta ahora: no por volumen, sino porque **tres sistemas que se quedan
+guardaban sus datos en tablas de UP**.
+
+### Lo primero: verificar que el kanban sobrevive
+
+Antes de tocar tablas, se quitaron los 3 triggers de UP sobre `content` y se midió el efecto
+moviendo una tarjeta real (en transacción revertida):
+
+| Prueba: mover tarjeta a `delivered` | Con triggers | Sin triggers |
+|---|---|---|
+| `up_events` | +1 | **0** |
+| `point_transactions` | +2 | **0** |
+| `content_history` | +1 | **+1** |
+| `content_status_logs` | +1 | **+1** |
+
+El board registra exactamente igual; solo deja de escribir puntos.
+
+### Los 3 sistemas que se quedan y dependían de UP
+
+| Sistema | Qué pasaba | Solución |
+|---|---|---|
+| **Referidos** 🔴 | `award_referral_coins` insertaba en `reputation_events` **sin `EXCEPTION`**: al dropear la tabla habría lanzado error duro y roto el flujo (2 callers vivos en `referral-service`) | Reescrita como no-op. **Hallazgo:** ese INSERT era su único efecto — las monedas las acredita el edge function por su cuenta, así que no se pierde nada |
+| **Academia** 🟠 | `award_space_points` e `issue_academy_certificate` escribían ahí dentro de un `EXCEPTION`: no rompían, pero habrían fallado en silencio para siempre | Limpiadas |
+| **KIRO** 🟠 | Su gamificación persistía en `point_transactions` y `user_points` | Desacoplado: KIRO usa solo `localStorage`, **que ya era su camino de respaldo diseñado** (detectaba el error "tabla no existe" y caía ahí). `award_kiro_points` dropeada |
+
+### Decisiones 2 y 3 implementadas
+
+`marketplace_reputation`, `get_org_talent_roster`, `get_unified_talent` y
+`update_talent_performance_scores` se reescribieron sobre señales reales:
+
+```
+score = ( 40·(calidad/5) + 35·min(entregas/20,1) + 25·(puntualidad/100) )
+        / (peso de los componentes que SÍ tienen datos)
+```
+
+- **calidad**: `creator_reviews` + estrellas del board
+- **entregas**: contenido aprobado/pagado + proyectos completados
+- **puntualidad**: `content.delivered_at` vs `deadline`
+
+**Aviso honesto sobre los datos de hoy:** `creator_reviews` tiene 0 filas y ningún contenido
+está valorado, así que la señal de calidad está vacía y el score sale solo de volumen y
+puntualidad. La fórmula se renormaliza sola: en cuanto entren reseñas, la calidad entra sin
+tocar nada. **La escala cambia**: de "puntos acumulados" (10–5.660) a 0–100. Los 40 registros
+quedaron entre 0 y 47. El vocabulario de niveles (Novato/Pro/Elite/Master/Legend) se conserva.
+
+### Base de datos
+
+- **94 políticas RLS**, **45 tablas** (44 del módulo + `role_archetypes`), **1 matview**
+  (`season_leaderboard_live`), **47 funciones**, **8 enums**, **3 triggers**, 8 tablas fuera
+  de Realtime. **85.654 filas** eliminadas (76.125 solo de `user_global_badges`).
+
+### El barrido post-DROP volvió a pagar
+
+Igual que en booking, aparecieron referencias vivas que el mapa no listaba — esta vez **en
+edge functions de producción**:
+
+| Dónde | Qué leía | Solución |
+|---|---|---|
+| `pancake-sync-user` 🔴 | `user_reputation_totals` para mandar el nivel al CRM | Reapuntada a `marketplace_reputation` (`global_level` + score/100) |
+| `ProfileTrustBadges` | `user_reputation_totals`, `user_achievements`, `achievements` | Reapuntado a `marketplace_reputation`; la sección de logros queda vacía |
+| `EnhancedSmartSearch` | `up_creadores_totals`, `user_achievements` | Reapuntado a `marketplace_reputation` |
+| `kreoon-bootstrap`, `sync-to-kreoon`, `kreoon-sql` | Listas de tablas a sincronizar/copiar | Depuradas |
+
+Las 4 edge functions se redesplegaron.
+
+### Números
+
+| Métrica | Línea base | Tras bloque 3 | Tras bloque 4 | Δ acumulado |
+|---|---:|---:|---:|---:|
+| Peso de `dist/` | 23.307.089 B | 22.933.107 B | **22.753.732 B** | **−553.357 B (−2,4 %)** |
+| Chunks JS | 390 | 364 | 357 | −33 |
+| Rutas | 165 | 148 | 146 | −19 |
+| Archivos en `src` | 1.946 | 1.886 | 1.833 | −113 |
+| Componentes | 1.035 | 1.002 | 972 | −63 |
+| Edge functions | 169 | 160 | 158 | −11 |
+| Tablas dropeadas | — | 64 | **109** | −109 |

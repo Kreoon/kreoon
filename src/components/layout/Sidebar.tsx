@@ -15,7 +15,6 @@ import {
   LogOut,
   Kanban,
   RefreshCw,
-  Trophy,
   Video,
   Megaphone,
   Wallet,
@@ -101,7 +100,6 @@ const adminSections: NavSection[] = [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
       { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
-      { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
   {
@@ -140,7 +138,6 @@ const strategistSections: NavSection[] = [
       { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content", requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts", requiresOrg: true },
       { name: "Academia", href: "/academia", icon: GraduationCap, tourId: "sidebar-academia", isNew: true },
-      { name: "Ranking", href: "/ranking", icon: Trophy, tourId: "sidebar-up", requiresOrg: true },
     ]
   },
   {

@@ -88,7 +88,6 @@ export const EdgeFunctions = {
   GHL_SYNC: "ghl-sync",
 
   // Utility Functions
-  GENERATE_ACHIEVEMENT_ICON: "generate-achievement-icon",
   PRODUCT_RESEARCH: "product-research",
 
   // Admin Functions

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import {
   type KiroLevel,
   type PointSource,
@@ -167,58 +166,9 @@ export function useKiroGamification(options: UseKiroGamificationOptions = {}) {
     const storedTransactions = loadFromStorage<PointTransaction[]>(STORAGE_KEYS.transactions, []);
     setRecentTransactions(storedTransactions.slice(0, 10));
 
-    // Intentar sincronizar con Supabase si hay userId
-    if (userId) {
-      try {
-        const { data, error } = await supabase
-          .from('user_points')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        if (error) {
-          // Si la tabla no existe o hay otro error, usar localStorage
-          if (error.code === 'PGRST116' || error.code === '42P01') {
-            console.warn('[KiroGamification] Tabla user_points no encontrada, usando localStorage');
-            setUseLocalStorage(true);
-          } else if (error.code === 'PGRST116') {
-            // No hay registro para este usuario, crear uno
-            const { error: insertError } = await supabase
-              .from('user_points')
-              .insert({ user_id: userId, total_points: storedPoints?.totalPoints || 0, level: 1 });
-
-            if (insertError) {
-              console.warn('[KiroGamification] Error creando registro, usando localStorage');
-              setUseLocalStorage(true);
-            }
-          } else {
-            console.warn('[KiroGamification] Error consultando Supabase:', error.message);
-            setUseLocalStorage(true);
-          }
-        } else if (data) {
-          // Sincronizar: usar el mayor valor entre local y remoto
-          const remotePoints = data.total_points || 0;
-          const localPoints = storedPoints?.totalPoints || 0;
-          const finalPoints = Math.max(remotePoints, localPoints);
-
-          setUserPoints(finalPoints);
-          updateDerivedState(finalPoints);
-
-          // Guardar en localStorage
-          saveToStorage(STORAGE_KEYS.userPoints, {
-            totalPoints: finalPoints,
-            level: getLevelForPoints(finalPoints).level,
-            lastUpdated: Date.now(),
-          });
-        }
-      } catch (err) {
-        console.warn('[KiroGamification] Error de conexión, usando localStorage');
-        setUseLocalStorage(true);
-      }
-    } else {
-      // Sin userId, usar solo localStorage
-      setUseLocalStorage(true);
-    }
+    // Simplificación 2026: KIRO ya no lee `user_points` (tabla del módulo UP,
+    // eliminada). Sus puntos viven solo en localStorage.
+    setUseLocalStorage(true);
 
     setIsLoading(false);
   }, [userId, updateDerivedState]);
@@ -267,13 +217,7 @@ export function useKiroGamification(options: UseKiroGamificationOptions = {}) {
   // ─────────────────────────────────────────────────────────────────────────
   // Otorgar puntos
   // ─────────────────────────────────────────────────────────────────────────
-  // SEGURIDAD: el insert directo en 'point_transactions' y el upsert en
-  // 'user_points' fueron reemplazados por la RPC award_kiro_points
-  // (SECURITY DEFINER). El servidor valida ownership (user_id = auth.uid()),
-  // rango de puntos [1, 10000] y source no vacío. El nivel se recalcula en
-  // SQL usando calculate_up_level() en lugar de enviarlo como número entero
-  // desde el cliente (evita inconsistencia con el enum up_level de la BD).
-  // La lógica de cooldown y localStorage permanece inalterada.
+  // Los puntos de KIRO viven en localStorage (ver nota más abajo).
   // ─────────────────────────────────────────────────────────────────────────
   const awardPoints = useCallback(
     async (sourceKey: string, customDescription?: string): Promise<AwardResult> => {
@@ -345,19 +289,12 @@ export function useKiroGamification(options: UseKiroGamificationOptions = {}) {
       const updatedTransactions = [transaction, ...storedTransactions].slice(0, MAX_TRANSACTIONS_STORED);
       saveToStorage(STORAGE_KEYS.transactions, updatedTransactions);
 
-      // Sincronizar con Supabase via RPC SECURITY DEFINER (fire and forget)
-      // La RPC award_kiro_points valida ownership e inserta en point_transactions
-      // + upsert en user_points con current_level calculado en SQL.
-      if (userId && !useLocalStorage && points > 0) {
-        (supabase as any)
-          .rpc('award_kiro_points', {
-            p_points:           points,
-            p_source:           sourceKey,
-            p_description:      description,
-            p_new_total_points: newPoints,
-          })
-          .then(() => {});
-      }
+      // Simplificación 2026: la gamificación de KIRO se persistía en las tablas
+      // point_transactions / user_points, que pertenecían al módulo UP y fueron
+      // eliminadas. KIRO pasa a usar solo localStorage — que ya era su camino de
+      // respaldo diseñado (ver el manejo de error 42P01 en la carga inicial).
+      // Si en el futuro se quiere persistencia por usuario, hay que darle a KIRO
+      // su propia tabla; no reutilizar las de un módulo retirado.
 
       // Verificar level up
       const levelUpResult = didLevelUp(previousPoints, newPoints);

@@ -16,15 +16,6 @@ const PANCAKE_TABLES = {
 
 type UserType = keyof typeof PANCAKE_TABLES
 
-// Mapeo de nivel UP basado en puntos
-function getUpLevel(points: number): string {
-  if (points >= 15000) return 'Legend'
-  if (points >= 5000) return 'Master'
-  if (points >= 2000) return 'Elite'
-  if (points >= 500) return 'Pro'
-  return 'Novato'
-}
-
 // Formatear fecha en español
 function formatDate(dateString: string): string {
   try {
@@ -215,13 +206,17 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle()
 
+    // Simplificación 2026: user_reputation_totals pertenecía al módulo UP,
+    // eliminado. La reputación del talento vive ahora en marketplace_reputation
+    // (score 0-100 calculado desde reseñas, entregas y puntualidad).
     const { data: reputation } = await supabase
-      .from('user_reputation_totals')
-      .select('total_points')
+      .from('marketplace_reputation')
+      .select('global_score, global_level')
       .eq('user_id', user_id)
       .maybeSingle()
 
-    const reputationPoints = reputation?.total_points || 0
+    const reputationPoints = Math.round(reputation?.global_score || 0)
+    const reputationLevel = reputation?.global_level || 'Novato'
 
     // Obtener categorías/especialidades
     let categories: string[] = []
@@ -274,7 +269,7 @@ serve(async (req) => {
       // Talento de org: incluir nombre de org, rol y especialidades
       if (orgInfo?.name) pancakePayload.nombre_de_la_organizacion = orgInfo.name
       pancakePayload.username_de_kreoon = profile.username || profile.id
-      pancakePayload.nivel_up_reputacion = `${getUpLevel(reputationPoints)} (${reputationPoints} pts)`
+      pancakePayload.nivel_up_reputacion = `${reputationLevel} (${reputationPoints}/100)`
       // Agregar rol en la org al inicio de categorías
       if (orgRole) {
         const roleLabel = orgRole.charAt(0).toUpperCase() + orgRole.slice(1)
@@ -288,7 +283,7 @@ serve(async (req) => {
     } else {
       // Freelancer: incluir campos de creator
       pancakePayload.username_de_kreoon = profile.username || profile.id
-      pancakePayload.nivel_up_reputacion = `${getUpLevel(reputationPoints)} (${reputationPoints} pts)`
+      pancakePayload.nivel_up_reputacion = `${reputationLevel} (${reputationPoints}/100)`
       if (categories.length > 0) pancakePayload.especialidadescategorias = categories.join(', ')
     }
 

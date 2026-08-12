@@ -19,14 +19,10 @@ import type { MarketplaceProject } from '@/components/marketplace/types/marketpl
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
 import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
-import { RoleUPWidget } from '@/components/points/RoleUPWidget';
-import { SeasonUrgencyBanner } from '@/components/points/SeasonUrgencyBanner';
-import { RoleLeaderboard } from '@/components/points/RoleLeaderboard';
-import { UPHistoryTable } from '@/components/points/UPHistoryTable';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
 import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
-import { SeasonBanner, ProgressToNextLevel, VOCABULARIO_ROL } from '@/components/studio';
+import { VOCABULARIO_ROL } from '@/components/studio';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -184,9 +180,6 @@ export default function EditorDashboard() {
   const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
   const pendingUSD = mktPendingByCurrency['USD'] || 0;
   const paidUSD = mktPaidByCurrency['USD'] || 0;
-  // Alias para compatibilidad con ProgressToNextLevel
-  const pendingPayment = studioPendingCOP;
-  const totalPaid = studioPaidCOP;
   const approvedVideos = useMemo(() =>
     [...content]
       .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
@@ -314,14 +307,6 @@ export default function EditorDashboard() {
             );
           })()}
 
-          {/* Banners de temporada */}
-          <SeasonUrgencyBanner />
-          <SeasonBanner variant="compact" showMetas={false} />
-          <ProgressToNextLevel
-            creditosActuales={totalPaid + (approvedContent.length * 50)}
-            size="md"
-          />
-
           {/* KPI Cards — Studio + Marketplace fusionados */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <NovaKpiCard
@@ -408,17 +393,6 @@ export default function EditorDashboard() {
             )}
           </div>
 
-          {/* UGC Points */}
-          {targetUserId && (
-            <RoleUPWidget
-              userId={targetUserId}
-              role="editor"
-              roles={hasCreatorRole ? ['creator', 'editor'] : undefined}
-            />
-          )}
-
-
-
           {/* Videos aprobados */}
           {approvedVideos.length > 0 && (
             <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
@@ -442,14 +416,6 @@ export default function EditorDashboard() {
                 onVideoClick={setVideoViewer}
                 maxItems={6}
               />
-            </div>
-          )}
-
-          {/* Ranking e historial de puntos */}
-          {targetUserId && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <RoleLeaderboard role="editor" currentUserId={targetUserId} maxItems={5} />
-              <UPHistoryTable userId={targetUserId} />
             </div>
           )}
 

@@ -7,7 +7,6 @@
 
 import type { LucideIcon } from 'lucide-react';
 import {
-  Trophy,
   TrendingUp,
   Users,
   BarChart3,
@@ -49,17 +48,6 @@ export interface DevelopmentModule {
  * Solo visibles para el usuario root (jacsolucionesgraficas@gmail.com)
  */
 export const DEVELOPMENT_MODULES: DevelopmentModule[] = [
-  {
-    id: 'ranking',
-    name: 'Ranking',
-    description: 'Sistema de clasificación y leaderboards para talentos',
-    icon: Trophy,
-    status: 'development',
-    routes: ['/ranking'],
-    sidebarItems: [
-      { label: 'Ranking', path: '/ranking', icon: Trophy }
-    ]
-  },
   {
     id: 'marketing',
     name: 'Marketing',

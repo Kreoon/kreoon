@@ -10,7 +10,6 @@ import {
   Menu,
   Kanban,
   RefreshCw,
-  Trophy,
   Store,
   Play,
   Bookmark,
@@ -48,7 +47,6 @@ import { Badge } from "@/components/ui/badge";
 import { ClientSelectorDialog } from "@/components/clients/ClientSelectorDialog";
 import { RoleSwitcher } from "@/components/layout/RoleSwitcher";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
-import { SidebarAchievementsWidget } from "@/components/points/SidebarAchievementsWidget";
 import { supabase } from "@/integrations/supabase/client";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
@@ -89,7 +87,6 @@ const adminSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-      { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
     ]
   },
   {
@@ -125,7 +122,6 @@ const strategistSections: NavSection[] = [
       { name: "Producciones", href: "/board", icon: Kanban, requiresOrg: true },
       { name: "Portafolio", href: "/content", icon: FileText, requiresOrg: true },
       { name: "Kreoon IA", href: "/scripts", icon: Sparkles, requiresOrg: true },
-      { name: "Ranking", href: "/ranking", icon: Trophy, requiresOrg: true },
     ]
   },
   {
@@ -751,13 +747,6 @@ export function MobileNav() {
                 organizationId={usePersonalCoins ? null : profile.current_organization_id}
                 variant="header"
               />
-            </div>
-          )}
-
-          {/* Achievements Widget - hide for freelancers */}
-          {!isFreelanceUser && (
-            <div className="border-t border-border">
-              <SidebarAchievementsWidget collapsed={false} />
             </div>
           )}
 

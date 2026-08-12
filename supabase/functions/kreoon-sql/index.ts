@@ -154,7 +154,6 @@ serve(async (req) => {
       'products',
       'content',
       'app_settings',
-      'achievements',
     ];
 
     for (const table of tables) {

@@ -24,7 +24,6 @@ const MAIN_NAV = [
 ];
 
 const MORE_NAV = [
-  { id: 'sistema-up', label: 'Sistema UP' },
   { id: 'social', label: 'Social Creators' },
   { id: 'precios', label: 'Precios' },
   { id: 'seguridad', label: 'Seguridad' },

@@ -110,9 +110,6 @@ export { usePortfolioItems } from './usePortfolioItems';
 // ─── Analytics & Tracking ───────────────────────────────────────────────────
 export { useAnalytics } from './useAnalytics';
 export { useAdminDashboard } from './useAdminDashboard';
-export { useGlobalRanking } from './useGlobalRanking';
-export { useGlobalBadges } from './useGlobalBadges';
-export { useAchievements } from './useAchievements';
 export { useFeedEvents } from './useFeedEvents';
 
 // ─── Client Portal ──────────────────────────────────────────────────────────

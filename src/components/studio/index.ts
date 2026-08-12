@@ -1,18 +1,10 @@
 // ============================================
-// COMPONENTES DE "EL ESTUDIO" - Sistema de Gamificación
+// COMPONENTES DE "EL ESTUDIO"
 // ============================================
 
-// Gamificación y niveles
-export { LevelBadge } from './LevelBadge';
+// Créditos y ratings
 export { CreditsDisplay, CreditsDisplayCompact } from './CreditsDisplay';
 export { RatingStars, RatingStarsInline } from './RatingStars';
-export { ProgressToNextLevel } from './ProgressToNextLevel';
-export { AchievementCard } from './AchievementCard';
-export { AchievementToast, AchievementToastProvider, useAchievementToast } from './AchievementToast';
-
-// Rankings y temporadas
-export { RankingTable } from './RankingTable';
-export { SeasonBanner } from './SeasonBanner';
 
 // Contenido y producciones
 export { ContentStatusBadge, ContentStatusDot } from './ContentStatusBadge';
@@ -25,8 +17,6 @@ export { RecentActivityFeed } from './RecentActivityFeed';
 // Re-exportar tipos y constantes útiles del sistema
 export {
   // Constantes
-  NIVELES,
-  INSIGNIAS,
   ESTADOS_CONTENIDO,
   VOCABULARIO_ROL,
   ACCIONES_CREDITOS,
@@ -34,18 +24,11 @@ export {
   STUDIO_GRADIENTS,
 
   // Funciones helper
-  getNivelActual,
-  getProgresoNivel,
-  getTemporadaActual,
   getMensajeVacio,
-  getMensajeLogro,
 } from '@/lib/studio-system';
 
 // Re-exportar tipos
 export type {
-  NivelInfo,
-  Insignia,
-  InsigniaKey,
   EstadoContenido,
   EstadoInfo,
   RolUsuario,

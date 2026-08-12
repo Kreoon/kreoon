@@ -26,7 +26,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMe
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
 import { TalentProfileModal } from '@/components/talent/TalentProfileModal';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
-import { TalentRanking } from '@/components/team/TalentRanking';
 import { UnifiedRolePicker } from '@/components/roles/UnifiedRolePicker';
 import { cn } from '@/lib/utils';
 import { getRoleLabel } from '@/lib/roles';
@@ -43,13 +42,12 @@ const TOP_TABS: { key: TopTab; label: string }[] = [
 ];
 
 // ── Tipos de filtro internos de Talento ───────────────────────────────────────
-type FilterTab = 'activos' | 'inactivos' | 'todos' | 'ranking';
+type FilterTab = 'activos' | 'inactivos' | 'todos';
 
 const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'activos',   label: 'Activos' },
   { key: 'inactivos', label: 'Inactivos' },
   { key: 'todos',     label: 'Todos' },
-  { key: 'ranking',   label: 'Ranking' },
 ];
 
 type RoleFilter = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos';
@@ -555,10 +553,7 @@ function TalentoSection() {
         </div>
 
         {/* Content */}
-        {filter === 'ranking' ? (
-          <TalentRanking />
-        ) : (
-          <div className="flex gap-4">
+        <div className="flex gap-4">
             {/* Grid / Table */}
             <div className={cn('flex-1 min-w-0', activeMember && 'md:mr-[440px]')}>
               {isLoading ? (
@@ -706,8 +701,7 @@ function TalentoSection() {
               onClose={() => setSelectedMember(null)}
               onUpdate={() => refetch()}
             />
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
