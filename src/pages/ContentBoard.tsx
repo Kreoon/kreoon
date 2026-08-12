@@ -387,20 +387,7 @@ export default function ContentBoard() {
   const allContentIds = useMemo(() => content.map(c => c.id), [content]);
   const { data: socialStatusMap } = useContentSocialStatus(allContentIds);
 
-  // Extract unique campaign weeks from content
-  const campaignWeeks = useMemo(() => {
-    const weeks = new Set<string>();
-    content.forEach(c => {
-      if (c.campaign_week) weeks.add(c.campaign_week);
-    });
-    return Array.from(weeks).sort((a, b) => {
-      const numA = parseInt(a) || 0;
-      const numB = parseInt(b) || 0;
-      return numA - numB;
-    });
-  }, [content]);
-
-  // Filtrar contenido por búsqueda, fechas, producto, campaña (sin filtrar por visibilidad de estado - todos ven todas las columnas)
+  // Filtrar contenido por búsqueda, fechas y producto (sin filtrar por visibilidad de estado - todos ven todas las columnas)
   const filteredContent = useMemo(() => content.filter(c => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();

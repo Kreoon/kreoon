@@ -138,10 +138,14 @@ export const tourConfigs: Record<string, RoleTourConfig> = {
 };
 
 /**
- * Claves de rol legacy que todavía aparecen en `organization_members.role`.
- * Se mapean a la canónica; no se deben usar en código nuevo.
+ * Rol → tour que le corresponde.
+ *
+ * - `creator` y `strategist` son claves legacy que todavía aparecen en filas
+ *   viejas de `organization_members.role`; no usarlas en código nuevo.
+ * - `creative_strategist` es canónica: comparte tour con `digital_strategist`
+ *   porque usan las mismas tres pantallas.
  */
-const LEGACY_ROLE_ALIASES: Record<string, string> = {
+const ROLE_TO_TOUR: Record<string, string> = {
   creator: "content_creator",
   strategist: "digital_strategist",
   creative_strategist: "digital_strategist",
@@ -158,7 +162,7 @@ const TOUR_PRIORITY = [
 
 export function getTourConfig(roles: string[]): RoleTourConfig | null {
   const normalized = new Set(
-    roles.map((role) => LEGACY_ROLE_ALIASES[role] ?? role)
+    roles.map((role) => ROLE_TO_TOUR[role] ?? role)
   );
 
   for (const role of TOUR_PRIORITY) {

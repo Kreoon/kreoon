@@ -1050,7 +1050,9 @@ export default function Dashboard() {
 
           {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
           <TabsContent value="principal" className="space-y-3 mt-0">
-            {allContent.length === 0 && (
+            {/* Solo cuando la organización está realmente vacía: con filtros puestos
+                el vacío significa "no hay resultados", no "no hay videos". */}
+            {allContent.length === 0 && !hasActiveFilters && (
               <KreoonEmptyState
                 icon={<Clapperboard className="h-9 w-9" />}
                 title="Todavía no hay videos"

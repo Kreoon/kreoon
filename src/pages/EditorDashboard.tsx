@@ -252,7 +252,9 @@ export default function EditorDashboard() {
       )}
 
       {/* Studio tab */}
-      {dashboardTab === 'studio' && content.length === 0 && mktProjects.length === 0 && (
+      {/* Sin nada que mostrar: se mira el contenido crudo, no el filtrado por mes,
+          para no decir "no tienes videos" cuando solo faltan en el mes actual. */}
+      {dashboardTab === 'studio' && editorRaw.length === 0 && creatorRaw.length === 0 && mktProjects.length === 0 && (
         <KreoonEmptyState
           icon={<Film className="h-9 w-9" />}
           title="Todavía no tienes videos por editar"
@@ -261,7 +263,7 @@ export default function EditorDashboard() {
         />
       )}
 
-      {dashboardTab === 'studio' && (content.length > 0 || mktProjects.length > 0) && (
+      {dashboardTab === 'studio' && (editorRaw.length > 0 || creatorRaw.length > 0 || mktProjects.length > 0) && (
         <div className="space-y-6">
           {/* Banner de actividad — rol + en proceso + por cobrar */}
           {(inProgressContent.length + mktInProgress.length > 0 || totalPendingCOP > 0 || pendingUSD > 0) && (() => {
