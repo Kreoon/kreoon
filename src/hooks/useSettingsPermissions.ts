@@ -13,6 +13,7 @@ export type SettingsSectionKey =
   | 'tour'
   | 'marketplace'        // Marketplace profile, roles, services, availability
   | 'client_company'     // Client company info (for client role)
+  | 'my_plan'            // Plan del usuario/marca (antes vivía en el sidebar como 'Mi Plan')
   // Organization level
   | 'organization_plans'
   | 'ai_settings'        // Merged: portfolio_ai + organization_ai + assistant
@@ -61,6 +62,7 @@ const SECTION_LEVELS: Record<SettingsSectionKey, 'user' | 'organization' | 'plat
   tour: 'user',
   marketplace: 'user',
   client_company: 'user', // Client company info
+  my_plan: 'user',        // Cada quien ve su propio plan
   // Organization level - org admin/owner only
   organization_plans: 'organization',
   ai_settings: 'organization',

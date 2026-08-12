@@ -1,4 +1,5 @@
 import { useState, useEffect, Suspense, lazy, useMemo, memo } from 'react';
+import PlanesPage from '@/pages/PlanesPage';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, Cog } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -66,10 +67,13 @@ const SECTION_COMPONENTS: Record<SettingsSectionKey, React.LazyExoticComponent<R
   ai_tokenization: AITokenizationSection,
   prompts: PromptsSection,
   mcp_integrations: MCPIntegrationsSection,
+  // Simplificación 2026: 'Mi Plan' salió del sidebar y vive aquí.
+  // PlanesPage ya elige el segmento (marcas/creadores/agencias) según el rol.
+  my_plan: PlanesPage,
 };
 
 // Wide sections that need more space
-const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'marketplace', 'profile'];
+const WIDE_SECTIONS: SettingsSectionKey[] = ['billing', 'marketplace', 'profile', 'my_plan'];
 
 const SettingsPage = memo(() => {
   const [searchParams, setSearchParams] = useSearchParams();

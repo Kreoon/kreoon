@@ -187,8 +187,6 @@ const clientSections: NavSection[] = [
       { name: "Productos", href: "/client-dashboard?tab=products", icon: Package },
       { name: "Portafolio", href: "/client-dashboard?tab=portfolio", icon: FileText },
       { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
-      ACADEMIA_ITEM,
-      PLAN_ITEM,
     ]
   },
 ];

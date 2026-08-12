@@ -89,9 +89,9 @@ export default function UGCPriceCalculator() {
     }
   };
 
-  const handleCreateCampaign = () => {
+  const handleFindCreators = () => {
     const slug = TEMPLATE_SLUGS[contentType];
-    navigate(`/marketplace/campaigns/create?quick=true&template=${slug}`);
+    navigate(`/marketplace?tipo=${slug}`);
   };
 
   return (
@@ -251,11 +251,11 @@ export default function UGCPriceCalculator() {
 
               {/* CTA */}
               <button
-                onClick={handleCreateCampaign}
+                onClick={handleFindCreators}
                 className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-sm transition-colors"
               >
                 <Zap className="h-4 w-4" />
-                Crear Campana Express
+                Buscar Creadores
                 <ArrowRight className="h-4 w-4" />
               </button>
 
