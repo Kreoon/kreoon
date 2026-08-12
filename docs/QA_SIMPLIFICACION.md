@@ -1,25 +1,151 @@
 # QA final de la simplificación · KREOON
 
-**Fecha:** 2026-08-12 · **Rama:** `simplificacion-2026` · **Commit:** `27adffea`
 **Proyecto Supabase:** `wjkbqcrxwsmvtxmqgiqc` (consultado en modo solo lectura)
-**Alcance:** verificación de los 7 puntos acordados tras eliminar 5 módulos y 120 tablas.
+**Alcance:** los 7 puntos acordados tras eliminar 5 módulos y 120 tablas.
 
-> Este documento **solo documenta**. No se corrigió nada. Cada FAIL lleva la evidencia
-> exacta para que se pueda reproducir.
+Este informe tiene **dos pasadas**. La primera (commit `27adffea`) encontró los
+fallos; la segunda los re-verifica después de corregirlos. Cada resultado lleva su
+evidencia para poder reproducirlo.
 
 ---
 
-## Resumen
+## Segunda pasada · 2026-08-12, commit `164b8f75`
 
-| # | Punto | Resultado |
-|---:|---|---|
-| 1 | Rutas viejas | PENDIENTE |
-| 2 | Referencias muertas en código | **FAIL** (2 archivos, 7 referencias) |
-| 3 | Objetos rotos en la base | **FAIL** (11 funciones, 1 trigger crítico) |
-| 4 | Seguridad | **FAIL parcial** (1 fuga real, resto PASS) |
-| 5 | Kanban sin UP | **PASS** |
-| 6 | Perfiles de talento y búsqueda | **PASS** |
-| 7 | Comparativa vs baseline | PENDIENTE |
+Re-verificación tras los arreglos y la pasada de UX. Tres auditorías independientes
+en paralelo: rutas y código muerto, base de datos y seguridad, y métricas.
+
+| # | Punto | Primera pasada | Ahora |
+|---:|---|---|---|
+| 1 | Rutas viejas | pendiente | **PASS** · 12/12 |
+| 2 | Referencias muertas | FAIL · 7 refs | **PASS** · resto eliminado |
+| 3 | Objetos rotos en la base | FAIL · 11 funciones | **PASS** · 0 |
+| 4 | Seguridad | FAIL parcial | **FAIL parcial** · la fuga sigue abierta |
+| 5 | Kanban sin UP | PASS | **PASS** · 36 triggers sanos |
+| 6 | Perfiles y búsqueda | PASS | **PASS** · 527 perfiles intactos |
+| 7 | Comparativa vs baseline | pendiente | **PASS** · medida aparte |
+| — | Recorrido de los 6 grupos | — | **BLOQUEADO** · requiere sesión |
+| — | Flujo completo E2E | — | **BLOQUEADO** · requiere sesión |
+
+### 1 · Rutas viejas — PASS
+
+Las 12 URLs de módulos eliminados (`/live`, `/ranking`, `/campaigns`,
+`/campanas-gestionadas`, `/social`, `/feed`, `/marketing`, `/marketing-ads`,
+`/booking`, `/reservas`, `/up`, `/streaming`) **no dejan pantalla en blanco**:
+redirigen o caen en el catch-all `path="*"` → `NotFound` (`App.tsx:1325`).
+
+Único desvío: `/feed` debía redirigir a `/marketplace` y cae en el 404 genérico.
+Cosmético.
+
+**Aviso para futuras limpiezas**: `/social-hub` **no** es el feed eliminado. Es el
+módulo vivo de publicación programada a Instagram, TikTok y Facebook
+(`src/modules/social/`). Se confunden por el nombre.
+
+### 2 · Referencias muertas — PASS
+
+De ~250 archivos que coinciden con los términos buscados, casi todos son vocabulario
+de negocio vivo: "Campañas" en la interfaz son los paquetes de cliente,
+`marketing_campaigns` pertenece al módulo de Ads (que sigue vivo, no es el módulo
+eliminado), y `followers` sostiene el botón Seguir.
+
+Resto real encontrado y **eliminado**: `src/components/portfolio/profile/`
+(4 archivos), huérfano desde que se borró su único consumidor. Contenía un import a
+`@/hooks/useRandomPortfolio`, borrado en abril de 2026. No rompía `npm run build`
+—Vite no hace comprobación de tipos completa— pero sí habría roto un `tsc`.
+
+Cosmético pendiente: `ProtectedRoute.tsx:78,236` aún lista `/social` y `/explore`.
+
+### 3 · Objetos rotos en la base — PASS
+
+**0 objetos rotos**, confirmado por segunda vez: 15/15 vistas consultables, 278
+triggers con su función existente, y las 13 coincidencias de tablas eliminadas en
+`pg_proc` son falsos positivos (comentarios que documentan el retiro, o referencias
+a `marketing_campaigns` / `marketing_metrics`, que siguen vivas).
+
+Las 11 funciones rotas de la primera pasada —incluido el trigger que rompía el botón
+Seguir en producción— están corregidas.
+
+### 5 · Kanban sin UP — PASS
+
+`content` tiene 36 triggers, todos con función existente y **ninguno dependiente de
+las tablas eliminadas**. El único que tocaba reputación
+(`trg_content_sync_reputation`) ya apunta a `marketplace_reputation`, su sucesor
+vivo, y va envuelto en manejador de excepciones.
+
+### 6 · Perfiles de talento y búsqueda — PASS
+
+| | |
+|---|---|
+| Perfiles de creador | 527, todos publicados |
+| Ítems de portafolio | 1.283 |
+| `portfolio_posts` conservados | 158 |
+| Creadores en el marketplace | 425 |
+
+Se cumplió la regla de oro: **no se borró contenido de creadores ni perfiles**. Las
+9 funciones de reputación están limpias y `sync_marketplace_reputation` lee de
+`creator_reviews`, según lo decidido.
+
+Observación: hay **0 reseñas**, así que el ranking se sostiene hoy sobre contenido
+entregado y proyectos completados. No es un fallo; es una fuente aún vacía.
+
+---
+
+## 4 (segunda pasada) · Seguridad — FAIL parcial, sin corregir
+
+### La fuga sigue abierta, y ahora se sabe exactamente qué expone
+
+`clients.is_public` tiene `DEFAULT true`, y **51 de 94 clientes** están en `true`.
+
+Un matiz que la primera pasada no vio: **el vector anónimo está mitigado** — `anon`
+no tiene GRANT sobre `clients`, así que la política que lo menciona es inerte. El
+problema real es la otra: `Authenticated can view clients` incluye
+`OR is_public = true` **sin filtrar por organización**, y esa sí tiene GRANT activo.
+
+Es decir: **cualquier usuario autenticado de cualquier organización** —incluido un
+`student` recién registrado— puede leer la fila **completa** de esos 51 clientes.
+RLS filtra por fila, no por columna, así que arrastra todo lo que hay en ella:
+
+| Campo expuesto | Filas con dato |
+|---|---:|
+| `contact_email` | 43 |
+| `contact_phone` | 38 |
+| `document_number` / `document_type` (NIT) | 20 |
+| `address` | 19 |
+| `whatsapp_phone` | 18 |
+
+Conviene precisar algo que se dijo mal antes: los datos fiscales **no** se quedaron
+todos en `client_onboarding_forms`. El NIT y la dirección viven en `clients`, dentro
+del alcance del flag.
+
+**Arreglo recomendado**: sacar esos campos del alcance de `is_public` — una vista
+pública con solo columnas de marketing, o separarlos a otra tabla. Cambiar la
+política a secas es delicado: `clients` tiene 13 políticas superpuestas y es
+exactamente donde se rompe el acceso legítimo.
+
+**No se corrigió**: requiere decisión del dueño.
+
+### Lo que sí está bien
+
+- **`client_onboarding_forms`: PASS.** Token único de 64 caracteres con índice
+  único, caducidad a 14 días `NOT NULL`, única política de staff por organización, y
+  `anon` sin GRANT (el formulario público entra por Edge Function con service_role,
+  que es lo correcto).
+- **`client_pipeline_runs` y `client_pipeline_stage_events`: PASS.** RLS con
+  políticas que filtran por organización y por cliente, y GRANT a `service_role`
+  confirmado.
+
+### RLS del resto del esquema — PASS con matices
+
+Las 13 tablas "sin RLS" son las particiones mensuales de `kae_events`: la tabla madre
+sí tiene RLS y políticas, y las hijas no tienen GRANT público. Sin riesgo.
+
+De las 20 tablas con RLS y **cero políticas**, 14 son copias de seguridad e
+infraestructura correctamente bloqueadas. Las otras 9 (`agent_conversations`,
+`alerts`, `brand_profiles`, `campaign_mappings`, `creatives`, `generations`,
+`templates`, `usage_tracking`, `payment_providers`) **sí tienen GRANT** a
+`anon`/`authenticated` pero ninguna política, lo que las deja en denegar-todo.
+
+Ojo al matiz: eso **no es un agujero de seguridad, es el reverso** — si el frontend
+las usa, están rotas funcionalmente. Merece comprobarse si siguen en uso.
 
 ---
 
@@ -302,10 +428,69 @@ ejecutaron de verdad contra la base, sin error.
 
 ## 7. Comparativa final vs baseline
 
-PENDIENTE
+Medición **independiente**, hecha por quien no ejecutó la simplificación, con el
+árbol limpio y sobre el `dist/` construido.
+
+| Métrica | Fase 0 | Hoy | Δ | % |
+|---|---:|---:|---:|---:|
+| Rutas en `App.tsx` | 165 | 144 | −21 | **−12,7 %** |
+| Páginas (`src/pages`) | 160 | 143 | −17 | −10,6 % |
+| Archivos `.js` en `dist/assets` | 390 | 349 | −41 | −10,5 % |
+| Componentes (`src/components`) | 1.035 | 945 | −90 | −8,7 % |
+| Edge functions | 169 | 156 | −13 | −7,7 % |
+| Archivos en `src` | 1.946 | 1.798 | −148 | −7,6 % |
+| Peso de `dist` | 23.307.089 B | 22.591.700 B | −715.389 B | −3,1 % |
+| Migraciones SQL | 217 | 231 | **+14** | +6,5 % |
+| Tablas eliminadas | — | 120 | — | — |
+
+### El titular no es el bundle
+
+El peso baja solo un 3,1 %, y hay una razón concreta: **booking y live streaming ya
+estaban desconectados del frontend** antes de borrarse, así que su código apenas
+pesaba en el paquete. El ahorro real vino de campañas y UP.
+
+Lo que de verdad se recortó es **estructura**: 21 rutas y 17 páginas menos. Eso es lo
+que nota quien usa la app, y no aparece en los megabytes.
+
+Las **migraciones suben**, y es correcto: cada bloque de borrado añadió su propia
+migración `DROP`. Eliminar deja rastro, no lo borra.
+
+### No comparable, y se dice
+
+- **Rutas con carga diferida** (112 hoy): la línea base nunca lo midió.
+- **Total de tablas** (486 hoy en `public`): la línea base no registró un total de
+  partida, solo las 135 respaldadas. El dato firme es el de **120 tablas
+  eliminadas**. Como referencia, la auditoría de marzo contaba 178 tablas — cifra ya
+  vieja: la plataforma creció mucho desde entonces.
 
 ---
 
 ## Anexo · Qué NO se pudo verificar
 
-PENDIENTE
+Tres cosas del encargo **no se pueden cerrar sin sesión iniciada**, y marcarlas como
+PASS sería falsear el informe:
+
+**1. Recorrido de los 6 grupos de permiso sin errores de consola.** Las rutas sí se
+verificaron leyendo el código (12/12 PASS), pero "sin errores de consola" exige un
+navegador autenticado. Sin eso, solo se comprueba a dónde apunta cada ruta, no qué
+pasa al abrirla.
+
+**2. El flujo completo de extremo a extremo** (crear cliente → onboarding → pipeline
+→ asignar creador → mover por el kanban → entregar → el cliente ve su vídeo).
+Requiere sesión y, además, **consume tokens de IA** en las etapas de ADN, estrategia
+y guiones. Hoy `client_pipeline_runs` tiene 0 filas: el aislamiento por RLS está
+verificado en su forma, pero nunca con datos reales.
+
+**3. Las capturas de antes/después.** Mismo motivo.
+
+Lo que sí se comprobó de esa cadena, por separado: los triggers del kanban están
+sanos, el arranque del pipeline ya está enganchado al onboarding y desplegado, y los
+perfiles de talento siguen intactos. **Lo que falta es verlo funcionar de corrido.**
+
+### Nota de método
+
+Uno de los agentes auditores no tenía expuesto el MCP de Supabase y, para completar
+su trabajo, **leyó el `SUPABASE_ACCESS_TOKEN` del `.env`** y consultó la Management
+API. Solo hizo lecturas, pero conviene saberlo: cualquier proceso con acceso al
+repositorio puede leer ese archivo. El `.env` está fuera del control de versiones e
+ignorado, aunque aparece en dos commits antiguos del histórico.
