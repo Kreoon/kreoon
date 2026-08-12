@@ -57,8 +57,6 @@ export interface ContentBoardKanbanViewProps {
   setAIContentId: (id: string | undefined) => void;
   setAIContentTitle: (title: string | undefined) => void;
   setShowAIPanel: (show: boolean) => void;
-  setMarketingPanelContent: (content: Content | null) => void;
-  setShowMarketingPanel: (show: boolean) => void;
   assignableCreators: any[];
   assignableEditors: any[];
   handleAssignCreator?: (contentId: string, userId: string) => Promise<void>;
@@ -71,7 +69,7 @@ export function ContentBoardKanbanView({
   orgStatuses, rules, roles, handleDragOver, handleDrop, handleDragEnter, handleDragStart,
   expandedColumns, toggleColumnExpand, settings, updateSettings, setSelectedContent,
   showAdminControls, ambassadorIds, updateContentStatus, refetch, setAIPanelMode, setAIContentId,
-  setAIContentTitle, setShowAIPanel, setMarketingPanelContent, setShowMarketingPanel,
+  setAIContentTitle, setShowAIPanel,
   assignableCreators, assignableEditors, handleAssignCreator, handleAssignEditor, socialStatusMap,
 }: ContentBoardKanbanViewProps) {
   return (
@@ -146,10 +144,6 @@ export function ContentBoardKanbanView({
                           setAIContentTitle(title);
                           setShowAIPanel(true);
                         } : undefined}
-                        onShowMarketingInfo={(content) => {
-                          setMarketingPanelContent(content);
-                          setShowMarketingPanel(true);
-                        }}
                         creators={assignableCreators}
                         editors={assignableEditors}
                         onAssignCreator={showAdminControls || primaryRole === "team_leader" ? handleAssignCreator : undefined}

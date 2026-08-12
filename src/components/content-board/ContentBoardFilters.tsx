@@ -1,6 +1,5 @@
 import { Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
 import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
@@ -20,8 +19,6 @@ export interface ContentBoardFiltersProps {
   filterProductId: string;
   setFilterProductId: (v: string) => void;
   productOptions: SearchableSelectOption[];
-  filterCampaignWeek: string;
-  setFilterCampaignWeek: (v: string) => void;
 }
 
 export function ContentBoardFilters({
@@ -30,7 +27,6 @@ export function ContentBoardFilters({
   filterEditorId, setFilterEditorId, editorOptions,
   filterClientId, setFilterClientId, clientOptions,
   filterProductId, setFilterProductId, productOptions,
-  filterCampaignWeek, setFilterCampaignWeek,
 }: ContentBoardFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
@@ -87,19 +83,6 @@ export function ContentBoardFilters({
         searchPlaceholder="Buscar producto..."
         triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
       />
-
-      <Input
-        type="text"
-        placeholder="Campaña/Semana"
-        value={filterCampaignWeek}
-        onChange={(e) => setFilterCampaignWeek(e.target.value)}
-        className="w-[100px] md:w-[120px] h-8 md:h-9 text-xs md:text-sm"
-      />
-      {filterCampaignWeek && (
-        <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setFilterCampaignWeek('')}>
-          <X className="h-3 w-3 md:h-4 md:w-4" />
-        </Button>
-      )}
     </div>
   );
 }

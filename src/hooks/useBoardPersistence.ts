@@ -6,7 +6,6 @@ interface BoardFilters {
   editorId: string;
   clientId: string;
   productId: string;
-  campaignWeek: string;
   searchTerm: string;
   startDate?: string;
   deadline?: string;
@@ -38,7 +37,6 @@ const defaultFilters: BoardFilters = {
   editorId: 'all',
   clientId: 'all',
   productId: 'all',
-  campaignWeek: '',
   searchTerm: '',
   startDate: undefined,
   deadline: undefined,

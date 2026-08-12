@@ -23,6 +23,7 @@ import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/This
 import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
 import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
 import { VOCABULARIO_ROL } from '@/components/studio';
+import { KreoonEmptyState } from '@/components/ui/kreoon';
 import { cn } from '@/lib/utils';
 
 const TABS = [
@@ -251,7 +252,16 @@ export default function EditorDashboard() {
       )}
 
       {/* Studio tab */}
-      {dashboardTab === 'studio' && (
+      {dashboardTab === 'studio' && content.length === 0 && mktProjects.length === 0 && (
+        <KreoonEmptyState
+          icon={<Film className="h-9 w-9" />}
+          title="Todavía no tienes videos por editar"
+          description="Cuando te asignen uno, aparecerá aquí y te avisamos."
+          action={{ label: 'Ver el tablero', onClick: () => navigate('/board') }}
+        />
+      )}
+
+      {dashboardTab === 'studio' && (content.length > 0 || mktProjects.length > 0) && (
         <div className="space-y-6">
           {/* Banner de actividad — rol + en proceso + por cobrar */}
           {(inProgressContent.length + mktInProgress.length > 0 || totalPendingCOP > 0 || pendingUSD > 0) && (() => {

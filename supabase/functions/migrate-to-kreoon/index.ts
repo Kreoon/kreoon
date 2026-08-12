@@ -69,10 +69,6 @@ serve(async (req) => {
       'organization_members',
       'organization_member_roles',
       'client_packages',
-      'up_creadores',
-      'up_creadores_totals',
-      'up_editores',
-      'up_editores_totals',
     ];
 
     for (const table of orderedTables) {

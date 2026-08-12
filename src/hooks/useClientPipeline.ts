@@ -18,6 +18,40 @@ import { supabase } from '@/integrations/supabase/client';
 
 const POLL_MS = 10_000;
 
+/**
+ * `functions.invoke` no lanza en 4xx/5xx: deja `data === null` y un
+ * FunctionsHttpError cuyo cuerpo hay que abrir a mano. Sin esto, un 403 o un
+ * 409 del orquestador llegaría como un "non-2xx status code" sin sentido para
+ * el cliente.
+ */
+async function readFunctionError(fnError: unknown): Promise<{ code: string; message: string }> {
+  const context = (fnError as { context?: { json?: () => Promise<unknown> } })?.context;
+
+  if (context?.json) {
+    try {
+      const body = (await context.json()) as { error?: string; stage_actual?: string };
+      if (body?.error) {
+        return { code: body.error, message: ERROR_MESSAGES[body.error] ?? GENERIC_ERROR };
+      }
+    } catch {
+      /* el cuerpo no era JSON: seguimos al mensaje genérico */
+    }
+  }
+
+  return { code: 'desconocido', message: GENERIC_ERROR };
+}
+
+const GENERIC_ERROR = 'No pudimos completar la acción. Inténtalo de nuevo en un momento.';
+
+/** Errores del orquestador traducidos a algo que un cliente entienda. */
+const ERROR_MESSAGES: Record<string, string> = {
+  stage_desincronizado: 'Esta pantalla está desactualizada. La acabamos de actualizar: revísalo de nuevo.',
+  etapa_ya_aprobada: 'Esto ya estaba aprobado. Actualizamos la pantalla.',
+  content_not_found: 'Ese guion ya no está disponible. Actualizamos la pantalla.',
+  run_not_found: 'No encontramos tu proceso. Actualizamos la pantalla.',
+  'content_id no pertenece a este run': 'Ese guion no es de este proceso.',
+};
+
 export type PipelineStage = 'onboarding' | 'adn' | 'estrategia' | 'guiones' | 'produccion';
 
 export type PipelineStageStatus =
@@ -81,7 +115,24 @@ export interface PipelineScript {
 }
 
 /** Estados de `content` que el cliente ve como "guion en revisión" o "guion listo". */
-const SCRIPT_STATUSES = ['script_pending', 'script_approved'];
+const SCRIPT_STATUSES = ['script_pending', 'script_approved'] as const;
+
+/**
+ * Los ids del lote de guiones vienen en `payload.content_ids` de los eventos
+ * `generated` de la etapa. Si el evento aún no existe (o no trae ids), se
+ * devuelve un set vacío y el hook cae a mostrar todos los del cliente.
+ */
+function collectBatchContentIds(events: PipelineStageEvent[]): Set<string> {
+  const ids = new Set<string>();
+  for (const event of events) {
+    if (event.stage !== 'guiones') continue;
+    const payloadIds = (event.payload as { content_ids?: unknown })?.content_ids;
+    if (Array.isArray(payloadIds)) {
+      for (const id of payloadIds) if (typeof id === 'string') ids.add(id);
+    }
+  }
+  return ids;
+}
 
 export function useClientPipeline(clientId: string | null) {
   const [run, setRun] = useState<ClientPipelineRun | null>(null);
@@ -95,6 +146,10 @@ export function useClientPipeline(clientId: string | null) {
 
   // Evita pisar el estado si el cliente cambia mientras hay un fetch en vuelo
   const requestRef = useRef(0);
+  // El id del run vive en un ref para que `callOrchestrator` sea estable y el
+  // intervalo de polling no se reinicie en cada render.
+  const runIdRef = useRef<string | null>(null);
+  runIdRef.current = run?.id ?? null;
 
   const fetchAll = useCallback(async (options?: { silent?: boolean }) => {
     if (!clientId) {
@@ -126,6 +181,7 @@ export function useClientPipeline(clientId: string | null) {
       setRun(currentRun);
 
       // Histórico (para saber si ya se pidió un cambio y mostrar el feedback)
+      let runEvents: PipelineStageEvent[] = [];
       if (currentRun?.id) {
         const { data: eventRows } = await supabase
           .from('client_pipeline_stage_events' as any)
@@ -134,10 +190,9 @@ export function useClientPipeline(clientId: string | null) {
           .order('created_at', { ascending: false })
           .limit(50);
         if (requestId !== requestRef.current) return;
-        setEvents((eventRows as unknown as PipelineStageEvent[]) ?? []);
-      } else {
-        setEvents([]);
+        runEvents = (eventRows as unknown as PipelineStageEvent[]) ?? [];
       }
+      setEvents(runEvents);
 
       // ADN de la marca: el que apunta el run, o el activo del cliente.
       const dnaBase = supabase
@@ -164,7 +219,9 @@ export function useClientPipeline(clientId: string | null) {
         setProduct(null);
       }
 
-      // Guiones del cliente
+      // Guiones. Se muestran SOLO los del lote de este run: el cliente puede
+      // tener guiones en `script_pending` de otro flujo, y el orquestador
+      // rechaza (403) un content_id que no pertenezca al run.
       const { data: scriptRows } = await supabase
         .from('content')
         .select('id, title, script, status, notes, created_at')
@@ -172,7 +229,10 @@ export function useClientPipeline(clientId: string | null) {
         .in('status', SCRIPT_STATUSES)
         .order('created_at', { ascending: true });
       if (requestId !== requestRef.current) return;
-      setScripts((scriptRows as unknown as PipelineScript[]) ?? []);
+
+      const batchIds = collectBatchContentIds(runEvents);
+      const allScripts = (scriptRows as unknown as PipelineScript[]) ?? [];
+      setScripts(batchIds.size ? allScripts.filter(s => batchIds.has(s.id)) : allScripts);
     } catch (err) {
       console.error('[useClientPipeline] Error:', err);
       if (requestId === requestRef.current) {
@@ -187,60 +247,105 @@ export function useClientPipeline(clientId: string | null) {
     fetchAll();
   }, [fetchAll]);
 
-  // Polling suave: SOLO mientras hay algo generándose de verdad.
+  // ── Acciones (todas pasan por la edge function) ─────────────────────
+  /**
+   * El orquestador devuelve `{ ok: true, run: <fila ya actualizada> }`, así que
+   * pintamos ese run al instante y solo re-leemos lo pesado (ADN, producto,
+   * guiones) en segundo plano.
+   */
+  const callOrchestrator = useCallback(async (
+    body: Record<string, unknown>,
+    options?: { silentRefresh?: boolean },
+  ) => {
+    const runId = runIdRef.current;
+    if (!runId) throw new Error('Todavía no hay un proceso activo');
+
+    const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+      body: { run_id: runId, ...body },
+    });
+
+    if (fnError) {
+      const { code, message } = await readFunctionError(fnError);
+      // Los desajustes de estado se arreglan solos releyendo: la pantalla
+      // estaba vieja (otra pestaña, doble clic, o el run ya avanzó).
+      if (code === 'stage_desincronizado' || code === 'etapa_ya_aprobada' ||
+          code === 'content_not_found' || code === 'run_not_found') {
+        await fetchAll({ silent: true });
+      }
+      throw new Error(message);
+    }
+
+    if (data?.run) setRun(data.run as ClientPipelineRun);
+    if (!options?.silentRefresh) await fetchAll({ silent: true });
+
+    return data;
+  }, [fetchAll]);
+
+  /**
+   * Polling: mientras algo se está generando hay que llamar `poll`, no leer la
+   * tabla. El ADN y la estrategia son asíncronos (la estrategia tarda 5–15 min)
+   * y sin que alguien llame `poll` el run se queda en `generating` para siempre
+   * aunque el contenido ya esté listo. `poll` es idempotente.
+   */
   const inFlight = run?.stage_status === 'generating' || run?.stage_status === 'changes_requested';
 
   useEffect(() => {
     if (!inFlight || !clientId) return;
-    const interval = setInterval(() => { fetchAll({ silent: true }); }, POLL_MS);
+
+    const tick = async () => {
+      try {
+        // silentRefresh: el `run` que devuelve poll basta; solo recargamos el
+        // resto cuando la etapa ya cambió a algo que el cliente puede revisar.
+        const data = await callOrchestrator({ action: 'poll' }, { silentRefresh: true });
+        const nextStatus = (data?.run as ClientPipelineRun | undefined)?.stage_status;
+        if (nextStatus && nextStatus !== 'generating' && nextStatus !== 'changes_requested') {
+          await fetchAll({ silent: true });
+        }
+      } catch {
+        // Si `poll` falla (red, 5xx), al menos releemos la tabla por RLS.
+        await fetchAll({ silent: true });
+      }
+    };
+
+    const interval = setInterval(tick, POLL_MS);
     return () => clearInterval(interval);
-  }, [inFlight, clientId, fetchAll]);
+  }, [inFlight, clientId, callOrchestrator, fetchAll]);
 
-  // ── Acciones (todas pasan por la edge function) ─────────────────────
-  const callOrchestrator = useCallback(async (body: Record<string, unknown>) => {
-    if (!run?.id) throw new Error('Todavía no hay un proceso activo');
-
+  /** Envuelve una acción del cliente marcando el estado de "guardando". */
+  const act = useCallback(async (body: Record<string, unknown>) => {
     setActing(true);
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
-        body: { run_id: run.id, ...body },
-      });
-
-      if (fnError) throw new Error(fnError.message || 'No se pudo completar la acción');
-      if (data && data.success === false) throw new Error(data.error || 'No se pudo completar la acción');
-
-      await fetchAll({ silent: true });
-      return data;
+      return await callOrchestrator(body);
     } finally {
       setActing(false);
     }
-  }, [run?.id, fetchAll]);
+  }, [callOrchestrator]);
 
   /** Aprueba la etapa actual (ADN o estrategia). */
   const approve = useCallback(
-    (stage: PipelineStage) => callOrchestrator({ action: 'approve', stage }),
-    [callOrchestrator],
+    (stage: PipelineStage) => act({ action: 'approve', stage }),
+    [act],
   );
 
   /** Pide un cambio en la etapa, con el texto libre del cliente. */
   const requestChanges = useCallback(
     (stage: PipelineStage, feedback: string) =>
-      callOrchestrator({ action: 'request_changes', stage, feedback }),
-    [callOrchestrator],
+      act({ action: 'request_changes', stage, feedback }),
+    [act],
   );
 
-  /** Aprueba UN guion concreto. */
+  /** Aprueba UN guion concreto (el orquestador cierra la etapa solo). */
   const approveScript = useCallback(
     (contentId: string) =>
-      callOrchestrator({ action: 'approve', stage: 'guiones', content_id: contentId }),
-    [callOrchestrator],
+      act({ action: 'approve', stage: 'guiones', content_id: contentId }),
+    [act],
   );
 
-  /** Pide cambios en UN guion concreto. */
+  /** Pide cambios en UN guion concreto: se reescribe solo ese. */
   const requestScriptChanges = useCallback(
     (contentId: string, feedback: string) =>
-      callOrchestrator({ action: 'request_changes', stage: 'guiones', content_id: contentId, feedback }),
-    [callOrchestrator],
+      act({ action: 'request_changes', stage: 'guiones', content_id: contentId, feedback }),
+    [act],
   );
 
   const researchProgress = (product?.research_progress as ResearchProgress | null) ?? null;

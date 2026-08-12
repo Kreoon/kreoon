@@ -475,3 +475,81 @@ Más 27 políticas RLS y 2 tablas fuera de Realtime.
 | Componentes | 1.035 | 940 | −95 |
 | Edge functions | 169 | 156 | −13 |
 | Tablas dropeadas | — | **120** | −120 |
+
+---
+
+## Después de los módulos: navegación, roles y pipeline — 2026-08-12
+
+### Navegación minimalista (`669a76e4`)
+
+Sidebar y MobileNav **ahora coinciden exactamente** (antes divergían, y esa divergencia era
+parte del problema). Máximo 6 entradas por rol:
+
+| Rol | Entradas |
+|---|---|
+| admin / estratega | Inicio · Proyectos · Clientes · Creadores · Guiones · Configuración |
+| creador / editor | Inicio · Proyectos · Guiones · Configuración |
+| cliente | Inicio · Mis videos · Mi marca · Buscar talento · Facturas · Configuración |
+
+Las rutas de CRM de plataforma quedan agrupadas aparte. El resto va a "Más".
+
+### Roles: el encargo partía de una premisa equivocada
+
+`getPermissionGroup` **ya tenía 4 grupos** (admin, talent, client, student), no 44. Lo que tenía
+52 entradas era el *mapa de roles* hacia esos grupos. Pasar a 6 grupos habría **complicado** el
+sistema y obligado a reescribir cada comprobación de permisos sin ganar nada.
+
+Lo que sí sobraba, verificado con datos: **33 "marketplace roles"** que **ningún usuario tiene
+como permiso** (0 filas en `organization_members` y en `user_roles`) mientras **111 perfiles los
+usan como especialidad**. Fuera del mapa de permisos, intactos como etiqueta de perfil. El mapa
+quedó en 15 entradas.
+
+Dato que contradice el encargo: **`team_leader` y `strategist` no tienen ni un usuario**. Los
+estrategas reales son `creative_strategist` (48) y `digital_strategist` (19).
+
+### Sidebar de cliente (`59ca2a2a`)
+
+Academia y Mi Plan salen del sidebar. **Mi Plan pasa a Configuración**, reutilizando `PlanesPage`,
+que ya elige el segmento (marcas/creadores/agencias) según el rol.
+
+### Textos: la plataforma seguía vendiendo lo que ya no existe
+
+−160 líneas en la landing. Lo más serio: **los planes de precios seguían ofreciendo "Campañas
+activas" como límite de cada plan y "Live Shopping" como add-on**. También fuera "Sistema UP" y
+"Red social profesional". Kiro ya no habla de campañas ni de logros.
+
+### Pipeline autónomo (`0928d082`, `e0fb7606`, `3645c74f`, `27adffea`)
+
+onboarding → ADN → estrategia → guiones, con parada en cada etapa esperando al cliente.
+Documentado en `docs/PIPELINE_AUTONOMO.md`. Tres correcciones sobre el encargo:
+
+1. **`generate-brand-dna` no existe** — el ADN de marca real es `generate-client-dna`.
+2. **`generate-product-dna` crea un producto en cada llamada** → el orquestador guarda el
+   `product_id` y no la repite.
+3. **`generate-full-research` es asíncrona** (202 + 21 fases, 5–15 min) y **si se queda sin
+   tokens aborta sin avisar por HTTP** → estado `paused_no_tokens` detectado por polling.
+
+Y una decisión de diseño: **no existe estado "guión en revisión de cliente"**. Crearlo exigía
+tocar el enum `content_status` *y* `organization_statuses`. Se usa `script_pending`, que significa
+exactamente eso y ya tiene flujo de aprobación.
+
+---
+
+## Cifras finales vs. línea base
+
+| Métrica | Línea base | Ahora | Δ |
+|---|---:|---:|---:|
+| Peso de `dist/` | 23.307.089 B | 22.612.913 B | **−694.176 B (−3,0 %)** |
+| Chunks JS | 390 | 350 | −40 |
+| Rutas | 165 | 144 | −21 |
+| Páginas | 160 | 143 | −17 |
+| Componentes | 1.035 | 948 | −87 |
+| Archivos en `src` | 1.946 | 1.801 | −145 |
+| Edge functions | 169 | 157 | −12 |
+| Tablas eliminadas | — | — | **−120** |
+
+**La lectura honesta del bundle:** −3 % parece poco para 5 módulos, y tiene explicación. Booking y
+live streaming ya estaban desmontados del frontend (no descargaban nada), y el feed conservó
+`portfolio_posts` y su árbol porque el módulo de talento escribe ahí. El ahorro real vino de
+campañas (−366 KB) y UP (−179 KB). **Lo que de verdad se simplificó es la base de datos y la
+superficie mental: 120 tablas menos y 21 rutas menos.**

@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp,
   Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
   Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
-  Building2, Scissors, Zap, Trophy, Crown, Store,
+  Building2, Scissors, Trophy, Crown, Store,
   Clapperboard, AlertTriangle, PackageCheck
 } from "lucide-react";
 import { format, endOfMonth } from "date-fns";
@@ -38,7 +38,7 @@ import { ReferralStats } from "@/components/dashboard/ReferralStats";
 import { MarketplaceDashboardTab } from "@/components/marketplace/dashboard/MarketplaceDashboardTab";
 import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
-import { CollaborativeStats } from "@/components/dashboard/CollaborativeStats";
+import { KreoonEmptyState } from "@/components/ui/kreoon";
 
 // Optimized animated number counter using requestAnimationFrame (60fps, minimal re-renders)
 const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) => {
@@ -381,6 +381,7 @@ export default function Dashboard() {
   const { user, isAdmin, isClient, profile } = useAuth();
   const { currentOrgId, isPlatformRoot, loading: orgLoading } = useOrgOwner();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Detect independent client (client_users or brand member without organization)
   const [isIndependentClient, setIsIndependentClient] = useState<boolean | null>(null);
@@ -856,7 +857,7 @@ export default function Dashboard() {
       <div className="p-4 md:p-6">
         <PageHeader
           icon={Crown}
-          title="KREOON Board"
+          title="Inicio"
           subtitle="Centro de comando y métricas"
           action={
             <div className="flex items-center gap-2">
@@ -874,10 +875,6 @@ export default function Dashboard() {
                   <span className="hidden md:inline">Metas</span>
                 </Button>
               )}
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-sm bg-success/10 border border-success/20">
-                <Activity className="h-3 w-3 text-success animate-pulse" />
-                <span className="text-xs font-medium text-success">En vivo</span>
-              </div>
             </div>
           }
         />
@@ -1032,7 +1029,7 @@ export default function Dashboard() {
       <div className="px-4 py-2 lg:px-6">
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="principal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-5 h-10 mb-4">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-10 mb-4">
             <TabsTrigger value="principal" className="text-xs gap-1">
               <BarChart3 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Principal</span>
@@ -1040,10 +1037,6 @@ export default function Dashboard() {
             <TabsTrigger value="financiero" className="text-xs gap-1">
               <DollarSign className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Financiero</span>
-            </TabsTrigger>
-            <TabsTrigger value="up" className="text-xs gap-1">
-              <Zap className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">UP System</span>
             </TabsTrigger>
             <TabsTrigger value="usuarios" className="text-xs gap-1">
               <Users className="h-3.5 w-3.5" />
@@ -1057,6 +1050,15 @@ export default function Dashboard() {
 
           {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
           <TabsContent value="principal" className="space-y-3 mt-0">
+            {allContent.length === 0 && (
+              <KreoonEmptyState
+                icon={<Clapperboard className="h-9 w-9" />}
+                title="Todavía no hay videos"
+                description="Crea el primero y aquí verás cómo avanza."
+                action={{ label: 'Crear el primer video', onClick: () => navigate('/board') }}
+              />
+            )}
+
             {/* Row 0: Widgets operativos - qué está pasando ahora mismo */}
             <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
               {/* Proyectos activos */}
@@ -1196,7 +1198,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <TechSectionHeader icon={Activity} title="Pipeline de Contenidos" />
+              <TechSectionHeader icon={Activity} title="Cómo van los videos" />
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
                 <PipelineItem
                   icon={Calendar}
@@ -1700,15 +1702,7 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {/* TAB 3: SOCIAL */}
-          <TabsContent value="up" className="space-y-4 mt-0">
-            {/* Kreoon Social Collaborative Stats */}
-            {currentOrgId && (
-              <CollaborativeStats organizationId={currentOrgId} />
-            )}
-          </TabsContent>
-
-          {/* TAB 4: USUARIOS Y REFERIDOS */}
+          {/* TAB 3: USUARIOS Y REFERIDOS */}
           <TabsContent value="usuarios" className="space-y-4 mt-0">
             {/* Team Summary */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -7,8 +7,6 @@ export { BoardTableView } from './BoardTableView';
 export { BoardListView } from './BoardListView';
 export { BoardAIPanel } from './BoardAIPanel';
 export { StatusChangeDropdown, QuickStatusButtons } from './StatusChangeDropdown';
-export { MarketingInfoPanel } from './MarketingInfoPanel';
-export { CampaignAssignmentDialog } from './CampaignAssignmentDialog';
 export { MarketplaceBoardView } from './MarketplaceBoardView';
 export { ViewSelector } from './ViewSelector';
 export { ResizableTableHeader, useColumnConfig } from './ResizableTableHeader';

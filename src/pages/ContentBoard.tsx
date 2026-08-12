@@ -35,8 +35,6 @@ import {
   BoardTableView,
   BoardListView,
   BoardAIPanel,
-  MarketingInfoPanel,
-  CampaignAssignmentDialog,
   ViewSelector
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
@@ -85,7 +83,6 @@ export default function ContentBoard() {
   const [filterEditorId, setFilterEditorId] = useState<string>(persistence.filters.editorId);
   const [filterClientId, setFilterClientId] = useState<string>(persistence.filters.clientId);
   const [filterProductId, setFilterProductId] = useState<string>(persistence.filters.productId);
-  const [filterCampaignWeek, setFilterCampaignWeek] = useState<string>(persistence.filters.campaignWeek);
   const [searchTerm, setSearchTerm] = useState(persistence.filters.searchTerm);
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeValue | null>(
     persistence.filters.startDate && persistence.filters.deadline
@@ -102,12 +99,11 @@ export default function ContentBoard() {
       editorId: filterEditorId,
       clientId: filterClientId,
       productId: filterProductId,
-      campaignWeek: filterCampaignWeek,
       searchTerm: searchTerm,
       startDate: dateRangeFilter?.from?.toISOString(),
       deadline: dateRangeFilter?.to?.toISOString(),
     });
-  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, dateRangeFilter]);
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, searchTerm, dateRangeFilter]);
   
   // Listas para filtros
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
@@ -195,15 +191,7 @@ export default function ContentBoard() {
   const [aiPanelMode, setAIPanelMode] = useState<'card' | 'board'>('board');
   const [aiContentId, setAIContentId] = useState<string | undefined>();
   const [aiContentTitle, setAIContentTitle] = useState<string | undefined>();
-  
-  // Marketing Panel state
-  const [showMarketingPanel, setShowMarketingPanel] = useState(false);
-  const [marketingPanelContent, setMarketingPanelContent] = useState<Content | null>(null);
-  
-  // Campaign Assignment Dialog state (for moving to 'en_campaa')
-  const [showCampaignDialog, setShowCampaignDialog] = useState(false);
-  const [pendingCampaignContent, setPendingCampaignContent] = useState<Content | null>(null);
-  
+
   // Vista actual y configuración del board - using persisted view
   const currentView = persistence.currentView;
   const setCurrentView = persistence.setCurrentView;
@@ -251,10 +239,9 @@ export default function ContentBoard() {
            filterEditorId !== 'all' ||
            filterClientId !== 'all' ||
            filterProductId !== 'all' ||
-           filterCampaignWeek !== '' ||
            searchTerm !== '' ||
            dateRangeFilter !== null;
-  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, filterCampaignWeek, searchTerm, dateRangeFilter]);
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, searchTerm, dateRangeFilter]);
   
   // Board settings hook
   const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings, updateSettings } = useBoardSettings(currentOrgId);
@@ -443,16 +430,11 @@ export default function ContentBoard() {
       if (c.product_id !== filterProductId) return false;
     }
 
-    // Filtro por campaña/semana
-    if (filterCampaignWeek) {
-      if (c.campaign_week !== filterCampaignWeek) return false;
-    }
-
     // Ocultar contenido archivado (pagado al 100% y cerrado)
     if (hidePaidContent && c.status === 'archived') return false;
 
     return true;
-  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, filterCampaignWeek, hidePaidContent]);
+  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, hidePaidContent]);
 
   // Agrupar contenido por estado (soporta status personalizados)
   const getContentByStatus = (status: ContentStatus | string) => {
@@ -501,14 +483,6 @@ export default function ContentBoard() {
         description: 'No tienes permisos para realizar este cambio de estado',
         variant: 'destructive'
       });
-      setDraggingContent(null);
-      return;
-    }
-
-    // If target is 'en_campaa', show campaign assignment dialog instead of direct update
-    if (targetStatus === 'en_campaa') {
-      setPendingCampaignContent(draggingContent);
-      setShowCampaignDialog(true);
       setDraggingContent(null);
       return;
     }
@@ -629,7 +603,7 @@ export default function ContentBoard() {
         <PageHeader
           icon={Scroll}
           title="Kreoon Producciones"
-          subtitle="Centro de control inteligente de contenido • Powered by AI"
+          subtitle="Centro de control de tus videos"
           action={
             <div className="flex items-center gap-2">
               {(isAdmin || isClient) && (
@@ -689,8 +663,6 @@ export default function ContentBoard() {
             filterProductId={filterProductId}
             setFilterProductId={setFilterProductId}
             productOptions={productOptions}
-            filterCampaignWeek={filterCampaignWeek}
-            setFilterCampaignWeek={setFilterCampaignWeek}
           />
         )}
         {/* Board Header with View Switcher - 2 rows layout */}
@@ -699,7 +671,7 @@ export default function ContentBoard() {
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
-              <Badge variant="outline" className="text-xs">{filteredContent.length} items</Badge>
+              <Badge variant="outline" className="text-xs">{filteredContent.length} videos</Badge>
               {settings && settings.card_size !== 'normal' && (
                 <Badge variant="secondary" className="text-xs gap-1">
                   <Settings2 className="h-3 w-3" />
@@ -746,7 +718,7 @@ export default function ContentBoard() {
                       onClick={handleResetFilters}
                     >
                       <RotateCcw className="h-4 w-4" />
-                      <span className="hidden sm:inline">Reset</span>
+                      <span className="hidden sm:inline">Quitar filtros</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Restablecer todos los filtros</TooltipContent>
@@ -862,8 +834,6 @@ export default function ContentBoard() {
               setAIContentId={setAIContentId}
               setAIContentTitle={setAIContentTitle}
               setShowAIPanel={setShowAIPanel}
-              setMarketingPanelContent={setMarketingPanelContent}
-              setShowMarketingPanel={setShowMarketingPanel}
               assignableCreators={assignableCreators}
               assignableEditors={assignableEditors}
               handleAssignCreator={handleAssignCreator}
@@ -1017,31 +987,6 @@ export default function ContentBoard() {
           contentTitle={aiContentTitle}
         />
       )}
-
-      {/* Marketing Info Panel */}
-      <MarketingInfoPanel
-        content={marketingPanelContent}
-        open={showMarketingPanel}
-        onClose={() => {
-          setShowMarketingPanel(false);
-          setMarketingPanelContent(null);
-        }}
-      />
-
-      {/* Campaign Assignment Dialog (for moving to 'en_campaa') */}
-      <CampaignAssignmentDialog
-        open={showCampaignDialog}
-        onOpenChange={(open) => {
-          setShowCampaignDialog(open);
-          if (!open) setPendingCampaignContent(null);
-        }}
-        content={pendingCampaignContent}
-        organizationId={currentOrgId}
-        onSuccess={() => {
-          refetch();
-          setPendingCampaignContent(null);
-        }}
-      />
 
       {/* Bulk Generation Drawer */}
       <BulkGenerationDrawer open={showBulkDrawer} onOpenChange={setShowBulkDrawer} clientId={externalClientId ?? undefined} />

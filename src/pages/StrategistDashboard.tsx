@@ -16,6 +16,7 @@ import { TechKpiDialog } from '@/components/dashboard/TechKpiDialog';
 import { TechKpiCard } from '@/components/dashboard/TechKpiCard';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { TechGrid, TechParticles, TechOrb } from '@/components/ui/tech-effects';
+import { KreoonEmptyState } from '@/components/ui/kreoon';
 import { 
   Lightbulb, 
   FileText, 
@@ -246,7 +247,7 @@ export default function StrategistDashboard() {
         {/* Page Header */}
         <PageHeader
           icon={Scroll}
-          title="KREOON Board"
+          title="Inicio"
           subtitle={`Bienvenido, ${profile?.full_name}`}
           action={
             <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
@@ -308,6 +309,15 @@ export default function StrategistDashboard() {
             size="sm"
           />
         </motion.div>
+
+        {allContent.length === 0 && (
+          <KreoonEmptyState
+            icon={<FileText className="h-9 w-9" />}
+            title="Todavía no tienes guiones asignados"
+            description="Cuando te asignen un video, podrás escribir su guion aquí."
+            action={{ label: 'Ir a Guiones', onClick: () => navigate('/scripts') }}
+          />
+        )}
 
         {/* Progress Card - Tech Style */}
         <motion.div

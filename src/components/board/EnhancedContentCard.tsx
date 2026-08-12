@@ -95,7 +95,6 @@ interface EnhancedContentCardProps {
   onStatusChange?: (contentId: string, newStatus: ContentStatus) => Promise<void>;
   showStatusControls?: boolean;
   ambassadorIds?: Set<string>;
-  onShowMarketingInfo?: (content: Content) => void;
   /** Equipo asignable - creadores y editores para dropdown */
   creators?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
   editors?: Array<{ id: string; full_name: string | null; avatar_url: string | null }>;
@@ -163,7 +162,6 @@ export function EnhancedContentCard({
   onStatusChange,
   showStatusControls = false,
   ambassadorIds = new Set(),
-  onShowMarketingInfo,
   creators = [],
   editors = [],
   onAssignCreator,
@@ -248,10 +246,6 @@ export function EnhancedContentCard({
     onAnalyzeWithAI?.(content.id, content.title);
   };
 
-  const handleMarketingClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onShowMarketingInfo?.(content);
-  };
 
   // Wrap onStatusChange to show share prompt when content is approved
   const handleStatusChange = useCallback(async (contentId: string, newStatus: ContentStatus) => {
@@ -369,7 +363,7 @@ export function EnhancedContentCard({
         )}
 
         {/* Actions menu */}
-        {(onAnalyzeWithAI || onShowMarketingInfo) && (
+        {onAnalyzeWithAI && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -382,13 +376,6 @@ export function EnhancedContentCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 bg-white dark:bg-[#1f1f2e] border-zinc-200 dark:border-purple-500/30">
-              {onShowMarketingInfo && (
-                <DropdownMenuItem onClick={handleMarketingClick} className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10">
-                  <Megaphone className="h-4 w-4 text-blue-500 dark:text-blue-400" />
-                  Ver info Marketing
-                </DropdownMenuItem>
-              )}
-              {onShowMarketingInfo && onAnalyzeWithAI && <DropdownMenuSeparator className="bg-zinc-200 dark:bg-white/10" />}
               {onAnalyzeWithAI && (
                 <DropdownMenuItem onClick={handleAnalyzeClick} className="gap-2 text-zinc-900 dark:text-zinc-100 focus:bg-zinc-100 dark:focus:bg-white/10">
                   <Brain className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -523,9 +510,8 @@ export function EnhancedContentCard({
                 return (
                   <Badge
                     variant="outline"
-                    className={cn(sizeConfig.badgeSize, "border-zinc-300 dark:border-white/20 cursor-pointer")}
+                    className={cn(sizeConfig.badgeSize, "border-zinc-300 dark:border-white/20")}
                     style={{ color: marketingIndicator.color }}
-                    onClick={handleMarketingClick}
                   >
                     <MIcon className={cn(sizeConfig.iconSize, "mr-0.5")} />
                     {cardSize !== "compact" && marketingIndicator.label}

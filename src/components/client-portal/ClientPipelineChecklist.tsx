@@ -42,6 +42,21 @@ function toStepState(status: PipelineStageStatus): StepState {
   }
 }
 
+/**
+ * Los dos estados "de atención" tienen causas distintas y merecen mensajes
+ * distintos: `error` significa que un humano ya tomó el caso; el otro es una
+ * pausa técnica del sistema, no un problema del cliente.
+ */
+function attentionText(status?: PipelineStageStatus): string {
+  return status === 'paused_no_tokens'
+    ? 'Estamos terminando esto. Te avisamos apenas esté.'
+    : 'Un estratega de nuestro equipo va a revisarlo contigo.';
+}
+
+function attentionLabel(status?: PipelineStageStatus): string | undefined {
+  return status === 'paused_no_tokens' ? 'En pausa' : undefined;
+}
+
 interface ClientPipelineChecklistProps {
   clientId: string | null;
   clientName?: string;
@@ -223,14 +238,16 @@ export function ClientPipelineChecklist({
                   ? 'Estamos haciendo los cambios que nos pediste.'
                   : 'Estamos leyendo tus respuestas para entender tu marca.'
                 : adnState === 'attention'
-                  ? 'Algo se atascó. Nuestro equipo ya lo está mirando.'
+                  ? attentionText(run?.stage_status)
                   : 'Empieza apenas tengamos tu información.'
         }
         state={adnState}
         stateLabel={
           adnState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
-            : undefined
+            : adnState === 'attention'
+              ? attentionLabel(run?.stage_status)
+              : undefined
         }
         primaryAction={
           adnState === 'ready' ? (
@@ -270,14 +287,16 @@ export function ClientPipelineChecklist({
                   ? 'Estamos ajustando el plan con lo que nos dijiste.'
                   : 'Estamos investigando tu mercado y armando el plan.'
                 : strategyState === 'attention'
-                  ? 'Algo se atascó. Nuestro equipo ya lo está mirando.'
+                  ? attentionText(run?.stage_status)
                   : 'Empieza cuando apruebes cómo entendimos tu marca.'
         }
         state={strategyState}
         stateLabel={
           strategyState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
-            : undefined
+            : strategyState === 'attention'
+              ? attentionLabel(run?.stage_status)
+              : undefined
         }
         primaryAction={
           strategyState === 'ready' ? (
@@ -337,14 +356,16 @@ export function ClientPipelineChecklist({
                   ? 'Estamos reescribiendo lo que nos pediste.'
                   : 'Estamos escribiendo tus guiones.'
                 : scriptsState === 'attention'
-                  ? 'Algo se atascó. Nuestro equipo ya lo está mirando.'
+                  ? attentionText(run?.stage_status)
                   : 'Empiezan cuando apruebes tu estrategia.'
         }
         state={scriptsState}
         stateLabel={
           scriptsState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
-            : undefined
+            : scriptsState === 'attention'
+              ? attentionLabel(run?.stage_status)
+              : undefined
         }
       >
         {(scriptsState === 'ready' || scriptsState === 'done') && (

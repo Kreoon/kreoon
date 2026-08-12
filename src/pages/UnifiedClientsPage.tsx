@@ -400,7 +400,7 @@ export function UnifiedClientsContent() {
           <div className="rounded-sm border border-border bg-card p-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <DollarSign className="h-3.5 w-3.5" />
-              Pipeline
+              Valor contratado
             </div>
             <p className="text-xl font-bold text-card-foreground">{formatCurrency(stats.pipelineValue)}</p>
           </div>

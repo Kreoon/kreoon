@@ -15,7 +15,10 @@
 //   advance         { run_id }
 //   approve         { run_id, stage, actor, actor_id }
 //   request_changes { run_id, stage, feedback, actor_id }
-//   poll            { run_id }                     ← interno / portal
+//   poll            { run_id, auto?, ciclo? }      ← interno / portal
+//                   `auto:true` (solo service role) encadena el auto-poll que
+//                   reconcilia las etapas asíncronas sin depender de que haya
+//                   un cliente con el portal abierto. Ver "Auto-poll" abajo.
 //   status          { run_id }
 //
 // FUNCIONES ENCADENADAS Y SU AUTH REAL (contratos verificados):
@@ -106,6 +109,21 @@ const ROLES_STAFF = [
 
 /** Al 4º intento se escala en vez de regenerar. */
 const LIMITE_REGENERACIONES = 4;
+
+// ── Auto-poll ──────────────────────────────────────────────────────────────
+// El ADN y la estrategia son asíncronos (la estrategia tarda 5–15 min en sus
+// 21 fases) y nadie devuelve un callback al terminar. Si la reconciliación
+// dependiera solo del portal, un run cuyo cliente cerró la pestaña se quedaría
+// en 'generating' para siempre — un run colgado en silencio.
+// Por eso, al entrar en 'generating' la función se auto-invoca en cadena con el
+// service role: cada eslabón duerme un intervalo, reconcilia y encadena el
+// siguiente mientras siga generando. Es el mismo patrón de self-invocation que
+// ya usa generate-full-research entre fases.
+const INTERVALO_AUTOPOLL_MS = 25_000;
+/** 60 × 25 s ≈ 25 min. Pasado ese techo el run se marca en error, no se cuelga. */
+const MAX_CICLOS_AUTOPOLL = 60;
+
+const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const NOTIFICATION_TYPE = "content_update";
 const NOTIFICATION_ENTITY_TYPE = "client_pipeline";
@@ -461,6 +479,23 @@ async function invocar(
   }
 }
 
+/**
+ * Arranca (o continúa) la cadena de auto-poll. Fire-and-forget con service
+ * role: `auto:true` solo se acepta si el Bearer es exactamente el service key,
+ * para que nadie desde fuera pueda montar una cadena infinita.
+ *
+ * Puede haber dos cadenas vivas si dos acciones entran en 'generating' a la
+ * vez; no es un problema: cada eslabón es idempotente y todos se apagan en
+ * cuanto el run sale de 'generating'.
+ */
+function programarAutoPoll(runId: string, ciclo: number): void {
+  invocarSinEsperar(
+    "pipeline-orchestrator",
+    { action: "poll", run_id: runId, auto: true, ciclo },
+    `Bearer ${SERVICE_KEY}`,
+  );
+}
+
 /** Dispara sin esperar respuesta (funciones que tardan minutos). */
 function invocarSinEsperar(nombre: string, body: Json, authHeader: string): void {
   fetch(`${SUPABASE_URL}/functions/v1/${nombre}`, {
@@ -649,6 +684,8 @@ async function ejecutarEtapaAdn(
     if (productId) {
       run = await actualizarRun(admin, run.id, { product_id: productId });
     } else {
+      // El producto sigue cociéndose: la cadena de auto-poll lo recoge.
+      programarAutoPoll(run.id, 0);
       return await actualizarRun(admin, run.id, { stage: "adn", stage_status: "generating" });
     }
   }
@@ -694,6 +731,7 @@ async function ejecutarEtapaEstrategia(
     typeof progreso.step === "number" && progreso.step > 0 &&
     progreso.step < (progreso.total ?? 21);
   if (enCurso && !opciones.regenerar) {
+    programarAutoPoll(run.id, 0);
     return await actualizarRun(admin, run.id, { stage: "estrategia", stage_status: "generating" });
   }
 
@@ -739,6 +777,8 @@ async function ejecutarEtapaEstrategia(
   await registrarEvento(admin, run.id, "estrategia", "generated", {
     payload: { product_id: run.product_id, regenerado: !!opciones.regenerar, status: res.status },
   });
+  // 5–15 min de 21 fases sin callback: la cadena de auto-poll vigila el avance.
+  programarAutoPoll(run.id, 0);
   return run;
 }
 
@@ -1282,6 +1322,35 @@ Deno.serve(async (req) => {
 
     // ── poll ───────────────────────────────────────────────────────────────
     if (accion === "poll") {
+      // Eslabón de la cadena de auto-poll: duerme, reconcilia y encadena el
+      // siguiente mientras el run siga generando. Solo con service role.
+      if (body.auto === true && ctx.esServiceRole) {
+        const ciclo = Number(body.ciclo ?? 0);
+        await dormir(INTERVALO_AUTOPOLL_MS);
+
+        // El run cambió mientras dormíamos: hay que releerlo.
+        const { data: fresco } = await admin
+          .from("client_pipeline_runs").select("*").eq("id", run.id).maybeSingle();
+        if (!fresco) return json(req, { ok: true, detenido: "run_borrado" });
+
+        const actualizado = await ejecutarPoll(admin, fresco as Run, ctx);
+
+        if (actualizado.stage_status !== "generating") {
+          // Ya transicionó (o falló): la cadena cumplió y se apaga.
+          return json(req, { ok: true, run: actualizado, cadena: "finalizada", ciclo });
+        }
+        if (ciclo + 1 >= MAX_CICLOS_AUTOPOLL) {
+          const conError = await marcarError(
+            admin, actualizado, actualizado.stage,
+            `la etapa lleva más de ${Math.round(MAX_CICLOS_AUTOPOLL * INTERVALO_AUTOPOLL_MS / 60000)} min generando sin terminar`,
+            "se agotó la cadena de auto-poll",
+          );
+          return json(req, { ok: false, run: conError, cadena: "agotada", ciclo });
+        }
+        programarAutoPoll(run.id, ciclo + 1);
+        return json(req, { ok: true, run: actualizado, cadena: "continua", ciclo });
+      }
+
       const actualizado = await ejecutarPoll(admin, run, ctx);
       return json(req, { ok: true, run: actualizado });
     }
@@ -1298,7 +1367,13 @@ Deno.serve(async (req) => {
       if (!ORDEN_ETAPAS.includes(stage)) {
         return json(req, { error: "stage inválido" }, 400);
       }
-      if (stage !== run.stage) {
+      // Excepción al guard de sincronía: aprobar el último guion cierra la
+      // etapa y mueve el run a 'produccion'. Un doble clic sobre ese mismo
+      // guion llega con stage='guiones' y run.stage='produccion' — es la misma
+      // acción repetida, no un desfase, así que se deja pasar (es idempotente).
+      const reaprobacionDeGuion = stage === "guiones" &&
+        run.stage === "produccion" && typeof body.content_id === "string";
+      if (stage !== run.stage && !reaprobacionDeGuion) {
         return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
       }
       // El actor sale del JWT, no del body: el body solo puede confirmarlo.

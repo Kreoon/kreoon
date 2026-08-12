@@ -640,7 +640,6 @@ serve(async (req) => {
         await cleanupTable("creator_services", "user_id", userId);
         await cleanupTable("creator_profiles", "user_id", userId);
         await cleanupTable("saved_creators", "user_id", userId);
-        await cleanupTable("campaign_applications", "creator_id", userId);
         await cleanupTable(
           "marketplace_projects",
           "creator_id",
@@ -676,9 +675,9 @@ serve(async (req) => {
         await cleanupTable("referral_codes", "user_id", userId);
         await cleanupTable("referral_earnings", "referrer_id", userId);
 
-        // ─── Reputation ───
-        await cleanupTable("reputation_events", "user_id", userId);
-        await cleanupTable("user_reputation_totals", "user_id", userId);
+        // ─── Reputación ───
+        // Simplificación 2026: reputation_events y user_reputation_totals eran
+        // del módulo UP, eliminado. marketplace_reputation se conserva.
         await cleanupTable("marketplace_reputation", "user_id", userId);
 
         // ─── CRM ───
