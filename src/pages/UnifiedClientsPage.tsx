@@ -408,7 +408,7 @@ export function UnifiedClientsContent() {
 
         {/* Seguimiento de actividad — solo admins */}
         {canSeeInternal && activityMetrics.length > 0 && (
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => handleFilterChange('activos')}
               className={cn(

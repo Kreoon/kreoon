@@ -23,7 +23,7 @@ export default function WhiteLabelSection() {
 
       {/* Tabs */}
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
           <TabsTrigger value="branding">Marca Visual</TabsTrigger>
           <TabsTrigger value="domain">Dominio</TabsTrigger>
           <TabsTrigger value="email">Email</TabsTrigger>

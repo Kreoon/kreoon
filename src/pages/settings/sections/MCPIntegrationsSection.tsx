@@ -251,7 +251,7 @@ export default function MCPIntegrationsSection() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="web">
-              <TabsList className="grid grid-cols-2 w-full">
+              <TabsList className="grid grid-cols-1 sm:grid-cols-2 w-full">
                 <TabsTrigger value="web">Claude en la web (claude.ai)</TabsTrigger>
                 <TabsTrigger value="desktop">Claude en tu computador</TabsTrigger>
               </TabsList>

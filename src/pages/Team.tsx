@@ -208,7 +208,7 @@ export function SinAsignarSection() {
       ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
       : null;
     return (
-      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarImage src={profile.avatar_url || ''} />
@@ -580,7 +580,7 @@ export default function Team() {
       ? formatDistanceToNow(new Date(health.last_login_at), { addSuffix: true, locale: es })
       : null;
     return (
-      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-muted/50 rounded-sm border border-border/50 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarImage src={profile.avatar_url || ''} />

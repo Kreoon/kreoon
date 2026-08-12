@@ -15,7 +15,7 @@ export default function PlatformAdminSection() {
       </div>
 
       <Tabs defaultValue="security" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
           <TabsTrigger value="security" className="gap-2">
             <ShieldCheck className="h-4 w-4" />
             Seguridad
