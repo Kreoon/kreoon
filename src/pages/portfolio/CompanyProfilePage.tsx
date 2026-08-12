@@ -13,10 +13,9 @@ import {
   Grid3X3, Play, Users, Heart, Settings, ArrowLeft, Handshake
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { CompanyFollowButton } from '@/components/portfolio/CompanyFollowButton';
 import { CompanyProfileEditor } from '@/components/portfolio/CompanyProfileEditor';
-import FeedGridCard from '@/components/portfolio/feed/FeedGridCard';
-import FeedGridModal from '@/components/portfolio/feed/FeedGridModal';
+import CompanyMediaCard from '@/components/portfolio/CompanyMediaCard';
+import CompanyMediaModal from '@/components/portfolio/CompanyMediaModal';
 
 interface Company {
   id: string;
@@ -70,7 +69,6 @@ export default function CompanyProfilePage() {
   const [showEditor, setShowEditor] = useState(false);
   
   // Stats
-  const [followersCount, setFollowersCount] = useState(0);
   const [contentCount, setContentCount] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
   
@@ -131,7 +129,6 @@ export default function CompanyProfilePage() {
 
       // Fetch stats in parallel
       await Promise.all([
-        fetchFollowersCount(companyData.id),
         fetchContent(companyData.id),
         fetchCreators(companyData.id),
         fetchCollaborations(companyData.id),
@@ -142,15 +139,6 @@ export default function CompanyProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchFollowersCount = async (companyId: string) => {
-    const { count } = await supabase
-      .from('company_followers')
-      .select('*', { count: 'exact', head: true })
-      .eq('company_id', companyId);
-    
-    setFollowersCount(count || 0);
   };
 
   const fetchContent = async (companyId: string) => {
@@ -425,10 +413,6 @@ export default function CompanyProfilePage() {
                   <span className="text-muted-foreground ml-1">contenidos</span>
                 </div>
                 <div className="text-center">
-                  <span className="font-bold">{formatCount(followersCount)}</span>
-                  <span className="text-muted-foreground ml-1">seguidores</span>
-                </div>
-                <div className="text-center">
                   <span className="font-bold">{formatCount(totalViews)}</span>
                   <span className="text-muted-foreground ml-1">views</span>
                 </div>
@@ -471,10 +455,6 @@ export default function CompanyProfilePage() {
                 )}
               </div>
 
-              {/* Follow button */}
-              {!isOwner && user?.id && (
-                <CompanyFollowButton companyId={company.id} />
-              )}
             </div>
           </div>
 
@@ -524,7 +504,7 @@ export default function CompanyProfilePage() {
               ) : (
                 <div className="grid grid-cols-3 gap-1">
                   {content.map((item, index) => (
-                    <FeedGridCard
+                    <CompanyMediaCard
                       key={item.id}
                       item={item}
                       onClick={() => handleCardClick(index, 'content')}
@@ -602,7 +582,7 @@ export default function CompanyProfilePage() {
                   </div>
                   <div className="grid grid-cols-3 gap-1">
                     {collaborations.map((item, index) => (
-                      <FeedGridCard
+                      <CompanyMediaCard
                         key={item.id}
                         item={item}
                         onClick={() => handleCardClick(index, 'collaborations')}
@@ -617,7 +597,7 @@ export default function CompanyProfilePage() {
       </ScrollArea>
 
       {/* Content Modal */}
-      <FeedGridModal
+      <CompanyMediaModal
         items={modalContentType === 'collaborations' ? collaborations : content}
         initialIndex={selectedIndex}
         isOpen={modalOpen}

@@ -8493,27 +8493,6 @@ export type Database = {
           },
         ]
       }
-      company_followers: {
-        Row: {
-          company_id: string
-          created_at: string
-          follower_id: string
-          id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string
-          follower_id: string
-          id?: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string
-          follower_id?: string
-          id?: string
-        }
-        Relationships: []
-      }
       company_profiles: {
         Row: {
           brand_voice: string | null
@@ -11969,73 +11948,6 @@ export type Database = {
         }
         Relationships: []
       }
-      favorites: {
-        Row: {
-          created_at: string | null
-          generation_id: string | null
-          id: string
-          notes: string | null
-          user_id: string
-          variation_index: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          generation_id?: string | null
-          id?: string
-          notes?: string | null
-          user_id: string
-          variation_index?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          generation_id?: string | null
-          id?: string
-          notes?: string | null
-          user_id?: string
-          variation_index?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "favorites_generation_id_fkey"
-            columns: ["generation_id"]
-            isOneToOne: false
-            referencedRelation: "generations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      feed_reactions: {
-        Row: {
-          created_at: string
-          id: string
-          post_id: string
-          reaction_type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          post_id: string
-          reaction_type: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          post_id?: string
-          reaction_type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "feed_reactions_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "portfolio_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       fillmaker_services: {
         Row: {
           billing_status: string
@@ -12230,30 +12142,6 @@ export type Database = {
           revenue_goal_usd?: number | null
           updated_at?: string
           year?: number
-        }
-        Relationships: []
-      }
-      hashtags: {
-        Row: {
-          created_at: string
-          id: string
-          tag: string
-          updated_at: string
-          use_count: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          tag: string
-          updated_at?: string
-          use_count?: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          tag?: string
-          updated_at?: string
-          use_count?: number
         }
         Relationships: []
       }
@@ -13859,35 +13747,6 @@ export type Database = {
         }
         Relationships: []
       }
-      kreadores_content_likes: {
-        Row: {
-          created_at: string
-          id: string
-          portfolio_item_id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          portfolio_item_id: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          portfolio_item_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kreadores_content_likes_portfolio_item_id_fkey"
-            columns: ["portfolio_item_id"]
-            isOneToOne: false
-            referencedRelation: "portfolio_items"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       kreadores_creator_interests: {
         Row: {
           created_at: string
@@ -14493,39 +14352,6 @@ export type Database = {
           updated_at?: string | null
           version?: string
           version_date?: string
-        }
-        Relationships: []
-      }
-      link_previews: {
-        Row: {
-          description: string | null
-          expires_at: string
-          fetched_at: string
-          id: string
-          image_url: string | null
-          site_name: string | null
-          title: string | null
-          url: string
-        }
-        Insert: {
-          description?: string | null
-          expires_at?: string
-          fetched_at?: string
-          id?: string
-          image_url?: string | null
-          site_name?: string | null
-          title?: string | null
-          url: string
-        }
-        Update: {
-          description?: string | null
-          expires_at?: string
-          fetched_at?: string
-          id?: string
-          image_url?: string | null
-          site_name?: string | null
-          title?: string | null
-          url?: string
         }
         Relationships: []
       }
@@ -21685,30 +21511,6 @@ export type Database = {
         }
         Relationships: []
       }
-      portfolio_post_comments: {
-        Row: {
-          comment: string
-          created_at: string | null
-          id: string
-          post_id: string
-          user_id: string
-        }
-        Insert: {
-          comment: string
-          created_at?: string | null
-          id?: string
-          post_id: string
-          user_id: string
-        }
-        Update: {
-          comment?: string
-          created_at?: string | null
-          id?: string
-          post_id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       portfolio_post_likes: {
         Row: {
           created_at: string | null
@@ -21791,81 +21593,6 @@ export type Database = {
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      portfolio_stories: {
-        Row: {
-          created_at: string
-          expires_at: string
-          id: string
-          media_type: string
-          media_url: string
-          music_name: string | null
-          music_url: string | null
-          music_volume: number | null
-          mute_video_audio: boolean | null
-          user_id: string
-          video_volume: number | null
-          views_count: number | null
-        }
-        Insert: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          media_type?: string
-          media_url: string
-          music_name?: string | null
-          music_url?: string | null
-          music_volume?: number | null
-          mute_video_audio?: boolean | null
-          user_id: string
-          video_volume?: number | null
-          views_count?: number | null
-        }
-        Update: {
-          created_at?: string
-          expires_at?: string
-          id?: string
-          media_type?: string
-          media_url?: string
-          music_name?: string | null
-          music_url?: string | null
-          music_volume?: number | null
-          mute_video_audio?: boolean | null
-          user_id?: string
-          video_volume?: number | null
-          views_count?: number | null
-        }
-        Relationships: []
-      }
-      post_hashtags: {
-        Row: {
-          hashtag_id: string
-          post_id: string
-        }
-        Insert: {
-          hashtag_id: string
-          post_id: string
-        }
-        Update: {
-          hashtag_id?: string
-          post_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_hashtags_hashtag_id_fkey"
-            columns: ["hashtag_id"]
-            isOneToOne: false
-            referencedRelation: "hashtags"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "post_hashtags_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "portfolio_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -25248,42 +24975,6 @@ export type Database = {
         }
         Relationships: []
       }
-      social_notifications: {
-        Row: {
-          actor_id: string | null
-          created_at: string
-          entity_id: string | null
-          entity_type: string | null
-          id: string
-          is_read: boolean
-          message: string | null
-          notification_type: string
-          user_id: string
-        }
-        Insert: {
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          is_read?: boolean
-          message?: string | null
-          notification_type: string
-          user_id: string
-        }
-        Update: {
-          actor_id?: string | null
-          created_at?: string
-          entity_id?: string | null
-          entity_type?: string | null
-          id?: string
-          is_read?: boolean
-          message?: string | null
-          notification_type?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       social_publish_logs: {
         Row: {
           action: string
@@ -25533,27 +25224,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      story_views: {
-        Row: {
-          id: string
-          story_id: string
-          viewed_at: string
-          viewer_id: string
-        }
-        Insert: {
-          id?: string
-          story_id: string
-          viewed_at?: string
-          viewer_id: string
-        }
-        Update: {
-          id?: string
-          story_id?: string
-          viewed_at?: string
-          viewer_id?: string
-        }
-        Relationships: []
       }
       stripe_connected_accounts: {
         Row: {

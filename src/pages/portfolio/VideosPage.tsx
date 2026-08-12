@@ -3,13 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useSavedItems } from '@/hooks/useSavedItems';
 import { cn } from '@/lib/utils';
-import { Heart, MessageCircle, Bookmark, Share2, Download, ChevronDown, X } from 'lucide-react';
+import { Heart, Bookmark, Share2, Download, ChevronDown, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useNavigate } from 'react-router-dom';
 import { extractBunnyIds, getBunnyThumbnailUrl } from '@/hooks/useHLSPlayer';
-import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
 import { SocialSharePanel } from '@/components/content/unified';
 import { useDownload } from '@/hooks/unified';
 
@@ -129,7 +127,6 @@ interface VideoSlideProps {
   onSave: () => void;
   isSaved: boolean;
   onProfileClick: (userId: string, marketplaceId?: string) => void;
-  onOpenComments: () => void;
   onShare: () => void;
   onDownload: () => void;
   canDownload: boolean;
@@ -141,7 +138,6 @@ const VideoSlide = memo(function VideoSlide({
   onSave,
   isSaved,
   onProfileClick,
-  onOpenComments,
   onShare,
   onDownload,
   canDownload,
@@ -262,17 +258,6 @@ const VideoSlide = memo(function VideoSlide({
           )}
         </button>
 
-        {/* Comments */}
-        <button
-          onClick={(e) => { e.stopPropagation(); onOpenComments(); }}
-          className="flex flex-col items-center gap-1"
-        >
-          <MessageCircle className="h-7 w-7 text-white hover:scale-110 transition-transform" />
-          {video.comments_count > 0 && (
-            <span className="text-white text-xs">{video.comments_count}</span>
-          )}
-        </button>
-
         {/* Save */}
         <button
           onClick={(e) => { e.stopPropagation(); onSave(); }}
@@ -317,19 +302,12 @@ export default function VideosPage() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [filter, setFilter] = useState<VideoFilter>('all');
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentsVideoId, setCommentsVideoId] = useState<string | null>(null);
 
   // Share panel state
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareVideo, setShareVideo] = useState<VideoItem | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleOpenComments = useCallback((videoId: string) => {
-    setCommentsVideoId(videoId);
-    setCommentsOpen(true);
-  }, []);
 
   const fetchVideos = useCallback(async () => {
     setLoading(true);
@@ -678,7 +656,6 @@ export default function VideosPage() {
               onSave={() => handleSave(video)}
               isSaved={checkIsSaved(video)}
               onProfileClick={handleProfileClick}
-              onOpenComments={() => handleOpenComments(video.id)}
               onShare={() => handleShare(video)}
               onDownload={() => handleDownload(video)}
               canDownload={checkCanDownload(video)}
@@ -686,19 +663,6 @@ export default function VideosPage() {
           </div>
         ))}
       </div>
-
-      {/* Comments Drawer */}
-      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <DrawerContent className="h-[60vh] bg-zinc-900 border-0 rounded-t-2xl">
-          {commentsVideoId && (
-            <PortfolioCommentsSection
-              postId={commentsVideoId}
-              isOpen={commentsOpen}
-              onClose={() => setCommentsOpen(false)}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
 
       {/* Share Panel */}
       {shareVideo && (

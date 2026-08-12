@@ -24,7 +24,7 @@ interface FeedItem {
   creator_name?: string;
 }
 
-interface FeedGridCardProps {
+interface CompanyMediaCardProps {
   item: FeedItem;
   onClick: () => void;
   priority?: boolean; // For above-the-fold items
@@ -36,7 +36,7 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCardProps) {
+function CompanyMediaCardComponent({ item, onClick, priority = false }: CompanyMediaCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -236,5 +236,5 @@ function FeedGridCardComponent({ item, onClick, priority = false }: FeedGridCard
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const FeedGridCard = memo(FeedGridCardComponent);
-export default FeedGridCard;
+const CompanyMediaCard = memo(CompanyMediaCardComponent);
+export default CompanyMediaCard;

@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import { HLSVideoPlayer, getBunnyVideoUrls } from '@/components/video';
 import { CommentsSection } from '@/components/content/CommentsSection';
-import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
 import { SocialSharePanel } from './SocialSharePanel';
 import { FloatingHearts } from '@/components/social/ReactionButton';
 import { STATUS_LABELS, STATUS_COLORS, ContentStatus } from '@/types/database';
@@ -322,12 +321,14 @@ const VideoSlide = memo(function VideoSlide({
         )}
 
         {/* Comments */}
-        <button
-          onClick={onOpenComments}
-          className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
+        {onOpenComments && (
+          <button
+            onClick={onOpenComments}
+            className="p-3 rounded-full bg-black/30 text-white hover:bg-black/50 transition-colors"
+          >
+            <MessageCircle className="h-6 w-6" />
+          </button>
+        )}
 
         {/* Save - only in browse mode */}
         {mode === 'browse' && onSave && (
@@ -621,7 +622,7 @@ export function UnifiedContentViewer({
           onSave={onSave ? () => onSave(currentItem) : undefined}
           onDownload={showDownload ? handleDownload : undefined}
           onShare={showShare ? () => setShowSharePanel(true) : undefined}
-          onOpenComments={showComments ? () => setShowCommentsDrawer(true) : undefined}
+          onOpenComments={showComments && currentItem.type === 'work' ? () => setShowCommentsDrawer(true) : undefined}
           onProfileClick={handleProfileClick}
           onClientClick={handleClientClick}
           isLiked={isLiked?.(currentItem)}
@@ -733,14 +734,8 @@ export function UnifiedContentViewer({
       {/* Comments Drawer */}
       <Drawer open={showCommentsDrawer} onOpenChange={setShowCommentsDrawer}>
         <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
-          {currentItem.type === 'work' ? (
+          {currentItem.type === 'work' && (
             <CommentsSection contentId={currentItem.id} />
-          ) : (
-            <PortfolioCommentsSection
-              postId={currentItem.id}
-              isOpen={showCommentsDrawer}
-              onClose={() => setShowCommentsDrawer(false)}
-            />
           )}
         </DrawerContent>
       </Drawer>

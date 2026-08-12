@@ -94,28 +94,12 @@ Deno.serve(async (req) => {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       if (type === 'story') {
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        const { data: storyData, error: dbError } = await supabase
-          .from('portfolio_stories')
-          .insert({
-            user_id,
-            media_url: embed_url,
-            media_type: 'video',
-            thumbnail_url,
-            caption,
-            expires_at: expiresAt,
-          })
-          .select()
-          .single()
-
-        if (dbError) {
-          console.error('[bunny-portfolio-upload] DB error:', dbError)
-          throw dbError
-        }
-
+        // Simplificación 2026: las historias (portfolio_stories) se eliminaron con
+        // el feed social. Se responde con error explícito en vez de fallar contra
+        // una tabla inexistente.
         return new Response(
-          JSON.stringify({ success: true, id: storyData.id }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          JSON.stringify({ success: false, error: 'Las historias ya no están disponibles' }),
+          { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       } else if (type === 'post') {
         const { data: postData, error: dbError } = await supabase

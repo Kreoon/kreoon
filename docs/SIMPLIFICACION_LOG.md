@@ -390,3 +390,88 @@ Las 4 edge functions se redesplegaron.
 | Componentes | 1.035 | 1.002 | 972 | −63 |
 | Edge functions | 169 | 160 | 158 | −11 |
 | Tablas dropeadas | — | 64 | **109** | −109 |
+
+---
+
+## Bloque 5 · Red social / Feed — 2026-08-12
+
+**El alcance cambió respecto al mapa**, y lo cambió la propia decisión 1 del dueño del producto.
+
+### El diagnóstico de `portfolio_posts` (docs/MIGRACION_PORTFOLIO_POSTS.md)
+
+| Concepto | Filas |
+|---|---:|
+| Total | 158 |
+| Ya replicadas en `portfolio_items` | **21 — el 100 % de las migrables** |
+| Pendientes de migrar | **0** |
+| No migrables | **137** |
+
+Las 137 pertenecen a **19 autores que no existen en la base**: ni en `auth.users` ni en
+`profiles`. No son "estudiantes o clientes" como decía el comentario de la migración anterior:
+son datos importados de **un proyecto Supabase previo** (31 de sus archivos aún apuntan al
+dominio antiguo). Ya eran invisibles en la app desde julio, porque el feed cruzaba contra
+perfiles. `portfolio_posts.user_id` nunca tuvo llave foránea, por eso quedaron así.
+
+Las dos alternativas a conservarlas se descartaron con evidencia: crear perfiles de creador
+para esos 19 autores significaba **inventar 19 creadores falsos visibles en el marketplace**
+(prohibido por la regla de oro), y hacer `creator_id` nullable **debilitaba la garantía que
+protege a las 1.283 filas de `portfolio_items` sin ganar visibilidad**.
+
+**Además `portfolio_posts` no es una tabla muerta:** 15 archivos vivos escriben en ella, y
+varios son del módulo de **talento** (`VideosPage`, `useMarketplaceCreators`,
+`useMarketplaceReadiness`). Migrar ese código a `portfolio_items` es un proyecto aparte.
+
+→ Por la decisión 1 ("solo dropear con 100 % replicado"), **`portfolio_posts` se conserva**,
+y con ella `portfolio_post_likes` (14 filas, apunta a ella).
+
+### Tablas eliminadas (11)
+
+`social_notifications` (68 filas), `kreadores_content_likes` (4) y 9 vacías:
+`portfolio_stories`, `story_views`, `feed_reactions`, `hashtags`, `post_hashtags`,
+`link_previews`, `favorites`, `portfolio_post_comments`, `company_followers`.
+Más 27 políticas RLS y 2 tablas fuera de Realtime.
+
+### La frontera, verificada con datos después del DROP
+
+| Se queda | Filas |
+|---|---:|
+| `portfolio_posts` | 158 |
+| `portfolio_post_likes` | 14 |
+| `portfolio_items` | 1.283 |
+| `followers` (perfil de talento) | 36 |
+| `content_likes` (board) | 45 |
+| `saved_items` (marketplace) | 4 |
+| `user_notifications` | 4.696 |
+
+### Decisiones 5, 6 y 7 implementadas
+
+- **5 · Campanita móvil**: nuevo `MobileNotificationsBell` sobre `user_notifications`,
+  sustituye a la del feed en las 4 cabeceras móviles. Se hizo componente aparte porque
+  `IntegratedNotificationHeader` es una barra fija pensada para escritorio.
+- **6 · Bottom nav de marca**: rediseñado, no rellenado → **Inicio · Mis videos · Talento ·
+  Mi perfil**. También sale "Feed" de las navs de creator y editor.
+- **7 · `company_followers`**: fuera el botón y el contador de seguir; **el perfil público de
+  empresa se queda intacto**.
+
+### El barrido post-DROP volvió a encontrar lo que el mapa no listaba
+
+| Dónde | Qué | Solución |
+|---|---|---|
+| `useContactReveal.ts` | Insertaba en `social_notifications` al revelar contacto (marketplace) | Reapuntado a `user_notifications`, reusando un `type` ya mapeado en el frontend para no reventar el renderizado |
+| `bunny-portfolio-upload` | Rama que creaba historias | Responde 410 "ya no disponible" en vez de fallar contra una tabla inexistente |
+| `sync-to-kreoon` | 11 tablas del feed en su lista | Depurada |
+| `UnifiedContentViewer`, `CompanyMediaModal`, `VideosPage` | Drawer de comentarios sobre la tabla borrada | Retirado |
+| `FeedGridCard` / `FeedGridModal` | Los usaba el perfil de empresa, que se queda | Renombrados a `CompanyMediaCard` / `CompanyMediaModal` y movidos fuera de `feed/` |
+| `MobileBottomNav.tsx` | Código muerto (0 importadores) | Borrado |
+
+### Números finales
+
+| Métrica | Línea base | Tras bloque 5 | Δ total |
+|---|---:|---:|---:|
+| Peso de `dist/` | 23.307.089 B | **22.589.895 B** | **−717.194 B (−3,1 %)** |
+| Chunks JS | 390 | 351 | −39 |
+| Rutas | 165 | 144 | −21 |
+| Archivos en `src` | 1.946 | 1.789 | −157 |
+| Componentes | 1.035 | 940 | −95 |
+| Edge functions | 169 | 156 | −13 |
+| Tablas dropeadas | — | **120** | −120 |

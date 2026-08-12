@@ -11,10 +11,9 @@ import { KiroHeaderButton } from "@/components/kiro/KiroHeaderButton";
 import { AccountMenu } from "./AccountMenu";
 import { MoreMenuSheet, type MoreMenuItem } from "./MoreMenuSheet";
 import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
-import { SocialNotificationsDropdown } from "@/components/portfolio/SocialNotificationsDropdown";
+import { MobileNotificationsBell } from "@/components/notifications/MobileNotificationsBell";
 import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
 import { useAuth } from "@/hooks/useAuth";
-import { useImmersiveFeed } from "@/contexts/ImmersiveFeedContext";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { usePresence } from "@/hooks/usePresence";
@@ -63,11 +62,9 @@ interface MainLayoutProps {
 }
 
 // Editor navigation items for mobile bottom bar - Kreoon Tech theme
-// Frente 2.5.A: Feed entra (motor de retencion). Kreoon IA/Config salen -> viven en "Mas"
-// (MoreMenuSheet, 5to slot) para no perder acceso a nada.
+// Kreoon IA/Config viven en "Mas" (MoreMenuSheet) para no perder acceso a nada.
 const editorMobileNavigation = [
   { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
-  { name: "Feed", href: "/feed", icon: Compass },
   { name: "Producciones", href: "/board", icon: Kanban },
   { name: "Market", href: "/marketplace", icon: Briefcase },
 ];
@@ -75,16 +72,19 @@ const editorMobileNavigation = [
 // Creator navigation items for mobile bottom bar
 const creatorMobileNavigation = [
   { name: "Hub", href: "/creator-dashboard", icon: LayoutDashboard },
-  { name: "Feed", href: "/feed", icon: Compass },
   { name: "Producciones", href: "/board", icon: Kanban },
   { name: "Market", href: "/marketplace", icon: Briefcase },
 ];
 
-// Client/marca navigation items for mobile bottom bar (Fase 3.6 — antes client no tenia bottom nav, solo sidebar)
+// Client/marca navigation items for mobile bottom bar.
+// Simplificación 2026 (decisión 6): rediseñado, no rellenado. Al irse el Feed, en vez
+// de dejar 2 slots o meter un ítem cualquiera, la nav pasa a lo que el cliente
+// realmente hace: ver su avance, revisar sus videos y consultar su perfil.
 const brandMobileNavigation = [
-  { name: "Hub", href: "/client-dashboard", icon: LayoutDashboard },
-  { name: "Feed", href: "/feed", icon: Compass },
+  { name: "Inicio", href: "/client-dashboard", icon: LayoutDashboard },
+  { name: "Mis videos", href: "/board?view=marketplace", icon: Kanban },
   { name: "Talento", href: "/marketplace", icon: Store },
+  { name: "Mi perfil", href: "/settings?section=profile", icon: UserCircle },
 ];
 
 // Items secundarios de "Mas" para client — todo lo que vivia en clientSections del Sidebar
@@ -106,7 +106,6 @@ const clientMoreItems: MoreMenuItem[] = [
 // Admin navigation items for mobile bottom bar (Fase 3.6 — antes admin no tenia bottom nav)
 const adminMobileNavigation = [
   { name: "Hub", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Feed", href: "/feed", icon: Compass },
   { name: "CRM", href: "/crm", icon: Building2 },
   { name: "Usuarios", href: "/talent", icon: Users },
 ];
@@ -191,13 +190,10 @@ export function MainLayout({
 
   // Detect marketplace routes for dark styling
   const isMarketplaceRoute = location.pathname.startsWith('/marketplace');
-  // Feed (modo inmersivo TikTok-style en movil) necesita el mismo full-bleed sin p-4/p-6
-  const isMarketplaceRouteOrFeed = isMarketplaceRoute || location.pathname === '/feed';
+  const isMarketplaceRouteOrFeed = isMarketplaceRoute;
 
-  // Modo pantalla completa del feed: FeedPage pide ocultar header + bottom nav via contexto
+
   // (boton "esconder menus"). Solo aplica en /feed — el estado global no afecta otras rutas.
-  const { isChromeHidden } = useImmersiveFeed();
-  const hideChromeForFeed = isChromeHidden && location.pathname === '/feed';
 
   // Sesion activa dentro de un space de Academia (home/classroom/feed/dm/calendario/miembros) —
   // NO incluye publicas (/academia, /academia/explorar) ni gestion/admin/editor de curso/reproductor
@@ -218,7 +214,7 @@ export function MainLayout({
       isAcademiaSpaceSession ||
       isClient ||
       isAdmin) &&
-    !hideChromeForFeed;
+    true;
 
   // Items de "Mas" para admin, filtrados por isPlatformRoot (paridad con Sidebar.tsx platformRootOnly)
   const adminMoreItems: MoreMenuItem[] = ADMIN_MORE_ITEMS_BASE.filter(
@@ -311,7 +307,7 @@ export function MainLayout({
         </div>
 
         {/* Creator Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed */}
-        {!hideChromeForFeed && (
+        {(
         <>
         <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -321,7 +317,7 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Panel Creador</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <SocialNotificationsDropdown />
+            <MobileNotificationsBell />
             <KiroHeaderButton />
             <AccountMenu
               trigger={
@@ -413,7 +409,7 @@ export function MainLayout({
         </div>
         
         {/* Editor Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed */}
-        {!hideChromeForFeed && (
+        {(
         <>
         <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
           <div className="flex-1 flex items-center gap-2 min-w-0">
@@ -423,7 +419,7 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Panel Editor</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <SocialNotificationsDropdown />
+            <MobileNotificationsBell />
             <KiroHeaderButton />
             <AccountMenu
               trigger={
@@ -556,7 +552,7 @@ export function MainLayout({
         )}
 
         {/* Client Mobile Header + Bottom Nav — ocultos en modo pantalla completa del feed (Fase 3.6) */}
-        {!hideChromeForFeed && (
+        {(
         <>
         <header
           className="sticky z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden"
@@ -572,7 +568,7 @@ export function MainLayout({
             </div>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <SocialNotificationsDropdown />
+            <MobileNotificationsBell />
             <KiroHeaderButton />
             <AccountMenu
               trigger={
@@ -697,7 +693,7 @@ export function MainLayout({
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <SocialNotificationsDropdown />
+          <MobileNotificationsBell />
           <KiroHeaderButton />
           <AccountMenu
             trigger={
@@ -725,7 +721,7 @@ export function MainLayout({
       {/* Admin Mobile Bottom Nav (Fase 3.6) — solo isAdmin; digital_strategist/creative_strategist/
           community_manager caen en este branch pero no son admin, no ganan bottom nav aca (sin cambio
           respecto al comportamiento previo para ellos) */}
-      {isAdmin && !hideChromeForFeed && (
+      {isAdmin && (
         <nav
           className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border md:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}

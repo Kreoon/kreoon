@@ -163,9 +163,6 @@ verify_jwt = false
 [functions.fetch-document]
 verify_jwt = false
 
-[functions.cleanup-expired-stories]
-verify_jwt = false
-
 [functions.generate-thumbnail]
 verify_jwt = true
 
@@ -191,9 +188,6 @@ verify_jwt = false
 # Server-to-server only (MCP server / otras edge functions) — se autentica
 # comparando el Authorization contra el secret de service role en código,
 # nunca requiere sesión de usuario.
-verify_jwt = false
-
-[functions.feed-recommendations]
 verify_jwt = false
 
 [functions.interest-extractor]

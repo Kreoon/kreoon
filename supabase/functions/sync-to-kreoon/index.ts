@@ -50,14 +50,8 @@ const TABLES_TO_SYNC = [
   'followers',
   'portfolio_posts',
   'portfolio_post_likes',
-  'portfolio_post_comments',
-  'portfolio_stories',
-  'story_views',
   'saved_collections',
   'saved_items',
-  'social_notifications',
-  
-  // Ambassador system
   'ambassador_referrals',
   'ambassador_network_stats',
   'ambassador_commission_config',
@@ -100,7 +94,6 @@ const TABLES_TO_SYNC = [
   // Misc
   'audit_logs',
   'blocked_ips',
-  'company_followers',
   'contact_reveals',
   'registration_codes',
   'registration_settings',
@@ -126,9 +119,6 @@ const ORG_SCOPED_TABLES = [
   // Social/feed (often org-scoped by current org)
   'portfolio_posts',
   'portfolio_post_likes',
-  'portfolio_post_comments',
-  'portfolio_stories',
-  'social_notifications',
 ];
 
 serve(async (req) => {

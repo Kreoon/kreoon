@@ -29,7 +29,6 @@ import { AccessGateProvider } from "@/providers/AccessGateProvider";
 import { RoleLegalGateProvider } from "@/providers/RoleLegalGateProvider";
 import { StrategistClientProvider } from "@/contexts/StrategistClientContext";
 import { KiroProvider } from "@/contexts/KiroContext";
-import { ImmersiveFeedProvider } from "@/contexts/ImmersiveFeedContext";
 import { GenerationJobProvider } from "@/contexts/GenerationJobContext";
 import { CreatorFavoritesProvider } from "@/contexts/CreatorFavoritesContext";
 import { FloatingGenerationBadge } from "@/components/ui/FloatingGenerationBadge";
@@ -120,12 +119,8 @@ const ClientContentBoard = lazyWithRetry(
 );
 const VideosPage = lazyWithRetry(() => import("./pages/portfolio/VideosPage"));
 const SavedPage = lazyWithRetry(() => import("./pages/portfolio/SavedPage"));
-const FeedPage = lazyWithRetry(() => import("./pages/portfolio/FeedPage"));
 const CompanyProfilePage = lazyWithRetry(
   () => import("./pages/portfolio/CompanyProfilePage"),
-);
-const PublicProfilePage = lazyWithRetry(
-  () => import("./pages/portfolio/PublicProfilePage"),
 );
 const Unauthorized = lazyWithRetry(() => import("./pages/Unauthorized"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
@@ -696,7 +691,6 @@ function AppRoutes() {
           }
         />
         <Route path="/company/:username" element={<CompanyProfilePage />} />
-        <Route path="/profile/:userId" element={<PublicProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
         <Route path="/p/:username" element={<PublicCreatorPage />} />
         <Route path="/@:username" element={<PublicCreatorPage />} />
@@ -764,26 +758,6 @@ function AppRoutes() {
             >
               <MainLayout>
                 <ContentBoard />
-              </MainLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/feed"
-          element={
-            <ProtectedRoute
-              allowedRoles={[
-                "admin",
-                "content_creator",
-                "editor",
-                "digital_strategist",
-                "creative_strategist",
-                "community_manager",
-                "client",
-              ]}
-            >
-              <MainLayout>
-                <FeedPage />
               </MainLayout>
             </ProtectedRoute>
           }
@@ -1374,7 +1348,6 @@ function AppContent() {
                               <AICopilotProvider>
                                 <KiroProvider>
                                   <GenerationJobProvider>
-                                    <ImmersiveFeedProvider>
                                     <TooltipProvider delayDuration={0}>
                                       <ImpersonationBanner />
                                       <Toaster />
@@ -1392,7 +1365,6 @@ function AppContent() {
                                         </CreatorFavoritesProvider>
                                       </ErrorBoundary>
                                     </TooltipProvider>
-                                    </ImmersiveFeedProvider>
                                   </GenerationJobProvider>
                                 </KiroProvider>
                               </AICopilotProvider>

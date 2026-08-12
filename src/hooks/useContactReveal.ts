@@ -105,17 +105,29 @@ export function useContactReveal(profileId: string | undefined) {
 
       if (revealError) throw revealError;
 
-      // Create notification for the revealed profile
-      await supabase
-        .from('social_notifications')
-        .insert({
-          user_id: profileId,
-          actor_id: user.id,
-          notification_type: 'reveal',
-          entity_type: 'profile',
-          entity_id: profileId,
-          message: 'reveló tus datos de contacto'
-        });
+      // Simplificación 2026: social_notifications era del feed (eliminado).
+      // El aviso se manda por user_notifications, la tabla real de la plataforma.
+      // OJO: el frontend solo mapea los types conocidos, por eso se usa
+      // 'content_update' + entity_type='profile' en vez de inventar un type nuevo.
+      const { data: revealerProfile } = await supabase
+        .from('profiles')
+        .select('full_name, current_organization_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (revealerProfile?.current_organization_id) {
+        await supabase
+          .from('user_notifications')
+          .insert({
+            user_id: profileId,
+            organization_id: revealerProfile.current_organization_id,
+            type: 'content_update',
+            title: 'Revelaron tus datos de contacto',
+            message: `${revealerProfile.full_name || 'Una organización'} reveló tus datos de contacto`,
+            entity_type: 'profile',
+            entity_id: profileId,
+          });
+      }
 
       const expiryDate = new Date(Date.now() + REVEAL_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
       setIsRevealed(true);

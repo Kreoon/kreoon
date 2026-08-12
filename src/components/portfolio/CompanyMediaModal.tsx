@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Heart, MessageCircle, Bookmark, Volume2, VolumeX } from 'lucide-react';
+import { X, Heart, Bookmark, Volume2, VolumeX } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { HLSVideoPlayer, getBunnyVideoUrls } from '@/components/video';
-import { PortfolioCommentsSection } from '@/components/content/PortfolioCommentsSection';
 import { ShareButton } from '@/components/social/ShareButton';
 import { FloatingHearts } from '@/components/social/ReactionButton';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,7 +32,7 @@ interface FeedItem {
   is_saved?: boolean;
 }
 
-interface FeedGridModalProps {
+interface CompanyMediaModalProps {
   items: FeedItem[];
   initialIndex: number;
   isOpen: boolean;
@@ -52,7 +50,6 @@ interface VideoSlideProps {
   isSaved: boolean;
   onCompanyClick?: (username: string) => void;
   onProfileClick?: (userId: string) => void;
-  onOpenComments?: () => void;
 }
 
 const VideoSlide = memo(function VideoSlide({ 
@@ -63,8 +60,7 @@ const VideoSlide = memo(function VideoSlide({
   onSave,
   isSaved,
   onCompanyClick,
-  onProfileClick,
-  onOpenComments
+  onProfileClick
 }: VideoSlideProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [showHeart, setShowHeart] = useState(false);
@@ -177,15 +173,7 @@ const VideoSlide = memo(function VideoSlide({
         >
           <Heart className={cn("h-7 w-7", isLiked && "fill-red-500 text-red-500")} />
         </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-12 w-12 text-white hover:bg-white/20 rounded-full"
-          onClick={onOpenComments}
-        >
-          <MessageCircle className="h-7 w-7" />
-        </Button>
-        <Button 
+        <Button
           variant="ghost" 
           size="icon" 
           className="h-12 w-12 text-white hover:bg-white/20 rounded-full"
@@ -216,25 +204,18 @@ const VideoSlide = memo(function VideoSlide({
   );
 });
 
-function FeedGridModalComponent({
+function CompanyMediaModalComponent({
   items,
   initialIndex,
   isOpen,
   onClose,
   onSave,
   isSaved,
-}: FeedGridModalProps) {
+}: CompanyMediaModalProps) {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
   const [isMuted, setIsMuted] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
-
-  const handleOpenComments = useCallback((postId: string) => {
-    setCommentsPostId(postId);
-    setCommentsOpen(true);
-  }, []);
 
   const handleCompanyClick = useCallback((username: string) => {
     onClose();
@@ -385,27 +366,13 @@ function FeedGridModalComponent({
               isSaved={isSaved(item)}
               onCompanyClick={handleCompanyClick}
               onProfileClick={handleProfileClick}
-              onOpenComments={() => handleOpenComments(item.id)}
             />
           </div>
         ))}
       </div>
-
-      {/* Comments Drawer */}
-      <Drawer open={commentsOpen} onOpenChange={setCommentsOpen}>
-        <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
-          {commentsPostId && (
-            <PortfolioCommentsSection 
-              postId={commentsPostId} 
-              isOpen={commentsOpen}
-              onClose={() => setCommentsOpen(false)}
-            />
-          )}
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }
 
-const FeedGridModal = memo(FeedGridModalComponent);
-export default FeedGridModal;
+const CompanyMediaModal = memo(CompanyMediaModalComponent);
+export default CompanyMediaModal;
