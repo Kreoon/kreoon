@@ -2008,7 +2008,6 @@ export function UnifiedTalentDetailDialog({
                           <option value="tutorial">Tutorial</option>
                           <option value="vsl">VSL</option>
                           <option value="photography">Fotografía</option>
-                          <option value="live_streaming">Live Streaming</option>
                           <option value="consulting">Consultoría</option>
                           <option value="other">Otro</option>
                         </select>

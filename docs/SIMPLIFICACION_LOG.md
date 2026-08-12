@@ -209,3 +209,28 @@ respaldo de esquema cubre tablas, índices, políticas y triggers, pero no funci
 
 Sigue sin haber ahorro de peso real: los dos módulos eliminados hasta ahora ya no cargaban nada
 en el navegador. Lo que baja es la base de datos: **52 tablas menos**.
+
+### Textos públicos que prometían el módulo (segunda pasada)
+
+Un barrido más amplio, después del commit principal, encontró que la plataforma **seguía
+vendiendo live streaming de cara al público**:
+
+| Dónde | Qué decía | Acción |
+|---|---|---|
+| `LandingSections.tsx` · sección `KreoonLiveSection` | Sección entera "KREOON Live — Transmite en vivo, vende productos…" con 4 features | Borrada (39 líneas). Estaba definida pero **no se usaba en ninguna página**: código muerto que igualmente había que retirar |
+| `LandingSections.tsx` · hero | "Gestión integral de contenido, IA, talento, pagos, **live streaming** y más" | Reescrito sin la promesa |
+| `LandingSections.tsx` · módulos | Tarjeta "KREOON Live" con `status: 'live'` | Borrada |
+| `LandingSections.tsx` · plan Growth ($139/mes) | Vendía **"KREOON Live"** como feature del plan | Borrada — se estaba cobrando por algo que ya no existe |
+| `LandingSections.tsx` · lista de features | "Live streaming integrado" | Borrada |
+| `UnifiedTalentDetailDialog.tsx` | Opción `<option value="live_streaming">` en el selector de tipo de contenido del talento | Borrada, por coherencia con `service-catalog` |
+
+**Se conservan** por ser etiquetas de especialidad de creador, no del módulo: `live_streamer`
+(`marketplaceRoleConfig.ts`, `specializations.ts`), `streaming` como categoría de perfil
+(`HeroBannerBlock.tsx`), y las opciones "TV / Streaming" y "Video en vivo" del cuestionario de ADN.
+
+**Pendiente para los bloques 4 y 5:** la landing todavía vende "Sistema UP" (`LandingHeader.tsx:27`,
+`LandingSections.tsx:173`, `:296`) y "Red social profesional" (`:168`, `:295`), y el plan Starter
+los incluye como features. Se limpian al eliminar esos módulos.
+
+**Lección:** el grep de nombres de tabla no basta. Hay que buscar también el **nombre comercial**
+del módulo en la interfaz y en los planes de precios.

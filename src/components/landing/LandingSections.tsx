@@ -11,7 +11,7 @@ import {
   LayoutDashboard, FolderKanban, Network, Bot, Calendar,
   FileText, Play, Heart, Share2, Rocket, Clock, Wand2,
   Mic, Camera, Workflow, BarChart3, PieChart, Mail, Phone,
-  CreditCard, Package, ShoppingBag, Radio, Tv, Gift,
+  CreditCard, Package, ShoppingBag, Gift,
   Code, Puzzle, Smartphone, Monitor, CloudUpload, Webhook,
   Brain, Lightbulb, Map, Flag, Timer
 } from 'lucide-react';
@@ -75,7 +75,7 @@ export function HeroSection({ onRegister }: SectionProps) {
         </h1>
         
         <p className="mt-6 text-lg sm:text-xl text-white/60 max-w-3xl mx-auto leading-relaxed animate-fade-in" style={{ animationDelay: '0.2s' }}>
-          Gestión integral de contenido, <span className="text-primary">IA</span>, talento, pagos, live streaming y más. 
+          Gestión integral de contenido, <span className="text-primary">IA</span>, talento, pagos y más.
           Todo en un ecosistema diseñado para <span className="text-white">escalar tu operación creativa</span>.
         </p>
         
@@ -190,13 +190,6 @@ export function ModulesSection() {
       features: ['Chats 1:1 y grupales', 'Adjuntos', 'Historial', 'Notificaciones']
     },
     {
-      icon: Radio,
-      name: 'KREOON Live',
-      status: 'live',
-      description: 'Live streaming y live shopping',
-      features: ['Transmisiones en vivo', 'Ventas en tiempo real', 'Métricas de stream', 'Múltiples canales']
-    },
-    {
       icon: CreditCard,
       name: 'Pagos',
       status: 'live',
@@ -302,7 +295,6 @@ export function WhatIsSection() {
     { icon: Globe, text: 'Red social profesional' },
     { icon: Trophy, text: 'Sistema de gamificación' },
     { icon: Bot, text: 'IA en cada módulo' },
-    { icon: Radio, text: 'Live streaming integrado' },
     { icon: CreditCard, text: 'Control de pagos' },
     { icon: MessageSquare, text: 'Chat interno con IA' },
   ];
@@ -580,45 +572,6 @@ export function SocialCreatorsSection() {
   );
 }
 
-// NEW Section: KREOON Live
-export function KreoonLiveSection() {
-  const features = [
-    { icon: Radio, label: 'Transmisiones en vivo', desc: 'Streaming profesional' },
-    { icon: ShoppingBag, label: 'Live Shopping', desc: 'Ventas en tiempo real' },
-    { icon: BarChart3, label: 'Métricas en vivo', desc: 'Analytics instantáneos' },
-    { icon: Tv, label: 'Multi-canal', desc: 'Múltiples streams' },
-  ];
-
-  return (
-    <section className="py-24 px-4 bg-gradient-to-b from-background to-muted/20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <Badge variant="outline" className="mb-4 border-red-500/30 text-red-500">
-            <Radio className="h-3 w-3 mr-1" />
-            Live Streaming
-          </Badge>
-          <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            KREOON Live
-          </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Transmite en vivo, vende productos y conecta con tu audiencia en tiempo real
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {features.map((f, i) => (
-            <div key={i} className="rounded-sm p-6 bg-card/50 border border-border/50 hover:border-red-500/30 transition-all duration-300 text-center group">
-              <f.icon className="h-8 w-8 text-red-500 mx-auto mb-3 group-hover:scale-110 transition-transform" />
-              <span className="text-foreground font-medium block">{f.label}</span>
-              <span className="text-xs text-muted-foreground">{f.desc}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 // NEW Section: Roadmap - Lo que viene
 export function RoadmapSection() {
   const upcoming = [
@@ -774,7 +727,6 @@ export function PricingSection({ onRegister }: SectionProps) {
         { icon: CheckCircle2, text: 'Todo lo Starter +' },
         { icon: Cpu, text: 'IA avanzada' },
         { icon: LineChart, text: 'Dashboards custom' },
-        { icon: Radio, text: 'KREOON Live' },
         { icon: Bell, text: 'Notificaciones smart' },
       ],
       cta: 'Empezar gratis',
