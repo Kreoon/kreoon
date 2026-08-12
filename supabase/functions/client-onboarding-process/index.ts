@@ -9,7 +9,8 @@
 //   1. cliente     — actualiza `clients` con los datos de contacto y marca.
 //   2. invitacion  — da acceso al portal (delega en client-portal-invite).
 //   3. adn         — crea la fila de product_dna y dispara generate-product-dna.
-//   4. cierre      — status 'processed' + notifica al staff.
+//   4. pipeline    — crea el run de client_pipeline_runs (pipeline-orchestrator).
+//   5. cierre      — status 'processed' + notifica al staff.
 //
 // DATOS FISCALES: razón social, NIT, dirección fiscal y representante NO se
 // copian a `clients`. `clients.is_public` tiene DEFAULT true y existe la
@@ -324,7 +325,44 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ── Paso 4: cierre + notificación ────────────────────────────────────────
+  // ── Paso 4: arrancar el pipeline autónomo ────────────────────────────────
+  // Sin esto el cliente entra a su portal y ve los cinco pasos en "Aún no
+  // empieza" para siempre: la pantalla lee `client_pipeline_runs` y nadie
+  // creaba la fila. `start` es idempotente (UNIQUE por client_id), así que
+  // reprocesar el formulario no crea un segundo run ni reinicia el vivo.
+  try {
+    const res = await fetch(`${url}/functions/v1/pipeline-orchestrator`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader,
+      },
+      body: JSON.stringify({
+        action: "start",
+        client_id: form.client_id,
+        organization_id: form.organization_id,
+        onboarding_form_id: form.id,
+      }),
+    });
+    const payload = await res.json().catch(() => ({}));
+    pasos.pipeline = res.ok
+      ? {
+        ok: true,
+        en: ahora(),
+        detalle: payload.reutilizado
+          ? "El proceso del cliente ya estaba en marcha."
+          : "Proceso del cliente creado; queda a la espera de su aprobación.",
+      }
+      : {
+        ok: false,
+        en: ahora(),
+        detalle: payload.message ?? payload.error ?? `HTTP ${res.status}`,
+      };
+  } catch (e) {
+    pasos.pipeline = { ok: false, en: ahora(), detalle: String((e as Error).message) };
+  }
+
+  // ── Paso 5: cierre + notificación ────────────────────────────────────────
   const eraProcesado = form.status === "processed";
 
   await admin
