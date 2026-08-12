@@ -323,7 +323,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
         <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">
           <div className="flex h-full w-full overflow-hidden">
             {/* Sidebar - Nova v2 */}
-            <aside className="w-56 shrink-0 flex flex-col border-r border-purple-500/10 bg-[#0f0f22]/60">
+            <aside className="w-40 sm:w-56 shrink-0 flex flex-col border-r border-purple-500/10 bg-[#0f0f22]/60">
               <SheetHeader className="p-4 border-b border-purple-500/10 shrink-0">
                 <SheetTitle className="flex items-center gap-2 text-[#e4e4e7] text-lg">
                   <Settings className="h-5 w-5 text-[#8b5cf6]" />
@@ -339,13 +339,13 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
                     key={tab.id}
                     value={tab.id}
                     className={cn(
-                      "w-full justify-start gap-2 h-10 px-4 rounded-none border-l-2 border-transparent mt-0.5",
+                      "w-full justify-start gap-2 h-10 px-2 sm:px-4 rounded-none border-l-2 border-transparent mt-0.5 min-w-0",
                       "data-[state=active]:border-[#8b5cf6] data-[state=active]:bg-purple-500/10 data-[state=active]:text-[#a78bfa]",
                       "hover:bg-purple-500/5 text-[#a1a1aa] transition-colors duration-150"
                     )}
                   >
                     <tab.icon className="h-4 w-4 shrink-0" />
-                    {tab.label}
+                    <span className="truncate">{tab.label}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
@@ -355,7 +355,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
             <div className="flex-1 overflow-hidden flex flex-col min-w-0">
 
           {/* ESTADOS TAB */}
-          <TabsContent value="statuses" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden min-h-0">
+          <TabsContent value="statuses" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden min-h-0">
             {!organizationId && (
               <div className="rounded-sm border border-amber-500/50 bg-amber-500/10 p-3 text-sm text-amber-200">
                 No hay organización seleccionada. Asegúrate de estar en el tablero de una organización.
@@ -524,7 +524,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* MATRIZ PERMISOS POR ESTADO/ROL */}
-          <TabsContent value="state-permissions" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="state-permissions" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center justify-between gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <Lock className="h-4 w-4 text-muted-foreground" />
@@ -645,7 +645,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* REGLAS TAB - Permisos de movimiento y transiciones */}
-          <TabsContent value="rules" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="rules" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-2">
               <Lock className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -785,7 +785,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* TARJETAS TAB */}
-          <TabsContent value="cards" className="flex-1 overflow-y-auto p-6 space-y-6 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="cards" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-6 mt-0 data-[state=inactive]:hidden">
             {/* Card Size Selection */}
             <div>
               <Label className="text-sm font-medium">Tamaño de tarjeta</Label>
@@ -937,7 +937,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* CAMPOS PERSONALIZADOS TAB */}
-          <TabsContent value="fields" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="fields" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <p className="text-sm text-muted-foreground">
               Crea campos personalizados tipo Notion para tus proyectos
             </p>
@@ -1007,7 +1007,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* PERMISOS TAB */}
-          <TabsContent value="permissions" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="permissions" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <p className="text-sm text-muted-foreground">
               Define qué puede hacer cada rol en el tablero
             </p>
@@ -1076,7 +1076,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* VISIBILIDAD TAB */}
-          <TabsContent value="visibility" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="visibility" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -1096,7 +1096,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* AUTOMATIZACIONES TAB */}
-          <TabsContent value="automations" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="automations" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-4">
               <Activity className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -1113,7 +1113,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* NOTIFICACIONES TAB */}
-          <TabsContent value="notifications" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="notifications" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-4">
               <Bell className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -1130,7 +1130,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* INTEGRACIONES TAB */}
-          <TabsContent value="integrations" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="integrations" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <div className="flex items-center gap-2 mb-4">
               <Plug className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
@@ -1147,7 +1147,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
           </TabsContent>
 
           {/* SCRIPTS TAB */}
-          <TabsContent value="scripts" className="flex-1 overflow-y-auto p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="scripts" className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 mt-0 data-[state=inactive]:hidden">
             <ScriptPermissionsEditor organizationId={organizationId} />
           </TabsContent>
             </div>

@@ -514,7 +514,7 @@ export default function StrategistDashboard() {
             />
             <CardHeader className="relative z-10">
               <CardTitle className="flex items-center gap-2 text-lg">
-                <FileText className="w-5 h-5 text-[hsl(270,100%,60%)]" />
+                <FileText className="w-5 h-5 text-primary" />
                 <span className="text-primary">Contenido Reciente</span>
               </CardTitle>
             </CardHeader>
@@ -535,11 +535,11 @@ export default function StrategistDashboard() {
                         {item.thumbnail_url ? (
                           <img src={item.thumbnail_url} alt="" className="h-full w-full object-cover rounded-sm" />
                         ) : (
-                          <Play className="h-4 w-4 text-[hsl(270,100%,60%)]" />
+                          <Play className="h-4 w-4 text-primary" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate text-white group-hover:text-primary transition-colors">{item.title}</p>
+                        <p className="font-medium text-sm truncate text-foreground group-hover:text-primary transition-colors">{item.title}</p>
                         <p className="text-xs text-muted-foreground">{item.client?.name || 'Sin cliente'}</p>
                       </div>
                       <Badge className={cn("text-xs", STATUS_COLORS[item.status])} variant="secondary">
@@ -554,9 +554,9 @@ export default function StrategistDashboard() {
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
-                      <Lightbulb className="w-12 h-12 mx-auto text-[hsl(270,100%,60%)] mb-4" />
+                      <Lightbulb className="w-12 h-12 mx-auto text-primary mb-4" />
                     </motion.div>
-                    <h4 className="font-semibold mb-2 text-white">Sin proyectos asignados</h4>
+                    <h4 className="font-semibold mb-2 text-foreground">Sin proyectos asignados</h4>
                     <p className="text-sm text-muted-foreground">Cuando te asignen proyectos aparecerán aquí</p>
                   </div>
                 )}

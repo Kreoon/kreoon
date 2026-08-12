@@ -328,7 +328,7 @@ export default function CreatorDashboard() {
           })()}
 
           {/* KPI Cards — Studio + Marketplace fusionados */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <NovaKpiCard
               title="Asignados"
               value={assignedContent.length + mktAssigned.length}

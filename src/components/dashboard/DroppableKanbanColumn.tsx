@@ -41,7 +41,7 @@ export function DroppableKanbanColumn({
   return (
     <div 
       className={cn(
-        "flex flex-col shrink-0 w-[350px] h-full rounded-sm",
+        "flex flex-col shrink-0 w-[280px] sm:w-[320px] h-full rounded-sm",
         "transition-all duration-300 ease-out border",
         isDropTarget && canDrop && "ring-2 ring-[#a855f7]/60 shadow-[0_0_30px_rgba(168,85,247,0.15)]",
         isDropTarget && !canDrop && "ring-2 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.15)]"

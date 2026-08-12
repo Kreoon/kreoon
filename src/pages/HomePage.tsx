@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { getDashboardPath } from "@/utils/navigation";
@@ -17,7 +17,14 @@ import { MarketplaceUniverse } from "@/components/landing/sections/MarketplaceUn
 import { PricingSection } from "@/components/landing/sections/PricingSection";
 import { CTASection } from "@/components/landing/sections/CTASection";
 import { BrandsPartners } from "@/components/landing/sections/BrandsPartners";
-import { HeroOrbCanvas } from "@/components/landing/sections/HeroOrbCanvas";
+// El canvas 3D del hero pesa ~877 kB: es el trozo más grande de toda la app.
+// Importado de forma estática bloqueaba el pintado de la portada pública.
+// Cargándolo aparte, el texto del hero aparece primero y el orbe entra después.
+const HeroOrbCanvas = lazy(() =>
+  import("@/components/landing/sections/HeroOrbCanvas").then((m) => ({
+    default: m.HeroOrbCanvas,
+  })),
+);
 
 import { AuthModal } from "@/components/auth/AuthModal";
 import { Loader2 } from "lucide-react";
@@ -63,7 +70,9 @@ export default function HomePage() {
 
   return (
     <>
-      <HeroOrbCanvas />
+      <Suspense fallback={null}>
+        <HeroOrbCanvas />
+      </Suspense>
       <LandingLayout
         onOpenAuth={(tab) => handleOpenAuth(tab)}
       >

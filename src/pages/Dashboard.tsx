@@ -329,7 +329,7 @@ function DashboardSkeleton() {
             <Skeleton className="h-4 w-4" />
             <Skeleton className="h-4 w-40" />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
             {Array.from({ length: 7 }).map((_, i) => (
               <div key={i} className="rounded-sm border border-border/20 bg-card/50 p-3 space-y-2">
                 <Skeleton className="h-5 w-5 mx-auto" />
@@ -1201,7 +1201,7 @@ export default function Dashboard() {
               transition={{ delay: 0.4 }}
             >
               <TechSectionHeader icon={Activity} title="Cómo van los videos" />
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
                 <PipelineItem
                   icon={Calendar}
                   value={pending}

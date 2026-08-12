@@ -51,12 +51,17 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-editor';
           }
 
-          // Charts — separados en su propio chunk asíncrono.
-          // recharts + d3 suman ~200KB y NO se usan en el marketplace principal.
-          // Al estar en un chunk propio, solo se descargan cuando se navega
-          // a dashboards/analytics que los necesitan.
-          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+          // Charts — chunk asíncrono, solo para dashboards y analítica.
+          //
+          // d3-* va APARTE de recharts a propósito: el hero 3D del landing
+          // (@react-three/drei) depende de un d3-* pequeño, y al compartir
+          // chunk arrastraba los ~500 kB de recharts a la portada pública,
+          // que no pinta una sola gráfica. Juntarlos otra vez repite el bug.
+          if (id.includes('node_modules/recharts')) {
             return 'vendor-charts';
+          }
+          if (id.includes('node_modules/d3-')) {
+            return 'vendor-d3';
           }
 
           // Framer Motion — animaciones opcionales, chunk propio para defer

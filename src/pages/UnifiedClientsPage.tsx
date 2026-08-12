@@ -571,12 +571,12 @@ export function UnifiedClientsContent() {
             </Popover>
 
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar..."
-                className="pl-8 h-8 w-48 bg-muted border-border text-white placeholder:text-muted-foreground text-xs"
+                className="pl-8 h-8 w-48 bg-muted border-border text-foreground placeholder:text-muted-foreground text-xs"
               />
             </div>
             <ViewModeToggle value={viewMode} onChange={setViewMode} />
@@ -634,7 +634,7 @@ export function UnifiedClientsContent() {
                   </div>
                 ) : filteredClientUsers.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-border rounded-sm">
-                    <UsersIcon className="h-8 w-8 text-white/20 mx-auto mb-3" />
+                    <UsersIcon className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">
                       {search ? 'No se encontraron usuarios' : 'No hay usuarios cliente vinculados a empresas'}
                     </p>
@@ -732,7 +732,7 @@ export function UnifiedClientsContent() {
                   </div>
                 ) : filtered.length === 0 ? (
                   <div className="text-center py-16 border border-dashed border-border rounded-sm">
-                    <Castle className="h-8 w-8 text-white/20 mx-auto mb-3" />
+                    <Castle className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm text-muted-foreground">No se encontraron clientes</p>
                     {search && (
                       <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
