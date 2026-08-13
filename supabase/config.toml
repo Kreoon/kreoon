@@ -596,3 +596,13 @@ verify_jwt = false
 #   · acciones de cliente-> fila en client_users para ese client_id
 #   · llamadas internas  -> Bearer exactamente igual al service role key
 verify_jwt = false
+
+[functions.process-client-document]
+# Extrae texto y genera un resumen de un documento que el cliente sube como
+# contexto (PDF/Word/Excel/PPT/texto) antes del ADN de marca.
+# verify_jwt=false porque la invoca el frontend justo despues de subir el
+# archivo, con la sesion del cliente o de staff (no hay usuario "de sistema"
+# natural para este paso). El handler valida SIEMPRE dentro:
+#   · staff de la organizacion dueña del documento, o
+#   · el cliente dueño (fila en client_users para ese client_id)
+verify_jwt = false

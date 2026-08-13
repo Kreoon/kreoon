@@ -191,7 +191,7 @@ function aTexto(valor: unknown, maxChars = 6000): string {
 // ---------------------------------------------------------------------------
 // Transcripción para el ADN — mismo texto que compone client-onboarding-process
 // ---------------------------------------------------------------------------
-function componerTextoParaAdn(formData: Json): string {
+async function componerTextoParaAdn(admin: Sb, formData: Json, clientId: string): Promise<string> {
   const marca = (formData.marca ?? {}) as Json;
   const prod = (formData.producto ?? {}) as Json;
   const cont = (formData.contenido ?? {}) as Json;
@@ -205,7 +205,7 @@ function componerTextoParaAdn(formData: Json): string {
     return v ? `${etiqueta}: ${v}` : null;
   };
 
-  return [
+  const texto = [
     "== MARCA ==",
     linea("Historia", marca.historia),
     linea("Tono deseado", marca.tono_deseado),
@@ -242,6 +242,30 @@ function componerTextoParaAdn(formData: Json): string {
     linea("Plataformas", cont.plataformas),
     linea("Qué probaron antes", cont.historial_contenido),
   ].filter((l) => l !== null).join("\n");
+
+  // Documentos que el cliente subió como contexto (client_documents,
+  // procesados por process-client-document): solo los que ya tienen resumen
+  // listo y cuyo alcance incluye 'marca'. Si no hay ninguno, el texto queda
+  // EXACTAMENTE igual que antes — sin sección vacía.
+  const { data: documentos } = await admin
+    .from("client_documents")
+    .select("file_name, resumen")
+    .eq("client_id", clientId)
+    .eq("estado", "listo")
+    .in("alcance", ["marca", "todo"])
+    .not("resumen", "is", null);
+
+  const resumenes = ((documentos ?? []) as { file_name: string; resumen: string }[])
+    .filter((d) => d.resumen?.trim());
+  if (resumenes.length === 0) return texto;
+
+  const seccionDocumentos = [
+    "",
+    "== DOCUMENTOS DEL CLIENTE ==",
+    ...resumenes.map((d) => `- ${d.file_name}: ${d.resumen.trim()}`),
+  ].join("\n");
+
+  return `${texto}\n${seccionDocumentos}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -618,7 +642,7 @@ async function ejecutarEtapaAdn(
     }
   }
 
-  let transcripcion = componerTextoParaAdn(formData);
+  let transcripcion = await componerTextoParaAdn(admin, formData, run.client_id);
   // Las líneas con contenido real son las que trae `linea()`, con formato
   // "Etiqueta: valor". Sin ninguna, el formulario está vacío.
   const tieneDatos = transcripcion.split("\n").some((l) => /^[^=\s][^:]*: .+/.test(l));

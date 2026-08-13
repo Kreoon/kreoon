@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Mic, PenLine } from 'lucide-react';
+import { Loader2, Mic, PenLine, Paperclip } from 'lucide-react';
 import {
   Sheet,
   SheetContent,
@@ -23,6 +23,8 @@ import {
 } from '@/components/client-onboarding/steps';
 import { SCHEMAS, STEPS, type OnboardingFormData, type SectionKey } from '@/components/client-onboarding/schemas';
 import type { SubmitOnboardingResult } from '@/hooks/useClientPipeline';
+import { DocumentosUploader } from './DocumentosUploader';
+import type { UseClientDocumentsReturn } from '@/hooks/useClientDocuments';
 
 /**
  * Panel lateral para que el cliente cuente de su marca desde el portal — la
@@ -60,6 +62,8 @@ interface OnboardingSheetProps {
    * a escribir y se cansa tiene que poder pasarse a contarlo, y al revés.
    */
   onCambiarModo?: (modo: OnboardingSheetModo) => void;
+  /** Documentos adjuntos del cliente — misma instancia que en `ClientPipelineChecklist`. */
+  documentos: UseClientDocumentsReturn;
 }
 
 /** Los únicos 3 pasos obligatorios (ver schemas.ts). */
@@ -127,6 +131,7 @@ export function OnboardingSheet({
   onSubmit,
   onCompleted,
   onCambiarModo,
+  documentos,
 }: OnboardingSheetProps) {
   const { toast } = useToast();
   const [datos, setDatos] = useState<OnboardingFormData>(formData);
@@ -309,6 +314,11 @@ export function OnboardingSheet({
 
   const { titulo, descripcion } = tituloYDescripcion(modo, fase, pasoEscribir?.titulo, pasoEscribir?.ayuda);
 
+  const cantidadDocumentos = documentos.documents.length;
+  const textoAccesoDocumentos = cantidadDocumentos > 0
+    ? `${cantidadDocumentos} documento${cantidadDocumentos === 1 ? '' : 's'} adjunto${cantidadDocumentos === 1 ? '' : 's'}`
+    : '¿Tienes documentos que nos ayuden a entender tu marca?';
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -349,6 +359,29 @@ export function OnboardingSheet({
             </button>
           )}
         </SheetHeader>
+
+        {/* Acceso a documentos: visible sin importar el camino (escribir o
+            hablar) y en cualquier paso — el cliente puede adjuntar cuando
+            quiera, no solo al final. */}
+        <div className="mb-5">
+          <DocumentosUploader
+            documentos={documentos}
+            trigger={
+              <button
+                type="button"
+                className="flex w-full items-center justify-between gap-2 rounded-lg border bg-muted/40 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted/60"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="truncate">{textoAccesoDocumentos}</span>
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground underline underline-offset-4">
+                  {cantidadDocumentos > 0 ? 'Ver' : 'Adjuntar'}
+                </span>
+              </button>
+            }
+          />
+        </div>
 
         {modo === 'escribir' && (
           <div className="space-y-5">

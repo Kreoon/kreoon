@@ -9,12 +9,14 @@ import {
   type PipelineStage,
   type PipelineStageStatus,
 } from '@/hooks/useClientPipeline';
+import { useClientDocuments } from '@/hooks/useClientDocuments';
 import { StepCard, type StepState } from './StepCard';
 import { ReviewDialog } from './ReviewDialog';
 import { RequestChangesDialog } from './RequestChangesDialog';
 import { ScriptsList } from './ScriptsList';
 import { ProductionSummary } from './ProductionSummary';
 import { OnboardingSheet, type OnboardingSheetModo } from './OnboardingSheet';
+import { DocumentosUploader } from './DocumentosUploader';
 import { dnaToSections, strategyToSections } from './plainLanguage';
 
 /**
@@ -81,6 +83,7 @@ export function ClientPipelineChecklist({
     product,
     researchProgress,
     scripts,
+    organizationId,
     loading,
     acting,
     approve,
@@ -93,6 +96,8 @@ export function ClientPipelineChecklist({
     iniciarProceso,
     refresh,
   } = useClientPipeline(clientId);
+
+  const documentos = useClientDocuments(clientId, organizationId);
 
   // Qué se está viendo / cambiando (null = nada abierto)
   const [reviewing, setReviewing] = useState<'adn' | 'estrategia' | null>(null);
@@ -338,6 +343,7 @@ export function ClientPipelineChecklist({
         }
         state={onboardingState}
         stateLabel={onboardingState === 'done' ? 'Recibido' : undefined}
+        primaryAction={<DocumentosUploader documentos={documentos} />}
       />
 
       {/* ── 2. Así entendimos tu marca ────────────────────────────── */}
@@ -589,6 +595,7 @@ export function ClientPipelineChecklist({
         onSaveSection={guardarSeccionOnboarding}
         onSubmit={enviarOnboarding}
         onCambiarModo={setOnboardingSheetModo}
+        documentos={documentos}
         onCompleted={() => {
           setOnboardingSheetModo(null);
           refresh({ silent: true });
