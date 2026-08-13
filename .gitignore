@@ -105,3 +105,6 @@ backups/pre-simplificacion/booking/
 backups/pre-simplificacion/restore/
 supabase/functions/deno.lock
 supabase/functions/node_modules/
+
+# Artefacto local de deno check sobre las edge functions
+deno.lock
