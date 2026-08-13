@@ -606,3 +606,10 @@ verify_jwt = false
 #   · staff de la organizacion dueña del documento, o
 #   · el cliente dueño (fila en client_users para ese client_id)
 verify_jwt = false
+
+[functions.research-engine]
+# Motor de investigacion real (Apify + Perplexity): etapas A-G.
+# verify_jwt=false porque se auto-invoca en cadena con el service role y la
+# llama pipeline-orchestrator. Valida por dentro: staff de la organizacion via
+# assertOrgMembership, y la accion 'tick' solo con el service key exacto.
+verify_jwt = false
