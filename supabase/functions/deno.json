@@ -1,0 +1,9 @@
+{
+  "//": "Solo existe para poder correr `deno check` sobre las edge functions.",
+  "//2": "Uso: cd supabase/functions && npx deno@2.1.4 check --node-modules-dir=auto <funcion>/index.ts",
+  "//3": "Hace falta porque ni el build de Vite ni `supabase functions deploy` hacen type-check: una funcion puede desplegarse llamando a un identificador que no existe y reventar en produccion (pasó el 2026-08-13 con esItemDeError).",
+  "nodeModulesDir": "auto",
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"]
+  }
+}

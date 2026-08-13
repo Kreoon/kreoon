@@ -1120,15 +1120,23 @@ function puntuarCreador(
 async function calcularShortlist(admin: Sb, run: Run): Promise<Candidato[]> {
   // Creadores de la organización. Se aceptan las dos formas del rol porque en
   // producción conviven filas con el legacy 'creator' y con 'content_creator'.
-  const { data: miembros } = await admin
+  // `organization_members` NO tiene `is_active` (verificado 2026-08-13); la
+  // baja se marca con `deleted_at`. Pedir una columna inexistente hace que
+  // PostgREST devuelva error y `data` llegue null: la shortlist salía vacía y
+  // el pipeline se saltaba la etapa entera sin decir por qué.
+  const { data: miembros, error: errorMiembros } = await admin
     .from("organization_members")
-    .select("user_id, role, is_active")
+    .select("user_id, role, deleted_at")
     .eq("organization_id", run.organization_id)
+    .is("deleted_at", null)
     .in("role", ["content_creator", "creator"]);
 
-  const userIds = ((miembros ?? []) as Json[])
-    .filter((m) => m.is_active !== false)
-    .map((m) => String(m.user_id));
+  if (errorMiembros) {
+    console.error("[pipeline] no se pudieron leer los creadores:", errorMiembros.message);
+    return [];
+  }
+
+  const userIds = ((miembros ?? []) as Json[]).map((m) => String(m.user_id));
 
   if (userIds.length === 0) return [];
 
@@ -1156,13 +1164,22 @@ async function calcularShortlist(admin: Sb, run: Run): Promise<Candidato[]> {
       .from("research_runs").select("niche, result").eq("id", run.research_run_id).maybeSingle();
     if (research) {
       niche = (research as Json).niche ?? null;
-      const viral = ((research as Json).result?.adn_viral ?? {}) as Json;
-      formatosGanadores = [
-        ...(Array.isArray(viral.hooks_dominantes)
-          ? viral.hooks_dominantes.map((h: Json) => String(h.taxonomia ?? ""))
-          : []),
-        String(viral.duracion?.mezcla_tutorial_vs_emocion ?? ""),
-      ].filter(Boolean);
+
+      // Los formatos salen del `tipo_contenido` de los videos analizados
+      // (tutorial, demo, storytime, testimonial…), que es vocabulario de
+      // GRABACIÓN y se puede comparar con `formatos_fuertes` de la ficha.
+      // Las taxonomías de hook ("Dolor + Solución Inmediata") no sirven aquí:
+      // describen cómo empieza el video, no cómo se rueda.
+      const analisis = ((research as Json).result?.analisis ?? []) as Json[];
+      const cuenta = new Map<string, number>();
+      for (const a of analisis) {
+        const tipo = String(a?.tipo_contenido ?? "").trim().toLowerCase();
+        if (tipo) cuenta.set(tipo, (cuenta.get(tipo) ?? 0) + 1);
+      }
+      formatosGanadores = [...cuenta.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([tipo]) => tipo);
     }
   }
 

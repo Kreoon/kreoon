@@ -103,3 +103,5 @@ backups/pre-simplificacion/up-reputacion/
 backups/pre-simplificacion/marketplace-campanas/
 backups/pre-simplificacion/booking/
 backups/pre-simplificacion/restore/
+supabase/functions/deno.lock
+supabase/functions/node_modules/

@@ -45,11 +45,13 @@ import {
   CAMPOS,
   codigoPais,
   detectarGating,
+  esItemDeError,
   hayToken,
   type Json,
   lanzarRun,
   leerDataset,
   leerRun,
+  motivoDeError,
   normalizarAd,
   normalizarHandle,
   normalizarPostIg,
@@ -161,9 +163,11 @@ async function guardarRun(admin: Sb, runId: string, cambios: Json): Promise<Json
   return data as Json;
 }
 
-function anotarEtapa(stage: Json, etapa: string, cambios: Json): Json {
-  return { ...stage, [etapa]: { ...((stage[etapa] ?? {}) as Json), ...cambios } };
-}
+// El progreso de la corrida se cuenta con `stage.fase` (base → descubrimiento →
+// competidores → ads → ranking → transcripcion → sintesis → fin) y con el
+// estado de cada job en `stage.jobs`. Las anotaciones sueltas por etapa A–G
+// solo se escriben al crear la corrida, para dejar constancia de qué se saltó
+// por caché de nicho.
 
 // ---------------------------------------------------------------------------
 // Inputs por tipo de job (schemas verificados 2026-08-13)
@@ -753,6 +757,20 @@ async function avanzar(admin: Sb, runId: string, ciclo: number): Promise<Json> {
       job.error = (e as Error).message.slice(0, 400);
       errores.push({ at: ahora(), job: job.key, error: job.error });
       await persistir();
+
+      // La cuenta de Apify agotó su cupo del mes: los 8 jobs siguientes van a
+      // fallar exactamente igual. Se corta aquí con un mensaje que dice qué
+      // hacer, en vez de dejar un rastro de nueve errores idénticos que
+      // parecen un fallo del motor y no lo son.
+      if (/hard limit exceeded|platform-feature-disabled/i.test(job.error)) {
+        await persistir();
+        return await cerrar(
+          admin,
+          run,
+          "error",
+          "La cuenta de Apify agotó su cupo mensual. Hay que subir el plan o esperar al siguiente ciclo de facturación para volver a investigar.",
+        );
+      }
     }
   }
 
