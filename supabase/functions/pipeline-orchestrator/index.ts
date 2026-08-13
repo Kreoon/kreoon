@@ -1299,6 +1299,41 @@ function reglasDeAdaptacion(nombre: string, ficha: FichaCreativa | null): string
   ].filter(Boolean).join("\n");
 }
 
+/**
+ * Cuántos guiones toca generar para este cliente.
+ *
+ * Sale de lo que el cliente PAGÓ: `client_packages.content_quantity` del
+ * paquete activo más reciente. Antes esto no existía y el pipeline generaba
+ * siempre 5 guiones (el default de la columna), diera igual que el cliente
+ * hubiera comprado 3 o 12 — produciendo de más o de menos sin que nadie lo
+ * decidiera.
+ *
+ * Si no hay paquete, se queda en el default: es mejor generar el lote base que
+ * bloquear el pipeline por un dato administrativo que quizá se cargue luego.
+ */
+async function guionesSegunPaquete(admin: Sb, clientId: string): Promise<number | null> {
+  try {
+    const { data } = await admin
+      .from("client_packages")
+      .select("content_quantity, payment_status, created_at")
+      .eq("client_id", clientId)
+      .eq("is_active", true)
+      .in("payment_status", ["paid", "partial"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const cantidad = Number((data as Json | null)?.content_quantity ?? 0);
+    if (!Number.isFinite(cantidad) || cantidad <= 0) return null;
+
+    // La columna admite 1..20; un paquete de 50 videos no se genera de una vez.
+    return Math.min(Math.max(Math.round(cantidad), 1), 20);
+  } catch (e) {
+    console.warn(`[pipeline] no se pudo leer el paquete del cliente: ${(e as Error).message}`);
+    return null;
+  }
+}
+
 /** Lee la ficha y el nombre de un creador. */
 async function leerCreador(
   admin: Sb,
@@ -1856,6 +1891,7 @@ Deno.serve(async (req) => {
           return json(req, { ok: true, run, reutilizado: true });
         }
       } else {
+        const guionesDelPaquete = await guionesSegunPaquete(admin, clientId);
         const { data: creado, error } = await admin
           .from("client_pipeline_runs")
           .insert({
@@ -1865,6 +1901,8 @@ Deno.serve(async (req) => {
             stage: "onboarding",
             stage_status: "awaiting_client",
             onboarding_completed_at: ahora(),
+            // Cuántos guiones se van a generar: lo que el cliente pagó.
+            ...(guionesDelPaquete ? { scripts_target: guionesDelPaquete } : {}),
           })
           .select("*").single();
         if (error || !creado) {
@@ -2374,6 +2412,44 @@ Deno.serve(async (req) => {
 
       const actualizado = await ejecutarAdvance(admin, aprobado, ctx);
       return json(req, { ok: true, run: actualizado });
+    }
+
+    // ── set_scripts_target ─────────────────────────────────────────────────
+    // Cuántos guiones se le generan a este cliente. Nace de lo que pagó
+    // (`client_packages.content_quantity`), pero el equipo manda: aquí puede
+    // ajustarlo antes de que se generen.
+    //
+    // Solo se acepta ANTES de la etapa de guiones. Después, cambiar el número
+    // no serviría de nada: el lote ya existe y hay que regenerarlo o pedir
+    // cambios sobre él.
+    if (accion === "set_scripts_target") {
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
+        if (!esStaff) return json(req, { error: "solo_staff" }, 403);
+      }
+
+      const objetivo = Number(body.scripts_target);
+      if (!Number.isFinite(objetivo) || objetivo < 1 || objetivo > 20) {
+        return json(req, { error: "scripts_target debe estar entre 1 y 20" }, 400);
+      }
+
+      if (["guiones", "produccion"].includes(run.stage)) {
+        return json(req, {
+          error: "demasiado_tarde",
+          detalle: "Los guiones ya se generaron. Pide cambios sobre el lote o reintenta la etapa.",
+        }, 409);
+      }
+
+      const actualizado = await actualizarRun(admin, run.id, {
+        scripts_target: Math.round(objetivo),
+      });
+      await registrarEvento(admin, run.id, run.stage, "generated", {
+        actor: ctx.esServiceRole ? "system" : rolCaller,
+        actorId: ctx.userId ?? null,
+        payload: { scripts_target: Math.round(objetivo), anterior: run.scripts_target },
+      });
+
+      return json(req, { ok: true, run: actualizado, scripts_target: Math.round(objetivo) });
     }
 
     // ── select_creators ────────────────────────────────────────────────────

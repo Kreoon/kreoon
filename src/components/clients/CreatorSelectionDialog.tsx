@@ -73,11 +73,29 @@ export function CreatorSelectionDialog({
   onDone,
 }: CreatorSelectionDialogProps) {
   const { toast } = useToast();
-  const { organizationId, shortlist, selectedCreatorIds, loading, acting, error, confirmar, readaptar, refresh } =
-    useCreatorSelection(open ? runId : null);
+  const {
+    organizationId,
+    shortlist,
+    selectedCreatorIds,
+    loading,
+    acting,
+    error,
+    confirmar,
+    readaptar,
+    refresh,
+    scriptsTarget,
+    videosDelPaquete,
+    cambiarCantidadDeGuiones,
+  } = useCreatorSelection(open ? runId : null);
   const { creators: creadoresOrg } = useOrgAssignableUsers(organizationId);
 
   const [seleccionados, setSeleccionados] = useState<string[]>([]);
+  /** Cuántos guiones se van a generar. Se edita aquí, antes de generarlos. */
+  const [cantidadGuiones, setCantidadGuiones] = useState<string>("5");
+  useEffect(() => {
+    if (scriptsTarget) setCantidadGuiones(String(scriptsTarget));
+  }, [scriptsTarget]);
+
   const [manualExtra, setManualExtra] = useState<CandidatoManual[]>([]);
   const [fichasManual, setFichasManual] = useState<Record<string, CreatorCreativeProfile | null>>({});
   const [busqueda, setBusqueda] = useState("");
@@ -317,6 +335,55 @@ export function CreatorSelectionDialog({
             </div>
           </>
         )}
+
+        {/* Cuántos guiones se generan. Nace de lo que el cliente pagó, pero
+            el equipo decide: es el último momento para ajustarlo antes de que
+            se escriban. */}
+        <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">¿Cuántos guiones le hacemos?</p>
+              <p className="text-xs text-muted-foreground">
+                {videosDelPaquete
+                  ? `Su paquete tiene ${videosDelPaquete} ${videosDelPaquete === 1 ? "video" : "videos"} contratados.`
+                  : "Este cliente no tiene un paquete activo cargado."}
+              </p>
+            </div>
+            <Input
+              type="number"
+              min={1}
+              max={20}
+              value={cantidadGuiones}
+              onChange={(e) => setCantidadGuiones(e.target.value)}
+              className="w-20"
+              disabled={acting}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={acting || Number(cantidadGuiones) === scriptsTarget}
+              onClick={async () => {
+                try {
+                  await cambiarCantidadDeGuiones(Number(cantidadGuiones));
+                  toast({ title: `Se generarán ${cantidadGuiones} guiones` });
+                } catch (e) {
+                  toast({
+                    title: "No se pudo cambiar la cantidad",
+                    description: e instanceof Error ? e.message : undefined,
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Guardar
+            </Button>
+          </div>
+          {videosDelPaquete != null && Number(cantidadGuiones) > videosDelPaquete && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Ojo: vas a generar más guiones de los que el cliente pagó.
+            </p>
+          )}
+        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

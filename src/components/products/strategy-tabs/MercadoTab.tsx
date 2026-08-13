@@ -7,7 +7,9 @@ import type { ResearchAd, MarketGap, MarketDontCopy } from '@/types/research';
 
 interface CompetitorAnalysis {
   competitors?: unknown[];
-  differentiation?: unknown;
+  // `unknown` obligaba a castear al renderizar; con Record el JSX ya no protesta
+  // y sigue siendo agnóstico de la forma exacta que traiga el research.
+  differentiation?: Record<string, unknown> | null;
 }
 
 interface MercadoTabProps {
@@ -50,7 +52,7 @@ export function MercadoTab({ competitorAnalysis, researchResult }: MercadoTabPro
       {(competitors.length > 0 || differentiation) && (
         <div className="space-y-6">
           {competitors.length > 0 && <CompetitionAnalysisTab competitorAnalysis={{ competitors } as any} />}
-          {differentiation ? <DifferentiationTab differentiation={differentiation as any} /> : null}
+          {differentiation ? <DifferentiationTab differentiation={differentiation as never} /> : null}
         </div>
       )}
 

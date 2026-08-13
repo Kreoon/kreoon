@@ -82,6 +82,7 @@ interface Product {
   content_calendar?: any | null;
   launch_strategy?: any | null;
   research_generated_at?: string | null;
+  product_code?: string | null;
   created_at: string | null;
   updated_at: string | null;
 }

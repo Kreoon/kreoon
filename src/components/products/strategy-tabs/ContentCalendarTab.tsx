@@ -17,6 +17,8 @@ interface CalendarItem {
   copy?: string;
   cta?: string;
   hashtags?: string[];
+  cast_phase?: string;
+  /** Productos generados antes del Research Unificado. */
   esferaPhase?: string;
   avatar?: string;
   productionNotes?: string;
@@ -48,7 +50,15 @@ const PILLAR_COLORS: Record<string, string> = {
   comunidad: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
 };
 
-const ESFERA_COLORS: Record<string, string> = {
+// Colores del Metodo CAST. Se conservan las llaves viejas (ESFERA) porque los
+// productos generados antes del Research Unificado siguen guardando esos
+// valores en `esferaPhase` y deben verse igual de bien.
+const CAST_COLORS: Record<string, string> = {
+  conocer: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+  atraer: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  seducir: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
+  transformar: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+  // Vocabulario viejo (productos historicos)
   enganchar: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
   solucion: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
   remarketing: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300',
@@ -95,7 +105,7 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
       item.platform || '',
       item.format || '',
       item.pillar || '',
-      item.esferaPhase || '',
+      item.cast_phase || item.esferaPhase || '',
       item.avatar || '',
       (item.title || '').replace(/"/g, '""'),
       (item.hook || '').replace(/"/g, '""'),
@@ -146,7 +156,7 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
                 <p className="text-xs font-medium text-primary">{WEEK_LABELS[wt.week || idx + 1] || `Semana ${wt.week || idx + 1}`}</p>
                 <p className="text-sm font-semibold mt-1">{wt.theme || 'Tema'}</p>
                 <p className="text-xs text-muted-foreground mt-1">{wt.objective || ''}</p>
-                {wt.focusPhase && <Badge className={`text-xs mt-2 ${ESFERA_COLORS[wt.focusPhase] || ''}`}>{wt.focusPhase}</Badge>}
+                {wt.focusPhase && <Badge className={`text-xs mt-2 ${CAST_COLORS[wt.focusPhase] || ''}`}>{wt.focusPhase}</Badge>}
               </CardContent>
             </Card>
           ))}
@@ -210,7 +220,11 @@ export function ContentCalendarTab({ contentCalendar }: ContentCalendarTabProps)
                       <Badge variant="outline" className="text-xs">{item.platform || 'N/A'}</Badge>
                       <Badge variant="outline" className="text-xs">{item.format || 'N/A'}</Badge>
                       {item.pillar && <Badge className={`text-xs ${PILLAR_COLORS[item.pillar] || ''}`}>{item.pillar}</Badge>}
-                      {item.esferaPhase && <Badge className={`text-xs ${ESFERA_COLORS[item.esferaPhase] || ''}`}>{item.esferaPhase}</Badge>}
+                      {(item.cast_phase || item.esferaPhase) && (
+                        <Badge className={`text-xs ${CAST_COLORS[(item.cast_phase || item.esferaPhase)!] || ''}`}>
+                          {item.cast_phase || item.esferaPhase}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm font-medium">{item.title || 'Sin título'}</p>
                     {item.hook && <p className="text-xs text-muted-foreground mt-1 italic">"{item.hook}"</p>}

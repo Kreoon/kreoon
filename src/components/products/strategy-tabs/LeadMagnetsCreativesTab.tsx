@@ -26,6 +26,8 @@ interface Creative {
   title?: string;
   idea?: string;
   format?: string;
+  cast_phase?: string;
+  /** Productos anteriores al Research Unificado. */
   esferaPhase?: string;
   duration?: string;
 }
@@ -39,7 +41,13 @@ interface LeadMagnetsCreativesTabProps {
   salesAnglesData?: SalesAnglesData | null;
 }
 
+// Metodo CAST + el vocabulario viejo, para que los productos generados antes
+// del Research Unificado sigan mostrando su fase.
 const PHASE_COLORS: Record<string, string> = {
+  'conocer': 'bg-red-100 text-red-700',
+  'atraer': 'bg-blue-100 text-blue-700',
+  'seducir': 'bg-purple-100 text-purple-700',
+  'transformar': 'bg-green-100 text-green-700',
   'enganchar': 'bg-red-100 text-red-700',
   'solucion': 'bg-blue-100 text-blue-700',
   'remarketing': 'bg-purple-100 text-purple-700',
@@ -148,7 +156,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
               <div className="flex flex-wrap gap-2">
                 {Object.entries(
                   videoCreatives.reduce((acc, vc) => {
-                    const phase = vc.esferaPhase || 'otro';
+                    const phase = vc.cast_phase || vc.esferaPhase || 'otro';
                     acc[phase] = (acc[phase] || 0) + 1;
                     return acc;
                   }, {} as Record<string, number>)
@@ -185,7 +193,7 @@ export function LeadMagnetsCreativesTab({ salesAnglesData }: LeadMagnetsCreative
                       <TableRow key={idx}>
                         <TableCell className="font-bold">{idx + 1}</TableCell>
                         <TableCell>
-                          <Badge className={`text-xs ${PHASE_COLORS[vc.esferaPhase || ''] || 'bg-zinc-100 text-zinc-700'}`}>
+                          <Badge className={`text-xs ${PHASE_COLORS[vc.cast_phase || vc.esferaPhase || ''] || 'bg-zinc-100 text-zinc-700'}`}>
                             {vc.esferaPhase || '-'}
                           </Badge>
                         </TableCell>

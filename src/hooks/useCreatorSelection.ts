@@ -88,6 +88,10 @@ export function useCreatorSelection(runId: string | null | undefined) {
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [selectedCreatorIds, setSelectedCreatorIds] = useState<string[]>([]);
   const [shortlist, setShortlist] = useState<CreatorShortlistCandidate[]>([]);
+  /** Cuántos guiones se van a generar para este cliente. */
+  const [scriptsTarget, setScriptsTarget] = useState<number>(5);
+  /** Cuántos contenidos pagó, según su paquete activo. */
+  const [videosDelPaquete, setVideosDelPaquete] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -105,13 +109,30 @@ export function useCreatorSelection(runId: string | null | undefined) {
     try {
       const { data: runRow, error: runError } = await supabase
         .from("client_pipeline_runs")
-        .select("organization_id, selected_creator_ids")
+        .select("organization_id, selected_creator_ids, scripts_target, client_id")
         .eq("id", runId)
         .maybeSingle();
       if (runError) throw runError;
 
       setOrganizationId(runRow?.organization_id ?? null);
       setSelectedCreatorIds(runRow?.selected_creator_ids ?? []);
+      setScriptsTarget(runRow?.scripts_target ?? 5);
+
+      // Lo que el cliente pagó, para poder contrastarlo con lo que se va a generar.
+      if (runRow?.client_id) {
+        const { data: paquete } = await supabase
+          .from("client_packages")
+          .select("content_quantity")
+          .eq("client_id", runRow.client_id)
+          .eq("is_active", true)
+          .in("payment_status", ["paid", "partial"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setVideosDelPaquete(paquete?.content_quantity ?? null);
+      } else {
+        setVideosDelPaquete(null);
+      }
 
       const { data: eventRow, error: eventError } = await supabase
         .from("client_pipeline_stage_events")
@@ -208,8 +229,37 @@ export function useCreatorSelection(runId: string | null | undefined) {
     [runId, invalidarListaClientes, cargar],
   );
 
+  /** Ajusta cuántos guiones se generarán. Solo antes de la etapa de guiones. */
+  const cambiarCantidadDeGuiones = useCallback(
+    async (cantidad: number) => {
+      if (!runId) throw new Error("No hay un proceso activo para este cliente.");
+      if (!Number.isFinite(cantidad) || cantidad < 1 || cantidad > 20) {
+        throw new Error("La cantidad debe estar entre 1 y 20.");
+      }
+
+      setActing(true);
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke("pipeline-orchestrator", {
+          body: { action: "set_scripts_target", run_id: runId, scripts_target: cantidad },
+        });
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.detalle || data.error);
+
+        setScriptsTarget(cantidad);
+        queryClient.invalidateQueries({ queryKey: ["client-pipeline-runs"] });
+        return data;
+      } finally {
+        setActing(false);
+      }
+    },
+    [runId, queryClient],
+  );
+
   return {
     organizationId,
+    scriptsTarget,
+    videosDelPaquete,
+    cambiarCantidadDeGuiones,
     shortlist,
     selectedCreatorIds,
     loading,
