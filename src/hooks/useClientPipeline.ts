@@ -78,6 +78,40 @@ async function readSubmitFormError(fnError: unknown): Promise<
   return { kind: 'other', code: 'desconocido', message: GENERIC_ERROR };
 }
 
+/**
+ * Igual que `readFunctionError`, pero para `select_creators`: el error
+ * `reparto_no_cuadra` trae `{ suma, objetivo }` para decir exactamente cuánto
+ * falta o sobra, y perder ese detalle dejaría al cliente sin saber qué
+ * corregir (el botón ya se deshabilita si no cuadra, así que este caso es
+ * solo defensa ante una carrera con otra pestaña).
+ */
+async function readSelectCreatorsError(fnError: unknown): Promise<
+  | { kind: 'reparto_no_cuadra'; suma: number; objetivo: number }
+  | { kind: 'other'; code: string; message: string }
+> {
+  const context = (fnError as { context?: { json?: () => Promise<unknown> } })?.context;
+
+  if (context?.json) {
+    try {
+      const body = (await context.json()) as { error?: string; suma?: number; objetivo?: number };
+      if (body?.error === 'reparto_no_cuadra') {
+        return {
+          kind: 'reparto_no_cuadra',
+          suma: typeof body.suma === 'number' ? body.suma : 0,
+          objetivo: typeof body.objetivo === 'number' ? body.objetivo : 0,
+        };
+      }
+      if (body?.error) {
+        return { kind: 'other', code: body.error, message: ERROR_MESSAGES[body.error] ?? GENERIC_ERROR };
+      }
+    } catch {
+      /* el cuerpo no era JSON: seguimos al mensaje genérico */
+    }
+  }
+
+  return { kind: 'other', code: 'desconocido', message: GENERIC_ERROR };
+}
+
 const GENERIC_ERROR = 'No pudimos completar la acción. Inténtalo de nuevo en un momento.';
 
 /** Errores del orquestador traducidos a algo que un cliente entienda. */
@@ -87,6 +121,10 @@ const ERROR_MESSAGES: Record<string, string> = {
   content_not_found: 'Ese guion ya no está disponible. Actualizamos la pantalla.',
   run_not_found: 'No encontramos tu proceso. Actualizamos la pantalla.',
   'content_id no pertenece a este run': 'Ese guion no es de este proceso.',
+  sin_creadores: 'Todavía no elegiste quién va a grabar tus videos. Vuelve al paso anterior y elige.',
+  reparto_invalido: 'El reparto de videos no es válido. Revisa los números e inténtalo de nuevo.',
+  reparto_con_creador_desconocido: 'Uno de los creadores que elegiste ya no está disponible. Actualizamos la pantalla.',
+  guiones_ya_generados: 'Tus guiones para este lote ya se generaron. Actualizamos la pantalla.',
 };
 
 export type PipelineStage =
@@ -125,6 +163,10 @@ export interface ClientPipelineRun {
   scripts_target: number;
   /** A quién eligió el cliente para grabar (etapa 'creadores'). Vacío hasta que elige. */
   selected_creator_ids: string[] | null;
+  /** Cuántos videos le tocan a cada creador elegido, id de usuario → cantidad.
+   *  Puede no venir en runs anteriores a este reparto manual: el checklist
+   *  cae a mostrar solo los nombres, sin cantidades. */
+  creator_allocation?: Record<string, number> | null;
   onboarding_completed_at: string | null;
   adn_started_at: string | null;
   adn_approved_at: string | null;
@@ -411,7 +453,8 @@ export function useClientPipeline(clientId: string | null) {
       // Los desajustes de estado se arreglan solos releyendo: la pantalla
       // estaba vieja (otra pestaña, doble clic, o el run ya avanzó).
       if (code === 'stage_desincronizado' || code === 'etapa_ya_aprobada' ||
-          code === 'content_not_found' || code === 'run_not_found') {
+          code === 'content_not_found' || code === 'run_not_found' ||
+          code === 'guiones_ya_generados') {
         await fetchAll({ silent: true });
       }
       throw new Error(message);
@@ -598,15 +641,58 @@ export function useClientPipeline(clientId: string | null) {
     }
   }, [callOrchestrator]);
 
-  /** Aprueba la etapa actual (ADN, mercado o estrategia). */
-  /** El cliente elige quién graba sus videos. */
+  /**
+   * El cliente elige quién graba sus videos y cómo se reparten entre ellos.
+   * Se queda por fuera de `callOrchestrator` porque necesita leer el detalle
+   * de `reparto_no_cuadra` (suma/objetivo) que ese helper genérico descarta
+   * al reducir todo a un solo mensaje.
+   */
   const elegirCreador = useCallback(
-    async (creatorIds: string[]) => {
+    async (creatorIds: string[], allocation?: Record<string, number>) => {
       if (creatorIds.length === 0) throw new Error('Elige al menos un creador.');
-      return callOrchestrator({ action: 'select_creators', creator_ids: creatorIds });
+      const runId = runIdRef.current;
+      if (!runId) throw new Error('Todavía no hay un proceso activo');
+
+      setActing(true);
+      try {
+        const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+          body: { run_id: runId, action: 'select_creators', creator_ids: creatorIds, allocation },
+        });
+
+        if (fnError) {
+          const result = await readSelectCreatorsError(fnError);
+          if (result.kind === 'reparto_no_cuadra') {
+            throw new Error(
+              `Los números no cuadran: repartiste ${result.suma} de ${result.objetivo} videos en total.`,
+            );
+          }
+          if (
+            result.code === 'stage_desincronizado' ||
+            result.code === 'etapa_ya_aprobada' ||
+            result.code === 'run_not_found' ||
+            result.code === 'guiones_ya_generados'
+          ) {
+            await fetchAll({ silent: true });
+          }
+          throw new Error(result.message);
+        }
+
+        if (data?.run) setRun(data.run as ClientPipelineRun);
+        await fetchAll({ silent: true });
+        return data;
+      } finally {
+        setActing(false);
+      }
     },
-    [callOrchestrator],
+    [fetchAll],
   );
+
+  /**
+   * Dispara la generación de los guiones ya repartidos entre los creadores
+   * elegidos. `select_creators` solo guarda la elección; esta es la acción
+   * que efectivamente arranca la escritura.
+   */
+  const generarGuiones = useCallback(() => act({ action: 'start_scripts' }), [act]);
 
   const approve = useCallback(
     (stage: PipelineStage) => act({ action: 'approve', stage }),
@@ -662,6 +748,7 @@ export function useClientPipeline(clientId: string | null) {
     error,
     creatorShortlist,
     elegirCreador,
+    generarGuiones,
     approve,
     requestChanges,
     reintentarEtapa,

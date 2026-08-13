@@ -10,6 +10,7 @@ import {
   type PipelineStageStatus,
 } from '@/hooks/useClientPipeline';
 import { useClientDocuments } from '@/hooks/useClientDocuments';
+import { useCreatorCatalog } from '@/hooks/useCreatorCatalog';
 import { StepCard, type StepState } from './StepCard';
 import { ElegirCreadorDialog } from './ElegirCreadorDialog';
 import { ReviewDialog } from './ReviewDialog';
@@ -87,6 +88,27 @@ function attentionLabel(status?: PipelineStageStatus): string | undefined {
   return status === 'paused_no_tokens' ? 'En pausa' : undefined;
 }
 
+/**
+ * "Van a grabar: Ana (3 videos), Luis (3 videos)." Sin el reparto guardado
+ * (runs viejos, o mientras el backend todavía no lo devuelve) cae a listar
+ * solo los nombres, sin inventar cantidades.
+ */
+function resumenReparto(
+  creatorIds: string[],
+  allocation: Record<string, number> | null | undefined,
+  nombreDe: (userId: string) => string,
+): string {
+  if (creatorIds.length === 0) return '';
+  const partes = creatorIds.map((id) => {
+    const cantidad = allocation?.[id];
+    const nombre = nombreDe(id);
+    return typeof cantidad === 'number'
+      ? `${nombre} (${cantidad} ${cantidad === 1 ? 'video' : 'videos'})`
+      : nombre;
+  });
+  return `Van a grabar: ${partes.join(', ')}.`;
+}
+
 interface ClientPipelineChecklistProps {
   clientId: string | null;
   clientName?: string;
@@ -119,6 +141,7 @@ export function ClientPipelineChecklist({
     reintentarEtapa,
     creatorShortlist,
     elegirCreador,
+    generarGuiones,
     approveScript,
     requestScriptChanges,
     crearFormulario,
@@ -129,6 +152,19 @@ export function ClientPipelineChecklist({
   } = useClientPipeline(clientId);
 
   const documentos = useClientDocuments(clientId, organizationId);
+
+  // Nombres de creadores elegidos que no están entre los 3 recomendados: el
+  // cliente puede elegir a cualquiera del catálogo completo, y el resumen
+  // ("Van a grabar…") necesita poder nombrarlos a todos. Solo se pide el
+  // catálogo cuando ya hay alguien elegido — antes de eso no hace falta.
+  const catalogoElegidos = useCreatorCatalog(
+    run?.selected_creator_ids?.length ? clientId : null,
+  );
+
+  const nombreDeCreador = (userId: string): string =>
+    creatorShortlist.find((c) => c.user_id === userId)?.nombre ??
+    catalogoElegidos.byId.get(userId)?.nombre ??
+    'Creador';
 
   // Qué se está viendo / cambiando (null = nada abierto)
   const [eligiendoCreador, setEligiendoCreador] = useState(false);
@@ -160,9 +196,11 @@ export function ClientPipelineChecklist({
   const strategyState = stateOf('estrategia');
   // La etapa de creador la resuelve el CLIENTE desde aquí.
   const creadorState = stateOf('creadores');
-  const creadorElegidoNombre = creatorShortlist.find(
-    c => run?.selected_creator_ids?.includes(c.user_id),
-  )?.nombre ?? null;
+  // 'done' cubre dos momentos distintos: el run puede seguir EN la etapa
+  // 'creadores' (ya eligió y repartió, pero los guiones no arrancaron) o ya
+  // haber avanzado a 'guiones'/más allá (los guiones ya se generaron). Se
+  // distinguen mirando `run.stage`, sin inventar ningún campo nuevo.
+  const creadorElegidoSinGenerar = creadorState === 'done' && run?.stage === 'creadores';
   const scriptsState = stateOf('guiones');
   const productionState = stateOf('produccion');
 
@@ -307,6 +345,32 @@ export function ClientPipelineChecklist({
         variant: 'destructive',
       });
       throw err;
+    }
+  };
+
+  /** Confirma o cambia quién graba y cómo se reparten los videos entre ellos. */
+  const handleElegirCreador = async (creatorIds: string[], allocation: Record<string, number>) => {
+    await elegirCreador(creatorIds, allocation);
+    toast({
+      title: '¡Listo, ya quedó el reparto!',
+      description: 'Cuando estés conforme, dale a "Generar los guiones".',
+    });
+  };
+
+  /** Arranca la escritura de los guiones una vez el reparto ya está cuadrado. */
+  const handleGenerarGuiones = async () => {
+    try {
+      await generarGuiones();
+      toast({
+        title: 'Generando tus guiones',
+        description: 'Ya estamos escribiendo tus videos. Te avisamos cuando estén listos.',
+      });
+    } catch (err) {
+      toast({
+        title: 'No pudimos generar los guiones',
+        description: err instanceof Error ? err.message : 'Inténtalo de nuevo en un momento.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -623,9 +687,8 @@ export function ClientPipelineChecklist({
         state={creadorState}
         description={
           creadorState === 'done'
-            ? creadorElegidoNombre
-              ? `Va a grabar ${creadorElegidoNombre}.`
-              : 'Ya está elegido quién va a grabar.'
+            ? resumenReparto(run?.selected_creator_ids ?? [], run?.creator_allocation, nombreDeCreador) ||
+              'Ya está elegido quién va a grabar.'
             : creadorState === 'ready'
               ? 'Elige quién va a grabar tus videos. Puedes ver su trabajo antes de decidir.'
               : 'Cuando aprobemos tu estrategia, eliges quién graba.'
@@ -634,6 +697,26 @@ export function ClientPipelineChecklist({
           creadorState === 'ready' ? (
             <Button className="w-full sm:w-auto" onClick={() => setEligiendoCreador(true)}>
               Elegir mi creador
+            </Button>
+          ) : creadorElegidoSinGenerar ? (
+            <Button
+              className="w-full sm:w-auto gap-2"
+              onClick={handleGenerarGuiones}
+              disabled={acting}
+            >
+              {acting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Generar los guiones
+            </Button>
+          ) : undefined
+        }
+        secondaryAction={
+          creadorElegidoSinGenerar ? (
+            <Button
+              variant="ghost"
+              className="w-full sm:w-auto text-muted-foreground"
+              onClick={() => setEligiendoCreador(true)}
+            >
+              Cambiar
             </Button>
           ) : undefined
         }
@@ -772,7 +855,10 @@ export function ClientPipelineChecklist({
         onOpenChange={setEligiendoCreador}
         clientId={clientId}
         recomendados={creatorShortlist}
-        onConfirmar={elegirCreador}
+        totalGuiones={run?.scripts_target ?? 0}
+        seleccionInicial={run?.selected_creator_ids ?? undefined}
+        repartoInicial={run?.creator_allocation ?? undefined}
+        onConfirmar={handleElegirCreador}
       />
 
       <ReviewDialog

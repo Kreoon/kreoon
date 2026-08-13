@@ -124,7 +124,8 @@ type EventoEtapa =
   | "changes_requested"
   | "error"
   | "escalated"
-  | "paused_no_tokens";
+  | "paused_no_tokens"
+  | "scripts_started";
 type Actor = "system" | "client" | "staff";
 
 interface Run {
@@ -141,6 +142,8 @@ interface Run {
   research_run_id: string | null;
   /** Creadores confirmados por el equipo; los guiones se escriben para ellos. */
   selected_creator_ids: string[] | null;
+  /** Cuantos guiones le tocan a cada creador ({} = reparto automatico equitativo). */
+  creator_allocation: Record<string, number> | null;
   stage_attempts: Record<string, number>;
   error_log: Json[];
   last_feedback: string | null;
@@ -1394,6 +1397,29 @@ function extraerPov(html: string): string | null {
   return m ? m[1].toLowerCase() : null;
 }
 
+/**
+ * Expande la lista de creadores segun el reparto pactado en select_creators:
+ * {A: 2, B: 1} -> [A, A, B]. Esa lista expandida se indexa igual que antes
+ * (indice % length), asi que cada posicion del lote cae en el creador que le
+ * corresponde en vez del round-robin ciego. Si no hay reparto (run viejo o
+ * "automatico", {}), se devuelve la lista de seleccionados tal cual y el
+ * round-robin sigue igual que siempre (compatibilidad).
+ */
+function expandirCreadoresPorReparto(
+  seleccionados: string[],
+  allocation: Record<string, number> | null | undefined,
+): string[] {
+  if (!allocation || Object.keys(allocation).length === 0) return seleccionados;
+  const expandido: string[] = [];
+  for (const id of seleccionados) {
+    const cantidad = Number(allocation[id] ?? 0);
+    for (let i = 0; i < cantidad; i++) expandido.push(id);
+  }
+  // Reparto corrupto o desalineado (no deberia pasar, select_creators lo
+  // valida): mejor caer al round-robin plano que producir una lista vacia.
+  return expandido.length > 0 ? expandido : seleccionados;
+}
+
 async function ejecutarEtapaGuiones(
   admin: Sb,
   runInicial: Run,
@@ -1485,9 +1511,13 @@ async function ejecutarEtapaGuiones(
   // Los creadores confirmados en la etapa anterior. El lote se reparte entre
   // ellos y cada guion se escribe para SU voz — no un lote genérico repartido
   // después, que es como salen los guiones que nadie puede decir en cámara.
-  const creadores = (run.selected_creator_ids ?? []).filter(Boolean);
+  const seleccionados = (run.selected_creator_ids ?? []).filter(Boolean);
+  // Lista de trabajo para el indice%length de abajo: expandida segun el
+  // reparto que confirmo el cliente en select_creators (o igual a
+  // `seleccionados` si el reparto es automatico).
+  const creadores = expandirCreadoresPorReparto(seleccionados, run.creator_allocation);
   const fichas = new Map<string, { nombre: string; ficha: FichaCreativa | null }>();
-  for (const userId of creadores) {
+  for (const userId of seleccionados) {
     fichas.set(userId, await leerCreador(admin, userId));
   }
 
@@ -2622,8 +2652,11 @@ Deno.serve(async (req) => {
     }
 
     // ── select_creators ────────────────────────────────────────────────────
-    // El equipo confirma quién graba. Puede ignorar la shortlist y elegir a
-    // mano: el humano manda, el sistema solo propone.
+    // El equipo confirma quién graba y cuántos guiones le tocan a cada uno.
+    // Ya NO dispara la generación: solo deja el reparto guardado y aprobado.
+    // El cliente puede volver a llamar esta acción para cambiar o agregar
+    // creadores/reparto las veces que quiera, mientras los guiones todavía no
+    // existan — la acción que sí genera es `start_scripts`.
     if (accion === "select_creators") {
       // Lo normal es que elija el CLIENTE. El staff puede hacerlo por él si no
       // contesta: el proceso no se queda congelado por una decisión pendiente.
@@ -2634,6 +2667,17 @@ Deno.serve(async (req) => {
       }
       if (run.stage !== "creadores") {
         return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
+      }
+
+      // Si los guiones de este run ya existen, cambiar el reparto acá no los
+      // reescribe solo — hay que pedir cambios sobre el lote o regenerarlo
+      // (mismo criterio de "demasiado tarde" que usa `set_scripts_target`).
+      const guionesDelRun = await guionesYaCreados(admin, run.id);
+      if (guionesDelRun.length > 0) {
+        return json(req, {
+          error: "guiones_ya_generados",
+          detalle: "Los guiones de este lote ya se generaron. Pide cambios sobre el lote en vez de reelegir creadores.",
+        }, 409);
       }
 
       const ids = Array.isArray(body.creator_ids)
@@ -2654,8 +2698,51 @@ Deno.serve(async (req) => {
         return json(req, { error: "creador_fuera_de_la_organizacion", intrusos }, 403);
       }
 
+      // Reparto opcional: cuántos guiones le tocan a cada creador. Si viene
+      // ausente o vacío se guarda `{}` (reparto automático equitativo, el
+      // comportamiento de siempre) — no es un error, es el default.
+      let allocation: Record<string, number> = {};
+      if (body.allocation !== undefined && body.allocation !== null) {
+        if (typeof body.allocation !== "object" || Array.isArray(body.allocation)) {
+          return json(req, {
+            error: "reparto_invalido",
+            detalle: "allocation debe ser un objeto { user_id: cantidad }",
+          }, 400);
+        }
+        const entradas = Object.entries(body.allocation as Json);
+        const idsValidos = new Set(ids);
+        const desconocidos = entradas.map(([id]) => id).filter((id) => !idsValidos.has(id));
+        if (desconocidos.length > 0) {
+          return json(req, { error: "reparto_con_creador_desconocido", detalle: desconocidos }, 400);
+        }
+
+        let suma = 0;
+        for (const [id, cantidadRaw] of entradas) {
+          const cantidad = Number(cantidadRaw);
+          if (!Number.isInteger(cantidad) || cantidad < 1) {
+            return json(req, {
+              error: "reparto_invalido",
+              detalle: `la cantidad para ${id} debe ser un entero mayor o igual a 1`,
+            }, 400);
+          }
+          allocation[id] = cantidad;
+          suma += cantidad;
+        }
+
+        // El objeto vacío ya se resolvió arriba (allocation queda {}); acá
+        // solo se valida cuando SÍ vinieron entradas.
+        if (entradas.length > 0 && suma !== run.scripts_target) {
+          return json(req, {
+            error: "reparto_no_cuadra",
+            suma,
+            objetivo: run.scripts_target,
+          }, 400);
+        }
+      }
+
       const confirmado = await actualizarRun(admin, run.id, {
         selected_creator_ids: ids,
+        creator_allocation: allocation,
         stage_status: "approved",
         creadores_approved_at: ahora(),
         last_feedback: null,
@@ -2663,11 +2750,43 @@ Deno.serve(async (req) => {
       await registrarEvento(admin, run.id, "creadores", "approved", {
         actor: ctx.esServiceRole ? "system" : rolCaller,
         actorId: ctx.userId ?? null,
-        payload: { creator_ids: ids },
+        payload: { creator_ids: ids, allocation },
       });
 
-      const avanzado = await ejecutarAdvance(admin, confirmado, ctx);
-      return json(req, { ok: true, run: avanzado, creator_ids: ids });
+      return json(req, { ok: true, run: confirmado, creator_ids: ids, allocation });
+    }
+
+    // ── start_scripts ──────────────────────────────────────────────────────
+    // Separada de select_creators a propósito: confirmar creadores/reparto ya
+    // no dispara nada por sí solo, así el cliente tiene margen para cambiar
+    // de opinión (recambiar creador, ajustar reparto) antes de gastar tokens
+    // de IA generando guiones que después habría que regenerar.
+    if (accion === "start_scripts") {
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
+        const esCliente = await esUsuarioDelCliente(admin, ctx.userId!, run.client_id);
+        if (!esStaff && !esCliente) return json(req, { error: "no_autorizado" }, 403);
+      }
+      if (run.stage !== "creadores" || run.stage_status !== "approved") {
+        return json(req, {
+          error: "stage_desincronizado",
+          stage_actual: run.stage,
+          stage_status_actual: run.stage_status,
+        }, 409);
+      }
+      const creadoresConfirmados = (run.selected_creator_ids ?? []).filter(Boolean);
+      if (creadoresConfirmados.length === 0) {
+        return json(req, { error: "sin_creadores" }, 400);
+      }
+
+      await registrarEvento(admin, run.id, "creadores", "scripts_started", {
+        actor: ctx.esServiceRole ? "system" : rolCaller,
+        actorId: ctx.userId ?? null,
+        payload: { creator_ids: creadoresConfirmados, allocation: run.creator_allocation ?? {} },
+      });
+
+      const avanzado = await ejecutarAdvance(admin, run, ctx);
+      return json(req, { ok: true, run: avanzado });
     }
 
     // ── readapt_scripts ────────────────────────────────────────────────────
