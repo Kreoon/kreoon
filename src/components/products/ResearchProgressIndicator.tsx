@@ -3,19 +3,28 @@ import { Progress } from '@/components/ui/progress';
 import { Loader2, CheckCircle2, AlertCircle, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
+/**
+ * Las 16 fases del research unificado, en el mismo orden que
+ * `STEP_SEQUENCE` de generate-full-research. Las etiquetas están escritas
+ * para que las entienda quien mira la pantalla, no para nombrar el stepId.
+ */
 const RESEARCH_SECTIONS = [
-  { key: 'market_overview', label: 'Panorama del Mercado' },
-  { key: 'jtbd', label: 'Análisis JTBD' },
-  { key: 'pains_desires', label: 'Dolores y Deseos' },
-  { key: 'competitors', label: 'Análisis de Competencia' },
-  { key: 'avatars', label: 'Avatares Estratégicos' },
-  { key: 'differentiation', label: 'Diferenciación y ESFERA' },
-  { key: 'sales_angles', label: 'Ángulos de Venta' },
-  { key: 'puv_transformation', label: 'Propuesta Única de Valor' },
-  { key: 'lead_magnets', label: 'Lead Magnets' },
-  { key: 'video_creatives', label: 'Creativos de Video' },
-  { key: 'content_calendar', label: 'Parrilla de Contenido' },
-  { key: 'launch_strategy', label: 'Estrategia de Lanzamiento' },
+  { key: 'market_overview', label: 'Cómo compra tu cliente' },
+  { key: 'jtbd', label: 'Qué busca de verdad' },
+  { key: 'pains_desires', label: 'Dolores y deseos' },
+  { key: 'competitors', label: 'Tu competencia' },
+  { key: 'avatars', label: 'A quién le hablamos' },
+  { key: 'differentiation', label: 'Por dónde entrar' },
+  { key: 'sales_angles', label: 'Ángulos de venta' },
+  { key: 'puv_transformation', label: 'Tu propuesta de valor' },
+  { key: 'lead_magnets', label: 'Imanes de clientes' },
+  { key: 'video_creatives_a', label: 'Ideas de contenido (1 de 2)' },
+  { key: 'video_creatives_b', label: 'Ideas de contenido (2 de 2)' },
+  { key: 'content_calendar_w1', label: 'Parrilla — semana 1 de 4' },
+  { key: 'content_calendar_w2', label: 'Parrilla — semana 2 de 4' },
+  { key: 'content_calendar_w3', label: 'Parrilla — semana 3 de 4' },
+  { key: 'content_calendar_w4', label: 'Parrilla — semana 4 de 4' },
+  { key: 'content_kpis', label: 'Qué medir de tu contenido' },
 ] as const;
 
 type SectionStatus = 'pending' | 'generating' | 'completed';

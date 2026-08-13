@@ -29,6 +29,7 @@ import {
   NichoViralTab,
   ContentKpisTab,
 } from "./strategy-tabs";
+import type { ResearchResult } from "@/types/research";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -80,6 +81,7 @@ interface Product {
   content_strategy?: any | null;
   content_calendar?: any | null;
   launch_strategy?: any | null;
+  research_generated_at?: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -206,7 +208,7 @@ export function ProductDetailDialog({
 
   // Investigación del motor (research-engine). Es del CLIENTE, no del producto:
   // todos los productos de la misma marca comparten mercado y nicho.
-  const [researchResult, setResearchResult] = useState<Record<string, unknown> | null>(null);
+  const [researchResult, setResearchResult] = useState<ResearchResult | null>(null);
 
   useEffect(() => {
     const idCliente = clientId ?? (product as { client_id?: string } | null)?.client_id;
@@ -227,7 +229,7 @@ export function ProductDetailDialog({
         .maybeSingle();
 
       if (!cancelado) {
-        setResearchResult((data?.result as Record<string, unknown>) ?? null);
+        setResearchResult((data?.result as ResearchResult | null) ?? null);
       }
     })();
 

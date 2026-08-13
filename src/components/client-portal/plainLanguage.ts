@@ -427,32 +427,200 @@ export function dnaToSections(dnaData: unknown): ReadableSection[] {
 
 // ── Estrategia (vive en la fila de `products`) ────────────────────────
 
-const STRATEGY_SECTIONS: { key: string; title: string }[] = [
-  { key: 'strategy', title: 'La idea en una frase' },
-  { key: 'ideal_avatar', title: 'Tu cliente ideal' },
-  { key: 'avatar_profiles', title: 'A quién le vamos a hablar' },
-  { key: 'content_strategy', title: 'Tu plan de contenido' },
-  { key: 'sales_angles_data', title: 'Cómo vamos a vender' },
-  { key: 'sales_angles', title: 'Cómo vamos a vender' },
-  { key: 'content_calendar', title: 'Cuándo publicamos' },
-  { key: 'launch_strategy', title: 'Cómo lo vamos a lanzar' },
-  { key: 'competitor_analysis', title: 'Qué hace tu competencia' },
-  { key: 'market_research', title: 'Lo que encontramos del mercado' },
-];
+/**
+ * La estrategia que ve el CLIENTE, curada a mano.
+ *
+ * Antes esto volcaba todas las columnas del producto con un conversor
+ * genérico, y el resultado era ilegible: JSON crudo en "Tu cliente ideal",
+ * títulos como `CastPlaybook` o `WhatsappSetup`, marcas de tiempo, y secciones
+ * de pasos que ya ni se generan. El cliente abría "Ver y aprobar" y se
+ * encontraba el research entero encima.
+ *
+ * Ahora cada sección se extrae con su propia función, se limita el volumen y
+ * se traduce a lenguaje de persona. Lo que no está aquí NO se le muestra al
+ * cliente — el equipo lo sigue viendo completo en el ADN del producto.
+ */
+
+/** Un valor que puede venir como objeto o como string con JSON dentro. */
+function comoObjeto(valor: unknown): Record<string, unknown> | null {
+  if (!valor) return null;
+  if (typeof valor === 'object' && !Array.isArray(valor)) return valor as Record<string, unknown>;
+  if (typeof valor === 'string') {
+    const limpio = valor.trim();
+    if (!limpio.startsWith('{')) return null;
+    try {
+      return JSON.parse(limpio) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function comoLista(valor: unknown): Record<string, unknown>[] {
+  if (Array.isArray(valor)) {
+    return valor.filter(v => v && typeof v === 'object') as Record<string, unknown>[];
+  }
+  return [];
+}
+
+const textoDe = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 
 export function strategyToSections(product: Record<string, unknown> | null): ReadableSection[] {
   if (!product) return [];
 
   const sections: ReadableSection[] = [];
-  const used = new Set<string>();
+  const estrategia = comoObjeto(product.sales_angles_data) ?? {};
+  const push = (id: string, title: string, blocks: ReadableBlock[]) => {
+    const utiles = blocks.filter(b => b.text || b.items?.length || b.cards?.length);
+    if (utiles.length) sections.push({ id, title, blocks: utiles });
+  };
 
-  for (const { key, title } of STRATEGY_SECTIONS) {
-    if (used.has(title)) continue;
-    const blocks = toBlocks(product[key]);
-    if (blocks.length) {
-      sections.push({ id: key, title, blocks });
-      used.add(title);
+  // 1. La promesa, en una frase
+  const puv = comoObjeto(estrategia.puv);
+  if (puv) {
+    const bloques: ReadableBlock[] = [];
+    const frase = textoDe(puv.statement);
+    if (frase) bloques.push({ text: frase });
+    const resultado = textoDe(puv.tangibleResult);
+    if (resultado) bloques.push({ label: 'Lo que tu cliente se lleva', text: resultado });
+    const diferencia = textoDe(puv.marketDifference);
+    if (diferencia) bloques.push({ label: 'Por qué tú y no otro', text: diferencia });
+    push('puv', 'Lo que le vamos a prometer a tu cliente', bloques);
+  }
+
+  // 2. El antes y el después
+  const transformacion = comoObjeto(estrategia.transformation);
+  if (transformacion) {
+    const etiquetas: Record<string, string> = {
+      functional: 'En su día a día',
+      emotional: 'En cómo se siente',
+      identity: 'En cómo se ve a sí mismo',
+      social: 'En cómo lo ven los demás',
+      financial: 'En su bolsillo',
+    };
+    const items: string[] = [];
+    for (const [clave, etiqueta] of Object.entries(etiquetas)) {
+      const dim = comoObjeto(transformacion[clave]);
+      if (!dim) continue;
+      const antes = textoDe(dim.before);
+      const despues = textoDe(dim.after);
+      if (antes && despues) items.push(`${etiqueta}: antes ${antes} → después ${despues}`);
     }
+    if (items.length) push('transformacion', 'El cambio que va a notar tu cliente', [{ items }]);
+  }
+
+  // 3. A quién le hablamos (los avatares, en corto)
+  const perfiles = comoObjeto(product.avatar_profiles);
+  const todosLosAvatares = comoLista(perfiles?.profiles);
+  const avatares = todosLosAvatares.slice(0, 3);
+  if (avatares.length) {
+    const cards: ReadableCard[] = avatares.map(a => {
+      const demo = comoObjeto(a.demographics);
+      const situacion = comoObjeto(a.situation);
+      const disparador = comoObjeto(a.purchaseTrigger);
+      const fields: { label: string; value: string }[] = [];
+
+      const quien = [textoDe(demo?.age), textoDe(demo?.location), textoDe(demo?.occupation)]
+        .filter(Boolean)
+        .join(' · ');
+      if (quien) fields.push({ label: 'Quién es', value: quien });
+
+      const siente = textoDe(situacion?.currentFeeling);
+      if (siente) fields.push({ label: 'Cómo se siente hoy', value: siente });
+
+      const momento = textoDe(disparador?.triggerEvent);
+      if (momento) fields.push({ label: 'Qué lo hace decidirse', value: momento });
+
+      return { title: textoDe(a.name) || 'Cliente ideal', fields };
+    });
+    push('avatares', 'A quién le vamos a hablar', [
+      { cards, hiddenCount: Math.max(todosLosAvatares.length - avatares.length, 0) },
+    ]);
+  }
+
+  // 4. Por dónde vamos a entrar (los huecos del mercado)
+  const competencia = comoObjeto(product.competitor_analysis);
+  const dif = comoObjeto(competencia?.differentiation);
+  const huecos = comoLista(dif?.positioningOpportunities).slice(0, 4);
+  if (huecos.length) {
+    const items = huecos
+      .map(h => {
+        const que = textoDe(h.opportunity);
+        const porque = textoDe(h.why);
+        return porque ? `${que} — ${porque}` : que;
+      })
+      .filter(Boolean);
+    if (items.length) push('huecos', 'Por dónde vamos a entrar', [{ items }]);
+  }
+
+  // 5. Los ángulos (solo el gancho y por qué funciona)
+  const todosLosAngulos = comoLista(estrategia.angles);
+  const angulos = todosLosAngulos.slice(0, 6);
+  if (angulos.length) {
+    const cards: ReadableCard[] = angulos.map((a, i) => {
+      const fields: { label: string; value: string }[] = [];
+      const porque = textoDe(a.whyItWorks);
+      if (porque) fields.push({ label: 'Por qué funciona', value: porque });
+      const paraQuien = textoDe(a.avatar);
+      if (paraQuien) fields.push({ label: 'Para quién', value: paraQuien });
+      return {
+        title: textoDe(a.hookExample) || textoDe(a.angle) || `Gancho ${i + 1}`,
+        fields,
+      };
+    });
+    push('angulos', 'Los ganchos que vamos a usar', [
+      { cards, hiddenCount: Math.max(todosLosAngulos.length - angulos.length, 0) },
+    ]);
+  }
+
+  // 6. Las ideas de contenido (título y formato, nada más)
+  const todasLasIdeas = comoLista(estrategia.videoCreatives);
+  const ideas = todasLasIdeas.slice(0, 8);
+  if (ideas.length) {
+    const items = ideas
+      .map(c => {
+        const titulo = textoDe(c.title);
+        const extra = [textoDe(c.format), textoDe(c.duration)].filter(Boolean).join(' · ');
+        return extra ? `${titulo} (${extra})` : titulo;
+      })
+      .filter(Boolean);
+    push('ideas', 'Las primeras ideas de contenido', [
+      { items, hiddenCount: Math.max(todasLasIdeas.length - ideas.length, 0) },
+    ]);
+  }
+
+  // 7. El primer mes, resumido por semanas (nunca las 28 piezas de golpe)
+  const parrilla = comoObjeto(product.content_calendar);
+  const piezas = comoLista(parrilla?.calendar);
+  if (piezas.length) {
+    const temas = comoLista(parrilla?.weeklyThemes);
+    const items: string[] = [];
+    for (const semana of [1, 2, 3, 4]) {
+      const deLaSemana = piezas.filter(p => Number(p.week) === semana);
+      if (!deLaSemana.length) continue;
+      const tema = textoDe(temas.find(t => Number(t.week) === semana)?.theme);
+      items.push(`Semana ${semana}: ${deLaSemana.length} publicaciones${tema ? ` — ${tema}` : ''}`);
+    }
+    if (items.length) {
+      push('parrilla', 'Tu primer mes de publicaciones', [
+        { text: `Son ${piezas.length} publicaciones listas, repartidas en cuatro semanas.` },
+        { items },
+      ]);
+    }
+  }
+
+  // 8. Qué vamos a medir
+  const kpis = comoLista(estrategia.contentKpis);
+  if (kpis.length) {
+    const items = kpis
+      .map(k => {
+        const nombre = textoDe(k.kpi);
+        const meta = textoDe(k.meta);
+        return meta ? `${nombre} — meta: ${meta}` : nombre;
+      })
+      .filter(Boolean);
+    if (items.length) push('kpis', 'Cómo vamos a saber si está funcionando', [{ items }]);
   }
 
   return sections;
