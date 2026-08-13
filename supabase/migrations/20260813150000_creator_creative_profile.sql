@@ -153,3 +153,11 @@ COMMENT ON TABLE public.creator_creative_profile IS
   'Ficha creativa del creador: cómo habla, dónde puede grabar y qué NO graba. La usa la etapa de selección de creador para proponer una shortlist y el generador de guiones para escribir en su voz. La clave es user_id porque es lo que guarda content.creator_id.';
 COMMENT ON COLUMN public.creator_creative_profile.restricciones IS
   'Filtro DURO en el matching y en la generación de guiones: lo que aquí esté escrito no se le pide nunca a este creador.';
+
+-- ---------------------------------------------------------------------
+-- La función del trigger es SECURITY DEFINER, y Supabase la expone como RPC
+-- a `anon` y `authenticated` por defecto. Llamarla suelta no haría daño
+-- (fuera de un trigger no existe NEW y falla), pero una función SECURITY
+-- DEFINER accesible desde fuera es superficie de ataque gratis.
+-- ---------------------------------------------------------------------
+REVOKE EXECUTE ON FUNCTION public.calcular_completitud_ficha_creativa() FROM PUBLIC, anon, authenticated;
