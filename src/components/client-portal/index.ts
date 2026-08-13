@@ -20,3 +20,4 @@ export {
   researchProgressPercent,
 } from './plainLanguage';
 export type { ReadableSection, ReadableBlock } from './plainLanguage';
+export { ElegirCreadorDialog } from './ElegirCreadorDialog';

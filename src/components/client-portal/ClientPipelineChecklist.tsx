@@ -11,6 +11,7 @@ import {
 } from '@/hooks/useClientPipeline';
 import { useClientDocuments } from '@/hooks/useClientDocuments';
 import { StepCard, type StepState } from './StepCard';
+import { ElegirCreadorDialog } from './ElegirCreadorDialog';
 import { ReviewDialog } from './ReviewDialog';
 import { RequestChangesDialog } from './RequestChangesDialog';
 import { ScriptsList } from './ScriptsList';
@@ -116,6 +117,8 @@ export function ClientPipelineChecklist({
     approve,
     requestChanges,
     reintentarEtapa,
+    creatorShortlist,
+    elegirCreador,
     approveScript,
     requestScriptChanges,
     crearFormulario,
@@ -128,6 +131,7 @@ export function ClientPipelineChecklist({
   const documentos = useClientDocuments(clientId, organizationId);
 
   // Qué se está viendo / cambiando (null = nada abierto)
+  const [eligiendoCreador, setEligiendoCreador] = useState(false);
   const [reviewing, setReviewing] = useState<'adn' | 'mercado' | 'estrategia' | null>(null);
   const [changing, setChanging] = useState<'adn' | 'mercado' | 'estrategia' | null>(null);
   // Panel lateral para llenar el formulario de inicio (null = cerrado)
@@ -154,6 +158,11 @@ export function ClientPipelineChecklist({
   // que apruebe la tarjeta de mercado).
   const nicheState: StepState = mercadoState === 'ready' ? 'done' : mercadoState;
   const strategyState = stateOf('estrategia');
+  // La etapa de creador la resuelve el CLIENTE desde aquí.
+  const creadorState = stateOf('creadores');
+  const creadorElegidoNombre = creatorShortlist.find(
+    c => run?.selected_creator_ids?.includes(c.user_id),
+  )?.nombre ?? null;
   const scriptsState = stateOf('guiones');
   const productionState = stateOf('produccion');
 
@@ -607,9 +616,32 @@ export function ClientPipelineChecklist({
         ) : null}
       </StepCard>
 
-      {/* ── 6. Tus guiones ────────────────────────────────────────── */}
+      {/* ── 6. Tu creador ─────────────────────────────────────────── */}
       <StepCard
         number={6}
+        title="Tu creador"
+        state={creadorState}
+        description={
+          creadorState === 'done'
+            ? creadorElegidoNombre
+              ? `Va a grabar ${creadorElegidoNombre}.`
+              : 'Ya está elegido quién va a grabar.'
+            : creadorState === 'ready'
+              ? 'Elige quién va a grabar tus videos. Puedes ver su trabajo antes de decidir.'
+              : 'Cuando aprobemos tu estrategia, eliges quién graba.'
+        }
+        primaryAction={
+          creadorState === 'ready' ? (
+            <Button className="w-full sm:w-auto" onClick={() => setEligiendoCreador(true)}>
+              Elegir mi creador
+            </Button>
+          ) : undefined
+        }
+      />
+
+      {/* ── 7. Tus guiones ────────────────────────────────────────── */}
+      <StepCard
+        number={7}
         title="Tus guiones"
         description={
           scriptsState === 'done'
@@ -647,9 +679,9 @@ export function ClientPipelineChecklist({
         )}
       </StepCard>
 
-      {/* ── 7. Tus videos (solo lectura) ──────────────────────────── */}
+      {/* ── 8. Tus videos (solo lectura) ──────────────────────────── */}
       <StepCard
-        number={7}
+        number={8}
         title="Tus videos"
         description={
           productionState === 'locked'
@@ -734,6 +766,14 @@ export function ClientPipelineChecklist({
           </section>
         </div>
       </ReviewDialog>
+
+      <ElegirCreadorDialog
+        open={eligiendoCreador}
+        onOpenChange={setEligiendoCreador}
+        clientId={clientId}
+        recomendados={creatorShortlist}
+        onConfirmar={elegirCreador}
+      />
 
       <ReviewDialog
         open={reviewing === 'estrategia'}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { OnboardingFormData } from '@/components/client-onboarding/schemas';
 import type { ResearchRun } from '@/types/research';
@@ -101,8 +101,8 @@ export type PipelineStage =
 export type PipelineStageStatus =
   | 'generating'
   | 'awaiting_client'
-  /** La etapa de creadores la resuelve el equipo, no el cliente: el portal
-   *  no le pide nada al cliente mientras esté en este estado. */
+  /** El equipo eligió por el cliente (no contestó a tiempo, o pidió que lo
+   *  hicieran ellos). El portal no le pide nada al cliente en este estado. */
   | 'awaiting_team'
   | 'changes_requested'
   | 'approved'
@@ -123,6 +123,8 @@ export interface ClientPipelineRun {
   error_log: unknown[];
   last_feedback: string | null;
   scripts_target: number;
+  /** A quién eligió el cliente para grabar (etapa 'creadores'). Vacío hasta que elige. */
+  selected_creator_ids: string[] | null;
   onboarding_completed_at: string | null;
   adn_started_at: string | null;
   adn_approved_at: string | null;
@@ -182,6 +184,33 @@ const SCRIPT_STATUSES = ['script_pending', 'script_approved'] as const;
  * `generated` de la etapa. Si el evento aún no existe (o no trae ids), se
  * devuelve un set vacío y el hook cae a mostrar todos los del cliente.
  */
+export interface CreatorShortlistCandidate {
+  user_id: string;
+  nombre: string;
+  /** Ya vienen escritos en castellano desde el backend: se muestran tal cual. */
+  motivos: string[];
+}
+
+/**
+ * Los 3 candidatos que el sistema propone para grabar, con su porqué en
+ * castellano — vienen en el último evento  de la etapa
+ * 'creadores' (). El cliente no está obligado a elegir a
+ * ninguno de estos: son una ayuda, no la única opción.
+ */
+function parseCreatorShortlist(events: PipelineStageEvent[]): CreatorShortlistCandidate[] {
+  const evento = events.find((e) => e.stage === 'creadores' && e.event === 'generated');
+  const raw = (evento?.payload as { shortlist?: unknown } | undefined)?.shortlist;
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .filter((item): item is Record<string, unknown> => !!item && typeof item === 'object' && typeof item.user_id === 'string')
+    .map((item) => ({
+      user_id: item.user_id as string,
+      nombre: typeof item.nombre === 'string' && item.nombre.trim() ? item.nombre : 'Creador sin nombre',
+      motivos: Array.isArray(item.motivos) ? item.motivos.filter((m): m is string => typeof m === 'string') : [],
+    }));
+}
+
 function collectBatchContentIds(events: PipelineStageEvent[]): Set<string> {
   const ids = new Set<string>();
   for (const event of events) {
@@ -363,6 +392,9 @@ export function useClientPipeline(clientId: string | null) {
    * pintamos ese run al instante y solo re-leemos lo pesado (ADN, producto,
    * guiones) en segundo plano.
    */
+  /** Los 3 que el sistema propone para grabar. El cliente puede ignorarlos. */
+  const creatorShortlist = useMemo(() => parseCreatorShortlist(events), [events]);
+
   const callOrchestrator = useCallback(async (
     body: Record<string, unknown>,
     options?: { silentRefresh?: boolean },
@@ -567,6 +599,15 @@ export function useClientPipeline(clientId: string | null) {
   }, [callOrchestrator]);
 
   /** Aprueba la etapa actual (ADN, mercado o estrategia). */
+  /** El cliente elige quién graba sus videos. */
+  const elegirCreador = useCallback(
+    async (creatorIds: string[]) => {
+      if (creatorIds.length === 0) throw new Error('Elige al menos un creador.');
+      return callOrchestrator({ action: 'select_creators', creator_ids: creatorIds });
+    },
+    [callOrchestrator],
+  );
+
   const approve = useCallback(
     (stage: PipelineStage) => act({ action: 'approve', stage }),
     [act],
@@ -619,6 +660,8 @@ export function useClientPipeline(clientId: string | null) {
     loading,
     acting,
     error,
+    creatorShortlist,
+    elegirCreador,
     approve,
     requestChanges,
     reintentarEtapa,

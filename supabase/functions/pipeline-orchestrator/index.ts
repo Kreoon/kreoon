@@ -1241,17 +1241,24 @@ async function ejecutarEtapaCreadores(
     },
   });
 
+  // La elige el CLIENTE: es su marca y es esa cara la que va a salir en sus
+  // videos. El equipo mantiene el botón como respaldo por si no contesta.
+  await notificarCliente(
+    admin,
+    run,
+    "Elige quién va a grabar tus videos",
+    "Ya tenemos tu estrategia lista. Ahora elige al creador que mejor represente a tu marca.",
+  );
   await notificarEquipo(
     admin, run.organization_id,
-    "Hay que elegir creador",
-    `Ya está la estrategia de este cliente. El sistema propone a ${shortlist.map((c) => c.nombre).join(", ")}. Confirma quién graba para que los guiones se escriban en su voz.`,
+    "El cliente tiene que elegir creador",
+    `La estrategia está lista. El sistema propone a ${shortlist.map((c) => c.nombre).join(", ")}, pero decide el cliente. Si no contesta, pueden elegir ustedes.`,
     run.id,
   );
 
-  // Esta parada la resuelve el equipo, no el cliente.
   return await actualizarRun(admin, run.id, {
     stage: "creadores",
-    stage_status: "awaiting_team",
+    stage_status: "awaiting_client",
   });
 }
 
@@ -2618,9 +2625,12 @@ Deno.serve(async (req) => {
     // El equipo confirma quién graba. Puede ignorar la shortlist y elegir a
     // mano: el humano manda, el sistema solo propone.
     if (accion === "select_creators") {
+      // Lo normal es que elija el CLIENTE. El staff puede hacerlo por él si no
+      // contesta: el proceso no se queda congelado por una decisión pendiente.
       if (!ctx.esServiceRole) {
         const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
-        if (!esStaff) return json(req, { error: "solo_staff" }, 403);
+        const esCliente = await esUsuarioDelCliente(admin, ctx.userId!, run.client_id);
+        if (!esStaff && !esCliente) return json(req, { error: "no_autorizado" }, 403);
       }
       if (run.stage !== "creadores") {
         return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
