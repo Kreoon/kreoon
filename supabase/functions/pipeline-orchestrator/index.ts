@@ -1363,10 +1363,14 @@ async function cupoDelCliente(
       .eq("client_id", clientId)
       .eq("is_active", true)
       .in("payment_status", ["paid", "partial"]),
+    // Lo borrado NO consume cupo: el cliente pago por videos entregados, no
+    // por intentos. Sin este filtro, borrar un guion le quitaba para siempre
+    // uno de los videos que ya habia pagado.
     admin
       .from("content")
       .select("id", { count: "exact", head: true })
-      .eq("client_id", clientId),
+      .eq("client_id", clientId)
+      .is("deleted_at", null),
   ]);
 
   const contratados = ((paquetes ?? []) as Json[])
