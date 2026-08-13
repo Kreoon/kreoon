@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Video, Calendar, Trash2, Users, Medal, UserCog, Lightbulb, Star, FolderKanban, UserCheck, RefreshCw } from "lucide-react";
+import { Building2, Video, Calendar, Trash2, Users, Medal, UserCog, Lightbulb, Star, FolderKanban, UserCheck, RefreshCw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -126,7 +127,20 @@ if (!error && data?.length) {
   const esperandoEquipoElegirCreador = pipeline?.stage === "creadores" && pipeline.stage_status === "awaiting_team";
   // Ya se eligió a alguien y el proceso siguió: se puede cambiar de creador
   // más adelante (se ofrece siempre que exista una elección previa).
+  const { toast } = useToast();
+  const [generandoTanda, setGenerandoTanda] = useState(false);
   const puedeCambiarCreador = (pipeline?.selected_creator_ids?.length ?? 0) > 0 && !esperandoEquipoElegirCreador;
+
+  // Los paquetes grandes se producen por tandas: cuando la anterior está
+  // cerrada (el run llegó a producción) y todavía quedan videos contratados,
+  // el equipo puede abrir la siguiente. Nunca se abre sola.
+  const cupo = pipeline?.cupo;
+  const puedeAbrirSiguienteTanda =
+    !!pipeline &&
+    pipeline.stage === "produccion" &&
+    !!cupo &&
+    cupo.contratados > 0 &&
+    cupo.restantes > 0;
 
   return (
     <div
@@ -235,6 +249,42 @@ if (!error && data?.length) {
         >
           <UserCheck className="h-4 w-4" />
           Elegir creador
+        </Button>
+      )}
+
+      {/* Siguiente tanda de un paquete grande: la abre el equipo */}
+      {puedeAbrirSiguienteTanda && pipeline && cupo && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full mb-3 gap-1.5"
+          disabled={generandoTanda}
+          onClick={async (e) => {
+            e.stopPropagation();
+            setGenerandoTanda(true);
+            try {
+              const { data, error } = await supabase.functions.invoke("pipeline-orchestrator", {
+                body: { action: "next_batch", run_id: pipeline.id },
+              });
+              if (error) throw error;
+              if (data?.error) throw new Error(data.detalle || data.error);
+              toast({
+                title: `Generando ${data?.tanda ?? ""} guiones más`,
+                description: `Le quedaban ${cupo.restantes} videos de ${cupo.contratados}.`,
+              });
+            } catch (err) {
+              toast({
+                title: "No se pudo abrir la siguiente tanda",
+                description: err instanceof Error ? err.message : undefined,
+                variant: "destructive",
+              });
+            } finally {
+              setGenerandoTanda(false);
+            }
+          }}
+        >
+          <Sparkles className="h-4 w-4" />
+          {generandoTanda ? "Generando…" : `Siguiente tanda (quedan ${cupo.restantes})`}
         </Button>
       )}
 

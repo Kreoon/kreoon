@@ -1334,6 +1334,38 @@ async function guionesSegunPaquete(admin: Sb, clientId: string): Promise<number 
   }
 }
 
+/**
+ * Cuánto le queda por producir a este cliente.
+ *
+ * `contratados` = suma de los paquetes activos. `usados` = las piezas de
+ * contenido que ya existen para él. La misma cuenta que hace el diálogo de
+ * "crear contenido desde la investigación": si hubiera dos definiciones de
+ * "usado", las dos pantallas darían números distintos y nadie sabría cuál creer.
+ */
+async function cupoDelCliente(
+  admin: Sb,
+  clientId: string,
+): Promise<{ contratados: number; usados: number; restantes: number }> {
+  const [{ data: paquetes }, { count }] = await Promise.all([
+    admin
+      .from("client_packages")
+      .select("content_quantity")
+      .eq("client_id", clientId)
+      .eq("is_active", true)
+      .in("payment_status", ["paid", "partial"]),
+    admin
+      .from("content")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", clientId),
+  ]);
+
+  const contratados = ((paquetes ?? []) as Json[])
+    .reduce((suma, p) => suma + Number(p.content_quantity ?? 0), 0);
+  const usados = count ?? 0;
+
+  return { contratados, usados, restantes: Math.max(contratados - usados, 0) };
+}
+
 /** Lee la ficha y el nombre de un creador. */
 async function leerCreador(
   admin: Sb,
@@ -1392,7 +1424,35 @@ async function ejecutarEtapaGuiones(
   }
 
   const existentes = await guionesYaCreados(admin, run.id);
-  const objetivo = run.scripts_target ?? 5;
+
+  // TOPE DURO: no se producen mas videos de los que el cliente pago. Si el
+  // paquete se agoto, el pipeline se detiene aqui con un mensaje claro en vez
+  // de seguir generando trabajo que nadie va a cobrar.
+  const cupo = await cupoDelCliente(admin, run.client_id);
+  if (cupo.contratados > 0 && cupo.restantes <= 0) {
+    await notificarEquipo(
+      admin, run.organization_id,
+      "Paquete agotado",
+      `Este cliente ya tiene sus ${cupo.contratados} videos creados. Para producir mas, amplia su paquete.`,
+      run.id,
+    );
+    return marcarError(
+      admin, run, "guiones",
+      `El paquete del cliente esta agotado (${cupo.usados} de ${cupo.contratados} usados)`,
+    );
+  }
+
+  const objetivoPedido = run.scripts_target ?? 5;
+  // La tanda nunca puede pasarse de lo que queda por producir.
+  const objetivo = cupo.contratados > 0
+    ? Math.min(objetivoPedido, cupo.restantes)
+    : objetivoPedido;
+
+  if (objetivo < objetivoPedido) {
+    console.log(
+      `[pipeline] ${run.id} · tanda recortada a ${objetivo} guiones: al cliente le quedan ${cupo.restantes} de ${cupo.contratados}`,
+    );
+  }
   const regenerando = !!opciones.feedback && existentes.length > 0;
 
   const angulos: string[] = Array.isArray(producto.sales_angles) && producto.sales_angles.length > 0
@@ -2285,7 +2345,17 @@ Deno.serve(async (req) => {
         ? await leerProgresoResearch(admin, run.product_id)
         : null;
 
-      return json(req, { ok: true, run, eventos: eventos ?? [], research_progress: progreso });
+      // El cupo viaja con el estado: las pantallas necesitan saber cuántos
+      // videos quedan para decidir si ofrecer la siguiente tanda.
+      const cupo = await cupoDelCliente(admin, run.client_id);
+
+      return json(req, {
+        ok: true,
+        run,
+        eventos: eventos ?? [],
+        research_progress: progreso,
+        cupo,
+      });
     }
 
     // ── poll ───────────────────────────────────────────────────────────────
@@ -2441,6 +2511,60 @@ Deno.serve(async (req) => {
       return json(req, { ok: true, run: actualizado });
     }
 
+    // ── next_batch ─────────────────────────────────────────────────────────
+    // La siguiente tanda de guiones de un paquete grande.
+    //
+    // Un paquete de 100 videos no se produce de una sentada: se hace por
+    // tandas de hasta 20, y cada una pasa por su aprobación. Esta acción abre
+    // la siguiente cuando la anterior ya está cerrada, y la dispara el EQUIPO
+    // — nada se genera solo, para no llenar el tablero ni quemar tokens sin
+    // que nadie lo haya pedido.
+    if (accion === "next_batch") {
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
+        if (!esStaff) return json(req, { error: "solo_staff" }, 403);
+      }
+
+      // Solo cuando la tanda anterior está cerrada: si aún hay guiones sin
+      // aprobar, abrir otra tanda solo genera confusión.
+      const pendientes = await guionesPendientes(admin, run.id);
+      if (pendientes.length > 0) {
+        return json(req, {
+          error: "tanda_en_curso",
+          detalle: `Todavía hay ${pendientes.length} guiones esperando aprobación del cliente.`,
+          guiones_pendientes: pendientes.length,
+        }, 409);
+      }
+
+      const cupo = await cupoDelCliente(admin, run.client_id);
+      if (cupo.contratados > 0 && cupo.restantes <= 0) {
+        return json(req, {
+          error: "sin_cupo",
+          detalle: `El cliente ya tiene sus ${cupo.contratados} videos. Amplía su paquete para producir más.`,
+          ...cupo,
+        }, 409);
+      }
+
+      const tanda = Math.min(run.scripts_target ?? 5, cupo.restantes || (run.scripts_target ?? 5));
+
+      // La tanda nueva arranca limpia: los guiones de las anteriores ya están
+      // en el tablero y no se tocan.
+      const reiniciado = await actualizarRun(admin, run.id, {
+        stage: "guiones",
+        stage_status: "generating",
+        guiones_started_at: ahora(),
+        last_feedback: null,
+      });
+      await registrarEvento(admin, run.id, "guiones", "generated", {
+        actor: ctx.esServiceRole ? "system" : rolCaller,
+        actorId: ctx.userId ?? null,
+        payload: { tanda_nueva: true, cantidad: tanda, restantes_antes: cupo.restantes },
+      });
+
+      const generado = await ejecutarEtapaGuiones(admin, reiniciado, ctx, {});
+      return json(req, { ok: true, run: generado, tanda, restantes: cupo.restantes });
+    }
+
     // ── set_scripts_target ─────────────────────────────────────────────────
     // Cuántos guiones se le generan a este cliente. Nace de lo que pagó
     // (`client_packages.content_quantity`), pero el equipo manda: aquí puede
@@ -2464,6 +2588,17 @@ Deno.serve(async (req) => {
         return json(req, {
           error: "demasiado_tarde",
           detalle: "Los guiones ya se generaron. Pide cambios sobre el lote o reintenta la etapa.",
+        }, 409);
+      }
+
+      // Tope duro: no se puede pedir mas de lo contratado.
+      const cupoActual = await cupoDelCliente(admin, run.client_id);
+      if (cupoActual.contratados > 0 && objetivo > cupoActual.restantes) {
+        return json(req, {
+          error: "sin_cupo",
+          detalle: `Al cliente le quedan ${cupoActual.restantes} videos de los ${cupoActual.contratados} que contrato. Amplia su paquete para producir mas.`,
+          restantes: cupoActual.restantes,
+          contratados: cupoActual.contratados,
         }, 409);
       }
 

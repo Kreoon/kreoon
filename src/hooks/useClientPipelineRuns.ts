@@ -19,6 +19,9 @@ export interface ClientPipelineRunSummary {
   /** Creadores ya confirmados por el equipo en la etapa "creadores". Vacío
    *  si todavía no se ha elegido a nadie. */
   selected_creator_ids: string[];
+  /** Cuántos videos contrató, cuántos lleva y cuántos le quedan. Sirve para
+   *  saber si toca ofrecer la siguiente tanda o si el paquete ya se agotó. */
+  cupo: { contratados: number; usados: number; restantes: number };
 }
 
 /**
@@ -46,12 +49,46 @@ export function useClientPipelineRuns(organizationId: string | null | undefined)
 
       if (error) throw error;
 
+      const filas = (data ?? []) as ClientPipelineRunSummary[];
+      const clientIds = filas.map(f => f.client_id);
+
+      // Cupo de todos los clientes en dos consultas, no una por tarjeta.
+      const cupos: Record<string, { contratados: number; usados: number; restantes: number }> = {};
+      if (clientIds.length > 0) {
+        const [{ data: paquetes }, { data: contenidos }] = await Promise.all([
+          supabase
+            .from("client_packages")
+            .select("client_id, content_quantity")
+            .in("client_id", clientIds)
+            .eq("is_active", true)
+            .in("payment_status", ["paid", "partial"]),
+          supabase
+            .from("content")
+            .select("client_id")
+            .in("client_id", clientIds),
+        ]);
+
+        for (const id of clientIds) cupos[id] = { contratados: 0, usados: 0, restantes: 0 };
+        for (const p of paquetes ?? []) {
+          if (!p.client_id) continue;
+          cupos[p.client_id].contratados += Number(p.content_quantity ?? 0);
+        }
+        for (const c of contenidos ?? []) {
+          if (!c.client_id || !cupos[c.client_id]) continue;
+          cupos[c.client_id].usados += 1;
+        }
+        for (const id of clientIds) {
+          cupos[id].restantes = Math.max(cupos[id].contratados - cupos[id].usados, 0);
+        }
+      }
+
       const porCliente: Record<string, ClientPipelineRunSummary> = {};
-      for (const fila of (data ?? []) as ClientPipelineRunSummary[]) {
+      for (const fila of filas) {
         const intentos = fila.stage_attempts ?? {};
         porCliente[fila.client_id] = {
           ...fila,
           selected_creator_ids: fila.selected_creator_ids ?? [],
+          cupo: cupos[fila.client_id] ?? { contratados: 0, usados: 0, restantes: 0 },
           intentos_totales: Object.values(intentos).reduce(
             (suma, n) => suma + (Number(n) || 0),
             0,
