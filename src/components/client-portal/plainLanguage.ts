@@ -1,3 +1,5 @@
+import type { ResearchRun } from '@/types/research';
+
 /**
  * Traductor de JSON → lenguaje de cliente.
  *
@@ -147,6 +149,67 @@ const KEY_LABELS: Record<string, string> = {
   format: 'Formato',
   message: 'Mensaje',
   notes: 'Notas',
+
+  // ADN de Mercado (research_runs.result.adn_mercado)
+  competidores: 'Tu competencia',
+  posicionamiento: 'Cómo se posiciona',
+  seguidores: 'Seguidores',
+  frecuencia_real: 'Cada cuánto publica',
+  engagement_medio: 'Interacción media',
+  que_esta_pautando: 'Lo que está pautando',
+  ads_30_dias: 'Anuncios con más de 30 días corriendo',
+  funnel: 'Su camino de venta',
+  arma_secreta: 'Su as bajo la manga',
+  tabla_comparativa: 'Comparación con tu competencia',
+  criterio: 'Punto de comparación',
+  lider: 'Quién va ganando',
+  detalle: 'Detalle',
+  huecos_de_mercado: 'Oportunidades sin explotar',
+  hueco: 'Oportunidad',
+  por_que_esta_libre: 'Por qué nadie la está aprovechando',
+  como_atacarlo: 'Cómo aprovecharla',
+  que_no_copiar: 'Lo que no te conviene copiar',
+  practica: 'Práctica',
+  razon: 'Por qué',
+  alcance: 'Qué tan completo es esto',
+
+  // ADN Viral del nicho (research_runs.result.adn_viral)
+  hooks_dominantes: 'Lo que más engancha',
+  taxonomia: 'Tipo de gancho',
+  porcentaje_del_top: 'Qué tan frecuente es',
+  ejemplos: 'Ejemplos reales',
+  por_que_funciona: 'Por qué funciona',
+  estructura_ganadora: 'La estructura que gana',
+  descripcion: 'Cómo es',
+  re_enganches_literales: 'Frases que reenganchan',
+  evidencia: 'Evidencia',
+  ctas: 'Cómo piden la acción',
+  tipos_usados: 'Tipos que usan',
+  gating_normalizado: 'Piden comentar para dar la info',
+  duracion: 'Duración',
+  moda_segundos: 'Duración típica (segundos)',
+  rango: 'Rango de duración',
+  mezcla_tutorial_vs_emocion: 'Tutorial vs. emocional',
+  angulos_de_ads_ganadores: 'Ángulos de anuncios que ganan',
+  angulo: 'Ángulo',
+  dias_corriendo: 'Días corriendo',
+  gaps: 'Lo que nadie está usando',
+  oportunidad: 'Oportunidad',
+  por_que_nadie_lo_usa: 'Por qué nadie lo usa',
+
+  // Anuncios y métricas
+  pagina: 'Página',
+  activo: 'Activo',
+  inicio: 'Empezó a correr',
+  plataformas: 'Plataformas',
+  top: 'Lo más visto',
+  handle: 'Cuenta',
+  score: 'Qué tan viral',
+  vistas: 'Vistas',
+  metricas_por_cuenta: 'Números por cuenta',
+  publicaciones: 'Publicaciones',
+  vistas_medias: 'Vistas promedio',
+  publicaciones_por_semana: 'Publicaciones por semana',
 };
 
 /** Llaves que nunca se le muestran al cliente (ruido técnico). */
@@ -164,10 +227,32 @@ const PRIORITY_WORDS: Record<string, string> = {
   low: 'baja',
 };
 
+/**
+ * Taxonomía de hooks del ADN Viral (`hooks_dominantes[].taxonomia`,
+ * `synthesis.ts` en research-engine). Son códigos internos del prompt de
+ * IA — el cliente jamás debe ver "kill-shot" en su pantalla.
+ */
+const HOOK_TAXONOMY_LABELS: Record<string, string> = {
+  'inclusivo-perdida': 'Le hablas directo a lo que está perdiendo',
+  'kill-shot': 'Golpe directo desde el primer segundo',
+  'noticia-shock': 'Una noticia que sorprende',
+  'experimento-resultado': 'Un experimento con resultado a la vista',
+  'anclaje-precio': 'Comparación de precio',
+  'historia-demostrativa': 'Una historia que demuestra el punto',
+  'personalidad-cruda': 'Personalidad sin filtro',
+  brecha: 'Una brecha que genera curiosidad',
+};
+
 export function humanizeKey(key: string): string {
   if (KEY_LABELS[key]) return KEY_LABELS[key];
   const spaced = key.replace(/[_-]+/g, ' ').trim();
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+/** Traduce el código de taxonomía de un hook a una frase que se entiende. */
+export function humanizeHookTaxonomy(taxonomia: string | null | undefined): string {
+  if (!taxonomia) return 'Gancho';
+  return HOOK_TAXONOMY_LABELS[taxonomia] ?? humanizeKey(taxonomia);
 }
 
 function humanizeValue(value: unknown): string {
@@ -315,4 +400,43 @@ export function strategyToSections(product: Record<string, unknown> | null): Rea
   }
 
   return sections;
+}
+
+// ── Investigación de mercado (research_runs) ──────────────────────────
+
+/**
+ * Traduce `research_runs.stage.fase` a una frase que un cliente entiende.
+ * `fase` es lo único que se actualiza en vivo mientras la corrida avanza
+ * (verificado en `research-engine/index.ts`: las etapas A/B/D con
+ * `{status, motivo}` solo se anotan una vez, al crear la corrida).
+ */
+const FASE_LABELS: Record<string, string> = {
+  base: 'Estamos viendo tu perfil y tus últimas publicaciones',
+  descubrimiento: 'Estamos buscando quién es tu competencia',
+  competidores: 'Estamos viendo qué publica tu competencia',
+  ads: 'Estamos revisando qué anuncios está pautando tu gremio',
+  ranking: 'Estamos viendo qué contenido es el que más funciona',
+  transcripcion: 'Estamos leyendo lo que dicen los videos que mejor funcionan',
+  sintesis: 'Estamos armando el resumen de todo esto',
+  fin: 'Ya casi terminamos',
+};
+
+/** Orden real de las fases del motor (sin contar "fin"), para la barra de progreso. */
+const FASE_ORDER = ['base', 'descubrimiento', 'competidores', 'ads', 'ranking', 'transcripcion', 'sintesis'];
+
+/** Texto "en cristiano" de qué se está haciendo mientras la corrida está `running`. */
+export function researchWorkingText(researchRun: ResearchRun | null): string {
+  const fase = researchRun?.stage?.fase;
+  if (fase && FASE_LABELS[fase]) return FASE_LABELS[fase];
+  return 'Estamos investigando tu mercado';
+}
+
+/** Porcentaje 0–100 para la barra de progreso, o null si no hay nada que mostrar. */
+export function researchProgressPercent(researchRun: ResearchRun | null): number | null {
+  const fase = researchRun?.stage?.fase;
+  if (!fase) return null;
+  if (fase === 'fin') return 100;
+  const idx = FASE_ORDER.indexOf(fase);
+  if (idx === -1) return null;
+  return Math.round(((idx + 1) / FASE_ORDER.length) * 100);
 }

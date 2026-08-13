@@ -54,6 +54,7 @@ import { usePurgeMember, useRemoveMember } from '@/hooks/useOrgMemberActions';
 import type { Content, AppRole } from '@/types/database';
 import { STATUS_LABELS } from '@/types/database';
 import { TalentPaymentsTab } from './TalentPaymentsTab';
+import { CreativeCardForm } from '@/components/settings/CreativeCardForm';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Constantes de UI
@@ -433,6 +434,9 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
           <TabsList className="flex-shrink-0 px-6 pt-2 bg-transparent border-b border-border rounded-none justify-start gap-1 h-auto pb-0">
             <TabsTrigger value="perfil" className="text-xs px-3 py-1.5 rounded-t-sm rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">Perfil</TabsTrigger>
             <TabsTrigger value="rendimiento" className="text-xs px-3 py-1.5 rounded-t-sm rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">Rendimiento</TabsTrigger>
+            {hasInternal && (
+              <TabsTrigger value="ficha-creativa" className="text-xs px-3 py-1.5 rounded-t-sm rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">Ficha Creativa</TabsTrigger>
+            )}
             {hasExternal && hasRelationship && (
               <TabsTrigger value="crm" className="text-xs px-3 py-1.5 rounded-t-sm rounded-b-none data-[state=active]:border-b-2 data-[state=active]:border-primary">CRM</TabsTrigger>
             )}
@@ -755,6 +759,13 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
               </DetailSection>
             )}
           </TabsContent>
+
+          {/* ── TAB: Ficha Creativa ─────────────────────────────────────── */}
+          {hasInternal && (
+            <TabsContent value="ficha-creativa" className="flex-1 overflow-y-auto px-6 py-4 mt-0">
+              <CreativeCardForm userId={member.id} onSaved={onUpdate} />
+            </TabsContent>
+          )}
 
           {/* ── TAB: CRM ─────────────────────────────────────────────────── */}
           {hasExternal && hasRelationship && (

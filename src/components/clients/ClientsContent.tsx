@@ -17,6 +17,7 @@ import { AssignStrategistsDialog } from "@/components/clients/AssignStrategistsD
 import { ClientCard } from "@/components/clients/ClientCard";
 import { useClientPipelineRuns } from "@/hooks/useClientPipelineRuns";
 import { ClientServicesDialog } from "@/components/clients/ClientServicesDialog";
+import { CreatorSelectionDialog } from "@/components/clients/CreatorSelectionDialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -99,6 +100,11 @@ export const ClientsContent = forwardRef<ClientsContentHandle>(function ClientsC
   const [selectedClientForStrategists, setSelectedClientForStrategists] = useState<Client | null>(null);
   const [servicesDialogOpen, setServicesDialogOpen] = useState(false);
   const [selectedClientForServices, setSelectedClientForServices] = useState<Client | null>(null);
+  // Elección de creador: el pipeline se para aquí esperando al equipo.
+  const [creatorSelectionOpen, setCreatorSelectionOpen] = useState(false);
+  const [creatorSelectionClient, setCreatorSelectionClient] = useState<Client | null>(null);
+  const [creatorSelectionRunId, setCreatorSelectionRunId] = useState<string | null>(null);
+  const [yaHayCreadorElegido, setYaHayCreadorElegido] = useState(false);
 
   // Expone la apertura del diálogo "Nueva Empresa" al padre (botón del PageHeader)
   useImperativeHandle(ref, () => ({
@@ -531,6 +537,12 @@ export const ClientsContent = forwardRef<ClientsContentHandle>(function ClientsC
                   setSelectedClientForServices(c);
                   setServicesDialogOpen(true);
                 }}
+                onOpenCreatorSelection={(c, runId, yaHay) => {
+                  setCreatorSelectionClient(c);
+                  setCreatorSelectionRunId(runId);
+                  setYaHayCreadorElegido(yaHay);
+                  setCreatorSelectionOpen(true);
+                }}
               />
             ))}
           </div>
@@ -839,6 +851,24 @@ export const ClientsContent = forwardRef<ClientsContentHandle>(function ClientsC
           clientId={selectedClientForServices.id}
           clientName={selectedClientForServices.name}
           onSuccess={fetchClients}
+        />
+      )}
+
+      {/* Elegir (o cambiar) el creador que va a grabar */}
+      {creatorSelectionClient && creatorSelectionRunId && (
+        <CreatorSelectionDialog
+          open={creatorSelectionOpen}
+          onOpenChange={(open) => {
+            setCreatorSelectionOpen(open);
+            if (!open) {
+              setCreatorSelectionClient(null);
+              setCreatorSelectionRunId(null);
+            }
+          }}
+          runId={creatorSelectionRunId}
+          clientName={creatorSelectionClient.name}
+          yaHayCreadorElegido={yaHayCreadorElegido}
+          onDone={fetchClients}
         />
       )}
     </>

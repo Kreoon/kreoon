@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Video, Calendar, Trash2, Users, Medal, UserCog, Lightbulb, Star, FolderKanban } from "lucide-react";
+import { Building2, Video, Calendar, Trash2, Users, Medal, UserCog, Lightbulb, Star, FolderKanban, UserCheck, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +47,16 @@ interface AssignedStrategist {
 
 import { ClientPipelineBadge, type PipelineStage, type PipelineStageStatus } from "@/components/clients/ClientPipelineBadge";
 
+/** Estado del pipeline autónomo que necesita la tarjeta, incluido lo que hace
+ *  falta para la etapa "creadores" (quién graba). */
+export interface ClientCardPipelineInfo {
+  id: string;
+  stage: PipelineStage;
+  stage_status: PipelineStageStatus;
+  intentos_totales?: number;
+  selected_creator_ids: string[];
+}
+
 interface ClientCardProps {
   client: Client;
   isAdmin: boolean;
@@ -55,14 +65,11 @@ interface ClientCardProps {
   onOpenUsers: (client: Client) => void;
   onOpenStrategists: (client: Client) => void;
   onOpenServices: (client: Client) => void;
-  /** Estado del pipeline autónomo. Si no llega, la tarjeta muestra "Sin iniciar".
-   *  `intentos_totales` son las regeneraciones acumuladas: como el cliente puede
-   *  pedir cambios sin tope, el distintivo lo destaca al pasar de 3. */
-  pipeline?: {
-    stage: PipelineStage;
-    stage_status: PipelineStageStatus;
-    intentos_totales?: number;
-  } | null;
+  /** Abre el diálogo de "quién graba". `yaHayCreadorElegido` le dice al diálogo
+   *  si debe comportarse como primera confirmación o como cambio de creador. */
+  onOpenCreatorSelection: (client: Client, runId: string, yaHayCreadorElegido: boolean) => void;
+  /** Estado del pipeline autónomo. Si no llega, la tarjeta muestra "Sin iniciar". */
+  pipeline?: ClientCardPipelineInfo | null;
 }
 
 export function ClientCard({
@@ -74,6 +81,7 @@ export function ClientCard({
   onOpenUsers,
   onOpenStrategists,
   onOpenServices,
+  onOpenCreatorSelection,
 }: ClientCardProps) {
   const [strategists, setStrategists] = useState<AssignedStrategist[]>([]);
 
@@ -113,13 +121,20 @@ if (!error && data?.length) {
     return format(new Date(date), "d MMM yyyy", { locale: es });
   };
 
+  // La etapa "creadores" la resuelve el equipo: mientras espera, la pelota es
+  // nuestra y hay que dejarlo clarísimo con un botón, no un badge pasivo.
+  const esperandoEquipoElegirCreador = pipeline?.stage === "creadores" && pipeline.stage_status === "awaiting_team";
+  // Ya se eligió a alguien y el proceso siguió: se puede cambiar de creador
+  // más adelante (se ofrece siempre que exista una elección previa).
+  const puedeCambiarCreador = (pipeline?.selected_creator_ids?.length ?? 0) > 0 && !esperandoEquipoElegirCreador;
+
   return (
-    <div 
+    <div
       onClick={() => onSelect(client)}
       className={cn(
         "group rounded-sm border p-4 transition-all duration-200 hover:shadow-lg cursor-pointer flex flex-col h-full",
-        client.is_internal_brand 
-          ? "border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:border-amber-500" 
+        client.is_internal_brand
+          ? "border-amber-500/50 bg-gradient-to-br from-amber-500/10 to-amber-600/5 hover:border-amber-500"
           : "border-border bg-card hover:border-primary/20"
       )}
     >
@@ -127,8 +142,8 @@ if (!error && data?.length) {
       <div className="flex items-start gap-3 mb-3">
         {/* Logo */}
         {client.logo_url ? (
-          <img 
-            src={client.logo_url} 
+          <img
+            src={client.logo_url}
             alt={client.name}
             className={cn(
               "h-12 w-12 rounded-sm object-cover ring-1 shrink-0",
@@ -138,8 +153,8 @@ if (!error && data?.length) {
         ) : (
           <div className={cn(
             "h-12 w-12 rounded-sm flex items-center justify-center ring-1 shrink-0",
-            client.is_internal_brand 
-              ? "bg-amber-500/20 ring-amber-500/50" 
+            client.is_internal_brand
+              ? "bg-amber-500/20 ring-amber-500/50"
               : "bg-primary/10 ring-border"
           )}>
             {client.is_internal_brand ? (
@@ -177,8 +192,8 @@ if (!error && data?.length) {
         {isAdmin && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="icon"
                 className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 onClick={(e) => e.stopPropagation()}
@@ -190,7 +205,7 @@ if (!error && data?.length) {
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Eliminar a {client.name}?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Esta acción eliminará permanentemente este cliente. 
+                  Esta acción eliminará permanentemente este cliente.
                   Asegúrate de que no tenga proyectos activos asociados.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -207,6 +222,21 @@ if (!error && data?.length) {
           </AlertDialog>
         )}
       </div>
+
+      {/* Elegir creador: la pelota la tiene el equipo, no el cliente */}
+      {esperandoEquipoElegirCreador && pipeline && (
+        <Button
+          size="sm"
+          className="w-full mb-3 gap-1.5 bg-violet-600 hover:bg-violet-700 text-white"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenCreatorSelection(client, pipeline.id, false);
+          }}
+        >
+          <UserCheck className="h-4 w-4" />
+          Elegir creador
+        </Button>
+      )}
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-2 mb-3 min-w-0">
@@ -234,7 +264,7 @@ if (!error && data?.length) {
       </div>
 
       {/* Strategists Section - visible to all */}
-      <div 
+      <div
         className="mb-3 p-2.5 rounded-sm border border-dashed border-border hover:border-primary/30 hover:bg-primary/5 transition-colors cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
@@ -250,7 +280,7 @@ if (!error && data?.length) {
             {strategists.length}
           </Badge>
         </div>
-        
+
         {strategists.length > 0 ? (
           <div className="flex items-center gap-1">
             <TooltipProvider>
@@ -296,8 +326,8 @@ if (!error && data?.length) {
 
       {/* Action Badges */}
       <div className="flex items-center gap-1.5 flex-wrap mt-auto">
-        <Badge 
-          variant="outline" 
+        <Badge
+          variant="outline"
           className="text-[10px] cursor-pointer hover:bg-primary/10 px-2 py-0.5"
           onClick={(e) => {
             e.stopPropagation();
@@ -307,8 +337,8 @@ if (!error && data?.length) {
           <Users className="h-3 w-3 mr-1" />
           Usuarios
         </Badge>
-        <Badge 
-          variant="outline" 
+        <Badge
+          variant="outline"
           className="text-[10px] cursor-pointer hover:bg-primary/10 border-primary/30 px-2 py-0.5"
           onClick={(e) => {
             e.stopPropagation();
@@ -318,6 +348,19 @@ if (!error && data?.length) {
           <Lightbulb className="h-3 w-3 mr-1" />
           Servicios
         </Badge>
+        {puedeCambiarCreador && pipeline && (
+          <Badge
+            variant="outline"
+            className="text-[10px] cursor-pointer hover:bg-primary/10 px-2 py-0.5"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenCreatorSelection(client, pipeline.id, true);
+            }}
+          >
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Cambiar de creador
+          </Badge>
+        )}
       </div>
 
       {/* Footer: Date */}

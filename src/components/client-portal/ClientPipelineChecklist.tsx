@@ -17,15 +17,36 @@ import { ScriptsList } from './ScriptsList';
 import { ProductionSummary } from './ProductionSummary';
 import { OnboardingSheet, type OnboardingSheetModo } from './OnboardingSheet';
 import { DocumentosUploader } from './DocumentosUploader';
-import { dnaToSections, strategyToSections } from './plainLanguage';
+import { CompetitorsTable } from './CompetitorsTable';
+import { WinningAdsList } from './WinningAdsList';
+import { NicheInsightsContent } from './NicheInsightsContent';
+import {
+  dnaToSections,
+  strategyToSections,
+  researchWorkingText,
+  researchProgressPercent,
+} from './plainLanguage';
 
 /**
  * La pantalla principal del portal del cliente: un checklist vertical de
- * cinco pasos. El cliente solo tiene dos decisiones posibles en cada paso —
- * aprobar o pedir un cambio — y nunca ve una palabra de jerga interna.
+ * siete pasos. El cliente solo tiene dos decisiones posibles en cada paso
+ * que se lo pide — aprobar o pedir un cambio — y nunca ve una palabra de
+ * jerga interna.
  */
 
-const STAGE_ORDER: PipelineStage[] = ['onboarding', 'adn', 'estrategia', 'guiones', 'produccion'];
+const STAGE_ORDER: PipelineStage[] = [
+  'onboarding',
+  'adn',
+  'mercado',
+  'estrategia',
+  // 'creadores' no tiene tarjeta propia todavía (la elige el equipo, no el
+  // cliente) pero cuenta en el orden: sin esto, mientras el run está en
+  // 'creadores' las tarjetas de guiones/producción quedarían mal marcadas
+  // como "locked" en vez de reconocer que la estrategia ya se aprobó.
+  'creadores',
+  'guiones',
+  'produccion',
+];
 
 /** Traduce el estado técnico de la etapa al estado visual de la tarjeta. */
 function toStepState(status: PipelineStageStatus): StepState {
@@ -35,6 +56,11 @@ function toStepState(status: PipelineStageStatus): StepState {
       return 'working';
     case 'awaiting_client':
       return 'ready';
+    // La etapa de creadores la resuelve el equipo, no el cliente. No hay
+    // tarjeta que la muestre todavía, pero si el run cae aquí se lee como
+    // "seguimos trabajando", nunca como error.
+    case 'awaiting_team':
+      return 'working';
     case 'approved':
       return 'done';
     case 'error':
@@ -63,7 +89,7 @@ function attentionLabel(status?: PipelineStageStatus): string | undefined {
 interface ClientPipelineChecklistProps {
   clientId: string | null;
   clientName?: string;
-  /** Contenido del cliente ya cargado por el dashboard (paso 5, solo lectura). */
+  /** Contenido del cliente ya cargado por el dashboard (paso 7, solo lectura). */
   content: Content[];
   /** Navegación a las otras vistas del portal que se conservan. */
   onGoToTab?: (tab: string) => void;
@@ -82,6 +108,7 @@ export function ClientPipelineChecklist({
     dnaData,
     product,
     researchProgress,
+    researchRun,
     scripts,
     organizationId,
     loading,
@@ -101,8 +128,8 @@ export function ClientPipelineChecklist({
   const documentos = useClientDocuments(clientId, organizationId);
 
   // Qué se está viendo / cambiando (null = nada abierto)
-  const [reviewing, setReviewing] = useState<'adn' | 'estrategia' | null>(null);
-  const [changing, setChanging] = useState<'adn' | 'estrategia' | null>(null);
+  const [reviewing, setReviewing] = useState<'adn' | 'mercado' | 'estrategia' | null>(null);
+  const [changing, setChanging] = useState<'adn' | 'mercado' | 'estrategia' | null>(null);
   // Panel lateral para llenar el formulario de inicio (null = cerrado)
   const [onboardingSheetModo, setOnboardingSheetModo] = useState<OnboardingSheetModo | null>(null);
 
@@ -120,6 +147,12 @@ export function ClientPipelineChecklist({
   };
 
   const adnState = stateOf('adn');
+  const mercadoState = stateOf('mercado');
+  // "Lo que funciona en tu nicho" es solo lectura: no tiene su propia
+  // aprobación, así que en cuanto la investigación queda lista para que el
+  // cliente la revise, sus datos ya están ahí para mostrarse (sin esperar a
+  // que apruebe la tarjeta de mercado).
+  const nicheState: StepState = mercadoState === 'ready' ? 'done' : mercadoState;
   const strategyState = stateOf('estrategia');
   const scriptsState = stateOf('guiones');
   const productionState = stateOf('produccion');
@@ -204,7 +237,7 @@ export function ClientPipelineChecklist({
     }
   };
 
-  const handleApprove = async (stage: 'adn' | 'estrategia') => {
+  const handleApprove = async (stage: 'adn' | 'mercado' | 'estrategia') => {
     try {
       await approve(stage);
       setReviewing(null);
@@ -278,6 +311,7 @@ export function ClientPipelineChecklist({
   }
 
   const pendingScripts = scripts.filter(s => s.status !== 'script_approved');
+  const mercadoProgreso = mercadoState === 'working' ? researchProgressPercent(researchRun) : null;
 
   return (
     <div className="max-w-2xl mx-auto w-full">
@@ -419,9 +453,94 @@ export function ClientPipelineChecklist({
         }
       />
 
-      {/* ── 3. Tu estrategia ──────────────────────────────────────── */}
+      {/* ── 3. Tu mercado y competencia ───────────────────────────── */}
       <StepCard
         number={3}
+        title="Tu mercado y competencia"
+        description={
+          mercadoState === 'done'
+            ? 'Aprobado. Así vimos a tu competencia.'
+            : mercadoState === 'ready'
+              ? 'Mira a tu competencia y dinos si la ves igual.'
+              : mercadoState === 'working'
+                ? run?.stage_status === 'changes_requested'
+                  ? 'Estamos revisando lo que nos pediste.'
+                  : 'Estamos investigando tu mercado y tu competencia.'
+                : mercadoState === 'attention'
+                  ? attentionText(run?.stage_status)
+                  : 'Empieza cuando apruebes cómo entendimos tu marca.'
+        }
+        state={mercadoState}
+        onRetry={() => handleReintentar('mercado')}
+        retrying={acting}
+        stateLabel={
+          mercadoState === 'working' && run?.stage_status === 'changes_requested'
+            ? 'Haciendo tus cambios'
+            : mercadoState === 'attention'
+              ? attentionLabel(run?.stage_status)
+              : undefined
+        }
+        primaryAction={
+          mercadoState === 'ready' ? (
+            <Button className="w-full sm:w-auto" onClick={() => setReviewing('mercado')}>
+              Ver y aprobar
+            </Button>
+          ) : mercadoState === 'done' ? (
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto"
+              onClick={() => setReviewing('mercado')}
+            >
+              Ver
+            </Button>
+          ) : undefined
+        }
+        secondaryAction={
+          mercadoState === 'ready' ? (
+            <Button
+              variant="ghost"
+              className="w-full sm:w-auto text-muted-foreground"
+              onClick={() => setChanging('mercado')}
+            >
+              Pedir un cambio
+            </Button>
+          ) : undefined
+        }
+      >
+        {/* Progreso real de la investigación (research_runs.stage.fase) */}
+        {mercadoState === 'working' && mercadoProgreso !== null ? (
+          <div className="mt-3">
+            <Progress value={mercadoProgreso} className="h-1.5" />
+            <p className="mt-2 text-xs text-muted-foreground">{researchWorkingText(researchRun)}</p>
+          </div>
+        ) : null}
+      </StepCard>
+
+      {/* ── 4. Lo que funciona en tu nicho (solo lectura) ─────────── */}
+      <StepCard
+        number={4}
+        title="Lo que funciona en tu nicho"
+        description={
+          nicheState === 'done'
+            ? 'Esto es lo que más está funcionando en tu nicho ahora mismo.'
+            : nicheState === 'working'
+              ? 'Estamos viendo qué está funcionando en tu nicho.'
+              : nicheState === 'attention'
+                ? attentionText(run?.stage_status)
+                : 'Aparece junto con tu mercado y tu competencia.'
+        }
+        state={nicheState}
+      >
+        {nicheState !== 'locked' && (
+          <div className="mt-3">
+            <NicheInsightsContent adnViral={researchRun?.result?.adn_viral} />
+          </div>
+        )}
+      </StepCard>
+
+      {/* ── 5. Tu estrategia ──────────────────────────────────────── */}
+      <StepCard
+        number={5}
         title="Tu estrategia"
         description={
           strategyState === 'done'
@@ -434,7 +553,7 @@ export function ClientPipelineChecklist({
                   : 'Estamos investigando tu mercado y armando el plan.'
                 : strategyState === 'attention'
                   ? attentionText(run?.stage_status)
-                  : 'Empieza cuando apruebes cómo entendimos tu marca.'
+                  : 'Empieza cuando apruebes tu mercado y tu competencia.'
         }
         state={strategyState}
         onRetry={() => handleReintentar('estrategia')}
@@ -488,9 +607,9 @@ export function ClientPipelineChecklist({
         ) : null}
       </StepCard>
 
-      {/* ── 4. Tus guiones ────────────────────────────────────────── */}
+      {/* ── 6. Tus guiones ────────────────────────────────────────── */}
       <StepCard
-        number={4}
+        number={6}
         title="Tus guiones"
         description={
           scriptsState === 'done'
@@ -505,7 +624,7 @@ export function ClientPipelineChecklist({
                   : 'Estamos escribiendo tus guiones.'
                 : scriptsState === 'attention'
                   ? attentionText(run?.stage_status)
-                  : 'Empiezan cuando apruebes tu estrategia.'
+                  : 'Empiezan cuando apruebes tu estrategia y elijamos tu creador.'
         }
         state={scriptsState}
         onRetry={() => handleReintentar('guiones')}
@@ -528,9 +647,9 @@ export function ClientPipelineChecklist({
         )}
       </StepCard>
 
-      {/* ── 5. Tus videos (solo lectura) ──────────────────────────── */}
+      {/* ── 7. Tus videos (solo lectura) ──────────────────────────── */}
       <StepCard
-        number={5}
+        number={7}
         title="Tus videos"
         description={
           productionState === 'locked'
@@ -591,6 +710,32 @@ export function ClientPipelineChecklist({
       />
 
       <ReviewDialog
+        open={reviewing === 'mercado'}
+        onOpenChange={open => !open && setReviewing(null)}
+        title="Tu mercado y tu competencia"
+        subtitle={
+          mercadoState === 'done'
+            ? 'Esto es lo que aprobaste sobre tu competencia.'
+            : 'Así vimos a tu competencia real. Dinos si la ves igual.'
+        }
+        showActions={mercadoState === 'ready'}
+        submitting={acting}
+        onApprove={() => handleApprove('mercado')}
+        onRequestChanges={() => setChanging('mercado')}
+      >
+        <div className="space-y-6">
+          <section>
+            <h4 className="text-base font-semibold mb-2">Tu competencia</h4>
+            <CompetitorsTable competidores={researchRun?.result?.adn_mercado?.competidores} />
+          </section>
+          <section>
+            <h4 className="text-base font-semibold mb-2">Los anuncios que están funcionando</h4>
+            <WinningAdsList ads={researchRun?.result?.ads} />
+          </section>
+        </div>
+      </ReviewDialog>
+
+      <ReviewDialog
         open={reviewing === 'estrategia'}
         onOpenChange={open => !open && setReviewing(null)}
         title="Tu estrategia"
@@ -609,7 +754,13 @@ export function ClientPipelineChecklist({
       <RequestChangesDialog
         open={!!changing}
         onOpenChange={open => !open && setChanging(null)}
-        what={changing === 'adn' ? 'Así entendimos tu marca' : 'Tu estrategia'}
+        what={
+          changing === 'adn'
+            ? 'Así entendimos tu marca'
+            : changing === 'mercado'
+              ? 'Tu mercado y tu competencia'
+              : 'Tu estrategia'
+        }
         submitting={acting}
         onSubmit={handleRequestChanges}
       />

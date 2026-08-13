@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Loader2, Clock, MessageSquareWarning, CheckCircle2, AlertTriangle, Coins, RefreshCw } from "lucide-react";
+import { Loader2, Clock, MessageSquareWarning, CheckCircle2, AlertTriangle, Coins, RefreshCw, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -10,10 +10,20 @@ import { cn } from "@/lib/utils";
  * en dos palabras si algo le toca a él, al cliente, o a nadie.
  */
 
-export type PipelineStage = "onboarding" | "adn" | "estrategia" | "guiones" | "produccion";
+export type PipelineStage =
+  | "onboarding"
+  | "adn"
+  | "mercado"
+  | "estrategia"
+  | "creadores"
+  | "guiones"
+  | "produccion";
 export type PipelineStageStatus =
   | "generating"
   | "awaiting_client"
+  /** La etapa 'creadores' la resuelve el equipo (propone el sistema,
+   *  confirma un humano), nunca el cliente. */
+  | "awaiting_team"
   | "changes_requested"
   | "approved"
   | "error"
@@ -43,7 +53,9 @@ const UMBRAL_INTENTOS = 4;
 const STAGE_LABEL: Record<PipelineStage, string> = {
   onboarding: "Formulario",
   adn: "Marca",
+  mercado: "Mercado",
   estrategia: "Estrategia",
+  creadores: "Creador",
   guiones: "Guiones",
   produccion: "Producción",
 };
@@ -62,6 +74,11 @@ const STATUS_CONFIG: Record<
     texto: "espera al cliente",
     icono: Clock,
     clase: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  },
+  awaiting_team: {
+    texto: "espera al equipo",
+    icono: Users,
+    clase: "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
   },
   changes_requested: {
     texto: "pidió cambios",

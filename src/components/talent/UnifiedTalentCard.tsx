@@ -2,7 +2,7 @@ import type { MouseEvent } from 'react';
 import {
   User, Video, Star, Zap, Clock, TrendingUp, AlertTriangle,
   Crown, Shield, Sparkles, Heart, Ban, Users, MessageCircle, Handshake,
-  DollarSign, Activity, AlertCircle, ShieldOff, ShieldCheck,
+  DollarSign, Activity, AlertCircle, ShieldOff, ShieldCheck, IdCard,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -23,6 +23,8 @@ interface UnifiedTalentCardProps {
   isAdmin?: boolean;
   isSelected?: boolean;
   activityMetrics?: TalentActivityMetrics;
+  /** Completitud (0-100) de la ficha creativa. undefined = todavía no se consultó. */
+  creativeCompletion?: number;
 }
 
 const ROLE_STYLES: Record<string, { label: string; className: string }> = {
@@ -67,7 +69,7 @@ function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarketplacePause, isAdmin, isSelected, activityMetrics }: UnifiedTalentCardProps) {
+export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarketplacePause, isAdmin, isSelected, activityMetrics, creativeCompletion }: UnifiedTalentCardProps) {
   const hasInternal = member.source !== 'external';
   const hasExternal = member.source !== 'internal';
 
@@ -176,6 +178,22 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarke
                   </span>
                 </div>
                 <Progress value={overallScore} className="h-1" />
+              </div>
+            )}
+
+            {/* Ficha creativa */}
+            {creativeCompletion != null && (
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between text-[10px]">
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <IdCard className="h-2.5 w-2.5" />
+                    Ficha creativa
+                  </span>
+                  <span className={cn('font-medium', creativeCompletion >= 70 ? 'text-success' : creativeCompletion >= 30 ? 'text-warning' : 'text-destructive')}>
+                    {creativeCompletion}%
+                  </span>
+                </div>
+                <Progress value={creativeCompletion} className="h-1" />
               </div>
             )}
 

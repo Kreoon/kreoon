@@ -16,6 +16,9 @@ export interface ClientPipelineRunSummary {
    *  este número es lo único que delata a quien insiste mucho: cada intento
    *  gasta tokens de IA de la organización. */
   intentos_totales: number;
+  /** Creadores ya confirmados por el equipo en la etapa "creadores". Vacío
+   *  si todavía no se ha elegido a nadie. */
+  selected_creator_ids: string[];
 }
 
 /**
@@ -36,7 +39,9 @@ export function useClientPipelineRuns(organizationId: string | null | undefined)
     queryFn: async (): Promise<Record<string, ClientPipelineRunSummary>> => {
       const { data, error } = await supabase
         .from("client_pipeline_runs")
-        .select("id, client_id, stage, stage_status, product_id, last_feedback, updated_at, stage_attempts")
+        .select(
+          "id, client_id, stage, stage_status, product_id, last_feedback, updated_at, stage_attempts, selected_creator_ids",
+        )
         .eq("organization_id", organizationId!);
 
       if (error) throw error;
@@ -46,6 +51,7 @@ export function useClientPipelineRuns(organizationId: string | null | undefined)
         const intentos = fila.stage_attempts ?? {};
         porCliente[fila.client_id] = {
           ...fila,
+          selected_creator_ids: fila.selected_creator_ids ?? [],
           intentos_totales: Object.values(intentos).reduce(
             (suma, n) => suma + (Number(n) || 0),
             0,

@@ -15,7 +15,12 @@
 export type Json = Record<string, any>;
 
 const APIFY_API = "https://api.apify.com/v2";
-const APIFY_TOKEN = Deno.env.get("APIFY_TOKEN") ?? "";
+
+// El proyecto ya tenía el token de Apify guardado como `APIFY_API_KEY` desde
+// mayo. Se aceptan los dos nombres en vez de crear un secret duplicado: dos
+// secrets para la misma credencial es exactamente cómo se rompió la subida de
+// video en toda la plataforma con BUNNY_LIBRARY_ID.
+const APIFY_TOKEN = Deno.env.get("APIFY_TOKEN") ?? Deno.env.get("APIFY_API_KEY") ?? "";
 
 /** Bloques de lectura del dataset. Leer de golpe dispara el rate limit. */
 const BLOQUE_DATASET = 15;
@@ -32,6 +37,9 @@ export const ACTORES = {
   tt_search: "clockworks~tiktok-scraper",
   fb_ads: "apify~facebook-ads-scraper",
   ig_transcripts: "apple_yang~instagram-transcripts-scraper",
+  // Mismo actor que la búsqueda, pero con el add-on de transcripción activado
+  // sobre URLs concretas del top.
+  tt_transcripts: "clockworks~tiktok-scraper",
 } as const;
 
 export type TipoJob = keyof typeof ACTORES | "discovery" | "rank" | "synthesis";
@@ -43,8 +51,16 @@ export type TipoJob = keyof typeof ACTORES | "discovery" | "rank" | "synthesis";
  * necesitamos vive dentro.
  */
 export const CAMPOS: Record<string, string> = {
+  // `latestPosts` viene GRATIS en la respuesta del perfil: 12 publicaciones con
+  // caption, likes, comentarios, vistas, fecha y si está fijada. Verificado con
+  // una corrida real el 2026-08-13. Pedirlas aquí significa que aunque el
+  // scrape de posts falle, la cuenta ya entra al ranking con algo.
+  //
+  // OJO: `relatedProfiles` YA NO lo devuelve este actor (la spec lo daba por
+  // sentado como semilla del descubrimiento). Se sigue leyendo si algún día
+  // vuelve, pero la etapa B no depende de él.
   ig_profile:
-    "username,fullName,biography,followersCount,followsCount,postsCount,verified,externalUrl,businessCategoryName,relatedProfiles,profilePicUrlHD",
+    "username,fullName,biography,followersCount,followsCount,postsCount,verified,externalUrl,businessCategoryName,relatedProfiles,profilePicUrlHD,latestPosts",
   ig_posts:
     "id,shortCode,url,type,caption,hashtags,commentsCount,likesCount,videoViewCount,videoPlayCount,videoDuration,timestamp,isPinned,ownerUsername",
   tiktok:
@@ -55,6 +71,11 @@ export const CAMPOS: Record<string, string> = {
     "adArchiveId,pageName,pageId,startDate,startDateFormatted,endDate,isActive,publisherPlatform,snapshot,adUrl,totalActiveTime",
   ig_transcripts:
     "url,videoUrl,transcript,text,segments,code,error,shortCode",
+  // El nombre del campo de salida del add-on de transcripción de TikTok no
+  // está documentado en el schema de entrada, así que se pide todo lo que
+  // puede contenerlo y la cosecha prueba en orden.
+  tt_transcripts:
+    "webVideoUrl,text,transcript,subtitles,videoMeta,submittedVideoUrl",
 };
 
 // ---------------------------------------------------------------------------
@@ -121,6 +142,23 @@ export async function leerRun(runId: string): Promise<RunApify> {
  * cuando el run terminó en FAILED: un run caído casi siempre deja dataset
  * parcial válido, y rescatarlo es gratis frente a re-scrapear.
  */
+/**
+ * Los actores de Instagram no fallan cuando no pueden leer una cuenta: el run
+ * termina en SUCCEEDED y meten en el dataset un item de error
+ * (`{error:'no_items', errorDescription:'Empty or private data...'}`). Si eso
+ * se cuenta como dato, el job queda "done" con cero información real y el
+ * informe miente. Visto en la primera corrida real (2026-08-13).
+ */
+export function esItemDeError(item: Json): boolean {
+  return typeof item?.error === "string" && item.error.length > 0 && !item.id && !item.username;
+}
+
+export function motivoDeError(items: Json[]): string {
+  const primero = items.find(esItemDeError);
+  if (!primero) return "sin items";
+  return `${primero.error}: ${String(primero.errorDescription ?? "").slice(0, 160)}`;
+}
+
 export async function leerDataset(
   datasetId: string,
   fields: string,
@@ -130,7 +168,9 @@ export async function leerDataset(
   for (let offset = 0; offset < maxItems; offset += BLOQUE_DATASET) {
     const url = new URL(`${APIFY_API}/datasets/${datasetId}/items`);
     url.searchParams.set("token", APIFY_TOKEN);
-    if (fields) url.searchParams.set("fields", fields);
+    // `error` y `errorDescription` van SIEMPRE en la proyección: sin ellos, un
+    // item de error llega como objeto vacío y parece un dato más.
+    if (fields) url.searchParams.set("fields", `${fields},error,errorDescription`);
     url.searchParams.set("clean", "true");
     url.searchParams.set("limit", String(Math.min(BLOQUE_DATASET, maxItems - offset)));
     url.searchParams.set("offset", String(offset));

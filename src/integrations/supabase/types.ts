@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       _backup_ai_token_transactions: {
@@ -5029,6 +5004,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ad_generator_products_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ad_generator_products_crm_product_id_fkey"
             columns: ["crm_product_id"]
             isOneToOne: false
@@ -7707,6 +7689,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "client_closings_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "client_closings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -7858,10 +7847,100 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "client_dna_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "client_dna_deleted_by_fkey"
             columns: ["deleted_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_documents: {
+        Row: {
+          alcance: string
+          client_id: string
+          created_at: string
+          error_detalle: string | null
+          estado: string
+          file_name: string
+          file_size: number
+          id: string
+          mime_type: string
+          organization_id: string
+          resumen: string | null
+          storage_path: string
+          texto_extraido: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          alcance?: string
+          client_id: string
+          created_at?: string
+          error_detalle?: string | null
+          estado?: string
+          file_name: string
+          file_size: number
+          id?: string
+          mime_type: string
+          organization_id: string
+          resumen?: string | null
+          storage_path: string
+          texto_extraido?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          alcance?: string
+          client_id?: string
+          created_at?: string
+          error_detalle?: string | null
+          estado?: string
+          file_name?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          organization_id?: string
+          resumen?: string | null
+          storage_path?: string
+          texto_extraido?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -7988,6 +8067,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_onboarding_forms_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -8171,6 +8257,200 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_client_packages_client"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_pipeline_runs: {
+        Row: {
+          adn_approved_at: string | null
+          adn_started_at: string | null
+          client_dna_id: string | null
+          client_id: string
+          creadores_approved_at: string | null
+          creadores_started_at: string | null
+          created_at: string
+          error_log: Json
+          estrategia_approved_at: string | null
+          estrategia_started_at: string | null
+          guiones_approved_at: string | null
+          guiones_started_at: string | null
+          id: string
+          last_feedback: string | null
+          mercado_approved_at: string | null
+          mercado_started_at: string | null
+          onboarding_completed_at: string | null
+          onboarding_form_id: string | null
+          organization_id: string
+          product_dna_id: string | null
+          product_id: string | null
+          research_run_id: string | null
+          scripts_target: number
+          selected_creator_ids: string[]
+          stage: string
+          stage_attempts: Json
+          stage_status: string
+          updated_at: string
+        }
+        Insert: {
+          adn_approved_at?: string | null
+          adn_started_at?: string | null
+          client_dna_id?: string | null
+          client_id: string
+          creadores_approved_at?: string | null
+          creadores_started_at?: string | null
+          created_at?: string
+          error_log?: Json
+          estrategia_approved_at?: string | null
+          estrategia_started_at?: string | null
+          guiones_approved_at?: string | null
+          guiones_started_at?: string | null
+          id?: string
+          last_feedback?: string | null
+          mercado_approved_at?: string | null
+          mercado_started_at?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_form_id?: string | null
+          organization_id: string
+          product_dna_id?: string | null
+          product_id?: string | null
+          research_run_id?: string | null
+          scripts_target?: number
+          selected_creator_ids?: string[]
+          stage?: string
+          stage_attempts?: Json
+          stage_status?: string
+          updated_at?: string
+        }
+        Update: {
+          adn_approved_at?: string | null
+          adn_started_at?: string | null
+          client_dna_id?: string | null
+          client_id?: string
+          creadores_approved_at?: string | null
+          creadores_started_at?: string | null
+          created_at?: string
+          error_log?: Json
+          estrategia_approved_at?: string | null
+          estrategia_started_at?: string | null
+          guiones_approved_at?: string | null
+          guiones_started_at?: string | null
+          id?: string
+          last_feedback?: string | null
+          mercado_approved_at?: string | null
+          mercado_started_at?: string | null
+          onboarding_completed_at?: string | null
+          onboarding_form_id?: string | null
+          organization_id?: string
+          product_dna_id?: string | null
+          product_id?: string | null
+          research_run_id?: string | null
+          scripts_target?: number
+          selected_creator_ids?: string[]
+          stage?: string
+          stage_attempts?: Json
+          stage_status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_pipeline_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_onboarding_form_id_fkey"
+            columns: ["onboarding_form_id"]
+            isOneToOne: false
+            referencedRelation: "client_onboarding_forms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "client_pipeline_runs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_pipeline_stage_events: {
+        Row: {
+          actor: string
+          actor_id: string | null
+          created_at: string
+          event: string
+          feedback: string | null
+          id: string
+          payload: Json
+          run_id: string
+          stage: string
+        }
+        Insert: {
+          actor?: string
+          actor_id?: string | null
+          created_at?: string
+          event: string
+          feedback?: string | null
+          id?: string
+          payload?: Json
+          run_id: string
+          stage: string
+        }
+        Update: {
+          actor?: string
+          actor_id?: string | null
+          created_at?: string
+          event?: string
+          feedback?: string | null
+          id?: string
+          payload?: Json
+          run_id?: string
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_pipeline_stage_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "client_pipeline_runs"
+            referencedColumns: ["id"]
+          },
         ]
       }
       client_strategists: {
@@ -8220,6 +8500,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_strategists_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -9104,6 +9391,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "content_client_package_id_fkey"
             columns: ["client_package_id"]
             isOneToOne: false
@@ -9524,6 +9818,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_licenses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -10005,6 +10306,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      creator_creative_profile: {
+        Row: {
+          ciudad: string | null
+          completada_por: string | null
+          completitud: number
+          created_at: string
+          escenarios: string[]
+          estilo_energia: string | null
+          formatos_fuertes: string[]
+          frases_ejemplo: string[]
+          genero: string | null
+          muletillas: string[]
+          nichos_afines: string[]
+          pais_acento: string | null
+          rango_edad: string | null
+          registro: string | null
+          restricciones: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ciudad?: string | null
+          completada_por?: string | null
+          completitud?: number
+          created_at?: string
+          escenarios?: string[]
+          estilo_energia?: string | null
+          formatos_fuertes?: string[]
+          frases_ejemplo?: string[]
+          genero?: string | null
+          muletillas?: string[]
+          nichos_afines?: string[]
+          pais_acento?: string | null
+          rango_edad?: string | null
+          registro?: string | null
+          restricciones?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ciudad?: string | null
+          completada_por?: string | null
+          completitud?: number
+          created_at?: string
+          escenarios?: string[]
+          estilo_energia?: string | null
+          formatos_fuertes?: string[]
+          frases_ejemplo?: string[]
+          genero?: string | null
+          muletillas?: string[]
+          nichos_afines?: string[]
+          pais_acento?: string | null
+          rango_edad?: string | null
+          registro?: string | null
+          restricciones?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       creator_notification_preferences: {
         Row: {
@@ -12023,6 +12384,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fillmaker_services_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -17516,6 +17884,53 @@ export type Database = {
           },
         ]
       }
+      niche_intelligence: {
+        Row: {
+          adn_viral: Json
+          country: string
+          created_at: string
+          discovered_competitors: Json
+          id: string
+          market_ads: Json
+          niche: string
+          refreshed_at: string
+          source_run_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          adn_viral?: Json
+          country: string
+          created_at?: string
+          discovered_competitors?: Json
+          id?: string
+          market_ads?: Json
+          niche: string
+          refreshed_at?: string
+          source_run_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adn_viral?: Json
+          country?: string
+          created_at?: string
+          discovered_competitors?: Json
+          id?: string
+          market_ads?: Json
+          niche?: string
+          refreshed_at?: string
+          source_run_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "niche_intelligence_source_run_id_fkey"
+            columns: ["source_run_id"]
+            isOneToOne: false
+            referencedRelation: "research_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           channel_email: boolean
@@ -18617,6 +19032,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_client_payments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -21830,6 +22252,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "product_dna_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "product_dna_deleted_by_fkey"
             columns: ["deleted_by"]
             isOneToOne: false
@@ -23920,6 +24349,99 @@ export type Database = {
         }
         Relationships: []
       }
+      research_runs: {
+        Row: {
+          apify_run_ids: Json
+          budget_usd: number
+          client_id: string
+          cost_usd: number
+          country: string | null
+          created_at: string
+          error_log: Json
+          finished_at: string | null
+          id: string
+          niche: string | null
+          organization_id: string
+          pipeline_run_id: string | null
+          result: Json
+          stage: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          apify_run_ids?: Json
+          budget_usd?: number
+          client_id: string
+          cost_usd?: number
+          country?: string | null
+          created_at?: string
+          error_log?: Json
+          finished_at?: string | null
+          id?: string
+          niche?: string | null
+          organization_id: string
+          pipeline_run_id?: string | null
+          result?: Json
+          stage?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          apify_run_ids?: Json
+          budget_usd?: number
+          client_id?: string
+          cost_usd?: number
+          country?: string | null
+          created_at?: string
+          error_log?: Json
+          finished_at?: string | null
+          id?: string
+          niche?: string | null
+          organization_id?: string
+          pipeline_run_id?: string | null
+          result?: Json
+          stage?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "research_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_context"
+            referencedColumns: ["client_id"]
+          },
+          {
+            foreignKeyName: "research_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "research_runs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "research_runs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "research_runs_pipeline_run_id_fkey"
+            columns: ["pipeline_run_id"]
+            isOneToOne: false
+            referencedRelation: "client_pipeline_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       role_legal_gates: {
         Row: {
           created_at: string | null
@@ -24797,6 +25319,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_accounts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -28327,6 +28856,13 @@ export type Database = {
             referencedRelation: "clients"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       mcp_webhooks_safe: {
@@ -28468,6 +29004,60 @@ export type Database = {
           },
         ]
       }
+      public_client_profiles: {
+        Row: {
+          bio: string | null
+          category: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          facebook: string | null
+          id: string | null
+          instagram: string | null
+          is_vip: boolean | null
+          linkedin: string | null
+          logo_url: string | null
+          name: string | null
+          tiktok: string | null
+          username: string | null
+          website: string | null
+        }
+        Insert: {
+          bio?: string | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id?: string | null
+          instagram?: string | null
+          is_vip?: boolean | null
+          linkedin?: string | null
+          logo_url?: string | null
+          name?: string | null
+          tiktok?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Update: {
+          bio?: string | null
+          category?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          facebook?: string | null
+          id?: string | null
+          instagram?: string | null
+          is_vip?: boolean | null
+          linkedin?: string | null
+          logo_url?: string | null
+          name?: string | null
+          tiktok?: string | null
+          username?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       v_duplicate_content: {
         Row: {
           client_id: string | null
@@ -28491,6 +29081,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -28525,6 +29122,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_licenses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "public_client_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -28972,7 +29576,6 @@ export type Database = {
         }[]
       }
       cleanup_expired_preview_tokens: { Args: never; Returns: undefined }
-      cleanup_expired_stories: { Args: never; Returns: undefined }
       cleanup_old_audit_logs: { Args: never; Returns: undefined }
       cleanup_old_kae_events: {
         Args: { retention_days?: number }
@@ -29677,10 +30280,6 @@ export type Database = {
           total_transactions: number
         }[]
       }
-      get_company_followers_count: {
-        Args: { _company_id: string }
-        Returns: number
-      }
       get_consent_bypass_status: {
         Args: { p_user_email: string }
         Returns: Json
@@ -29949,66 +30548,6 @@ export type Database = {
           renewal_rate: number
         }[]
       }
-      get_feed_posts:
-        | {
-            Args: {
-              p_cursor_created_at?: string
-              p_cursor_id?: string
-              p_limit?: number
-              p_niche?: string
-              p_tab?: string
-            }
-            Returns: {
-              author_avatar: string
-              author_name: string
-              author_user_id: string
-              category: string
-              created_at: string
-              is_following_author: boolean
-              is_liked: boolean
-              is_saved: boolean
-              likes_count: number
-              media_type: string
-              media_url: string
-              my_reaction: string
-              post_id: string
-              post_source: string
-              reactions_count: number
-              thumbnail_url: string
-              title: string
-              views_count: number
-            }[]
-          }
-        | {
-            Args: {
-              p_cursor_created_at?: string
-              p_cursor_id?: string
-              p_limit?: number
-              p_niche?: string
-              p_seed?: string
-              p_tab?: string
-            }
-            Returns: {
-              author_avatar: string
-              author_name: string
-              author_user_id: string
-              category: string
-              created_at: string
-              is_following_author: boolean
-              is_liked: boolean
-              is_saved: boolean
-              likes_count: number
-              media_type: string
-              media_url: string
-              my_reaction: string
-              post_id: string
-              post_source: string
-              reactions_count: number
-              thumbnail_url: string
-              title: string
-              views_count: number
-            }[]
-          }
       get_financial_period_summary: {
         Args: {
           p_currency?: string
@@ -31157,7 +31696,6 @@ export type Database = {
       is_device_blocked: { Args: { _device_id: string }; Returns: boolean }
       is_email_blocked: { Args: { _email: string }; Returns: boolean }
       is_following: { Args: { _following_id: string }; Returns: boolean }
-      is_following_company: { Args: { _company_id: string }; Returns: boolean }
       is_ip_blocked: { Args: { _ip: string }; Returns: boolean }
       is_lesson_unlocked_for_user: {
         Args: { p_lesson_id: string; p_user_id?: string }
@@ -31847,7 +32385,6 @@ export type Database = {
         }
         Returns: Json
       }
-      toggle_company_follow: { Args: { _company_id: string }; Returns: boolean }
       toggle_content_like: {
         Args: { content_uuid: string; viewer: string }
         Returns: boolean
@@ -32431,9 +32968,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       ad_account_status: ["active", "paused", "disabled", "pending_review"],

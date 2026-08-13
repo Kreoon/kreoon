@@ -1,23 +1,47 @@
 import { useState } from 'react';
 import { CreatorProfileEditor } from '@/components/settings/CreatorProfileEditor';
+import { CreativeCardForm } from '@/components/settings/CreativeCardForm';
 import { TalentDNAPage } from '@/components/talent-dna';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dna, User, Sparkles } from 'lucide-react';
+import { Dna, User, Sparkles, IdCard } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { useCreatorCreativeProfile } from '@/hooks/useCreatorCreativeProfile';
 
 export default function CreatorProfileSection() {
   const [activeTab, setActiveTab] = useState('profile');
+  const { profile: creativeProfile } = useCreatorCreativeProfile();
 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="bg-card border border-border p-1 rounded-sm mb-6">
+        <TabsList className="bg-card border border-border p-1 rounded-sm mb-6 flex-wrap h-auto">
           <TabsTrigger
             value="profile"
             className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-sm"
           >
             <User className="h-4 w-4" />
             Perfil Manual
+          </TabsTrigger>
+          <TabsTrigger
+            value="creative-card"
+            className="gap-2 data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-sm"
+          >
+            <IdCard className="h-4 w-4" />
+            Ficha Creativa
+            {creativeProfile && (
+              <Badge
+                variant="outline"
+                className={
+                  creativeProfile.completitud >= 70
+                    ? 'ml-1 text-[9px] bg-success/10 text-success border-success/20'
+                    : creativeProfile.completitud > 0
+                    ? 'ml-1 text-[9px] bg-warning/10 text-warning border-warning/20'
+                    : 'ml-1 text-[9px] bg-muted text-muted-foreground border-border'
+                }
+              >
+                {creativeProfile.completitud}%
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="talent-dna"
@@ -34,6 +58,24 @@ export default function CreatorProfileSection() {
 
         <TabsContent value="profile" className="mt-0">
           <CreatorProfileEditor />
+        </TabsContent>
+
+        <TabsContent value="creative-card" className="mt-0">
+          <div className="bg-card border border-border rounded-sm p-6 mb-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-sm bg-gradient-to-br from-primary/20 to-purple-600/20 border border-primary/20">
+                <IdCard className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-bold">Ficha Creativa</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Cuéntanos cómo eres frente a cámara. Con esto tus guiones dejan de ser genéricos
+                  y empiezan a sonar como tú. Te toma 2 minutos y puedes guardar a medias y volver luego.
+                </p>
+              </div>
+            </div>
+          </div>
+          <CreativeCardForm />
         </TabsContent>
 
         <TabsContent value="talent-dna" className="mt-0">

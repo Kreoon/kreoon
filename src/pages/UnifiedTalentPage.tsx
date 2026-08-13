@@ -22,6 +22,7 @@ import { useTrialGuard } from '@/hooks/useTrialGuard';
 import { useUnifiedTalent, useToggleAmbassador, useSetMarketplacePause } from '@/hooks/useUnifiedTalent';
 import { TalentMarketplacePauseDialog } from '@/components/talent/TalentMarketplacePauseDialog';
 import { useTalentActivityMetrics } from '@/hooks/useTalentActivityMetrics';
+import { useCreatorCreativeProfilesCompletion } from '@/hooks/useCreatorCreativeProfile';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { UnifiedTalentCard } from '@/components/talent/UnifiedTalentCard';
 import { TalentProfileModal } from '@/components/talent/TalentProfileModal';
@@ -50,18 +51,23 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: 'todos',     label: 'Todos' },
 ];
 
-type RoleFilter = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos';
+type RoleFilter = 'todos' | 'admins' | 'estrategas' | 'creadores' | 'editores' | 'traffickers' | 'embajadores' | 'externos' | 'ficha_incompleta';
 
 const ROLE_FILTERS: { key: RoleFilter; label: string }[] = [
-  { key: 'todos',       label: 'Todos los roles' },
-  { key: 'creadores',   label: 'Creadores' },
-  { key: 'editores',    label: 'Editores' },
-  { key: 'estrategas',  label: 'Estrategas' },
-  { key: 'traffickers', label: 'Traffickers' },
-  { key: 'admins',      label: 'Admins' },
-  { key: 'embajadores', label: 'Embajadores' },
-  { key: 'externos',    label: 'Externos' },
+  { key: 'todos',            label: 'Todos los roles' },
+  { key: 'creadores',        label: 'Creadores' },
+  { key: 'editores',         label: 'Editores' },
+  { key: 'estrategas',       label: 'Estrategas' },
+  { key: 'traffickers',      label: 'Traffickers' },
+  { key: 'admins',           label: 'Admins' },
+  { key: 'embajadores',      label: 'Embajadores' },
+  { key: 'externos',         label: 'Externos' },
+  { key: 'ficha_incompleta', label: 'Ficha creativa incompleta' },
 ];
+
+// Umbral de negocio: por debajo de esto consideramos que la ficha no aporta
+// suficiente contexto para que los guiones dejen de sonar genéricos. Ajustable.
+const CREATIVE_PROFILE_INCOMPLETE_THRESHOLD = 70;
 
 function formatCurrency(n: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -117,6 +123,13 @@ function TalentoSection() {
   const { data: activityMetrics } = useTalentActivityMetrics(currentOrgId);
 
   const canSeeInternal = isAdmin || isTeamLeader;
+
+  // Completitud de ficha creativa — solo aplica a talento interno (tiene cuenta real)
+  const internalMemberIds = useMemo(
+    () => members.filter(m => m.source !== 'external').map(m => m.id),
+    [members],
+  );
+  const { completionMap: creativeCompletionMap } = useCreatorCreativeProfilesCompletion(internalMemberIds);
 
   const [filter, setFilter] = useState<FilterTab>(canSeeInternal ? 'activos' : 'todos');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('todos');
@@ -193,6 +206,12 @@ function TalentoSection() {
         case 'externos':
           list = list.filter(m => m.source !== 'internal');
           break;
+        case 'ficha_incompleta':
+          list = list.filter(m =>
+            m.source !== 'external' &&
+            (creativeCompletionMap.get(m.id) ?? 0) < CREATIVE_PROFILE_INCOMPLETE_THRESHOLD,
+          );
+          break;
       }
     }
 
@@ -219,7 +238,7 @@ function TalentoSection() {
     }
 
     return list;
-  }, [members, filter, roleFilter, search, canSeeInternal, activityMap, dateRange]);
+  }, [members, filter, roleFilter, search, canSeeInternal, activityMap, dateRange, creativeCompletionMap]);
 
   // Keep selected member in sync with refreshed data
   const activeMember = selectedMember
@@ -434,7 +453,7 @@ function TalentoSection() {
                       <ChevronDown className="h-3 w-3" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuContent align="end" className="w-52">
                     {ROLE_FILTERS.map(r => (
                       <DropdownMenuCheckboxItem
                         key={r.key}
@@ -580,6 +599,7 @@ function TalentoSection() {
                       member={m}
                       onClick={() => setSelectedMember(m)}
                       activityMetrics={activityMap.get(m.id)}
+                      creativeCompletion={m.source !== 'external' ? (creativeCompletionMap.get(m.id) ?? 0) : undefined}
                       onAmbassadorToggle={() =>
                         toggleAmbassador.mutate({
                           userId: m.id,

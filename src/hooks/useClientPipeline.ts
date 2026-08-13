@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import type { OnboardingFormData } from '@/components/client-onboarding/schemas';
+import type { ResearchRun } from '@/types/research';
 
 /**
- * Lee el pipeline autónomo de UN cliente (onboarding → ADN → estrategia →
- * guiones → producción) y expone las acciones que el cliente puede ejecutar:
- * llenar su formulario de inicio, arrancar el proceso, aprobar una etapa o
- * pedir un cambio.
+ * Lee el pipeline autónomo de UN cliente (onboarding → ADN → mercado →
+ * estrategia → creadores → guiones → producción) y expone las acciones que
+ * el cliente puede ejecutar: llenar su formulario de inicio, arrancar el
+ * proceso, aprobar una etapa o pedir un cambio.
  *
  * El cliente lee su propio run gracias a la política RLS
  * "Client can view own pipeline run" (client_users → client_id). Escribir
@@ -88,11 +89,21 @@ const ERROR_MESSAGES: Record<string, string> = {
   'content_id no pertenece a este run': 'Ese guion no es de este proceso.',
 };
 
-export type PipelineStage = 'onboarding' | 'adn' | 'estrategia' | 'guiones' | 'produccion';
+export type PipelineStage =
+  | 'onboarding'
+  | 'adn'
+  | 'mercado'
+  | 'estrategia'
+  | 'creadores'
+  | 'guiones'
+  | 'produccion';
 
 export type PipelineStageStatus =
   | 'generating'
   | 'awaiting_client'
+  /** La etapa de creadores la resuelve el equipo, no el cliente: el portal
+   *  no le pide nada al cliente mientras esté en este estado. */
+  | 'awaiting_team'
   | 'changes_requested'
   | 'approved'
   | 'error'
@@ -190,6 +201,7 @@ export function useClientPipeline(clientId: string | null) {
   const [product, setProduct] = useState<Record<string, unknown> | null>(null);
   const [scripts, setScripts] = useState<PipelineScript[]>([]);
   const [onboardingForm, setOnboardingForm] = useState<ClientOnboardingForm | null>(null);
+  const [researchRun, setResearchRun] = useState<ResearchRun | null>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
@@ -288,6 +300,21 @@ export function useClientPipeline(clientId: string | null) {
         : await dnaBase.eq('is_active', true).order('version', { ascending: false }).limit(1).maybeSingle();
       if (requestId !== requestRef.current) return;
       setDnaData(dnaRow?.dna_data ?? null);
+
+      // Investigación real de mercado y competencia (research_runs). Puede no
+      // existir todavía (la etapa 'mercado' no ha arrancado) o venir vacía:
+      // las tarjetas "Tu mercado" y "Lo que funciona en tu nicho" se
+      // comportan igual que hoy si esto es null. RLS: "Client can view own
+      // research runs" (client_users → client_id).
+      const { data: researchRow } = await supabase
+        .from('research_runs' as any)
+        .select('id, status, stage, cost_usd, result, created_at, finished_at')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (requestId !== requestRef.current) return;
+      setResearchRun((researchRow as unknown as ResearchRun) ?? null);
 
       // Estrategia: vive en la fila de `products` que creó el pipeline.
       if (currentRun?.product_id) {
@@ -508,8 +535,15 @@ export function useClientPipeline(clientId: string | null) {
         // silentRefresh: el `run` que devuelve poll basta; solo recargamos el
         // resto cuando la etapa ya cambió a algo que el cliente puede revisar.
         const data = await callOrchestrator({ action: 'poll' }, { silentRefresh: true });
-        const nextStatus = (data?.run as ClientPipelineRun | undefined)?.stage_status;
-        if (nextStatus && nextStatus !== 'generating' && nextStatus !== 'changes_requested') {
+        const nextRun = data?.run as ClientPipelineRun | undefined;
+        const nextStatus = nextRun?.stage_status;
+        const cambioDeEstado = !!nextStatus && nextStatus !== 'generating' && nextStatus !== 'changes_requested';
+        // La investigación de mercado avanza en su propia tabla
+        // (research_runs), fuera del pipeline-orchestrator: sin releer aquí
+        // en cada latido, el texto de progreso ("viendo tu competencia"…) se
+        // quedaría congelado en lo que había al entrar a la pantalla.
+        const investigando = nextRun?.stage === 'mercado';
+        if (cambioDeEstado || investigando) {
           await fetchAll({ silent: true });
         }
       } catch {
@@ -532,7 +566,7 @@ export function useClientPipeline(clientId: string | null) {
     }
   }, [callOrchestrator]);
 
-  /** Aprueba la etapa actual (ADN o estrategia). */
+  /** Aprueba la etapa actual (ADN, mercado o estrategia). */
   const approve = useCallback(
     (stage: PipelineStage) => act({ action: 'approve', stage }),
     [act],
@@ -578,6 +612,7 @@ export function useClientPipeline(clientId: string | null) {
     dnaData,
     product,
     researchProgress,
+    researchRun,
     scripts,
     onboardingForm,
     organizationId,

@@ -87,6 +87,54 @@ async function pedirJson(system: string, user: string): Promise<Json | null> {
 }
 
 // ---------------------------------------------------------------------------
+// Nicho: el onboarding todavía no lo pregunta
+//
+// Hasta que exista el campo en el Onboarding 2.0, se infiere del brief. La
+// alternativa era usar `tipo_oferta`, y ahí un cliente de agentes de IA queda
+// etiquetado como "servicio": inútil para buscar competencia y venenoso para
+// la caché de nicho, que es compartida entre organizaciones.
+//
+// Si la IA no responde, devuelve null. Sin nicho el motor hace menos cosas,
+// pero no hace ninguna mal.
+// ---------------------------------------------------------------------------
+export async function inferirNicho(formData: Json): Promise<string | null> {
+  const producto = (formData.producto ?? {}) as Json;
+  const marca = (formData.marca ?? {}) as Json;
+
+  const brief = [
+    `Nombre: ${producto.nombre ?? ""}`,
+    `Qué es: ${producto.componentes ?? producto.beneficios ?? ""}`,
+    `Diferenciales: ${producto.diferenciales ?? ""}`,
+    `Historia de la marca: ${marca.historia ?? ""}`,
+  ].join("\n").slice(0, 2500).trim();
+
+  if (brief.replace(/[A-Za-zÁ-ú:\s]/g, "").length === 0 && brief.length < 60) return null;
+
+  try {
+    const salida = await pedirJson(
+      "Clasificas negocios en nichos de mercado. Devuelves SOLO JSON.",
+      [
+        "A partir de este brief, dime en qué nicho compite este negocio.",
+        "",
+        brief,
+        "",
+        'Responde: { "nicho": "2 a 4 palabras en español, en minúsculas" }',
+        'El nicho debe servir para buscar competencia en redes sociales: "agentes de ia para empresas", "belleza capilar", "suplementos deportivos".',
+        'NUNCA respondas con el tipo de oferta ("servicio", "producto", "curso"): eso no es un nicho.',
+      ].join("\n"),
+    );
+
+    const nicho = String(salida?.nicho ?? "").trim().toLowerCase();
+    if (!nicho || nicho.length < 4 || nicho.length > 60) return null;
+    if (["servicio", "producto", "curso", "software"].includes(nicho)) return null;
+    return nicho;
+  } catch (e) {
+    console.error("[research] no se pudo inferir el nicho:", (e as Error).message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Análisis por transcripción (uno por video del top)
 // ---------------------------------------------------------------------------
 const SISTEMA_ANALISIS =

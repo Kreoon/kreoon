@@ -73,6 +73,7 @@ import {
 } from "./discovery.ts";
 import {
   analizarTranscripcion,
+  inferirNicho,
   metricasPorCuenta,
   sintetizarAdnMercado,
   sintetizarAdnViral,
@@ -247,12 +248,19 @@ function acumular(result: Json, job: Job, items: Json[]): Json {
           verificado: item.verified === true,
           web: item.externalUrl ?? null,
           categoria: item.businessCategoryName ?? null,
-          // Semilla gratis para la etapa B: Instagram entrega los pares del
-          // nicho sin cobrar por ello.
+          // Solo si el actor lo devuelve: hoy (2026-08-13) NO lo hace, aunque
+          // la spec del motor lo daba por hecho. La etapa B no depende de esto.
           perfiles_relacionados: Array.isArray(item.relatedProfiles)
             ? item.relatedProfiles.slice(0, 20).map((p: Json) => p?.username ?? p).filter(Boolean)
             : [],
         });
+
+        // Los últimos 12 posts vienen incluidos en la respuesta del perfil, sin
+        // coste extra. Entran ya al ranking: si el scrape de posts se cae, esta
+        // cuenta no se queda fuera del informe por eso.
+        for (const post of (Array.isArray(item.latestPosts) ? item.latestPosts : [])) {
+          cubo.posts.push(normalizarPostIg(post as Json, handle, job.origen));
+        }
       }
       break;
     }
@@ -303,6 +311,26 @@ function acumular(result: Json, job: Job, items: Json[]): Json {
         if (!texto) continue;
         salida.transcripciones.push({
           url: String(item.url ?? item.videoUrl ?? ""),
+          texto: texto.slice(0, 8000),
+        });
+      }
+      break;
+    }
+
+    case "tt_transcripts": {
+      for (const item of items) {
+        const video = (item.videoMeta ?? {}) as Json;
+        // El add-on deja el texto en sitios distintos según la versión del
+        // actor. Se prueba en orden y, si no hay ninguno, este video
+        // simplemente no aporta transcripción: NUNCA se usa el caption como
+        // sustituto, porque el caption no es lo que la persona dijo.
+        const crudo = item.transcript ?? item.subtitles ?? video.subtitles ??
+          video.transcript ?? "";
+        const texto = (typeof crudo === "string" ? crudo : JSON.stringify(crudo)).trim();
+        if (!texto || texto === "{}" || texto === "[]") continue;
+
+        salida.transcripciones.push({
+          url: String(item.webVideoUrl ?? item.submittedVideoUrl ?? ""),
           texto: texto.slice(0, 8000),
         });
       }
@@ -363,12 +391,29 @@ async function ejecutarDescubrimiento(
 
 function ejecutarRanking(result: Json): Json {
   const salida = resultVacio(result);
-  const todos: PostNormalizado[] = [
-    ...(salida.own.posts ?? []),
-    ...(salida.competitors.posts ?? []),
-    ...(salida.niche.posts ?? []),
-  ];
 
+  // El mismo post llega por dos caminos: los 12 que regala el perfil y los 30
+  // del scrape de publicaciones. Sin deduplicar, una cuenta pesaría el doble
+  // en el ranking solo por haber sido leída dos veces.
+  const porId = new Map<string, PostNormalizado>();
+  for (
+    const post of [
+      ...(salida.own.posts ?? []),
+      ...(salida.competitors.posts ?? []),
+      ...(salida.niche.posts ?? []),
+    ] as PostNormalizado[]
+  ) {
+    const clave = post.id || post.url;
+    if (!clave) continue;
+    const previo = porId.get(clave);
+    // Nos quedamos con la versión que trae más datos (la del scrape completo
+    // suele traer duración y el contador de reproducciones).
+    if (!previo || post.vistas > previo.vistas || (post.duracion && !previo.duracion)) {
+      porId.set(clave, post);
+    }
+  }
+
+  const todos = [...porId.values()];
   const rankeados = rankear(todos, (salida.followers ?? {}) as Record<string, number>);
 
   salida.ranking = rankeados.slice(0, 60);
@@ -510,25 +555,64 @@ function jobAds(run: Json, result: Json): Job | null {
   };
 }
 
-function jobTranscripciones(result: Json): Job | null {
-  const urls = ((result.top ?? []) as Json[])
+/**
+ * Transcripciones del top. TikTok cuesta ~10 veces más por minuto que
+ * Instagram, así que se transcribe todo el top de Instagram y solo los 4
+ * mejores de TikTok.
+ *
+ * Lección de la primera corrida real (Dapta, 2026-08-13): el top salió 14 de
+ * TikTok y 1 de Instagram, así que transcribir solo Instagram dejaba el ADN
+ * Viral SIN un solo video —se construía únicamente con anuncios—. En muchos
+ * nichos la viralidad relativa vive en TikTok; ignorarlo no era ahorrar, era
+ * quedarse sin la mitad del producto.
+ */
+const TOP_TIKTOK_A_TRANSCRIBIR = 4;
+
+function jobsTranscripciones(result: Json): Job[] {
+  const top = (result.top ?? []) as Json[];
+  const jobs: Job[] = [];
+
+  const urlsIg = top
     .filter((p) => p.plataforma === "instagram" && p.url)
     .slice(0, TOP_A_TRANSCRIBIR)
     .map((p) => String(p.url));
 
-  // TikTok se transcribe a $0.048/min, diez veces el precio de Instagram. En
-  // la primera corrida se usa TikTok para métricas y formatos, y se transcribe
-  // solo Instagram. Está escrito en la spec y aquí se cumple.
-  if (urls.length === 0) return null;
+  if (urlsIg.length > 0) {
+    jobs.push({
+      key: "F_transcripts_ig",
+      tipo: "ig_transcripts",
+      origen: "niche",
+      handle: "top",
+      estado: "pending",
+      input: { bulkUrls: urlsIg, resultsLimit: urlsIg.length },
+    });
+  }
 
-  return {
-    key: "F_transcripts",
-    tipo: "ig_transcripts",
-    origen: "niche",
-    handle: "top",
-    estado: "pending",
-    input: { bulkUrls: urls, resultsLimit: urls.length },
-  };
+  const urlsTt = top
+    .filter((p) => p.plataforma === "tiktok" && p.url)
+    .slice(0, TOP_TIKTOK_A_TRANSCRIBIR)
+    .map((p) => String(p.url));
+
+  if (urlsTt.length > 0) {
+    jobs.push({
+      key: "F_transcripts_tt",
+      tipo: "tt_transcripts",
+      origen: "niche",
+      handle: "top",
+      estado: "pending",
+      input: {
+        postURLs: urlsTt,
+        resultsPerPage: urlsTt.length,
+        // El add-on que de verdad devuelve texto, con su coste asumido.
+        downloadSubtitlesOptions: "DOWNLOAD_AND_TRANSCRIBE_VIDEOS_WITHOUT_SUBTITLES",
+        shouldDownloadVideos: false,
+        shouldDownloadCovers: false,
+        shouldDownloadSlideshowImages: false,
+      },
+    });
+  }
+
+  return jobs;
 }
 
 // ---------------------------------------------------------------------------
@@ -641,7 +725,7 @@ async function avanzar(admin: Sb, runId: string, ciclo: number): Promise<Json> {
       costo += estadoApify.usageTotalUsd ?? 0;
       job.cost_usd = estadoApify.usageTotalUsd ?? 0;
 
-      const items = estadoApify.defaultDatasetId
+      const crudos = estadoApify.defaultDatasetId
         ? await leerDataset(
           estadoApify.defaultDatasetId,
           CAMPOS[job.tipo] ?? "",
@@ -649,11 +733,15 @@ async function avanzar(admin: Sb, runId: string, ciclo: number): Promise<Json> {
         )
         : [];
 
+      // Un dataset lleno de items de error es un dataset vacío con disfraz.
+      const items = crudos.filter((i) => !esItemDeError(i));
       job.items = items.length;
 
       if (items.length === 0) {
         job.estado = "error";
-        job.error = `Apify terminó en ${estadoApify.status} sin items`;
+        job.error = crudos.length > 0
+          ? `Apify no devolvió datos — ${motivoDeError(crudos)}`
+          : `Apify terminó en ${estadoApify.status} sin items`;
         errores.push({ at: ahora(), job: job.key, error: job.error });
       } else {
         result = acumular(result, job, items);
@@ -759,10 +847,8 @@ async function planificar(
         result,
       };
 
-    case "ranking": {
-      const t = jobTranscripciones(result);
-      return { fase: "transcripcion", jobs: t ? [t] : [], result };
-    }
+    case "ranking":
+      return { fase: "transcripcion", jobs: jobsTranscripciones(result), result };
 
     case "transcripcion":
       return {
@@ -835,11 +921,10 @@ function construirPlan(formData: Json, competidoresExtra: string[]) {
   }
 
   // El nicho todavía no es un campo del onboarding (lo será en el Onboarding
-  // 2.0). Hasta entonces se deriva de lo que el cliente ya escribió; si no da
-  // para nada, queda null y `niche_intelligence` no se toca — antes eso que
-  // envenenar la caché de nicho con una etiqueta inventada.
-  const niche = String(producto.categoria ?? marca.nicho ?? producto.tipo_oferta ?? "")
-    .trim().toLowerCase() || null;
+  // 2.0). Si el cliente no lo declaró, se infiere del brief con IA — nunca de
+  // `tipo_oferta`, que diría "servicio" y no sirve ni para buscar competencia
+  // ni para la caché de nicho, que es compartida entre organizaciones.
+  const niche = String(producto.categoria ?? marca.nicho ?? "").trim().toLowerCase() || null;
   const country = String(audiencia.pais ?? "").trim() || null;
 
   return { jobs, niche, country, sinResolver };
@@ -979,8 +1064,8 @@ Deno.serve(async (req: Request) => {
     }, 422);
   }
 
-  const niche = (body.niche ?? plan.niche) as string | null;
   const country = (body.country ?? plan.country) as string | null;
+  const niche = (body.niche ?? plan.niche ?? await inferirNicho(formData)) as string | null;
 
   // Si el nicho ya está investigado y fresco, esta corrida se ahorra las
   // etapas B y D enteras. Ese es el ahorro que crece con cada cliente.
