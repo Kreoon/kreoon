@@ -48,6 +48,12 @@ interface OnboardingSheetProps {
   onSubmit: () => Promise<SubmitOnboardingResult>;
   /** El formulario quedó enviado: cerrar el panel y refrescar el portal. */
   onCompleted: () => void;
+  /**
+   * Cambiar de escribir a hablar (o al revés) sin cerrar ni perder lo guardado.
+   * Elegir un camino no puede ser una puerta de un solo sentido: quien empieza
+   * a escribir y se cansa tiene que poder pasarse a contarlo, y al revés.
+   */
+  onCambiarModo?: (modo: OnboardingSheetModo) => void;
 }
 
 /** Los únicos 3 pasos obligatorios (ver schemas.ts). */
@@ -310,6 +316,29 @@ export function OnboardingSheet({
             <SheetTitle>{titulo}</SheetTitle>
           </div>
           <SheetDescription>{descripcion}</SheetDescription>
+
+          {/* Salida al otro camino. Al escribir siempre está disponible (lo
+              guardado por pasos no se pierde). Al hablar, solo antes de grabar:
+              después ya hay transcripción encima y cambiar tiraría trabajo. */}
+          {onCambiarModo && !enviando && (modo === 'escribir' || fase === 'grabar') && (
+            <button
+              type="button"
+              onClick={() => onCambiarModo(modo === 'escribir' ? 'hablar' : 'escribir')}
+              className="mt-2 inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            >
+              {modo === 'escribir' ? (
+                <>
+                  <Mic className="h-3.5 w-3.5" />
+                  Mejor te lo cuento hablando
+                </>
+              ) : (
+                <>
+                  <PenLine className="h-3.5 w-3.5" />
+                  Mejor lo escribo
+                </>
+              )}
+            </button>
+          )}
         </SheetHeader>
 
         {modo === 'escribir' && (

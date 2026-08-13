@@ -127,8 +127,21 @@ export function ClientPipelineChecklist({
 
   // Estado del formulario de inicio, para decidir qué ofrecerle al cliente
   // mientras todavía no hay un proceso (`run`) arrancado.
-  const formularioAMedias = onboardingForm?.status === 'pending' || onboardingForm?.status === 'in_progress';
   const formularioListo = onboardingForm?.status === 'submitted' || onboardingForm?.status === 'processed';
+
+  // Abrir el panel CREA la fila del formulario, aunque el cliente no llegue a
+  // escribir nada. Si nos fiáramos solo del status ('pending' recién creado),
+  // bastaría con abrir y cerrar para que la pantalla dijera "ya empezaste" y
+  // ofreciera únicamente "seguir escribiendo" — dejando fuera el camino de
+  // hablar. Por eso lo que decide es si hay CONTENIDO, no si existe la fila.
+  const tieneAlgoEscrito = Object.values(onboardingForm?.form_data ?? {}).some((seccion) => {
+    if (!seccion || typeof seccion !== 'object') return !!seccion;
+    return Object.values(seccion as Record<string, unknown>).some(
+      (v) => v !== null && v !== undefined && v !== '',
+    );
+  });
+
+  const formularioAMedias = !formularioListo && tieneAlgoEscrito;
 
   const abrirFormulario = async (modo: OnboardingSheetModo) => {
     // Si el cliente todavía no tiene ningún formulario, se crea antes de
@@ -273,12 +286,23 @@ export function ClientPipelineChecklist({
               <p className="mt-1 text-sm text-muted-foreground">
                 Ya empezaste a contarnos de tu marca. Termina cuando quieras.
               </p>
-              <Button
-                className="mt-3 w-full sm:w-auto"
-                onClick={() => abrirFormulario('escribir')}
-              >
-                Seguir donde lo dejaste
-              </Button>
+              {/* El segundo botón no es adorno: sin él, quien empezó
+                  escribiendo queda atrapado en ese camino para siempre. */}
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                <Button
+                  className="w-full sm:w-auto"
+                  onClick={() => abrirFormulario('escribir')}
+                >
+                  Seguir donde lo dejaste
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => abrirFormulario('hablar')}
+                >
+                  Mejor contarlo hablando
+                </Button>
+              </div>
             </>
           ) : (
             <>
@@ -564,6 +588,7 @@ export function ClientPipelineChecklist({
         onOpenChange={(open) => !open && setOnboardingSheetModo(null)}
         onSaveSection={guardarSeccionOnboarding}
         onSubmit={enviarOnboarding}
+        onCambiarModo={setOnboardingSheetModo}
         onCompleted={() => {
           setOnboardingSheetModo(null);
           refresh({ silent: true });
