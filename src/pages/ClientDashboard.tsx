@@ -1072,7 +1072,10 @@ export default function ClientDashboard() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           }>
-            <ClientDNATab clientId={selectedClientId} />
+            {/* Portal del cliente: solo el resultado. Su marca sale del
+                formulario inicial y la construye el proceso, así que aquí no
+                se graba ni se genera nada — solo se lee. */}
+            <ClientDNATab clientId={selectedClientId} soloResultado />
           </Suspense>
         )}
 

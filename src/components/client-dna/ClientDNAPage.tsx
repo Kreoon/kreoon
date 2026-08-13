@@ -10,9 +10,18 @@ type ViewMode = 'display' | 'wizard';
 
 interface ClientDNAPageProps {
   clientId: string;
+  /**
+   * Solo el resultado, sin el asistente de generación.
+   *
+   * Es lo que ve el CLIENTE en su portal: su marca la construye el proceso a
+   * partir del formulario inicial, así que aquí no tiene que grabar ni generar
+   * nada — solo leer lo que salió. El EQUIPO sigue viendo la pantalla completa,
+   * con generar, regenerar y borrar.
+   */
+  soloResultado?: boolean;
 }
 
-export function ClientDNAPage({ clientId }: ClientDNAPageProps) {
+export function ClientDNAPage({ clientId, soloResultado = false }: ClientDNAPageProps) {
   const [activeDNA, setActiveDNA] = useState<ClientDNA | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('display');
   const [loading, setLoading] = useState(true);
@@ -125,21 +134,34 @@ export function ClientDNAPage({ clientId }: ClientDNAPageProps) {
         </div>
       )}
 
-      {/* Wizard (when no DNA or regenerating) */}
-      {viewMode === 'wizard' && (
+      {/* Wizard (when no DNA or regenerating) — nunca en modo solo resultado */}
+      {!soloResultado && viewMode === 'wizard' && (
         <ClientDNAWizard
           clientId={clientId}
           onComplete={handleDNAGenerated}
         />
       )}
 
-      {/* Display (when DNA exists) */}
-      {viewMode === 'display' && activeDNA && (
+      {/* Todavía no hay marca y el cliente no puede generarla: se explica de
+          dónde va a salir, en vez de dejar la pantalla en blanco. */}
+      {soloResultado && !activeDNA && (
+        <div className="rounded-xl border bg-card p-6 text-center">
+          <p className="font-medium">Aquí verás tu marca</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+            La preparamos con lo que nos contaste al principio. En cuanto esté
+            lista, aparece aquí y te avisamos.
+          </p>
+        </div>
+      )}
+
+      {/* Display (when DNA exists). Para el cliente, sin regenerar ni borrar:
+          su marca la rehace el proceso pidiendo un cambio, no desde aquí. */}
+      {activeDNA && (soloResultado || viewMode === 'display') && (
         <ClientDNADisplay
           dna={activeDNA}
-          onDelete={handleDeleteDNA}
-          onRegenerate={() => setViewMode('wizard')}
-          onUpdate={handleUpdateDNA}
+          onDelete={soloResultado ? undefined : handleDeleteDNA}
+          onRegenerate={soloResultado ? undefined : () => setViewMode('wizard')}
+          onUpdate={soloResultado ? undefined : handleUpdateDNA}
         />
       )}
     </div>

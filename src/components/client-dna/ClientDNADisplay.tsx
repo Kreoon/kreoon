@@ -266,6 +266,10 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                       Editar
                     </button>
                   )}
+                  {/* Sin `onDelete` el botón no se pinta: si no, el cliente
+                      vería "Eliminar", confirmaría, y creería que borró su
+                      marca cuando no pasó nada. */}
+                  {onDelete && (
                   <button
                     onClick={() => setConfirmDelete(true)}
                     className="flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-lg
@@ -277,6 +281,7 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
                     <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     Borrar
                   </button>
+                  )}
                 </>
               )}
             </div>
