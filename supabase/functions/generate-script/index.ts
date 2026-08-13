@@ -400,6 +400,40 @@ Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
       response_time_ms,
     }).catch(console.error);
 
+    // ── Consume tokens (billing de plataforma, distinto de logAIUsage que solo
+    // registra costo real en USD) ────────────────────────────────────────────
+    // Este flujo antes no cobraba tokens en absoluto. 150 tokens: 1 sola llamada de
+    // IA, sin research previo (a diferencia de product_dna/client_dna que llaman a
+    // Perplexity), prompt fijo con few-shot examples, output corto (un guion de
+    // 30-60 segundos). Es la operacion mas liviana de las tres -- proporcional a
+    // client_dna (400 tokens, 1 llamada pero produce un documento multi-seccion
+    // completo) y product_dna (600 tokens, 5 llamadas de IA con research externo).
+    // callerUser ya fue validado como miembro de organizationId por assertOrgMembership
+    // arriba, asi que se cobra a la organizacion (no hay concepto de client-portal
+    // user en este flujo).
+    try {
+      const { data: tokenResult, error: tokenError } = await supabase.rpc("consume_ai_tokens", {
+        p_user_id: null,
+        p_org_id: organizationId,
+        p_action_type: "script",
+        p_tokens: 150,
+        p_metadata: { product_name, sphere_phase: sphere_phase || null, ai_provider: aiConfig.provider, ai_model: aiConfig.model },
+      });
+
+      if (tokenError || !tokenResult?.success) {
+        console.error(
+          `[generate-script] Cobro de tokens FALLO (org=${organizationId}, product=${product_name}):`,
+          tokenError?.message || tokenResult?.error || "razon desconocida"
+        );
+      } else {
+        console.log("[generate-script] Tokens consumidos OK (150)");
+      }
+    } catch (tokenErr) {
+      // No tumbar la respuesta por un fallo de contabilidad (el guion ya se genero)
+      // pero que quede visible en logs, no tragado en silencio.
+      console.error(`[generate-script] Cobro de tokens lanzo excepcion (org=${organizationId}):`, tokenErr);
+    }
+
     return successResponse({
       script,
       ai_provider: aiConfig.provider,

@@ -539,6 +539,52 @@ Deno.serve(async (req: Request) => {
       throw new Error(`Error creating DNA record: ${insertError.message}`);
     }
 
+    // ── Consume tokens ────────────────────────────────────────────────────
+    // Este flujo antes no cobraba tokens en absoluto (sin ninguna llamada a
+    // consume_ai_tokens). 400 tokens: es 1 sola llamada de IA (Perplexity con
+    // fallback a Gemini, hasta 2 intentos solo si falla el parseo) pero produce
+    // un documento de ADN de marca completo y multi-seccion (posicionamiento,
+    // avatares, tono, angulos) en un unico prompt largo -- comparable en alcance
+    // de output a las 4 llamadas orquestadas de generate-product-dna (600 tokens
+    // por 5 llamadas de IA), pero al ser una sola llamada se factura proporcionalmente
+    // menos: 400 en vez de ~480 (600 * 4/5) para reflejar que no hay research previo
+    // via Perplexity+Firecrawl como paso separado.
+    try {
+      const { data: clientRow, error: clientLookupError } = await supabase
+        .from("clients")
+        .select("organization_id")
+        .eq("id", client_id)
+        .maybeSingle();
+
+      if (clientLookupError || !clientRow?.organization_id) {
+        console.error(
+          `[generate-client-dna] Cobro de tokens: no se pudo resolver organization_id (client_id=${client_id}, dna_id=${newDna.id}):`,
+          clientLookupError?.message || "clients.organization_id vacio"
+        );
+      } else {
+        const { data: tokenResult, error: tokenError } = await supabase.rpc("consume_ai_tokens", {
+          p_user_id: null,
+          p_org_id: clientRow.organization_id,
+          p_action_type: "client_dna",
+          p_tokens: 400,
+          p_metadata: { client_id, dna_id: newDna.id, version: nextVersion },
+        });
+
+        if (tokenError || !tokenResult?.success) {
+          console.error(
+            `[generate-client-dna] Cobro de tokens FALLO (client_id=${client_id}, org=${clientRow.organization_id}):`,
+            tokenError?.message || tokenResult?.error || "razon desconocida"
+          );
+        } else {
+          console.log("[generate-client-dna] Tokens consumidos OK (400)");
+        }
+      }
+    } catch (tokenErr) {
+      // No tumbar la respuesta por un fallo de contabilidad (el ADN ya se genero
+      // y se guardo) pero que quede visible en logs, no tragado en silencio.
+      console.error(`[generate-client-dna] Cobro de tokens lanzo excepcion (client_id=${client_id}):`, tokenErr);
+    }
+
     return new Response(
       JSON.stringify({ success: true, dna_data: dnaData, dna_id: newDna.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

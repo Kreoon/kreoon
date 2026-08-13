@@ -1862,16 +1862,49 @@ Deno.serve(async (req: Request) => {
     }
 
     // ── 8. Consume tokens ──────────────────────────────────────────────────
+    // Firma real de consume_ai_tokens (verificada contra pg_proc / baseline.sql):
+    //   consume_ai_tokens(p_user_id uuid, p_org_id uuid, p_action_type text, p_tokens integer, p_metadata jsonb)
+    // La llamada anterior usaba p_organization_id/p_feature/p_model, que NO existen en la
+    // firma real -> PostgREST no resolvia la funcion y el cobro fallaba en silencio (el
+    // try/catch solo hacia console.warn). 600 tokens: cubre 1 research de Perplexity +
+    // 1 enriquecimiento Firecrawl + 4 llamadas a Gemini (call1..call4 en generateAllSections).
     try {
-      await supabase.rpc("consume_ai_tokens", {
-        p_user_id: null,
-        p_organization_id: null,
-        p_tokens: 600,
-        p_feature: "product_dna",
-        p_model: "gemini-2.5-flash",
-      });
+      // product_dna no tiene organization_id propio; se deriva desde clients.organization_id
+      // (join por client_id, ya presente en record). No hay usuario final en este flujo
+      // (se dispara desde el wizard sin pasar user_id), asi que se cobra a la organizacion.
+      const { data: clientRow, error: clientLookupError } = await supabase
+        .from("clients")
+        .select("organization_id")
+        .eq("id", record.client_id)
+        .maybeSingle();
+
+      if (clientLookupError || !clientRow?.organization_id) {
+        console.error(
+          `[generate-product-dna] Cobro de tokens: no se pudo resolver organization_id (product_dna_id=${productDnaId}, client_id=${record.client_id}):`,
+          clientLookupError?.message || "clients.organization_id vacio"
+        );
+      } else {
+        const { data: tokenResult, error: tokenError } = await supabase.rpc("consume_ai_tokens", {
+          p_user_id: null,
+          p_org_id: clientRow.organization_id,
+          p_action_type: "product_dna",
+          p_tokens: 600,
+          p_metadata: { product_dna_id: productDnaId, model: "gemini-2.5-flash" },
+        });
+
+        if (tokenError || !tokenResult?.success) {
+          console.error(
+            `[generate-product-dna] Cobro de tokens FALLO (product_dna_id=${productDnaId}, org=${clientRow.organization_id}):`,
+            tokenError?.message || tokenResult?.error || "razon desconocida"
+          );
+        } else {
+          console.log("[generate-product-dna] Tokens consumidos OK (600)");
+        }
+      }
     } catch (tokenErr) {
-      console.warn("[generate-product-dna] Token consumption failed:", tokenErr);
+      // No tumbar la generacion por un fallo de contabilidad (el usuario ya tiene su
+      // Product DNA listo) pero que quede visible en logs, no un console.warn silencioso.
+      console.error(`[generate-product-dna] Cobro de tokens lanzo excepcion (product_dna_id=${productDnaId}):`, tokenErr);
     }
 
     console.log(`[generate-product-dna] Product DNA updated: ${productDnaId} → status=ready`);
