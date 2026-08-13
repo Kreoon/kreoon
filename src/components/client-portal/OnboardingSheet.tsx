@@ -32,8 +32,14 @@ import type { SubmitOnboardingResult } from '@/hooks/useClientPipeline';
  *  · 'escribir' — los mismos 6 pasos del wizard público, guardando cada uno
  *    con `onSaveSection` en vez del token.
  *  · 'hablar'   — graba un audio, lo transcribe, deja revisar/corregir el
- *    texto y usa IA para llenar lo que se entendió. Lo que no quedó claro se
- *    pide suelto con los mismos pasos cortos ("Solo nos falta esto").
+ *    texto y usa IA para llenar lo que se entendió.
+ *
+ * Hablar NO se salta el teclado, es un mix: lo que se cuenta se cuenta
+ * (historia, tono, público, objeciones) y lo que se transcribe mal se teclea.
+ * Por eso los 3 pasos obligatorios se revisan SIEMPRE por escrito, aunque la
+ * IA los haya dado por buenos: ahí están el NIT, los correos, el celular, el
+ * precio y el link de compra. Un correo mal oído lo caza el validador; un NIT
+ * mal oído, no — y ese acaba en una factura.
  */
 
 export type OnboardingSheetModo = 'escribir' | 'hablar';
@@ -269,19 +275,21 @@ export function OnboardingSheet({
     } else {
       toast({
         title: 'No entendimos todo',
-        description: 'Sigue completando lo que falte, es rapidito.',
+        description: 'No pasa nada: ahora lo confirmas escribiendo.',
       });
     }
 
-    const cola = OBLIGATORIOS.filter(
-      (key) => !SCHEMAS[key].safeParse(datosConExtraccion[key] ?? {}).success,
-    );
-
-    if (cola.length === 0) {
-      await intentarEnviar();
-      return;
-    }
-    setColaCompletar(cola);
+    // Los tres pasos obligatorios SIEMPRE se revisan por escrito, aunque la IA
+    // los haya dado por entendidos. Ahí viven los datos que hay que teclear sí
+    // o sí — NIT, correos, celular, precio, link de compra —: dictados en voz
+    // alta salen mal, y el validador no los salva. Un correo torcido lo caza
+    // (`.email()`), pero el NIT solo exige "algo escrito", así que un número
+    // mal oído pasaría como bueno y acabaría en una factura.
+    //
+    // De ahí el mix: se habla lo que se cuenta (historia, tono, público,
+    // objeciones) y se teclea lo que se transcribe mal. Llegan prellenados con
+    // lo que sí se entendió, así que revisarlos es rápido.
+    setColaCompletar([...OBLIGATORIOS]);
     setColaIndex(0);
     setFase('completando');
   };
@@ -495,7 +503,12 @@ function tituloYDescripcion(
     case 'extrayendo':
       return { titulo: 'Entendiendo lo que dijiste', descripcion: 'Un momento, ya casi.' };
     case 'completando':
-      return { titulo: 'Solo nos falta esto', descripcion: 'Lo que no alcanzaste a contar hablando.' };
+      // No es "faltó": es que estos datos hay que verlos escritos. Un NIT o un
+      // correo dictados se transcriben mal y nadie lo nota hasta la factura.
+      return {
+        titulo: 'Revisa estos datos',
+        descripcion: 'Van escritos para que queden exactos. Ya pusimos lo que entendimos.',
+      };
     case 'enviando':
       return { titulo: 'Enviando todo', descripcion: 'Un momento, ya casi.' };
     case 'grabar':
