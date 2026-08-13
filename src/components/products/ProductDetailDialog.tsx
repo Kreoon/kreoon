@@ -20,22 +20,14 @@ import {
   pollProductDNAStatus,
 } from "@/lib/services/product-dna.service";
 import {
-  MarketOverviewTab,
-  JTBDAnalysisTab,
-  AvatarSegmentationTab,
-  CompetitionAnalysisTab,
-  DifferentiationTab,
-  StrategicPlaybookTab,
-  ExecutiveSummaryTab,
   SalesAnglesTab,
-  PUVTransformationTab,
   LeadMagnetsCreativesTab,
   ContentCalendarTab,
-  LaunchStrategyTab,
-  LandingPagesTab,
-  WhatsappFunnelTab,
-  GenericJsonTab,
   AdnLandingTab,
+  ProductoAdnTab,
+  MercadoTab,
+  NichoViralTab,
+  ContentKpisTab,
 } from "./strategy-tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +42,7 @@ import {
   File, FolderOpen, Plus, X, Sparkles, Dna,
   Globe, Swords, Lightbulb, Brain, Trophy, Gift, Download, Calendar, Rocket, ExternalLink,
   RefreshCw, Mic, Check, Coins, AlertTriangle, MessageCircle,
-  Megaphone, Mail, DollarSign, BarChart3, Search, Handshake, Heart
+  Megaphone, Mail, DollarSign, BarChart3, Search, Handshake, Heart, Flame
 } from "lucide-react";
 import { generateProductResearchPdf } from "./productResearchPdfGenerator";
 import { AdnRecargadoBanner } from "./AdnRecargadoBanner";
@@ -211,6 +203,36 @@ export function ProductDetailDialog({
 
   // Tab activa (controlada para permitir navegacion programatica desde botones)
   const [activeTab, setActiveTab] = useState<string>(product ? "brief" : "info");
+
+  // Investigación del motor (research-engine). Es del CLIENTE, no del producto:
+  // todos los productos de la misma marca comparten mercado y nicho.
+  const [researchResult, setResearchResult] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    const idCliente = clientId ?? (product as { client_id?: string } | null)?.client_id;
+    if (!open || !idCliente) {
+      setResearchResult(null);
+      return;
+    }
+
+    let cancelado = false;
+    (async () => {
+      const { data } = await supabase
+        .from("research_runs")
+        .select("result, status")
+        .eq("client_id", idCliente)
+        .in("status", ["done", "partial"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!cancelado) {
+        setResearchResult((data?.result as Record<string, unknown>) ?? null);
+      }
+    })();
+
+    return () => { cancelado = true; };
+  }, [open, clientId, product]);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Resetear scroll al inicio cuando cambia la pestana activa
@@ -627,8 +649,11 @@ export function ProductDetailDialog({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           {/* Tabs en dos filas */}
           <div className="px-4 sm:px-6 pt-4 shrink-0 space-y-1">
-            {/* Row 1: ADN + steps 1-6 (in research invocation order) */}
-            <TabsList className="grid grid-cols-4 sm:grid-cols-7 h-auto gap-1">
+            {/* Research Unificado (2026-08-13): de 22 pestañas a las que de
+                verdad alimentan contenido. Las 10 de consultoría de negocio
+                salieron con sus pasos; sus datos históricos siguen en la base
+                y no rompen nada, simplemente ya no tienen pestaña. */}
+            <TabsList className="grid grid-cols-3 sm:grid-cols-6 h-auto gap-1">
               <TabsTrigger value="brief" className="gap-1 text-xs py-2">
                 {dnaRecord ? <Check className="h-3 w-3 text-emerald-400" /> : <Dna className="h-3 w-3" />}
                 ADN
@@ -640,110 +665,35 @@ export function ProductDetailDialog({
                 <Sparkles className="h-3 w-3 text-amber-300 animate-pulse" />
                 ADN Recargado
               </TabsTrigger>
-              <TabsTrigger value="market" className="gap-1 text-xs py-2">
-                {product?.market_research?.market_overview ? <Check className="h-3 w-3 text-emerald-400" /> : <Globe className="h-3 w-3" />}
+              <TabsTrigger value="producto-adn" className="gap-1 text-xs py-2">
+                {product?.avatar_profiles?.profiles ? <Check className="h-3 w-3 text-emerald-400" /> : <Users className="h-3 w-3" />}
+                Tu producto
+              </TabsTrigger>
+              <TabsTrigger value="mercado" className="gap-1 text-xs py-2">
+                {product?.competitor_analysis?.competitors ? <Check className="h-3 w-3 text-emerald-400" /> : <Swords className="h-3 w-3" />}
                 Mercado
               </TabsTrigger>
-              <TabsTrigger value="jtbd" className="gap-1 text-xs py-2">
-                {product?.market_research?.jtbd ? <Check className="h-3 w-3 text-emerald-400" /> : <Target className="h-3 w-3" />}
-                JTBD
-              </TabsTrigger>
-              <TabsTrigger value="competition" className="gap-1 text-xs py-2">
-                {product?.competitor_analysis?.competitors ? <Check className="h-3 w-3 text-emerald-400" /> : <Swords className="h-3 w-3" />}
-                Competencia
-              </TabsTrigger>
-              <TabsTrigger value="avatars" className="gap-1 text-xs py-2">
-                {product?.avatar_profiles?.profiles ? <Check className="h-3 w-3 text-emerald-400" /> : <Users className="h-3 w-3" />}
-                Avatares
-              </TabsTrigger>
-              <TabsTrigger value="differentiation" className="gap-1 text-xs py-2">
-                {product?.competitor_analysis?.differentiation ? <Check className="h-3 w-3 text-emerald-400" /> : <Lightbulb className="h-3 w-3" />}
-                Diferenciación
-              </TabsTrigger>
-              <TabsTrigger value="esfera" className="gap-1 text-xs py-2">
-                {product?.content_strategy?.esferaInsights ? <Check className="h-3 w-3 text-emerald-400" /> : <Brain className="h-3 w-3" />}
-                Playbook
-              </TabsTrigger>
-            </TabsList>
-            {/* Row 2: steps 7-12 + utilities */}
-            <TabsList className="grid grid-cols-4 sm:grid-cols-8 h-auto gap-1">
-              <TabsTrigger value="summary" className="gap-1 text-xs py-2">
-                {product?.content_strategy?.executiveSummary ? <Check className="h-3 w-3 text-emerald-400" /> : <FileText className="h-3 w-3" />}
-                Conclusión
+              <TabsTrigger value="nicho-viral" className="gap-1 text-xs py-2">
+                <Flame className="h-3 w-3" />
+                Tu nicho
               </TabsTrigger>
               <TabsTrigger value="angles" className="gap-1 text-xs py-2">
                 {product?.sales_angles_data?.angles ? <Check className="h-3 w-3 text-emerald-400" /> : <Sparkles className="h-3 w-3" />}
                 Ángulos
               </TabsTrigger>
-              <TabsTrigger value="puv" className="gap-1 text-xs py-2">
-                {product?.sales_angles_data?.puv ? <Check className="h-3 w-3 text-emerald-400" /> : <Trophy className="h-3 w-3" />}
-                PUV
-              </TabsTrigger>
+            </TabsList>
+            <TabsList className="grid grid-cols-3 sm:grid-cols-5 h-auto gap-1">
               <TabsTrigger value="leads" className="gap-1 text-xs py-2">
-                {product?.sales_angles_data?.leadMagnets ? <Check className="h-3 w-3 text-emerald-400" /> : <Gift className="h-3 w-3" />}
-                Leads
+                {product?.sales_angles_data?.videoCreatives ? <Check className="h-3 w-3 text-emerald-400" /> : <Gift className="h-3 w-3" />}
+                Ideas
               </TabsTrigger>
               <TabsTrigger value="calendar" className="gap-1 text-xs py-2">
                 {product?.content_calendar ? <Check className="h-3 w-3 text-emerald-400" /> : <Calendar className="h-3 w-3" />}
                 Parrilla
               </TabsTrigger>
-              <TabsTrigger value="launch" className="gap-1 text-xs py-2">
-                {product?.launch_strategy ? <Check className="h-3 w-3 text-emerald-400" /> : <Rocket className="h-3 w-3" />}
-                Lanzamiento
-              </TabsTrigger>
-              <TabsTrigger value="landing-pages" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.landingPages?.length > 0
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Globe className="h-3 w-3" />}
-                Landing Pages
-              </TabsTrigger>
-              <TabsTrigger value="whatsapp-funnel" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.whatsappFunnels?.length > 0
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <MessageCircle className="h-3 w-3" />}
-                WhatsApp
-              </TabsTrigger>
-              <TabsTrigger value="paid-ads" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.paidAds
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Megaphone className="h-3 w-3" />}
-                Paid Ads
-              </TabsTrigger>
-              <TabsTrigger value="email-marketing" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.emailMarketing
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Mail className="h-3 w-3" />}
-                Email
-              </TabsTrigger>
-              <TabsTrigger value="pricing-strategy" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.pricingStrategy
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <DollarSign className="h-3 w-3" />}
-                Precios
-              </TabsTrigger>
-              <TabsTrigger value="kpis-dashboard" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.kpisDashboard
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <BarChart3 className="h-3 w-3" />}
-                KPIs
-              </TabsTrigger>
-              <TabsTrigger value="seo-strategy" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.seoStrategy
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Search className="h-3 w-3" />}
-                SEO
-              </TabsTrigger>
-              <TabsTrigger value="partnerships" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.partnerships
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Handshake className="h-3 w-3" />}
-                Alianzas
-              </TabsTrigger>
-              <TabsTrigger value="community-strategy" className="gap-1 text-xs py-2">
-                {(product?.sales_angles_data as any)?.communityStrategy
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Heart className="h-3 w-3" />}
-                Comunidad
+              <TabsTrigger value="kpis-contenido" className="gap-1 text-xs py-2">
+                {(product?.sales_angles_data as any)?.contentKpis?.length ? <Check className="h-3 w-3 text-emerald-400" /> : <BarChart3 className="h-3 w-3" />}
+                Qué medir
               </TabsTrigger>
               <TabsTrigger value="info" className="text-xs py-2">Info</TabsTrigger>
               <TabsTrigger value="files" className="text-xs py-2">Archivos</TabsTrigger>
@@ -831,65 +781,46 @@ export function ProductDetailDialog({
           </TabsContent>
 
           {/* Step 1: Panorama de Mercado */}
-          <TabsContent value="market" className="mt-4">
-            <MarketOverviewTab marketResearch={(() => {
-              try {
-                if (!product?.market_research) return null;
-                const mr = typeof product.market_research === 'string'
-                  ? JSON.parse(product.market_research)
-                  : product.market_research;
-                return mr?.market_overview || mr;
-              } catch {
-                return null;
-              }
-            })()} />
-          </TabsContent>
 
           {/* Steps 2-3: JTBD + Dolores y Deseos */}
-          <TabsContent value="jtbd" className="mt-4">
-            <JTBDAnalysisTab jtbdData={jtbdData} />
-          </TabsContent>
 
           {/* Step 4: Competencia */}
-          <TabsContent value="competition" className="mt-4">
-            <CompetitionAnalysisTab competitorAnalysis={product?.competitor_analysis as any} />
-          </TabsContent>
 
           {/* Step 5: Avatares */}
-          <TabsContent value="avatars" className="mt-4">
-            <AvatarSegmentationTab avatarProfiles={product?.avatar_profiles as any} />
-          </TabsContent>
 
           {/* Step 6: Diferenciacion + Playbook del Metodo CAST + Conclusion */}
-          <TabsContent value="differentiation" className="mt-4">
-            <DifferentiationTab differentiation={product?.competitor_analysis?.differentiation as any} />
-          </TabsContent>
 
-          <TabsContent value="esfera" className="mt-4">
-            <StrategicPlaybookTab
-              contentStrategy={product?.content_strategy as any}
-              avatarProfiles={product?.avatar_profiles as any}
-              salesAnglesData={product?.sales_angles_data as any}
-              marketResearch={product?.market_research as any}
-            />
-          </TabsContent>
 
-          <TabsContent value="summary" className="mt-4">
-            <ExecutiveSummaryTab
-              contentStrategy={product?.content_strategy as any}
-              productName={formData.name}
-            />
-          </TabsContent>
 
           {/* Step 7: Ángulos de Venta */}
+          <TabsContent value="producto-adn" className="mt-4">
+            <ProductoAdnTab
+              jtbdData={product?.market_research?.jtbd}
+              avatarProfiles={product?.avatar_profiles}
+              salesAnglesData={product?.sales_angles_data}
+            />
+          </TabsContent>
+
+          <TabsContent value="mercado" className="mt-4">
+            <MercadoTab
+              competitorAnalysis={product?.competitor_analysis}
+              researchResult={researchResult}
+            />
+          </TabsContent>
+
+          <TabsContent value="nicho-viral" className="mt-4">
+            <NichoViralTab adnViral={researchResult?.adn_viral} />
+          </TabsContent>
+
+          <TabsContent value="kpis-contenido" className="mt-4">
+            <ContentKpisTab contentKpis={(product?.sales_angles_data as any)?.contentKpis} />
+          </TabsContent>
+
           <TabsContent value="angles" className="mt-4">
             <SalesAnglesTab salesAnglesData={product?.sales_angles_data as any} />
           </TabsContent>
 
           {/* Step 8: PUV y Transformación */}
-          <TabsContent value="puv" className="mt-4">
-            <PUVTransformationTab salesAnglesData={product?.sales_angles_data as any} />
-          </TabsContent>
 
           {/* Steps 9-10: Lead Magnets + Creativos */}
           <TabsContent value="leads" className="mt-4">
@@ -902,9 +833,6 @@ export function ProductDetailDialog({
           </TabsContent>
 
           {/* Step 12: Estrategia de Lanzamiento */}
-          <TabsContent value="launch" className="mt-4">
-            <LaunchStrategyTab launchStrategy={product?.launch_strategy as any} />
-          </TabsContent>
 
           <TabsContent value="info" className="space-y-4 mt-4">
             <div className="space-y-2">
@@ -1002,78 +930,16 @@ export function ProductDetailDialog({
           </TabsContent>
 
           {/* Tab 12: Landing Pages (2 variaciones del Método CONVERT) */}
-          <TabsContent value="landing-pages" className="mt-4">
-            <LandingPagesTab landingPages={(product?.sales_angles_data as any)?.landingPages} abTesting={(product?.sales_angles_data as any)?.landingPagesAbTesting} techStack={(product?.sales_angles_data as any)?.landingPagesTechStack} />
-          </TabsContent>
 
           {/* Tab 13: Funnel WhatsApp (Método CONVERT — Capa E LATAM) */}
-          <TabsContent value="whatsapp-funnel" className="mt-4">
-            <WhatsappFunnelTab funnels={(product?.sales_angles_data as any)?.whatsappFunnels} setup={(product?.sales_angles_data as any)?.whatsappSetup} benchmarks={(product?.sales_angles_data as any)?.whatsappBenchmarks} />
-          </TabsContent>
 
           {/* Tabs 360 (CONVERT completo) */}
-          <TabsContent value="paid-ads" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.paidAds}
-              emptyIcon={<Megaphone className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de Paid Ads se genera al activar el ADN Recargado."
-              emptyHint="Estructura completa Meta + TikTok con presupuestos, creativos y benchmarks LATAM"
-            />
-          </TabsContent>
 
-          <TabsContent value="email-marketing" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.emailMarketing}
-              emptyIcon={<Mail className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de Email Marketing se genera al activar el ADN Recargado."
-              emptyHint="Secuencias de bienvenida (7 emails), lanzamiento y reactivación, listas para copiar"
-            />
-          </TabsContent>
 
-          <TabsContent value="pricing-strategy" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.pricingStrategy}
-              emptyIcon={<DollarSign className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de precios se genera al activar el ADN Recargado."
-              emptyHint="Posicionamiento, value ladder, planes de pago en LATAM, proyecciones"
-            />
-          </TabsContent>
 
-          <TabsContent value="kpis-dashboard" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.kpisDashboard}
-              emptyIcon={<BarChart3 className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="El dashboard de KPIs se genera al activar el ADN Recargado."
-              emptyHint="North Star metric + AARRR + decision triggers + tools stack"
-            />
-          </TabsContent>
 
-          <TabsContent value="seo-strategy" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.seoStrategy}
-              emptyIcon={<Search className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de SEO se genera al activar el ADN Recargado."
-              emptyHint="Keywords, blog strategy, YouTube strategy, local SEO y timeline"
-            />
-          </TabsContent>
 
-          <TabsContent value="partnerships" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.partnerships}
-              emptyIcon={<Handshake className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de alianzas se genera al activar el ADN Recargado."
-              emptyHint="Programa de afiliados + influencers + co-marketing + PR"
-            />
-          </TabsContent>
 
-          <TabsContent value="community-strategy" className="mt-4">
-            <GenericJsonTab
-              data={(product?.sales_angles_data as any)?.communityStrategy}
-              emptyIcon={<Heart className="h-12 w-12 text-muted-foreground" />}
-              emptyTitle="La estrategia de comunidad se genera al activar el ADN Recargado."
-              emptyHint="Concepto, plataforma, onboarding, engagement, monetización"
-            />
-          </TabsContent>
 
           <TabsContent value="files" className="space-y-6 mt-4">
             <p className="text-sm text-muted-foreground">

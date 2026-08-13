@@ -11,6 +11,7 @@ interface Product {
   sales_angles_data?: any;
   content_strategy?: any;
   content_calendar?: any;
+  /** @deprecated launch_strategy ya no se genera (Research Unificado, 2026-08-13). Se conserva el tipo por compatibilidad con productos historicos; el PDF ya no arma esa seccion. */
   launch_strategy?: any;
   ideal_avatar?: string | null;
 }
@@ -114,7 +115,6 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
   const salesAnglesData = parseJson(product.sales_angles_data);
   const contentStrategy = parseJson(product.content_strategy);
   const contentCalendar = parseJson(product.content_calendar);
-  const launchStrategy = parseJson(product.launch_strategy);
 
   // Parse JTBD — try ideal_avatar first, then market_research.jtbd as fallback
   let jtbdData: any = null;
@@ -269,10 +269,9 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
   if (marketResearch) {
     let content = '';
 
-    // Key metrics grid
+    // Key metrics grid — version slim del Research Unificado: solo comportamiento
+    // del consumidor + nivel de conciencia del mercado (TAM/SAM/SOM y CAGR se eliminaron).
     const metrics: { icon: string; label: string; value: string }[] = [];
-    if (safeStr(marketResearch.marketSize)) metrics.push({ icon: '📈', label: 'Tamaño del Mercado', value: marketResearch.marketSize });
-    if (safeStr(marketResearch.growthTrend)) metrics.push({ icon: '📊', label: 'Tendencia de Crecimiento', value: marketResearch.growthTrend });
     if (safeStr(marketResearch.marketState)) metrics.push({ icon: '🏷️', label: 'Estado del Mercado', value: marketResearch.marketState });
     if (safeStr(marketResearch.awarenessLevel)) metrics.push({ icon: '🧠', label: 'Nivel de Conciencia', value: marketResearch.awarenessLevel });
 
@@ -291,27 +290,6 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
 
     if (safeStr(marketResearch.marketStateExplanation)) {
       content += `<p class="body-text">${escapeHtml(marketResearch.marketStateExplanation)}</p>`;
-    }
-
-    const macroVars = safeArray(marketResearch.macroVariables);
-    if (macroVars.length > 0) {
-      content += `<h3>🔮 Variables Macroeconómicas</h3>
-        <table class="data-table compact">
-          <thead><tr><th>Factor</th><th>Tipo</th><th>Impacto</th><th>Implicación</th></tr></thead>
-          <tbody>`;
-      macroVars.forEach((v: any) => {
-        if (typeof v === 'string') {
-          content += `<tr><td colspan="4">${escapeHtml(v)}</td></tr>`;
-        } else {
-          content += `<tr>
-            <td>${escapeHtml(safeStr(v?.factor, '-'))}</td>
-            <td><span class="tag blue">${escapeHtml(safeStr(v?.type, '-'))}</span></td>
-            <td>${escapeHtml(safeStr(v?.impact, '-'))}</td>
-            <td>${escapeHtml(safeStr(v?.implication, '-'))}</td>
-          </tr>`;
-        }
-      });
-      content += `</tbody></table>`;
     }
 
     const opportunities = safeArray(marketResearch.opportunities);
@@ -700,12 +678,20 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
       const whyWorks = safeStr(angle?.whyItWorks, '');
       const devTips = safeStr(angle?.developmentTips, '');
       const hashtags = safeArray(angle?.hashtags);
-      if (cta || whyWorks || devTips || hashtags.length > 0) {
+      // hook_source / hook_source_evidence: de qué hook real del ADN Viral desciende
+      // este ángulo (o "gap" si ataca un hueco que nadie usa). Research Unificado.
+      const hookSource = safeStr(angle?.hook_source, '');
+      const hookSourceEvidence = safeStr(angle?.hook_source_evidence, '');
+      if (cta || whyWorks || devTips || hashtags.length > 0 || hookSource) {
         content += `<div style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;page-break-inside:avoid">
           <strong style="color:#6366f1">#${idx + 1} — ${escapeHtml(safeStr(angle?.type, ''))}</strong>`;
         if (cta) content += `<div style="margin-top:6px"><span style="font-weight:600;color:#16a34a">CTA:</span> ${escapeHtml(cta)}</div>`;
         if (whyWorks) content += `<div style="margin-top:4px"><span style="font-weight:600;color:#7c3aed">Por qué funciona:</span> ${escapeHtml(whyWorks)}</div>`;
         if (devTips) content += `<div style="margin-top:4px"><span style="font-weight:600;color:#2563eb">Desarrollo:</span> ${escapeHtml(devTips)}</div>`;
+        if (hookSource) {
+          const isGap = hookSource.toLowerCase() === 'gap';
+          content += `<div style="margin-top:4px"><span style="font-weight:600;color:#db2777">${isGap ? 'Hueco que nadie usa:' : 'Hook real de referencia:'}</span> ${escapeHtml(hookSource)}${hookSourceEvidence ? ` — <span style="color:#6b7280">${escapeHtml(hookSourceEvidence)}</span>` : ''}</div>`;
+        }
         if (hashtags.length > 0) content += `<div style="margin-top:6px">${hashtags.map((t: any) => `<span style="background:#eff6ff;color:#3b82f6;padding:2px 6px;border-radius:3px;font-size:10px;margin-right:4px">#${escapeHtml(safeStr(t, '').replace(/^#/, ''))}</span>`).join('')}</div>`;
         content += `</div>`;
       }
@@ -903,21 +889,27 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
     }
 
     if (videoCreatives.length > 0) {
-      content += `<h3>🎬 Creativos por Fase ESFERA</h3>
+      content += `<h3>🎬 Creativos por Fase CAST</h3>
         <table class="data-table compact">
           <thead>
             <tr>
               <th width="5%">#</th>
-              <th width="15%">Fase</th>
-              <th width="25%">Título</th>
-              <th width="35%">Idea</th>
-              <th width="15%">Formato</th>
+              <th width="14%">Fase</th>
+              <th width="21%">Título</th>
+              <th width="26%">Idea</th>
+              <th width="12%">Formato</th>
+              <th width="17%">Pauta recomendada</th>
             </tr>
           </thead>
           <tbody>`;
+      const temperatureColors: Record<string, string> = { frio: '#38bdf8', 'frío': '#38bdf8', tibio: '#f59e0b', caliente: '#ef4444' };
       videoCreatives.slice(0, 20).forEach((vc: any, idx: number) => {
-        const phase = safeStr(vc?.esferaPhase);
+        // cast_phase reemplazó a esferaPhase (Research Unificado); se conserva el
+        // fallback para creativos históricos que aún traen el nombre viejo.
+        const phase = safeStr(vc?.cast_phase || vc?.esferaPhase);
         const phaseClass = phase.toLowerCase().replace(/\s/g, '');
+        const temp = safeStr(vc?.pauta_recomendada?.temperatura, '');
+        const tempColor = temperatureColors[temp.toLowerCase()] || '#9ca3af';
         content += `
           <tr>
             <td class="text-center">${idx + 1}</td>
@@ -925,12 +917,59 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
             <td>${escapeHtml(safeStr(vc?.title, '-'))}</td>
             <td>${escapeHtml(safeStr(vc?.idea, '-'))}</td>
             <td>${escapeHtml(safeStr(vc?.format, '-'))}</td>
+            <td>${temp ? `<span style="background:${tempColor}15;color:${tempColor};padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;text-transform:uppercase">${escapeHtml(temp)}</span>` : '-'}</td>
           </tr>`;
       });
       content += `</tbody></table>`;
+
+      // Detalle por creativo: nota de pauta + brief de producción (herencia del
+      // paso paid_ads eliminado + campos nuevos de production_brief)
+      content += `<div style="margin-top:16px">`;
+      videoCreatives.slice(0, 20).forEach((vc: any, idx: number) => {
+        const nota = safeStr(vc?.pauta_recomendada?.nota, '');
+        const brief = vc?.production_brief;
+        const briefFields = [
+          { key: 'scenario', label: 'Escenario' },
+          { key: 'light', label: 'Luz' },
+          { key: 'framing', label: 'Encuadre' },
+          { key: 'wardrobe', label: 'Vestuario' },
+          { key: 'editing_notes', label: 'Notas de edición' },
+          { key: 'subtitles', label: 'Subtítulos' },
+        ].filter(f => brief && safeStr(brief[f.key]));
+        if (!nota && briefFields.length === 0) return;
+        content += `<div style="margin-bottom:10px;padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;page-break-inside:avoid">
+          <strong style="color:#6366f1">#${idx + 1} — ${escapeHtml(safeStr(vc?.title, ''))}</strong>`;
+        if (nota) content += `<div style="margin-top:6px"><span style="font-weight:600;color:#d97706">Nota de pauta:</span> ${escapeHtml(nota)}</div>`;
+        if (briefFields.length > 0) {
+          content += `<div style="margin-top:6px"><span style="font-weight:600;color:#2563eb">Brief de producción:</span><ul style="margin-top:4px">`;
+          briefFields.forEach(f => {
+            content += `<li><strong>${f.label}:</strong> ${escapeHtml(safeStr(brief[f.key]))}</li>`;
+          });
+          content += `</ul></div>`;
+        }
+        content += `</div>`;
+      });
+      content += `</div>`;
     }
 
     addSection('lead-magnets', '🎁', 'Lead Magnets y Creativos', content);
+
+  // ── SECTION: Content KPIs (herencia de kpis_dashboard eliminado) ─────────────────────
+  const contentKpis = safeArray(salesAnglesData?.contentKpis);
+  if (contentKpis.length > 0) {
+    let content = `<p class="body-text">Qué medir en tu contenido, y qué hacer cuando la métrica se sale del rango esperado.</p>`;
+    content += `<table class="data-table"><thead><tr><th width="22%">KPI</th><th width="28%">Cómo medirlo</th><th width="20%">Meta</th><th width="30%">Si pasa esto, haz esto</th></tr></thead><tbody>`;
+    contentKpis.forEach((k: any) => {
+      content += `<tr>
+        <td><strong>${escapeHtml(safeStr(k?.kpi, '-'))}</strong></td>
+        <td>${escapeHtml(safeStr(k?.como_medirlo, '-'))}</td>
+        <td>${escapeHtml(safeStr(k?.meta, '-'))}</td>
+        <td>${escapeHtml(safeStr(k?.trigger, '-'))}</td>
+      </tr>`;
+    });
+    content += `</tbody></table>`;
+    addSection('content-kpis', '📈', 'KPIs de Contenido', content);
+  }
   }
 
   // ── SECTION: Content Calendar (Parrilla de Contenido) ───────────────────────
@@ -966,9 +1005,12 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
           <th style="width:10%">Pilar</th>
           <th style="width:20%">Título</th>
           <th style="width:28%">Hook</th>
-          <th style="width:10%">ESFERA</th>
+          <th style="width:10%">CAST</th>
         </tr></thead><tbody>`;
       weekItems.forEach((item: any) => {
+        // cast_phase reemplazó a esferaPhase (Research Unificado); fallback para
+        // parrillas históricas que aún traen el nombre viejo.
+        const castPhase = safeStr(item.cast_phase || item.esferaPhase);
         content += `
           <tr>
             <td>D${item.day || '?'}</td>
@@ -977,160 +1019,13 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
             <td>${escapeHtml(safeStr(item.pillar, '-'))}</td>
             <td>${escapeHtml(safeStr(item.title, '-'))}</td>
             <td><em>${escapeHtml(safeStr(item.hook, '-'))}</em></td>
-            <td><span class="phase-badge ${safeStr(item.esferaPhase).toLowerCase()}">${escapeHtml(safeStr(item.esferaPhase, '-'))}</span></td>
+            <td><span class="phase-badge ${castPhase.toLowerCase()}">${escapeHtml(castPhase || '-')}</span></td>
           </tr>`;
       });
       content += `</tbody></table>`;
     }
 
     addSection('content-calendar', '📅', 'Parrilla de Contenido — 30 Días', content);
-  }
-
-  // ── SECTION: Launch Strategy ────────────────────────────────────────────────
-  if (launchStrategy && (launchStrategy.preLaunch || launchStrategy.launch)) {
-    let content = '';
-
-    // Pre-Launch
-    if (launchStrategy.preLaunch) {
-      const pre = launchStrategy.preLaunch;
-      content += `<h3>🚀 Pre-Lanzamiento ${pre.duration ? `(${escapeHtml(pre.duration)})` : ''}</h3>`;
-
-      const objectives = safeArray(pre.objectives);
-      if (objectives.length > 0) {
-        content += `<p><strong>Objetivos:</strong></p><ul>`;
-        objectives.forEach((o: string) => { content += `<li>${escapeHtml(o)}</li>`; });
-        content += `</ul>`;
-      }
-
-      const actions = safeArray(pre.actions);
-      if (actions.length > 0) {
-        content += `<table><thead><tr><th>Semana</th><th>Canal</th><th>Acción</th><th>Detalles</th></tr></thead><tbody>`;
-        actions.forEach((a: any) => {
-          content += `<tr>
-            <td>${escapeHtml(safeStr(a.week, '-'))}</td>
-            <td>${escapeHtml(safeStr(a.channel, '-'))}</td>
-            <td>${escapeHtml(safeStr(a.action, '-'))}</td>
-            <td>${escapeHtml(safeStr(a.details, '-'))}</td>
-          </tr>`;
-        });
-        content += `</tbody></table>`;
-      }
-
-      const checklist = safeArray(pre.checklist);
-      if (checklist.length > 0) {
-        content += `<h4>✅ Checklist</h4><div class="grid-2col">`;
-        checklist.forEach((item: string) => {
-          content += `<div class="highlight-box gray"><span>☐</span> ${escapeHtml(item)}</div>`;
-        });
-        content += `</div>`;
-      }
-    }
-
-    // Launch Day
-    if (launchStrategy.launch) {
-      const launch = launchStrategy.launch;
-      content += `<h3>🎯 Día de Lanzamiento</h3>`;
-
-      const dayPlan = safeArray(launch.dayPlan);
-      if (dayPlan.length > 0) {
-        content += `<table><thead><tr><th>Hora</th><th>Acción</th><th>Canal</th><th>Detalles</th></tr></thead><tbody>`;
-        dayPlan.forEach((step: any) => {
-          content += `<tr>
-            <td><strong>${escapeHtml(safeStr(step.time, '-'))}</strong></td>
-            <td>${escapeHtml(safeStr(step.action, '-'))}</td>
-            <td>${escapeHtml(safeStr(step.channel, '-'))}</td>
-            <td>${escapeHtml(safeStr(step.details, '-'))}</td>
-          </tr>`;
-        });
-        content += `</tbody></table>`;
-      }
-
-      // Offer
-      if (launch.offer) {
-        content += `<div class="highlight-box green">
-          <h4>💰 Estructura de Oferta</h4>
-          ${launch.offer.description ? `<p>${escapeHtml(launch.offer.description)}</p>` : ''}
-          ${launch.offer.price ? `<p><strong>Precio:</strong> ${escapeHtml(launch.offer.price)}</p>` : ''}
-          ${safeArray(launch.offer.bonuses).length > 0 ? `<p><strong>Bonos:</strong> ${safeArray(launch.offer.bonuses).map((b: string) => escapeHtml(b)).join(' | ')}</p>` : ''}
-          ${launch.offer.guarantee ? `<p><strong>Garantía:</strong> ${escapeHtml(launch.offer.guarantee)}</p>` : ''}
-        </div>`;
-      }
-
-      // Email Sequence
-      const emails = safeArray(launch.emailSequence);
-      if (emails.length > 0) {
-        content += `<h4>📧 Secuencia de Emails</h4>
-          <table><thead><tr><th>Día</th><th>Asunto</th><th>Resumen</th><th>CTA</th></tr></thead><tbody>`;
-        emails.forEach((e: any) => {
-          content += `<tr>
-            <td>${escapeHtml(safeStr(e.day, '-'))}</td>
-            <td><strong>${escapeHtml(safeStr(e.subject, '-'))}</strong></td>
-            <td>${escapeHtml(safeStr(e.bodyOutline, '-'))}</td>
-            <td>${escapeHtml(safeStr(e.cta, '-'))}</td>
-          </tr>`;
-        });
-        content += `</tbody></table>`;
-      }
-    }
-
-    // Post-Launch
-    if (launchStrategy.postLaunch) {
-      const post = launchStrategy.postLaunch;
-      content += `<h3>🔄 Post-Lanzamiento</h3>`;
-
-      const retention = safeArray(post.retentionActions);
-      if (retention.length > 0) {
-        content += `<p><strong>Acciones de retención:</strong></p><ul>`;
-        retention.forEach((r: string) => { content += `<li>${escapeHtml(r)}</li>`; });
-        content += `</ul>`;
-      }
-
-      if (post.referralStrategy) {
-        content += `<div class="highlight-box blue"><h4>🤝 Estrategia de referidos</h4><p>${escapeHtml(post.referralStrategy)}</p></div>`;
-      }
-
-      const nonBuyer = safeArray(post.nonBuyerFollowUp);
-      if (nonBuyer.length > 0) {
-        content += `<p><strong>Follow-up no compradores:</strong></p><ul>`;
-        nonBuyer.forEach((n: string) => { content += `<li>${escapeHtml(n)}</li>`; });
-        content += `</ul>`;
-      }
-    }
-
-    // Budget
-    if (launchStrategy.budget) {
-      const budget = launchStrategy.budget;
-      content += `<h4>💵 Presupuesto</h4>`;
-      if (budget.totalEstimated) {
-        content += `<p><strong>Total estimado: ${escapeHtml(budget.totalEstimated)}</strong></p>`;
-      }
-      const allItems = [...safeArray(budget.organic).map((i: any) => ({ ...i, type: 'Orgánico' })), ...safeArray(budget.paid).map((i: any) => ({ ...i, type: 'Pagado' }))];
-      if (allItems.length > 0) {
-        content += `<table><thead><tr><th>Tipo</th><th>Item</th><th>Costo</th></tr></thead><tbody>`;
-        allItems.forEach((item: any) => {
-          content += `<tr><td>${escapeHtml(item.type)}</td><td>${escapeHtml(safeStr(item.item, '-'))}</td><td>${escapeHtml(safeStr(item.cost, '-'))}</td></tr>`;
-        });
-        content += `</tbody></table>`;
-      }
-    }
-
-    // Timeline
-    const timeline = safeArray(launchStrategy.timeline);
-    if (timeline.length > 0) {
-      content += `<h4>📆 Timeline</h4>
-        <table><thead><tr><th>Fase</th><th>Semana</th><th>Hito</th><th>Entregables</th></tr></thead><tbody>`;
-      timeline.forEach((t: any) => {
-        content += `<tr>
-          <td>${escapeHtml(safeStr(t.phase, '-'))}</td>
-          <td>${escapeHtml(safeStr(t.week, '-'))}</td>
-          <td>${escapeHtml(safeStr(t.milestone, '-'))}</td>
-          <td>${safeArray(t.deliverables).map((d: string) => escapeHtml(d)).join(', ')}</td>
-        </tr>`;
-      });
-      content += `</tbody></table>`;
-    }
-
-    addSection('launch-strategy', '🚀', 'Estrategia de Lanzamiento', content);
   }
 
   // ── BUILD TABLE OF CONTENTS ─────────────────────────────────────────────────
@@ -1628,6 +1523,11 @@ export function generateProductResearchPdf({ product, clientName }: ProductResea
     .phase-badge.solucion, .phase-badge.solución { background: #dbeafe; color: #2563eb; }
     .phase-badge.remarketing { background: #f3e8ff; color: #7c3aed; }
     .phase-badge.fidelizar { background: #d1fae5; color: #059669; }
+    /* CAST (Research Unificado): conocer/atraer/seducir/transformar reemplaza a ESFERA */
+    .phase-badge.conocer { background: #fee2e2; color: #dc2626; }
+    .phase-badge.atraer { background: #dbeafe; color: #2563eb; }
+    .phase-badge.seducir { background: #f3e8ff; color: #7c3aed; }
+    .phase-badge.transformar { background: #d1fae5; color: #059669; }
 
     /* ── COMPETITOR CARDS ────────────────────────────────── */
     .competitor-card {

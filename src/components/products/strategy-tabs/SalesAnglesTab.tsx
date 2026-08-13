@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Heart, Users, Video, Hash, Megaphone } from 'lucide-react';
+import { Sparkles, Heart, Users, Video, Hash, Megaphone, Link2, Unlink } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table,
@@ -23,6 +23,10 @@ interface SalesAngle {
   hashtags?: string[];
   whyItWorks?: string;
   developmentTips?: string;
+  /** De qué hook REAL del nicho desciende este ángulo. "gap" si ataca un hueco que nadie usa. */
+  hook_source?: string;
+  /** URL del video/anuncio del que sale, o cuál gap. */
+  hook_source_evidence?: string;
 }
 
 interface SalesAnglesData {
@@ -57,6 +61,30 @@ const TYPE_COLORS: Record<string, string> = {
   'error-comun': 'bg-orange-900/50 text-orange-400',
 };
 
+/** Trazabilidad del ángulo: de qué hook real desciende, o si ataca un gap. */
+function HookSourceBadge({ angle }: { angle: SalesAngle }) {
+  if (!angle.hook_source) return null;
+  const isGap = angle.hook_source.toLowerCase() === 'gap';
+  return (
+    <div className={`p-2 rounded-lg border text-xs ${isGap ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-violet-500/5 border-violet-500/20'}`}>
+      <p className={`font-medium mb-0.5 flex items-center gap-1 ${isGap ? 'text-emerald-600 dark:text-emerald-400' : 'text-violet-600 dark:text-violet-400'}`}>
+        {isGap ? <Unlink className="h-3 w-3" /> : <Link2 className="h-3 w-3" />}
+        {isGap ? 'Ataca un hueco que nadie usa' : `Desciende de: ${angle.hook_source}`}
+      </p>
+      {angle.hook_source_evidence && (
+        <p className="text-muted-foreground">
+          {isGap ? 'Hueco: ' : 'Evidencia: '}
+          {angle.hook_source_evidence.startsWith('http') ? (
+            <a href={angle.hook_source_evidence} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+              {angle.hook_source_evidence}
+            </a>
+          ) : angle.hook_source_evidence}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
   const angles = salesAnglesData?.angles || [];
 
@@ -80,6 +108,7 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
         </h3>
         <p className="text-sm text-zinc-400">
           Ángulos variados: educativos, emocionales, aspiracionales, autoridad, comparativos, anti-mercado, storytelling, prueba social y error común.
+          Cada uno con trazabilidad: de qué hook real del nicho desciende, o qué hueco ataca.
         </p>
       </div>
 
@@ -123,6 +152,7 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                   <TableHead className="min-w-[100px]">Emoción</TableHead>
                   <TableHead className="min-w-[180px]">Hook</TableHead>
                   <TableHead className="min-w-[100px]">Formato</TableHead>
+                  <TableHead className="min-w-[140px]">Desciende de</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,6 +193,19 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                         {angle.contentType || '-'}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-xs">
+                      {angle.hook_source ? (
+                        angle.hook_source.toLowerCase() === 'gap' ? (
+                          <Badge variant="outline" className="text-emerald-600 border-emerald-300 text-[10px]">
+                            <Unlink className="h-2.5 w-2.5 mr-1" /> gap
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-violet-600 border-violet-300 text-[10px]">
+                            <Link2 className="h-2.5 w-2.5 mr-1" /> {angle.hook_source}
+                          </Badge>
+                        )
+                      ) : '-'}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -202,6 +245,8 @@ export function SalesAnglesTab({ salesAnglesData }: SalesAnglesTabProps) {
                   <p className="text-sm italic text-zinc-300">"{angle.hookExample}"</p>
                 </div>
               )}
+
+              <HookSourceBadge angle={angle} />
 
               {angle.ctaExample && (
                 <div className="p-2 bg-[#1a1a24] border border-zinc-800 dark:border-zinc-700/50 rounded-lg">
