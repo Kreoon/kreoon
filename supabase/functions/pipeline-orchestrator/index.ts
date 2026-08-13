@@ -1904,9 +1904,14 @@ Deno.serve(async (req) => {
         );
       }
 
+      // `actor`/`actorId` se declaran dentro de `approve` y `request_changes`,
+      // no en el scope de la función: aquí hay que resolverlos de nuevo.
+      const actorReintento: Actor = ctx.esServiceRole ? "system" : rolCaller;
+      const actorIdReintento = ctx.userId ?? (body.actor_id ? String(body.actor_id) : null);
+
       await registrarEvento(admin, run.id, stage, "generated", {
-        actor,
-        actorId,
+        actor: actorReintento,
+        actorId: actorIdReintento,
         payload: { reintento: true, desde_estado: run.stage_status },
       });
 
