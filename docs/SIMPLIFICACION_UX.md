@@ -272,17 +272,31 @@ carga cada cosa** — y eso el peso total no lo mide.
   eliminado. Los usan de verdad el tablero y Academia, y ya cargan bajo demanda.
   **No tocar.**
 
-### Causa raíz pendiente — por qué `vendor-charts` sigue precargándose
+### `vendor-charts` en la portada — arreglado a medias, causa sin cerrar
 
-Separar `d3` no bastó: `vendor-charts` sigue en el `modulepreload` de la
-portada. El culpable es `src/components/ui/lazy-charts.tsx`, que hace carga
-diferida en las líneas 41-61 y luego, **en la línea 95, reexporta 26 símbolos de
-`recharts` de forma estática**. El comentario dice que son "más livianos", pero
-salen del mismo paquete: cualquiera que importe de ahí se trae la librería
-entera, y son 10 archivos.
+**Lo que se hizo** (2026-08-12): `src/components/ui/lazy-charts.tsx` hacía carga
+diferida en las líneas 41-61 y luego **reexportaba 26 símbolos de `recharts` de
+forma estática**, anulándose a sí mismo. Se quitó ese reexport y los 12
+consumidores pasaron a importar directamente de `recharts`.
 
-Arreglarlo es real pero toca esos 10 importadores: **no es un cambio de bajo
-riesgo**, queda propuesto y sin aplicar.
+**Lo que NO se consiguió**: era necesario pero **no suficiente**. Tras el
+cambio, `vendor-charts` sigue en el `modulepreload` de la portada, con el mismo
+tamaño exacto (441.443 B) y el mismo hash.
+
+**Lo comprobado después**, por si alguien retoma esto:
+
+| Hipótesis | Resultado |
+|---|---|
+| ¿Es solo un aviso de precarga? | **No.** El chunk de entrada importa `vendor-charts` de verdad (2 referencias en `dist/assets/index-*.js`) |
+| ¿Algún consumidor cuelga de ruta no diferida? | **No.** Los 12 están en rutas con `lazyWithRetry`, incluida Academia |
+| ¿Lo importa algo directamente desde `App.tsx`? | **No.** Ninguno de sus imports estáticos de primer nivel toca `recharts` |
+
+Queda una **cadena transitiva de segundo o tercer nivel** que arrastra
+`recharts` al arranque. Encontrarla exige analizar el grafo de módulos del build
+(por ejemplo con `rollup-plugin-visualizer`), no más grep.
+
+**No es funcionalidad rota**: las gráficas funcionan. Es 441 kB de arranque
+innecesario en la portada pública.
 
 Menores, sin aplicar: `SocialHubPage`, `AdGeneratorPage` y `ProductBannersPage`
 usan `lazy()` en vez de `lazyWithRetry()` (pierden la recarga automática cuando
