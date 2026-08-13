@@ -80,6 +80,11 @@
 // `resolverAuthStaff`). Es una impersonación acotada y deliberada: sin ella la
 // etapa de guiones no puede ser autónoma. Se puede fijar qué usuario se usa con
 // el secret opcional PIPELINE_STAFF_USER_ID; si no, se toma un admin de la org.
+// La cadena de guiones (un guion por invocación, ver ejecutarEtapaGuiones)
+// NO fabrica uno nuevo por cada eslabón: el primero que lo acuña lo pasa al
+// siguiente en el body de la invocación interna (`programarAutoPoll`) y se
+// reutiliza mientras siga sirviendo — Supabase Auth limita cuántos magic
+// links emite por hora y fabricar uno por guion lo agotaba a la 5ª.
 //
 // ── Notificaciones ─────────────────────────────────────────────────────────
 // SIEMPRE `user_notifications` con type 'content_update' (uno ya mapeado en el
@@ -468,6 +473,13 @@ interface ContextoAuth {
   token: string | null;
   userId: string | null;
   esServiceRole: boolean;
+  /**
+   * JWT de staff cacheado de un eslabón anterior de la cadena de guiones
+   * (viaja en el body de la invocación interna, ver programarAutoPoll). Solo
+   * lo puebla el handler de `poll` con `auto:true`; el resto de callers lo
+   * dejan undefined y `resolverAuthStaff` cae a su comportamiento normal.
+   */
+  cachedStaffAuth?: string | null;
 }
 
 async function leerContextoAuth(req: Request): Promise<ContextoAuth> {
@@ -525,6 +537,14 @@ async function resolverAuthStaff(
   ctx: ContextoAuth,
   organizationId: string,
 ): Promise<string | null> {
+  // Eslabón de la cadena de guiones que ya trae el JWT resuelto por un
+  // eslabón anterior: se reutiliza en vez de fabricar uno nuevo. Un
+  // access_token dura ~1h, de sobra para una cadena de varios guiones — y
+  // evita chocar con el límite de magic links que Supabase Auth emite por
+  // hora (la causa real de que el 5º guion de una tanda de 6 se quedara sin
+  // JWT: antes se fabricaba uno por guion).
+  if (ctx.cachedStaffAuth) return ctx.cachedStaffAuth;
+
   if (ctx.authHeader && ctx.userId && await esStaffDeOrg(admin, ctx.userId, organizationId)) {
     return ctx.authHeader;
   }
@@ -599,20 +619,50 @@ async function invocar(
 }
 
 /**
+ * Invoca generate-script con reintento de auth. El JWT de staff que llega en
+ * `auth` puede venir cacheado de un eslabón anterior de la cadena de guiones
+ * (ver `resolverAuthStaff`) y haber expirado entretanto: si la llamada
+ * responde 401/403 se descarta ese header, se fabrica uno nuevo (bypaseando
+ * el cache) y se reintenta una sola vez. Devuelve también el auth que
+ * terminó sirviendo, para que el llamador lo reutilice en el resto del lote
+ * y lo pase al siguiente eslabón de la cadena.
+ */
+async function invocarGenerateScript(
+  admin: Sb,
+  ctx: ContextoAuth,
+  organizationId: string,
+  auth: string,
+  cuerpo: Json,
+  timeoutMs: number,
+): Promise<{ res: RespuestaFn; auth: string }> {
+  const res = await invocar("generate-script", cuerpo, auth, timeoutMs);
+  if (res.status !== 401 && res.status !== 403) return { res, auth };
+
+  const nuevo = await resolverAuthStaff(admin, { ...ctx, cachedStaffAuth: null }, organizationId);
+  if (!nuevo) return { res, auth };
+  return { res: await invocar("generate-script", cuerpo, nuevo, timeoutMs), auth: nuevo };
+}
+
+/**
  * Arranca (o continúa) la cadena de auto-poll. Fire-and-forget con service
  * role: `auto:true` solo se acepta si el Bearer es exactamente el service key,
  * para que nadie desde fuera pueda montar una cadena infinita.
  *
- * Puede haber dos cadenas vivas si dos acciones entran en 'generating' a la
- * vez; no es un problema: cada eslabón es idempotente y todos se apagan en
- * cuanto el run sale de 'generating'.
+ * `staffAuth` es un extra SOLO para la cadena de guiones: el JWT de staff
+ * que ya resolvió este eslabón (ver `resolverAuthStaff`) viaja en el body de
+ * la invocación interna para que el siguiente eslabón lo reutilice en vez de
+ * fabricar uno nuevo — nunca se loguea ni se persiste. El resto de etapas no
+ * lo necesitan y lo dejan sin usar.
+ *
+ * La etapa de guiones, además, tiene su propio cerrojo de eslabón
+ * (`stage_attempts.guiones_eslabon`, ver ejecutarEtapaGuiones) para que dos
+ * cadenas que entraron en 'generating' casi a la vez no avancen las dos: la
+ * que pierde la carrera se retira sola.
  */
-function programarAutoPoll(runId: string, ciclo: number): void {
-  invocarSinEsperar(
-    "pipeline-orchestrator",
-    { action: "poll", run_id: runId, auto: true, ciclo },
-    `Bearer ${SERVICE_KEY}`,
-  );
+function programarAutoPoll(runId: string, ciclo: number, staffAuth?: string | null): void {
+  const cuerpo: Json = { action: "poll", run_id: runId, auto: true, ciclo };
+  if (staffAuth) cuerpo.staff_auth = staffAuth;
+  invocarSinEsperar("pipeline-orchestrator", cuerpo, `Bearer ${SERVICE_KEY}`);
 }
 
 /** Dispara sin esperar respuesta (funciones que tardan minutos). */
@@ -1453,10 +1503,42 @@ async function ejecutarEtapaGuiones(
     // dormía (aprobación manual, error por otra vía), no hay nada que
     // continuar.
     if (run.stage !== "guiones" || run.stage_status !== "generating") return run;
+
+    // Cerrojo de ESLABÓN: puede haber más de una cadena de auto-poll viva
+    // para el mismo run (dos acciones que entraron en 'generating' casi a la
+    // vez). Sin esto cada cadena generaría su propio guion en paralelo y un
+    // lote de 6 terminaría con 20+ eventos en vez de 6. Se reclama el turno
+    // con un CAS sobre `stage_attempts.guiones_eslabon`: el UPDATE solo
+    // afecta la fila si el contador sigue teniendo el valor que se acaba de
+    // leer. El eslabón que pierde la carrera ve 0 filas actualizadas y se
+    // retira sin generar nada — la otra cadena sigue sola. El `.or()` cubre
+    // además los runs que ya estaban en 'guiones' antes de este cambio y
+    // todavía no tienen la clave seteada (NULL en vez de 0).
+    const eslabonLeido = Number(run.stage_attempts?.guiones_eslabon ?? 0);
+    let reclamo = admin
+      .from("client_pipeline_runs")
+      .update({ stage_attempts: { ...(run.stage_attempts ?? {}), guiones_eslabon: eslabonLeido + 1 } })
+      .eq("id", run.id);
+    reclamo = eslabonLeido === 0
+      ? reclamo.or("stage_attempts->>guiones_eslabon.eq.0,stage_attempts->>guiones_eslabon.is.null")
+      : reclamo.eq("stage_attempts->>guiones_eslabon", String(eslabonLeido));
+    const { data: reclamado } = await reclamo.select("*");
+    if (!reclamado || reclamado.length === 0) {
+      console.log(`[pipeline] ${run.id} · cadena de guiones duplicada; este eslabón se retira`);
+      return run;
+    }
+    run = reclamado[0] as Run;
   } else {
     const { data: tomado } = await admin
       .from("client_pipeline_runs")
-      .update({ stage: "guiones", stage_status: "generating", guiones_started_at: ahora() })
+      .update({
+        stage: "guiones",
+        stage_status: "generating",
+        guiones_started_at: ahora(),
+        // Arranca (o reinicia, en un retry_stage/next_batch) el contador de
+        // eslabón que usa el cerrojo de arriba.
+        stage_attempts: { ...(run.stage_attempts ?? {}), guiones_eslabon: 0 },
+      })
       .eq("id", run.id).neq("stage_status", "generating").select("*");
     if (!tomado || tomado.length === 0) return run;
     run = tomado[0] as Run;
@@ -1468,15 +1550,6 @@ async function ejecutarEtapaGuiones(
     .eq("id", run.product_id).maybeSingle();
   if (prodError || !producto) {
     return marcarError(admin, run, "guiones", "no se encontró el producto del run", prodError?.message);
-  }
-
-  // generate-script exige un usuario miembro de la organización.
-  const auth = await resolverAuthStaff(admin, ctx, run.organization_id);
-  if (!auth) {
-    return marcarError(
-      admin, run, "guiones",
-      "no hay un JWT de un miembro de la organización para invocar generate-script",
-    );
   }
 
   const existentes = await guionesYaCreados(admin, run.id);
@@ -1517,6 +1590,51 @@ async function ejecutarEtapaGuiones(
       `[pipeline] ${run.id} · objetivo recortado a ${objetivo} guiones: al cliente le quedan ${cupo.restantes} de ${cupo.contratados}`,
     );
   }
+
+  // generate-script exige un usuario miembro de la organización. Se resuelve
+  // DESPUÉS de calcular `existentes`/`objetivo` porque, si falla, la
+  // decisión de escalar a error o solo reintentar depende de cuánto trabajo
+  // ya hay hecho.
+  let auth = await resolverAuthStaff(admin, ctx, run.organization_id);
+  if (!auth) {
+    if (existentes.length > 0) {
+      // Ya hay guiones buenos escritos: un tropiezo transitorio resolviendo
+      // el JWT (p.ej. Supabase Auth deja de emitir magic links si se piden
+      // demasiados seguidos) no puede tirar ese trabajo detrás de un error.
+      // Se cuenta en el MISMO freno que ya protege el rate limit del
+      // proveedor de IA (`guiones_intentos`) y se reprograma la cadena para
+      // que el próximo eslabón lo vuelva a intentar.
+      const clave = "guiones_intentos";
+      const intentosPrevios = Number(run.stage_attempts?.[clave] ?? 0);
+      const intentos = intentosPrevios + 1;
+      const attempts = { ...(run.stage_attempts ?? {}), [clave]: intentos };
+      const topeIntentos = objetivo * 3;
+
+      if (intentos >= topeIntentos) {
+        const conTope = await actualizarRun(admin, run.id, { stage_attempts: attempts });
+        await notificarEquipo(
+          admin, run.organization_id,
+          "Pipeline detenido: no se pudo resolver un JWT de staff",
+          `Se generaron ${existentes.length} de ${objetivo} guiones, pero tras ${intentos} intentos no se pudo conseguir un JWT de un miembro de la organización para seguir. Reintenta la etapa.`,
+          run.id,
+        );
+        return marcarError(
+          admin, conTope, "guiones",
+          `No se pudo resolver un JWT de staff tras ${intentos} intentos (van ${existentes.length} de ${objetivo} guiones)`,
+        );
+      }
+
+      await actualizarRun(admin, run.id, { stage_attempts: attempts });
+      programarAutoPoll(run.id, 0);
+      return run;
+    }
+
+    return marcarError(
+      admin, run, "guiones",
+      "no hay un JWT de un miembro de la organización para invocar generate-script",
+    );
+  }
+
   const regenerando = !!opciones.feedback && existentes.length > 0;
 
   const angulos: string[] = Array.isArray(producto.sales_angles) && producto.sales_angles.length > 0
@@ -1564,7 +1682,7 @@ async function ejecutarEtapaGuiones(
         ? reglasDeAdaptacion(datosCreador.nombre, datosCreador.ficha)
         : "";
 
-      const res = await invocar("generate-script", {
+      const { res, auth: authActualizado } = await invocarGenerateScript(admin, ctx, run.organization_id, auth, {
         ...base,
         sales_angle: salesAngle,
         sphere_phase: spherePhase,
@@ -1574,7 +1692,8 @@ async function ejecutarEtapaGuiones(
             : "",
           reglas,
         ].filter(Boolean).join("\n"),
-      }, auth, 120_000);
+      }, 120_000);
+      auth = authActualizado;
 
       const html = res.body?.script;
       if (!res.ok || typeof html !== "string" || !html.trim()) {
@@ -1621,9 +1740,11 @@ async function ejecutarEtapaGuiones(
   // paso se espacian las llamadas al proveedor — que es justo lo que
   // dispara ese límite cuando se piden varias seguidas.
 
-  // Idempotencia: si dos eslabones de la cadena llegaron a correr casi a la
-  // vez (ver el comentario de programarAutoPoll: puede haber dos cadenas
-  // vivas), el que llega después ve que ya no falta nada y no duplica.
+  // Idempotencia: aunque el cerrojo de eslabón de arriba ya evita que dos
+  // continuaciones corran a la vez, esto cubre además un `retry_stage` o
+  // `next_batch` que arranque una cadena nueva mientras la vieja todavía no
+  // se apagó del todo: el que llega después ve que ya no falta nada y no
+  // duplica.
   if (existentes.length >= objetivo) {
     if (existentes.length === 0) {
       return marcarError(admin, run, "guiones", "no se pudo generar ningún guion");
@@ -1668,12 +1789,13 @@ async function ejecutarEtapaGuiones(
   const PRESUPUESTO_REINTENTOS_MS = 90_000;
   const inicioInvocacion = Date.now();
 
-  let res = await invocar("generate-script", cuerpoScript, auth, 120_000);
+  let res: RespuestaFn;
+  ({ res, auth } = await invocarGenerateScript(admin, ctx, run.organization_id, auth, cuerpoScript, 120_000));
   for (const espera of ESPERAS_RATE_LIMIT_MS) {
     if (res.ok || !esFalloDeRateLimit(res)) break;
     if (Date.now() - inicioInvocacion + espera > PRESUPUESTO_REINTENTOS_MS) break;
     await dormir(espera);
-    res = await invocar("generate-script", cuerpoScript, auth, 120_000);
+    ({ res, auth } = await invocarGenerateScript(admin, ctx, run.organization_id, auth, cuerpoScript, 120_000));
   }
 
   let creadoId: string | null = null;
@@ -1790,12 +1912,32 @@ async function ejecutarEtapaGuiones(
   // el cerrojo de arriba, para que el próximo eslabón de la cadena (y un
   // poll manual del portal) vean que la etapa sigue en curso, no aprobada
   // a medias.
+  //
+  // El JWT que se acaba de usar (o refrescar) viaja al siguiente eslabón en
+  // el body de la invocación interna — nunca se persiste ni se loguea — así
+  // no hace falta fabricar uno nuevo por cada guion (ver resolverAuthStaff).
+  // Este llamado es el ÚNICO que reprograma la cadena de guiones (tanto en
+  // el primer guion, arrancado desde advance/retry_stage/next_batch, como en
+  // cada continuación): el handler de `poll` con `auto:true` no vuelve a
+  // programar por su cuenta cuando la etapa es 'guiones', para no duplicar
+  // la cadena (antes se disparaban dos auto-polls por eslabón — uno desde
+  // acá y otro desde el handler — y la duplicación se multiplicaba en cada
+  // vuelta: la causa real de que un lote de 6 guiones generara más de 20
+  // eventos casi simultáneos).
   const conIntentos = await actualizarRun(admin, run.id, { stage_attempts: attempts });
-  programarAutoPoll(run.id, 0);
+  programarAutoPoll(run.id, 0, auth);
   return conIntentos;
 }
 
-/** content_ids de los eventos previos, filtrados contra las filas que existen. */
+/**
+ * content_ids de los eventos previos, filtrados contra las filas que
+ * existen y NO están borradas en suave. Sin el `deleted_at`, un guion
+ * borrado a mano (esperando que el pipeline lo reponga) seguía contando
+ * como "existente": el objetivo se daba por cumplido de menos y ese guion
+ * nunca se regeneraba — el lote se quedaba incompleto para siempre. Mismo
+ * criterio que ya usa el portal del cliente para no mostrar contenido
+ * borrado.
+ */
 async function guionesYaCreados(admin: Sb, runId: string): Promise<string[]> {
   const { data: eventos } = await admin
     .from("client_pipeline_stage_events").select("payload")
@@ -1810,7 +1952,8 @@ async function guionesYaCreados(admin: Sb, runId: string): Promise<string[]> {
   ];
   if (ids.length === 0) return [];
 
-  const { data: vivos } = await admin.from("content").select("id").in("id", ids);
+  const { data: vivos } = await admin
+    .from("content").select("id").in("id", ids).is("deleted_at", null);
   const vivosSet = new Set(((vivos ?? []) as { id: string }[]).map((c) => c.id));
   return ids.filter((id) => vivosSet.has(id));
 }
@@ -2585,6 +2728,15 @@ Deno.serve(async (req) => {
       // siguiente mientras el run siga generando. Solo con service role.
       if (body.auto === true && ctx.esServiceRole) {
         const ciclo = Number(body.ciclo ?? 0);
+        // JWT de staff que dejó cacheado el eslabón anterior de una cadena
+        // de guiones (ver programarAutoPoll/resolverAuthStaff). Solo se
+        // acepta acá porque este bloque ya exige que el Bearer sea
+        // exactamente el service key — el mismo candado que protege
+        // `auto:true` — y nunca se loguea ni se persiste: solo viaja de
+        // eslabón en eslabón dentro del body de esta invocación interna.
+        const staffAuthCacheado = typeof body.staff_auth === "string" && body.staff_auth
+          ? body.staff_auth
+          : null;
         await dormir(INTERVALO_AUTOPOLL_MS);
 
         // El run cambió mientras dormíamos: hay que releerlo.
@@ -2604,7 +2756,12 @@ Deno.serve(async (req) => {
         const esContinuacionDeGuiones = (fresco as Run).stage === "guiones" &&
           (fresco as Run).stage_status === "generating";
         const actualizado = esContinuacionDeGuiones
-          ? await ejecutarEtapaGuiones(admin, fresco as Run, ctx, { continuacion: true })
+          ? await ejecutarEtapaGuiones(
+            admin,
+            fresco as Run,
+            { ...ctx, cachedStaffAuth: staffAuthCacheado },
+            { continuacion: true },
+          )
           : await ejecutarPoll(admin, fresco as Run, ctx);
 
         if (actualizado.stage_status !== "generating") {
@@ -2619,7 +2776,15 @@ Deno.serve(async (req) => {
           );
           return json(req, { ok: false, run: conError, cadena: "agotada", ciclo });
         }
-        programarAutoPoll(run.id, ciclo + 1);
+        // GUIONES reprograma su propio siguiente eslabón DENTRO de
+        // ejecutarEtapaGuiones (necesita llevarse el JWT de staff que acaba
+        // de usar/refrescar). Si este handler también reprogramara acá, cada
+        // eslabón de guiones encadenaba DOS auto-polls en vez de uno — la
+        // causa real de que un lote de 6 guiones disparara más de 20
+        // eventos casi simultáneos.
+        if (!esContinuacionDeGuiones) {
+          programarAutoPoll(run.id, ciclo + 1);
+        }
         return json(req, { ok: true, run: actualizado, cadena: "continua", ciclo });
       }
 
