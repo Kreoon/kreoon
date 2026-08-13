@@ -43,11 +43,13 @@ const RESEARCH_STEPS = [
   { id: "sales_angles", name: "Angulos de Venta" },
   { id: "puv_transformation", name: "PUV y Transformacion" },
   { id: "lead_magnets", name: "Lead Magnets" },
-  { id: "video_creatives", name: "Ideas de Contenido" },
+  { id: "video_creatives_a", name: "Ideas de Contenido (1 de 2)" },
+  { id: "video_creatives_b", name: "Ideas de Contenido (2 de 2)" },
   { id: "content_calendar_w1", name: "Parrilla — semana 1" },
   { id: "content_calendar_w2", name: "Parrilla — semana 2" },
   { id: "content_calendar_w3", name: "Parrilla — semana 3" },
   { id: "content_calendar_w4", name: "Parrilla — semana 4" },
+  { id: "content_kpis", name: "Que medir de tu contenido" },
 ];
 
 /** Las cuatro sub-invocaciones que arman la parrilla de 4 semanas. */
@@ -73,13 +75,15 @@ const STEP_SEQUENCE: string[] = [
   "sales_angles",        // Fase 6  — creativo (hook_source obligatorio)
   "puv_transformation",  // Fase 7  — creativo
   "lead_magnets",        // Fase 8  — creativo
-  "video_creatives",     // Fase 9  — creativo
+  "video_creatives_a",   // Fase 9  — creativo (partido en dos: ver TOKEN_MAP)
+  "video_creatives_b",   // Fase 10
   "content_calendar_w1", // Fase 10 — parrilla, semana a semana
   "content_calendar_w2", // Fase 11
   "content_calendar_w3", // Fase 12
   "content_calendar_w4", // Fase 13
+  "content_kpis",        // Fase 14 — herencia ligera de kpis_dashboard
 ];
-const TOTAL_PHASES = STEP_SEQUENCE.length; // 14
+const TOTAL_PHASES = STEP_SEQUENCE.length; // 16
 
 // Steps that use web search (Perplexity as first provider)
 // Solo este paso sigue usando búsqueda web. `competitors` ya no investiga:
@@ -108,9 +112,11 @@ const STEP_SKILLS: Record<string, SkillType[]> = {
   sales_angles:        ["consciousness_mapper", "storybrand_architect", "hooks_specialist", "social_funnel_builder", "cta_specialist", "objection_crusher"],
   puv_transformation:  ["storybrand_architect", "copy_sharpener", "neuro_persuader", "storytelling_specialist"],
   lead_magnets:        ["offer_engineer", "hooks_specialist", "cta_specialist", "copy_sharpener"],
-  video_creatives:     ["consciousness_mapper", "hooks_specialist", "storytelling_specialist", "production_director", "social_funnel_builder", "virality_optimizer"],
+  video_creatives_a:   ["consciousness_mapper", "hooks_specialist", "storytelling_specialist", "production_director", "social_funnel_builder", "virality_optimizer"],
+  video_creatives_b:   ["consciousness_mapper", "hooks_specialist", "storytelling_specialist", "production_director", "social_funnel_builder", "virality_optimizer"],
   // Las cuatro semanas de la parrilla comparten skills: es el mismo trabajo
   // repartido, no cuatro trabajos distintos.
+  content_kpis:        [],  // analisis puro
   content_calendar_w1: ["consciousness_mapper", "social_funnel_builder", "platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
   content_calendar_w2: ["consciousness_mapper", "social_funnel_builder", "platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
   content_calendar_w3: ["consciousness_mapper", "social_funnel_builder", "platform_optimizer", "virality_optimizer", "seo_discoverer", "hooks_specialist"],
@@ -135,11 +141,16 @@ const TOKEN_MAP: Record<string, number> = {
   sales_angles: 9000,        // 20 ángulos con hook_source
   puv_transformation: 4000,
   lead_magnets: 4000,
-  video_creatives: 8000,     // 15-18 ideas + pauta_recomendada + content_kpis
+  // Partido en dos (2026-08-13): con Gemini sin cuota, 12-15 ideas de una vez
+  // no salían de Mistral dentro del wall-clock REAL de la función (~112 s, no
+  // los 150 s que se suponían). Siete ideas por invocación sí caben.
+  video_creatives_a: 3200,
+  video_creatives_b: 3200,
   content_calendar_w1: 5500, // 7-9 posts por semana × 4 = la parrilla completa
   content_calendar_w2: 5500,
   content_calendar_w3: 5500,
   content_calendar_w4: 5500,
+  content_kpis: 2000,        // bloque corto: 5-6 metricas con su disparador
 };
 
 // ── JSON repair ────────────────────────────────────────────────────────────
@@ -181,7 +192,71 @@ function repairJsonForParse(str: string): string {
     }
     while (bracket > 0) { s += "]"; bracket--; }
     while (open > 0) { s += "}"; open--; }
-    return s;
+
+    // Último recurso: si el JSON sigue roto (típico cuando el modelo mete una
+    // comilla doble sin escapar en mitad de un texto), en vez de perder el
+    // paso entero nos quedamos con los elementos del array que SÍ están
+    // completos. 10 creativos buenos valen mucho más que cero.
+    try {
+      JSON.parse(s);
+      return s;
+    } catch {
+      return rescatarArrayParcial(s) ?? s;
+    }
+  }
+}
+
+/**
+ * Recorta un JSON roto hasta el último elemento COMPLETO del primer array que
+ * encuentra y lo cierra. Devuelve null si no consigue nada parseable.
+ */
+function rescatarArrayParcial(s: string): string | null {
+  const inicioArray = s.indexOf("[");
+  if (inicioArray === -1) return null;
+
+  let profundidad = 0;
+  let enTexto = false;
+  let escapado = false;
+  let finUltimoElemento = -1;
+
+  for (let i = inicioArray + 1; i < s.length; i++) {
+    const ch = s[i];
+    if (escapado) { escapado = false; continue; }
+    if (ch === "\\" && enTexto) { escapado = true; continue; }
+    if (ch === '"') { enTexto = !enTexto; continue; }
+    if (enTexto) continue;
+
+    if (ch === "{") profundidad++;
+    else if (ch === "}") {
+      profundidad--;
+      if (profundidad === 0) finUltimoElemento = i;
+    }
+  }
+
+  if (finUltimoElemento === -1) return null;
+
+  const recortado = `${s.slice(0, finUltimoElemento + 1)}]`;
+  // Cerrar los objetos que envolvían al array (p. ej. { "creatives": [ ... )
+  let abiertos = 0;
+  enTexto = false;
+  escapado = false;
+  for (let i = 0; i < recortado.length; i++) {
+    const ch = recortado[i];
+    if (escapado) { escapado = false; continue; }
+    if (ch === "\\" && enTexto) { escapado = true; continue; }
+    if (ch === '"') { enTexto = !enTexto; continue; }
+    if (enTexto) continue;
+    if (ch === "{") abiertos++;
+    else if (ch === "}") abiertos--;
+  }
+
+  const candidato = recortado + "}".repeat(Math.max(abiertos, 0));
+  try {
+    JSON.parse(candidato);
+    console.warn(`[full-research] JSON roto rescatado parcialmente (${candidato.length} chars)`);
+    return candidato;
+  } catch {
+    return null;
   }
 }
 
@@ -312,9 +387,9 @@ const SCHEMAS: Record<string, any> = {
       properties: { name: { type: "string" }, format: { type: "string" }, objective: { type: "string" }, pain: { type: "string" }, avatar: { type: "string" }, awarenessPhase: { type: "string", enum: ["problem_aware","solution_aware","product_aware"] }, promise: { type: "string" }, structure: { type: "array", minItems: 5, maxItems: 7, items: { type: "string" } }, deliveryMethod: { type: "string" }, estimatedTime: { type: "string" } }
     }}},
   },
-  video_creatives: {
+  video_creatives_a: {
     type: "object", additionalProperties: false, required: ["creatives"],
-    properties: { creatives: { type: "array", minItems: 15, maxItems: 18, items: { type: "object", additionalProperties: false, required: ["number","title","idea","structure","format","cast_phase"],
+    properties: { creatives: { type: "array", minItems: 6, maxItems: 8, items: { type: "object", additionalProperties: false, required: ["number","title","idea","structure","format","cast_phase"],
       properties: { number: { type: "number" }, angle: { type: "string" }, avatar: { type: "string" }, title: { type: "string" }, idea: { type: "string" },
         structure: { type: "object", properties: { hook: { type: "string" }, body: { type: "string" }, climax: { type: "string" }, cta: { type: "string" } } },
         format: { type: "string" }, cast_phase: { type: "string", enum: ["conocer","atraer","seducir","transformar"], description: "Fase del Metodo CAST: Conocer-Atraer-Seducir-Transformar" }, duration: { type: "string" }, platform: { type: "string" }, productionNotes: { type: "string" },
@@ -342,16 +417,59 @@ const SCHEMAS: Record<string, any> = {
         },
       }
     }},
-    // Herencia de kpis_dashboard (paso archivado): qué medir del CONTENIDO.
-    // El framework AARRR de negocio se fue con el paso.
-    content_kpis: { type: "array", minItems: 5, maxItems: 6, items: { type: "object", additionalProperties: false,
-      required: ["kpi","como_medirlo","meta","trigger"],
-      properties: {
-        kpi: { type: "string" },
-        como_medirlo: { type: "string" },
-        meta: { type: "string" },
-        trigger: { type: "string", description: "Regla if/then ejecutable" },
-      } } },
+    },
+  },
+
+  // Herencia de kpis_dashboard (paso archivado): qué medir del CONTENIDO. El
+  // framework AARRR de negocio se fue con el paso. Va en su propio paso porque
+  // metido dentro de los creativos los hacía morir por tiempo.
+  video_creatives_b: {
+    type: "object", additionalProperties: false, required: ["creatives"],
+    properties: { creatives: { type: "array", minItems: 6, maxItems: 8, items: { type: "object", additionalProperties: false, required: ["number","title","idea","structure","format","cast_phase"],
+      properties: { number: { type: "number" }, angle: { type: "string" }, avatar: { type: "string" }, title: { type: "string" }, idea: { type: "string" },
+        structure: { type: "object", properties: { hook: { type: "string" }, body: { type: "string" }, climax: { type: "string" }, cta: { type: "string" } } },
+        format: { type: "string" }, cast_phase: { type: "string", enum: ["conocer","atraer","seducir","transformar"], description: "Fase del Metodo CAST: Conocer-Atraer-Seducir-Transformar" }, duration: { type: "string" }, platform: { type: "string" }, productionNotes: { type: "string" },
+        consciousness_level: { type: "string", enum: ["dormido","despertando","buscando","comparando","listo"] },
+        funnel_temperature: { type: "string", enum: ["frio","tibio","caliente"] },
+        production_brief: {
+          type: "object",
+          properties: {
+            scenario: { type: "string" },
+            light: { type: "string" },
+            framing: { type: "string" },
+            wardrobe: { type: "string" },
+            editing_notes: { type: "string" },
+            subtitles: { type: "boolean" },
+          },
+        },
+        // Herencia de paid_ads (paso archivado): la recomendación de pauta
+        // sobrevive; la estructura de campaña publicitaria no.
+        pauta_recomendada: {
+          type: "object",
+          properties: {
+            temperatura: { type: "string", enum: ["frio","tibio","caliente"] },
+            nota: { type: "string" },
+          },
+        },
+      }
+    }},
+    },
+  },
+
+  // Herencia de kpis_dashboard (paso archivado): qué medir del CONTENIDO. El
+  // framework AARRR de negocio se fue con el paso. Va en su propio paso porque
+  // metido dentro de los creativos los hacía morir por tiempo.
+  content_kpis: {
+    type: "object", additionalProperties: false, required: ["content_kpis"],
+    properties: {
+      content_kpis: { type: "array", minItems: 5, maxItems: 6, items: { type: "object", additionalProperties: false,
+        required: ["kpi","como_medirlo","meta","trigger"],
+        properties: {
+          kpi: { type: "string" },
+          como_medirlo: { type: "string" },
+          meta: { type: "string" },
+          trigger: { type: "string", description: "Regla if/then ejecutable" },
+        } } },
     },
   },
   content_calendar_w1: {
@@ -720,7 +838,13 @@ async function callAI(
     // creditos de sobra. Hay margen para darselo: cuando Gemini responde 429 lo
     // hace en 1-2 segundos, asi que Mistral hereda casi todo el wall-clock de
     // ~150s de la funcion.
-    const dynamicTimeout = maxTokens >= 14000 ? 120000 : maxTokens >= 10000 ? 110000 : 95000;
+    // Subido otra vez (2026-08-13, research unificado): con Gemini sin cuota,
+    // `video_creatives` (8.000 tokens) moría en TIMEOUT a los 109 s teniendo
+    // creditos de Mistral de sobra. Ya ningun paso pide mas de 9.000, asi que
+    // el escalon de arriba sobra y lo que hace falta es darle a Mistral casi
+    // todo el wall-clock: Gemini responde 429 en 1-2 segundos y le deja el
+    // resto. 118 s + el arranque cabe holgado en los ~150 s de la funcion.
+    const dynamicTimeout = maxTokens >= 8000 ? 118000 : 100000;
     const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
     try {
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
@@ -826,9 +950,74 @@ async function callAI(
     }
   };
 
-  // Pipeline V2: Perplexity investiga → Gemini estructura (primario) → Mistral fallback
-  const providerLabels = ["gemini", "mistral"];
-  const attempts = [tryGemini, tryMistral];
+  /**
+   * Tercer proveedor, y el que salva el sistema cuando Gemini se queda sin
+   * cuota (2026-08-13): con solo Gemini y Mistral, un 429 de Gemini dejaba a
+   * Mistral solo, y Mistral no termina un JSON largo dentro del wall-clock
+   * REAL de la función (~112 s, no los 150 s que se suponían). Resultado: el
+   * paso moría en TIMEOUT con créditos de sobra.
+   *
+   * gpt-4o-mini es rápido, barato y tiene JSON mode. La clave ya estaba en los
+   * secrets del proyecto: no hacía falta configurar nada nuevo.
+   */
+  const tryOpenAI = async (): Promise<any> => {
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) throw new Error("No OPENAI_API_KEY");
+    console.log(`[AI] → Paso 2b: OpenAI gpt-4o-mini estructurando (${stepId})`);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75000);
+    try {
+      const res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${openaiKey}`, "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          max_tokens: maxTokens,
+          temperature: 0.2,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: enrichedUserPrompt },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        throw new Error(`OpenAI HTTP ${res.status}: ${errBody.substring(0, 200)}`);
+      }
+
+      const data = await res.json();
+      const content = (data.choices?.[0]?.message?.content || "").toString().trim();
+      if (!content) throw new Error(`OpenAI returned empty content for ${stepId}`);
+      console.log(`[AI] OpenAI response received (${stepId}) — ${content.length} chars`);
+
+      try {
+        const parsed = JSON.parse(repairJsonForParse(content));
+        console.log(`[AI] ✓ OpenAI OK (${stepId}) — JSON parsed correctly`);
+        return parsed;
+      } catch (parseErr: any) {
+        DEBUG_RESPONSES.push({
+          provider: "openai",
+          parseError: parseErr.message,
+          contentLength: content.length,
+          first800: content.substring(0, 800),
+          last300: content.substring(Math.max(0, content.length - 300)),
+        });
+        throw new Error(`OpenAI JSON inválido: ${parseErr.message}`);
+      }
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  // Perplexity investiga → Gemini estructura → OpenAI (rápido) → Mistral (último).
+  // Mistral va al final justo por ser el más lento: si los dos de arriba están
+  // caídos, al menos hereda todo el wall-clock que quede.
+  const providerLabels = ["gemini", "openai", "mistral"];
+  const attempts = [tryGemini, tryOpenAI, tryMistral];
   for (let i = 0; i < attempts.length; i++) {
     const lengthBefore = DEBUG_RESPONSES.length;
     try {
@@ -878,6 +1067,13 @@ del nicho) es la FUENTE DE VERDAD de este research.
 - Todo dato de producto (que incluye, precios, garantias, componentes) viene del
   cliente. No se deduce, no se completa, no se redondea.
 - Si la evidencia viene marcada como INCOMPLETA, trabaja con lo que hay y dilo.
+
+## FORMATO DEL JSON — NO ROMPAS LA SALIDA
+
+Dentro de los valores de texto NO uses comillas dobles ("). Si necesitas citar
+algo, usa comillas simples ('). Una comilla doble sin escapar parte el JSON a
+la mitad y se pierde el paso entero, con todo lo que costó generarlo.
+Tampoco uses saltos de linea sin escapar dentro de un valor.
 `;
 
 // ── Evidencia scrapeada por research-engine ────────────────────────────────
@@ -1184,7 +1380,8 @@ function getStepPrompt(
   const prevCompetitors = prev.competitors;
   const prevDiff = prev.differentiation;
   const prevSales = prev.sales_angles;
-  const prevCreatives = prev.video_creatives;
+  const prevCreativesA = prev.video_creatives_a;
+  const prevCreatives = { creatives: [...(prev.video_creatives_a?.creatives || []), ...(prev.video_creatives_b?.creatives || [])] };
   const prevW1 = prev.content_calendar_w1;
   const prevW2 = prev.content_calendar_w2;
   const prevW3 = prev.content_calendar_w3;
@@ -1346,7 +1543,7 @@ INSTRUCCIONES CRITICAS:
 
 Crea 3 LEAD MAGNETS: 1 para PROBLEM AWARE, 1 para SOLUTION AWARE, 1 para PRODUCT AWARE. Cada uno con: name, format, objective, pain, avatar, awarenessPhase, promise, structure (5-7 secciones), deliveryMethod, estimatedTime.`,
 
-    video_creatives: `Crea 15-18 IDEAS DE CONTENIDO con guiones resumidos, clasificadas por el METODO CAST.
+    video_creatives_a: `Crea 7 IDEAS DE CONTENIDO (primera mitad del lote) con guiones resumidos, clasificadas por el METODO CAST.Crea 12-15 IDEAS DE CONTENIDO con guiones resumidos, clasificadas por el METODO CAST.
 
 ${baseContext}
 
@@ -1358,10 +1555,10 @@ ${prevAvatars?.avatars?.map((a: any) => a.name).join(", ") || "N/A"}
 
 INSTRUCCIONES CRITICAS:
 - METODO CAST (propio, y el UNICO de este research): Conocer > Atraer > Seducir > Transformar.
-- Distribucion sugerida sobre 18 piezas: 6 conocer + 5 atraer + 4 seducir + 3 transformar.
+- Esta primera mitad cubre CONOCER y ATRAER: 4 de conocer + 3 de atraer.
 - FORMATOS Y DURACIONES: tomalos del ADN Viral (lo que de verdad funciona en este nicho), no de tu intuicion. Si el ADN Viral dice que la duracion ganadora son 25 segundos, no propongas piezas de 3 minutos.
 - PRIORIZAR formatos faciles de producir: Carruseles, Reels con texto, Stories, Posts estaticos, Infografias, Memes, Threads.
-- Maximo 4 de 18 deben ser videos con persona hablando.
+- Maximo 2 de estas 7 deben ser videos con persona hablando.
 - Se conciso: titles cortos, idea en 2-3 oraciones, structure compacta.
 
 CAMPOS QUE HAY QUE LLENAR CON CRITERIO (no los dejes al azar):
@@ -1371,9 +1568,51 @@ CAMPOS QUE HAY QUE LLENAR CON CRITERIO (no los dejes al azar):
 - production_brief: escenario, luz, encuadre, vestuario, notas de edicion y si lleva subtitulos. Que un creador pueda grabarlo leyendo solo eso.
 - pauta_recomendada: { temperatura: frio|tibio|caliente, nota: una linea diciendo a quien se le pondria plata detras y por que }. Solo la recomendacion; la estructura de campana ya no es parte de este research.
 
-Cada creativo con: number, angle, avatar, title (max 12 palabras), idea (2-3 oraciones), structure (hook/body/climax/cta breves), format, cast_phase, duration, platform, productionNotes, consciousness_level, funnel_temperature, production_brief y pauta_recomendada.
+Numera del 1 al 7. Cada creativo con: number, angle, avatar, title (max 12 palabras), idea (2-3 oraciones), structure (hook/body/climax/cta breves), format, cast_phase, duration, platform, productionNotes, consciousness_level, funnel_temperature, production_brief y pauta_recomendada.`,
 
-Ademas del array de creativos, agrega content_kpis: 5-6 metricas de CONTENIDO (no de negocio) con { kpi, como_medirlo, meta, trigger }, donde trigger es una regla if/then ejecutable del tipo "si un hook baja de 3s de retencion a los 3 dias, rotarlo".`,
+    video_creatives_b: `Crea 8 IDEAS DE CONTENIDO (segunda mitad del lote) con guiones resumidos, clasificadas por el METODO CAST.Crea 12-15 IDEAS DE CONTENIDO con guiones resumidos, clasificadas por el METODO CAST.
+
+${baseContext}
+
+ANGULOS DISPONIBLES:
+${prevSales?.salesAngles?.slice(0, 8).map((a: any) => `- [${a.type}] "${a.hookExample}" > Avatar: ${a.avatar} > desciende de: ${a.hook_source || "N/A"}`).join("\n") || "N/A"}
+
+AVATARES:
+${prevAvatars?.avatars?.map((a: any) => a.name).join(", ") || "N/A"}
+
+INSTRUCCIONES CRITICAS:
+- METODO CAST (propio, y el UNICO de este research): Conocer > Atraer > Seducir > Transformar.
+- Esta segunda mitad cubre SEDUCIR y TRANSFORMAR: 4 de seducir + 4 de transformar.
+- FORMATOS Y DURACIONES: tomalos del ADN Viral (lo que de verdad funciona en este nicho), no de tu intuicion. Si el ADN Viral dice que la duracion ganadora son 25 segundos, no propongas piezas de 3 minutos.
+- PRIORIZAR formatos faciles de producir: Carruseles, Reels con texto, Stories, Posts estaticos, Infografias, Memes, Threads.
+- Maximo 2 de estas 8 deben ser videos con persona hablando.
+- Se conciso: titles cortos, idea en 2-3 oraciones, structure compacta.
+
+CAMPOS QUE HAY QUE LLENAR CON CRITERIO (no los dejes al azar):
+- cast_phase: conocer | atraer | seducir | transformar.
+- consciousness_level: dormido | despertando | buscando | comparando | listo — la cabeza del avatar al ver ESTA pieza.
+- funnel_temperature: frio | tibio | caliente.
+- production_brief: escenario, luz, encuadre, vestuario, notas de edicion y si lleva subtitulos. Que un creador pueda grabarlo leyendo solo eso.
+- pauta_recomendada: { temperatura: frio|tibio|caliente, nota: una linea diciendo a quien se le pondria plata detras y por que }. Solo la recomendacion; la estructura de campana ya no es parte de este research.
+
+Numera del 8 al 15. Cada creativo con: number, angle, avatar, title (max 12 palabras), idea (2-3 oraciones), structure (hook/body/climax/cta breves), format, cast_phase, duration, platform, productionNotes, consciousness_level, funnel_temperature, production_brief y pauta_recomendada.
+
+YA EXISTEN ESTAS IDEAS (primera mitad, NO las repitas):
+${prevCreativesA?.creatives?.map((c: any) => `- ${c.title}`).join("\n") || "N/A"}`,
+
+    content_kpis: `Define QUE MEDIR del contenido de esta marca. Corto y ejecutable.
+
+${baseContext}
+
+IDEAS DE CONTENIDO YA DEFINIDAS:
+${prevCreatives?.creatives?.slice(0, 8).map((c: any) => `- [${c.cast_phase}] ${c.title} (${c.format})`).join("\n") || "N/A"}
+
+INSTRUCCIONES CRITICAS:
+- Son metricas de CONTENIDO, no de negocio: retencion, guardados, comentarios, alcance de no seguidores, clics al perfil. NADA de CAC, LTV ni AARRR.
+- Cada metrica lleva un disparador if/then EJECUTABLE, del tipo "si un hook baja de 3s de retencion a los 3 dias, rotarlo".
+- Metas realistas para una marca que empieza, no de cuenta consolidada.
+
+Genera 5-6 content_kpis con: kpi, como_medirlo, meta y trigger.`,
 
     content_calendar_w1: `Crea la SEMANA 1 de la parrilla de contenido (7 a 9 piezas).
 
@@ -1544,7 +1783,13 @@ async function reconstructPrevResults(
   if (hasData(sa.angles)) stepResults.sales_angles = { salesAngles: sa.angles };
   if (hasData(sa.puv)) stepResults.puv_transformation = { puv: sa.puv, transformation: sa.transformation };
   if (hasData(sa.leadMagnets)) stepResults.lead_magnets = { leadMagnets: sa.leadMagnets };
-  if (hasData(sa.videoCreatives)) stepResults.video_creatives = { creatives: sa.videoCreatives };
+  if (hasData(sa.videoCreatives)) {
+    const todas = sa.videoCreatives as any[];
+    // La primera mitad son las 7 primeras; si hay más, la segunda ya corrió.
+    stepResults.video_creatives_a = { creatives: todas.slice(0, 7) };
+    if (todas.length > 7) stepResults.video_creatives_b = { creatives: todas.slice(7) };
+  }
+  if (hasData(sa.contentKpis)) stepResults.content_kpis = { content_kpis: sa.contentKpis };
   // La parrilla se guarda entera en una columna, pero se genera semana a
   // semana. Al reanudar hay que devolverle a cada sub-paso lo que le
   // corresponde: una semana solo se considera hecha si tiene piezas propias.
@@ -2139,14 +2384,28 @@ async function processRequest(body: any): Promise<void> {
         break;
       }
 
-      case "video_creatives": {
-        const creData = result.creatives || result.video_creatives || result;
+      // Las dos mitades de las ideas de contenido se acumulan en la misma
+      // lista: para quien las lee (UI, PDF, portal) sigue siendo un solo lote.
+      case "video_creatives_a":
+      case "video_creatives_b": {
+        const creData = result.creatives || result;
         const creList = Array.isArray(creData) ? creData : (creData?.creatives || []);
+        const previas = stepId === "video_creatives_b"
+          ? (Array.isArray(salesAnglesData.videoCreatives) ? salesAnglesData.videoCreatives : [])
+          : [];
         salesAnglesData = {
           ...salesAnglesData,
-          videoCreatives: creList,
-          // Herencia de kpis_dashboard: qué medir del contenido.
-          contentKpis: result.content_kpis || [],
+          videoCreatives: [...previas, ...creList],
+          generatedAt: now,
+        };
+        update.sales_angles_data = salesAnglesData;
+        break;
+      }
+
+      case "content_kpis": {
+        salesAnglesData = {
+          ...salesAnglesData,
+          contentKpis: result.content_kpis || result || [],
           generatedAt: now,
         };
         update.sales_angles_data = salesAnglesData;

@@ -39,6 +39,42 @@ export function ReadableSections({ sections }: { sections: ReadableSection[] }) 
                     ))}
                   </ul>
                 )}
+
+                {/* Fichas: cada elemento con su título y sus datos separados,
+                    en vez de un párrafo corrido con todo dentro. */}
+                {block.cards && (
+                  <div className="space-y-3">
+                    {block.cards.map((card, j) => (
+                      <div
+                        key={j}
+                        className="rounded-lg border bg-muted/30 p-3 space-y-2"
+                      >
+                        <p className="text-sm font-medium leading-snug break-words">
+                          {card.title}
+                        </p>
+                        {card.fields.length > 0 && (
+                          <dl className="grid gap-1.5">
+                            {card.fields.map((field, k) => (
+                              <div key={k} className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:gap-3">
+                                <dt className="text-xs font-medium text-muted-foreground">
+                                  {field.label}
+                                </dt>
+                                <dd className="text-sm leading-relaxed break-words min-w-0">
+                                  {field.value}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </div>
+                    ))}
+                    {!!block.hiddenCount && (
+                      <p className="text-xs text-muted-foreground">
+                        Y {block.hiddenCount} más. Los verás todos cuando pasemos a producción.
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

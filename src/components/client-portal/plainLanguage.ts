@@ -14,12 +14,26 @@ import type { ResearchRun } from '@/types/research';
  * propio estado de "todavía no hay nada".
  */
 
+/** Una ficha: un elemento de una lista, con su título y sus datos separados. */
+export interface ReadableCard {
+  title: string;
+  fields: { label: string; value: string }[];
+}
+
 export interface ReadableBlock {
   label?: string;
   /** Párrafo suelto */
   text?: string;
   /** Lista de viñetas */
   items?: string[];
+  /**
+   * Fichas. Se usa cuando la lista trae objetos con varios campos (los 20
+   * ángulos de venta, la parrilla, los avatares…). Antes todo eso se aplanaba
+   * a UNA línea por elemento y el cliente veía un párrafo gigante ilegible.
+   */
+  cards?: ReadableCard[];
+  /** Cuántos elementos se ocultaron para no hacer un muro. */
+  hiddenCount?: number;
 }
 
 export interface ReadableSection {
@@ -289,7 +303,41 @@ function flattenToLine(value: unknown): string {
     .join(' — ');
 }
 
-/** Convierte cualquier valor JSON en bloques legibles (párrafos y listas). */
+/** Cuántas fichas se muestran antes de cortar con un "y N más". */
+const MAX_FICHAS = 8;
+
+/** ¿Es una lista de objetos con varios campos? Entonces son fichas, no viñetas. */
+function esListaDeFichas(value: unknown[]): boolean {
+  const objetos = value.filter(
+    v => v !== null && typeof v === 'object' && !Array.isArray(v),
+  );
+  if (objetos.length < 2) return false;
+  // Con 3 campos o más por elemento, una sola línea se vuelve ilegible.
+  return objetos.some(o => Object.keys(o as object).length >= 3);
+}
+
+function aFicha(value: unknown, indice: number): ReadableCard {
+  const obj = value as Record<string, unknown>;
+  const entries = Object.entries(obj).filter(
+    ([k, v]) => !HIDDEN_KEYS.has(k) && !isEmpty(v),
+  );
+
+  // El título sale del campo que mejor identifique al elemento.
+  const clavesTitulo = ['name', 'title', 'hook', 'hookExample', 'angle', 'kpi', 'opportunity', 'pain', 'desire', 'objection'];
+  const claveTitulo = clavesTitulo.find(k => typeof obj[k] === 'string' && String(obj[k]).trim());
+  const titulo = claveTitulo
+    ? String(obj[claveTitulo]).trim()
+    : `Punto ${indice + 1}`;
+
+  const fields = entries
+    .filter(([k]) => k !== claveTitulo)
+    .map(([k, v]) => ({ label: humanizeKey(k), value: flattenToLine(v) }))
+    .filter(f => f.value);
+
+  return { title: titulo, fields };
+}
+
+/** Convierte cualquier valor JSON en bloques legibles (párrafos, listas y fichas). */
 export function toBlocks(value: unknown, label?: string): ReadableBlock[] {
   if (isEmpty(value)) return [];
 
@@ -298,6 +346,13 @@ export function toBlocks(value: unknown, label?: string): ReadableBlock[] {
   }
 
   if (Array.isArray(value)) {
+    if (esListaDeFichas(value)) {
+      const visibles = value.slice(0, MAX_FICHAS);
+      const cards = visibles.map(aFicha).filter(c => c.fields.length || c.title);
+      return cards.length
+        ? [{ label, cards, hiddenCount: Math.max(value.length - visibles.length, 0) }]
+        : [];
+    }
     const items = value.map(flattenToLine).filter(Boolean);
     return items.length ? [{ label, items }] : [];
   }
@@ -311,8 +366,9 @@ export function toBlocks(value: unknown, label?: string): ReadableBlock[] {
     if (typeof val !== 'object') {
       blocks.push({ label: childLabel, text: humanizeValue(val) });
     } else if (Array.isArray(val)) {
-      const items = val.map(flattenToLine).filter(Boolean);
-      if (items.length) blocks.push({ label: childLabel, items });
+      // Mismo criterio que arriba: si son objetos ricos, van como fichas.
+      const anidados = toBlocks(val, childLabel);
+      if (anidados.length) blocks.push(...anidados);
     } else {
       // Objeto anidado: se aplana a una lista "Etiqueta: valor"
       const items = Object.entries(val as Record<string, unknown>)
