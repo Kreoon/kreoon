@@ -179,7 +179,6 @@ const ROLES_STAFF = [
 
 /** Al 4º intento se escala en vez de regenerar. */
 const LIMITE_REGENERACIONES = 4;
-
 // ── Auto-poll ──────────────────────────────────────────────────────────────
 // El ADN y la estrategia son asíncronos (la estrategia tarda 5–15 min en sus
 // 21 fases) y nadie devuelve un callback al terminar. Si la reconciliación
@@ -1424,11 +1423,20 @@ function expandirCreadoresPorReparto(
   return expandido.length > 0 ? expandido : seleccionados;
 }
 
+/** "Rate limits exceeded" (o HTTP 429) es un tropiezo transitorio del
+ *  proveedor de IA — se distingue de otros fallos para reintentarlo en vez
+ *  de darlo por perdido. */
+function esFalloDeRateLimit(res: RespuestaFn): boolean {
+  if (res.status === 429) return true;
+  const texto = `${res.error ?? ""} ${aTexto(res.body?.error, 500)}`.toLowerCase();
+  return texto.includes("rate limit");
+}
+
 async function ejecutarEtapaGuiones(
   admin: Sb,
   runInicial: Run,
   ctx: ContextoAuth,
-  opciones: { feedback?: string | null } = {},
+  opciones: { feedback?: string | null; continuacion?: boolean } = {},
 ): Promise<Run> {
   let run = runInicial;
 
@@ -1436,12 +1444,23 @@ async function ejecutarEtapaGuiones(
     return marcarError(admin, run, "guiones", "el run no tiene product_id");
   }
 
-  const { data: tomado } = await admin
-    .from("client_pipeline_runs")
-    .update({ stage: "guiones", stage_status: "generating", guiones_started_at: ahora() })
-    .eq("id", run.id).neq("stage_status", "generating").select("*");
-  if (!tomado || tomado.length === 0) return run;
-  run = tomado[0] as Run;
+  if (opciones.continuacion) {
+    // Venimos de una invocación anterior que dejó el run en
+    // 'guiones'/'generating' A PROPÓSITO (ver el cierre "faltan guiones" más
+    // abajo): el cerrojo del `else` no sirve acá porque su
+    // `.neq('generating')` fallaría siempre contra un estado que YA es
+    // 'generating'. Si algo lo resolvió mientras la cadena de auto-poll
+    // dormía (aprobación manual, error por otra vía), no hay nada que
+    // continuar.
+    if (run.stage !== "guiones" || run.stage_status !== "generating") return run;
+  } else {
+    const { data: tomado } = await admin
+      .from("client_pipeline_runs")
+      .update({ stage: "guiones", stage_status: "generating", guiones_started_at: ahora() })
+      .eq("id", run.id).neq("stage_status", "generating").select("*");
+    if (!tomado || tomado.length === 0) return run;
+    run = tomado[0] as Run;
+  }
 
   const { data: producto, error: prodError } = await admin
     .from("products")
@@ -1480,14 +1499,22 @@ async function ejecutarEtapaGuiones(
   }
 
   const objetivoPedido = run.scripts_target ?? 5;
-  // La tanda nunca puede pasarse de lo que queda por producir.
+  // `cupo.restantes` se recalcula en CADA invocación contando todo el
+  // contenido del cliente — incluidos los guiones que este mismo run ya
+  // creó en invocaciones anteriores (`existentes`). Si se tomara
+  // `cupo.restantes` como el objetivo absoluto, cada invocación nueva
+  // "olvidaría" lo ya hecho y la etapa se cerraría de menos (el bug
+  // original, ahora por el cupo en vez del rate limit). Por eso el objetivo
+  // se arma sumando lo que ya existe más lo que TODAVÍA falta pedir, topado
+  // por lo que de verdad queda de cupo.
+  const faltaPorPedido = Math.max(objetivoPedido - existentes.length, 0);
   const objetivo = cupo.contratados > 0
-    ? Math.min(objetivoPedido, cupo.restantes)
+    ? existentes.length + Math.min(faltaPorPedido, cupo.restantes)
     : objetivoPedido;
 
   if (objetivo < objetivoPedido) {
     console.log(
-      `[pipeline] ${run.id} · tanda recortada a ${objetivo} guiones: al cliente le quedan ${cupo.restantes} de ${cupo.contratados}`,
+      `[pipeline] ${run.id} · objetivo recortado a ${objetivo} guiones: al cliente le quedan ${cupo.restantes} de ${cupo.contratados}`,
     );
   }
   const regenerando = !!opciones.feedback && existentes.length > 0;
@@ -1508,10 +1535,6 @@ async function ejecutarEtapaGuiones(
     ideal_avatar: aTexto(producto.ideal_avatar, 2000),
   };
 
-  const creados: string[] = [];
-  const actualizados: string[] = [];
-  const fallos: string[] = [];
-
   // Los creadores confirmados en la etapa anterior. El lote se reparte entre
   // ellos y cada guion se escribe para SU voz — no un lote genérico repartido
   // después, que es como salen los guiones que nadie puede decir en cámara.
@@ -1525,37 +1548,40 @@ async function ejecutarEtapaGuiones(
     fichas.set(userId, await leerCreador(admin, userId));
   }
 
-  const total = regenerando ? existentes.length : objetivo - existentes.length;
-  for (let i = 0; i < total; i++) {
-    const indice = regenerando ? i : existentes.length + i;
-    const spherePhase = CICLO_SPHERE[indice % CICLO_SPHERE.length];
-    const salesAngle = angulos.length > 0 ? angulos[indice % angulos.length] : "";
+  // ── Regenerando (readapt): SIN CAMBIOS respecto de siempre. Un feedback
+  // sobre el lote entero se resuelve en una sola invocación síncrona que
+  // regenera TODO lo existente — no es el camino que rompía el cupo. ────────
+  if (regenerando) {
+    const actualizados: string[] = [];
+    const fallosRegen: string[] = [];
 
-    const creadorId = creadores.length > 0 ? creadores[indice % creadores.length] : null;
-    const datosCreador = creadorId ? fichas.get(creadorId) : undefined;
-    const reglas = datosCreador
-      ? reglasDeAdaptacion(datosCreador.nombre, datosCreador.ficha)
-      : "";
+    for (let i = 0; i < existentes.length; i++) {
+      const spherePhase = CICLO_SPHERE[i % CICLO_SPHERE.length];
+      const salesAngle = angulos.length > 0 ? angulos[i % angulos.length] : "";
+      const creadorId = creadores.length > 0 ? creadores[i % creadores.length] : null;
+      const datosCreador = creadorId ? fichas.get(creadorId) : undefined;
+      const reglas = datosCreador
+        ? reglasDeAdaptacion(datosCreador.nombre, datosCreador.ficha)
+        : "";
 
-    const res = await invocar("generate-script", {
-      ...base,
-      sales_angle: salesAngle,
-      sphere_phase: spherePhase,
-      additional_context: [
-        opciones.feedback
-          ? `Ajustes pedidos por el cliente sobre la versión anterior: ${opciones.feedback}`
-          : "",
-        reglas,
-      ].filter(Boolean).join("\n"),
-    }, auth, 120_000);
+      const res = await invocar("generate-script", {
+        ...base,
+        sales_angle: salesAngle,
+        sphere_phase: spherePhase,
+        additional_context: [
+          opciones.feedback
+            ? `Ajustes pedidos por el cliente sobre la versión anterior: ${opciones.feedback}`
+            : "",
+          reglas,
+        ].filter(Boolean).join("\n"),
+      }, auth, 120_000);
 
-    const html = res.body?.script;
-    if (!res.ok || typeof html !== "string" || !html.trim()) {
-      fallos.push(res.error ?? res.body?.error ?? `HTTP ${res.status}`);
-      continue;
-    }
+      const html = res.body?.script;
+      if (!res.ok || typeof html !== "string" || !html.trim()) {
+        fallosRegen.push(res.error ?? res.body?.error ?? `HTTP ${res.status}`);
+        continue;
+      }
 
-    if (regenerando) {
       const contentId = existentes[i];
       const { data: previo } = await admin
         .from("content").select("script_version").eq("id", contentId).maybeSingle();
@@ -1565,54 +1591,208 @@ async function ejecutarEtapaGuiones(
         script_pending_at: ahora(),
         status: "script_pending",
       }).eq("id", contentId);
-      if (error) fallos.push(error.message);
+      if (error) fallosRegen.push(error.message);
       else actualizados.push(contentId);
-    } else {
-      // Patrón vigente del repo (CreateContentFromResearchDialog / ProductBriefWizard).
-      const { data: fila, error } = await admin.from("content").insert({
-        title: `${producto.name ?? "Guion"} — guion ${indice + 1}`,
-        client_id: run.client_id,
-        product_id: run.product_id,
-        organization_id: run.organization_id,
-        status: "script_pending",
-        script: html,
-        script_pending_at: ahora(),
-        script_version: 1,
-        // El creador queda asignado desde el nacimiento del guion: la
-        // asignación manual del tablero sigue funcionando igual, pero ya no
-        // hace falta para estos.
-        creator_id: creadorId,
-        creator_assigned_at: creadorId ? ahora() : null,
-        sphere_phase: spherePhase,
-        ideal_avatar: base.ideal_avatar || null,
-        sales_angle: salesAngle || null,
-        hook_source: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.hook_source ?? null,
-        hook_source_evidence: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.evidencia ?? null,
-        pov_narrativo: extraerPov(html),
-        description: aTexto(producto.description, 500) || null,
-        ai_prefilled: true,
-        ai_prefilled_at: ahora(),
-      }).select("id").single();
-
-      if (error || !fila) fallos.push(error?.message ?? "insert sin id");
-      else creados.push(fila.id);
     }
+
+    if (actualizados.length === 0) {
+      return marcarError(
+        admin, run, "guiones",
+        "no se pudo generar ningún guion",
+        fallosRegen.slice(0, 5).join(" | "),
+      );
+    }
+    return pasarAEsperandoCliente(admin, run, "guiones", {
+      content_ids: existentes,
+      creados: [],
+      actualizados,
+      fallos: fallosRegen.slice(0, 5),
+    });
   }
 
-  if (creados.length === 0 && actualizados.length === 0) {
+  // ── Creación nueva: UN guion por invocación, encadenado ──────────────────
+  //
+  // "Esto debe generar la cantidad asignada de entrada": la etapa no se da
+  // por terminada hasta juntar los `objetivo` guiones, y esta invocación
+  // solo produce el SIGUIENTE. Con un guion por invocación (~18-20s) contra
+  // una función que vive ~112s reales (no los 150s nominales — medido, ver
+  // docs/QA_RESEARCH_UNIFICADO.md §4.1) sobra margen de sobra para
+  // reintentar de verdad ante un rate limit en vez de perder el guion, y de
+  // paso se espacian las llamadas al proveedor — que es justo lo que
+  // dispara ese límite cuando se piden varias seguidas.
+
+  // Idempotencia: si dos eslabones de la cadena llegaron a correr casi a la
+  // vez (ver el comentario de programarAutoPoll: puede haber dos cadenas
+  // vivas), el que llega después ve que ya no falta nada y no duplica.
+  if (existentes.length >= objetivo) {
+    if (existentes.length === 0) {
+      return marcarError(admin, run, "guiones", "no se pudo generar ningún guion");
+    }
+    return pasarAEsperandoCliente(admin, run, "guiones", {
+      content_ids: existentes,
+      creados: [],
+      actualizados: [],
+      fallos: [],
+    });
+  }
+
+  const indice = existentes.length;
+  const spherePhase = CICLO_SPHERE[indice % CICLO_SPHERE.length];
+  const salesAngle = angulos.length > 0 ? angulos[indice % angulos.length] : "";
+  const creadorId = creadores.length > 0 ? creadores[indice % creadores.length] : null;
+  const datosCreador = creadorId ? fichas.get(creadorId) : undefined;
+  const reglas = datosCreador
+    ? reglasDeAdaptacion(datosCreador.nombre, datosCreador.ficha)
+    : "";
+
+  const cuerpoScript = {
+    ...base,
+    sales_angle: salesAngle,
+    sphere_phase: spherePhase,
+    additional_context: [
+      opciones.feedback
+        ? `Ajustes pedidos por el cliente sobre la versión anterior: ${opciones.feedback}`
+        : "",
+      reglas,
+    ].filter(Boolean).join("\n"),
+  };
+
+  // "Rate limits exceeded" es un tropiezo TRANSITORIO del proveedor (la
+  // cuota gratuita de Gemini se agota y el sistema recurre a OpenAI): se
+  // reintenta con esperas crecientes en vez de perder el guion al primer
+  // tropiezo. El tope de presupuesto evita que la última espera empuje esta
+  // invocación más allá del límite real de la function — si no queda
+  // margen, se corta el reintento y el guion queda pendiente para la
+  // siguiente invocación de la cadena (no se pierde, solo se pospone).
+  const ESPERAS_RATE_LIMIT_MS = [5_000, 15_000, 30_000];
+  const PRESUPUESTO_REINTENTOS_MS = 90_000;
+  const inicioInvocacion = Date.now();
+
+  let res = await invocar("generate-script", cuerpoScript, auth, 120_000);
+  for (const espera of ESPERAS_RATE_LIMIT_MS) {
+    if (res.ok || !esFalloDeRateLimit(res)) break;
+    if (Date.now() - inicioInvocacion + espera > PRESUPUESTO_REINTENTOS_MS) break;
+    await dormir(espera);
+    res = await invocar("generate-script", cuerpoScript, auth, 120_000);
+  }
+
+  let creadoId: string | null = null;
+  let fallo: string | null = null;
+
+  const html = res.body?.script;
+  if (!res.ok || typeof html !== "string" || !html.trim()) {
+    // Si sigue en rate limit tras los reintentos, NO se cuenta como fallo
+    // definitivo: no entra a `fallos`, solo no hay guion nuevo esta vez y la
+    // siguiente invocación de la cadena lo vuelve a intentar (mismo
+    // `indice`, porque `existentes.length` no habrá cambiado).
+    if (!esFalloDeRateLimit(res)) {
+      fallo = res.error ?? res.body?.error ?? `HTTP ${res.status}`;
+    }
+  } else {
+    // Patrón vigente del repo (CreateContentFromResearchDialog / ProductBriefWizard).
+    const { data: fila, error } = await admin.from("content").insert({
+      title: `${producto.name ?? "Guion"} — guion ${indice + 1}`,
+      client_id: run.client_id,
+      product_id: run.product_id,
+      organization_id: run.organization_id,
+      status: "script_pending",
+      script: html,
+      script_pending_at: ahora(),
+      script_version: 1,
+      // El creador queda asignado desde el nacimiento del guion: la
+      // asignación manual del tablero sigue funcionando igual, pero ya no
+      // hace falta para estos.
+      creator_id: creadorId,
+      creator_assigned_at: creadorId ? ahora() : null,
+      sphere_phase: spherePhase,
+      ideal_avatar: base.ideal_avatar || null,
+      sales_angle: salesAngle || null,
+      hook_source: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.hook_source ?? null,
+      hook_source_evidence: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.evidencia ?? null,
+      pov_narrativo: extraerPov(html),
+      description: aTexto(producto.description, 500) || null,
+      ai_prefilled: true,
+      ai_prefilled_at: ahora(),
+    }).select("id").single();
+
+    if (error || !fila) fallo = error?.message ?? "insert sin id";
+    else creadoId = fila.id;
+  }
+
+  const logrados = existentes.length + (creadoId ? 1 : 0);
+  const contentIdsDelLote = creadoId ? [...existentes, creadoId] : existentes;
+
+  if (logrados === 0) {
+    // Ni el primer guion salió: no tiene sentido encadenar a ciegas.
+    return marcarError(admin, run, "guiones", "no se pudo generar ningún guion", fallo ?? undefined);
+  }
+
+  if (logrados >= objetivo) {
+    return pasarAEsperandoCliente(admin, run, "guiones", {
+      content_ids: contentIdsDelLote,
+      creados: creadoId ? [creadoId] : [],
+      actualizados: [],
+      fallos: fallo ? [fallo] : [],
+    });
+  }
+
+  // Falta al menos uno: se registra el avance de ESTE guion (o el intento
+  // fallido) — guionesYaCreados() lee estos content_ids para que la
+  // siguiente invocación sepa cuáles ya cuentan como `existentes` — pero la
+  // etapa se queda en 'generating': el cliente no puede aprobar un lote a
+  // medias sin que nadie se entere de que falta.
+  const faltan = objetivo - logrados;
+  await registrarEvento(admin, run.id, "guiones", "generated", {
+    payload: {
+      content_ids: contentIdsDelLote,
+      creados: creadoId ? [creadoId] : [],
+      actualizados: [],
+      fallos: fallo ? [fallo] : [],
+      parcial: true,
+      faltan,
+    },
+  });
+
+  // Freno anti-bucle infinito: con una invocación por guion, el tope no
+  // puede ser "tandas" — tiene que cubrir una invocación por cada guion del
+  // objetivo, más margen para los tropiezos que no cuentan como fallo
+  // definitivo (rate limit agotando los 3 reintentos). Clave DISTINTA de
+  // "guiones"/"guiones:<uuid>" (las que usa request_changes para el conteo
+  // de regeneraciones pedidas por el cliente, LIMITE_REGENERACIONES): son
+  // contadores de cosas distintas y no pueden compartir casilla en
+  // stage_attempts sin pisarse.
+  const clave = "guiones_intentos";
+  const intentosPrevios = Number(run.stage_attempts?.[clave] ?? 0);
+  const intentos = intentosPrevios + 1;
+  const attempts = { ...(run.stage_attempts ?? {}), [clave]: intentos };
+  const topeIntentos = objetivo * 3;
+
+  if (intentos >= topeIntentos) {
+    // Se persiste el contador ANTES de marcarError (mismo orden que usa el
+    // tope de LIMITE_REGENERACIONES en request_changes): si no, un
+    // retry_stage posterior volvería a leer el contador viejo y el freno
+    // perdería la cuenta real de intentos ya hechos.
+    const conTope = await actualizarRun(admin, run.id, { stage_attempts: attempts });
+    await notificarEquipo(
+      admin, run.organization_id,
+      "Pipeline detenido: faltan guiones por generar",
+      `Se generaron ${logrados} de ${objetivo} guiones tras ${intentos} intentos. La causa fue el límite de tasa del proveedor de IA (sin cuota). Reintenta la etapa cuando haya cupo disponible.`,
+      run.id,
+    );
     return marcarError(
-      admin, run, "guiones",
-      "no se pudo generar ningún guion",
-      fallos.slice(0, 5).join(" | "),
+      admin, conTope, "guiones",
+      `Solo se generaron ${logrados} de ${objetivo} guiones tras ${intentos} intentos: el límite de tasa del proveedor de IA no dio tregua`,
+      fallo ?? undefined,
     );
   }
 
-  return pasarAEsperandoCliente(admin, run, "guiones", {
-    content_ids: [...existentes, ...creados],
-    creados,
-    actualizados,
-    fallos: fallos.slice(0, 5),
-  });
+  // stage/stage_status NO se tocan: siguen en 'guiones'/'generating' desde
+  // el cerrojo de arriba, para que el próximo eslabón de la cadena (y un
+  // poll manual del portal) vean que la etapa sigue en curso, no aprobada
+  // a medias.
+  const conIntentos = await actualizarRun(admin, run.id, { stage_attempts: attempts });
+  programarAutoPoll(run.id, 0);
+  return conIntentos;
 }
 
 /** content_ids de los eventos previos, filtrados contra las filas que existen. */
@@ -2412,7 +2592,20 @@ Deno.serve(async (req) => {
           .from("client_pipeline_runs").select("*").eq("id", run.id).maybeSingle();
         if (!fresco) return json(req, { ok: true, detenido: "run_borrado" });
 
-        const actualizado = await ejecutarPoll(admin, fresco as Run, ctx);
+        // GUIONES es distinto al resto: no hay un trabajo externo que
+        // reconciliar — la propia cadena de auto-poll ES la que retoma la
+        // siguiente tanda donde quedó la anterior (ver "faltan guiones" en
+        // ejecutarEtapaGuiones). El resto de etapas sí generan afuera y acá
+        // solo se lee su estado con ejecutarPoll. Por eso esta rama es la
+        // ÚNICA que dispara trabajo real, y solo desde este eslabón de
+        // service role: el poll manual del portal (más abajo) nunca la usa,
+        // para no duplicar guiones si el cliente tiene el portal abierto
+        // mientras la cadena corre en segundo plano.
+        const esContinuacionDeGuiones = (fresco as Run).stage === "guiones" &&
+          (fresco as Run).stage_status === "generating";
+        const actualizado = esContinuacionDeGuiones
+          ? await ejecutarEtapaGuiones(admin, fresco as Run, ctx, { continuacion: true })
+          : await ejecutarPoll(admin, fresco as Run, ctx);
 
         if (actualizado.stage_status !== "generating") {
           // Ya transicionó (o falló): la cadena cumplió y se apaga.
