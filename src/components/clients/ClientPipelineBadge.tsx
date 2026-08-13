@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Loader2, Clock, MessageSquareWarning, CheckCircle2, AlertTriangle, Coins } from "lucide-react";
+import { Loader2, Clock, MessageSquareWarning, CheckCircle2, AlertTriangle, Coins, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -25,7 +25,20 @@ interface ClientPipelineBadgeProps {
   className?: string;
   /** Muestra solo el icono, para listas muy densas */
   compact?: boolean;
+  /**
+   * Regeneraciones acumuladas en todas las etapas. Desde que el cliente puede
+   * lanzar y regenerar por su cuenta, sin tope, este número es lo único que
+   * delata a quien insiste mucho — y cada intento gasta tokens de IA de la
+   * organización. Solo se pinta al pasar de UMBRAL_INTENTOS.
+   */
+  intentos?: number;
 }
+
+/** El orquestador escala a un humano al 4º intento sobre la misma etapa
+ *  (LIMITE_REGENERACIONES en pipeline-orchestrator). Por encima de eso, sumando
+ *  todas las etapas, el cliente ya ha ido y venido bastante: el equipo debería
+ *  enterarse sin tener que consultar la base. */
+const UMBRAL_INTENTOS = 4;
 
 const STAGE_LABEL: Record<PipelineStage, string> = {
   onboarding: "Formulario",
@@ -77,6 +90,7 @@ export const ClientPipelineBadge = memo(function ClientPipelineBadge({
   stageStatus,
   className,
   compact = false,
+  intentos = 0,
 }: ClientPipelineBadgeProps) {
   // Sin run todavía: el cliente aún no ha enviado su formulario
   if (!stage || !stageStatus) {
@@ -96,18 +110,30 @@ export const ClientPipelineBadge = memo(function ClientPipelineBadge({
   const cfg = STATUS_CONFIG[stageStatus];
   const Icono = cfg.icono;
   const etiqueta = `${STAGE_LABEL[stage]} · ${cfg.texto}`;
+  const insiste = intentos > UMBRAL_INTENTOS;
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
-        cfg.clase,
-        className,
+    <span className={cn("inline-flex items-center gap-1", className)}>
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium",
+          cfg.clase,
+        )}
+        title={etiqueta}
+      >
+        <Icono className={cn("h-3 w-3 flex-shrink-0", stageStatus === "generating" && "animate-spin")} />
+        {!compact && <span className="truncate">{etiqueta}</span>}
+      </span>
+
+      {insiste && (
+        <span
+          className="inline-flex items-center gap-0.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+          title={`Ha pedido cambios ${intentos} veces. Cada intento vuelve a generar con IA; quizá le cuesta explicar lo que quiere y agradezca una llamada.`}
+        >
+          <RefreshCw className="h-3 w-3 flex-shrink-0" />
+          {intentos}
+        </span>
       )}
-      title={etiqueta}
-    >
-      <Icono className={cn("h-3 w-3 flex-shrink-0", stageStatus === "generating" && "animate-spin")} />
-      {!compact && <span className="truncate">{etiqueta}</span>}
     </span>
   );
 });

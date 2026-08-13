@@ -10,6 +10,12 @@ export interface ClientPipelineRunSummary {
   product_id: string | null;
   last_feedback: string | null;
   updated_at: string;
+  /** {"adn": 1, "estrategia": 0, ...} — intentos por etapa */
+  stage_attempts: Record<string, number> | null;
+  /** Suma de todas las etapas. El cliente puede regenerar sin tope, así que
+   *  este número es lo único que delata a quien insiste mucho: cada intento
+   *  gasta tokens de IA de la organización. */
+  intentos_totales: number;
 }
 
 /**
@@ -30,14 +36,21 @@ export function useClientPipelineRuns(organizationId: string | null | undefined)
     queryFn: async (): Promise<Record<string, ClientPipelineRunSummary>> => {
       const { data, error } = await supabase
         .from("client_pipeline_runs")
-        .select("id, client_id, stage, stage_status, product_id, last_feedback, updated_at")
+        .select("id, client_id, stage, stage_status, product_id, last_feedback, updated_at, stage_attempts")
         .eq("organization_id", organizationId!);
 
       if (error) throw error;
 
       const porCliente: Record<string, ClientPipelineRunSummary> = {};
       for (const fila of (data ?? []) as ClientPipelineRunSummary[]) {
-        porCliente[fila.client_id] = fila;
+        const intentos = fila.stage_attempts ?? {};
+        porCliente[fila.client_id] = {
+          ...fila,
+          intentos_totales: Object.values(intentos).reduce(
+            (suma, n) => suma + (Number(n) || 0),
+            0,
+          ),
+        };
       }
       return porCliente;
     },

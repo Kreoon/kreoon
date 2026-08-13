@@ -8,9 +8,16 @@
 // Dos modos:
 //   { token, section, data }  -> guarda/mergea esa seccion, status in_progress
 //   { token, final: true }    -> valida obligatorios, marca submitted, notifica
+//                                 y arranca pipeline-orchestrator (accion
+//                                 "start") en la PRIMERA transicion a submitted.
 //
 // El submit final NO toca la tabla `clients`. El volcado de los datos a
 // clients/products es un paso manual posterior del admin (status -> processed).
+//
+// Arranque del pipeline: acá no hay sesion de usuario (formulario publico sin
+// login), asi que se invoca con el service role -- `start` ya lo acepta como
+// `esServiceRole`. Es fire-and-forget dentro de un try/catch: si el pipeline
+// falla, el submit YA se guardo arriba y no se revierte por esto.
 // ============================================================================
 
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
@@ -240,6 +247,45 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       await notifyOrgStaff(supabase, form.organization_id, form.id, client?.name ?? null);
+
+      // Arranca el pipeline autonomo del cliente. Mismo patron que el paso 4
+      // de client-onboarding-process (commit c27e144f): fire-and-forget, un
+      // fallo acá NO tumba el submit que ya se guardo arriba.
+      try {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const pipelineRes = await fetch(
+          `${supabaseUrl}/functions/v1/pipeline-orchestrator`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              // Sin sesion de usuario en este formulario publico: el service
+              // role es la unica credencial disponible. `start` la acepta
+              // como `esServiceRole` y no exige ser staff en ese caso.
+              Authorization: `Bearer ${serviceRoleKey}`,
+            },
+            body: JSON.stringify({
+              action: "start",
+              client_id: form.client_id,
+              organization_id: form.organization_id,
+              onboarding_form_id: form.id,
+            }),
+          },
+        );
+        if (!pipelineRes.ok) {
+          const payload = await pipelineRes.json().catch(() => ({}));
+          console.error(
+            "[client-onboarding-submit] pipeline-orchestrator respondio con error:",
+            payload.message ?? payload.error ?? `HTTP ${pipelineRes.status}`,
+          );
+        }
+      } catch (e) {
+        console.error(
+          "[client-onboarding-submit] no se pudo arrancar el pipeline:",
+          (e as Error).message,
+        );
+      }
     }
 
     return jsonResponse(req, { ok: true, status: "submitted" });

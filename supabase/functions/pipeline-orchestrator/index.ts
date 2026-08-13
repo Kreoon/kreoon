@@ -12,6 +12,16 @@
 //
 // Acciones (POST { action, ... }):
 //   start           { client_id, onboarding_form_id?, organization_id }
+//                   Staff de la organización, o el dueño del cliente (fila en
+//                   `client_users`) arrancando el SUYO — su `client_id` se
+//                   valida contra el vínculo real, nunca se confía en el body
+//                   a ciegas (ver `esUsuarioDelCliente`).
+//   create_form     { client_id, organization_id }
+//                   Crea la fila de `client_onboarding_forms` si el cliente no
+//                   tiene ninguna vigente (no expirada, no procesada); si ya
+//                   existe, la devuelve tal cual (idempotente). Mismo criterio
+//                   de autorización que `start`. El `token` lo genera el
+//                   DEFAULT de la columna (no se genera acá).
 //   advance         { run_id }
 //   approve         { run_id, stage, actor, actor_id }
 //   request_changes { run_id, stage, feedback, actor_id }
@@ -1235,8 +1245,24 @@ Deno.serve(async (req) => {
       }
 
       if (!ctx.esServiceRole) {
-        if (!await esStaffDeOrg(admin, ctx.userId!, organizationId)) {
-          return json(req, { error: "forbidden: se requiere staff de esta organización" }, 403);
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, organizationId);
+        if (!esStaff) {
+          // No es staff: solo puede arrancar SU PROPIO cliente. `clientId`
+          // sale del body, pero `esUsuarioDelCliente` lo valida contra el
+          // vínculo real en `client_users` (keyed por ctx.userId, que sí
+          // viene del JWT verificado) — un cliente no puede forjar el
+          // client_id de otro: si no existe esa fila exacta, esto da false.
+          const esDuenoDelCliente = await esUsuarioDelCliente(admin, ctx.userId!, clientId);
+          if (!esDuenoDelCliente) {
+            return json(
+              req,
+              {
+                error: "forbidden",
+                message: "No puedes arrancar el pipeline de un cliente que no es el tuyo.",
+              },
+              403,
+            );
+          }
         }
       }
 
@@ -1283,6 +1309,88 @@ Deno.serve(async (req) => {
 
       const actualizado = await ejecutarEtapa(admin, run, "adn", ctx);
       return json(req, { ok: true, run: actualizado, reutilizado: !!existente });
+    }
+
+    // ── create_form ───────────────────────────────────────────────────────
+    // Crea el formulario de onboarding para el cliente que lo pide, si no
+    // tiene ya uno vigente. Antes solo lo creaba el staff desde el panel
+    // (OnboardingLinkDialog); esto le da al dueño del cliente la misma puerta
+    // de entrada sin depender de que el staff se lo genere primero.
+    if (accion === "create_form") {
+      const clientId = String(body.client_id ?? "");
+      const organizationId = String(body.organization_id ?? "");
+      if (!clientId || !organizationId) {
+        return json(req, { error: "client_id y organization_id son requeridos" }, 400);
+      }
+
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, organizationId);
+        if (!esStaff) {
+          // Mismo criterio que en `start`: el dueño solo puede crear el
+          // formulario de SU cliente, validado contra `client_users`.
+          const esDuenoDelCliente = await esUsuarioDelCliente(admin, ctx.userId!, clientId);
+          if (!esDuenoDelCliente) {
+            return json(
+              req,
+              {
+                error: "forbidden",
+                message: "No puedes crear el formulario de un cliente que no es el tuyo.",
+              },
+              403,
+            );
+          }
+        }
+      }
+
+      // El cliente debe pertenecer a la organización declarada (mismo chequeo
+      // que en `start`: evita un formulario cruzado apuntando a otra org).
+      const { data: clienteForm } = await admin
+        .from("clients").select("id, organization_id").eq("id", clientId).maybeSingle();
+      if (!clienteForm || clienteForm.organization_id !== organizationId) {
+        return json(req, { error: "client_not_found" }, 404);
+      }
+
+      // Idempotencia: mismo criterio de "vigente" que usa el panel
+      // (OnboardingLinkDialog.tsx → fetchActiveForm): no processed, no
+      // vencido. Si ya existe, se devuelve tal cual — no se crea un segundo
+      // link ni se toca el que ya está circulando.
+      const { data: vigente } = await admin
+        .from("client_onboarding_forms")
+        .select("id, organization_id, client_id, token, status, expires_at")
+        .eq("client_id", clientId)
+        .eq("organization_id", organizationId)
+        .neq("status", "processed")
+        .gt("expires_at", ahora())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (vigente) {
+        return json(req, { ok: true, form: vigente, reutilizado: true });
+      }
+
+      // El `token` NO se genera acá: lo pone el DEFAULT de la columna (dos
+      // UUIDv4 sin guiones, 64 hex) — el mismo mecanismo que usa el insert
+      // del panel en OnboardingLinkDialog.tsx.
+      const { data: creado, error: errorCreado } = await admin
+        .from("client_onboarding_forms")
+        .insert({
+          organization_id: organizationId,
+          client_id: clientId,
+          created_by: ctx.esServiceRole ? null : ctx.userId,
+        })
+        .select("id, organization_id, client_id, token, status, expires_at")
+        .single();
+
+      if (errorCreado || !creado) {
+        return json(
+          req,
+          { error: "no_se_pudo_crear_el_formulario", detalle: errorCreado?.message },
+          500,
+        );
+      }
+
+      return json(req, { ok: true, form: creado, reutilizado: false });
     }
 
     // ── El resto de acciones trabajan sobre un run existente ────────────────

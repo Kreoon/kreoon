@@ -55,8 +55,14 @@ interface ClientCardProps {
   onOpenUsers: (client: Client) => void;
   onOpenStrategists: (client: Client) => void;
   onOpenServices: (client: Client) => void;
-  /** Estado del pipeline autónomo. Si no llega, la tarjeta muestra "Sin iniciar". */
-  pipeline?: { stage: PipelineStage; stage_status: PipelineStageStatus } | null;
+  /** Estado del pipeline autónomo. Si no llega, la tarjeta muestra "Sin iniciar".
+   *  `intentos_totales` son las regeneraciones acumuladas: como el cliente puede
+   *  pedir cambios sin tope, el distintivo lo destaca al pasar de 3. */
+  pipeline?: {
+    stage: PipelineStage;
+    stage_status: PipelineStageStatus;
+    intentos_totales?: number;
+  } | null;
 }
 
 export function ClientCard({
@@ -159,7 +165,11 @@ if (!error && data?.length) {
             <p className="text-xs text-muted-foreground truncate mt-0.5">{client.contact_email}</p>
           )}
           <div className="mt-1.5">
-            <ClientPipelineBadge stage={pipeline?.stage} stageStatus={pipeline?.stage_status} />
+            <ClientPipelineBadge
+              stage={pipeline?.stage}
+              stageStatus={pipeline?.stage_status}
+              intentos={pipeline?.intentos_totales}
+            />
           </div>
         </div>
 
