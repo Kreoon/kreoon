@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import type { OnboardingFormData } from '@/components/client-onboarding/schemas';
 
 /**
  * Lee el pipeline autónomo de UN cliente (onboarding → ADN → estrategia →
- * guiones → producción) y expone las dos únicas acciones que el cliente
- * puede ejecutar: aprobar una etapa o pedir un cambio.
+ * guiones → producción) y expone las acciones que el cliente puede ejecutar:
+ * llenar su formulario de inicio, arrancar el proceso, aprobar una etapa o
+ * pedir un cambio.
  *
  * El cliente lee su propio run gracias a la política RLS
  * "Client can view own pipeline run" (client_users → client_id). Escribir
@@ -39,6 +41,40 @@ async function readFunctionError(fnError: unknown): Promise<{ code: string; mess
   }
 
   return { code: 'desconocido', message: GENERIC_ERROR };
+}
+
+/**
+ * Igual que `readFunctionError`, pero para `submit_form`: ese error trae
+ * además la lista de campos que faltan (mismo formato que
+ * `client-onboarding-submit`), así que se lee aparte para no perder ese dato.
+ */
+async function readSubmitFormError(fnError: unknown): Promise<
+  | { kind: 'missing_fields'; missingFields: string[] }
+  | { kind: 'other'; code: string; message: string }
+> {
+  const context = (fnError as { context?: { json?: () => Promise<unknown> } })?.context;
+
+  if (context?.json) {
+    try {
+      const body = (await context.json()) as {
+        error?: string;
+        missing_fields?: unknown;
+      };
+      if (body?.error === 'missing_required_fields') {
+        return {
+          kind: 'missing_fields',
+          missingFields: Array.isArray(body.missing_fields) ? (body.missing_fields as string[]) : [],
+        };
+      }
+      if (body?.error) {
+        return { kind: 'other', code: body.error, message: ERROR_MESSAGES[body.error] ?? GENERIC_ERROR };
+      }
+    } catch {
+      /* el cuerpo no era JSON: seguimos al mensaje genérico */
+    }
+  }
+
+  return { kind: 'other', code: 'desconocido', message: GENERIC_ERROR };
 }
 
 const GENERIC_ERROR = 'No pudimos completar la acción. Inténtalo de nuevo en un momento.';
@@ -114,6 +150,19 @@ export interface PipelineScript {
   created_at: string;
 }
 
+/** Estado del formulario de onboarding que el cliente llena desde el portal. */
+export type OnboardingFormStatus = 'pending' | 'in_progress' | 'submitted' | 'processed';
+
+export interface ClientOnboardingForm {
+  id: string;
+  status: OnboardingFormStatus;
+  form_data: OnboardingFormData;
+}
+
+export type SubmitOnboardingResult =
+  | { ok: true; form: ClientOnboardingForm }
+  | { ok: false; missingFields: string[] };
+
 /** Estados de `content` que el cliente ve como "guion en revisión" o "guion listo". */
 const SCRIPT_STATUSES = ['script_pending', 'script_approved'] as const;
 
@@ -140,6 +189,8 @@ export function useClientPipeline(clientId: string | null) {
   const [dnaData, setDnaData] = useState<unknown>(null);
   const [product, setProduct] = useState<Record<string, unknown> | null>(null);
   const [scripts, setScripts] = useState<PipelineScript[]>([]);
+  const [onboardingForm, setOnboardingForm] = useState<ClientOnboardingForm | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,6 +213,33 @@ export function useClientPipeline(clientId: string | null) {
     if (!options?.silent) setLoading(true);
 
     try {
+      // organization_id del cliente: lo necesitan `iniciarProceso` y
+      // `crearFormulario` para llamar a pipeline-orchestrator antes de que
+      // exista un run. `clients` es de lectura pública (is_public), así que
+      // esto no depende de ninguna política nueva.
+      const { data: clientRow } = await supabase
+        .from('clients')
+        .select('organization_id')
+        .eq('id', clientId)
+        .maybeSingle();
+      if (requestId !== requestRef.current) return;
+      setOrganizationId((clientRow as { organization_id?: string } | null)?.organization_id ?? null);
+
+      // Formulario de onboarding del cliente (para saber si ya lo llenó, a
+      // medias, o nada). REQUIERE una política RLS que le permita al cliente
+      // ver el suyo — hoy `client_onboarding_forms` solo tiene la política de
+      // staff, así que esto devuelve null hasta que exista (ver nota en
+      // `crearFormulario`). No falla: simplemente no hay formulario que leer.
+      const { data: formRow } = await supabase
+        .from('client_onboarding_forms' as any)
+        .select('id, status, form_data')
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (requestId !== requestRef.current) return;
+      setOnboardingForm((formRow as unknown as ClientOnboardingForm) ?? null);
+
       const { data: runRow, error: runError } = await supabase
         .from('client_pipeline_runs' as any)
         .select('*')
@@ -282,6 +360,127 @@ export function useClientPipeline(clientId: string | null) {
   }, [fetchAll]);
 
   /**
+   * Crea el formulario de onboarding del cliente desde el portal (sin token
+   * público) — lo primero que dispara "Escribirlo" o "Contarlo hablando"
+   * cuando el cliente todavía no tiene ningún formulario.
+   *
+   * BLOQUEADO POR BACKEND (2026-08-12): `pipeline-orchestrator` todavía no
+   * tiene la acción `create_form`. Se asume el contrato
+   * `{ action:'create_form', client_id }` → `{ ok:true, form:{ id, status,
+   * form_data } }`, autorizado tanto para staff como para el dueño del
+   * cliente (client_users) — igual que se pide para `start` más abajo.
+   * También hace falta una política RLS de SELECT para que el cliente pueda
+   * leer su propio `client_onboarding_forms` (hoy solo hay política de
+   * staff), análoga a "Client can view own pipeline run". Hasta que exista,
+   * esta llamada falla con el mensaje genérico de error.
+   */
+  const crearFormulario = useCallback(async (): Promise<ClientOnboardingForm | undefined> => {
+    if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
+    setActing(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+        body: { action: 'create_form', client_id: clientId },
+      });
+      if (fnError) {
+        const { message } = await readFunctionError(fnError);
+        throw new Error(message);
+      }
+      const form = data?.form as ClientOnboardingForm | undefined;
+      if (form) setOnboardingForm(form);
+      return form;
+    } finally {
+      setActing(false);
+    }
+  }, [clientId]);
+
+  /**
+   * Guarda (mergea) una sección del formulario de onboarding desde la sesión
+   * del cliente — el equivalente sin token de `saveSection` (api pública de
+   * client-onboarding).
+   *
+   * BLOQUEADO POR BACKEND (2026-08-12): se asume una acción nueva
+   * `{ action:'save_form_section', client_id, section, data }` →
+   * `{ ok:true, form }`, con la misma lógica de merge que ya tiene
+   * `client-onboarding-submit`.
+   */
+  const guardarSeccionOnboarding = useCallback(
+    async (section: string, data: unknown): Promise<ClientOnboardingForm | undefined> => {
+      if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
+      const { data: resp, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+        body: { action: 'save_form_section', client_id: clientId, section, data },
+      });
+      if (fnError) {
+        const { message } = await readFunctionError(fnError);
+        throw new Error(message);
+      }
+      const form = resp?.form as ClientOnboardingForm | undefined;
+      if (form) setOnboardingForm(form);
+      return form;
+    },
+    [clientId],
+  );
+
+  /**
+   * Envío final del formulario: valida obligatorios y lo marca como enviado.
+   *
+   * BLOQUEADO POR BACKEND (2026-08-12): se asume una acción nueva
+   * `{ action:'submit_form', client_id }` → `{ ok:true, form }`, o un error
+   * `missing_required_fields` con `missing_fields: string[]` (mismo formato
+   * que ya usa `client-onboarding-submit`).
+   */
+  const enviarOnboarding = useCallback(async (): Promise<SubmitOnboardingResult> => {
+    if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
+    const { data: resp, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+      body: { action: 'submit_form', client_id: clientId },
+    });
+    if (fnError) {
+      const result = await readSubmitFormError(fnError);
+      if (result.kind === 'missing_fields') return { ok: false, missingFields: result.missingFields };
+      throw new Error(result.message);
+    }
+    const form = resp?.form as ClientOnboardingForm | undefined;
+    if (form) setOnboardingForm(form);
+    await fetchAll({ silent: true });
+    return { ok: true, form: form ?? (onboardingForm as ClientOnboardingForm) };
+  }, [clientId, onboardingForm, fetchAll]);
+
+  /**
+   * Arranca el proceso del cliente cuando su formulario ya está enviado pero
+   * todavía no existe un run. A diferencia de `callOrchestrator`, esta acción
+   * NO requiere un run_id: es precisamente la que lo crea.
+   *
+   * BLOQUEADO POR BACKEND (2026-08-12): hoy la acción `start` de
+   * `pipeline-orchestrator` solo autoriza a staff de la organización
+   * (`esStaffDeOrg`) y devuelve 403 si el caller es el propio cliente. Hace
+   * falta que también acepte al dueño del cliente (`esUsuarioDelCliente`),
+   * igual que ya hace para el resto de acciones sobre un run existente.
+   */
+  const iniciarProceso = useCallback(async () => {
+    if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
+    if (!organizationId) throw new Error('No pudimos identificar tu organización. Recarga la página.');
+    setActing(true);
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
+        body: {
+          action: 'start',
+          client_id: clientId,
+          organization_id: organizationId,
+          onboarding_form_id: onboardingForm?.id ?? undefined,
+        },
+      });
+      if (fnError) {
+        const { message } = await readFunctionError(fnError);
+        throw new Error(message);
+      }
+      if (data?.run) setRun(data.run as ClientPipelineRun);
+      await fetchAll({ silent: true });
+      return data;
+    } finally {
+      setActing(false);
+    }
+  }, [clientId, organizationId, onboardingForm?.id, fetchAll]);
+
+  /**
    * Polling: mientras algo se está generando hay que llamar `poll`, no leer la
    * tabla. El ADN y la estrategia son asíncronos (la estrategia tarda 5–15 min)
    * y sin que alguien llame `poll` el run se queda en `generating` para siempre
@@ -357,6 +556,8 @@ export function useClientPipeline(clientId: string | null) {
     product,
     researchProgress,
     scripts,
+    onboardingForm,
+    organizationId,
     loading,
     acting,
     error,
@@ -364,6 +565,10 @@ export function useClientPipeline(clientId: string | null) {
     requestChanges,
     approveScript,
     requestScriptChanges,
+    crearFormulario,
+    guardarSeccionOnboarding,
+    enviarOnboarding,
+    iniciarProceso,
     refresh: fetchAll,
   };
 }

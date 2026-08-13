@@ -22,6 +22,24 @@
 //                   existe, la devuelve tal cual (idempotente). Mismo criterio
 //                   de autorización que `start`. El `token` lo genera el
 //                   DEFAULT de la columna (no se genera acá).
+//   save_form_section { client_id, section, data }
+//                   Guarda una sección desde una sesión autenticada (staff o
+//                   dueño del cliente) — el equivalente con sesión al "Modo 1"
+//                   de client-onboarding-submit (guardado con token público).
+//                   Mismo merge y misma sanitización: se importan de
+//                   _shared/client-onboarding.ts para que las dos rutas de
+//                   guardado no se puedan desincronizar en silencio.
+//   submit_form     { client_id }
+//                   Envío final con sesión: valida los mismos campos
+//                   obligatorios que client-onboarding-submit (misma fuente
+//                   compartida) y, si pasan, marca 'submitted' y encadena
+//                   `start` con un self-invoke fire-and-forget (mismo patrón
+//                   que `invocarSinEsperar`/`programarAutoPoll`) en vez de
+//                   duplicar su lógica — `start` ya es idempotente. Solo en
+//                   el PRIMER envío también notifica al staff con
+//                   `notificarEquipo` (mismo texto que la ruta pública): el
+//                   cliente no depende del staff para arrancar, pero el staff
+//                   sigue enterándose — "autónomo" no es "desatendido".
 //   advance         { run_id }
 //   approve         { run_id, stage, actor, actor_id }
 //   request_changes { run_id, stage, feedback, actor_id }
@@ -66,6 +84,11 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import {
+  findMissingRequiredFields,
+  sanitizeDeep,
+  VALID_SECTIONS,
+} from "../_shared/client-onboarding.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sb = any;
@@ -1318,10 +1341,20 @@ Deno.serve(async (req) => {
     // de entrada sin depender de que el staff se lo genere primero.
     if (accion === "create_form") {
       const clientId = String(body.client_id ?? "");
-      const organizationId = String(body.organization_id ?? "");
-      if (!clientId || !organizationId) {
-        return json(req, { error: "client_id y organization_id son requeridos" }, 400);
+      if (!clientId) {
+        return json(req, { error: "client_id es requerido" }, 400);
       }
+
+      // La organización se resuelve desde `clients`, NO del body: el portal del
+      // cliente no tiene por qué conocer su organization_id, y así esta acción
+      // se comporta igual que `save_form_section` y `submit_form`. Si el body
+      // trae uno distinto del real, manda el real.
+      const { data: clienteOrg } = await admin
+        .from("clients").select("id, organization_id").eq("id", clientId).maybeSingle();
+      if (!clienteOrg) {
+        return json(req, { error: "client_not_found" }, 404);
+      }
+      const organizationId = clienteOrg.organization_id as string;
 
       if (!ctx.esServiceRole) {
         const esStaff = await esStaffDeOrg(admin, ctx.userId!, organizationId);
@@ -1342,13 +1375,8 @@ Deno.serve(async (req) => {
         }
       }
 
-      // El cliente debe pertenecer a la organización declarada (mismo chequeo
-      // que en `start`: evita un formulario cruzado apuntando a otra org).
-      const { data: clienteForm } = await admin
-        .from("clients").select("id, organization_id").eq("id", clientId).maybeSingle();
-      if (!clienteForm || clienteForm.organization_id !== organizationId) {
-        return json(req, { error: "client_not_found" }, 404);
-      }
+      // (El cliente y su organización ya quedaron resueltos arriba, leyendo
+      // `clients` una sola vez.)
 
       // Idempotencia: mismo criterio de "vigente" que usa el panel
       // (OnboardingLinkDialog.tsx → fetchActiveForm): no processed, no
@@ -1391,6 +1419,226 @@ Deno.serve(async (req) => {
       }
 
       return json(req, { ok: true, form: creado, reutilizado: false });
+    }
+
+    // ── save_form_section ────────────────────────────────────────────────
+    // Guarda una sección desde una sesión autenticada. Mismo merge y misma
+    // sanitización que el "Modo 1" (guardado por sección con token público) de
+    // client-onboarding-submit — `sanitizeDeep` y `VALID_SECTIONS` vienen de
+    // _shared/client-onboarding.ts, no se reinventa la mezcla acá.
+    if (accion === "save_form_section") {
+      const clientId = String(body.client_id ?? "");
+      const section = body.section;
+      if (!clientId) return json(req, { error: "client_id es requerido" }, 400);
+      if (
+        typeof section !== "string" ||
+        !(VALID_SECTIONS as readonly string[]).includes(section)
+      ) {
+        return json(
+          req,
+          {
+            error: "invalid_section",
+            message: "Sección no válida.",
+            valid_sections: VALID_SECTIONS,
+          },
+          400,
+        );
+      }
+      if (
+        body.data === null ||
+        typeof body.data !== "object" ||
+        Array.isArray(body.data)
+      ) {
+        return json(
+          req,
+          { error: "invalid_data", message: "El contenido de la sección debe ser un objeto." },
+          400,
+        );
+      }
+
+      // Mismo par de chequeos que `start`/`create_form`: resolver la org
+      // REAL del cliente (nunca confiar en una que venga del body — acá ni
+      // siquiera se pide) y autorizar contra ella.
+      const { data: clienteForm } = await admin
+        .from("clients").select("id, organization_id").eq("id", clientId).maybeSingle();
+      if (!clienteForm) return json(req, { error: "client_not_found" }, 404);
+      const organizationId = clienteForm.organization_id as string;
+
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, organizationId);
+        if (!esStaff) {
+          const esDuenoDelCliente = await esUsuarioDelCliente(admin, ctx.userId!, clientId);
+          if (!esDuenoDelCliente) {
+            return json(
+              req,
+              {
+                error: "forbidden",
+                message: "No puedes editar el formulario de un cliente que no es el tuyo.",
+              },
+              403,
+            );
+          }
+        }
+      }
+
+      const { data: formSeccion } = await admin
+        .from("client_onboarding_forms")
+        .select("id, organization_id, client_id, token, status, form_data, expires_at")
+        .eq("client_id", clientId)
+        .eq("organization_id", organizationId)
+        .neq("status", "processed")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!formSeccion) {
+        return json(
+          req,
+          {
+            error: "form_not_found",
+            message: "Este cliente todavía no tiene un formulario de onboarding. Créalo primero con create_form.",
+          },
+          404,
+        );
+      }
+
+      // Merge IDÉNTICO al "Modo 1" de client-onboarding-submit: la sección
+      // nueva se mezcla sobre la que ya había, no la reemplaza entera.
+      const sanitized = sanitizeDeep(body.data) as Record<string, unknown>;
+      const previous = (formSeccion.form_data ?? {}) as Record<string, unknown>;
+      const previousSection = (previous[section] ?? {}) as Record<string, unknown>;
+      const nextFormData = {
+        ...previous,
+        [section]: { ...previousSection, ...sanitized },
+      };
+
+      const { data: formGuardado, error: errorGuardado } = await admin
+        .from("client_onboarding_forms")
+        .update({
+          form_data: nextFormData,
+          // Solo avanza pending -> in_progress, igual que la ruta pública.
+          status: formSeccion.status === "pending" ? "in_progress" : formSeccion.status,
+        })
+        .eq("id", formSeccion.id)
+        .select("id, organization_id, client_id, token, status, form_data, expires_at")
+        .single();
+
+      if (errorGuardado || !formGuardado) {
+        return json(req, { error: "no_se_pudo_guardar", detalle: errorGuardado?.message }, 500);
+      }
+
+      return json(req, { ok: true, form: formGuardado });
+    }
+
+    // ── submit_form ───────────────────────────────────────────────────────
+    // Envío final con sesión: mismos campos obligatorios que valida
+    // client-onboarding-submit, importados de _shared/client-onboarding.ts (si
+    // esa lista cambia, cambia acá también, sin que se puedan desincronizar).
+    if (accion === "submit_form") {
+      const clientId = String(body.client_id ?? "");
+      if (!clientId) return json(req, { error: "client_id es requerido" }, 400);
+
+      const { data: clienteSubmit } = await admin
+        .from("clients").select("id, organization_id, name").eq("id", clientId).maybeSingle();
+      if (!clienteSubmit) return json(req, { error: "client_not_found" }, 404);
+      const organizationId = clienteSubmit.organization_id as string;
+
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, organizationId);
+        if (!esStaff) {
+          const esDuenoDelCliente = await esUsuarioDelCliente(admin, ctx.userId!, clientId);
+          if (!esDuenoDelCliente) {
+            return json(
+              req,
+              {
+                error: "forbidden",
+                message: "No puedes enviar el formulario de un cliente que no es el tuyo.",
+              },
+              403,
+            );
+          }
+        }
+      }
+
+      const { data: formEnvio } = await admin
+        .from("client_onboarding_forms")
+        .select("id, organization_id, client_id, token, status, form_data, expires_at, submitted_at")
+        .eq("client_id", clientId)
+        .eq("organization_id", organizationId)
+        .neq("status", "processed")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!formEnvio) {
+        return json(
+          req,
+          {
+            error: "form_not_found",
+            message: "Este cliente todavía no tiene un formulario de onboarding.",
+          },
+          404,
+        );
+      }
+
+      const missing = findMissingRequiredFields(formEnvio.form_data);
+      if (missing.length > 0) {
+        return json(
+          req,
+          {
+            error: "missing_required_fields",
+            message: "Faltan datos obligatorios por llenar.",
+            missing_fields: missing,
+          },
+          400,
+        );
+      }
+
+      // Reenvío idempotente: se conserva el submitted_at original, igual que
+      // el modo final de client-onboarding-submit.
+      const isFirstSubmission = formEnvio.submitted_at === null;
+      const { data: formEnviado, error: errorEnvio } = await admin
+        .from("client_onboarding_forms")
+        .update({
+          status: "submitted",
+          submitted_at: formEnvio.submitted_at ?? ahora(),
+        })
+        .eq("id", formEnvio.id)
+        .select("id, organization_id, client_id, token, status, form_data, expires_at, submitted_at")
+        .single();
+
+      if (errorEnvio || !formEnviado) {
+        return json(req, { error: "no_se_pudo_enviar", detalle: errorEnvio?.message }, 500);
+      }
+
+      // Arranca el pipeline SOLO en la primera transición a submitted, para
+      // que reenviar no lo dispare de nuevo (`start` ya es idempotente igual,
+      // pero así se evita hasta el round-trip HTTP innecesario). Self-invoke
+      // fire-and-forget con service role, mismo patrón que `programarAutoPoll`.
+      if (isFirstSubmission) {
+        invocarSinEsperar(
+          "pipeline-orchestrator",
+          {
+            action: "start",
+            client_id: clientId,
+            organization_id: organizationId,
+            onboarding_form_id: formEnviado.id,
+          },
+          `Bearer ${SERVICE_KEY}`,
+        );
+
+        // El cliente arranca su proceso solo, pero el staff se entera igual
+        // que con la ruta pública (mismo título/mensaje que `notifyOrgStaff`
+        // en client-onboarding-submit). `notificarEquipo` ya envuelve su
+        // propio try/catch: un fallo acá no tumba la respuesta del submit.
+        await notificarEquipo(
+          admin,
+          organizationId,
+          "Onboarding completado",
+          `${clienteSubmit?.name ?? "Un cliente"} terminó de llenar su formulario de onboarding.`,
+          clientId,
+        );
+      }
+
+      return json(req, { ok: true, form: formEnviado });
     }
 
     // ── El resto de acciones trabajan sobre un run existente ────────────────

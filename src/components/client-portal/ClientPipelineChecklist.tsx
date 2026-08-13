@@ -14,6 +14,7 @@ import { ReviewDialog } from './ReviewDialog';
 import { RequestChangesDialog } from './RequestChangesDialog';
 import { ScriptsList } from './ScriptsList';
 import { ProductionSummary } from './ProductionSummary';
+import { OnboardingSheet, type OnboardingSheetModo } from './OnboardingSheet';
 import { dnaToSections, strategyToSections } from './plainLanguage';
 
 /**
@@ -75,6 +76,7 @@ export function ClientPipelineChecklist({
   const { toast } = useToast();
   const {
     run,
+    onboardingForm,
     dnaData,
     product,
     researchProgress,
@@ -85,11 +87,18 @@ export function ClientPipelineChecklist({
     requestChanges,
     approveScript,
     requestScriptChanges,
+    crearFormulario,
+    guardarSeccionOnboarding,
+    enviarOnboarding,
+    iniciarProceso,
+    refresh,
   } = useClientPipeline(clientId);
 
   // Qué se está viendo / cambiando (null = nada abierto)
   const [reviewing, setReviewing] = useState<'adn' | 'estrategia' | null>(null);
   const [changing, setChanging] = useState<'adn' | 'estrategia' | null>(null);
+  // Panel lateral para llenar el formulario de inicio (null = cerrado)
+  const [onboardingSheetModo, setOnboardingSheetModo] = useState<OnboardingSheetModo | null>(null);
 
   const dnaSections = useMemo(() => dnaToSections(dnaData), [dnaData]);
   const strategySections = useMemo(() => strategyToSections(product), [product]);
@@ -115,6 +124,45 @@ export function ClientPipelineChecklist({
     : run.onboarding_completed_at || currentIndex > 0
       ? 'done'
       : 'working';
+
+  // Estado del formulario de inicio, para decidir qué ofrecerle al cliente
+  // mientras todavía no hay un proceso (`run`) arrancado.
+  const formularioAMedias = onboardingForm?.status === 'pending' || onboardingForm?.status === 'in_progress';
+  const formularioListo = onboardingForm?.status === 'submitted' || onboardingForm?.status === 'processed';
+
+  const abrirFormulario = async (modo: OnboardingSheetModo) => {
+    // Si el cliente todavía no tiene ningún formulario, se crea antes de
+    // abrir el panel (primer clic en "Escribirlo" o "Contarlo hablando").
+    if (!onboardingForm) {
+      try {
+        await crearFormulario();
+      } catch (err) {
+        toast({
+          title: 'No pudimos empezar tu formulario',
+          description: err instanceof Error ? err.message : 'Inténtalo de nuevo en un momento.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+    setOnboardingSheetModo(modo);
+  };
+
+  const handleIniciarProceso = async () => {
+    try {
+      await iniciarProceso();
+      toast({
+        title: '¡Arrancamos!',
+        description: 'Ya estamos trabajando en entender tu marca.',
+      });
+    } catch (err) {
+      toast({
+        title: 'No pudimos empezar',
+        description: err instanceof Error ? err.message : 'Inténtalo de nuevo en un momento.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleApprove = async (stage: 'adn' | 'estrategia') => {
     try {
@@ -204,10 +252,54 @@ export function ClientPipelineChecklist({
 
       {!run && (
         <div className="mb-6 rounded-xl border bg-card p-4">
-          <p className="font-medium">Estamos preparando tu espacio</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            En cuanto completes tu formulario de inicio, aquí aparecerá todo tu proceso.
-          </p>
+          {formularioListo ? (
+            <>
+              <p className="font-medium">Ya podemos empezar</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ya tenemos todo lo que nos contaste. Dale clic y arrancamos.
+              </p>
+              <Button
+                className="mt-3 w-full sm:w-auto"
+                onClick={handleIniciarProceso}
+                disabled={acting}
+              >
+                {acting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                Empezar mi proceso
+              </Button>
+            </>
+          ) : formularioAMedias ? (
+            <>
+              <p className="font-medium">Te falta poco</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ya empezaste a contarnos de tu marca. Termina cuando quieras.
+              </p>
+              <Button
+                className="mt-3 w-full sm:w-auto"
+                onClick={() => abrirFormulario('escribir')}
+              >
+                Seguir donde lo dejaste
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="font-medium">Cuéntanos de tu marca</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Así sabemos qué videos hacerte. Toma solo unos minutos.
+              </p>
+              <div className="mt-3 flex flex-col sm:flex-row gap-2">
+                <Button className="w-full sm:w-auto" onClick={() => abrirFormulario('escribir')}>
+                  Escribirlo
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full sm:w-auto"
+                  onClick={() => abrirFormulario('hablar')}
+                >
+                  Contarlo hablando
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -462,6 +554,20 @@ export function ClientPipelineChecklist({
         what={changing === 'adn' ? 'Así entendimos tu marca' : 'Tu estrategia'}
         submitting={acting}
         onSubmit={handleRequestChanges}
+      />
+
+      {/* ── Formulario de inicio (panel lateral) ─────────────────────── */}
+      <OnboardingSheet
+        open={!!onboardingSheetModo}
+        modo={onboardingSheetModo ?? 'escribir'}
+        formData={onboardingForm?.form_data ?? {}}
+        onOpenChange={(open) => !open && setOnboardingSheetModo(null)}
+        onSaveSection={guardarSeccionOnboarding}
+        onSubmit={enviarOnboarding}
+        onCompleted={() => {
+          setOnboardingSheetModo(null);
+          refresh({ silent: true });
+        }}
       />
     </div>
   );

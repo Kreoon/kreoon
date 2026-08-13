@@ -5,5 +5,6 @@ export { RequestChangesDialog } from './RequestChangesDialog';
 export { ReadableSections } from './ReadableSections';
 export { ScriptsList } from './ScriptsList';
 export { ProductionSummary } from './ProductionSummary';
+export { OnboardingSheet, type OnboardingSheetModo } from './OnboardingSheet';
 export { dnaToSections, strategyToSections, toBlocks, humanizeKey } from './plainLanguage';
 export type { ReadableSection, ReadableBlock } from './plainLanguage';
