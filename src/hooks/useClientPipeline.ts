@@ -201,6 +201,10 @@ export function useClientPipeline(clientId: string | null) {
   // intervalo de polling no se reinicie en cada render.
   const runIdRef = useRef<string | null>(null);
   runIdRef.current = run?.id ?? null;
+  // Mismo truco para el formulario: `crearFormulario` necesita leer el
+  // form_data ya guardado sin quedar atado a que cambie en cada render.
+  const onboardingFormRef = useRef<ClientOnboardingForm | null>(null);
+  onboardingFormRef.current = onboardingForm;
 
   const fetchAll = useCallback(async (options?: { silent?: boolean }) => {
     if (!clientId) {
@@ -228,8 +232,9 @@ export function useClientPipeline(clientId: string | null) {
       // Formulario de onboarding del cliente (para saber si ya lo llenó, a
       // medias, o nada). REQUIERE una política RLS que le permita al cliente
       // ver el suyo — hoy `client_onboarding_forms` solo tiene la política de
-      // staff, así que esto devuelve null hasta que exista (ver nota en
-      // `crearFormulario`). No falla: simplemente no hay formulario que leer.
+      // staff, así que esto devuelve null hasta que exista (en marcha, según
+      // el team lead — 2026-08-13). No falla: simplemente no hay formulario
+      // que leer.
       const { data: formRow } = await supabase
         .from('client_onboarding_forms' as any)
         .select('id, status, form_data')
@@ -238,7 +243,7 @@ export function useClientPipeline(clientId: string | null) {
         .limit(1)
         .maybeSingle();
       if (requestId !== requestRef.current) return;
-      setOnboardingForm((formRow as unknown as ClientOnboardingForm) ?? null);
+      if (formRow) setOnboardingForm(formRow as unknown as ClientOnboardingForm);
 
       const { data: runRow, error: runError } = await supabase
         .from('client_pipeline_runs' as any)
@@ -364,41 +369,49 @@ export function useClientPipeline(clientId: string | null) {
    * público) — lo primero que dispara "Escribirlo" o "Contarlo hablando"
    * cuando el cliente todavía no tiene ningún formulario.
    *
-   * BLOQUEADO POR BACKEND (2026-08-12): `pipeline-orchestrator` todavía no
-   * tiene la acción `create_form`. Se asume el contrato
-   * `{ action:'create_form', client_id }` → `{ ok:true, form:{ id, status,
-   * form_data } }`, autorizado tanto para staff como para el dueño del
-   * cliente (client_users) — igual que se pide para `start` más abajo.
-   * También hace falta una política RLS de SELECT para que el cliente pueda
-   * leer su propio `client_onboarding_forms` (hoy solo hay política de
-   * staff), análoga a "Client can view own pipeline run". Hasta que exista,
-   * esta llamada falla con el mensaje genérico de error.
+   * Acción `create_form` YA DESPLEGADA (commit 6058d787): `{ action:
+   * 'create_form', client_id, organization_id }` → `{ ok:true, form:{ id,
+   * organization_id, client_id, token, status, expires_at }, reutilizado? }`.
+   * OJO: NO devuelve `form_data` — se completa aquí con lo que ya hubiera en
+   * memoria (o vacío, si es la primera vez). El contenido real se termina de
+   * leer por la política RLS de lectura del cliente sobre
+   * `client_onboarding_forms` (en marcha del lado backend); mientras tanto,
+   * `guardarSeccionOnboarding` va llenando el estado local igual.
    */
   const crearFormulario = useCallback(async (): Promise<ClientOnboardingForm | undefined> => {
     if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
+    if (!organizationId) throw new Error('No pudimos identificar tu organización. Recarga la página.');
     setActing(true);
     try {
       const { data, error: fnError } = await supabase.functions.invoke('pipeline-orchestrator', {
-        body: { action: 'create_form', client_id: clientId },
+        body: { action: 'create_form', client_id: clientId, organization_id: organizationId },
       });
       if (fnError) {
         const { message } = await readFunctionError(fnError);
         throw new Error(message);
       }
-      const form = data?.form as ClientOnboardingForm | undefined;
-      if (form) setOnboardingForm(form);
+      const raw = data?.form as { id: string; status: OnboardingFormStatus } | undefined;
+      if (!raw) return undefined;
+
+      const previo = onboardingFormRef.current;
+      const form: ClientOnboardingForm = {
+        id: raw.id,
+        status: raw.status,
+        form_data: previo?.id === raw.id ? previo.form_data : {},
+      };
+      setOnboardingForm(form);
       return form;
     } finally {
       setActing(false);
     }
-  }, [clientId]);
+  }, [clientId, organizationId]);
 
   /**
    * Guarda (mergea) una sección del formulario de onboarding desde la sesión
    * del cliente — el equivalente sin token de `saveSection` (api pública de
    * client-onboarding).
    *
-   * BLOQUEADO POR BACKEND (2026-08-12): se asume una acción nueva
+   * BLOQUEADO POR BACKEND (2026-08-13): en marcha, con este contrato exacto:
    * `{ action:'save_form_section', client_id, section, data }` →
    * `{ ok:true, form }`, con la misma lógica de merge que ya tiene
    * `client-onboarding-submit`.
@@ -423,7 +436,7 @@ export function useClientPipeline(clientId: string | null) {
   /**
    * Envío final del formulario: valida obligatorios y lo marca como enviado.
    *
-   * BLOQUEADO POR BACKEND (2026-08-12): se asume una acción nueva
+   * BLOQUEADO POR BACKEND (2026-08-13): en marcha, con este contrato exacto:
    * `{ action:'submit_form', client_id }` → `{ ok:true, form }`, o un error
    * `missing_required_fields` con `missing_fields: string[]` (mismo formato
    * que ya usa `client-onboarding-submit`).
@@ -441,19 +454,18 @@ export function useClientPipeline(clientId: string | null) {
     const form = resp?.form as ClientOnboardingForm | undefined;
     if (form) setOnboardingForm(form);
     await fetchAll({ silent: true });
-    return { ok: true, form: form ?? (onboardingForm as ClientOnboardingForm) };
-  }, [clientId, onboardingForm, fetchAll]);
+    return { ok: true, form: form ?? (onboardingFormRef.current as ClientOnboardingForm) };
+  }, [clientId, fetchAll]);
 
   /**
    * Arranca el proceso del cliente cuando su formulario ya está enviado pero
    * todavía no existe un run. A diferencia de `callOrchestrator`, esta acción
    * NO requiere un run_id: es precisamente la que lo crea.
    *
-   * BLOQUEADO POR BACKEND (2026-08-12): hoy la acción `start` de
-   * `pipeline-orchestrator` solo autoriza a staff de la organización
-   * (`esStaffDeOrg`) y devuelve 403 si el caller es el propio cliente. Hace
-   * falta que también acepte al dueño del cliente (`esUsuarioDelCliente`),
-   * igual que ya hace para el resto de acciones sobre un run existente.
+   * Acción `start` YA DESPLEGADA con autorización de cliente (commit
+   * 6058d787): acepta `esUsuarioDelCliente` además de staff, verificado
+   * contra `client_users` con el user_id del JWT. Requiere `organization_id`
+   * en el body (ya se manda abajo).
    */
   const iniciarProceso = useCallback(async () => {
     if (!clientId) throw new Error('No pudimos identificar tu cuenta.');
@@ -465,7 +477,7 @@ export function useClientPipeline(clientId: string | null) {
           action: 'start',
           client_id: clientId,
           organization_id: organizationId,
-          onboarding_form_id: onboardingForm?.id ?? undefined,
+          onboarding_form_id: onboardingFormRef.current?.id ?? undefined,
         },
       });
       if (fnError) {
@@ -478,7 +490,7 @@ export function useClientPipeline(clientId: string | null) {
     } finally {
       setActing(false);
     }
-  }, [clientId, organizationId, onboardingForm?.id, fetchAll]);
+  }, [clientId, organizationId, fetchAll]);
 
   /**
    * Polling: mientras algo se está generando hay que llamar `poll`, no leer la

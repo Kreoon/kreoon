@@ -120,6 +120,7 @@ export function OnboardingSheet({
   onSaveSection,
   onSubmit,
   onCompleted,
+  onCambiarModo,
 }: OnboardingSheetProps) {
   const { toast } = useToast();
   const [datos, setDatos] = useState<OnboardingFormData>(formData);
