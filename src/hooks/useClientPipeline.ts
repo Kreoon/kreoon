@@ -545,6 +545,17 @@ export function useClientPipeline(clientId: string | null) {
     [act],
   );
 
+  /**
+   * Reintenta una etapa que se cayó (sin cuota de IA, un timeout…). Retoma
+   * donde quedó, sin repetir lo ya hecho, y no gasta una de las 3
+   * regeneraciones: el cliente no tiene por qué pagar los tropiezos del
+   * sistema con sus intentos.
+   */
+  const reintentarEtapa = useCallback(
+    (stage: PipelineStage) => act({ action: 'retry_stage', stage }),
+    [act],
+  );
+
   /** Aprueba UN guion concreto (el orquestador cierra la etapa solo). */
   const approveScript = useCallback(
     (contentId: string) =>
@@ -575,6 +586,7 @@ export function useClientPipeline(clientId: string | null) {
     error,
     approve,
     requestChanges,
+    reintentarEtapa,
     approveScript,
     requestScriptChanges,
     crearFormulario,

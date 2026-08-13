@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Check, Clock, Loader2, AlertTriangle, Lock } from 'lucide-react';
+import { Check, Clock, Loader2, AlertTriangle, Lock, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -59,6 +59,14 @@ interface StepCardProps {
   primaryAction?: ReactNode;
   secondaryAction?: ReactNode;
   children?: ReactNode;
+  /**
+   * Volver a intentar un paso que se cayó. Solo se pinta en estado
+   * 'attention', junto al estado y sin texto: un icono basta, y así no compite
+   * con la acción principal de la tarjeta.
+   */
+  onRetry?: () => void;
+  /** Reintento en curso: el icono gira y no se puede pulsar otra vez. */
+  retrying?: boolean;
 }
 
 export function StepCard({
@@ -71,6 +79,8 @@ export function StepCard({
   primaryAction,
   secondaryAction,
   children,
+  onRetry,
+  retrying,
 }: StepCardProps) {
   const ui = STATE_UI[state];
   const Icon = ui.icon;
@@ -110,6 +120,26 @@ export function StepCard({
           <span className={cn('flex items-center gap-1 text-xs shrink-0 pt-0.5', ui.text)}>
             <Icon className={cn('w-3.5 h-3.5', state === 'working' && 'animate-spin')} />
             <span className="hidden sm:inline">{stateLabel ?? ui.label}</span>
+
+            {/* Solo icono, sin texto: si algo se cayó, lo que hace falta es
+                poder reintentarlo, no leer una explicación. */}
+            {state === 'attention' && onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={retrying}
+                title="Volver a intentar"
+                aria-label="Volver a intentar"
+                className={cn(
+                  'ml-1 inline-flex h-7 w-7 items-center justify-center rounded-full',
+                  'text-muted-foreground transition-colors',
+                  'hover:bg-muted hover:text-foreground',
+                  'disabled:opacity-50 disabled:pointer-events-none',
+                )}
+              >
+                <RotateCw className={cn('h-3.5 w-3.5', retrying && 'animate-spin')} />
+              </button>
+            )}
           </span>
         </div>
 

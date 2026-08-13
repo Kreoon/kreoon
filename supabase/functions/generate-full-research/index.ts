@@ -1153,8 +1153,15 @@ async function callAI(
     if (!mistralKey) throw new Error("No MISTRAL_API_KEY");
     console.log(`[AI] → Paso 2 fallback: Mistral large (${stepId})`);
     const controller = new AbortController();
-    // Timeout dinamico segun tamaño del output (max_tokens grandes = mas tiempo)
-    const dynamicTimeout = maxTokens >= 14000 ? 110000 : maxTokens >= 10000 ? 95000 : 75000;
+    // Timeout dinamico segun tamaño del output (max_tokens grandes = mas tiempo).
+    //
+    // Subido un escalon (2026-08-13): con Gemini sin cuota, la fase 2
+    // ("Dolores y Deseos", 9000 tokens) caia en la rama de 75s y Mistral no
+    // alcanzaba a terminar — se perdia la etapa entera con TIMEOUT teniendo
+    // creditos de sobra. Hay margen para darselo: cuando Gemini responde 429 lo
+    // hace en 1-2 segundos, asi que Mistral hereda casi todo el wall-clock de
+    // ~150s de la funcion.
+    const dynamicTimeout = maxTokens >= 14000 ? 120000 : maxTokens >= 10000 ? 110000 : 95000;
     const timeout = setTimeout(() => controller.abort(), dynamicTimeout);
     try {
       const res = await fetch("https://api.mistral.ai/v1/chat/completions", {

@@ -43,6 +43,11 @@
 //   advance         { run_id }
 //   approve         { run_id, stage, actor, actor_id }
 //   request_changes { run_id, stage, feedback, actor_id }
+//   retry_stage     { run_id, stage? }
+//                   Reintenta una etapa caída ('error' o 'paused_no_tokens').
+//                   Retoma donde se quedó — no repite las fases ya hechas — y
+//                   no gasta una de las 3 regeneraciones: mide tropiezos del
+//                   sistema, no cambios pedidos por el cliente.
 //   poll            { run_id, auto?, ciclo? }      ← interno / portal
 //                   `auto:true` (solo service role) encadena el auto-poll que
 //                   reconcilia las etapas asíncronas sin depender de que haya
@@ -249,20 +254,46 @@ async function componerTextoParaAdn(admin: Sb, formData: Json, clientId: string)
   // EXACTAMENTE igual que antes — sin sección vacía.
   const { data: documentos } = await admin
     .from("client_documents")
-    .select("file_name, resumen")
+    .select("file_name, resumen, texto_extraido")
     .eq("client_id", clientId)
     .eq("estado", "listo")
     .in("alcance", ["marca", "todo"])
     .not("resumen", "is", null);
 
-  const resumenes = ((documentos ?? []) as { file_name: string; resumen: string }[])
-    .filter((d) => d.resumen?.trim());
-  if (resumenes.length === 0) return texto;
+  type Doc = { file_name: string; resumen: string; texto_extraido: string | null };
+  const utiles = ((documentos ?? []) as Doc[]).filter((d) => d.resumen?.trim());
+  if (utiles.length === 0) return texto;
+
+  // Va el documento ENTERO mientras quepa, no solo su resumen. En un brief, el
+  // valor está en el detalle —"di 'En X te ayudamos a…', no 'Los agentes de X
+  // permiten…'"— y eso es lo primero que se pierde al resumir. El resumen
+  // queda de reserva para los documentos largos (un catálogo de 200 páginas no
+  // cabe en el prompt ni aporta tanto).
+  const TOPE_POR_DOCUMENTO = 12_000;
+  const TOPE_TOTAL = 30_000;
+
+  let gastado = 0;
+  const bloques: string[] = [];
+
+  for (const doc of utiles) {
+    const completo = (doc.texto_extraido ?? "").trim();
+    const cabe = completo && completo.length <= TOPE_POR_DOCUMENTO &&
+      gastado + completo.length <= TOPE_TOTAL;
+
+    const cuerpo = cabe ? completo : doc.resumen.trim();
+    gastado += cuerpo.length;
+    bloques.push(`--- ${doc.file_name} ---\n${cuerpo}`);
+
+    if (gastado >= TOPE_TOTAL) break;
+  }
 
   const seccionDocumentos = [
     "",
-    "== DOCUMENTOS DEL CLIENTE ==",
-    ...resumenes.map((d) => `- ${d.file_name}: ${d.resumen.trim()}`),
+    "== DOCUMENTOS QUE COMPARTIÓ EL CLIENTE ==",
+    "Lo que digan estos documentos MANDA sobre lo que se deduzca del resto:",
+    "los escribió el propio cliente para explicar cómo quiere que se hable de su marca.",
+    "",
+    ...bloques,
   ].join("\n");
 
   return `${texto}\n${seccionDocumentos}`;
@@ -1841,6 +1872,46 @@ Deno.serve(async (req) => {
 
       const actualizado = await ejecutarAdvance(admin, aprobado, ctx);
       return json(req, { ok: true, run: actualizado });
+    }
+
+    // ── retry_stage ────────────────────────────────────────────────────────
+    // Reintenta la etapa que quedó en 'error' o pausada por falta de tokens.
+    //
+    // Existe porque un fallo técnico dejaba al cliente sin salida: la tarjeta
+    // decía "necesita atención" y no ofrecía ningún botón, así que la única
+    // forma de seguir era que alguien tocara la base a mano. Y el fallo suele
+    // ser transitorio (un proveedor de IA sin cuota, un timeout), no algo que
+    // requiera intervención humana.
+    //
+    // NO fuerza regeneración: `regenerar` se queda en false a propósito, para
+    // que la investigación retome desde la fase que falló en vez de repetir
+    // las que ya terminaron. Tampoco cuenta como una de las 3 regeneraciones
+    // por etapa: eso mide los cambios que pide el cliente, no los tropiezos
+    // del sistema.
+    if (accion === "retry_stage") {
+      const stage = String(body.stage ?? run.stage) as Etapa;
+      if (!ORDEN_ETAPAS.includes(stage)) {
+        return json(req, { error: "stage inválido" }, 400);
+      }
+      if (stage !== run.stage) {
+        return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
+      }
+      if (run.stage_status !== "error" && run.stage_status !== "paused_no_tokens") {
+        return json(
+          req,
+          { error: "nada_que_reintentar", stage_status: run.stage_status },
+          409,
+        );
+      }
+
+      await registrarEvento(admin, run.id, stage, "generated", {
+        actor,
+        actorId,
+        payload: { reintento: true, desde_estado: run.stage_status },
+      });
+
+      const reintentado = await ejecutarEtapa(admin, run, stage, ctx);
+      return json(req, { ok: true, run: reintentado });
     }
 
     // ── request_changes ────────────────────────────────────────────────────

@@ -123,7 +123,11 @@ async function callPerplexity(systemPrompt: string, userPrompt: string): Promise
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 8192,
+      // 8192 se quedaba corto: el esquema pide 8 secciones y el modelo cortaba
+      // por la mitad, devolviendo solo 4. Se perdía `brand_identity`, que es
+      // justo donde viven `voice.do_say` y `voice.dont_say` — las reglas de
+      // cómo habla la marca, lo más valioso de un brief.
+      max_tokens: 32768,
       temperature: 0.3,
       return_citations: true,
     }),
@@ -156,7 +160,11 @@ async function callGeminiFallback(systemPrompt: string, userPrompt: string): Pro
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
-        max_tokens: 8192,
+        // 8192 se quedaba corto: el esquema pide 8 secciones y el modelo cortaba
+      // por la mitad, devolviendo solo 4. Se perdía `brand_identity`, que es
+      // justo donde viven `voice.do_say` y `voice.dont_say` — las reglas de
+      // cómo habla la marca, lo más valioso de un brief.
+      max_tokens: 32768,
         temperature: 0.3,
       }),
     }
@@ -395,7 +403,20 @@ Genera un JSON con esta estructura EXACTA (TODOS los campos son obligatorios):
   }
 }
 
-IMPORTANTE: Responde UNICAMENTE con el JSON valido. Sin markdown, sin \`\`\`json, sin explicaciones, sin texto adicional. El JSON debe poder parsearse directamente.`;
+IMPORTANTE: Responde UNICAMENTE con el JSON valido. Sin markdown, sin \`\`\`json, sin explicaciones, sin texto adicional. El JSON debe poder parsearse directamente.
+
+OBLIGATORIO: devuelve las OCHO secciones de nivel superior, sin excepcion:
+business_identity, value_proposition, ideal_customer, flagship_offer,
+brand_identity, visual_identity, marketing_strategy, ads_targeting.
+Ninguna es opcional. Si de alguna tienes poca informacion, complétala con lo que
+se deduzca del resto en vez de omitirla — un ADN al que le falten secciones no
+sirve: las etapas siguientes leen de ellas.
+
+Presta atencion especial a brand_identity.voice.do_say y .dont_say: si el
+cliente compartio documentos con reglas de como habla su marca (formulas que
+prefiere, expresiones que evita, como se refiere a si misma), esas reglas van
+ahi LITERALES, con sus comillas, no parafraseadas. Son lo mas valioso que
+aporta un brief y lo que despues gobierna los guiones.`;
 
 // ── Main handler ──────────────────────────────────────────────────────
 Deno.serve(async (req: Request) => {

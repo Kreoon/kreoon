@@ -220,7 +220,10 @@ function DocumentosContenido({ documentos }: { documentos: UseClientDocumentsRet
                   {doc.estado === 'listo' && (
                     <div className="mt-1.5 flex items-start gap-1.5">
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
-                      <p className="text-xs text-muted-foreground leading-relaxed">
+                      {/* `whitespace-pre-line` respeta los saltos que trae el
+                          resumen: sin esto el HTML los colapsa y las secciones
+                          (QUÉ ES, CÓMO HABLA…) salen como un solo ladrillo. */}
+                      <p className="whitespace-pre-line text-xs text-muted-foreground leading-relaxed">
                         {doc.resumen ?? 'Ya lo leímos.'}
                       </p>
                     </div>

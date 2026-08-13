@@ -88,6 +88,7 @@ export function ClientPipelineChecklist({
     acting,
     approve,
     requestChanges,
+    reintentarEtapa,
     approveScript,
     requestScriptChanges,
     crearFormulario,
@@ -176,6 +177,27 @@ export function ClientPipelineChecklist({
     } catch (err) {
       toast({
         title: 'No pudimos empezar',
+        description: err instanceof Error ? err.message : 'Inténtalo de nuevo en un momento.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  /**
+   * Volver a intentar un paso que se cayó. La causa suele ser pasajera —un
+   * proveedor de IA sin cuota, un tiempo de espera agotado— y retoma donde se
+   * quedó, así que no rehace lo que ya estaba hecho.
+   */
+  const handleReintentar = async (stage: PipelineStage) => {
+    try {
+      await reintentarEtapa(stage);
+      toast({
+        title: 'Lo estamos intentando de nuevo',
+        description: 'Seguimos desde donde se quedó. Te avisamos al terminar.',
+      });
+    } catch (err) {
+      toast({
+        title: 'No pudimos reintentarlo',
         description: err instanceof Error ? err.message : 'Inténtalo de nuevo en un momento.',
         variant: 'destructive',
       });
@@ -364,6 +386,8 @@ export function ClientPipelineChecklist({
                   : 'Empieza apenas tengamos tu información.'
         }
         state={adnState}
+        onRetry={() => handleReintentar('adn')}
+        retrying={acting}
         stateLabel={
           adnState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
@@ -413,6 +437,8 @@ export function ClientPipelineChecklist({
                   : 'Empieza cuando apruebes cómo entendimos tu marca.'
         }
         state={strategyState}
+        onRetry={() => handleReintentar('estrategia')}
+        retrying={acting}
         stateLabel={
           strategyState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
@@ -482,6 +508,8 @@ export function ClientPipelineChecklist({
                   : 'Empiezan cuando apruebes tu estrategia.'
         }
         state={scriptsState}
+        onRetry={() => handleReintentar('guiones')}
+        retrying={acting}
         stateLabel={
           scriptsState === 'working' && run?.stage_status === 'changes_requested'
             ? 'Haciendo tus cambios'
