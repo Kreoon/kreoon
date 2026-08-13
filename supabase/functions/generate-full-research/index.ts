@@ -856,17 +856,179 @@ async function callAI(
   throw error;
 }
 
+/**
+ * Regla global del Research Unificado (2026-08-13). Se añade al system prompt
+ * de TODOS los pasos.
+ *
+ * Antes, cada paso investigaba por su cuenta y podía contradecir la evidencia
+ * que el cliente ya había aprobado en su portal. Ahora hay una sola fuente de
+ * verdad, y está scrapeada.
+ */
+const REGLA_EVIDENCIA = `
+## REGLA INNEGOCIABLE — LA EVIDENCIA MANDA
+
+La evidencia scrapeada que aparece en el contexto (competidores reales con sus
+numeros, anuncios que estan corriendo ahora mismo, hooks transcritos de videos
+del nicho) es la FUENTE DE VERDAD de este research.
+
+- Prohibido contradecirla, corregirla o "mejorarla" con tu conocimiento previo.
+- Prohibido inventar testimonios, URLs, handles, marcas o metricas. Si un dato
+  no esta, se dice que no esta: un campo vacio es honesto, uno inventado es una
+  mentira que el cliente va a descubrir.
+- Todo dato de producto (que incluye, precios, garantias, componentes) viene del
+  cliente. No se deduce, no se completa, no se redondea.
+- Si la evidencia viene marcada como INCOMPLETA, trabaja con lo que hay y dilo.
+`;
+
+// ── Evidencia scrapeada por research-engine ────────────────────────────────
+/**
+ * Lee la última corrida del motor de investigación del cliente y la deja lista
+ * para inyectar. Se acepta una corrida 'partial' a propósito: una investigación
+ * con huecos declarados vale mucho más que ninguna — pero se marca, para que
+ * los prompts sepan que no tienen la foto completa.
+ */
+interface EvidenciaMotor {
+  adnMercado: any;
+  adnViral: any;
+  ads: number;
+  competidores: number;
+  tieneViral: boolean;
+  parcial: boolean;
+  texto: string;
+}
+
+async function cargarEvidenciaDelMotor(
+  supabase: any,
+  clientId: string | null,
+): Promise<EvidenciaMotor | null> {
+  if (!clientId) return null;
+
+  try {
+    const { data } = await supabase
+      .from("research_runs")
+      .select("status, niche, country, result")
+      .eq("client_id", clientId)
+      .in("status", ["done", "partial"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!data) return null;
+
+    const result = data.result || {};
+    const mercado = result.adn_mercado || null;
+    const viral = result.adn_viral || result.adn_viral_heredado || null;
+    const ads = Array.isArray(result.ads) ? result.ads : [];
+    const competidores = Array.isArray(mercado?.competidores) ? mercado.competidores : [];
+
+    if (!mercado && !viral && ads.length === 0) return null;
+
+    const lineas: string[] = [];
+    lineas.push("\n--- EVIDENCIA REAL SCRAPEADA (manda sobre cualquier suposicion) ---");
+    if (data.niche) lineas.push(`NICHO: ${data.niche}${data.country ? ` | PAIS: ${data.country}` : ""}`);
+    if (data.status === "partial") {
+      lineas.push("AVISO: la investigacion quedo INCOMPLETA. Usa lo que hay y NO rellenes lo que falta.");
+    }
+
+    if (competidores.length > 0) {
+      lineas.push("\nCOMPETIDORES REALES (datos medidos, no estimados):");
+      for (const c of competidores.slice(0, 6)) {
+        lineas.push(
+          `- ${c.handle ?? "?"}: ${c.posicionamiento ?? "sin posicionamiento detectado"} | ` +
+          `${c.seguidores ?? "?"} seguidores | publica ${c.frecuencia_real ?? "?"} | ` +
+          `engagement ${c.engagement_medio ?? "?"}%${c.ads_30_dias ? ` | ${c.ads_30_dias} anuncios con 30+ dias` : ""}`,
+        );
+      }
+    }
+
+    const huecos = Array.isArray(mercado?.huecos_de_mercado) ? mercado.huecos_de_mercado : [];
+    if (huecos.length > 0) {
+      lineas.push("\nHUECOS DE MERCADO DETECTADOS:");
+      for (const h of huecos.slice(0, 5)) lineas.push(`- ${h.hueco}: ${h.como_atacarlo ?? ""}`);
+    }
+
+    const hooks = Array.isArray(viral?.hooks_dominantes) ? viral.hooks_dominantes : [];
+    if (hooks.length > 0) {
+      lineas.push("\nHOOKS QUE DE VERDAD FUNCIONAN EN ESTE NICHO (transcritos de videos reales):");
+      for (const h of hooks.slice(0, 6)) {
+        const ejemplo = Array.isArray(h.ejemplos) && h.ejemplos[0]
+          ? ` | ejemplo textual: "${String(h.ejemplos[0].texto ?? "").slice(0, 180)}" (${h.ejemplos[0].url ?? ""})`
+          : "";
+        lineas.push(`- [${h.taxonomia}] presente en ${h.porcentaje_del_top ?? "?"}% del top${ejemplo}`);
+      }
+    }
+
+    if (viral?.duracion) {
+      lineas.push(
+        `\nDURACION GANADORA: ${viral.duracion.moda_segundos ?? "?"}s (rango ${viral.duracion.rango ?? "?"}) | ` +
+        `mezcla: ${viral.duracion.mezcla_tutorial_vs_emocion ?? "?"}`,
+      );
+    }
+
+    const gaps = Array.isArray(viral?.gaps) ? viral.gaps : [];
+    if (gaps.length > 0) {
+      lineas.push("\nANGULOS QUE NADIE DEL NICHO ESTA USANDO (oportunidad):");
+      for (const g of gaps.slice(0, 5)) lineas.push(`- ${g.oportunidad}: ${g.por_que_nadie_lo_usa ?? ""}`);
+    }
+
+    const ganadores = ads.filter((a: any) => (a?.dias_corriendo ?? 0) >= 30).slice(0, 6);
+    if (ganadores.length > 0) {
+      lineas.push("\nANUNCIOS DEL GREMIO QUE YA IMPRIMEN DINERO (30+ dias corriendo):");
+      for (const a of ganadores) {
+        lineas.push(`- [${a.dias_corriendo} dias] ${a.pagina}: "${String(a.texto ?? "").slice(0, 200)}"`);
+      }
+    }
+
+    return {
+      adnMercado: mercado,
+      adnViral: viral,
+      ads: ads.length,
+      competidores: competidores.length,
+      tieneViral: !!viral,
+      parcial: data.status === "partial",
+      texto: lineas.join("\n"),
+    };
+  } catch (e) {
+    console.warn(`[full-research] no se pudo leer la evidencia del motor: ${(e as Error).message}`);
+    return null;
+  }
+}
+
+/** Cuántos OTROS productos del mismo cliente ya existen (para medir el reuso). */
+async function contarProductosDelCliente(
+  supabase: any,
+  clientId: string | null,
+  productIdActual: string,
+): Promise<number> {
+  if (!clientId) return 0;
+  try {
+    const { count } = await supabase
+      .from("products")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", clientId)
+      .neq("id", productIdActual);
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 // ── Build enriched base context from Client DNA + Product DNA ──────────────
 function buildBaseContext(
   clientDna: any,
   productDna: any,
   productName: string,
+  evidencia?: EvidenciaMotor | null,
 ): string {
   const dna = clientDna?.dna_data || {};
   const pd = productDna || {};
   const parts: string[] = [];
 
   parts.push(`PRODUCTO/SERVICIO: ${productName}`);
+
+  // La evidencia va ARRIBA del todo: es lo primero que el modelo debe leer y
+  // lo que no puede contradecir.
+  if (evidencia?.texto) parts.push(evidencia.texto);
 
   // === Client DNA (Brand) ===
   parts.push("\n--- ADN DE MARCA (Client DNA) ---");
@@ -1424,9 +1586,13 @@ async function runStep(
     .map(id => getSkillById(id))
     .filter(Boolean) as Skill[];
 
+  // La regla que ordena todo el research unificado. Va en TODOS los pasos,
+  // por encima de las skills: la evidencia scrapeada no se discute.
+  const kiroConRegla = `${kiroMasterPrompt}\n${REGLA_EVIDENCIA}`;
+
   const systemPrompt = skills.length > 0
-    ? buildCombinedSystemPromptForResearch(skills, kiroMasterPrompt)
-    : kiroMasterPrompt;
+    ? buildCombinedSystemPromptForResearch(skills, kiroConRegla)
+    : kiroConRegla;
 
   console.log(`[full-research] Step ${stepId} | skills=[${skillIds.join(", ") || "none"}] | systemPrompt=${systemPrompt.length} chars`);
 
@@ -1558,10 +1724,17 @@ async function chainToNextPhase(
 
 // ── PROCESSING LOGIC ──────────────────────────────────────────────────────────
 async function processRequest(body: any): Promise<void> {
-  let productId: string | null = null;
+  // Es `string` y no `string | null` porque el handler ya rechaza con 400 las
+  // llamadas sin product_id: aquí siempre hay uno. Tenerlo como nullable solo
+  // generaba siete errores de tipos que nadie miraba.
+  let productId = "";
 
   try {
-    productId = body.product_id;
+    productId = String(body.product_id ?? "");
+    if (!productId) {
+      console.error("[full-research] processRequest sin product_id");
+      return;
+    }
     const userId: string | null = body.user_id || null;
     const organizationId: string | null = body.organization_id || null;
     const isClientUser: boolean = body.is_client_user || false;
@@ -1726,7 +1899,33 @@ async function processRequest(body: any): Promise<void> {
       }
     }
 
-    const baseContext = buildBaseContext(clientDna, productDna, product.name || "Producto");
+    // ── La evidencia scrapeada entra al contexto ──────────────────────
+    // Es LA fusión: lo que research-engine scrapeó de verdad (competidores con
+    // sus números, anuncios corriendo, hooks transcritos del nicho) manda sobre
+    // cualquier cosa que la IA pueda imaginar. Sin esto, cada paso volvía a
+    // investigar por su cuenta lo que ya estaba pagado y guardado.
+    // MULTI-PRODUCTO: la evidencia y el ADN de marca son del CLIENTE, no del
+    // producto. El segundo producto del mismo cliente los reutiliza tal cual —
+    // no se vuelve a scrapear ni a pagar nada. Solo su ADN de Producto y su
+    // estrategia son suyos.
+    const clientIdEfectivo = product.client_id ?? (body.client_id ? String(body.client_id) : null);
+    const evidencia = await cargarEvidenciaDelMotor(supabase, clientIdEfectivo);
+
+    if (evidencia) {
+      const otrosProductos = await contarProductosDelCliente(supabase, clientIdEfectivo, productId);
+      console.log(
+        `[step 3/6] Evidencia del motor: ${evidencia.competidores} competidores, ` +
+        `${evidencia.ads} anuncios, ADN Viral ${evidencia.tieneViral ? "sí" : "no"}` +
+        `${evidencia.parcial ? " (investigación PARCIAL)" : ""}` +
+        (otrosProductos > 0
+          ? ` — REUSADA de nivel cliente, compartida con otros ${otrosProductos} producto(s): 0 scrapes nuevos`
+          : ""),
+      );
+    } else {
+      console.log(`[step 3/6] Sin evidencia del motor: el research corre solo con lo declarado`);
+    }
+
+    const baseContext = buildBaseContext(clientDna, productDna, product.name || "Producto", evidencia);
     const targetMarket = getTargetMarket(clientDna, productDna);
     console.log(`[step 3/6] baseContext=${baseContext.length} chars | targetMarket="${targetMarket}"`);
 

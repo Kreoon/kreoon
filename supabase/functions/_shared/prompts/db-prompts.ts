@@ -243,15 +243,20 @@ function getFallbackPrompt(module: string, promptKey: string): PromptConfig | nu
 // FUNCIONES PRINCIPALES
 // ============================================================================
 
+/**
+ * Un filtro de PostgREST se puede encadenar tantas veces como haga falta.
+ * El tipo anterior solo admitía dos `.eq()` seguidos y el código usa tres
+ * (module + prompt_key + is_active), así que `deno check` fallaba en TODA
+ * función que importara este archivo. El tipo mentía, no el código.
+ */
+type FiltroEncadenable = {
+  eq: (column: string, value: unknown) => FiltroEncadenable;
+  maybeSingle: () => Promise<{ data: PlatformPrompt | null; error: unknown }>;
+};
+
 type SupabaseClient = {
   from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: unknown) => {
-        eq: (column: string, value: unknown) => {
-          maybeSingle: () => Promise<{ data: PlatformPrompt | null; error: unknown }>;
-        };
-      };
-    };
+    select: (columns: string) => FiltroEncadenable;
   };
 };
 
