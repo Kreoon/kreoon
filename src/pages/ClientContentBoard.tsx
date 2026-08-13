@@ -279,10 +279,14 @@ export default function ClientContentBoard() {
             console.error('Error fetching content:', contentError);
             // Fallback: try direct query with error logging
             console.log('Attempting fallback direct query...');
+            // El filtro de borrados va aquí también: la RPC de arriba ya lo
+            // aplica, y sin él este camino de respaldo le mostraría al cliente
+            // contenido eliminado justo cuando algo salió mal.
             const { data: fallbackData, error: fallbackError } = await supabase
               .from('content')
               .select('*')
               .eq('client_id', clientData.id)
+              .is('deleted_at', null)
               .order('created_at', { ascending: false });
 
             if (fallbackError) {

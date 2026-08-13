@@ -77,6 +77,7 @@ export function useClientPendingReviews(): PendingReviewCounts {
           .from('content')
           .select('*', { count: 'exact', head: true })
           .eq('client_id', clientId)
+          .is('deleted_at', null)
           .in('status', ['draft', 'script_pending'])
           .not('script', 'is', null);
 
@@ -85,6 +86,7 @@ export function useClientPendingReviews(): PendingReviewCounts {
           .from('content')
           .select('*', { count: 'exact', head: true })
           .eq('client_id', clientId)
+          .is('deleted_at', null)
           .in('status', ['review', 'delivered', 'issue']);
 
         const sc = scriptCount || 0;

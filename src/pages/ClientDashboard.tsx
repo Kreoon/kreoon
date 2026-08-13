@@ -396,11 +396,15 @@ export default function ClientDashboard() {
           notes: clientData.notes || ''
         });
 
-        // Fetch content WITHOUT JOIN to clients (avoids RLS timeout)
+        // Fetch content WITHOUT JOIN to clients (avoids RLS timeout).
+        // Lo borrado NO se le muestra al cliente: sin este filtro seguía
+        // apareciendo en "Guiones por Aprobar" y contaba en las métricas, así
+        // que el cliente veía como pendiente trabajo que ya no existe.
         const { data: contentData, error: contentError } = await supabase
           .from('content')
           .select('*')
           .eq('client_id', clientData.id)
+          .is('deleted_at', null)
           .order('created_at', { ascending: false });
 
         if (contentError) {
