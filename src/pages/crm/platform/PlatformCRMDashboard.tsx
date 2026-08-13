@@ -20,6 +20,8 @@ import {
   LazyBarChart,
   LazyPieChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   XAxis,
   YAxis,
@@ -28,7 +30,7 @@ import {
   ResponsiveContainer,
   Pie,
   Cell,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";

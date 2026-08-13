@@ -4,6 +4,8 @@ import {
   LazyPieChart,
   LazyBarChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Pie,
   Bar,
   Cell,
@@ -13,7 +15,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 import { cn } from "@/lib/utils";
 import type { AdminDashboardStats } from "@/types/admin-dashboard.types";
 

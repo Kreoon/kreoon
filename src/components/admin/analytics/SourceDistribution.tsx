@@ -1,12 +1,14 @@
 import {
   LazyPieChart,
   LazyChartContainer,
+} from '@/components/ui/lazy-charts';
+import {
   Pie,
   Cell,
-  Tooltip,
-  ResponsiveContainer,
   Legend,
-} from '@/components/ui/lazy-charts';
+  ResponsiveContainer,
+} from 'recharts';
+import type { SourceMetrics } from '@/analytics/types/dashboard';
 import type { SourceMetrics } from '@/analytics/types/dashboard';
 
 // Usamos CSS variables para compatibilidad con dark/light mode

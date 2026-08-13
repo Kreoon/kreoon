@@ -4,13 +4,15 @@ import { Progress } from "@/components/ui/progress";
 import {
   LazyAreaChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 import { cn } from "@/lib/utils";
 import type { AdminDashboardStats, AdminActivityTimeline } from "@/types/admin-dashboard.types";
 

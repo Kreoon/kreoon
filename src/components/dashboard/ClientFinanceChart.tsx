@@ -4,6 +4,8 @@ import {
   LazyPieChart,
   LazyLineChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   XAxis,
   YAxis,
@@ -14,7 +16,7 @@ import {
   Cell,
   Pie,
   Line,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 
 interface ClientPackage {
   id: string;

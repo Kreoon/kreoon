@@ -18,6 +18,8 @@ import {
   LazyPieChart,
   LazyAreaChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   Line,
   Pie,
@@ -29,7 +31,7 @@ import {
   Legend,
   ResponsiveContainer,
   Area,
-} from '@/components/ui/lazy-charts';
+} from "recharts";
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {

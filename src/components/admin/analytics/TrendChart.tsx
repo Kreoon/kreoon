@@ -1,14 +1,16 @@
 import {
-  LazyAreaChart,
+  LazyLineChart,
   LazyChartContainer,
-  Area,
+} from '@/components/ui/lazy-charts';
+import {
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
-} from '@/components/ui/lazy-charts';
+} from 'recharts';
+import { format } from 'date-fns';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import type { DailyMetrics } from '@/analytics/types/dashboard';

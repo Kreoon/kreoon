@@ -100,12 +100,17 @@ export default function CompanyProfilePage() {
   const fetchCompany = async () => {
     setLoading(true);
     try {
-      // Fetch company by username
+      // Se lee de `public_client_profiles`, NO de `clients`: esa vista expone
+      // solo columnas de marketing. Consultar la tabla obligaba a abrir sus
+      // políticas a cualquier autenticado, y eso dejaba a la vista el correo,
+      // el teléfono, el NIT y la dirección de todos los clientes públicos —
+      // porque RLS filtra filas enteras, no columnas.
+      // La vista ya filtra por is_public y no borrados, así que aquí basta el
+      // nombre de usuario.
       const { data: companyData, error } = await supabase
-        .from('clients')
+        .from('public_client_profiles')
         .select('*')
         .eq('username', username?.toLowerCase())
-        .eq('is_public', true)
         .single();
 
       if (error || !companyData) {

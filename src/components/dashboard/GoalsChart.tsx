@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import {
   LazyBarChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   XAxis,
   YAxis,
@@ -10,7 +12,7 @@ import {
   Legend,
   ResponsiveContainer,
   Cell,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface GoalData {

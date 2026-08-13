@@ -28,6 +28,8 @@ import {
   LazyLineChart,
   LazyPieChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Line,
   XAxis,
   YAxis,
@@ -38,7 +40,7 @@ import {
   Cell,
   Bar,
   Legend,
-} from '@/components/ui/lazy-charts';
+} from "recharts";
 
 interface UsageStats {
   total_requests: number;

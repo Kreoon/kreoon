@@ -1,13 +1,15 @@
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Castle } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useTrialGuard } from "@/hooks/useTrialGuard";
-import { ClientsContent } from "@/components/clients/ClientsContent";
+import { ClientsContent, type ClientsContentHandle } from "@/components/clients/ClientsContent";
 
 const Clients = () => {
   const { isAdmin } = useAuth();
-  const { guardAction, isReadOnly } = useTrialGuard();
+  const { isReadOnly } = useTrialGuard();
+  const clientsContentRef = useRef<ClientsContentHandle>(null);
 
   return (
     <div className="min-h-screen">
@@ -22,7 +24,7 @@ const Clients = () => {
                 variant="glow"
                 size="sm"
                 className="gap-1 md:gap-2 text-xs md:text-sm flex-shrink-0"
-                onClick={() => guardAction(() => {})}
+                onClick={() => clientsContentRef.current?.openCreateClientDialog()}
                 disabled={isReadOnly}
               >
                 <Plus className="h-4 w-4" />
@@ -32,7 +34,7 @@ const Clients = () => {
             )
           }
         />
-        <ClientsContent />
+        <ClientsContent ref={clientsContentRef} />
       </div>
     </div>
   );

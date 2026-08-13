@@ -75,7 +75,7 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
 }
 
 // Routes that users without roles can access (social/marketplace)
-const SOCIAL_ROUTES = ['/social', '/marketplace', '/explore', '/profile', '/settings'];
+const SOCIAL_ROUTES = ['/marketplace', '/profile', '/settings'];
 
 // Routes that brand members/clients can access (independent brands without org)
 const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/social-hub', '/marketing-ads', '/ad-generator'];
@@ -200,8 +200,11 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/academia" replace />;
   }
 
-  // Platform root without org selected trying to access org-required routes
-  if (isPlatformRoot && !currentOrgId && routeRequiresOrg && !isImpersonating) {
+  // Platform root without org selected trying to access org-required routes.
+  // Era `routeRequiresOrg`, que no existe en ningún sitio: al entrar un
+  // administrador de plataforma sin organización elegida, esto reventaba con
+  // ReferenceError y dejaba la pantalla en blanco en vez de redirigir.
+  if (isPlatformRoot && !currentOrgId && requiresOrg && !isImpersonating) {
     return <Navigate to="/no-organization" replace />;
   }
 
@@ -233,7 +236,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const TALENT_ROUTES = ['/creator-dashboard', '/scripts', '/wallet', '/board', '/content']; // /board y /content para gestionar proyectos y portafolio
   const ORG_ROUTES = ['/dashboard', '/board', '/content', '/talent', '/scripts', '/clients-hub', '/team', '/ranking'];
   const CLIENT_ROUTES = ['/client-dashboard', '/client-board', '/board', '/ad-generator', '/marketing-ads']; // /board para ver proyectos
-  const SHARED_ROUTES = ['/marketplace', '/social', '/explore', '/profile', '/settings', '/onboarding', '/unlock-access', '/social-hub', '/planes', '/wallet'];
+  const SHARED_ROUTES = ['/marketplace', '/profile', '/settings', '/onboarding', '/unlock-access', '/social-hub', '/planes', '/wallet'];
 
   // Only enforce account type validation if user has a set account type
   // and is not a platform admin/root
@@ -391,4 +394,3 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   return <>{children}</>;
 }
-

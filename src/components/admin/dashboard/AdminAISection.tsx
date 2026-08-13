@@ -4,13 +4,15 @@ import { Progress } from "@/components/ui/progress";
 import {
   LazyBarChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from "@/components/ui/lazy-charts";
+} from "recharts";
 import { cn } from "@/lib/utils";
 import type { AdminAIStats } from "@/types/admin-dashboard.types";
 import { formatLargeNumber, formatCurrency } from "@/hooks/useAdminDashboard";

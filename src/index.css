@@ -157,13 +157,13 @@
     --destructive: 350 80% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 270 80% 65%;
+    --success: 160 84% 39%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 280 70% 55%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 10%;
 
-    --info: 260 80% 60%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
     --border: 240 10% 12%;
@@ -603,43 +603,43 @@
 }
 
 @keyframes fadeUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(8px); 
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes scaleIn {
-  from { 
-    opacity: 0; 
-    transform: scale(0.95); 
+  from {
+    opacity: 0;
+    transform: scale(0.95);
   }
-  to { 
-    opacity: 1; 
-    transform: scale(1); 
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes slideUp {
-  from { 
-    opacity: 0; 
-    transform: translateY(16px); 
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes glowPulse {
-  0%, 100% { 
+  0%, 100% {
     box-shadow: 0 0 10px hsl(282 100% 36% / 0.3);
   }
-  50% { 
+  50% {
     box-shadow: 0 0 25px hsl(282 100% 36% / 0.5);
   }
 }

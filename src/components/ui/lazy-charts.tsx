@@ -34,8 +34,13 @@ export const ChartSkeleton = ({ height = 300, className }: ChartSkeletonProps) =
   </div>
 );
 
-// Lazy load individual Recharts components
+// Lazy load individual Recharts chart components
 // These create separate chunks that only load when needed
+// IMPORTANTE: Los componentes de gráficos (LazyLineChart, LazyBarChart, etc.)
+// se cargan bajo demanda. Los componentes de bajo nivel (Bar, XAxis, etc.)
+// DEBEN importarse directamente de 'recharts', NO desde este archivo.
+// Si se reexportan de forma estática aquí, se anula el lazy loading y 
+// recharts se carga en el bundle inicial (~441 KB).
 
 export const LazyLineChart = React.lazy(() =>
   import('recharts').then(m => ({ default: m.LineChart }))
@@ -60,39 +65,6 @@ export const LazyRadarChart = React.lazy(() =>
 export const LazyComposedChart = React.lazy(() =>
   import('recharts').then(m => ({ default: m.ComposedChart }))
 );
-
-// Re-export commonly used non-chart components (these are lighter weight)
-// We export them from a central place so components can import from here
-export {
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Bar,
-  Line,
-  Area,
-  Pie,
-  Cell,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  RadialBar,
-  RadialBarChart,
-  Treemap,
-  Funnel,
-  FunnelChart,
-  Scatter,
-  ScatterChart,
-  ReferenceLine,
-  ReferenceArea,
-  ReferenceDot,
-  Brush,
-  ErrorBar,
-  LabelList,
-} from 'recharts';
 
 // Wrapper with Suspense for easy usage
 interface LazyChartContainerProps {

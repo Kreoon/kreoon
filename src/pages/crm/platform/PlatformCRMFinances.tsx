@@ -9,6 +9,8 @@ import {
   LazyBarChart,
   LazyPieChart,
   LazyChartContainer,
+} from "@/components/ui/lazy-charts";
+import {
   Bar,
   XAxis,
   YAxis,
@@ -17,7 +19,7 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-} from '@/components/ui/lazy-charts';
+} from "recharts";
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';

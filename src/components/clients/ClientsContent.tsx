@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useImperativeHandle, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Plus, Building2, Calendar, Users, Mail, Phone, MapPin, Crown, Shield, Eye, Castle } from "lucide-react";
 import { UnassignedClientUsersAlert } from "@/components/clients/UnassignedClientUsersAlert";
@@ -66,7 +66,11 @@ interface UnassignedUser {
   avatar_url: string | null;
 }
 
-export function ClientsContent() {
+export interface ClientsContentHandle {
+  openCreateClientDialog: () => void;
+}
+
+export const ClientsContent = forwardRef<ClientsContentHandle>(function ClientsContent(_props, ref) {
   const { isAdmin } = useAuth();
   const { toast } = useToast();
   const { isPlatformRoot, currentOrgId, currentOrgName, loading: orgLoading } = useOrgOwner();
@@ -95,6 +99,11 @@ export function ClientsContent() {
   const [selectedClientForStrategists, setSelectedClientForStrategists] = useState<Client | null>(null);
   const [servicesDialogOpen, setServicesDialogOpen] = useState(false);
   const [selectedClientForServices, setSelectedClientForServices] = useState<Client | null>(null);
+
+  // Expone la apertura del diálogo "Nueva Empresa" al padre (botón del PageHeader)
+  useImperativeHandle(ref, () => ({
+    openCreateClientDialog: () => guardAction(() => setNewClientOpen(true)),
+  }));
 
   const fetchClients = async () => {
     setLoading(true);
@@ -834,4 +843,4 @@ export function ClientsContent() {
       )}
     </>
   );
-}
+});

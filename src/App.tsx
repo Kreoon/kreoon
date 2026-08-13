@@ -290,15 +290,15 @@ const LegalDocumentPage = lazyWithRetry(
 const ReceiptPage = lazyWithRetry(() => import("./pages/legal/ReceiptPage"));
 
 // Social Hub Module
-const SocialHubPage = lazy(
+const SocialHubPage = lazyWithRetry(
   () => import("./modules/social/pages/SocialHubPage"),
 );
 
 // Ad Generator Module
-const AdGeneratorPage = lazy(
+const AdGeneratorPage = lazyWithRetry(
   () => import("./modules/ad-generator/pages/AdGeneratorPage"),
 );
-const ProductBannersPage = lazy(
+const ProductBannersPage = lazyWithRetry(
   () => import("./modules/ad-generator/pages/ProductBannersPage"),
 );
 
@@ -1312,6 +1312,7 @@ function AppRoutes() {
         {/* Redirects de URLs de módulos eliminados (evitar 404 en links/bookmarks viejos) */}
         <Route path="/marketing" element={<Navigate to="/social-hub" replace />} />
         <Route path="/marketing-ads" element={<Navigate to="/ad-generator" replace />} />
+        <Route path="/feed" element={<Navigate to="/marketplace" replace />} />
         <Route path="/demo" element={<Navigate to="/dashboard" replace />} />
         <Route path="/admin/ad-intelligence" element={<Navigate to="/admin/analytics" replace />} />
         <Route path="/admin/social-scraper" element={<Navigate to="/admin/analytics" replace />} />
