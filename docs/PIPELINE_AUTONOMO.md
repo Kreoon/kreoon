@@ -4,10 +4,13 @@
 entran al tablero listos para asignar creador. El sistema hace el trabajo; el cliente solo aprueba.
 
 ```
-onboarding ──▶ ADN ──▶ estrategia ──▶ guiones ──▶ producción
-              │        │             │
-              └── se detiene en cada etapa esperando al cliente ──┘
+onboarding ─▶ ADN ─▶ mercado ─▶ estrategia ─▶ creadores ─▶ guiones ─▶ producción
+             │       │          │             │            │
+             └── se detiene en cada etapa esperando a quien le toque ──┘
 ```
+
+Casi todas las paradas esperan al **cliente**. La de `creadores` espera al
+**equipo**: el sistema propone tres creadores y un humano confirma quién graba.
 
 ---
 
@@ -36,7 +39,7 @@ que sí existen y lo que hace cada una:
 
 Tabla `client_pipeline_runs`, una fila por cliente.
 
-**Etapas** (`stage`): `onboarding` · `adn` · `estrategia` · `guiones` · `produccion`
+**Etapas** (`stage`): `onboarding` · `adn` · `mercado` · `estrategia` · `creadores` · `guiones` · `produccion`
 
 **Estados** (`stage_status`):
 
@@ -46,6 +49,7 @@ Tabla `client_pipeline_runs`, una fila por cliente.
 | `awaiting_client` | Listo para revisar | El cliente |
 | `changes_requested` | El cliente pidió un cambio | El sistema (regenera) |
 | `approved` | Aprobado | El sistema (avanza) |
+| `awaiting_team` | Hay que elegir creador | El equipo |
 | `error` | Algo falló | El equipo |
 | `paused_no_tokens` | La organización se quedó sin tokens de IA | El equipo |
 
@@ -117,3 +121,59 @@ la pelota: "Marca · espera al cliente", "Guiones · preparando", "Estrategia ·
    No se pierde contenido: el ADN, la estrategia y los guiones viven en sus tablas de siempre
    (`client_dna`, `products`, `content`). Estas dos tablas solo guardan el *estado del viaje*.
 3. Edge function: `npx supabase functions delete pipeline-orchestrator`.
+
+---
+
+## Las dos etapas nuevas (2026-08-13)
+
+### `mercado` — la investigación real entra al pipeline
+
+Entre el ADN y la estrategia. La ejecuta `research-engine` (ver
+`docs/MOTOR_INTELIGENCIA.md`), que scrapea las redes del cliente y de su
+competencia, lee los anuncios activos del gremio en la biblioteca de Meta,
+rankea por viralidad relativa y sintetiza dos ADNs nuevos: el de Mercado y el
+Viral del nicho.
+
+| | |
+|---|---|
+| Función | `research-engine` (asíncrona, se auto-encadena; 5–20 min) |
+| Estado | `research_runs.status`, reconciliado por el `poll` del orquestador |
+| Referencia | `client_pipeline_runs.research_run_id` |
+| Techo de gasto | `research_runs.budget_usd`, 6 USD por defecto |
+
+**Nunca bloquea al cliente.** Si no hay `APIFY_TOKEN`, si el motor devuelve
+error o si el presupuesto se agota, la etapa se marca aprobada por omisión, se
+avisa al equipo y la estrategia se genera igual —marcada como "sin
+investigación de mercado"—. Un scraper caído no puede dejar a nadie esperando.
+
+Un `status = 'partial'` **sí** se le muestra al cliente: es una investigación
+con huecos declarados, y eso vale mucho más que ninguna.
+
+### `creadores` — quién graba, antes de escribir
+
+Entre la estrategia y los guiones, porque un guion se escribe para la voz de
+una persona concreta. Elegir después obliga a reescribir o, peor, a que alguien
+finja en cámara una vida que no es la suya.
+
+- El sistema propone **tres** creadores con un puntaje **explicable** (nicho
+  afín 25, edad del avatar 20, género 15, formatos ganadores 15, escenarios 10,
+  ficha al día 15). Nada de IA: son reglas que el equipo puede leer y rebatir.
+- La ficha creativa vive en `creator_creative_profile`, con la completitud
+  calculada por trigger.
+- El equipo confirma con la acción **`select_creators`** (`{run_id,
+  creator_ids[]}`). `approve` sobre esta etapa devuelve 409 a propósito:
+  confirmar sin decir a quién se elige no significa nada.
+- Sin creadores activos en la organización, la etapa se salta con aviso y los
+  guiones salen sin adaptar.
+
+**Los guiones nacen con creador asignado** (`content.creator_id`) y con las
+reglas de adaptación en el prompt. Si el creador no coincide con el avatar, el
+guion cambia el punto de vista (tercero cercano, experto, reacción) en vez de
+forzar una primera persona increíble.
+
+### `readapt_scripts` — cambiar de creador sin rehacer nada
+
+Si el creador se enferma o renuncia: `{run_id, creator_ids[]}` pasa los guiones
+existentes por una re-adaptación de voz manteniendo ángulo y estructura. Los
+guiones que el cliente **ya aprobó no se tocan**: nace una copia titulada
+"re-adaptado a [nombre]" y la aprobada se queda intacta.
