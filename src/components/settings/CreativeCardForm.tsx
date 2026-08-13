@@ -19,7 +19,13 @@ import {
 // Opciones — lenguaje simple, con ejemplos, cero jerga técnica
 // ──────────────────────────────────────────────────────────────────────────────
 
-type ArrayField = 'muletillas' | 'frases_ejemplo' | 'escenarios' | 'formatos_fuertes' | 'restricciones';
+type ArrayField =
+  | 'muletillas'
+  | 'frases_ejemplo'
+  | 'escenarios'
+  | 'formatos_fuertes'
+  | 'nichos_afines'
+  | 'restricciones';
 
 const RANGO_EDAD_OPTIONS: { value: RangoEdad; label: string }[] = [
   { value: '18-24', label: '18 a 24 años' },
@@ -75,6 +81,15 @@ const ESCENARIOS_SUGERIDOS = [
 const FORMATOS_SUGERIDOS = [
   'Hablar a cámara', 'Voz en off', 'Skits o actuación', 'Unboxing',
   'Tutorial paso a paso', 'Antes y después', 'Testimonio', 'Reto o challenge', 'Bailar',
+];
+
+// Los temas que el creador ya domina. Es el criterio que MÁS pesa cuando el
+// sistema propone quién graba para un cliente (25 de 100 puntos), así que si no
+// se puede llenar desde aquí, ese punto no suma nunca.
+const NICHOS_SUGERIDOS = [
+  'Belleza y cuidado personal', 'Moda', 'Comida y recetas', 'Hogar y decoración',
+  'Fitness y bienestar', 'Salud', 'Tecnología', 'Negocios y emprendimiento',
+  'Viajes', 'Bebés y crianza', 'Mascotas', 'Automóviles',
 ];
 
 const TOTAL_STEPS = 4;
@@ -299,6 +314,7 @@ export function CreativeCardForm({ userId, onSaved }: CreativeCardFormProps) {
       frases_ejemplo: profile.frases_ejemplo,
       escenarios: profile.escenarios,
       formatos_fuertes: profile.formatos_fuertes,
+      nichos_afines: profile.nichos_afines,
       restricciones: profile.restricciones,
     });
     setShowOtroPais(!!profile.pais_acento && !PAIS_ACENTO_OPTIONS.some(o => o.value === profile.pais_acento));
@@ -494,6 +510,20 @@ export function CreativeCardForm({ userId, onSaved }: CreativeCardFormProps) {
                 onToggle={v => toggleInArray('formatos_fuertes', v)}
                 onAddFree={v => addToArray('formatos_fuertes', v)}
                 freePlaceholder="Otro formato que se te da bien..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">¿De qué temas sabes o te gusta hablar?</p>
+              <p className="text-xs text-muted-foreground">
+                Esto es lo que más ayuda a que te propongan para las marcas correctas.
+              </p>
+              <SuggestedChips
+                suggestions={NICHOS_SUGERIDOS}
+                values={form.nichos_afines ?? []}
+                onToggle={v => toggleInArray('nichos_afines', v)}
+                onAddFree={v => addToArray('nichos_afines', v)}
+                freePlaceholder="Otro tema que dominas..."
               />
             </div>
           </div>
