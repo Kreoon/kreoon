@@ -100,10 +100,20 @@ type Sb = any;
 // deno-lint-ignore no-explicit-any
 type Json = Record<string, any>;
 
-type Etapa = "onboarding" | "adn" | "estrategia" | "guiones" | "produccion";
+type Etapa =
+  | "onboarding"
+  | "adn"
+  | "mercado"
+  | "estrategia"
+  | "creadores"
+  | "guiones"
+  | "produccion";
 type EstadoEtapa =
   | "generating"
   | "awaiting_client"
+  // La elección de creador la resuelve el EQUIPO, no el cliente: el sistema
+  // propone una shortlist y un humano confirma.
+  | "awaiting_team"
   | "changes_requested"
   | "approved"
   | "error"
@@ -127,14 +137,33 @@ interface Run {
   stage_status: EstadoEtapa;
   client_dna_id: string | null;
   product_dna_id: string | null;
+  /** Corrida del motor de investigación que alimenta la etapa de mercado. */
+  research_run_id: string | null;
+  /** Creadores confirmados por el equipo; los guiones se escriben para ellos. */
+  selected_creator_ids: string[] | null;
   stage_attempts: Record<string, number>;
   error_log: Json[];
   last_feedback: string | null;
   scripts_target: number;
 }
 
-/** Orden real del pipeline. 'onboarding' es el punto de partida del run. */
-const ORDEN_ETAPAS: Etapa[] = ["onboarding", "adn", "estrategia", "guiones", "produccion"];
+/**
+ * Orden real del pipeline. 'onboarding' es el punto de partida del run.
+ *
+ * `mercado` va DESPUÉS del ADN y ANTES de la estrategia: si el cliente dice
+ * "esa no es mi competencia", conviene enterarse antes de escribir la
+ * estrategia sobre ella. `creadores` va antes de los guiones porque un guion
+ * se escribe para la voz de una persona concreta.
+ */
+const ORDEN_ETAPAS: Etapa[] = [
+  "onboarding",
+  "adn",
+  "mercado",
+  "estrategia",
+  "creadores",
+  "guiones",
+  "produccion",
+];
 
 /** Roles que cuentan como staff (mismos que client_onboarding_forms). */
 const ROLES_STAFF = [
@@ -599,7 +628,9 @@ function invocarSinEsperar(nombre: string, body: Json, authHeader: string): void
 const TITULO_ETAPA: Record<Etapa, string> = {
   onboarding: "onboarding",
   adn: "el ADN de tu marca",
+  mercado: "tu mercado y tu competencia",
   estrategia: "tu estrategia",
+  creadores: "la elección de tu creador",
   guiones: "tus guiones",
   produccion: "la producción",
 };
@@ -900,6 +931,378 @@ function esFaltaDeTokens(progreso: ProgresoResearch): boolean {
 // genera lo que falte hasta scripts_target.
 // Una regeneración por feedback NO crea guiones nuevos: reescribe el `script` de
 // los existentes subiendo `script_version` (no infla el board ni pierde el hilo).
+// ---------------------------------------------------------------------------
+// ETAPA MERCADO — el motor de investigación mira la competencia de verdad
+//
+// Es la etapa que convierte "creemos que tu competencia hace esto" en "esto es
+// lo que tu competencia está pautando, y este anuncio lleva 47 días corriendo".
+//
+// Regla de oro: si el motor no está disponible (sin APIFY_TOKEN) o falla, el
+// pipeline NO se bloquea. Se salta la etapa, se avisa al equipo y la estrategia
+// se genera con lo que hay, marcada como "sin investigación de mercado". Un
+// scraper caído no puede dejar a un cliente esperando.
+// ---------------------------------------------------------------------------
+async function ejecutarEtapaMercado(
+  admin: Sb,
+  runInicial: Run,
+  _ctx: ContextoAuth,
+): Promise<Run> {
+  let run = runInicial;
+
+  const { data: tomado } = await admin
+    .from("client_pipeline_runs")
+    .update({ stage: "mercado", stage_status: "generating", mercado_started_at: ahora() })
+    .eq("id", run.id).neq("stage_status", "generating").select("*");
+  if (!tomado || tomado.length === 0) return run;
+  run = tomado[0] as Run;
+
+  // El motor se invoca con el service role: es una cadena interna de gasto
+  // controlado, no una acción de usuario.
+  const res = await invocar("research-engine", {
+    action: "start",
+    client_id: run.client_id,
+    pipeline_run_id: run.id,
+  }, `Bearer ${SERVICE_KEY}`, 60_000);
+
+  const runId = res.body?.run_id;
+
+  if (!res.ok || !runId) {
+    const motivo = res.body?.error ?? res.error ?? `HTTP ${res.status}`;
+    console.warn(`[pipeline] ${run.id} · mercado no disponible: ${motivo}`);
+
+    await registrarEvento(admin, run.id, "mercado", "error", {
+      payload: { saltada: true, motivo: aTexto(motivo, 300) },
+    });
+    await notificarEquipo(
+      admin, run.organization_id,
+      "Estrategia sin investigación de mercado",
+      `No se pudo investigar el mercado de este cliente (${aTexto(motivo, 120)}). El pipeline sigue con los datos del onboarding.`,
+      run.id,
+    );
+
+    // Aprobada "por omisión": no hay nada que el cliente pueda revisar.
+    return await actualizarRun(admin, run.id, {
+      stage: "mercado",
+      stage_status: "approved",
+      mercado_approved_at: ahora(),
+    });
+  }
+
+  return await actualizarRun(admin, run.id, { research_run_id: String(runId) });
+}
+
+// ---------------------------------------------------------------------------
+// ETAPA CREADORES — quién va a grabar esto
+//
+// El sistema propone; el humano decide. La shortlist se calcula con reglas
+// explícitas (no con IA) para que el equipo pueda leer POR QUÉ se propuso a
+// cada uno y llevarle la contraria con criterio.
+// ---------------------------------------------------------------------------
+interface FichaCreativa {
+  user_id: string;
+  rango_edad: string | null;
+  genero: string | null;
+  ciudad: string | null;
+  pais_acento: string | null;
+  estilo_energia: string | null;
+  registro: string | null;
+  muletillas: string[];
+  frases_ejemplo: string[];
+  escenarios: string[];
+  formatos_fuertes: string[];
+  nichos_afines: string[];
+  restricciones: string[];
+  completitud: number;
+}
+
+interface Candidato {
+  user_id: string;
+  nombre: string;
+  score: number;
+  motivos: string[];
+  ficha: FichaCreativa | null;
+}
+
+/** Rangos de la ficha traducidos a números, para poder solaparlos. */
+const RANGOS: Record<string, [number, number]> = {
+  "18-24": [18, 24],
+  "25-34": [25, 34],
+  "35-44": [35, 44],
+  "45-54": [45, 54],
+  "55+": [55, 99],
+};
+
+/** Edad del avatar: el ADN la escribe en prosa ("mujeres de 30 a 45 años"). */
+function edadDelAvatar(texto: string): [number, number] | null {
+  const rango = texto.match(/(\d{2})\s*(?:a|-|–|hasta)\s*(\d{2})\s*años/i);
+  if (rango) return [Number(rango[1]), Number(rango[2])];
+  const suelta = texto.match(/(\d{2})\s*años/i);
+  if (suelta) {
+    const edad = Number(suelta[1]);
+    return [edad - 5, edad + 5];
+  }
+  return null;
+}
+
+function generoDelAvatar(texto: string): string | null {
+  const t = texto.toLowerCase();
+  if (/\bmujer(es)?\b|\bfemenin/.test(t)) return "femenino";
+  if (/\bhombre(s)?\b|\bmasculin/.test(t)) return "masculino";
+  return null;
+}
+
+/**
+ * Puntúa una ficha contra el ADN del cliente. Todo suma con un motivo escrito
+ * en castellano: si el equipo no entiende por qué se propuso a alguien, la
+ * shortlist no sirve de nada.
+ */
+function puntuarCreador(
+  ficha: FichaCreativa | null,
+  contexto: { avatar: string; niche: string | null; formatosGanadores: string[] },
+): { score: number; motivos: string[] } {
+  const motivos: string[] = [];
+  if (!ficha) {
+    return { score: 0, motivos: ["todavía no tiene ficha creativa"] };
+  }
+
+  let score = 0;
+
+  // Nicho
+  if (contexto.niche) {
+    const nicho = contexto.niche.toLowerCase();
+    if (ficha.nichos_afines.some((n) => nicho.includes(n.toLowerCase()) || n.toLowerCase().includes(nicho))) {
+      score += 25;
+      motivos.push(`ya trabaja el nicho de ${contexto.niche}`);
+    }
+  }
+
+  // Edad
+  const rangoAvatar = edadDelAvatar(contexto.avatar);
+  const rangoFicha = ficha.rango_edad ? RANGOS[ficha.rango_edad] : null;
+  if (rangoAvatar && rangoFicha) {
+    const solapa = rangoFicha[0] <= rangoAvatar[1] && rangoAvatar[0] <= rangoFicha[1];
+    if (solapa) {
+      score += 20;
+      motivos.push(`tiene la edad del cliente ideal (${ficha.rango_edad})`);
+    }
+  }
+
+  // Género
+  const generoAvatar = generoDelAvatar(contexto.avatar);
+  if (generoAvatar && ficha.genero === generoAvatar) {
+    score += 15;
+    motivos.push("coincide con el género del cliente ideal");
+  }
+
+  // Formatos que de verdad funcionan en el nicho
+  const coincidenFormatos = ficha.formatos_fuertes.filter((f) =>
+    contexto.formatosGanadores.some((g) => g.toLowerCase().includes(f.toLowerCase()))
+  );
+  if (coincidenFormatos.length > 0) {
+    score += 15;
+    motivos.push(`es fuerte en ${coincidenFormatos.join(" y ")}, que es lo que funciona en este nicho`);
+  }
+
+  // Escenarios disponibles
+  if (ficha.escenarios.length >= 3) {
+    score += 10;
+    motivos.push(`puede grabar en ${ficha.escenarios.slice(0, 3).join(", ")}`);
+  }
+
+  // Una ficha completa es una apuesta más segura que una a medio llenar.
+  score += Math.round((ficha.completitud / 100) * 15);
+  if (ficha.completitud >= 80) motivos.push("tiene su ficha creativa al día");
+  if (ficha.completitud < 50) motivos.push("ojo: su ficha creativa está a medias");
+
+  return { score, motivos };
+}
+
+async function calcularShortlist(admin: Sb, run: Run): Promise<Candidato[]> {
+  // Creadores de la organización. Se aceptan las dos formas del rol porque en
+  // producción conviven filas con el legacy 'creator' y con 'content_creator'.
+  const { data: miembros } = await admin
+    .from("organization_members")
+    .select("user_id, role, is_active")
+    .eq("organization_id", run.organization_id)
+    .in("role", ["content_creator", "creator"]);
+
+  const userIds = ((miembros ?? []) as Json[])
+    .filter((m) => m.is_active !== false)
+    .map((m) => String(m.user_id));
+
+  if (userIds.length === 0) return [];
+
+  const [{ data: fichas }, { data: perfiles }, { data: producto }] = await Promise.all([
+    admin.from("creator_creative_profile").select("*").in("user_id", userIds),
+    admin.from("profiles").select("id, full_name").in("id", userIds),
+    run.product_id
+      ? admin.from("products").select("ideal_avatar").eq("id", run.product_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const porUsuario = new Map<string, FichaCreativa>(
+    ((fichas ?? []) as FichaCreativa[]).map((f) => [f.user_id, f]),
+  );
+  const nombres = new Map<string, string>(
+    ((perfiles ?? []) as Json[]).map((p) => [String(p.id), String(p.full_name ?? "Sin nombre")]),
+  );
+
+  // Formatos que están funcionando, según el ADN Viral de la investigación.
+  let formatosGanadores: string[] = [];
+  let niche: string | null = null;
+
+  if (run.research_run_id) {
+    const { data: research } = await admin
+      .from("research_runs").select("niche, result").eq("id", run.research_run_id).maybeSingle();
+    if (research) {
+      niche = (research as Json).niche ?? null;
+      const viral = ((research as Json).result?.adn_viral ?? {}) as Json;
+      formatosGanadores = [
+        ...(Array.isArray(viral.hooks_dominantes)
+          ? viral.hooks_dominantes.map((h: Json) => String(h.taxonomia ?? ""))
+          : []),
+        String(viral.duracion?.mezcla_tutorial_vs_emocion ?? ""),
+      ].filter(Boolean);
+    }
+  }
+
+  const avatar = aTexto((producto as Json)?.ideal_avatar ?? "", 2000);
+
+  return userIds
+    .map((userId) => {
+      const ficha = porUsuario.get(userId) ?? null;
+      const { score, motivos } = puntuarCreador(ficha, { avatar, niche, formatosGanadores });
+      return { user_id: userId, nombre: nombres.get(userId) ?? "Sin nombre", score, motivos, ficha };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+async function ejecutarEtapaCreadores(
+  admin: Sb,
+  runInicial: Run,
+  _ctx: ContextoAuth,
+): Promise<Run> {
+  let run = runInicial;
+
+  const { data: tomado } = await admin
+    .from("client_pipeline_runs")
+    .update({ stage: "creadores", stage_status: "generating", creadores_started_at: ahora() })
+    .eq("id", run.id).neq("stage_status", "generating").select("*");
+  if (!tomado || tomado.length === 0) return run;
+  run = tomado[0] as Run;
+
+  const shortlist = (await calcularShortlist(admin, run)).slice(0, 3);
+
+  if (shortlist.length === 0) {
+    // Sin creadores en la organización no hay a quién proponer. Antes que
+    // frenar el pipeline en seco, se avisa y se sigue: los guiones saldrán
+    // genéricos y el equipo asignará a mano desde el tablero, como siempre.
+    await notificarEquipo(
+      admin, run.organization_id,
+      "No hay creadores para proponer",
+      "Este cliente llegó a la etapa de elegir creador y la organización no tiene creadores activos. Los guiones se generarán sin adaptar a una voz concreta.",
+      run.id,
+    );
+    await registrarEvento(admin, run.id, "creadores", "error", {
+      payload: { saltada: true, motivo: "sin creadores activos en la organización" },
+    });
+    return await actualizarRun(admin, run.id, {
+      stage: "creadores",
+      stage_status: "approved",
+      creadores_approved_at: ahora(),
+    });
+  }
+
+  await registrarEvento(admin, run.id, "creadores", "generated", {
+    payload: {
+      shortlist: shortlist.map((c) => ({
+        user_id: c.user_id,
+        nombre: c.nombre,
+        score: c.score,
+        motivos: c.motivos,
+      })),
+    },
+  });
+
+  await notificarEquipo(
+    admin, run.organization_id,
+    "Hay que elegir creador",
+    `Ya está la estrategia de este cliente. El sistema propone a ${shortlist.map((c) => c.nombre).join(", ")}. Confirma quién graba para que los guiones se escriban en su voz.`,
+    run.id,
+  );
+
+  // Esta parada la resuelve el equipo, no el cliente.
+  return await actualizarRun(admin, run.id, {
+    stage: "creadores",
+    stage_status: "awaiting_team",
+  });
+}
+
+/**
+ * Ficha del creador convertida en instrucciones para el guionista. Estas
+ * reglas van LITERALES al prompt (spec R3 §3) porque son la diferencia entre
+ * un guion que esta persona puede decir en cámara y uno que la obliga a fingir.
+ */
+function reglasDeAdaptacion(nombre: string, ficha: FichaCreativa | null): string {
+  if (!ficha) return "";
+
+  const lista = (arr: string[]) => arr.filter(Boolean).join(", ");
+  const edad = ficha.rango_edad ?? "edad no declarada";
+  const genero = ficha.genero ?? "género no declarado";
+  const ciudad = ficha.ciudad ?? "ciudad no declarada";
+
+  return [
+    "",
+    "REGLAS DE ADAPTACIÓN AL CREADOR (obligatorias):",
+    `1. El guion se escribe para la voz de ${nombre}, ${edad}, ${genero}, de ${ciudad}.`,
+    ficha.muletillas.length
+      ? `   Usa su registro (${ficha.registro ?? "neutro"}) y sus muletillas reales: ${lista(ficha.muletillas)}.`
+      : `   Usa un registro ${ficha.registro ?? "neutro"}.`,
+    "   Prohibido un lenguaje que esta persona no usaría.",
+    ficha.frases_ejemplo.length
+      ? `   Así habla de verdad: ${ficha.frases_ejemplo.map((f) => `"${f}"`).join(" · ")}`
+      : "",
+    "2. COHERENCIA CREADOR-AVATAR: si el creador coincide con el avatar, narra en",
+    "   primera persona como usuario del producto. Si NO coincide (edad, género o",
+    "   contexto), CAMBIA el punto de vista narrativo en vez de forzar: testimonio",
+    "   de tercero cercano, voz de experto/recomendador, reacción, o demo sin claim",
+    "   personal. NUNCA pongas al creador a fingir una vida que en cámara no es creíble.",
+    ficha.escenarios.length
+      ? `3. Escenarios y props: SOLO los de su lista: ${lista(ficha.escenarios)}. Si la escena pide otro, reescríbela.`
+      : "3. No hay escenarios declarados: escribe escenas que se puedan grabar en cualquier casa.",
+    ficha.formatos_fuertes.length
+      ? `4. Formato: prioriza sus formatos fuertes: ${lista(ficha.formatos_fuertes)}. Si la estrategia exige otro, simplifica la ejecución.`
+      : "4. Formato: prioriza talking-head simple.",
+    ficha.restricciones.length
+      ? `5. FILTRO DURO — este creador NO graba: ${lista(ficha.restricciones)}. Nada del guion puede pedir eso.`
+      : "5. Sin restricciones declaradas.",
+    "6. Al final del guion, declara en una línea el punto de vista elegido:",
+    "   POV: primera persona | tercero cercano | experto | reacción — y por qué.",
+    "",
+  ].filter(Boolean).join("\n");
+}
+
+/** Lee la ficha y el nombre de un creador. */
+async function leerCreador(
+  admin: Sb,
+  userId: string,
+): Promise<{ nombre: string; ficha: FichaCreativa | null }> {
+  const [{ data: perfil }, { data: ficha }] = await Promise.all([
+    admin.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    admin.from("creator_creative_profile").select("*").eq("user_id", userId).maybeSingle(),
+  ]);
+  return {
+    nombre: String((perfil as Json)?.full_name ?? "el creador"),
+    ficha: (ficha as FichaCreativa | null) ?? null,
+  };
+}
+
+/** Punto de vista que el guion declaró, si lo hizo. */
+function extraerPov(html: string): string | null {
+  const m = html.match(/POV:\s*(primera persona|tercero cercano|experto|reacci[oó]n)/i);
+  return m ? m[1].toLowerCase() : null;
+}
+
 async function ejecutarEtapaGuiones(
   admin: Sb,
   runInicial: Run,
@@ -956,19 +1359,37 @@ async function ejecutarEtapaGuiones(
   const actualizados: string[] = [];
   const fallos: string[] = [];
 
+  // Los creadores confirmados en la etapa anterior. El lote se reparte entre
+  // ellos y cada guion se escribe para SU voz — no un lote genérico repartido
+  // después, que es como salen los guiones que nadie puede decir en cámara.
+  const creadores = (run.selected_creator_ids ?? []).filter(Boolean);
+  const fichas = new Map<string, { nombre: string; ficha: FichaCreativa | null }>();
+  for (const userId of creadores) {
+    fichas.set(userId, await leerCreador(admin, userId));
+  }
+
   const total = regenerando ? existentes.length : objetivo - existentes.length;
   for (let i = 0; i < total; i++) {
     const indice = regenerando ? i : existentes.length + i;
     const spherePhase = CICLO_SPHERE[indice % CICLO_SPHERE.length];
     const salesAngle = angulos.length > 0 ? angulos[indice % angulos.length] : "";
 
+    const creadorId = creadores.length > 0 ? creadores[indice % creadores.length] : null;
+    const datosCreador = creadorId ? fichas.get(creadorId) : undefined;
+    const reglas = datosCreador
+      ? reglasDeAdaptacion(datosCreador.nombre, datosCreador.ficha)
+      : "";
+
     const res = await invocar("generate-script", {
       ...base,
       sales_angle: salesAngle,
       sphere_phase: spherePhase,
-      additional_context: opciones.feedback
-        ? `Ajustes pedidos por el cliente sobre la versión anterior: ${opciones.feedback}`
-        : "",
+      additional_context: [
+        opciones.feedback
+          ? `Ajustes pedidos por el cliente sobre la versión anterior: ${opciones.feedback}`
+          : "",
+        reglas,
+      ].filter(Boolean).join("\n"),
     }, auth, 120_000);
 
     const html = res.body?.script;
@@ -1000,6 +1421,11 @@ async function ejecutarEtapaGuiones(
         script: html,
         script_pending_at: ahora(),
         script_version: 1,
+        // El creador queda asignado desde el nacimiento del guion: la
+        // asignación manual del tablero sigue funcionando igual, pero ya no
+        // hace falta para estos.
+        creator_id: creadorId,
+        creator_assigned_at: creadorId ? ahora() : null,
         sphere_phase: spherePhase,
         ideal_avatar: base.ideal_avatar || null,
         sales_angle: salesAngle || null,
@@ -1183,8 +1609,12 @@ async function ejecutarEtapa(
   switch (etapa) {
     case "adn":
       return ejecutarEtapaAdn(admin, run, { feedback: opciones.feedback });
+    case "mercado":
+      return ejecutarEtapaMercado(admin, run, ctx);
     case "estrategia":
       return ejecutarEtapaEstrategia(admin, run, ctx, { regenerar: opciones.regenerar });
+    case "creadores":
+      return ejecutarEtapaCreadores(admin, run, ctx);
     case "guiones":
       return ejecutarEtapaGuiones(admin, run, ctx, { feedback: opciones.feedback });
     case "produccion":
@@ -1226,6 +1656,51 @@ async function ejecutarPoll(admin: Sb, runInicial: Run, ctx: ContextoAuth): Prom
       // generate-product-dna revierte a 'draft' cuando falla.
       return marcarError(admin, run, "adn", "generate-product-dna terminó en error (product_dna volvió a 'draft')");
     }
+    return run;
+  }
+
+  // MERCADO: el motor de investigación corre en cadena por su cuenta; aquí
+  // solo se mira en qué quedó.
+  if (run.stage === "mercado" && run.stage_status === "generating") {
+    if (!run.research_run_id) return run;
+
+    const { data: research } = await admin
+      .from("research_runs")
+      .select("status, cost_usd, stage, result")
+      .eq("id", run.research_run_id).maybeSingle();
+    if (!research) return run;
+
+    const estado = String((research as Json).status);
+
+    // 'partial' cuenta como terminado: es una investigación con huecos
+    // declarados, y vale mucho más que ninguna. El cliente la revisa igual.
+    if (estado === "done" || estado === "partial") {
+      return pasarAEsperandoCliente(admin, run, "mercado", {
+        research_run_id: run.research_run_id,
+        parcial: estado === "partial",
+        costo_usd: (research as Json).cost_usd ?? 0,
+      });
+    }
+
+    if (estado === "error") {
+      // Que la investigación falle no puede dejar al cliente esperando: se
+      // avisa al equipo y el pipeline sigue hacia la estrategia.
+      await registrarEvento(admin, run.id, "mercado", "error", {
+        payload: { saltada: true, research_run_id: run.research_run_id },
+      });
+      await notificarEquipo(
+        admin, run.organization_id,
+        "La investigación de mercado falló",
+        "El motor no pudo completar la investigación de este cliente. La estrategia se generará sin ella; revisa la corrida si quieres reintentarla.",
+        run.id,
+      );
+      return await actualizarRun(admin, run.id, {
+        stage: "mercado",
+        stage_status: "approved",
+        mercado_approved_at: ahora(),
+      });
+    }
+
     return run;
   }
 
@@ -1858,8 +2333,18 @@ Deno.serve(async (req) => {
         return json(req, { ok: true, run: actualizado, ya_aprobado: true });
       }
 
+      // La etapa de creadores NO la aprueba el cliente: se confirma con la
+      // acción `select_creators`, que además exige decir a quién se elige.
+      if (stage === "creadores") {
+        return json(req, {
+          error: "usa_select_creators",
+          detalle: "La elección de creador se confirma con la acción select_creators indicando creator_ids.",
+        }, 409);
+      }
+
       const marcaTiempo: Json = {};
       if (stage === "adn") marcaTiempo.adn_approved_at = ahora();
+      if (stage === "mercado") marcaTiempo.mercado_approved_at = ahora();
       if (stage === "estrategia") marcaTiempo.estrategia_approved_at = ahora();
       if (stage === "guiones") marcaTiempo.guiones_approved_at = ahora();
 
@@ -1872,6 +2357,198 @@ Deno.serve(async (req) => {
 
       const actualizado = await ejecutarAdvance(admin, aprobado, ctx);
       return json(req, { ok: true, run: actualizado });
+    }
+
+    // ── select_creators ────────────────────────────────────────────────────
+    // El equipo confirma quién graba. Puede ignorar la shortlist y elegir a
+    // mano: el humano manda, el sistema solo propone.
+    if (accion === "select_creators") {
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
+        if (!esStaff) return json(req, { error: "solo_staff" }, 403);
+      }
+      if (run.stage !== "creadores") {
+        return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
+      }
+
+      const ids = Array.isArray(body.creator_ids)
+        ? [...new Set(body.creator_ids.map(String).filter(Boolean))]
+        : [];
+      if (ids.length === 0) {
+        return json(req, { error: "creator_ids es obligatorio" }, 400);
+      }
+
+      // Nadie de fuera de la organización: el id viene del body y hay que
+      // comprobarlo contra la membresía real.
+      const { data: miembros } = await admin
+        .from("organization_members").select("user_id")
+        .eq("organization_id", run.organization_id).in("user_id", ids);
+      const validos = new Set(((miembros ?? []) as Json[]).map((m) => String(m.user_id)));
+      const intrusos = ids.filter((id) => !validos.has(id));
+      if (intrusos.length > 0) {
+        return json(req, { error: "creador_fuera_de_la_organizacion", intrusos }, 403);
+      }
+
+      const confirmado = await actualizarRun(admin, run.id, {
+        selected_creator_ids: ids,
+        stage_status: "approved",
+        creadores_approved_at: ahora(),
+        last_feedback: null,
+      });
+      await registrarEvento(admin, run.id, "creadores", "approved", {
+        actor: ctx.esServiceRole ? "system" : rolCaller,
+        actorId: ctx.userId ?? null,
+        payload: { creator_ids: ids },
+      });
+
+      const avanzado = await ejecutarAdvance(admin, confirmado, ctx);
+      return json(req, { ok: true, run: avanzado, creator_ids: ids });
+    }
+
+    // ── readapt_scripts ────────────────────────────────────────────────────
+    // El creador se enfermó, renunció o el equipo cambió de idea. Los guiones
+    // NO se rehacen de cero: se les cambia la voz, el punto de vista y los
+    // escenarios manteniendo el ángulo y la estructura que el cliente ya
+    // revisó.
+    //
+    // Un guion ya aprobado por el cliente NUNCA se sobreescribe: nace una
+    // versión nueva marcada "re-adaptado a [nombre]" y la aprobada se queda
+    // intacta (regla de protección de contenido aprobado del proyecto).
+    if (accion === "readapt_scripts") {
+      if (!ctx.esServiceRole) {
+        const esStaff = await esStaffDeOrg(admin, ctx.userId!, run.organization_id);
+        if (!esStaff) return json(req, { error: "solo_staff" }, 403);
+      }
+
+      const ids = Array.isArray(body.creator_ids)
+        ? [...new Set(body.creator_ids.map(String).filter(Boolean))]
+        : [];
+      if (ids.length === 0) return json(req, { error: "creator_ids es obligatorio" }, 400);
+
+      const { data: miembros } = await admin
+        .from("organization_members").select("user_id")
+        .eq("organization_id", run.organization_id).in("user_id", ids);
+      const validos = new Set(((miembros ?? []) as Json[]).map((m) => String(m.user_id)));
+      if (ids.some((id) => !validos.has(id))) {
+        return json(req, { error: "creador_fuera_de_la_organizacion" }, 403);
+      }
+
+      const auth = await resolverAuthStaff(admin, ctx, run.organization_id);
+      if (!auth) return json(req, { error: "sin_jwt_para_generate_script" }, 500);
+
+      const contentIds = await guionesYaCreados(admin, run.id);
+      if (contentIds.length === 0) {
+        return json(req, { error: "este_run_no_tiene_guiones" }, 409);
+      }
+
+      const { data: producto } = await admin
+        .from("products")
+        .select("id, name, strategy, market_research, ideal_avatar, content_strategy")
+        .eq("id", run.product_id).maybeSingle();
+
+      const fichas = new Map<string, { nombre: string; ficha: FichaCreativa | null }>();
+      for (const id of ids) fichas.set(id, await leerCreador(admin, id));
+
+      const readaptados: string[] = [];
+      const nuevos: string[] = [];
+      const fallos: string[] = [];
+
+      const { data: guiones } = await admin
+        .from("content")
+        .select("id, title, script, script_version, status, sphere_phase, sales_angle")
+        .in("id", contentIds);
+
+      let indice = 0;
+      for (const guion of ((guiones ?? []) as Json[])) {
+        const creadorId = ids[indice % ids.length];
+        const datos = fichas.get(creadorId)!;
+        indice += 1;
+
+        const res = await invocar("generate-script", {
+          organizationId: run.organization_id,
+          product_name: (producto as Json)?.name ?? "Producto",
+          strategy: aTexto((producto as Json)?.strategy || (producto as Json)?.content_strategy),
+          market_research: aTexto((producto as Json)?.market_research),
+          ideal_avatar: aTexto((producto as Json)?.ideal_avatar, 2000),
+          sales_angle: guion.sales_angle ?? "",
+          sphere_phase: guion.sphere_phase ?? "engage",
+          additional_context: [
+            "RE-ADAPTACIÓN, NO GUION NUEVO. Mantén el mismo ángulo de venta, la",
+            "misma estructura y el mismo mensaje del guion de abajo. Lo único que",
+            "cambia es QUIÉN lo dice: reescribe la voz, el punto de vista y los",
+            "escenarios para que encajen con el creador nuevo.",
+            "",
+            "GUION ORIGINAL:",
+            aTexto(guion.script, 6000),
+            reglasDeAdaptacion(datos.nombre, datos.ficha),
+          ].join("\n"),
+        }, auth, 120_000);
+
+        const html = res.body?.script;
+        if (!res.ok || typeof html !== "string" || !html.trim()) {
+          fallos.push(res.body?.error ?? res.error ?? `HTTP ${res.status}`);
+          continue;
+        }
+
+        if (guion.status === "script_approved") {
+          // Aprobado por el cliente: nace una copia, el original no se toca.
+          const { data: fila, error } = await admin.from("content").insert({
+            title: `${guion.title} — re-adaptado a ${datos.nombre}`,
+            client_id: run.client_id,
+            product_id: run.product_id,
+            organization_id: run.organization_id,
+            status: "script_pending",
+            script: html,
+            script_pending_at: ahora(),
+            script_version: 1,
+            creator_id: creadorId,
+            creator_assigned_at: ahora(),
+            sphere_phase: guion.sphere_phase ?? null,
+            sales_angle: guion.sales_angle ?? null,
+            ai_prefilled: true,
+            ai_prefilled_at: ahora(),
+          }).select("id").single();
+
+          if (error || !fila) fallos.push(error?.message ?? "insert sin id");
+          else nuevos.push(fila.id);
+        } else {
+          const { error } = await admin.from("content").update({
+            script: html,
+            script_version: (guion.script_version ?? 1) + 1,
+            script_pending_at: ahora(),
+            status: "script_pending",
+            creator_id: creadorId,
+            creator_assigned_at: ahora(),
+          }).eq("id", guion.id);
+
+          if (error) fallos.push(error.message);
+          else readaptados.push(guion.id);
+        }
+      }
+
+      if (readaptados.length === 0 && nuevos.length === 0) {
+        return json(req, { error: "no_se_pudo_readaptar", detalle: fallos.slice(0, 3) }, 500);
+      }
+
+      const actualizado = await actualizarRun(admin, run.id, {
+        selected_creator_ids: ids,
+        stage: "guiones",
+        stage_status: "awaiting_client",
+      });
+      await registrarEvento(admin, run.id, "guiones", "generated", {
+        actor: ctx.esServiceRole ? "system" : rolCaller,
+        actorId: ctx.userId ?? null,
+        payload: {
+          readaptacion: true,
+          creator_ids: ids,
+          content_ids: [...contentIds, ...nuevos],
+          readaptados,
+          nuevos,
+          fallos: fallos.slice(0, 5),
+        },
+      });
+
+      return json(req, { ok: true, run: actualizado, readaptados, nuevos, fallos: fallos.slice(0, 5) });
     }
 
     // ── retry_stage ────────────────────────────────────────────────────────
