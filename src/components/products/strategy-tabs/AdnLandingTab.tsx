@@ -8,7 +8,7 @@ import {
   Brain, Trophy, Gift, Calendar, Rocket, MessageCircle,
   Megaphone, Mail, DollarSign, BarChart3, Search, Handshake,
   Zap, CheckCircle2, ArrowRight, Coins, Clock, TrendingUp, RefreshCw,
-  Radar, Lock,
+  Radar, Lock, Flame, Mic,
 } from "lucide-react";
 
 const INTELLIGENCE_UPGRADE_COST = 2000;
@@ -38,56 +38,36 @@ const PHASES = [
     ],
   },
   {
-    title: "Estrategia",
+    title: "Tu mercado, con datos reales",
     color: "from-violet-500/10 to-violet-500/5 border-violet-500/30",
     iconBg: "bg-violet-500/20 text-violet-600 dark:text-violet-400",
     tabs: [
-      { icon: Users, name: "5 Avatares Detallados", desc: "Personas reales con demografía, psicografía, frases y triggers de compra", key: "avatars" },
-      { icon: Lightbulb, name: "Diferenciación + ESFERA", desc: "Mensajes saturados, gaps del mercado, posicionamiento único", key: "differentiation" },
-      { icon: Brain, name: "Resumen Ejecutivo", desc: "Score de oportunidad, key insights, quick wins y riesgos a evitar", key: "summary" },
-      { icon: Sparkles, name: "20 Ángulos de Venta", desc: "Educativos, emocionales, autoridad, anti-mercado, prueba social", key: "sales_angles" },
-      { icon: Trophy, name: "PUV + Transformación", desc: "Propuesta única + transformación funcional/emocional/identidad/social/financiera", key: "puv" },
+      { icon: Swords, name: "Competencia scrapeada", desc: "Quiénes son de verdad, con sus seguidores, frecuencia y engagement medidos", key: "mercado" },
+      { icon: Megaphone, name: "Anuncios del gremio", desc: "Lo que tu competencia está pautando ahora, con sus días corriendo", key: "mercado" },
+      { icon: Flame, name: "Los hooks que funcionan", desc: "Transcritos de los videos más virales de tu nicho, con su evidencia", key: "nicho-viral" },
+      { icon: Lightbulb, name: "Huecos sin explotar", desc: "Ángulos que nadie de tu nicho está usando", key: "mercado" },
     ],
   },
   {
-    title: "Ejecución Orgánica",
+    title: "Tu producto",
     color: "from-emerald-500/10 to-emerald-500/5 border-emerald-500/30",
     iconBg: "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
     tabs: [
-      { icon: Gift, name: "3 Lead Magnets", desc: "Recursos gratuitos diseñados para captar leads calificados", key: "leads" },
-      { icon: Sparkles, name: "25 Creativos de Video", desc: "Hooks, estructura, briefs de producción listos para grabar", key: "creatives" },
-      { icon: Calendar, name: "Parrilla 4 Semanas", desc: "28-35 posts con copy completo, hashtags, plataforma y horario", key: "calendar" },
-      { icon: Rocket, name: "Estrategia de Lanzamiento", desc: "Pre-launch, launch day, post-launch + presupuesto + equipo", key: "launch" },
+      { icon: Users, name: "3-5 Avatares detallados", desc: "Personas reales con demografía, psicografía, frases y triggers de compra", key: "producto-adn" },
+      { icon: Target, name: "Dolores, deseos y objeciones", desc: "10 de cada uno, con el lenguaje exacto que usa tu cliente", key: "producto-adn" },
+      { icon: Trophy, name: "PUV + Transformación", desc: "Propuesta única + el cambio funcional, emocional, social y financiero", key: "producto-adn" },
     ],
   },
   {
-    title: "Conversión Directa",
+    title: "Tu contenido",
     color: "from-amber-500/10 to-amber-500/5 border-amber-500/30",
     iconBg: "bg-amber-500/20 text-amber-600 dark:text-amber-400",
     tabs: [
-      { icon: Globe, name: "2 Landing Pages Completas", desc: "Variación A (Directa) + B (Educativa) con copy listo para publicar", key: "landing_pages" },
-      { icon: MessageCircle, name: "Funnel WhatsApp LATAM", desc: "3 secuencias (captación, cierre, reactivación) con mensajes literales", key: "whatsapp" },
-    ],
-  },
-  {
-    title: "Paid + Retención",
-    color: "from-pink-500/10 to-pink-500/5 border-pink-500/30",
-    iconBg: "bg-pink-500/20 text-pink-600 dark:text-pink-400",
-    tabs: [
-      { icon: Megaphone, name: "Campañas Meta + TikTok", desc: "Estructura por temperatura, presupuestos LATAM, creativos referenciados", key: "paid_ads" },
-      { icon: Mail, name: "Email Marketing Completo", desc: "Secuencia de bienvenida (7 emails), lanzamiento y reactivación", key: "email" },
-    ],
-  },
-  {
-    title: "Negocio + Largo Plazo",
-    color: "from-cyan-500/10 to-cyan-500/5 border-cyan-500/30",
-    iconBg: "bg-cyan-500/20 text-cyan-600 dark:text-cyan-400",
-    tabs: [
-      { icon: DollarSign, name: "Estrategia de Precios", desc: "Posicionamiento, value ladder, planes de pago LATAM, proyecciones", key: "pricing" },
-      { icon: BarChart3, name: "Dashboard de KPIs", desc: "North star metric + AARRR + decision triggers + tools stack", key: "kpis" },
-      { icon: Search, name: "Estrategia SEO", desc: "Keywords, blog strategy, YouTube strategy, timeline realista", key: "seo" },
-      { icon: Handshake, name: "Alianzas y Colaboraciones", desc: "Programa de afiliados, influencers, co-marketing, PR", key: "partnerships" },
-      { icon: Heart, name: "Estrategia de Comunidad", desc: "Concepto, plataforma, onboarding, engagement, monetización", key: "community" },
+      { icon: Sparkles, name: "20 Ángulos de venta", desc: "Cada gancho declara de qué video real del nicho desciende", key: "angles" },
+      { icon: Gift, name: "3 Lead Magnets", desc: "Recursos gratuitos diseñados para captar leads calificados", key: "leads" },
+      { icon: Mic, name: "15 Ideas de contenido", desc: "Con brief de rodaje y recomendación de pauta para cada una", key: "leads" },
+      { icon: Calendar, name: "Parrilla de 4 semanas", desc: "28 publicaciones con copy completo, hashtags y plataforma", key: "calendar" },
+      { icon: BarChart3, name: "Qué medir", desc: "KPIs de contenido con reglas del tipo: si pasa X, haz Y", key: "kpis-contenido" },
     ],
   },
 ];

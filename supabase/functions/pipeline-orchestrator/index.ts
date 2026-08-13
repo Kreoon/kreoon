@@ -1399,6 +1399,10 @@ async function ejecutarEtapaGuiones(
     ? producto.sales_angles
     : extraerAngulos(producto.sales_angles_data);
 
+  // De qué hook REAL del nicho desciende cada ángulo. Se guarda en la pieza
+  // para poder responder después: "¿de dónde salió este gancho?".
+  const trazabilidad = trazabilidadDeAngulos(producto.sales_angles_data);
+
   const base = {
     organizationId: run.organization_id,
     product_name: producto.name ?? "Producto",
@@ -1481,6 +1485,9 @@ async function ejecutarEtapaGuiones(
         sphere_phase: spherePhase,
         ideal_avatar: base.ideal_avatar || null,
         sales_angle: salesAngle || null,
+        hook_source: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.hook_source ?? null,
+        hook_source_evidence: trazabilidad[indice % Math.max(trazabilidad.length, 1)]?.evidencia ?? null,
+        pov_narrativo: extraerPov(html),
         description: aTexto(producto.description, 500) || null,
         ai_prefilled: true,
         ai_prefilled_at: ahora(),
@@ -1591,6 +1598,10 @@ async function regenerarGuionIndividual(
     ? producto.sales_angles
     : extraerAngulos(producto.sales_angles_data);
 
+  // De qué hook REAL del nicho desciende cada ángulo. Se guarda en la pieza
+  // para poder responder después: "¿de dónde salió este gancho?".
+  const trazabilidad = trazabilidadDeAngulos(producto.sales_angles_data);
+
   const res = await invocar("generate-script", {
     organizationId: run.organization_id,
     product_name: producto.name ?? "Producto",
@@ -1633,6 +1644,22 @@ async function regenerarGuionIndividual(
     "Regeneramos el guion con los cambios que pediste. Entra al portal para revisarlo.",
   );
   return actualizado;
+}
+
+/** Trazabilidad de cada ángulo, en el mismo orden que `extraerAngulos`. */
+function trazabilidadDeAngulos(
+  salesAnglesData: unknown,
+): Array<{ hook_source: string | null; evidencia: string | null }> {
+  const lista = Array.isArray(salesAnglesData)
+    ? salesAnglesData
+    : ((salesAnglesData as Json)?.angles ?? []);
+
+  if (!Array.isArray(lista)) return [];
+
+  return lista.map((a) => ({
+    hook_source: (a as Json)?.hook_source ?? null,
+    evidencia: (a as Json)?.hook_source_evidence ?? null,
+  }));
 }
 
 function extraerAngulos(salesAnglesData: unknown): string[] {

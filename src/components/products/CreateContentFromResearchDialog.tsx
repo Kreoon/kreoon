@@ -256,6 +256,9 @@ export function CreateContentFromResearchDialog({
             video_duration: prefill?.video_duration || '',
             ideal_avatar: prefill?.ideal_avatar || '',
             sales_angle: prefill?.sales_angle || '',
+            // Trazabilidad del gancho: de qué hook real del nicho desciende.
+            hook_source: prefill?.hook_source || null,
+            hook_source_evidence: prefill?.hook_source_evidence || null,
             suggested_hooks: prefill?.suggested_hooks || [],
             target_country: prefill?.target_country || 'Mexico',
             ai_prefilled: true,

@@ -707,7 +707,7 @@ export function ProductDetailDialog({
 
           {/* Banner: Retry incomplete research (for brief-based products without DNA) */}
           {product && !dnaRecord && product.brief_data && product.brief_status !== 'completed' &&
-            (!product.avatar_profiles || !product.content_calendar || !product.launch_strategy) && (
+            (!product.avatar_profiles || !product.content_calendar) && (
             <RetryResearchBanner
               product={product}
               onRetryComplete={(updatedProduct) => {
@@ -1228,10 +1228,13 @@ function RetryResearchBanner({
   const [retrying, setRetrying] = useState(false);
   const [progress, setProgress] = useState<{ step: number; total: number; label: string } | null>(null);
 
+  // OJO: `launch_strategy` ya no se genera (Research Unificado, 2026-08-13).
+  // Si se dejara en esta lista, el banner de "investigación incompleta"
+  // saldría SIEMPRE, incluso en productos recién terminados.
   const missingParts: string[] = [];
   if (!product.avatar_profiles) missingParts.push('Avatares');
   if (!product.content_calendar) missingParts.push('Parrilla de Contenido');
-  if (!product.launch_strategy) missingParts.push('Estrategia de Lanzamiento');
+  if (!(product.sales_angles_data as any)?.angles?.length) missingParts.push('Ángulos de Venta');
   if (missingParts.length === 0) return null;
 
   const handleRetry = async () => {
@@ -1241,10 +1244,13 @@ function RetryResearchBanner({
     // Determine startFromStep based on existing research_progress
     const rp = product.brief_data?.research_progress || (product as any).research_progress;
     const completedSteps: string[] = rp?.completed_steps || [];
+    // Mismo orden que STEP_SEQUENCE en generate-full-research.
     const ALL_STEPS = [
       'market_overview', 'jtbd', 'pains_desires', 'competitors', 'avatars',
       'differentiation', 'sales_angles', 'puv_transformation', 'lead_magnets',
-      'video_creatives', 'content_calendar', 'launch_strategy',
+      'video_creatives_a', 'video_creatives_b',
+      'content_calendar_w1', 'content_calendar_w2', 'content_calendar_w3', 'content_calendar_w4',
+      'content_kpis',
     ];
     const nextStep = ALL_STEPS.find(s => !completedSteps.includes(s));
 

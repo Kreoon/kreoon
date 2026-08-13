@@ -24,11 +24,16 @@ export interface ResearchData {
     avatar?: string;
     emotion?: string;
     hookExample?: string;
+    /** De qué hook real del nicho desciende (Research Unificado). */
+    hook_source?: string;
+    hook_source_evidence?: string;
   }>;
   creatives?: Array<{
     title: string;
     angle?: string;
     avatar?: string;
+    /** Metodo CAST. `esferaPhase` es el nombre viejo del mismo campo. */
+    cast_phase?: string;
     esferaPhase?: string;
     structure?: { hook?: string };
   }>;
@@ -57,6 +62,9 @@ export interface PrefillData {
   video_duration: string;
   ideal_avatar: string;
   sales_angle: string;
+  /** De qué hook real del nicho desciende el gancho de esta pieza. */
+  hook_source: string;
+  hook_source_evidence: string;
   suggested_hooks: string[];
   cta: string;
 }
@@ -74,6 +82,18 @@ const SPHERE_PHASE_MAP: Record<string, string> = {
   solution: 'solucion',
   remarketing: 'remarketing',
   fidelize: 'fidelizar',
+};
+
+/**
+ * El mismo mapa, pero al vocabulario CAST que usa el research unificado.
+ * Sin esto, el filtro de creativos no encontraba NADA en los productos nuevos
+ * (buscaba 'enganchar' contra un campo que ahora dice 'conocer').
+ */
+const CAST_PHASE_MAP: Record<string, string> = {
+  engage: 'conocer',
+  solution: 'atraer',
+  remarketing: 'seducir',
+  fidelize: 'transformar',
 };
 
 // Default narrative structures per sphere phase
@@ -361,29 +381,45 @@ function selectAvatar(research: ResearchData, phase: string, index: number = 0):
 /**
  * Selects the best sales angle based on sphere phase
  */
-function selectSalesAngle(research: ResearchData, phase: string, index: number = 0): string {
+function selectSalesAngle(
+  research: ResearchData,
+  phase: string,
+  index: number = 0,
+): { sales_angle: string; hook_source: string; hook_source_evidence: string } {
+  const vacio = { sales_angle: '', hook_source: '', hook_source_evidence: '' };
   const angles = research.salesAngles || [];
-  if (!angles.length) return '';
+  if (!angles.length) return vacio;
 
-  // Filter angles that match the sphere phase if specified
   const phaseSpanish = SPHERE_PHASE_MAP[phase] || phase;
+  const phaseCast = CAST_PHASE_MAP[phase] || phase;
 
-  // First try to find creatives that match the phase
+  // Primero, creativos de esa fase (aceptando los dos vocabularios).
   const creatives = research.creatives || [];
-  const phaseCreatives = creatives.filter(c =>
-    c.esferaPhase?.toLowerCase() === phaseSpanish.toLowerCase()
-  );
+  const phaseCreatives = creatives.filter(c => {
+    const suFase = (c.cast_phase || c.esferaPhase || '').toLowerCase();
+    return suFase === phaseCast.toLowerCase() || suFase === phaseSpanish.toLowerCase();
+  });
 
   if (phaseCreatives.length > 0) {
     const creative = phaseCreatives[index % phaseCreatives.length];
-    return creative.angle || creative.title || '';
+    const texto = creative.angle || creative.title || '';
+    // El creativo desciende de un ángulo: se busca para heredar su trazabilidad.
+    const origen = angles.find(a => a.angle === creative.angle || a.hookExample === creative.structure?.hook);
+    return {
+      sales_angle: texto,
+      hook_source: origen?.hook_source || '',
+      hook_source_evidence: origen?.hook_source_evidence || '',
+    };
   }
 
-  // Fall back to general sales angles
-  const selectedIndex = index % angles.length;
-  const angle = angles[selectedIndex];
+  const angle = angles[index % angles.length];
+  if (!angle) return vacio;
 
-  return angle?.angle || (typeof angle === 'string' ? angle : '');
+  return {
+    sales_angle: angle.angle || (typeof angle === 'string' ? angle : ''),
+    hook_source: angle.hook_source || '',
+    hook_source_evidence: angle.hook_source_evidence || '',
+  };
 }
 
 /**
@@ -478,7 +514,7 @@ export async function generatePrefillData(request: PrefillRequest): Promise<Pref
     narrative_structure: selectNarrativeStructure(spherePhase, contentIndex),
     video_duration: selectVideoDuration(spherePhase, contentIndex),
     ideal_avatar: selectAvatar(research, spherePhase, contentIndex),
-    sales_angle: selectSalesAngle(research, spherePhase, contentIndex),
+    ...selectSalesAngle(research, spherePhase, contentIndex),
     suggested_hooks: generateHooks(research, spherePhase, 3, contentIndex),
     cta: selectCTA(research, spherePhase, contentIndex),
   };
@@ -527,7 +563,7 @@ export async function buildDNAEnrichedGuidelines(
   const desire = research ? selectDesire(research, phase.key, contentIndex) : '';
   const objection = research ? selectObjection(research, phase.key, contentIndex) : '';
   const avatar = research ? selectAvatar(research, phase.key, contentIndex) : '';
-  const angle = research ? selectSalesAngle(research, phase.key, contentIndex) : '';
+  const angle = research ? selectSalesAngle(research, phase.key, contentIndex).sales_angle : '';
   const hooks = research ? generateHooks(research, phase.key, 3, contentIndex) : [];
   const puv = research?.puv?.main || '';
   const transformation = research?.transformation;

@@ -101,7 +101,44 @@ descartarlo todo. Diez creativos buenos valen más que cero.
   `supabase/functions/_shared/prompts/_archivo/` con instrucciones para
   revivirlos.
 
-## 7. Verificaciones técnicas
+## 7. Cierre de F2 — lo que se encontró al barrer la UI
+
+El barrido final por referencias muertas destapó cuatro cosas que ya estaban
+rompiendo o mintiendo en pantalla:
+
+| Qué | Efecto real | Estado |
+|---|---|---|
+| La parrilla y las ideas leían `esferaPhase` | Con datos nuevos la fase salía **vacía** | Leen `cast_phase`, con el nombre viejo de respaldo |
+| El banner de "investigación incompleta" exigía `launch_strategy` | Habría salido **siempre**, incluso en productos terminados | Ahora comprueba los ángulos de venta |
+| La lista de pasos del botón "reintentar" tenía los 12 viejos | Reintentaba desde un paso inexistente | Actualizada a las 16 fases reales |
+| La landing del ADN Recargado vendía landing pages, WhatsApp, ads, email y comunidad | **Publicidad de entregables que ya no existen** | Reescrita con lo que sí se entrega |
+
+Además, **8 componentes de pestañas quedaron huérfanos** al quitar sus pasos y
+se borraron del repo.
+
+## 8. Trazabilidad del gancho, de punta a punta
+
+`content` gana tres columnas (`hook_source`, `hook_source_evidence`,
+`pov_narrativo`) y las escriben los DOS caminos que crean contenido: el
+pipeline autónomo y el diálogo de "crear contenido desde la investigación".
+Abriendo una pieza del tablero ya se puede responder de qué video real del
+nicho salió su gancho.
+
+De paso apareció otro filtro roto por el cambio de vocabulario: el selector de
+ángulos de `scriptPrefillService` buscaba creativos por `esferaPhase`, así que
+en los productos nuevos **no encontraba ninguno** y siempre caía al respaldo.
+
+## 9. Cuántos guiones se generan
+
+Antes: **siempre 5**, porque nadie escribía `scripts_target` al crear el run.
+Daba igual que el cliente hubiera pagado 3 o 12.
+
+Ahora el run nace con `content_quantity` del paquete activo del cliente, y el
+equipo puede ajustarlo desde el diálogo de elegir creador (con aviso si se pide
+más de lo contratado). El backend rechaza el cambio una vez los guiones ya
+existen.
+
+## 10. Verificaciones técnicas
 
 - `deno check` sobre `generate-full-research`: **0 errores** (antes de esta
   sesión tenía 7, todos preexistentes; se cerraron de paso).
