@@ -194,6 +194,11 @@ const LIMITE_REGENERACIONES = 4;
 // siguiente mientras siga generando. Es el mismo patrón de self-invocation que
 // ya usa generate-full-research entre fases.
 const INTERVALO_AUTOPOLL_MS = 25_000;
+
+/** Pausa entre guiones de la cadena. No se vigila nada externo: solo se
+ *  espacian las llamadas al proveedor de IA lo justo para no toparse con su
+ *  límite de tasa. Ver el `dormir` del handler de poll. */
+const ESPERA_ENTRE_GUIONES_MS = 3_000;
 /** 60 × 25 s ≈ 25 min. Pasado ese techo el run se marca en error, no se cuelga. */
 const MAX_CICLOS_AUTOPOLL = 60;
 
@@ -2737,7 +2742,15 @@ Deno.serve(async (req) => {
         const staffAuthCacheado = typeof body.staff_auth === "string" && body.staff_auth
           ? body.staff_auth
           : null;
-        await dormir(INTERVALO_AUTOPOLL_MS);
+        // Los 25s son para vigilar ADN y estrategia, que tardan 5-15 min: ahí
+        // preguntar cada segundo no aporta nada. Pero en guiones la cadena ES
+        // la que trabaja — no hay proceso externo que esperar — y esa espera
+        // era el 58% del tiempo total del lote. Se deja una pausa corta, la
+        // justa para espaciar las llamadas al proveedor y no provocar el rate
+        // limit que ya nos costó un lote a medias.
+        const esCadenaDeGuiones = run.stage === "guiones" &&
+          run.stage_status === "generating";
+        await dormir(esCadenaDeGuiones ? ESPERA_ENTRE_GUIONES_MS : INTERVALO_AUTOPOLL_MS);
 
         // El run cambió mientras dormíamos: hay que releerlo.
         const { data: fresco } = await admin

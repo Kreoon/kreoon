@@ -324,13 +324,29 @@ export async function makeAIRequest(config: {
   userPrompt: string;
   temperature?: number;
   maxTokens?: number;
+  /**
+   * Cuánto razona el modelo antes de escribir. Gemini 2.5 lo trae en "auto",
+   * lo que suma latencia y, con textos largos, llega a truncar la respuesta.
+   * Pasar "none" lo desactiva en el endpoint compatible con OpenAI. Se deja
+   * SIN valor por defecto a propósito: quien lo necesite lo pide, y el resto
+   * de funciones que comparten este cliente siguen comportándose igual.
+   */
+  reasoningEffort?: "none" | "low" | "medium" | "high";
 }): Promise<{ success: boolean; content?: string; error?: string }> {
-  const { provider, model, apiKey, systemPrompt, userPrompt, temperature = 0.7, maxTokens = 16384 } = config;
+  const {
+    provider, model, apiKey, systemPrompt, userPrompt,
+    temperature = 0.7, maxTokens = 16384, reasoningEffort,
+  } = config;
 
   try {
     const prov = AI_PROVIDERS[provider] || AI_PROVIDERS.gemini;
     const baseBody = prov.getBody(model, systemPrompt, userPrompt);
-    const body = { ...baseBody, temperature, max_tokens: maxTokens };
+    const body: Record<string, unknown> = { ...baseBody, temperature, max_tokens: maxTokens };
+    // Solo Gemini entiende este parámetro; mandárselo a otro proveedor sería
+    // un campo desconocido en el cuerpo de la petición.
+    if (reasoningEffort && resolveProvider(provider) === "gemini") {
+      body.reasoning_effort = reasoningEffort;
+    }
 
     const response = await fetch(prov.url, {
       method: "POST",

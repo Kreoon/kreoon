@@ -345,6 +345,11 @@ Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
         userPrompt,
         temperature: 0.7, // V2: Balance creatividad/coherencia
         maxTokens: 16384, // V2: Tokens suficientes para guiones completos con tablas HTML
+        // El guion ya viene guiado por el prompt, el ángulo de venta y la
+        // ficha del creador: que el modelo razone por su cuenta antes de
+        // escribir sumaba ~20s por guion y con textos largos llegaba a
+        // truncar la respuesta a media escena.
+        reasoningEffort: "none",
       });
 
       if (!aiResult.success || !aiResult.content) {
