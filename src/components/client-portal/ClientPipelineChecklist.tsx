@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Content } from '@/types/database';
 import {
   useClientPipeline,
+  type ClientPipelineRun,
   type PipelineStage,
   type PipelineStageStatus,
 } from '@/hooks/useClientPipeline';
@@ -86,6 +87,23 @@ function attentionText(status?: PipelineStageStatus): string {
 
 function attentionLabel(status?: PipelineStageStatus): string | undefined {
   return status === 'paused_no_tokens' ? 'En pausa' : undefined;
+}
+
+/**
+ * Mismo umbral que UMBRAL_CADENA_MUERTA_MS en pipeline-orchestrator: pasado
+ * este tiempo sin que `updated_at` se mueva, la cadena que escribe los
+ * guiones uno por uno ya no está viva (crash, redeploy a medio vuelo,
+ * timeout de la plataforma) y no hay nadie que la vaya a retomar sola.
+ * Acotado a guiones a propósito: es la única etapa cuyo `updated_at` se
+ * refresca en cada paso normal (ver el comentario del backend); las demás
+ * pueden estar calladas varios minutos mientras un proceso externo sigue
+ * vivo, así que ahí este mismo umbral daría un falso "se colgó".
+ */
+const GUIONES_COLGADO_MS = 5 * 60 * 1000;
+
+function guionesEstanColgados(run: ClientPipelineRun | null): boolean {
+  if (!run || run.stage !== 'guiones' || run.stage_status !== 'generating') return false;
+  return Date.now() - new Date(run.updated_at).getTime() >= GUIONES_COLGADO_MS;
 }
 
 /**
@@ -203,6 +221,13 @@ export function ClientPipelineChecklist({
   const creadorElegidoSinGenerar = creadorState === 'done' && run?.stage === 'creadores';
   const scriptsState = stateOf('guiones');
   const productionState = stateOf('produccion');
+
+  // Escribir los guiones es un proceso largo (uno por uno) sin nada visible
+  // que mostrar mientras tanto: si la cadena que los va generando se cae a
+  // medio camino, el cliente solo ve la rueda girando para siempre, sin
+  // saber que algo se rompió ni qué hacer. Pasado el umbral se le explica
+  // en palabras simples y se le da la misma salida que a un paso caído.
+  const guionesColgados = guionesEstanColgados(run);
 
   // El paso 1 se da por hecho en cuanto el pipeline arranca.
   const onboardingState: StepState = !run
@@ -759,6 +784,25 @@ export function ClientPipelineChecklist({
             onApprove={handleScriptApprove}
             onRequestChanges={handleScriptChanges}
           />
+        )}
+
+        {scriptsState === 'working' && guionesColgados && (
+          <div className="mt-3 rounded-lg border border-amber-300 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/30 p-3">
+            <p className="text-sm text-amber-800 dark:text-amber-300">
+              Esto se está demorando más de lo normal. Puedes reintentar y seguimos desde donde
+              quedó — no se repite lo que ya está hecho.
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="mt-2 gap-2"
+              onClick={() => handleReintentar('guiones')}
+              disabled={acting}
+            >
+              {acting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Reintentar
+            </Button>
+          </div>
         )}
       </StepCard>
 

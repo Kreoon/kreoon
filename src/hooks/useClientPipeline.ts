@@ -125,6 +125,12 @@ const ERROR_MESSAGES: Record<string, string> = {
   reparto_invalido: 'El reparto de videos no es válido. Revisa los números e inténtalo de nuevo.',
   reparto_con_creador_desconocido: 'Uno de los creadores que elegiste ya no está disponible. Actualizamos la pantalla.',
   guiones_ya_generados: 'Tus guiones para este lote ya se generaron. Actualizamos la pantalla.',
+  // El backend devuelve esto cuando el cliente pulsa "Reintentar" ANTES de
+  // que pasen los 5 minutos de silencio que hacen falta para considerar la
+  // etapa realmente colgada (sigue habiendo alguien trabajando). El botón
+  // solo se muestra pasado ese umbral (ver ClientPipelineChecklist), así que
+  // en la práctica esto es una carrera con otra pestaña, no un error real.
+  nada_que_reintentar: 'Ya se puso en marcha de nuevo. Dale un vistazo en un momento.',
 };
 
 export type PipelineStage =

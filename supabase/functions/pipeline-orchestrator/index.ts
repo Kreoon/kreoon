@@ -153,6 +153,9 @@ interface Run {
   error_log: Json[];
   last_feedback: string | null;
   scripts_target: number;
+  /** Se refresca en CADA update de la fila (trigger touch_client_pipeline_runs).
+   *  Es la señal de "sigue viva" que usa el rescate de una cadena muerta. */
+  updated_at: string;
 }
 
 /**
@@ -201,6 +204,24 @@ const INTERVALO_AUTOPOLL_MS = 25_000;
 const ESPERA_ENTRE_GUIONES_MS = 3_000;
 /** 60 × 25 s ≈ 25 min. Pasado ese techo el run se marca en error, no se cuelga. */
 const MAX_CICLOS_AUTOPOLL = 60;
+
+// ── Rescate de una cadena muerta (no solo lenta) ────────────────────────────
+// El auto-poll de arriba asume que SIEMPRE queda un eslabón vivo vigilando.
+// Pero la cadena puede morir a medio vuelo: un redeploy de esta función
+// mientras una invocación estaba en curso, un crash, un reinicio de la
+// plataforma. Cuando eso pasa nadie vuelve a tocar el run — se queda en
+// 'generating' para siempre, y ni MAX_CICLOS_AUTOPOLL sirve porque ese conteo
+// vive DENTRO de la cadena que ya no existe.
+//
+// Acotado a GUIONES a propósito: es la única etapa cuyo `updated_at` se
+// refresca en cada paso normal (un guion cada ~13-20s, ver
+// ejecutarEtapaGuiones). Las demás etapas (adn/mercado/estrategia) pueden
+// pasar varios minutos sin tocar la fila mientras un proceso externo sigue
+// vivo y trabajando (generate-product-dna, generate-full-research…), así que
+// el mismo umbral ahí daría falsos positivos y arriesgaría duplicar trabajo
+// de IA. Si eso llega a doler en producción, hace falta una señal distinta de
+// "sigue viva" para esas etapas antes de extender el rescate.
+const UMBRAL_CADENA_MUERTA_MS = 5 * 60 * 1000;
 
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -671,12 +692,31 @@ function programarAutoPoll(runId: string, ciclo: number, staffAuth?: string | nu
 }
 
 /** Dispara sin esperar respuesta (funciones que tardan minutos). */
+/**
+ * El runtime de Supabase expone `EdgeRuntime.waitUntil` para retener trabajo
+ * en segundo plano. No está en los tipos de Deno, así que se declara aquí.
+ */
+declare const EdgeRuntime: { waitUntil?: (p: Promise<unknown>) => void } | undefined;
+
 function invocarSinEsperar(nombre: string, body: Json, authHeader: string): void {
-  fetch(`${SUPABASE_URL}/functions/v1/${nombre}`, {
+  const disparo = fetch(`${SUPABASE_URL}/functions/v1/${nombre}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: authHeader },
     body: JSON.stringify(body),
   }).catch((err) => console.error(`[pipeline] disparo de ${nombre} falló:`, err));
+
+  // SIN esto la cadena se rompe sola. Al devolver la respuesta, el runtime
+  // cancela lo que quede pendiente, así que este fetch moría a medio salir y
+  // el eslabón siguiente no llegaba a arrancar nunca. Era una carrera: a
+  // veces salía (el lote avanzaba) y a veces no (el run quedaba clavado en
+  // 'generating' para siempre). `waitUntil` obliga al runtime a esperar a que
+  // la petición salga antes de dar por terminada esta invocación.
+  try {
+    EdgeRuntime?.waitUntil?.(disparo);
+  } catch {
+    // En un entorno sin EdgeRuntime (tests, deno run local) no pasa nada:
+    // el fetch sigue disparado, solo que sin la garantía de que se complete.
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1491,7 +1531,7 @@ async function ejecutarEtapaGuiones(
   admin: Sb,
   runInicial: Run,
   ctx: ContextoAuth,
-  opciones: { feedback?: string | null; continuacion?: boolean } = {},
+  opciones: { feedback?: string | null; continuacion?: boolean; forzar?: boolean } = {},
 ): Promise<Run> {
   let run = runInicial;
 
@@ -1534,17 +1574,31 @@ async function ejecutarEtapaGuiones(
     }
     run = reclamado[0] as Run;
   } else {
-    const { data: tomado } = await admin
+    // `forzar` (rescate de una cadena muerta, ver retry_stage/ejecutarPoll y
+    // UMBRAL_CADENA_MUERTA_MS) cambia el cerrojo por un CAS distinto: el run
+    // YA está en 'generating' — así llegó colgado — así que el `.neq()` de
+    // siempre no tocaría ninguna fila y el rescate no arrancaría nada. En su
+    // lugar se exige que `updated_at` siga siendo el mismo que vio quien
+    // decidió rescatar: si otro rescate (u otro eslabón) ya se adelantó, el
+    // UPDATE de éste no toca ninguna fila — perdió la carrera — y se retira
+    // sin duplicar guiones. Mismo principio que el CAS de `guiones_eslabon`
+    // de arriba, aplicado a dos rescates concurrentes en vez de a dos
+    // eslabones. `guiones_eslabon: 0` de todas formas suelta el cerrojo de
+    // eslabón: si por algún motivo la cadena vieja seguía viva, pierde la
+    // carrera igual al releer un contador que ya cambió.
+    let cerrojo = admin
       .from("client_pipeline_runs")
       .update({
         stage: "guiones",
         stage_status: "generating",
         guiones_started_at: ahora(),
-        // Arranca (o reinicia, en un retry_stage/next_batch) el contador de
-        // eslabón que usa el cerrojo de arriba.
         stage_attempts: { ...(run.stage_attempts ?? {}), guiones_eslabon: 0 },
       })
-      .eq("id", run.id).neq("stage_status", "generating").select("*");
+      .eq("id", run.id);
+    cerrojo = opciones.forzar
+      ? cerrojo.eq("updated_at", run.updated_at)
+      : cerrojo.neq("stage_status", "generating");
+    const { data: tomado } = await cerrojo.select("*");
     if (!tomado || tomado.length === 0) return run;
     run = tomado[0] as Run;
   }
@@ -2112,7 +2166,7 @@ async function ejecutarEtapa(
   run: Run,
   etapa: Etapa,
   ctx: ContextoAuth,
-  opciones: { feedback?: string | null; regenerar?: boolean } = {},
+  opciones: { feedback?: string | null; regenerar?: boolean; forzar?: boolean } = {},
 ): Promise<Run> {
   switch (etapa) {
     case "adn":
@@ -2124,7 +2178,10 @@ async function ejecutarEtapa(
     case "creadores":
       return ejecutarEtapaCreadores(admin, run, ctx);
     case "guiones":
-      return ejecutarEtapaGuiones(admin, run, ctx, { feedback: opciones.feedback });
+      // `forzar` solo se usa acá: es la única etapa cuyo rescate desde
+      // 'generating' es seguro sin arriesgar trabajo duplicado de IA (ver
+      // UMBRAL_CADENA_MUERTA_MS).
+      return ejecutarEtapaGuiones(admin, run, ctx, { feedback: opciones.feedback, forzar: opciones.forzar });
     case "produccion":
       // Fin del pipeline autónomo: los guiones aprobados ya están en el board.
       return actualizarRun(admin, run.id, { stage: "produccion", stage_status: "approved" });
@@ -2250,6 +2307,30 @@ async function ejecutarPoll(admin: Sb, runInicial: Run, ctx: ContextoAuth): Prom
       });
     }
     return run;
+  }
+
+  // GUIONES: el poll MANUAL (portal del cliente, o dashboard de staff) no
+  // reconciliaba nada acá — la cadena vive de sus propios eslabones (ver
+  // ejecutarEtapaGuiones) y este poll solo necesitaba esperar. Pero si esa
+  // cadena murió a medio vuelo nadie más la retoma, y el portal YA pregunta
+  // el estado cada 10s mientras la etapa está en curso (useClientPipeline):
+  // aprovechando esa misma pregunta, el propio poll puede notar el silencio y
+  // relanzar la etapa sin que el cliente tenga que enterarse de nada ni
+  // pulsar ningún botón. El CAS sobre `updated_at` (ver el `forzar` de
+  // ejecutarEtapaGuiones) evita que dos polls simultáneos —dos pestañas del
+  // cliente, o el cliente y el staff mirando a la vez— arranquen dos
+  // rescates a la vez.
+  if (run.stage === "guiones" && run.stage_status === "generating") {
+    const inactivoMs = Date.now() - new Date(run.updated_at).getTime();
+    if (inactivoMs < UMBRAL_CADENA_MUERTA_MS) return run;
+
+    console.log(
+      `[pipeline] ${run.id} · guiones colgado hace ${Math.round(inactivoMs / 1000)}s; el poll manual lo retoma`,
+    );
+    await registrarEvento(admin, run.id, "guiones", "generated", {
+      payload: { reintento: true, desde_estado: "generating", cadena_colgada: true, auto: true },
+    });
+    return await ejecutarEtapaGuiones(admin, run, ctx, { forzar: true });
   }
 
   return run;
@@ -3332,7 +3413,34 @@ Deno.serve(async (req) => {
       if (stage !== run.stage) {
         return json(req, { error: "stage_desincronizado", stage_actual: run.stage }, 409);
       }
-      if (run.stage_status !== "error" && run.stage_status !== "paused_no_tokens") {
+
+      // Rescate de una cadena muerta: 'generating' normalmente significa "hay
+      // alguien trabajando, no toques nada" — de ahí el guard de siempre.
+      // Pero si la cadena de guiones murió a medio vuelo (crash, redeploy con
+      // una invocación en vuelo, timeout de la plataforma) el run se queda en
+      // 'generating' PARA SIEMPRE y nadie más lo retoma. Se distingue una
+      // cadena muerta de una que sigue viva mirando cuánto hace que
+      // `updated_at` no se mueve — cada eslabón la toca al avanzar, un guion
+      // cada ~13-20s — así que más de UMBRAL_CADENA_MUERTA_MS sin movimiento
+      // es señal fuerte de que no queda nadie trabajando. Acotado a 'guiones'
+      // (ver UMBRAL_CADENA_MUERTA_MS): en las demás etapas ese mismo silencio
+      // es NORMAL mientras un proceso externo sigue vivo, así que ahí se deja
+      // el guard de siempre.
+      let cadenaColgada = false;
+      if (run.stage_status === "generating") {
+        if (stage !== "guiones") {
+          return json(req, { error: "nada_que_reintentar", stage_status: run.stage_status }, 409);
+        }
+        const inactivoMs = Date.now() - new Date(run.updated_at).getTime();
+        cadenaColgada = inactivoMs >= UMBRAL_CADENA_MUERTA_MS;
+        if (!cadenaColgada) {
+          return json(
+            req,
+            { error: "nada_que_reintentar", stage_status: run.stage_status, inactivo_ms: inactivoMs },
+            409,
+          );
+        }
+      } else if (run.stage_status !== "error" && run.stage_status !== "paused_no_tokens") {
         return json(
           req,
           { error: "nada_que_reintentar", stage_status: run.stage_status },
@@ -3348,10 +3456,10 @@ Deno.serve(async (req) => {
       await registrarEvento(admin, run.id, stage, "generated", {
         actor: actorReintento,
         actorId: actorIdReintento,
-        payload: { reintento: true, desde_estado: run.stage_status },
+        payload: { reintento: true, desde_estado: run.stage_status, cadena_colgada: cadenaColgada },
       });
 
-      const reintentado = await ejecutarEtapa(admin, run, stage, ctx);
+      const reintentado = await ejecutarEtapa(admin, run, stage, ctx, { forzar: cadenaColgada });
       return json(req, { ok: true, run: reintentado });
     }
 

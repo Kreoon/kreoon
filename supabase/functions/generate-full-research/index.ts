@@ -10,6 +10,11 @@ import {
   buildCombinedSystemPromptForResearch,
   getSkillById,
 } from "../_shared/skills/registry.ts";
+
+/** `EdgeRuntime.waitUntil` lo expone el runtime de Supabase; no está en los
+ *  tipos de Deno. Retiene el disparo de la fase siguiente para que el runtime
+ *  no lo cancele al devolver la respuesta. */
+declare const EdgeRuntime: { waitUntil?: (p: Promise<unknown>) => void } | undefined;
 import type { Skill, SkillType } from "../_shared/skills/types.ts";
 import {
   batchScrape,
@@ -1928,7 +1933,7 @@ async function chainToNextPhase(
     return;
   }
 
-  fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
+  const disparoSiguienteFase = fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1962,6 +1967,14 @@ async function chainToNextPhase(
         },
       }).eq("id", productId).then(() => {});
     });
+
+  // Sin esto la cadena de fases se corta sola: al devolver la respuesta, el
+  // runtime cancela lo que quede pendiente y este disparo moría a medio
+  // salir. Era intermitente —a veces alcanzaba a salir, a veces no— y se veía
+  // como "la fase N falló" sin que la IA hubiera fallado en absoluto.
+  try {
+    EdgeRuntime?.waitUntil?.(disparoSiguienteFase);
+  } catch { /* fuera del runtime de Supabase no hay nada que retener */ }
 
   await new Promise(r => setTimeout(r, 400));
   console.log(`[full-research] Phase ${currentPhase} (${STEP_SEQUENCE[currentPhase]}) done. Chaining to ${nextPhase}.`);
@@ -2194,11 +2207,17 @@ async function processRequest(body: any): Promise<void> {
       const firstPending = STEP_SEQUENCE.findIndex(id => !stepResults[id]);
       if (firstPending > 0) {
         console.log(`[full-research] Smart resume: jumping to phase ${firstPending} (${STEP_SEQUENCE[firstPending]})`);
-        fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
+        const disparoSalto = fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
           body: JSON.stringify({ ...body, phase: firstPending, _internal: true }),
         }).catch(() => {});
+        // Mismo motivo que en el encadenado de fases: si el runtime cancela
+        // este disparo, la reanudación no arranca y el producto se queda
+        // quieto sin que nadie sepa por qué.
+        try {
+          EdgeRuntime?.waitUntil?.(disparoSalto);
+        } catch { /* fuera del runtime de Supabase */ }
         await new Promise(r => setTimeout(r, 400));
         return;
       }

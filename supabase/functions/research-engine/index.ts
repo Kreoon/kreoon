@@ -145,12 +145,22 @@ function json(req: Request, body: unknown, status = 200): Response {
   });
 }
 
+/** `EdgeRuntime.waitUntil` no está en los tipos de Deno; lo expone Supabase. */
+declare const EdgeRuntime: { waitUntil?: (p: Promise<unknown>) => void } | undefined;
+
 function encadenar(runId: string, ciclo: number): void {
-  fetch(`${SUPABASE_URL}/functions/v1/research-engine`, {
+  const disparo = fetch(`${SUPABASE_URL}/functions/v1/research-engine`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}` },
     body: JSON.stringify({ action: "tick", run_id: runId, auto: true, ciclo }),
   }).catch((err) => console.error("[research] encadenado falló:", err));
+
+  // Al devolver la respuesta, el runtime cancela lo que quede pendiente: sin
+  // esto el disparo del siguiente ciclo moría a medio salir y la
+  // investigación se quedaba colgada a mitad, de forma intermitente.
+  try {
+    EdgeRuntime?.waitUntil?.(disparo);
+  } catch { /* fuera del runtime de Supabase no hay nada que retener */ }
 }
 
 // ---------------------------------------------------------------------------
