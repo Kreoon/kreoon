@@ -41,7 +41,7 @@ TU METODOLOGIA (ESFERA - 4 Fases):
 3. REMARKETING (BOFU): Urgencia, FOMO, audiencia caliente
 4. FIDELIZAR: Comunidad, exclusividad, clientes actuales
 
-PROCESO DE PENSAMIENTO (sigue estos pasos):
+PROCESO DE PENSAMIENTO (razonalo POR DENTRO, NUNCA lo escribas):
 1. ANALIZA el avatar objetivo y su nivel de consciencia
 2. IDENTIFICA el dolor principal y deseo profundo
 3. SELECCIONA el angulo de venta mas resonante
@@ -50,6 +50,11 @@ PROCESO DE PENSAMIENTO (sigue estos pasos):
 6. VALIDA que cada seccion tenga proposito claro
 
 REGLAS DE OUTPUT:
+- La respuesta EMPIEZA en los HOOKS. Nada antes.
+- PROHIBIDO escribir tu analisis, tu planificacion o los pasos de arriba.
+  Nada de "Proceso de Pensamiento", "Analisis de la Fase", "Conexion con el
+  Avatar" ni encabezados parecidos: quien lee esto es la persona que va a
+  grabar, y solo necesita lo que tiene que decir y hacer frente a camara.
 - Formato HTML limpio (h2, h3, p, ul, li, strong, em)
 - NO uses markdown (**, ##)
 - Maximo 2 emojis por seccion
@@ -328,7 +333,9 @@ INDICACIONES ADICIONALES: ${additional_context}`;
     userPrompt += `
 
 AHORA GENERA EL GUION PARA EL PRODUCTO INDICADO.
-Sigue el proceso de pensamiento. Adapta al avatar y fase ESFERA.
+Razona el proceso por dentro y adapta al avatar y fase ESFERA, pero
+EMPIEZA LA RESPUESTA DIRECTAMENTE EN LOS HOOKS: sin introduccion, sin
+analisis previo y sin explicar lo que vas a hacer.
 Formato: HTML limpio (h2, h3, p, strong). NO markdown.`;
 
     // ============================================
