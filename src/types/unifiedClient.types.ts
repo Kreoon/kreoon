@@ -72,6 +72,10 @@ export interface ClientUser {
   bio: string | null;
   created_at: string;
   linked_companies: LinkedCompany[];
+  /** true si este usuario ya fue marcado como lead (existe un org_contacts vinculado) */
+  es_lead: boolean;
+  /** id del org_contacts creado al marcarlo como lead, null si no está marcado */
+  lead_contact_id: string | null;
 }
 
 /** An org member with role=client who is not linked to any company */

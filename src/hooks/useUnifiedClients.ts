@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import type { UnifiedClientEntity, ClientUser, UnassignedClientUser } from '@/types/unifiedClient.types';
+import type { RelationshipStrength } from '@/types/crm.types';
 
 export function useUnifiedClients(orgId: string | undefined) {
   return useQuery({
@@ -74,5 +76,70 @@ export function useArchivedClients(orgId: string | undefined) {
     },
     enabled: !!orgId,
     staleTime: 60 * 1000,
+  });
+}
+
+interface MarkUserAsLeadArgs {
+  userId: string;
+  orgId: string;
+  notas?: string;
+  temperatura?: RelationshipStrength;
+}
+
+/**
+ * Marca a un usuario de la pestaña "Usuarios" como lead: crea un org_contacts
+ * (contact_type='lead') vinculado a él, para poder remarketearlo después.
+ */
+export function useMarkUserAsLead() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ userId, orgId, notas, temperatura }: MarkUserAsLeadArgs) => {
+      const { data, error } = await supabase.rpc('admin_marcar_usuario_como_lead' as any, {
+        p_user_id: userId,
+        p_org_id: orgId,
+        p_notas: notas || null,
+        p_temperatura: temperatura || null,
+      });
+      if (error) throw error;
+      return data as unknown as string;
+    },
+    onSuccess: (_data, { orgId }) => {
+      queryClient.invalidateQueries({ queryKey: ['org-client-users', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-clients', orgId] });
+      toast({ description: 'Usuario marcado como lead' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message || 'No se pudo marcar como lead', variant: 'destructive' });
+    },
+  });
+}
+
+interface UnmarkLeadArgs {
+  contactId: string;
+  orgId: string;
+}
+
+/** Quita la marca de lead de un usuario (elimina el org_contacts vinculado) */
+export function useUnmarkLead() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ contactId }: UnmarkLeadArgs) => {
+      const { error } = await supabase.rpc('admin_quitar_marca_de_lead' as any, {
+        p_contact_id: contactId,
+      });
+      if (error) throw error;
+    },
+    onSuccess: (_data, { orgId }) => {
+      queryClient.invalidateQueries({ queryKey: ['org-client-users', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['unified-clients', orgId] });
+      toast({ description: 'Se quitó la marca de lead' });
+    },
+    onError: (error: Error) => {
+      toast({ title: 'Error', description: error.message || 'No se pudo quitar la marca', variant: 'destructive' });
+    },
   });
 }

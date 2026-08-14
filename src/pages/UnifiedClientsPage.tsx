@@ -3,12 +3,13 @@ import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
   Phone, MapPin, Loader2, Activity, TrendingDown, CalendarDays, X,
-  Archive,
+  Archive, Tag, Copy,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,11 +24,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
-import { useUnifiedClients, useOrgClientUsers, useUnassignedClientMembers, useArchivedClients } from '@/hooks/useUnifiedClients';
+import { useUnifiedClients, useOrgClientUsers, useUnassignedClientMembers, useArchivedClients, useUnmarkLead } from '@/hooks/useUnifiedClients';
 import { useClientActivityMetrics } from '@/hooks/useClientActivityMetrics';
 import { UnifiedClientCard } from '@/components/clients/UnifiedClientCard';
 import { ArchivedClientCard } from '@/components/clients/ArchivedClientCard';
 import { ClientUserCard } from '@/components/clients/ClientUserCard';
+import { LeadCard } from '@/components/clients/LeadCard';
+import { MarkAsLeadDialog } from '@/components/clients/MarkAsLeadDialog';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
 import { ClientUsersDialog } from '@/components/clients/ClientUsersDialog';
@@ -79,7 +82,7 @@ function getPresetRange(preset: DatePreset): { from: Date | null; to: Date | nul
   }
 }
 
-type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects' | 'archivadas';
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects' | 'archivadas' | 'leads';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'activos', label: 'Activos', adminOnly: true },
@@ -87,6 +90,7 @@ const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'prospects', label: 'Sin paquetes', adminOnly: true },
   { key: 'todos', label: 'Todos' },
   { key: 'usuarios', label: 'Usuarios' },
+  { key: 'leads', label: 'Leads', adminOnly: true },
   { key: 'archivadas', label: 'Archivadas', adminOnly: true },
 ];
 
@@ -142,6 +146,7 @@ export function UnifiedClientsContent() {
   const { data: unassignedMembers = [], refetch: refetchUnassigned } = useUnassignedClientMembers(currentOrgId);
   const { data: activityMetrics = [] } = useClientActivityMetrics(currentOrgId);
   const { data: archivedClients = [], isLoading: archivedLoading, refetch: refetchArchived } = useArchivedClients(currentOrgId);
+  const unmarkLead = useUnmarkLead();
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
@@ -171,6 +176,8 @@ export function UnifiedClientsContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<UnifiedClientEntity | null>(null);
   const [restoringId, setRestoringId] = useState<string | null>(null);
+  const [markLeadDialogOpen, setMarkLeadDialogOpen] = useState(false);
+  const [selectedForMarkLead, setSelectedForMarkLead] = useState<ClientUser | null>(null);
   const { toast } = useToast();
 
   // Handle tab change (solo estado local)
@@ -214,7 +221,7 @@ export function UnifiedClientsContent() {
     return map;
   }, [activityMetrics]);
 
-  // Filtered entities (empresas + contactos)
+  // Filtered entities (empresas + contactos + leads)
   const filtered = useMemo(() => {
     let list = entities;
 
@@ -235,6 +242,10 @@ export function UnifiedClientsContent() {
     }
     if (filter === 'prospects') {
       list = list.filter(e => e.entity_type === 'empresa' && activityMap.get(e.id) === 'prospect');
+    }
+    // Pestaña Leads: contactos marcados explícitamente como lead (contact_type='lead')
+    if (filter === 'leads') {
+      list = list.filter(e => e.entity_type === 'contacto' && e.contact_type === 'lead');
     }
 
     if (search.trim()) {
@@ -378,6 +389,35 @@ export function UnifiedClientsContent() {
     }
   };
 
+  // Handle mark/unmark a client user as lead
+  const handleOpenMarkAsLead = (user: ClientUser) => {
+    setSelectedForMarkLead(user);
+    setMarkLeadDialogOpen(true);
+  };
+
+  const handleUnmarkLead = (user: ClientUser) => {
+    if (!user.lead_contact_id || !currentOrgId) return;
+    unmarkLead.mutate({ contactId: user.lead_contact_id, orgId: currentOrgId });
+  };
+
+  // Handle copy all filtered lead emails to clipboard (para remarketing)
+  const handleCopyLeadEmails = async () => {
+    const emails = filtered.filter(e => e.email).map(e => e.email as string);
+    if (emails.length === 0) {
+      toast({ title: 'Sin correos', description: 'Ninguno de los leads filtrados tiene correo registrado', variant: 'destructive' });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(emails.join(', '));
+      toast({
+        title: 'Correos copiados',
+        description: `${emails.length} correo${emails.length !== 1 ? 's' : ''} listo${emails.length !== 1 ? 's' : ''} para pegar en tu herramienta de correo o publicidad`,
+      });
+    } catch {
+      toast({ title: 'Error', description: 'No se pudo copiar al portapapeles', variant: 'destructive' });
+    }
+  };
+
   // Active contact for side panel (only contactos)
   const activeContact = selectedEntity?.entity_type === 'contacto'
     ? entities.find(e => e.id === selectedEntity.id) || selectedEntity
@@ -416,6 +456,7 @@ export function UnifiedClientsContent() {
   // Determine which sub-tab we're showing
   const showUsuarios = filter === 'usuarios';
   const showArchivadas = filter === 'archivadas';
+  const showLeads = filter === 'leads';
 
   return (
     <div className="min-h-screen">
@@ -457,7 +498,7 @@ export function UnifiedClientsContent() {
         </div>
 
         {/* Seguimiento de actividad — solo admins */}
-        {canSeeInternal && activityMetrics.length > 0 && !showArchivadas && (
+        {canSeeInternal && activityMetrics.length > 0 && !showArchivadas && !showLeads && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => handleFilterChange('activos')}
@@ -526,6 +567,7 @@ export function UnifiedClientsContent() {
                 )}
               >
                 {tab.key === 'archivadas' && <Archive className="h-3 w-3" />}
+                {tab.key === 'leads' && <Tag className="h-3 w-3" />}
                 {tab.label}
               </button>
             ))}
@@ -632,9 +674,9 @@ export function UnifiedClientsContent() {
                 className="pl-8 h-8 w-48 bg-muted border-border text-foreground placeholder:text-muted-foreground text-xs"
               />
             </div>
-            {!showArchivadas && <ViewModeToggle value={viewMode} onChange={setViewMode} />}
+            {!showArchivadas && !showLeads && <ViewModeToggle value={viewMode} onChange={setViewMode} />}
 
-            {canSeeInternal && !showArchivadas && (
+            {canSeeInternal && !showArchivadas && !showLeads && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-8 gap-1 bg-primary hover:bg-primary/90 text-white text-xs">
@@ -661,7 +703,64 @@ export function UnifiedClientsContent() {
         {/* Content */}
         <div className="flex gap-4">
           <div className={cn('flex-1 min-w-0', hasSidePanel && 'md:mr-[440px]')}>
-            {showArchivadas ? (
+            {showLeads ? (
+              /* ===== LEADS TAB ===== */
+              <>
+                {/* Contador + acción de remarketing */}
+                <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+                  <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">{filtered.length}</strong> lead{filtered.length !== 1 ? 's' : ''}
+                    {' '}— cuentas que aún no compran, listas para remarketing
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    onClick={handleCopyLeadEmails}
+                    disabled={filtered.length === 0}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    Copiar correos
+                  </Button>
+                </div>
+
+                {isLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-40 rounded-sm bg-muted" />
+                    ))}
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <div className="text-center py-16 border border-dashed border-border rounded-sm">
+                    <Tag className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      {search ? 'No se encontraron leads' : 'Aún no hay leads marcados'}
+                    </p>
+                    {!search && (
+                      <p className="text-xs text-muted-foreground/70 mt-1">
+                        Marca usuarios como lead desde la pestaña "Usuarios"
+                      </p>
+                    )}
+                    {search && (
+                      <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
+                        Limpiar búsqueda
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filtered.map(e => (
+                      <LeadCard
+                        key={e.id}
+                        lead={e}
+                        onClick={() => handleEntityClick(e)}
+                        isSelected={selectedEntity?.id === e.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : showArchivadas ? (
               /* ===== ARCHIVADAS TAB ===== */
               <>
                 {archivedLoading ? (
@@ -739,6 +838,8 @@ export function UnifiedClientsContent() {
                         user={u}
                         onClick={() => handleClientUserClick(u)}
                         isSelected={selectedClientUser?.user_id === u.user_id}
+                        onMarkAsLead={canSeeInternal ? handleOpenMarkAsLead : undefined}
+                        onUnmarkLead={canSeeInternal ? handleUnmarkLead : undefined}
                       />
                     ))}
                   </div>
@@ -753,6 +854,9 @@ export function UnifiedClientsContent() {
                           <th className="text-left p-3 text-muted-foreground font-medium">Empresas</th>
                           <th className="text-left p-3 text-muted-foreground font-medium hidden sm:table-cell">Teléfono</th>
                           <th className="text-left p-3 text-muted-foreground font-medium hidden md:table-cell">Ciudad</th>
+                          {canSeeInternal && (
+                            <th className="text-center p-3 text-muted-foreground font-medium">Lead</th>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
@@ -801,6 +905,30 @@ export function UnifiedClientsContent() {
                             </td>
                             <td className="p-3 text-muted-foreground hidden sm:table-cell">{u.phone || '—'}</td>
                             <td className="p-3 text-muted-foreground hidden md:table-cell">{u.city || '—'}</td>
+                            {canSeeInternal && (
+                              <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
+                                {u.es_lead ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-400 border-amber-500/20">
+                                      Lead
+                                    </Badge>
+                                    <button
+                                      onClick={() => handleUnmarkLead(u)}
+                                      className="text-[10px] text-muted-foreground hover:text-destructive underline"
+                                    >
+                                      Quitar
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => handleOpenMarkAsLead(u)}
+                                    className="text-[10px] text-primary hover:underline"
+                                  >
+                                    Marcar como lead
+                                  </button>
+                                )}
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -904,9 +1032,11 @@ export function UnifiedClientsContent() {
                                 'px-2 py-0.5 rounded-full text-[10px] font-medium',
                                 e.entity_type === 'empresa'
                                   ? 'bg-blue-500/15 text-blue-400'
-                                  : 'bg-purple-500/15 text-purple-400',
+                                  : e.contact_type === 'lead'
+                                    ? 'bg-amber-500/15 text-amber-400'
+                                    : 'bg-purple-500/15 text-purple-400',
                               )}>
-                                {e.entity_type === 'empresa' ? 'Empresa' : 'Contacto'}
+                                {e.entity_type === 'empresa' ? 'Empresa' : e.contact_type === 'lead' ? 'Lead' : 'Contacto'}
                               </span>
                             </td>
                             <td className="p-3 text-muted-foreground truncate max-w-[160px] hidden sm:table-cell">{e.email || '—'}</td>
@@ -1114,6 +1244,21 @@ export function UnifiedClientsContent() {
                 setClientDialogOpen(false);
               }
             }}
+          />
+        )}
+
+        {/* Marcar usuario como Lead Dialog */}
+        {selectedForMarkLead && currentOrgId && (
+          <MarkAsLeadDialog
+            open={markLeadDialogOpen}
+            onOpenChange={(open) => {
+              setMarkLeadDialogOpen(open);
+              if (!open) setSelectedForMarkLead(null);
+            }}
+            userId={selectedForMarkLead.user_id}
+            userName={selectedForMarkLead.full_name}
+            orgId={currentOrgId}
+            onSuccess={() => setSelectedForMarkLead(null)}
           />
         )}
 

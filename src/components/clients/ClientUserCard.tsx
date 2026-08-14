@@ -1,5 +1,11 @@
-import { Users, Building2, Phone, MapPin } from 'lucide-react';
+import { Users, Building2, Phone, MapPin, MoreVertical, Tag, TagsIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import type { ClientUser } from '@/types/unifiedClient.types';
 
@@ -7,9 +13,15 @@ interface ClientUserCardProps {
   user: ClientUser;
   onClick: () => void;
   isSelected?: boolean;
+  /** Admin: abre el diálogo para marcar este usuario como lead */
+  onMarkAsLead?: (user: ClientUser) => void;
+  /** Admin: quita la marca de lead de este usuario */
+  onUnmarkLead?: (user: ClientUser) => void;
 }
 
-export function ClientUserCard({ user, onClick, isSelected }: ClientUserCardProps) {
+export function ClientUserCard({ user, onClick, isSelected, onMarkAsLead, onUnmarkLead }: ClientUserCardProps) {
+  const showLeadMenu = !!(onMarkAsLead || (user.es_lead && onUnmarkLead));
+
   return (
     <div
       onClick={onClick}
@@ -20,6 +32,40 @@ export function ClientUserCard({ user, onClick, isSelected }: ClientUserCardProp
           : 'border-border hover:border-emerald-500/30',
       )}
     >
+      {/* Menú de acciones (marcar/quitar lead) */}
+      {showLeadMenu && (
+        <div className="absolute top-2 right-2 z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                onClick={e => e.stopPropagation()}
+                className="h-6 w-6 rounded-sm flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                aria-label={`Más acciones para ${user.full_name}`}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+              {user.es_lead ? (
+                onUnmarkLead && (
+                  <DropdownMenuItem onClick={() => onUnmarkLead(user)}>
+                    <TagsIcon className="h-4 w-4 mr-2" />
+                    Quitar marca de lead
+                  </DropdownMenuItem>
+                )
+              ) : (
+                onMarkAsLead && (
+                  <DropdownMenuItem onClick={() => onMarkAsLead(user)}>
+                    <Tag className="h-4 w-4 mr-2" />
+                    Marcar como lead
+                  </DropdownMenuItem>
+                )
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-start gap-3 mb-3">
         {user.avatar_url ? (
@@ -30,14 +76,21 @@ export function ClientUserCard({ user, onClick, isSelected }: ClientUserCardProp
           </div>
         )}
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-6">
           <h3 className="font-semibold text-card-foreground truncate text-sm">{user.full_name}</h3>
           <p className="text-xs text-muted-foreground truncate">{user.email}</p>
         </div>
 
-        <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20 flex-shrink-0">
-          Usuario
-        </Badge>
+        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+          <Badge variant="outline" className="text-[10px] h-5 bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            Usuario
+          </Badge>
+          {user.es_lead && (
+            <Badge variant="outline" className="text-[10px] h-5 bg-amber-500/10 text-amber-400 border-amber-500/20">
+              Lead
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Linked companies */}
