@@ -26,6 +26,11 @@
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
 
+/** `EdgeRuntime.waitUntil` lo expone el runtime de Supabase, no los tipos de
+ *  Deno. Retiene los disparos que no se esperan para que el runtime no los
+ *  cancele al devolver la respuesta. */
+declare const EdgeRuntime: { waitUntil?: (p: Promise<unknown>) => void } | undefined;
+
 const ROLES_HABILITADOS = [
   "admin",
   "team_leader",
@@ -303,7 +308,7 @@ Deno.serve(async (req) => {
       // Fire-and-forget: la función es síncrona y tarda minutos (Perplexity +
       // Firecrawl + 4 LLM). No se espera para no colgar la respuesta al admin;
       // el progreso se ve en product_dna.status.
-      fetch(`${url}/functions/v1/generate-product-dna`, {
+      const disparoAdn = fetch(`${url}/functions/v1/generate-product-dna`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -313,6 +318,13 @@ Deno.serve(async (req) => {
       }).catch((err) =>
         console.error("[client-onboarding-process] ADN fire falló:", err)
       );
+
+      // Sin esto el runtime cancela el disparo al responderle al admin, y el
+      // ADN no arranca nunca: el product_dna se queda en su estado inicial
+      // sin que nadie lo note. Es el primer paso del pipeline del cliente.
+      try {
+        EdgeRuntime?.waitUntil?.(disparoAdn);
+      } catch { /* fuera del runtime de Supabase no hay nada que retener */ }
 
       pasos.adn = {
         ok: true,

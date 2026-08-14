@@ -2595,7 +2595,7 @@ Deno.serve(async (req) => {
 
   // Fire-and-forget self-invocation con user_id/organization_id derivados server-side
   // (nunca los valores originales del body — esos siguen sin ser confiables).
-  fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
+  const disparoArranque = fetch(`${supabaseUrl}/functions/v1/generate-full-research`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -2609,6 +2609,16 @@ Deno.serve(async (req) => {
       _internal: true,
     }),
   }).catch(() => {});
+
+  // El más crítico de los tres disparos del archivo: este ARRANCA la fase 0.
+  // Justo debajo se responde 202, y si el runtime cancela la petición antes
+  // de que salga, la investigación no empieza nunca y `research_progress` se
+  // queda en null — indistinguible de "no pasó nada". Quien vigila la etapa
+  // lee ese null como "todavía sin novedades" y no avisa a nadie, así que el
+  // cliente se queda esperando una estrategia que jamás arrancó.
+  try {
+    EdgeRuntime?.waitUntil?.(disparoArranque);
+  } catch { /* fuera del runtime de Supabase no hay nada que retener */ }
 
   return new Response(
     JSON.stringify({ success: true, status: "processing" }),
