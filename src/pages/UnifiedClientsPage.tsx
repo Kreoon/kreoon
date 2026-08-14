@@ -3,6 +3,7 @@ import {
   Castle, Contact, Building2, DollarSign, Search, Plus,
   ChevronDown, Crown, Users as UsersIcon, AlertTriangle,
   Phone, MapPin, Loader2, Activity, TrendingDown, CalendarDays, X,
+  Archive,
 } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -22,15 +23,17 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
-import { useUnifiedClients, useOrgClientUsers, useUnassignedClientMembers } from '@/hooks/useUnifiedClients';
+import { useUnifiedClients, useOrgClientUsers, useUnassignedClientMembers, useArchivedClients } from '@/hooks/useUnifiedClients';
 import { useClientActivityMetrics } from '@/hooks/useClientActivityMetrics';
 import { UnifiedClientCard } from '@/components/clients/UnifiedClientCard';
+import { ArchivedClientCard } from '@/components/clients/ArchivedClientCard';
 import { ClientUserCard } from '@/components/clients/ClientUserCard';
 import { ViewModeToggle, type ViewMode } from '@/components/crm/ViewModeToggle';
 import { ClientDetailDialog } from '@/components/clients/ClientDetailDialog';
 import { ClientUsersDialog } from '@/components/clients/ClientUsersDialog';
 import { ClientPackagesDialog } from '@/components/clients/ClientPackagesDialog';
 import { ClientVideosDialog } from '@/components/clients/ClientVideosDialog';
+import { ClientDeleteDialog } from '@/components/clients/ClientDeleteDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
@@ -76,7 +79,7 @@ function getPresetRange(preset: DatePreset): { from: Date | null; to: Date | nul
   }
 }
 
-type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects';
+type FilterTab = 'todos' | 'usuarios' | 'activos' | 'inactivos' | 'prospects' | 'archivadas';
 
 const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'activos', label: 'Activos', adminOnly: true },
@@ -84,6 +87,7 @@ const FILTER_TABS: { key: FilterTab; label: string; adminOnly?: boolean }[] = [
   { key: 'prospects', label: 'Sin paquetes', adminOnly: true },
   { key: 'todos', label: 'Todos' },
   { key: 'usuarios', label: 'Usuarios' },
+  { key: 'archivadas', label: 'Archivadas', adminOnly: true },
 ];
 
 function formatCurrency(n: number): string {
@@ -137,6 +141,7 @@ export function UnifiedClientsContent() {
   const { data: clientUsers = [], isLoading: clientUsersLoading, refetch: refetchClientUsers } = useOrgClientUsers(currentOrgId);
   const { data: unassignedMembers = [], refetch: refetchUnassigned } = useUnassignedClientMembers(currentOrgId);
   const { data: activityMetrics = [] } = useClientActivityMetrics(currentOrgId);
+  const { data: archivedClients = [], isLoading: archivedLoading, refetch: refetchArchived } = useArchivedClients(currentOrgId);
 
   const canSeeInternal = isAdmin || isTeamLeader;
 
@@ -163,6 +168,9 @@ export function UnifiedClientsContent() {
   const [videosDialogOpen, setVideosDialogOpen] = useState(false);
   const [selectedForQuickDialog, setSelectedForQuickDialog] = useState<UnifiedClientEntity | null>(null);
   const [clientDialogInitialTab, setClientDialogInitialTab] = useState<string | undefined>(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<UnifiedClientEntity | null>(null);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Handle tab change (solo estado local)
@@ -174,9 +182,13 @@ export function UnifiedClientsContent() {
     setClientDialogOpen(false);
   };
 
+  // IDs de empresas archivadas — usado para ocultarlas de todas las demás pestañas,
+  // como defensa adicional por si get_unified_clients aún no filtra deleted_at.
+  const archivedIds = useMemo(() => new Set(archivedClients.map(c => c.id)), [archivedClients]);
+
   // Stats
   const stats = useMemo(() => {
-    const empresas = entities.filter(e => e.entity_type === 'empresa');
+    const empresas = entities.filter(e => e.entity_type === 'empresa' && !archivedIds.has(e.id));
     const contactos = entities.filter(e => e.entity_type === 'contacto');
     const vip = empresas.filter(e => e.is_vip);
     const pipelineValue = contactos.reduce((sum, e) => sum + (e.deal_value || 0), 0);
@@ -193,7 +205,7 @@ export function UnifiedClientsContent() {
       inactivos,
       prospects,
     };
-  }, [entities, clientUsers, activityMetrics]);
+  }, [entities, clientUsers, activityMetrics, archivedIds]);
 
   // Mapa rápido de activity_status por client_id
   const activityMap = useMemo(() => {
@@ -205,6 +217,10 @@ export function UnifiedClientsContent() {
   // Filtered entities (empresas + contactos)
   const filtered = useMemo(() => {
     let list = entities;
+
+    // Empresas archivadas nunca aparecen en las demás pestañas (defensa adicional
+    // por si get_unified_clients aún no filtra deleted_at del lado del backend).
+    list = list.filter(e => e.entity_type !== 'empresa' || !archivedIds.has(e.id));
 
     if (!canSeeInternal) {
       list = list.filter(e => e.entity_type === 'contacto');
@@ -242,7 +258,7 @@ export function UnifiedClientsContent() {
     }
 
     return list;
-  }, [entities, filter, search, canSeeInternal, activityMap, dateRange]);
+  }, [entities, filter, search, canSeeInternal, activityMap, dateRange, archivedIds]);
 
   // Filtered client users
   const filteredClientUsers = useMemo(() => {
@@ -266,6 +282,16 @@ export function UnifiedClientsContent() {
     }
     return list;
   }, [clientUsers, search, dateRange]);
+
+  // Filtered archived companies
+  const filteredArchived = useMemo(() => {
+    if (!search.trim()) return archivedClients;
+    const q = search.toLowerCase();
+    return archivedClients.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.contact_email?.toLowerCase().includes(q),
+    );
+  }, [archivedClients, search]);
 
   // Handle click on entity
   const handleEntityClick = (entity: UnifiedClientEntity) => {
@@ -329,6 +355,29 @@ export function UnifiedClientsContent() {
     }
   };
 
+  // Handle open delete/archive dialog for a company
+  const handleOpenDelete = (entity: UnifiedClientEntity) => {
+    setSelectedForDelete(entity);
+    setDeleteDialogOpen(true);
+  };
+
+  // Handle restore of an archived company
+  const handleRestore = async (clientId: string) => {
+    setRestoringId(clientId);
+    try {
+      const { error } = await supabase.rpc('admin_restore_client' as any, { p_client_id: clientId });
+      if (error) throw error;
+      toast({ title: 'Empresa restaurada', description: 'Ya vuelve a aparecer en las listas' });
+      refetchArchived();
+      refetch();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'No se pudo restaurar la empresa';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    } finally {
+      setRestoringId(null);
+    }
+  };
+
   // Active contact for side panel (only contactos)
   const activeContact = selectedEntity?.entity_type === 'contacto'
     ? entities.find(e => e.id === selectedEntity.id) || selectedEntity
@@ -364,8 +413,9 @@ export function UnifiedClientsContent() {
     );
   }
 
-  // Determine if we're showing the usuarios tab
+  // Determine which sub-tab we're showing
   const showUsuarios = filter === 'usuarios';
+  const showArchivadas = filter === 'archivadas';
 
   return (
     <div className="min-h-screen">
@@ -407,7 +457,7 @@ export function UnifiedClientsContent() {
         </div>
 
         {/* Seguimiento de actividad — solo admins */}
-        {canSeeInternal && activityMetrics.length > 0 && (
+        {canSeeInternal && activityMetrics.length > 0 && !showArchivadas && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
               onClick={() => handleFilterChange('activos')}
@@ -469,12 +519,13 @@ export function UnifiedClientsContent() {
                 key={tab.key}
                 onClick={() => handleFilterChange(tab.key)}
                 className={cn(
-                  'px-3 py-1.5 rounded-sm text-xs font-medium transition-all',
+                  'px-3 py-1.5 rounded-sm text-xs font-medium transition-all flex items-center gap-1',
                   filter === tab.key
                     ? 'bg-primary text-white shadow-sm'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
                 )}
               >
+                {tab.key === 'archivadas' && <Archive className="h-3 w-3" />}
                 {tab.label}
               </button>
             ))}
@@ -482,93 +533,95 @@ export function UnifiedClientsContent() {
 
           <div className="flex items-center gap-2 ml-auto">
             {/* Date range filter */}
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className={cn(
-                  'h-8 gap-1.5 text-xs',
-                  dateRange.preset !== 'todo' && 'border-primary/50 bg-primary/10 text-primary',
-                )}>
-                  <CalendarDays className="h-3 w-3" />
-                  {dateRange.preset === 'todo'
-                    ? 'Fecha'
-                    : DATE_PRESETS.find(p => p.key === dateRange.preset)?.label ?? 'Fecha'}
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-3" align="end">
-                <div className="space-y-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Fecha de registro
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {DATE_PRESETS.map(p => (
-                      <button
-                        key={p.key}
-                        onClick={() => {
-                          if (p.key === 'personalizado') {
-                            setDateRange(prev => ({ ...prev, preset: 'personalizado' }));
-                          } else {
-                            const { from, to } = getPresetRange(p.key);
-                            setDateRange({ preset: p.key, from, to });
-                            if (p.key === 'todo') setDatePopoverOpen(false);
-                          }
-                        }}
-                        className={cn(
-                          'px-2.5 py-1 rounded-sm text-xs font-medium transition-all',
-                          dateRange.preset === p.key
-                            ? 'bg-primary text-white'
-                            : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
-                        )}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {dateRange.preset === 'personalizado' && (
-                    <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground mb-1">Desde</p>
-                        <input
-                          type="date"
-                          value={dateRange.from ? dateRange.from.toISOString().split('T')[0] : ''}
-                          onChange={e => {
-                            const from = e.target.value ? new Date(e.target.value) : null;
-                            setDateRange(prev => ({ ...prev, from }));
+            {!showArchivadas && (
+              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className={cn(
+                    'h-8 gap-1.5 text-xs',
+                    dateRange.preset !== 'todo' && 'border-primary/50 bg-primary/10 text-primary',
+                  )}>
+                    <CalendarDays className="h-3 w-3" />
+                    {dateRange.preset === 'todo'
+                      ? 'Fecha'
+                      : DATE_PRESETS.find(p => p.key === dateRange.preset)?.label ?? 'Fecha'}
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-3" align="end">
+                  <div className="space-y-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Fecha de registro
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DATE_PRESETS.map(p => (
+                        <button
+                          key={p.key}
+                          onClick={() => {
+                            if (p.key === 'personalizado') {
+                              setDateRange(prev => ({ ...prev, preset: 'personalizado' }));
+                            } else {
+                              const { from, to } = getPresetRange(p.key);
+                              setDateRange({ preset: p.key, from, to });
+                              if (p.key === 'todo') setDatePopoverOpen(false);
+                            }
                           }}
-                          className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
-                        <input
-                          type="date"
-                          value={dateRange.to ? dateRange.to.toISOString().split('T')[0] : ''}
-                          onChange={e => {
-                            const to = e.target.value ? new Date(e.target.value + 'T23:59:59') : null;
-                            setDateRange(prev => ({ ...prev, to }));
-                          }}
-                          className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
-                        />
-                      </div>
+                          className={cn(
+                            'px-2.5 py-1 rounded-sm text-xs font-medium transition-all',
+                            dateRange.preset === p.key
+                              ? 'bg-primary text-white'
+                              : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+                          )}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
                     </div>
-                  )}
 
-                  {dateRange.preset !== 'todo' && (
-                    <button
-                      onClick={() => {
-                        setDateRange({ preset: 'todo', from: null, to: null });
-                        setDatePopoverOpen(false);
-                      }}
-                      className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 py-1.5 border-t border-border mt-1"
-                    >
-                      <X className="h-3 w-3" />
-                      Limpiar filtro
-                    </button>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
+                    {dateRange.preset === 'personalizado' && (
+                      <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-1">Desde</p>
+                          <input
+                            type="date"
+                            value={dateRange.from ? dateRange.from.toISOString().split('T')[0] : ''}
+                            onChange={e => {
+                              const from = e.target.value ? new Date(e.target.value) : null;
+                              setDateRange(prev => ({ ...prev, from }));
+                            }}
+                            className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground mb-1">Hasta</p>
+                          <input
+                            type="date"
+                            value={dateRange.to ? dateRange.to.toISOString().split('T')[0] : ''}
+                            onChange={e => {
+                              const to = e.target.value ? new Date(e.target.value + 'T23:59:59') : null;
+                              setDateRange(prev => ({ ...prev, to }));
+                            }}
+                            className="w-full h-8 px-2 rounded-sm text-xs bg-muted border border-border text-foreground"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {dateRange.preset !== 'todo' && (
+                      <button
+                        onClick={() => {
+                          setDateRange({ preset: 'todo', from: null, to: null });
+                          setDatePopoverOpen(false);
+                        }}
+                        className="w-full text-xs text-muted-foreground hover:text-foreground flex items-center justify-center gap-1.5 py-1.5 border-t border-border mt-1"
+                      >
+                        <X className="h-3 w-3" />
+                        Limpiar filtro
+                      </button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
 
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -579,9 +632,9 @@ export function UnifiedClientsContent() {
                 className="pl-8 h-8 w-48 bg-muted border-border text-foreground placeholder:text-muted-foreground text-xs"
               />
             </div>
-            <ViewModeToggle value={viewMode} onChange={setViewMode} />
+            {!showArchivadas && <ViewModeToggle value={viewMode} onChange={setViewMode} />}
 
-            {canSeeInternal && (
+            {canSeeInternal && !showArchivadas && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="h-8 gap-1 bg-primary hover:bg-primary/90 text-white text-xs">
@@ -608,7 +661,41 @@ export function UnifiedClientsContent() {
         {/* Content */}
         <div className="flex gap-4">
           <div className={cn('flex-1 min-w-0', hasSidePanel && 'md:mr-[440px]')}>
-            {showUsuarios ? (
+            {showArchivadas ? (
+              /* ===== ARCHIVADAS TAB ===== */
+              <>
+                {archivedLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-40 rounded-sm bg-muted" />
+                    ))}
+                  </div>
+                ) : filteredArchived.length === 0 ? (
+                  <div className="text-center py-16 border border-dashed border-border rounded-sm">
+                    <Archive className="h-8 w-8 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      {search ? 'No se encontraron empresas archivadas' : 'No hay empresas archivadas'}
+                    </p>
+                    {search && (
+                      <button onClick={() => setSearch('')} className="text-xs text-[#8b5cf6] hover:underline mt-1">
+                        Limpiar búsqueda
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredArchived.map(c => (
+                      <ArchivedClientCard
+                        key={c.id}
+                        client={c}
+                        onRestore={() => handleRestore(c.id)}
+                        restoring={restoringId === c.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : showUsuarios ? (
               /* ===== USUARIOS CLIENTE TAB ===== */
               <>
                 {/* Unassigned alert */}
@@ -758,6 +845,7 @@ export function UnifiedClientsContent() {
                         } : undefined}
                         onOpenProjects={e.entity_type === 'empresa' ? handleOpenPackages : undefined}
                         onOpenVideos={e.entity_type === 'empresa' ? handleOpenVideos : undefined}
+                        onOpenDelete={e.entity_type === 'empresa' && isAdmin ? handleOpenDelete : undefined}
                       />
                     ))}
                   </div>
@@ -998,6 +1086,34 @@ export function UnifiedClientsContent() {
               if (!open) setSelectedForUsers(null);
             }}
             onUpdate={() => refetch()}
+          />
+        )}
+
+        {/* Archivar / Eliminar Empresa Dialog */}
+        {selectedForDelete && (
+          <ClientDeleteDialog
+            clientId={selectedForDelete.id}
+            clientName={selectedForDelete.name}
+            open={deleteDialogOpen}
+            onOpenChange={(open) => {
+              setDeleteDialogOpen(open);
+              if (!open) setSelectedForDelete(null);
+            }}
+            onArchived={() => {
+              refetch();
+              refetchArchived();
+              if (selectedEntity?.id === selectedForDelete.id) {
+                setSelectedEntity(null);
+                setClientDialogOpen(false);
+              }
+            }}
+            onDeleted={() => {
+              refetch();
+              if (selectedEntity?.id === selectedForDelete.id) {
+                setSelectedEntity(null);
+                setClientDialogOpen(false);
+              }
+            }}
           />
         )}
 

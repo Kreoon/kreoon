@@ -1081,27 +1081,81 @@ serve(async (req) => {
           });
         }
 
-        // Delete related data first
-        await supabaseAdmin.from("products").delete().eq("client_id", clientId);
-        await supabaseAdmin
-          .from("client_packages")
-          .delete()
-          .eq("client_id", clientId);
-        await supabaseAdmin
-          .from("content")
-          .update({ client_id: null })
-          .eq("client_id", clientId);
+        // content_licenses.client_id no tiene ON DELETE (NO ACTION): si el
+        // cliente tiene licencias de contenido registradas, el DELETE final
+        // de `clients` revienta con un 500 opaco de Postgres. Se revisa
+        // antes y se corta con un mensaje entendible en vez de dejar que
+        // falle a mitad de camino con datos ya borrados de otras tablas.
+        const { count: licensesCount, error: licensesCheckError } =
+          await supabaseAdmin
+            .from("content_licenses")
+            .select("id", { count: "exact", head: true })
+            .eq("client_id", clientId);
+        if (licensesCheckError) throw licensesCheckError;
 
-        const { error } = await supabaseAdmin
+        if ((licensesCount ?? 0) > 0) {
+          return new Response(
+            JSON.stringify({
+              error:
+                `No se puede eliminar esta empresa: tiene ${licensesCount} licencia(s) de contenido ` +
+                `registrada(s) (cesiones/derechos de uso). Elimina o reasigna esas licencias antes de borrar la empresa.`,
+            }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        }
+
+        // Delete related data first, dejando constancia de cuántas filas
+        // cayeron de cada tabla (antes esto era invisible en el log).
+        const deletedCounts: Record<string, number> = {};
+
+        const { count: productsDeleted } = await supabaseAdmin
+          .from("products")
+          .delete({ count: "exact" })
+          .eq("client_id", clientId);
+        deletedCounts.products = productsDeleted ?? 0;
+
+        const { count: packagesDeleted } = await supabaseAdmin
+          .from("client_packages")
+          .delete({ count: "exact" })
+          .eq("client_id", clientId);
+        deletedCounts.client_packages = packagesDeleted ?? 0;
+
+        const { count: contentUnlinked } = await supabaseAdmin
+          .from("content")
+          .update({ client_id: null }, { count: "exact" })
+          .eq("client_id", clientId);
+        deletedCounts.content_unlinked = contentUnlinked ?? 0;
+
+        // client_users no tiene FK confiable hacia clients en producción:
+        // sin este borrado explícito quedan accesos de portal apuntando a
+        // una empresa inexistente (mismo patrón de huérfanos ya documentado
+        // con organization_members en admin_delete_user_cascade).
+        const { count: portalUsersDeleted } = await supabaseAdmin
+          .from("client_users")
+          .delete({ count: "exact" })
+          .eq("client_id", clientId);
+        deletedCounts.client_users = portalUsersDeleted ?? 0;
+
+        const { error, count: clientsDeleted } = await supabaseAdmin
           .from("clients")
-          .delete()
+          .delete({ count: "exact" })
           .eq("id", clientId);
         if (error) throw error;
+        deletedCounts.clients = clientsDeleted ?? 0;
 
-        logger.warn("Client deleted by root", { client_id: clientId });
-        return new Response(JSON.stringify({ success: true }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        logger.warn("Client deleted by root", {
+          client_id: clientId,
+          deleted_counts: deletedCounts,
         });
+        return new Response(
+          JSON.stringify({ success: true, deleted_counts: deletedCounts }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
       }
 
       case "delete_content": {

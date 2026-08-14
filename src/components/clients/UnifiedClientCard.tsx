@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Building2, Contact, Crown, Video, Users as UsersIcon, Briefcase,
   DollarSign, Globe, Tag, MapPin, Phone, Instagram, Facebook, Linkedin,
-  Calendar, UserCog, Star, Mail, ChevronRight,
+  Calendar, UserCog, Star, Mail, ChevronRight, MoreVertical, Trash2,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,6 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +44,8 @@ interface UnifiedClientCardProps {
   onOpenServices?: (entity: UnifiedClientEntity) => void;
   onOpenProjects?: (entity: UnifiedClientEntity) => void;
   onOpenVideos?: (entity: UnifiedClientEntity) => void;
+  /** Solo admin: abre el diálogo de archivar / eliminar empresa */
+  onOpenDelete?: (entity: UnifiedClientEntity) => void;
 }
 
 function formatCurrency(n: number): string {
@@ -61,6 +69,7 @@ export function UnifiedClientCard({
   onOpenServices,
   onOpenProjects,
   onOpenVideos,
+  onOpenDelete,
 }: UnifiedClientCardProps) {
   const isEmpresa = entity.entity_type === 'empresa';
   const [toggling, setToggling] = useState(false);
@@ -149,10 +158,32 @@ export function UnifiedClientCard({
           : 'border-border hover:border-purple-500/30',
       )}
     >
-      {/* VIP indicator */}
-      {isEmpresa && entity.is_vip && (
-        <div className="absolute top-2 right-2">
-          <Crown className="h-4 w-4 text-amber-400 fill-amber-400" />
+      {/* VIP indicator + menú de acciones */}
+      {isEmpresa && (
+        <div className="absolute top-2 right-2 flex items-center gap-1 z-10">
+          {entity.is_vip && <Crown className="h-4 w-4 text-amber-400 fill-amber-400" />}
+          {canEdit && onOpenDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  onClick={e => e.stopPropagation()}
+                  className="h-6 w-6 rounded-sm flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label={`Más acciones para ${entity.name}`}
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={e => e.stopPropagation()}>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => onOpenDelete(entity)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Eliminar empresa
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       )}
 

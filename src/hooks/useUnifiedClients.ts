@@ -48,3 +48,31 @@ export function useUnassignedClientMembers(orgId: string | undefined) {
     staleTime: 5 * 60 * 1000,
   });
 }
+
+export interface ArchivedClient {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  contact_email: string | null;
+  deleted_at: string | null;
+  deleted_by: string | null;
+}
+
+/** Fetches companies archived (soft-deleted) in this org, for the "Archivadas" view */
+export function useArchivedClients(orgId: string | undefined) {
+  return useQuery({
+    queryKey: ['archived-clients', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, logo_url, contact_email, deleted_at, deleted_by')
+        .eq('organization_id', orgId!)
+        .not('deleted_at', 'is', null)
+        .order('deleted_at', { ascending: false });
+      if (error) throw error;
+      return (data || []) as ArchivedClient[];
+    },
+    enabled: !!orgId,
+    staleTime: 60 * 1000,
+  });
+}
