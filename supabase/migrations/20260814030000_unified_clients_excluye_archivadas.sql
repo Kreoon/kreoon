@@ -13,6 +13,11 @@
 --
 -- Va junto con 20260814020000_admin_archive_delete_clients.sql, que crea
 -- admin_archive_client / admin_restore_client / get_client_deletion_impact.
+--
+-- OJO: los alias de columna (AS entity_type, AS email, ...) son OBLIGATORIOS.
+-- La consulta cierra con ORDER BY entity_type, y sin el alias ese nombre no
+-- existe: la funcion entera falla con 400 y la pagina de Clientes se queda
+-- sin empresas. Paso en produccion al escribir esta migracion.
 -- ============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_unified_clients(p_org_id uuid)
@@ -33,16 +38,35 @@ BEGIN
 
   -- Empresas propias de la organización
   SELECT
-    c.id, 'empresa'::text, c.name, c.contact_email, c.contact_phone, c.logo_url,
-    c.created_at, c.created_at,
-    COALESCE(c.is_vip, false), COALESCE(c.is_internal_brand, false),
-    (SELECT COUNT(*) FROM content ct WHERE ct.client_id = c.id)::bigint,
-    (SELECT COUNT(*) FROM client_packages cp WHERE cp.client_id = c.id)::bigint,
-    (SELECT COUNT(*) FROM client_users cu WHERE cu.client_id = c.id)::bigint,
-    c.username, c.notes,
-    NULL::text, NULL::text, NULL::text, NULL::text, NULL::numeric, NULL::date,
-    NULL::text, NULL::text, NULL::text[], NULL::jsonb,
-    c.brand_id, c.lead_source, c.community_name, c.referred_by
+    c.id,
+    'empresa'::text AS entity_type,
+    c.name,
+    c.contact_email AS email,
+    c.contact_phone AS phone,
+    c.logo_url AS avatar_url,
+    c.created_at,
+    c.created_at AS updated_at,
+    COALESCE(c.is_vip, false) AS is_vip,
+    COALESCE(c.is_internal_brand, false) AS is_internal_brand,
+    (SELECT COUNT(*) FROM content ct WHERE ct.client_id = c.id)::bigint AS content_count,
+    (SELECT COUNT(*) FROM client_packages cp WHERE cp.client_id = c.id)::bigint AS active_projects,
+    (SELECT COUNT(*) FROM client_users cu WHERE cu.client_id = c.id)::bigint AS users_count,
+    c.username,
+    c.notes AS client_notes,
+    NULL::text AS company,
+    NULL::text AS "position",
+    NULL::text AS contact_type,
+    NULL::text AS pipeline_stage,
+    NULL::numeric AS deal_value,
+    NULL::date AS expected_close_date,
+    NULL::text AS relationship_strength,
+    NULL::text AS contact_notes,
+    NULL::text[] AS tags,
+    NULL::jsonb AS custom_fields,
+    c.brand_id,
+    c.lead_source,
+    c.community_name,
+    c.referred_by
   FROM clients c
   WHERE c.organization_id = p_org_id
     AND c.deleted_at IS NULL
@@ -51,16 +75,35 @@ BEGIN
 
   -- Marcas vinculadas por brand_organization_links
   SELECT
-    c.id, 'empresa'::text, c.name, c.contact_email, c.contact_phone, c.logo_url,
-    c.created_at, c.created_at,
-    COALESCE(c.is_vip, false), COALESCE(c.is_internal_brand, false),
-    (SELECT COUNT(*) FROM content ct WHERE ct.client_id = c.id)::bigint,
-    (SELECT COUNT(*) FROM client_packages cp WHERE cp.client_id = c.id)::bigint,
-    (SELECT COUNT(*) FROM client_users cu WHERE cu.client_id = c.id)::bigint,
-    c.username, c.notes,
-    NULL::text, NULL::text, NULL::text, NULL::text, NULL::numeric, NULL::date,
-    NULL::text, NULL::text, NULL::text[], NULL::jsonb,
-    c.brand_id, c.lead_source, c.community_name, c.referred_by
+    c.id,
+    'empresa'::text AS entity_type,
+    c.name,
+    c.contact_email AS email,
+    c.contact_phone AS phone,
+    c.logo_url AS avatar_url,
+    c.created_at,
+    c.created_at AS updated_at,
+    COALESCE(c.is_vip, false) AS is_vip,
+    COALESCE(c.is_internal_brand, false) AS is_internal_brand,
+    (SELECT COUNT(*) FROM content ct WHERE ct.client_id = c.id)::bigint AS content_count,
+    (SELECT COUNT(*) FROM client_packages cp WHERE cp.client_id = c.id)::bigint AS active_projects,
+    (SELECT COUNT(*) FROM client_users cu WHERE cu.client_id = c.id)::bigint AS users_count,
+    c.username,
+    c.notes AS client_notes,
+    NULL::text AS company,
+    NULL::text AS "position",
+    NULL::text AS contact_type,
+    NULL::text AS pipeline_stage,
+    NULL::numeric AS deal_value,
+    NULL::date AS expected_close_date,
+    NULL::text AS relationship_strength,
+    NULL::text AS contact_notes,
+    NULL::text[] AS tags,
+    NULL::jsonb AS custom_fields,
+    c.brand_id,
+    c.lead_source,
+    c.community_name,
+    c.referred_by
   FROM clients c
   JOIN brand_organization_links bol ON bol.brand_id = c.brand_id
   WHERE bol.organization_id = p_org_id
@@ -72,13 +115,35 @@ BEGIN
 
   -- Contactos sueltos del CRM: no tienen archivado
   SELECT
-    oc.id, 'contacto'::text, oc.full_name, oc.email, oc.phone, oc.avatar_url,
-    oc.created_at, oc.updated_at,
-    false, false, 0::bigint, 0::bigint, 0::bigint,
-    NULL::text, NULL::text,
-    oc.company, oc.position, oc.contact_type, oc.pipeline_stage, oc.deal_value,
-    oc.expected_close_date, oc.relationship_strength, oc.notes, oc.tags, oc.custom_fields,
-    NULL::uuid, NULL::text, NULL::text, NULL::text
+    oc.id,
+    'contacto'::text AS entity_type,
+    oc.full_name AS name,
+    oc.email,
+    oc.phone,
+    oc.avatar_url,
+    oc.created_at,
+    oc.updated_at,
+    false AS is_vip,
+    false AS is_internal_brand,
+    0::bigint AS content_count,
+    0::bigint AS active_projects,
+    0::bigint AS users_count,
+    NULL::text AS username,
+    NULL::text AS client_notes,
+    oc.company,
+    oc.position,
+    oc.contact_type,
+    oc.pipeline_stage,
+    oc.deal_value,
+    oc.expected_close_date,
+    oc.relationship_strength,
+    oc.notes AS contact_notes,
+    oc.tags,
+    oc.custom_fields,
+    NULL::uuid AS brand_id,
+    NULL::text AS lead_source,
+    NULL::text AS community_name,
+    NULL::text AS referred_by
   FROM org_contacts oc
   WHERE oc.organization_id = p_org_id
 
