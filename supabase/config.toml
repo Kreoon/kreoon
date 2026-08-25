@@ -587,6 +587,18 @@ verify_jwt = true
 # strings sanitizados (strip de tags + control chars) antes de persistir.
 verify_jwt = false
 
+[functions.client-onboarding-claim]
+# Paso 0 del link: el cliente crea su cuenta (contraseña + consentimientos).
+# verify_jwt=false: todavia no tiene cuenta; la credencial es el token del link.
+# Rate limit 10/10min por token+IP. Crea auth.user, vincula org+empresa, marca
+# el perfil completo (sin gate Nova) y registra user_legal_consents.
+verify_jwt = false
+
+[functions.client-onboarding-send]
+# Envia el link de onboarding por correo (Resend) al contact_email de la
+# empresa. verify_jwt=true + validacion server-side de staff de la org del form.
+verify_jwt = true
+
 [functions.pipeline-orchestrator]
 # Maquina de estados del pipeline autonomo del cliente:
 # onboarding -> adn -> estrategia -> guiones -> produccion.

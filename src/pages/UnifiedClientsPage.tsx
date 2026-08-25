@@ -37,6 +37,7 @@ import { ClientUsersDialog } from '@/components/clients/ClientUsersDialog';
 import { ClientPackagesDialog } from '@/components/clients/ClientPackagesDialog';
 import { ClientVideosDialog } from '@/components/clients/ClientVideosDialog';
 import { ClientDeleteDialog } from '@/components/clients/ClientDeleteDialog';
+import { OnboardingLinkDialog } from '@/components/clients/onboarding/OnboardingLinkDialog';
 import { ContactDetailPanel } from '@/components/crm/ContactDetailPanel';
 import { ClientUserDetailPanel } from '@/components/clients/ClientUserDetailPanel';
 import { CreateContactModal } from '@/components/crm/CreateContactModal';
@@ -165,8 +166,15 @@ export function UnifiedClientsContent() {
   const [clientDialogOpen, setClientDialogOpen] = useState(false);
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
-  const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_email: '', contact_phone: '', notes: '' });
+  const [newCompanyData, setNewCompanyData] = useState({ name: '', contact_name: '', contact_email: '', contact_phone: '', notes: '' });
   const [creatingCompany, setCreatingCompany] = useState(false);
+  const [onboardingLinkOpen, setOnboardingLinkOpen] = useState(false);
+  const [onboardingLinkClient, setOnboardingLinkClient] = useState<{
+    id: string;
+    name: string;
+    contactPhone: string | null;
+    contactEmail: string | null;
+  } | null>(null);
   const [usersDialogOpen, setUsersDialogOpen] = useState(false);
   const [selectedForUsers, setSelectedForUsers] = useState<UnifiedClientEntity | null>(null);
   const [packagesDialogOpen, setPackagesDialogOpen] = useState(false);
@@ -344,19 +352,32 @@ export function UnifiedClientsContent() {
       toast({ title: 'Error', description: 'El nombre de la empresa es requerido', variant: 'destructive' });
       return;
     }
+    if (!currentOrgId) return;
     setCreatingCompany(true);
     try {
-      const { error } = await supabase.from('clients').insert({
-        name: newCompanyData.name.trim(),
-        contact_email: newCompanyData.contact_email || null,
-        contact_phone: newCompanyData.contact_phone || null,
-        notes: newCompanyData.notes || null,
-        organization_id: currentOrgId,
-      });
+      const { data, error } = await supabase.rpc('create_client_with_onboarding' as never, {
+        p_organization_id: currentOrgId,
+        p_name: newCompanyData.name.trim(),
+        p_contact_name: newCompanyData.contact_name || null,
+        p_contact_email: newCompanyData.contact_email || null,
+        p_contact_phone: newCompanyData.contact_phone || null,
+        p_notes: newCompanyData.notes || null,
+      } as never);
       if (error) throw error;
+
+      const result = data as { client_id: string } | null;
+      if (!result?.client_id) throw new Error('La empresa se creó pero no llegó su ID');
+
       toast({ title: 'Empresa creada', description: `${newCompanyData.name} ha sido creada exitosamente` });
       setCreateCompanyOpen(false);
-      setNewCompanyData({ name: '', contact_email: '', contact_phone: '', notes: '' });
+      setOnboardingLinkClient({
+        id: result.client_id,
+        name: newCompanyData.name.trim(),
+        contactPhone: newCompanyData.contact_phone || null,
+        contactEmail: newCompanyData.contact_email || null,
+      });
+      setOnboardingLinkOpen(true);
+      setNewCompanyData({ name: '', contact_name: '', contact_email: '', contact_phone: '', notes: '' });
       refetch();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'No se pudo crear la empresa';
@@ -1127,6 +1148,10 @@ export function UnifiedClientsContent() {
               <DialogTitle>Crear Nueva Empresa</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              <p className="text-xs text-muted-foreground bg-muted/50 rounded-sm p-3 -mt-1">
+                Con esto le mandamos un link para que cree su acceso y nos cuente de su marca.
+                No vuelve a escribir lo que pongas aquí.
+              </p>
               <div className="space-y-2">
                 <Label htmlFor="company-name">Nombre de la empresa *</Label>
                 <Input
@@ -1137,7 +1162,16 @@ export function UnifiedClientsContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company-email">Email de contacto</Label>
+                <Label htmlFor="company-contact-name">Nombre del contacto</Label>
+                <Input
+                  id="company-contact-name"
+                  placeholder="Ej: María Pérez"
+                  value={newCompanyData.contact_name}
+                  onChange={(e) => setNewCompanyData(prev => ({ ...prev, contact_name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-email">Correo del contacto</Label>
                 <Input
                   id="company-email"
                   type="email"
@@ -1147,7 +1181,7 @@ export function UnifiedClientsContent() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="company-phone">Teléfono de contacto</Label>
+                <Label htmlFor="company-phone">WhatsApp del contacto</Label>
                 <Input
                   id="company-phone"
                   placeholder="+57 300 123 4567"
@@ -1175,6 +1209,23 @@ export function UnifiedClientsContent() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Link de onboarding — se abre automáticamente tras crear la empresa */}
+        {onboardingLinkClient && currentOrgId && (
+          <OnboardingLinkDialog
+            clientId={onboardingLinkClient.id}
+            clientName={onboardingLinkClient.name}
+            organizationId={currentOrgId}
+            contactPhone={onboardingLinkClient.contactPhone}
+            contactEmail={onboardingLinkClient.contactEmail}
+            open={onboardingLinkOpen}
+            onOpenChange={(open) => {
+              setOnboardingLinkOpen(open);
+              if (!open) setOnboardingLinkClient(null);
+            }}
+            onChanged={() => refetch()}
+          />
+        )}
 
         {/* Create Contact Modal */}
         <CreateContactModal

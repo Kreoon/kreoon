@@ -103,7 +103,6 @@ const Auth = lazyWithRetry(() => import("./pages/Auth"));
 const Content = lazyWithRetry(() => import("./pages/Content"));
 const Creators = lazyWithRetry(() => import("./pages/Creators"));
 const Scripts = lazyWithRetry(() => import("./pages/Scripts"));
-const Clients = lazyWithRetry(() => import("./pages/Clients"));
 const Settings = lazyWithRetry(() => import("./pages/Settings"));
 const Team = lazyWithRetry(() => import("./pages/Team"));
 const CreatorDashboard = lazyWithRetry(

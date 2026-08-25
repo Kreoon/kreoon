@@ -20,11 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { KreoonButton, KreoonBadge } from "@/components/ui/kreoon";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Copy, Check, Link2, RefreshCw, Loader2 } from "lucide-react";
+import { Copy, Check, Link2, RefreshCw, Loader2, MessageCircle, Mail } from "lucide-react";
 
 interface OnboardingLinkDialogProps {
   clientId: string;
@@ -34,6 +33,10 @@ interface OnboardingLinkDialogProps {
   onOpenChange: (open: boolean) => void;
   /** Se llama tras crear o regenerar, para que el padre refresque */
   onChanged?: () => void;
+  /** Teléfono de contacto de la empresa, para el botón de WhatsApp */
+  contactPhone?: string | null;
+  /** Correo de contacto de la empresa, para el botón de enviar por correo */
+  contactEmail?: string | null;
 }
 
 type OnboardingFormStatus = "pending" | "in_progress" | "submitted" | "processed";
@@ -43,6 +46,7 @@ interface OnboardingForm {
   token: string;
   status: OnboardingFormStatus;
   expires_at: string;
+  claimed_at: string | null;
 }
 
 const STATUS_LABELS: Record<OnboardingFormStatus, string> = {
@@ -80,6 +84,37 @@ function useCopyToClipboard() {
   return { copiedKey, copy };
 }
 
+/**
+ * `functions.invoke` no lanza en 4xx/5xx: deja `data` en null y un
+ * FunctionsHttpError cuyo cuerpo hay que abrir a mano. Mismo patron que
+ * `readFunctionError` en `useClientPipeline.ts`.
+ */
+async function readSendError(fnError: unknown): Promise<string> {
+  const context = (fnError as { context?: { json?: () => Promise<unknown> } })?.context;
+  if (context?.json) {
+    try {
+      const body = (await context.json()) as { error?: string; message?: string };
+      if (body?.error === "sin_correo") {
+        return "La empresa no tiene correo registrado";
+      }
+      if (body?.message) return body.message;
+    } catch {
+      /* el cuerpo no era JSON: seguimos al mensaje genérico */
+    }
+  }
+  return "No se pudo enviar el correo";
+}
+
+/** Dígitos de un teléfono para wa.me. Si son 10 y empiezan por 3 (celular
+ * colombiano sin indicativo), se prefija 57. */
+function toWhatsappDigits(phone: string | null | undefined): string {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (digits.length === 10 && digits.startsWith("3")) {
+    return `57${digits}`;
+  }
+  return digits;
+}
+
 export function OnboardingLinkDialog({
   clientId,
   clientName,
@@ -87,13 +122,15 @@ export function OnboardingLinkDialog({
   open,
   onOpenChange,
   onChanged,
+  contactPhone,
+  contactEmail,
 }: OnboardingLinkDialogProps) {
-  const { user } = useAuth();
   const { copiedKey, copy } = useCopyToClipboard();
 
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [confirmRegenOpen, setConfirmRegenOpen] = useState(false);
   const [form, setForm] = useState<OnboardingForm | null>(null);
 
@@ -102,7 +139,7 @@ export function OnboardingLinkDialog({
     try {
       const { data, error } = await supabase
         .from("client_onboarding_forms" as any)
-        .select("id, token, status, expires_at")
+        .select("id, token, status, expires_at, claimed_at")
         .eq("client_id", clientId)
         .eq("organization_id", organizationId)
         .neq("status", "processed")
@@ -132,19 +169,15 @@ export function OnboardingLinkDialog({
   const handleGenerate = async () => {
     setCreating(true);
     try {
-      const { data, error } = await supabase
-        .from("client_onboarding_forms" as any)
-        .insert({
-          organization_id: organizationId,
-          client_id: clientId,
-          created_by: user?.id ?? null,
-        })
-        .select("id, token, status, expires_at")
-        .single();
+      const { data, error } = await supabase.rpc(
+        "create_onboarding_form_for_client" as any,
+        { p_client_id: clientId } as any,
+      );
 
       if (error) throw error;
-      setForm(data as OnboardingForm);
-      toast.success("Link de onboarding generado");
+      await fetchActiveForm();
+      const reused = (data as { reused?: boolean } | null)?.reused;
+      toast.success(reused ? "Ya había un link activo para este cliente" : "Link de onboarding generado");
       onChanged?.();
     } catch (error) {
       console.error("Error generando formulario de onboarding:", error);
@@ -165,19 +198,14 @@ export function OnboardingLinkDialog({
 
       if (expireError) throw expireError;
 
-      const { data, error: insertError } = await supabase
-        .from("client_onboarding_forms" as any)
-        .insert({
-          organization_id: organizationId,
-          client_id: clientId,
-          created_by: user?.id ?? null,
-        })
-        .select("id, token, status, expires_at")
-        .single();
+      const { error: rpcError } = await supabase.rpc(
+        "create_onboarding_form_for_client" as any,
+        { p_client_id: clientId } as any,
+      );
 
-      if (insertError) throw insertError;
+      if (rpcError) throw rpcError;
 
-      setForm(data as OnboardingForm);
+      await fetchActiveForm();
       toast.success("Link regenerado. El anterior ya no funciona");
       onChanged?.();
     } catch (error) {
@@ -189,10 +217,48 @@ export function OnboardingLinkDialog({
     }
   };
 
+  const handleSendWhatsapp = () => {
+    if (!form || !contactPhone) return;
+    const digits = toWhatsappDigits(contactPhone);
+    if (!digits) return;
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(whatsappMessage)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleSendEmail = async () => {
+    if (!form) return;
+    setSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("client-onboarding-send", {
+        body: { form_id: form.id },
+      });
+
+      if (error) {
+        const message = await readSendError(error);
+        throw new Error(message);
+      }
+      if (data?.ok === false) {
+        throw new Error(data?.message ?? "No se pudo enviar el correo");
+      }
+
+      toast.success(`Enviado a ${data?.sent_to ?? contactEmail ?? "el correo de la empresa"}`);
+    } catch (error) {
+      console.error("Error enviando el link de onboarding por correo:", error);
+      const message = error instanceof Error ? error.message : "No se pudo enviar el correo";
+      toast.error(message);
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const onboardingUrl = form ? `${window.location.origin}/onboarding/${form.token}` : "";
   const whatsappMessage = form
-    ? `¡Hola! Para arrancar con el contenido de ${clientName} necesitamos que completes unos datos. Te toma unos 10 minutos y se va guardando solo, así que puedes cerrarlo y seguir después cuando quieras, sin perder nada. Aquí está tu link: ${onboardingUrl}`
+    ? `¡Hola! Para arrancar con el contenido de ${clientName} te dejo tu link de Kreoon. Ahí creas tu acceso (1 minuto) y nos cuentas de tu marca y tu producto. Se guarda solo, puedes cerrarlo y seguir después: ${onboardingUrl}`
     : "";
+
+  const whatsappDigits = toWhatsappDigits(contactPhone);
+  const canSendWhatsapp = !!form && whatsappDigits.length > 0;
+  const canSendEmail = !!form && !!contactEmail;
 
   return (
     <>
@@ -230,9 +296,14 @@ export function OnboardingLinkDialog({
           ) : (
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-2">
-                <KreoonBadge variant={STATUS_VARIANTS[form.status]}>
-                  {STATUS_LABELS[form.status]}
-                </KreoonBadge>
+                <div className="flex items-center gap-1.5">
+                  <KreoonBadge variant={STATUS_VARIANTS[form.status]}>
+                    {STATUS_LABELS[form.status]}
+                  </KreoonBadge>
+                  {form.claimed_at && (
+                    <KreoonBadge variant="success">Cuenta creada</KreoonBadge>
+                  )}
+                </div>
                 <span className="text-xs text-kreoon-text-muted">
                   Vence el{" "}
                   {format(new Date(form.expires_at), "d 'de' MMMM, yyyy", { locale: es })}
@@ -294,6 +365,36 @@ export function OnboardingLinkDialog({
                     </>
                   )}
                 </KreoonButton>
+              </div>
+
+              {/* Envío directo */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-kreoon-text-muted">
+                  Enviar directamente
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <KreoonButton
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSendWhatsapp}
+                    disabled={!canSendWhatsapp}
+                    title={canSendWhatsapp ? undefined : "La empresa no tiene WhatsApp registrado"}
+                  >
+                    <MessageCircle className="h-3.5 w-3.5" />
+                    Enviar por WhatsApp
+                  </KreoonButton>
+                  <KreoonButton
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSendEmail}
+                    loading={sendingEmail}
+                    disabled={!canSendEmail}
+                    title={canSendEmail ? undefined : "La empresa no tiene correo registrado"}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    Enviar por correo
+                  </KreoonButton>
+                </div>
               </div>
 
               <KreoonButton

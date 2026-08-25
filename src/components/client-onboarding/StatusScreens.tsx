@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Loader2, Rocket } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { KreoonButton } from '@/components/ui/kreoon';
 
 /**
  * Pantallas de estado del onboarding público: cargando, enlace no disponible y
@@ -79,7 +80,18 @@ export function PantallaEnlaceNoDisponible({ mensaje }: { mensaje: string }) {
   );
 }
 
-export function PantallaExito({ orgName }: { orgName?: string | null }) {
+export function PantallaExito({
+  orgName,
+  tienePortal = false,
+}: {
+  orgName?: string | null;
+  /**
+   * true cuando el cliente reclamó su cuenta en el paso 0: tiene sesión y
+   * puede seguir su proceso desde el portal. false = comportamiento anterior
+   * (formulario enviado sin cuenta, cierre simple de la pestaña).
+   */
+  tienePortal?: boolean;
+}) {
   return (
     <Fondo>
       <Tarjeta>
@@ -92,19 +104,44 @@ export function PantallaExito({ orgName }: { orgName?: string | null }) {
           <CheckCircle2 className="h-9 w-9 text-emerald-400" />
         </motion.div>
 
-        <h1 className="mb-3 text-2xl font-semibold text-kreoon-text-primary">
-          Recibimos todo 🚀
-        </h1>
-        <p className="text-base leading-relaxed text-kreoon-text-secondary">
-          Tu estratega te contacta en el grupo.
-        </p>
+        {tienePortal ? (
+          <>
+            <h1 className="mb-3 text-2xl font-semibold text-kreoon-text-primary">
+              Recibimos todo 🚀
+            </h1>
+            <p className="text-base leading-relaxed text-kreoon-text-secondary">
+              Ya arrancamos a construir el ADN de tu marca. Desde tu portal vas
+              a poder seguir cada paso, aprobar guiones y ver tus videos.
+            </p>
 
-        <div className="mt-6 rounded-sm border border-kreoon-border bg-kreoon-purple-500/5 p-4">
-          <p className="text-xs leading-relaxed text-kreoon-text-muted">
-            Ya puedes cerrar esta página. Si necesitas cambiar algo, escríbenos
-            por WhatsApp{orgName ? ` y el equipo de ${orgName} lo ajusta` : ''}.
-          </p>
-        </div>
+            <KreoonButton
+              variant="primary"
+              size="lg"
+              className="mt-6 min-h-[48px] w-full"
+              onClick={() => window.location.assign('/client-dashboard')}
+            >
+              <Rocket className="mr-2 h-4 w-4" />
+              Ir a mi portal
+            </KreoonButton>
+          </>
+        ) : (
+          <>
+            <h1 className="mb-3 text-2xl font-semibold text-kreoon-text-primary">
+              Recibimos todo 🚀
+            </h1>
+            <p className="text-base leading-relaxed text-kreoon-text-secondary">
+              Tu estratega te contacta en el grupo.
+            </p>
+
+            <div className="mt-6 rounded-sm border border-kreoon-border bg-kreoon-purple-500/5 p-4">
+              <p className="text-xs leading-relaxed text-kreoon-text-muted">
+                Ya puedes cerrar esta página. Si necesitas cambiar algo,
+                escríbenos por WhatsApp
+                {orgName ? ` y el equipo de ${orgName} lo ajusta` : ''}.
+              </p>
+            </div>
+          </>
+        )}
       </Tarjeta>
     </Fondo>
   );

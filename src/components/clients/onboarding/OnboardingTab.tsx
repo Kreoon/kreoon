@@ -31,6 +31,8 @@ interface OnboardingTabProps {
   clientId: string;
   clientName: string;
   organizationId: string | null | undefined;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
 }
 
 type EstadoForm = 'pending' | 'in_progress' | 'submitted' | 'processed';
@@ -41,6 +43,7 @@ interface FormRow {
   form_data: OnboardingFormData;
   submitted_at: string | null;
   processed_at: string | null;
+  claimed_at: string | null;
   processing: {
     pasos?: Record<
       string,
@@ -70,12 +73,15 @@ const NOMBRE_PASO: Record<string, string> = {
   cliente: 'Datos del cliente',
   invitacion: 'Invitación al portal',
   adn: 'ADN del producto',
+  pipeline: 'Proceso automático (ADN → estrategia)',
 };
 
 export function OnboardingTab({
   clientId,
   clientName,
   organizationId,
+  contactPhone,
+  contactEmail,
 }: OnboardingTabProps) {
   const { roles } = useAuth();
   const [form, setForm] = useState<FormRow | null>(null);
@@ -94,7 +100,7 @@ export function OnboardingTab({
     try {
       const { data, error } = await supabase
         .from('client_onboarding_forms')
-        .select('id, status, form_data, submitted_at, processed_at, processing')
+        .select('id, status, form_data, submitted_at, processed_at, claimed_at, processing')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -172,6 +178,11 @@ export function OnboardingTab({
           <KreoonBadge variant={VARIANTE_ESTADO[estado]} size="sm">
             {ETIQUETA_ESTADO[estado]}
           </KreoonBadge>
+          {form?.claimed_at && (
+            <KreoonBadge variant="success" size="sm">
+              Cuenta creada
+            </KreoonBadge>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -186,15 +197,20 @@ export function OnboardingTab({
           </KreoonButton>
 
           {estado === 'submitted' && (
-            <KreoonButton
-              variant="primary"
-              size="sm"
-              onClick={procesar}
-              loading={procesando}
-            >
-              <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
-              Procesar onboarding
-            </KreoonButton>
+            <div className="flex flex-col items-end gap-1">
+              <KreoonButton
+                variant="primary"
+                size="sm"
+                onClick={procesar}
+                loading={procesando}
+              >
+                <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
+                Procesar ahora
+              </KreoonButton>
+              <span className="text-[11px] text-muted-foreground">
+                Normalmente se procesa solo al enviar el formulario.
+              </span>
+            </div>
           )}
 
           {estado === 'processed' && (
@@ -204,7 +220,7 @@ export function OnboardingTab({
               onClick={procesar}
               loading={procesando}
             >
-              Reintentar procesamiento
+              Reprocesar
             </KreoonButton>
           )}
         </div>
@@ -257,6 +273,8 @@ export function OnboardingTab({
           clientId={clientId}
           clientName={clientName}
           organizationId={organizationId}
+          contactPhone={contactPhone}
+          contactEmail={contactEmail}
           open={linkAbierto}
           onOpenChange={setLinkAbierto}
           onChanged={cargar}

@@ -2416,6 +2416,31 @@ Deno.serve(async (req) => {
         return json(req, { error: "client_not_found" }, 404);
       }
 
+      // El formulario tiene que estar ENVIADO: sin esto el run arrancaba el ADN
+      // con un formulario en `pending` (form_data vacio) y quedaba en error
+      // "sin datos suficientes". Verificado en la auditoria del 2026-08-24.
+      if (formId) {
+        const { data: formulario } = await admin
+          .from("client_onboarding_forms")
+          .select("status")
+          .eq("id", formId)
+          .maybeSingle();
+        if (!formulario) {
+          return json(req, { error: "form_not_found" }, 404);
+        }
+        if (!["submitted", "processed"].includes(formulario.status)) {
+          return json(
+            req,
+            {
+              error: "form_not_submitted",
+              message: "El formulario de onboarding todavía no fue enviado.",
+              status: formulario.status,
+            },
+            409,
+          );
+        }
+      }
+
       // Idempotencia: UNIQUE(client_id). Si ya existe se devuelve el run vivo.
       const { data: existente } = await admin
         .from("client_pipeline_runs").select("*").eq("client_id", clientId).maybeSingle();

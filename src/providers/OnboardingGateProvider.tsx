@@ -13,6 +13,11 @@ const EXEMPT_ROUTES = [
   '/data-deletion',
 ];
 
+// Wizard público de onboarding de clientes (`/onboarding/:token`, token = 64
+// chars hex). NO cubre `/onboarding/profile` (ruta distinta, sí debe pasar
+// por el gate normal).
+const ONBOARDING_WIZARD_ROUTE = /^\/onboarding\/[a-f0-9]{64}$/;
+
 // Rutas públicas que no requieren autenticación
 const PUBLIC_ROUTES = [
   '/',
@@ -52,6 +57,13 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
 
     // Rutas explícitamente exentas
     if (EXEMPT_ROUTES.some(route => path.startsWith(route))) {
+      return true;
+    }
+
+    // Wizard público de onboarding de clientes: el gate Nova no debe
+    // aparecer sobre este formulario aunque el cliente ya tenga sesión
+    // (se la crea el paso 0 "Tu acceso" del propio wizard).
+    if (ONBOARDING_WIZARD_ROUTE.test(path)) {
       return true;
     }
 

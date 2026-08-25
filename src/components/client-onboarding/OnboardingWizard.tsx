@@ -3,13 +3,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Building2, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StepIndicator } from '@/components/auth/StepIndicator';
+import { supabase } from '@/integrations/supabase/client';
 import {
   isWellFormedToken,
   loadOnboarding,
   saveSection,
   submitFinal,
+  type LegalDocument,
+  type OnboardingAccount,
   type OnboardingBranding,
 } from './api';
+import { PasoAcceso } from './PasoAcceso';
 import {
   PantallaCargando,
   PantallaEnlaceNoDisponible,
@@ -29,12 +33,17 @@ import {
   PasoProducto,
 } from './steps';
 
-type Fase = 'cargando' | 'formulario' | 'error' | 'exito';
+type Fase = 'cargando' | 'acceso' | 'formulario' | 'error' | 'exito';
 
 const MENSAJE_GENERICO = 'Pídele un enlace nuevo a la persona que te contactó.';
 
 /**
  * Wizard público de onboarding de clientes.
+ *
+ * Paso 0 ("Tu acceso"): si el cliente todavía no reclamó su cuenta para este
+ * enlace, primero crea usuario + contraseña y acepta los documentos legales
+ * (`PasoAcceso`) antes de ver el formulario. Si `account.claimed` ya viene en
+ * true (reclamada en una visita anterior), este paso se salta.
  *
  * Guardado automático por paso: al pasar la validación de un paso se persiste
  * esa sección con `client-onboarding-submit` antes de avanzar. El cliente puede
@@ -46,6 +55,9 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
   const [mensajeError, setMensajeError] = useState(MENSAJE_GENERICO);
   const [branding, setBranding] = useState<OnboardingBranding | null>(null);
   const [formData, setFormData] = useState<OnboardingFormData>({});
+  const [account, setAccount] = useState<OnboardingAccount | null>(null);
+  const [legalDocuments, setLegalDocuments] = useState<LegalDocument[]>([]);
+  const [claimed, setClaimed] = useState(false);
   const [pasoActual, setPasoActual] = useState(0);
   const [guardando, setGuardando] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
@@ -72,10 +84,19 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
 
       setBranding(resultado.data.branding);
       setFormData(resultado.data.formData ?? {});
+      setAccount(resultado.data.account);
+      setLegalDocuments(resultado.data.legalDocuments ?? []);
+      setClaimed(resultado.data.account.claimed);
 
       // Si ya lo había enviado, se muestra la pantalla de éxito en vez del form.
       if (resultado.data.status === 'submitted') {
         setFase('exito');
+        return;
+      }
+
+      // Si el cliente aún no tiene cuenta para este link, primero la crea.
+      if (!resultado.data.account.claimed) {
+        setFase('acceso');
         return;
       }
 
@@ -97,7 +118,33 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
   // Al cambiar de paso, subir al inicio (en móvil el form es largo).
   useEffect(() => {
     contenedorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [pasoActual]);
+  }, [pasoActual, fase]);
+
+  const manejarAccesoCreado = useCallback(
+    async ({ email, password }: { userId: string; email: string; password: string }) => {
+      setClaimed(true);
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error('Tu cuenta quedó creada, pero no pudimos iniciar sesión sola', {
+          description: 'Sigue con el formulario, luego inicia sesión desde /auth.',
+        });
+      } else {
+        toast.success('Listo, tu acceso quedó creado');
+      }
+
+      // Retoma en el primer paso obligatorio que aún esté vacío (mismo cálculo
+      // que en la carga inicial, con los datos ya presentes en el estado).
+      const primerPendiente = STEPS.findIndex(
+        (paso) =>
+          paso.obligatorio &&
+          Object.keys(formData?.[paso.key] ?? {}).length === 0,
+      );
+      setPasoActual(primerPendiente === -1 ? 0 : primerPendiente);
+      setFase('formulario');
+    },
+    [formData],
+  );
 
   const persistirSeccion = useCallback(
     async (seccion: SectionKey, datos: unknown): Promise<boolean> => {
@@ -168,16 +215,20 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
     [persistirSeccion, token],
   );
 
-  const pasosIndicador = useMemo(
-    () => STEPS.map((paso) => ({ label: paso.titulo })),
-    [],
-  );
+  // El indicador de pasos incluye "Tu acceso" al inicio solo mientras ese
+  // paso está pendiente; una vez reclamada la cuenta desaparece.
+  const pasosIndicador = useMemo(() => {
+    const base = STEPS.map((paso) => ({ label: paso.titulo }));
+    return claimed ? base : [{ label: 'Tu acceso' }, ...base];
+  }, [claimed]);
+
+  const indiceIndicador = claimed ? pasoActual : pasoActual + 1;
 
   if (fase === 'cargando') return <PantallaCargando />;
   if (fase === 'error') return <PantallaEnlaceNoDisponible mensaje={mensajeError} />;
-  if (fase === 'exito') return <PantallaExito orgName={branding?.orgName} />;
+  if (fase === 'exito') return <PantallaExito orgName={branding?.orgName} tienePortal={claimed} />;
 
-  const paso = STEPS[pasoActual];
+  const paso = fase === 'formulario' ? STEPS[pasoActual] : null;
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-kreoon-bg-primary">
@@ -226,81 +277,105 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
         </header>
 
         <div className="mb-6">
-          <StepIndicator steps={pasosIndicador} currentStep={pasoActual} />
+          <StepIndicator steps={pasosIndicador} currentStep={indiceIndicador} />
         </div>
 
         <div className="glass-card p-4 sm:p-6">
-          <div className="mb-5">
-            <h1 className="flex items-center gap-2 text-lg font-semibold text-kreoon-text-primary sm:text-xl">
-              <span className="text-2xl">{paso.emoji}</span>
-              {paso.titulo}
-            </h1>
-            <p className="mt-1 text-sm text-kreoon-text-secondary">{paso.ayuda}</p>
-            {!paso.obligatorio && (
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-kreoon-bg-secondary px-2.5 py-1 text-[11px] text-kreoon-text-muted">
-                Puedes saltarte lo que no sepas
-              </span>
-            )}
-          </div>
+          {fase === 'acceso' ? (
+            <>
+              <div className="mb-5">
+                <h1 className="flex items-center gap-2 text-lg font-semibold text-kreoon-text-primary sm:text-xl">
+                  <span className="text-2xl">🔑</span>
+                  Crea tu acceso a Kreoon
+                </h1>
+                <p className="mt-1 text-sm text-kreoon-text-secondary">
+                  Con esta cuenta vas a aprobar guiones y ver tus videos. Toma 1
+                  minuto.
+                </p>
+              </div>
+              <PasoAcceso
+                token={token as string}
+                initialFullName={account?.fullName ?? null}
+                initialEmail={account?.email ?? null}
+                legalDocuments={legalDocuments}
+                onSuccess={manejarAccesoCreado}
+              />
+            </>
+          ) : paso ? (
+            <>
+              <div className="mb-5">
+                <h1 className="flex items-center gap-2 text-lg font-semibold text-kreoon-text-primary sm:text-xl">
+                  <span className="text-2xl">{paso.emoji}</span>
+                  {paso.titulo}
+                </h1>
+                <p className="mt-1 text-sm text-kreoon-text-secondary">{paso.ayuda}</p>
+                {!paso.obligatorio && (
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-kreoon-bg-secondary px-2.5 py-1 text-[11px] text-kreoon-text-muted">
+                    Puedes saltarte lo que no sepas
+                  </span>
+                )}
+              </div>
 
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={paso.key}
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2 }}
-            >
-              {paso.key === 'legal' && (
-                <PasoLegal
-                  initialData={formData.legal ?? {}}
-                  onNext={(datos) => avanzar('legal', datos)}
-                  guardando={guardando}
-                />
-              )}
-              {paso.key === 'equipo' && (
-                <PasoEquipo
-                  initialData={formData.equipo ?? {}}
-                  onNext={(datos) => avanzar('equipo', datos)}
-                  onBack={retroceder}
-                  guardando={guardando}
-                />
-              )}
-              {paso.key === 'marca' && (
-                <PasoMarca
-                  initialData={formData.marca ?? {}}
-                  onNext={(datos) => avanzar('marca', datos)}
-                  onBack={retroceder}
-                  guardando={guardando}
-                />
-              )}
-              {paso.key === 'producto' && (
-                <PasoProducto
-                  initialData={formData.producto ?? {}}
-                  onNext={(datos) => avanzar('producto', datos)}
-                  onBack={retroceder}
-                  guardando={guardando}
-                />
-              )}
-              {paso.key === 'contenido' && (
-                <PasoContenido
-                  initialData={formData.contenido ?? {}}
-                  onNext={(datos) => avanzar('contenido', datos)}
-                  onBack={retroceder}
-                  guardando={guardando}
-                />
-              )}
-              {paso.key === 'logistica' && (
-                <PasoLogistica
-                  initialData={formData.logistica ?? {}}
-                  onNext={enviarTodo}
-                  onBack={retroceder}
-                  guardando={guardando}
-                  resumen={formData}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={paso.key}
+                  initial={{ opacity: 0, x: 16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -16 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {paso.key === 'legal' && (
+                    <PasoLegal
+                      initialData={formData.legal ?? {}}
+                      onNext={(datos) => avanzar('legal', datos)}
+                      guardando={guardando}
+                    />
+                  )}
+                  {paso.key === 'equipo' && (
+                    <PasoEquipo
+                      initialData={formData.equipo ?? {}}
+                      onNext={(datos) => avanzar('equipo', datos)}
+                      onBack={retroceder}
+                      guardando={guardando}
+                    />
+                  )}
+                  {paso.key === 'marca' && (
+                    <PasoMarca
+                      initialData={formData.marca ?? {}}
+                      onNext={(datos) => avanzar('marca', datos)}
+                      onBack={retroceder}
+                      guardando={guardando}
+                    />
+                  )}
+                  {paso.key === 'producto' && (
+                    <PasoProducto
+                      initialData={formData.producto ?? {}}
+                      onNext={(datos) => avanzar('producto', datos)}
+                      onBack={retroceder}
+                      guardando={guardando}
+                    />
+                  )}
+                  {paso.key === 'contenido' && (
+                    <PasoContenido
+                      initialData={formData.contenido ?? {}}
+                      onNext={(datos) => avanzar('contenido', datos)}
+                      onBack={retroceder}
+                      guardando={guardando}
+                    />
+                  )}
+                  {paso.key === 'logistica' && (
+                    <PasoLogistica
+                      initialData={formData.logistica ?? {}}
+                      onNext={enviarTodo}
+                      onBack={retroceder}
+                      guardando={guardando}
+                      resumen={formData}
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </>
+          ) : null}
         </div>
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-kreoon-text-muted">

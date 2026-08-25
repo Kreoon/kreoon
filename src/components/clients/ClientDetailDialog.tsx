@@ -269,6 +269,7 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
         .select('*')
         .eq('client_id', client.id)
         .eq('organization_id', client.organization_id)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -464,6 +465,11 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
               </div>
 
               <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Razón social</Label>
+                <p className="font-medium">{fullClientData?.legal_name || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs flex items-center gap-1">
                   <Mail className="h-3 w-3" /> Email
                 </Label>
@@ -490,8 +496,23 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
               </div>
 
               <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Representante legal</Label>
+                <p className="font-medium">{fullClientData?.legal_representative || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Correo de facturación</Label>
+                <p className="font-medium">{fullClientData?.billing_email || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
                 <Label className="text-muted-foreground text-xs">Categoría</Label>
                 <p className="font-medium">{fullClientData?.category || "—"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Dirección</Label>
+                <p className="font-medium">{fullClientData?.address || "—"}</p>
               </div>
 
               <div className="space-y-2">
@@ -1154,6 +1175,8 @@ export function ClientDetailDialog({ client, open, onOpenChange, onUpdate, initi
               clientId={client.id}
               clientName={client.name}
               organizationId={fullClientData?.organization_id ?? client.organization_id}
+              contactPhone={fullClientData?.contact_phone ?? client.contact_phone}
+              contactEmail={fullClientData?.contact_email ?? client.contact_email}
             />
           </TabsContent>
         </Tabs>

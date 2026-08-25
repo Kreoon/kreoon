@@ -12,11 +12,16 @@
 //   4. pipeline    — crea el run de client_pipeline_runs (pipeline-orchestrator).
 //   5. cierre      — status 'processed' + notifica al staff.
 //
-// DATOS FISCALES: razón social, NIT, dirección fiscal y representante NO se
-// copian a `clients`. `clients.is_public` tiene DEFAULT true y existe la
-// política "Anyone can view public client profiles" (TO anon), así que copiarlos
-// los expondría. Viven solo en client_onboarding_forms. Además este paso pone
-// is_public = false en el cliente onboardeado.
+// DATOS FISCALES: razón social, documento, dirección fiscal, representante y
+// correo de facturación SÍ se copian a `clients` (columnas legal_name,
+// document_type/document_number, address, legal_representative, billing_email).
+// Antes no se copiaban porque `clients` era legible por anon vía la política
+// "Anyone can view public client profiles" (is_public = true). Esa política ya
+// no existe: 20260812080000_fix_clients_is_public_leak.sql la eliminó y dejó lo
+// público en la vista `public_client_profiles`, que solo expone columnas de
+// marketing. Aun así este paso sigue poniendo is_public = false.
+// El objetivo del volcado es que la pestaña Info de la empresa quede completa
+// sin que nadie retranscriba nada a mano.
 //
 // PRODUCTO: no se crea la fila de `products` acá. `generate-product-dna` ya la
 // crea ella misma al terminar (INSERT incondicional, con los datos de IA ya
@@ -25,6 +30,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
+import { volcarFormularioAClients } from "../_shared/client-onboarding.ts";
 
 /** `EdgeRuntime.waitUntil` lo expone el runtime de Supabase, no los tipos de
  *  Deno. Retiene los disparos que no se esperan para que el runtime no los
@@ -192,53 +198,14 @@ Deno.serve(async (req) => {
   const pasos: Record<string, Sb> = { ...pasosPrevios };
   const ahora = () => new Date().toISOString();
 
-  // ── Paso 1: actualizar el cliente (sin datos fiscales) ───────────────────
-  try {
-    const equipo = (fd.equipo ?? {}) as Record<string, unknown>;
-    const aprobador = (equipo.aprobador ?? {}) as Record<string, unknown>;
-    const legal = (fd.legal ?? {}) as Record<string, unknown>;
-    const marca = (fd.marca ?? {}) as Record<string, unknown>;
-    const prod = (fd.producto ?? {}) as Record<string, unknown>;
-
-    const texto = (v: unknown) =>
-      typeof v === "string" && v.trim() ? v.trim() : null;
-
-    // Resumen corto para `notes`. Nada fiscal.
-    const notas = [
-      texto(prod.nombre) ? `Producto: ${texto(prod.nombre)}` : null,
-      texto(prod.precio) ? `Precio: ${texto(prod.precio)}` : null,
-      texto(marca.tono_deseado) ? `Tono: ${texto(marca.tono_deseado)}` : null,
-    ].filter(Boolean).join(" · ");
-
-    const cambios: Record<string, unknown> = {
-      contact_email: texto(aprobador.correo) ?? texto(equipo.correo_portal),
-      contact_phone: texto(aprobador.celular),
-      whatsapp_phone: texto(aprobador.celular),
-      main_contact: texto(aprobador.nombre),
-      instagram: texto(marca.instagram),
-      tiktok: texto(marca.tiktok),
-      website: texto(marca.website),
-      // Ciudad y país del cliente son datos de contacto, no fiscales.
-      city: texto(legal.ciudad),
-      country: texto(legal.pais),
-      notes: notas || null,
-      // El cliente onboardeado deja de ser un perfil público.
-      is_public: false,
-    };
-    // No pisar con null lo que ya tenga cargado el admin.
-    for (const k of Object.keys(cambios)) {
-      if (cambios[k] === null && k !== "is_public") delete cambios[k];
-    }
-
-    const { error } = await admin.from("clients").update(cambios).eq(
-      "id",
-      form.client_id,
-    );
-    if (error) throw new Error(error.message);
-
-    pasos.cliente = { ok: true, en: ahora(), detalle: "Datos de contacto y marca actualizados; is_public en false." };
-  } catch (e) {
-    pasos.cliente = { ok: false, en: ahora(), detalle: String((e as Error).message) };
+  // ── Paso 1: ficha de la empresa (volcado compartido con -submit) ─────────
+  // Desde 2026-08-24 el envio final del formulario ya vuelca solo; aca se
+  // repite por si el admin reprocesa tras una correccion del cliente.
+  {
+    const volcado = await volcarFormularioAClients(admin, form.client_id, fd);
+    pasos.cliente = volcado.ok
+      ? { ok: true, en: ahora(), detalle: volcado.detalle }
+      : { ok: false, en: ahora(), detalle: volcado.error };
   }
 
   // ── Paso 2: invitación al portal (delega, ya es idempotente) ─────────────

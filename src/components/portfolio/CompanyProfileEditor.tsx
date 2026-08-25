@@ -27,32 +27,7 @@ import {
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-
-const COMPANY_CATEGORIES = [
-  { value: 'productos_digitales', label: 'Productos Digitales' },
-  { value: 'bienestar', label: 'Bienestar' },
-  { value: 'comunidad', label: 'Comunidad' },
-  { value: 'perfume', label: 'Perfume' },
-  { value: 'vehicular', label: 'Vehicular' },
-  { value: 'hogar', label: 'Hogar' },
-  { value: 'juguetes', label: 'Juguetes' },
-  { value: 'suplementos', label: 'Suplementos' },
-  { value: 'belleza', label: 'Belleza' },
-  { value: 'cosmeticos', label: 'Cosméticos' },
-  { value: 'educacion', label: 'Educación' },
-  { value: 'tecnologia', label: 'Tecnología' },
-  { value: 'saas', label: 'SaaS' },
-  { value: 'otro', label: 'Otro' },
-];
-
-const DOCUMENT_TYPES = [
-  { value: 'nit', label: 'NIT (Colombia)' },
-  { value: 'ein', label: 'EIN (USA)' },
-  { value: 'cedula', label: 'Cédula' },
-  { value: 'rut', label: 'RUT' },
-  { value: 'rfc', label: 'RFC (México)' },
-  { value: 'otro', label: 'Otro' },
-];
+import { COMPANY_CATEGORIES, DOCUMENT_TYPES } from '@/lib/companyCatalogs';
 
 interface CompanyData {
   name: string;
@@ -66,6 +41,9 @@ interface CompanyData {
   portfolio_url: string | null;
   document_type: string | null;
   document_number: string | null;
+  legal_name: string | null;
+  legal_representative: string | null;
+  billing_email: string | null;
   main_contact: string | null;
   contact_phone: string | null;
   contact_email: string | null;
@@ -110,6 +88,9 @@ export function CompanyProfileEditor({
   // Document
   const [documentType, setDocumentType] = useState('');
   const [documentNumber, setDocumentNumber] = useState('');
+  const [legalName, setLegalName] = useState('');
+  const [legalRepresentative, setLegalRepresentative] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
   
   // Contact
   const [mainContact, setMainContact] = useState('');
@@ -144,6 +125,9 @@ export function CompanyProfileEditor({
       setLogoUrl(currentData.logo_url || null);
       setDocumentType(currentData.document_type || '');
       setDocumentNumber(currentData.document_number || '');
+      setLegalName(currentData.legal_name || '');
+      setLegalRepresentative(currentData.legal_representative || '');
+      setBillingEmail(currentData.billing_email || '');
       setMainContact(currentData.main_contact || '');
       setContactPhone(currentData.contact_phone || '');
       setContactEmail(currentData.contact_email || '');
@@ -321,6 +305,9 @@ export function CompanyProfileEditor({
           logo_url: finalLogoUrl,
           document_type: documentType.trim(),
           document_number: documentNumber.trim(),
+          legal_name: legalName.trim() || null,
+          legal_representative: legalRepresentative.trim() || null,
+          billing_email: billingEmail.trim() || null,
           main_contact: mainContact.trim(),
           contact_phone: contactPhone.trim(),
           contact_email: contactEmail.trim(),
@@ -508,6 +495,37 @@ export function CompanyProfileEditor({
                     value={documentNumber}
                     onChange={(e) => setDocumentNumber(e.target.value)}
                     placeholder="Ej: 900123456-1 o NA"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="legalName">Razón social</Label>
+                  <Input
+                    id="legalName"
+                    value={legalName}
+                    onChange={(e) => setLegalName(e.target.value)}
+                    placeholder="Comercializadora ACME S.A.S."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="legalRepresentative">Representante legal</Label>
+                  <Input
+                    id="legalRepresentative"
+                    value={legalRepresentative}
+                    onChange={(e) => setLegalRepresentative(e.target.value)}
+                    placeholder="Quién firma el contrato"
+                  />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="billingEmail">Correo de facturación</Label>
+                  <Input
+                    id="billingEmail"
+                    type="email"
+                    value={billingEmail}
+                    onChange={(e) => setBillingEmail(e.target.value)}
+                    placeholder="contabilidad@empresa.com"
                   />
                 </div>
               </div>

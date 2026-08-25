@@ -11,8 +11,10 @@
 //                                 y arranca pipeline-orchestrator (accion
 //                                 "start") en la PRIMERA transicion a submitted.
 //
-// El submit final NO toca la tabla `clients`. El volcado de los datos a
-// clients/products es un paso manual posterior del admin (status -> processed).
+// El submit final SI vuelca los datos a `clients` (volcarFormularioAClients,
+// compartido con client-onboarding-process). Desde 2026-08-24 el onboarding
+// es automatico de punta a punta: el boton "Procesar" del panel queda como
+// reproceso manual. La fila de `products` sigue creandola el pipeline.
 //
 // Arranque del pipeline: acá no hay sesion de usuario (formulario publico sin
 // login), asi que se invoca con el service role -- `start` ya lo acepta como
@@ -32,6 +34,7 @@ import {
   MAX_PAYLOAD_BYTES,
   sanitizeDeep,
   VALID_SECTIONS,
+  volcarFormularioAClients,
 } from "../_shared/client-onboarding.ts";
 
 /** Limite de escrituras por token+IP: 60 cada 10 min (hay autosave por seccion). */
@@ -235,6 +238,19 @@ Deno.serve(async (req) => {
     if (updateError) {
       console.error("[client-onboarding-submit] error en submit final:", updateError.message);
       return jsonResponse(req, { error: "update_failed" }, 500);
+    }
+
+    // Volcado automatico a la ficha de la empresa. Antes era el paso 1 manual
+    // de client-onboarding-process ("Procesar onboarding"); ahora el envio lo
+    // hace solo y el boton del panel queda para reprocesar. Idempotente: se
+    // repite en cada reenvio para que las correcciones del cliente lleguen.
+    const volcado = await volcarFormularioAClients(
+      supabase,
+      form.client_id,
+      (form.form_data ?? {}) as Record<string, unknown>,
+    );
+    if (!volcado.ok) {
+      console.error("[client-onboarding-submit] volcado a clients fallo:", volcado.error);
     }
 
     // Solo se notifica en la PRIMERA transicion a submitted, para que un
