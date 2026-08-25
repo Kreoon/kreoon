@@ -413,6 +413,7 @@ export function useClientPipeline(clientId: string | null) {
         .from('content')
         .select('id, title, script, status, notes, created_at')
         .eq('client_id', clientId)
+        .is('deleted_at', null)
         .in('status', SCRIPT_STATUSES)
         .order('created_at', { ascending: true });
       if (requestId !== requestRef.current) return;

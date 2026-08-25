@@ -2,6 +2,8 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  CATEGORIAS_EMPRESA,
+  TIPOS_DOCUMENTO,
   TIPOS_OFERTA,
   type OnboardingFormData,
 } from '@/components/client-onboarding/schemas';
@@ -71,13 +73,26 @@ export function OnboardingResponseView({
         <TabsContent value="legal" className="mt-4">
           <Seccion titulo="Datos de la empresa" emoji="🏢">
             <Campo etiqueta="Razón social" valor={legal?.razon_social} />
-            <Campo etiqueta="NIT o identificación fiscal" valor={legal?.nit} />
+            <Campo
+              etiqueta="Tipo de documento"
+              valor={
+                TIPOS_DOCUMENTO.find((t) => t.value === legal?.tipo_documento)?.label
+              }
+            />
+            <Campo etiqueta="Número del documento" valor={legal?.nit} />
             <Campo etiqueta="Representante legal" valor={legal?.representante} />
             <Campo etiqueta="Correo del representante" valor={legal?.correo_representante} />
             <Campo etiqueta="Dirección fiscal" valor={legal?.direccion_fiscal} />
             <Campo etiqueta="Ciudad" valor={legal?.ciudad} />
             <Campo etiqueta="País" valor={legal?.pais} />
             <Campo etiqueta="Correo para facturas" valor={legal?.correo_facturacion} />
+            <Campo
+              etiqueta="Categoría"
+              valor={
+                CATEGORIAS_EMPRESA.find((c) => c.value === legal?.categoria)?.label
+              }
+            />
+            <Campo etiqueta="Descripción de la empresa" valor={legal?.descripcion} multilinea />
           </Seccion>
         </TabsContent>
 
@@ -102,6 +117,8 @@ export function OnboardingResponseView({
           <Seccion titulo="Redes y presencia" emoji="✨">
             <Campo etiqueta="Instagram" valor={marca?.instagram} />
             <Campo etiqueta="TikTok" valor={marca?.tiktok} />
+            <Campo etiqueta="Facebook" valor={marca?.facebook} />
+            <Campo etiqueta="LinkedIn" valor={marca?.linkedin} />
             <Campo etiqueta="Página web" valor={marca?.website} />
           </Seccion>
           <Seccion titulo="Historia y tono" emoji="✨">

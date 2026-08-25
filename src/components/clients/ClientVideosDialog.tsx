@@ -220,6 +220,7 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
       .from('content')
       .select('id, title, status, deadline, created_at, updated_at, delivered_at, approved_at, creator_id, editor_id, product_id, client_package_id')
       .eq('client_id', clientId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (!data?.length) { setContent([]); setLoading(false); return; }
@@ -261,6 +262,13 @@ export function ClientVideosDialog({ clientId, clientName, open, onOpenChange }:
 
           if (eventType === 'DELETE') {
             setContent(prev => prev.filter(c => c.id !== oldRow.id));
+            return;
+          }
+
+          // Soft delete: llega como UPDATE con deleted_at, no como DELETE.
+          // Sin esto la tarjeta seguiría mostrando un item que el kanban ya oculta.
+          if (newRow?.deleted_at) {
+            setContent(prev => prev.filter(c => c.id !== newRow.id));
             return;
           }
 

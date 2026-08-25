@@ -6,7 +6,7 @@ import { z } from 'zod';
  * Reglas de obligatoriedad (definidas con Alexander):
  *   - Pasos 1 (legal), 2 (equipo) y 4 (producto) son obligatorios completos.
  *   - Excepciones opcionales dentro de esos pasos: correo_facturacion,
- *     promociones y testimonios.
+ *     descripcion, promociones y testimonios.
  *   - Pasos 3 (marca), 5 (contenido) y 6 (logística) son enteramente opcionales.
  *
  * El backend (`_shared/client-onboarding.ts`) valida un subconjunto más chico
@@ -49,8 +49,46 @@ const tresOpcionales = z
 // ---------------------------------------------------------------------------
 // Paso 1 — Legal y facturación (obligatorio)
 // ---------------------------------------------------------------------------
+
+/**
+ * Tipos de documento fiscal. Los `value` son EXACTAMENTE los de
+ * `DOCUMENT_TYPES` en `CompanyProfileEditor.tsx` (columna
+ * `clients.document_type`), para que `client-onboarding-process` pueda volcar
+ * el valor tal cual, sin tabla de traducción.
+ */
+export const TIPOS_DOCUMENTO = [
+  { value: 'nit', label: 'NIT (Colombia)', emoji: '🇨🇴' },
+  { value: 'ein', label: 'EIN (USA)', emoji: '🇺🇸' },
+  { value: 'cedula', label: 'Cédula', emoji: '🪪' },
+  { value: 'rut', label: 'RUT', emoji: '📄' },
+  { value: 'rfc', label: 'RFC (México)', emoji: '🇲🇽' },
+  { value: 'otro', label: 'Otro', emoji: '❓' },
+] as const;
+
+/**
+ * Categorías de empresa. Mismos `value` que `COMPANY_CATEGORIES` en
+ * `CompanyProfileEditor.tsx` (columna `clients.category`).
+ */
+export const CATEGORIAS_EMPRESA = [
+  { value: 'productos_digitales', label: 'Productos digitales', emoji: '💾' },
+  { value: 'bienestar', label: 'Bienestar', emoji: '🧘' },
+  { value: 'comunidad', label: 'Comunidad', emoji: '🤝' },
+  { value: 'perfume', label: 'Perfumes', emoji: '🌸' },
+  { value: 'vehicular', label: 'Vehicular', emoji: '🚗' },
+  { value: 'hogar', label: 'Hogar', emoji: '🏠' },
+  { value: 'juguetes', label: 'Juguetes', emoji: '🧸' },
+  { value: 'suplementos', label: 'Suplementos', emoji: '💊' },
+  { value: 'belleza', label: 'Belleza', emoji: '💅' },
+  { value: 'cosmeticos', label: 'Cosméticos', emoji: '💄' },
+  { value: 'educacion', label: 'Educación', emoji: '🎓' },
+  { value: 'tecnologia', label: 'Tecnología', emoji: '💻' },
+  { value: 'saas', label: 'Software / SaaS', emoji: '☁️' },
+  { value: 'otro', label: 'Otro', emoji: '✨' },
+] as const;
+
 export const legalSchema = z.object({
   razon_social: requerido('Escribe la razón social de la empresa'),
+  tipo_documento: requerido('Elige el tipo de documento'),
   nit: requerido('Escribe el NIT o identificación fiscal'),
   representante: requerido('Escribe el nombre del representante legal'),
   correo_representante: correoRequerido('Escribe el correo del representante'),
@@ -58,6 +96,8 @@ export const legalSchema = z.object({
   ciudad: requerido('Escribe la ciudad'),
   pais: requerido('Escribe el país'),
   correo_facturacion: correoOpcional,
+  categoria: requerido('Elige a qué se dedica tu empresa'),
+  descripcion: textoOpcional,
 });
 
 // ---------------------------------------------------------------------------
@@ -82,6 +122,8 @@ export const equipoSchema = z.object({
 export const marcaSchema = z.object({
   instagram: textoOpcional,
   tiktok: textoOpcional,
+  facebook: textoOpcional,
+  linkedin: textoOpcional,
   website: textoOpcional,
   historia: textoOpcional,
   tono_deseado: textoOpcional,

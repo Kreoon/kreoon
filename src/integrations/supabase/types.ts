@@ -8617,6 +8617,7 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          billing_email: string | null
           bio: string | null
           brand_id: string | null
           category: string | null
@@ -8640,6 +8641,8 @@ export type Database = {
           is_public: boolean | null
           is_vip: boolean | null
           lead_source: string | null
+          legal_name: string | null
+          legal_representative: string | null
           linkedin: string | null
           logo_url: string | null
           main_contact: string | null
@@ -8664,6 +8667,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          billing_email?: string | null
           bio?: string | null
           brand_id?: string | null
           category?: string | null
@@ -8687,6 +8691,8 @@ export type Database = {
           is_public?: boolean | null
           is_vip?: boolean | null
           lead_source?: string | null
+          legal_name?: string | null
+          legal_representative?: string | null
           linkedin?: string | null
           logo_url?: string | null
           main_contact?: string | null
@@ -8711,6 +8717,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          billing_email?: string | null
           bio?: string | null
           brand_id?: string | null
           category?: string | null
@@ -8734,6 +8741,8 @@ export type Database = {
           is_public?: boolean | null
           is_vip?: boolean | null
           lead_source?: string | null
+          legal_name?: string | null
+          legal_representative?: string | null
           linkedin?: string | null
           logo_url?: string | null
           main_contact?: string | null

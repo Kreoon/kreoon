@@ -11,6 +11,7 @@ import {
   CampoTriple,
 } from './fields';
 import {
+  CATEGORIAS_EMPRESA,
   contenidoSchema,
   equipoSchema,
   legalSchema,
@@ -20,6 +21,7 @@ import {
   PLATAFORMAS,
   productoSchema,
   requiereEnvio,
+  TIPOS_DOCUMENTO,
   TIPOS_OFERTA,
   type TipoOferta,
   type ContenidoData,
@@ -107,6 +109,7 @@ export function PasoLegal({ initialData, onNext, guardando }: PasoProps<LegalDat
     resolver: zodResolver(legalSchema),
     defaultValues: {
       razon_social: initialData.razon_social ?? '',
+      tipo_documento: initialData.tipo_documento ?? 'nit',
       nit: initialData.nit ?? '',
       representante: initialData.representante ?? '',
       correo_representante: initialData.correo_representante ?? '',
@@ -114,6 +117,8 @@ export function PasoLegal({ initialData, onNext, guardando }: PasoProps<LegalDat
       ciudad: initialData.ciudad ?? '',
       pais: initialData.pais ?? '',
       correo_facturacion: initialData.correo_facturacion ?? '',
+      categoria: initialData.categoria ?? '',
+      descripcion: initialData.descripcion ?? '',
     },
   });
 
@@ -127,10 +132,19 @@ export function PasoLegal({ initialData, onNext, guardando }: PasoProps<LegalDat
           ayuda="El nombre legal de tu empresa, como aparece en el RUT"
           placeholder="Comercializadora ACME S.A.S."
         />
+        <CampoOpciones
+          control={form.control}
+          name="tipo_documento"
+          label="Tipo de documento"
+          ayuda="El documento con el que tu empresa factura"
+          opciones={TIPOS_DOCUMENTO}
+          permitirDeseleccionar={false}
+        />
         <CampoTexto
           control={form.control}
           name="nit"
-          label="NIT o identificación fiscal"
+          label="Número del documento"
+          ayuda="El NIT, EIN, RUT o RFC de tu empresa"
           placeholder="900123456-7"
           inputMode="text"
         />
@@ -177,6 +191,23 @@ export function PasoLegal({ initialData, onNext, guardando }: PasoProps<LegalDat
           type="email"
           inputMode="email"
           placeholder="contabilidad@empresa.com"
+          opcional
+        />
+        <CampoOpciones
+          control={form.control}
+          name="categoria"
+          label="¿A qué se dedica tu empresa?"
+          ayuda="Elige la que más se acerque"
+          opciones={CATEGORIAS_EMPRESA}
+          permitirDeseleccionar={false}
+        />
+        <CampoLargo
+          control={form.control}
+          name="descripcion"
+          label="Descripción corta de la empresa"
+          ayuda="Una o dos frases, como se lo dirías a alguien que no te conoce"
+          placeholder="Vendemos suplementos naturales para deportistas en Colombia"
+          rows={2}
           opcional
         />
         <Navegacion guardando={guardando} />
@@ -283,6 +314,8 @@ export function PasoMarca({
     defaultValues: {
       instagram: initialData.instagram ?? '',
       tiktok: initialData.tiktok ?? '',
+      facebook: initialData.facebook ?? '',
+      linkedin: initialData.linkedin ?? '',
       website: initialData.website ?? '',
       historia: initialData.historia ?? '',
       tono_deseado: initialData.tono_deseado ?? '',
@@ -315,6 +348,22 @@ export function PasoMarca({
             name="tiktok"
             label="TikTok"
             placeholder="@tumarca"
+            opcional
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <CampoTexto
+            control={form.control}
+            name="facebook"
+            label="Facebook"
+            placeholder="facebook.com/tumarca"
+            opcional
+          />
+          <CampoTexto
+            control={form.control}
+            name="linkedin"
+            label="LinkedIn"
+            placeholder="linkedin.com/company/tumarca"
             opcional
           />
         </div>
@@ -818,8 +867,24 @@ export function PasoLogistica({
 
           <BloqueResumen titulo="Tu empresa" emoji="🏢">
             <FilaResumen etiqueta="Razón social" valor={legal?.razon_social} />
-            <FilaResumen etiqueta="NIT" valor={legal?.nit} />
+            <FilaResumen
+              etiqueta="Documento"
+              valor={
+                legal?.nit
+                  ? `${
+                      TIPOS_DOCUMENTO.find((t) => t.value === legal?.tipo_documento)
+                        ?.label ?? 'Documento'
+                    }: ${legal.nit}`
+                  : undefined
+              }
+            />
             <FilaResumen etiqueta="Representante" valor={legal?.representante} />
+            <FilaResumen
+              etiqueta="A qué se dedica"
+              valor={
+                CATEGORIAS_EMPRESA.find((c) => c.value === legal?.categoria)?.label
+              }
+            />
             <FilaResumen
               etiqueta="Ciudad y país"
               valor={[legal?.ciudad, legal?.pais].filter(Boolean).join(', ')}

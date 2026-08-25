@@ -21,7 +21,14 @@ import {
   PasoMarca,
   PasoProducto,
 } from '@/components/client-onboarding/steps';
-import { SCHEMAS, STEPS, type OnboardingFormData, type SectionKey } from '@/components/client-onboarding/schemas';
+import {
+  CATEGORIAS_EMPRESA,
+  SCHEMAS,
+  STEPS,
+  TIPOS_DOCUMENTO,
+  type OnboardingFormData,
+  type SectionKey,
+} from '@/components/client-onboarding/schemas';
 import type { SubmitOnboardingResult } from '@/hooks/useClientPipeline';
 import { DocumentosUploader } from './DocumentosUploader';
 import type { UseClientDocumentsReturn } from '@/hooks/useClientDocuments';
@@ -100,9 +107,15 @@ async function extraerDatosDeTranscripcion(transcripcion: string): Promise<Parti
 
 Devuelve SOLO un JSON (sin texto adicional, sin markdown, sin comentarios) con esta forma EXACTA. Si un dato no se menciona en la transcripción, deja ese campo como cadena vacía "" (o el array de 3 cadenas vacías donde corresponda). No inventes nada que no se haya dicho.
 
-{"legal":{"razon_social":"","nit":"","representante":"","correo_representante":"","direccion_fiscal":"","ciudad":"","pais":"","correo_facturacion":""},"equipo":{"aprobador":{"nombre":"","cargo":"","correo":"","celular":""},"correo_portal":"","miembros_whatsapp":""},"marca":{"instagram":"","tiktok":"","website":"","historia":"","tono_deseado":"","tono_evitar":"","competidores":["","",""],"referentes":["","",""],"restricciones_legales":""},"producto":{"tipo_oferta":"producto","nombre":"","presentaciones":"","componentes":"","beneficios":"","diferenciales":"","precio":"","promociones":"","garantias":"","link_tienda":"","audiencia":{"edad":"","genero":"","pais":"","dolor":""},"objeciones":["","",""],"testimonios":""},"contenido":{"objetivo":"","plataformas":[],"historial_contenido":""}}
+{"legal":{"razon_social":"","tipo_documento":"nit","nit":"","representante":"","correo_representante":"","direccion_fiscal":"","ciudad":"","pais":"","correo_facturacion":"","categoria":"","descripcion":""},"equipo":{"aprobador":{"nombre":"","cargo":"","correo":"","celular":""},"correo_portal":"","miembros_whatsapp":""},"marca":{"instagram":"","tiktok":"","facebook":"","linkedin":"","website":"","historia":"","tono_deseado":"","tono_evitar":"","competidores":["","",""],"referentes":["","",""],"restricciones_legales":""},"producto":{"tipo_oferta":"producto","nombre":"","presentaciones":"","componentes":"","beneficios":"","diferenciales":"","precio":"","promociones":"","garantias":"","link_tienda":"","audiencia":{"edad":"","genero":"","pais":"","dolor":""},"objeciones":["","",""],"testimonios":""},"contenido":{"objetivo":"","plataformas":[],"historial_contenido":""}}
 
 "tipo_oferta" debe ser exactamente "producto", "servicio" o "digital", según lo que se entienda que vende.
+
+"tipo_documento" debe ser exactamente uno de: ${TIPOS_DOCUMENTO.map((t) => t.value).join(', ')}. Si no se dice cuál, deja "nit".
+
+"categoria" debe ser exactamente uno de: ${CATEGORIAS_EMPRESA.map((c) => c.value).join(', ')}. Si no se entiende a qué se dedica, déjalo en "".
+
+"descripcion" es una o dos frases sobre a qué se dedica la empresa, con lo que se haya dicho.
 
 Transcripción:
 """

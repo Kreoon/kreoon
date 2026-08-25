@@ -206,6 +206,7 @@ export const UnifiedContentModule = memo(function UnifiedContentModule({
           client_id,
           organization_id
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       // Apply filters based on mode
