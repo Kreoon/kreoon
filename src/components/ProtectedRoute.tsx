@@ -78,7 +78,7 @@ function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string
 const SOCIAL_ROUTES = ['/marketplace', '/profile', '/settings'];
 
 // Routes that brand members/clients can access (independent brands without org)
-const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/social-hub', '/marketing-ads', '/ad-generator'];
+const CLIENT_ALLOWED_ROUTES = ['/client-dashboard', '/board', '/marketplace', '/wallet', '/planes', '/marketing-ads', '/ad-generator'];
 
 export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRoles, requirePlatformAdmin }: ProtectedRouteProps) {
   const { user, profile, roles: realRoles, activeRole, loading, rolesLoaded, isPlatformAdmin, accountType } = useAuth();
@@ -313,6 +313,21 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     profile?.platform_access_unlocked !== true
   ) {
     return <Navigate to="/unlock-access" replace />;
+  }
+
+  // Módulos vedados para clientes/brand members: no van en su sidebar y
+  // tampoco deben quedar accesibles por URL directa (algunas de estas rutas
+  // usan allowNoRoles o no tienen ProtectedRoute propio, por eso el chequeo
+  // vive aquí en vez de en allowedRoles de cada <Route>).
+  const CLIENT_BLOCKED_ROUTES = ['/social-hub', '/academia', '/scripts'];
+  if (
+    (isClient || isBrandMember) &&
+    !isPlatformAdmin &&
+    !isPlatformRoot &&
+    !isImpersonating &&
+    CLIENT_BLOCKED_ROUTES.some(route => location.pathname.startsWith(route))
+  ) {
+    return <Navigate to="/client-dashboard" replace />;
   }
 
   // Routes that require a company/brand to be set up
