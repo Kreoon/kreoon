@@ -409,3 +409,42 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
 
   return <>{children}</>;
 }
+
+/**
+ * Deja pasar a todo el mundo MENOS a un cliente con sesión.
+ *
+ * Es para las rutas que son públicas a propósito y por eso no pueden ir
+ * envueltas en `ProtectedRoute` (que manda a /auth a quien no tenga sesión):
+ * la home de Academia y su marketplace. Ahí un visitante anónimo debe entrar
+ * —son páginas de captación— pero un cliente logueado no, porque Academia no
+ * es parte de su plan. El resto de `/academia/*` sí pasa por `ProtectedRoute`
+ * o `RequireAcademyAccess`, y para esas ya aplica `CLIENT_BLOCKED_ROUTES`.
+ */
+export function BlockClientsRoute({ children }: { children: ReactNode }) {
+  const { user, profile, roles, loading, rolesLoaded, isPlatformAdmin } = useAuth();
+  const { isImpersonating, effectiveRoles } = useImpersonation();
+  const { isPlatformRoot } = useOrgOwner();
+
+  // Sin sesión es una visita pública: pasa sin esperar a que carguen los roles.
+  if (!user) {
+    return <>{children}</>;
+  }
+
+  if (loading || !rolesLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const rolesToCheck = isImpersonating ? effectiveRoles : roles;
+  const isClient = rolesToCheck.some(r => getPermissionGroup(r) === 'client')
+    || (profile as { active_role?: string } | null)?.active_role === 'client';
+
+  if (isClient && !isPlatformAdmin && !isPlatformRoot && !isImpersonating) {
+    return <Navigate to="/client-dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}

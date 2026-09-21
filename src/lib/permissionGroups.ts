@@ -58,6 +58,15 @@ const ROLE_TO_PERMISSION_GROUP: Record<string, PermissionGroup> = {
   trafficker: 'talent',
   developer: 'talent',
   educator: 'talent',
+
+  // Legacy client roles → client. Sin estas dos entradas caían en el default
+  // 'talent' y la plataforma entera trataba a esos clientes como creadores
+  // (menú de talento, acceso a /scripts, /social-hub y /academia). La
+  // migración 20260515140000 normalizó `organization_members` pero NO
+  // `organization_member_roles`, que es la tabla que useAuth lee como
+  // canónica, así que el rol sigue vivo en producción.
+  brand_manager: 'client',
+  marketing_director: 'client',
 };
 
 /** Get the permission group for any role (base or legacy) */
