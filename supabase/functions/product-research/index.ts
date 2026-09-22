@@ -73,6 +73,7 @@ async function fetchDocumentContent(url: string): Promise<string> {
 }
 
 function repairJsonForParse(str: string): string {
+  // eslint-disable-next-line no-control-regex -- intencional: limpia caracteres de control que rompen JSON.parse en las respuestas de IA
   let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
   // Remove markdown code blocks if present
   s = s.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '');

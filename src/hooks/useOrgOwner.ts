@@ -248,8 +248,9 @@ export function useOrgOwner(): OrgOwnerStatus {
         setOrgBranding(null);
         setOrgTimezone(null);
       } finally {
-        if (cancelled) return;
-        setLoading(false);
+        // Sin `return` dentro del finally: un return ahí descarta cualquier
+        // excepción en vuelo. Mismo efecto, sin romper la propagación.
+        if (!cancelled) setLoading(false);
       }
     };
 

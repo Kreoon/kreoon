@@ -166,18 +166,20 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
     const action = config.ctaAction || 'scroll-portfolio';
 
     switch (action) {
-      case 'scroll-portfolio':
+      case 'scroll-portfolio': {
         const portfolioSection = document.querySelector('[data-block-type="portfolio"]');
         if (portfolioSection) {
           portfolioSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         break;
-      case 'contact':
+      }
+      case 'contact': {
         const contactSection = document.querySelector('[data-block-type="contact"]');
         if (contactSection) {
           contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         break;
+      }
       case 'link':
         if (config.premiumCtaEnabled && config.ctaUrl) {
           window.open(config.ctaUrl, '_blank');

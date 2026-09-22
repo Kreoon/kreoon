@@ -466,7 +466,7 @@ export function BulkGenerationDrawer({ open, onOpenChange, clientId }: Props) {
   const toggleItem = useCallback((id: string, v: boolean) => {
     setSelected(prev => {
       const next = new Set(prev);
-      v ? next.add(id) : next.delete(id);
+      if (v) next.add(id); else next.delete(id);
       return next;
     });
   }, []);

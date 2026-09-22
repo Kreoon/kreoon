@@ -27,6 +27,12 @@ export default function TemplateLibraryPage() {
   const [showPreview, setShowPreview] = useState(false);
   const [showCloneDialog, setShowCloneDialog] = useState(false);
 
+  // Hook adaptador que TemplateExplorer invoca en cada render (ignora los
+  // filtros internos del explorer y usa los de esta página, que es el
+  // comportamiento que ya tenía). Se nombra `use*` para que
+  // react-hooks/rules-of-hooks lo reconozca como hook y no como callback.
+  const usePageTemplates = () => usePublicTemplates(filters);
+
   const handleCategoryChange = (category: TemplateCategory | null) => {
     setFilters(prev => ({ ...prev, category }));
   };
@@ -108,7 +114,7 @@ export default function TemplateLibraryPage() {
         <TemplateExplorer
           filters={filters}
           onTemplateSelect={handleTemplateSelect}
-          useTemplatesHook={() => usePublicTemplates(filters)}
+          useTemplatesHook={usePageTemplates}
         />
       </div>
 

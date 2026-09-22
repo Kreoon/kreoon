@@ -39,6 +39,7 @@ const MAX_OBJECT_KEYS = 100;
  * solo ASCII imprimible y no caracteres de control literales.
  */
 const CONTROL_CHARS = new RegExp(
+  // eslint-disable-next-line no-control-regex -- intencional, ver el comentario de arriba
   "[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]",
   "g",
 );

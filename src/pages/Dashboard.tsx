@@ -416,11 +416,6 @@ export default function Dashboard() {
     checkClientUser();
   }, [orgLoading, currentOrgId, isPlatformRoot, profile, user?.id]);
 
-  // Redirect independent clients to their dedicated dashboard
-  if (isIndependentClient === true) {
-    return <Navigate to="/client-dashboard" replace />;
-  }
-
   // Filters state
   const [filterClientId, setFilterClientId] = useState<string>('all');
   const [filterCreatorId, setFilterCreatorId] = useState<string>('all');
@@ -839,6 +834,14 @@ export default function Dashboard() {
   };
 
   const hasActiveFilters = filterClientId !== 'all' || filterCreatorId !== 'all' || filterEditorId !== 'all' || dateRangeFilter;
+
+  // Redirect independent clients to their dedicated dashboard.
+  // Va aquí, después de TODOS los hooks: cuando isIndependentClient pasaba de
+  // null a true, el return temprano que estaba arriba dejaba de ejecutar los ~26
+  // hooks siguientes y React tiraba "Rendered fewer hooks than expected".
+  if (isIndependentClient === true) {
+    return <Navigate to="/client-dashboard" replace />;
+  }
 
   if (loading) {
     return <DashboardSkeleton />;
