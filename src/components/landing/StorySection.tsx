@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, type MotionValue } from "framer-motion";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -190,31 +190,46 @@ export function StoryStaggerContainer({
       ref={containerRef}
       className={className}
     >
-      {React.Children.map(children, (child, index) => {
-        const delay = index * staggerDelay;
-        const start = Math.min(delay, 0.5);
-        const end = Math.min(delay + 0.3, 0.8);
+      {React.Children.map(children, (child, index) => (
+        <StoryStaggerItem
+          key={index}
+          scrollYProgress={scrollYProgress}
+          delay={index * staggerDelay}
+        >
+          {child}
+        </StoryStaggerItem>
+      ))}
+    </motion.div>
+  );
+}
 
-        const itemY = useTransform(
-          scrollYProgress,
-          [start, end],
-          [80, 0]
-        );
-        const itemOpacity = useTransform(
-          scrollYProgress,
-          [start, end],
-          [0, 1]
-        );
+/**
+ * Cada hijo del stagger, como componente propio.
+ * Los useTransform vivían dentro del React.Children.map: la cantidad de hooks
+ * dependía de la cantidad de hijos, así que agregar o quitar uno rompía el
+ * orden de hooks. Aislarlos en un componente los deja en cantidad fija.
+ */
+function StoryStaggerItem({
+  children,
+  scrollYProgress,
+  delay,
+}: {
+  children: React.ReactNode;
+  scrollYProgress: MotionValue<number>;
+  delay: number;
+}) {
+  const start = Math.min(delay, 0.5);
+  const end = Math.min(delay + 0.3, 0.8);
 
-        return (
-          <motion.div
-            style={{ y: itemY, opacity: itemOpacity }}
-            className="will-change-transform"
-          >
-            {child}
-          </motion.div>
-        );
-      })}
+  const itemY = useTransform(scrollYProgress, [start, end], [80, 0]);
+  const itemOpacity = useTransform(scrollYProgress, [start, end], [0, 1]);
+
+  return (
+    <motion.div
+      style={{ y: itemY, opacity: itemOpacity }}
+      className="will-change-transform"
+    >
+      {children}
     </motion.div>
   );
 }

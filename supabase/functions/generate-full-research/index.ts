@@ -161,6 +161,7 @@ const TOKEN_MAP: Record<string, number> = {
 // ── JSON repair ────────────────────────────────────────────────────────────
 function repairJsonForParse(str: string): string {
   let s = str
+    // eslint-disable-next-line no-control-regex -- intencional: limpia caracteres de control que rompen JSON.parse en las respuestas de IA
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
     .trim();
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");

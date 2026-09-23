@@ -329,7 +329,7 @@ function PollDisplay({
             onClick={() => {
               const next = new Set(selected);
               if (post.poll_allows_multiple) {
-                isSelected ? next.delete(opt.id) : next.add(opt.id);
+                if (isSelected) next.delete(opt.id); else next.add(opt.id);
               } else {
                 next.clear();
                 next.add(opt.id);

@@ -207,7 +207,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
   function toggleExpanded(pkgId: string) {
     setExpandedPkgs(prev => {
       const next = new Set(prev);
-      next.has(pkgId) ? next.delete(pkgId) : next.add(pkgId);
+      if (next.has(pkgId)) next.delete(pkgId); else next.add(pkgId);
       return next;
     });
   }

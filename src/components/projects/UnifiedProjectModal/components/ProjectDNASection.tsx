@@ -54,9 +54,6 @@ interface ProjectDNASectionProps {
 // ============================================================
 
 export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, editing }: ProjectDNASectionProps) {
-  const config = PROJECT_DNA_QUESTIONS[projectType];
-  if (!config) return null;
-
   const hasResponses = Object.values(dnaData.responses).some(v => v?.trim());
   const hasAudio = !!dnaData.audio_url;
   const isComplete = hasResponses || hasAudio;
@@ -64,6 +61,12 @@ export function ProjectDNASection({ projectType, projectId, dnaData, onUpdate, e
   const [isOpen, setIsOpen] = useState(!isComplete);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+
+  // El guard va después de los hooks: si `config` es undefined para un
+  // projectType nuevo, el return temprano de antes se saltaba los tres
+  // useState y rompía el orden de hooks al cambiar de tipo de proyecto.
+  const config = PROJECT_DNA_QUESTIONS[projectType];
+  if (!config) return null;
 
   const updateResponse = (key: string, value: string) => {
     onUpdate({

@@ -5,6 +5,7 @@ import { getPrompt } from "../_shared/prompts/db-prompts.ts";
 // ── JSON repair (from product-research pattern) ───────────────────────
 function repairJsonForParse(str: string): string {
   // Eliminar caracteres de control (excepto \t \n \r) y limpiar markdown fences
+  // eslint-disable-next-line no-control-regex -- intencional: limpia caracteres de control que rompen JSON.parse en las respuestas de IA
   let s = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").trim();
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
 

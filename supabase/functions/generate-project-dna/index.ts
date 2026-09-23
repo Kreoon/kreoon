@@ -9,6 +9,7 @@ import { assertOrgMembership } from "../_shared/assertOrgMembership.ts";
 
 // ── JSON repair ─────────────────────────────────────────────────────────
 function repairJsonForParse(str: string): string {
+  // eslint-disable-next-line no-control-regex -- intencional: limpia caracteres de control que rompen JSON.parse en las respuestas de IA
   let s = str.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "").trim();
   s = s.replace(/^```json?\s*/i, "").replace(/\s*```$/i, "");
 

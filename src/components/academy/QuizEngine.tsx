@@ -425,7 +425,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
               type="button"
               onClick={() => {
                 const next = new Set(sel);
-                checked ? next.delete(opt.id) : next.add(opt.id);
+                if (checked) next.delete(opt.id); else next.add(opt.id);
                 onChange({ selected_option_ids: Array.from(next) });
               }}
               className={cn(
@@ -499,7 +499,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
               type="button"
               onClick={() => {
                 const next = new Set(checked);
-                isChecked ? next.delete(opt.id) : next.add(opt.id);
+                if (isChecked) next.delete(opt.id); else next.add(opt.id);
                 onChange({ self_eval_checked: Array.from(next) });
               }}
               className={cn(

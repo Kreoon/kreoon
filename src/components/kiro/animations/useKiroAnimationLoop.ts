@@ -346,11 +346,12 @@ export function useKiroAnimationLoop({
         pulseBase = 1;
         pulseAmplitude = 0;
         break;
-      case 'working':
+      case 'working': {
         // Parpadeo tipo semáforo
         const workingPhase = (s.antennaTime * 1000) % 400;
         values.antennaPulseOpacity = workingPhase < 200 ? 1 : 0.3;
         return;
+      }
       default:
         pulseSpeed = 3;
         pulseBase = 0.5;
