@@ -156,7 +156,7 @@ function populateBlockContent(
   const { profile, portfolioItems = [], services = [], reviews = [], trustStats } = data;
 
   switch (blockType) {
-    case 'hero_banner':
+    case 'hero_banner': {
       // Determinar el rol/especialidad del creador
       const primaryCategory = profile.categories?.[0] || 'Creador de Contenido';
       const roleText = profile.level
@@ -170,6 +170,7 @@ function populateBlockContent(
         avatarUrl: profile.avatar_url || '',
         coverUrl: profile.banner_url || '',
       };
+    }
 
     case 'about':
       return {
@@ -185,7 +186,7 @@ function populateBlockContent(
         experienceLevel: profile.experience_level || '',
       };
 
-    case 'stats':
+    case 'stats': {
       const statsConfig = templateBlock.config as any;
       const statsItems: Array<{ id: string; label: string; value: string; icon: 'users' | 'star' | 'briefcase' | 'eye' | 'heart' | 'trending' }> = [];
 
@@ -223,6 +224,7 @@ function populateBlockContent(
       }
 
       return { items: statsItems };
+    }
 
     case 'portfolio':
       return {
@@ -251,7 +253,7 @@ function populateBlockContent(
         })),
       };
 
-    case 'pricing':
+    case 'pricing': {
       // Generar paquetes con la estructura que espera PricingBlock
       const pricingPackages = services
         .filter((svc) => svc.price_amount && svc.price_amount > 0)
@@ -310,6 +312,7 @@ function populateBlockContent(
           : undefined,
         packages: pricingPackages.length > 0 ? pricingPackages : defaultPackages,
       };
+    }
 
     case 'reviews':
       return {
@@ -358,7 +361,7 @@ function populateBlockContent(
         ),
       };
 
-    case 'social_links':
+    case 'social_links': {
       const links = profile.social_links || {};
       return {
         items: Object.entries(links)
@@ -369,6 +372,7 @@ function populateBlockContent(
             label: platform.charAt(0).toUpperCase() + platform.slice(1),
           })),
       };
+    }
 
     case 'testimonials':
       return {
@@ -383,7 +387,7 @@ function populateBlockContent(
         })),
       };
 
-    case 'skills':
+    case 'skills': {
       // Usar categorias y content_types como skills
       const skillsFromCategories = (profile.categories || []).map((cat) => ({
         name: cat,
@@ -398,8 +402,9 @@ function populateBlockContent(
         showPercentage: (templateBlock.config as any)?.showPercentage ?? true,
         items: [...skillsFromCategories, ...skillsFromContent].slice(0, 8),
       };
+    }
 
-    case 'video_embed':
+    case 'video_embed': {
       // Buscar primer video del portfolio
       const firstVideo = portfolioItems.find((p) => p.media_type === 'video');
       return {
@@ -410,6 +415,7 @@ function populateBlockContent(
           : '',
         autoplay: false,
       };
+    }
 
     case 'recommended_talent':
       return {

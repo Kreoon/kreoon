@@ -254,7 +254,7 @@ const VideoSlide = memo(function VideoSlide({
               )}
               onClick={(e) => {
                 e.stopPropagation();
-                item.client_username && onClientClick?.(item.client_username);
+                if (item.client_username) onClientClick?.(item.client_username);
               }}
             >
               {item.client_name}

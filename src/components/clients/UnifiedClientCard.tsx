@@ -258,7 +258,7 @@ export function UnifiedClientCard({
           {/* Proyectos — abre tab Campañas del cliente */}
           <div
             className="flex flex-col items-center p-2.5 rounded-sm bg-muted/40 border border-border/50 cursor-pointer hover:bg-blue-500/10 hover:border-blue-500/30 transition-all"
-            onClick={e => { e.stopPropagation(); onOpenProjects ? onOpenProjects(entity) : onClick(); }}
+            onClick={e => { e.stopPropagation(); if (onOpenProjects) onOpenProjects(entity); else onClick(); }}
           >
             <Briefcase className="h-3.5 w-3.5 text-blue-400 mb-1" />
             <span className="font-bold text-lg leading-none text-foreground">{entity.active_projects}</span>
@@ -270,7 +270,7 @@ export function UnifiedClientCard({
           {/* Videos — abre tab Videos del cliente */}
           <div
             className="flex flex-col items-center p-2.5 rounded-sm bg-muted/40 border border-border/50 cursor-pointer hover:bg-purple-500/10 hover:border-purple-500/30 transition-all"
-            onClick={e => { e.stopPropagation(); onOpenVideos ? onOpenVideos(entity) : onClick(); }}
+            onClick={e => { e.stopPropagation(); if (onOpenVideos) onOpenVideos(entity); else onClick(); }}
           >
             <Video className="h-3.5 w-3.5 text-purple-400 mb-1" />
             <span className="font-bold text-lg leading-none text-foreground">{entity.content_count}</span>
@@ -288,7 +288,7 @@ export function UnifiedClientCard({
                 ? 'bg-primary/8 border-primary/25 hover:bg-primary/15 hover:border-primary/50'
                 : 'bg-muted/40 border-border/50 hover:bg-muted/60',
             )}
-            onClick={e => { e.stopPropagation(); onOpenUsers ? onOpenUsers(entity) : onClick(); }}
+            onClick={e => { e.stopPropagation(); if (onOpenUsers) onOpenUsers(entity); else onClick(); }}
           >
             <UsersIcon className={cn('h-3.5 w-3.5 mb-1', onOpenUsers ? 'text-primary' : 'text-muted-foreground')} />
             <span className={cn('font-bold text-lg leading-none', onOpenUsers ? 'text-primary' : 'text-foreground')}>
@@ -418,7 +418,7 @@ export function UnifiedClientCard({
             className="mb-3 p-2.5 rounded-sm border border-dashed border-border hover:border-primary/40 hover:bg-primary/5 transition-all cursor-pointer group/strat"
             onClick={e => {
               e.stopPropagation();
-              onOpenStrategists ? onOpenStrategists(entity) : onClick();
+              if (onOpenStrategists) onOpenStrategists(entity); else onClick();
             }}
           >
             <div className="flex items-center justify-between mb-1.5">

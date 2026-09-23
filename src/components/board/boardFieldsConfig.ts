@@ -309,7 +309,7 @@ export function formatFieldValue(
 ): string {
   switch (fieldKey) {
     case 'deadline':
-    case 'created_at':
+    case 'created_at': {
       const dateValue = content[fieldKey as keyof Content] as string | null;
       if (!dateValue) return '-';
       return format(
@@ -317,6 +317,7 @@ export function formatFieldValue(
         compact ? 'dd/MM' : 'dd MMM yyyy',
         { locale: es }
       );
+    }
 
     case 'client':
       return (content.client as { name?: string } | null)?.name || '-';
@@ -330,9 +331,10 @@ export function formatFieldValue(
     case 'campaign_week':
       return content.campaign_week ? `S${content.campaign_week}` : '-';
 
-    default:
+    default: {
       const value = content[fieldKey as keyof Content];
       return value?.toString() || '-';
+    }
   }
 }
 

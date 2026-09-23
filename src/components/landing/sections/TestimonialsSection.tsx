@@ -238,8 +238,6 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
 export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) {
   const list = testimonials?.length ? testimonials : MOCK_TESTIMONIALS;
 
-  // Don't render if no testimonials provided and we shouldn't show mocks
-  if (testimonials && testimonials.length === 0) return null;
   const sectionRef = React.useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-80px" });
   const {
@@ -258,6 +256,11 @@ export function TestimonialsSection({ testimonials }: TestimonialsSectionProps) 
     const t = setInterval(goNext, 5000);
     return () => clearInterval(t);
   }, [goNext, maxIndex, isPaused]);
+
+  // Don't render if no testimonials provided and we shouldn't show mocks.
+  // Va después de los hooks: antes estaba arriba y se saltaba useRef, useInView,
+  // useCarousel y useEffect cuando la prop llegaba vacía.
+  if (testimonials && testimonials.length === 0) return null;
 
   const innerWidthPercent = list.length > 0 ? (list.length / cardsVisible) * 100 : 100;
   const translatePercent = list.length > 0 ? currentIndex * (100 / list.length) : 0;

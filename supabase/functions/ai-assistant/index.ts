@@ -504,6 +504,13 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
     let apiKey = '';
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
+    // OJO: 'gemini' entra por aquí, no por una rama propia. Había más abajo un
+    // `else if (provider === 'gemini')` inalcanzable (esta condición ya lo
+    // captura) que leía la API key de la organización y armaba la URL nativa
+    // `:generateContent`. Se eliminó por estar muerto. Queda pendiente —fuera
+    // del alcance de este PR de lint— que el bloque de request de gemini
+    // (`contents`/`parts`, respuesta `candidates`) no casa con este endpoint
+    // compatible con OpenAI.
     if (provider === 'kreoon' || provider === 'gemini') {
       apiKey = Deno.env.get('GOOGLE_AI_API_KEY') || '';
       apiUrl = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
@@ -519,16 +526,6 @@ ${!userAccessLevels.has('financials') ? '- Información financiera detallada, pa
       apiKey = providerConfig?.api_key_encrypted || '';
       apiUrl = 'https://api.openai.com/v1/chat/completions';
       headers['Authorization'] = `Bearer ${apiKey}`;
-    } else if (provider === 'gemini') {
-      const { data: providerConfig } = await supabase
-        .from('organization_ai_providers')
-        .select('api_key_encrypted')
-        .eq('organization_id', organizationId)
-        .eq('provider_key', 'gemini')
-        .single();
-      
-      apiKey = providerConfig?.api_key_encrypted || '';
-      apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${config.model}:generateContent?key=${apiKey}`;
     } else if (provider === 'anthropic') {
       const { data: providerConfig } = await supabase
         .from('organization_ai_providers')
