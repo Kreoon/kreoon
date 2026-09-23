@@ -13,7 +13,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { ErrorBoundary } from "@/components/error";
 import { useNewContentNotifications } from "@/hooks/useNewContentNotifications";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ProtectedRoute, BlockClientsRoute } from "@/components/ProtectedRoute";
 import { TalentGate } from "@/components/TalentGate";
 import { RootOnlyRoute } from "@/components/RootOnlyRoute";
 import { UnsavedChangesProvider } from "@/contexts/UnsavedChangesContext";
@@ -1145,9 +1145,12 @@ function AppRoutes() {
         <Route path="/a/:spaceSlug" element={<AcademiaPublicLandingPage />} />
         <Route
           path="/academia/explorar"
-          element={<AcademiaMarketplacePage />}
+          element={<BlockClientsRoute><AcademiaMarketplacePage /></BlockClientsRoute>}
         />
-        <Route path="/academia" element={<AcademiaHomePage />} />
+        <Route
+          path="/academia"
+          element={<BlockClientsRoute><AcademiaHomePage /></BlockClientsRoute>}
+        />
         <Route
           path="/academia/crear"
           element={
@@ -1166,7 +1169,7 @@ function AppRoutes() {
         />
         <Route
           path="/academia/:spaceSlug"
-          element={<MainLayout><AcademiaSpaceHomePage /></MainLayout>}
+          element={<BlockClientsRoute><MainLayout><AcademiaSpaceHomePage /></MainLayout></BlockClientsRoute>}
         />
         <Route
           path="/academia/:spaceSlug/classroom"
