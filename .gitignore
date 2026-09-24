@@ -108,3 +108,5 @@ supabase/functions/node_modules/
 
 # Artefacto local de deno check sobre las edge functions
 deno.lock
+
+tsc_out.txt
