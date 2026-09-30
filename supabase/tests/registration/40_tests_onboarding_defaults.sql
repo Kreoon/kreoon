@@ -27,3 +27,27 @@ INSERT INTO pg_temp.results SELECT 'T43 P3 creador con user_type NULL no crea cl
 UPDATE public.profiles SET user_type='client' WHERE id='00000000-0000-0000-0000-0000000000e2';
 UPDATE public.profiles SET onboarding_completed=true WHERE id='00000000-0000-0000-0000-0000000000e2';
 INSERT INTO pg_temp.results SELECT 'T43b cliente real sigue generando su empresa (sin regresion)', count(*)=1, '' FROM public.clients WHERE user_id='00000000-0000-0000-0000-0000000000e2';
+
+-- T60-T62 membresias de marca (hueco H6)
+RESET ROLE;
+INSERT INTO public.brands(id,name,owner_id) VALUES ('bb000000-0000-0000-0000-000000000001','Marca Ajena','00000000-0000-0000-0000-0000000000b1');
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000a2');
+DO $$ BEGIN
+  BEGIN INSERT INTO public.brand_members(brand_id,user_id,role,status) VALUES ('bb000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-0000000000a2','owner','active');
+    INSERT INTO pg_temp.results VALUES ('T60 H6 un usuario NO se hace owner de una marca ajena', false, 'se inserto');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T60 H6 un usuario NO se hace owner de una marca ajena', true, SQLERRM); END; END $$;
+-- el propietario crea su marca y su auto-membresia (ClientDashboard/Upgrade)
+INSERT INTO public.brands(id,name,owner_id) VALUES ('bb000000-0000-0000-0000-000000000002','Mi Marca','00000000-0000-0000-0000-0000000000a2');
+DO $$ BEGIN
+  BEGIN INSERT INTO public.brand_members(brand_id,user_id,role,status) VALUES ('bb000000-0000-0000-0000-000000000002','00000000-0000-0000-0000-0000000000a2','owner','active');
+    INSERT INTO pg_temp.results VALUES ('T61 el propietario agrega su auto-membresia en su marca', true, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T61 el propietario agrega su auto-membresia en su marca', false, SQLERRM); END; END $$;
+-- root crea marca con otro owner y su membresia (BrandsCRM)
+SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000d1');
+DO $$ BEGIN
+  BEGIN
+    INSERT INTO public.brands(id,name,owner_id) VALUES ('bb000000-0000-0000-0000-000000000003','Marca CRM','00000000-0000-0000-0000-0000000000c1');
+    INSERT INTO public.brand_members(brand_id,user_id,role,status) VALUES ('bb000000-0000-0000-0000-000000000003','00000000-0000-0000-0000-0000000000c1','owner','active');
+    INSERT INTO pg_temp.results VALUES ('T62 el propietario de la plataforma crea marca+membresia de otra persona (CRM)', true, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T62 el propietario de la plataforma crea marca+membresia de otra persona (CRM)', false, SQLERRM); END; END $$;
+RESET ROLE;

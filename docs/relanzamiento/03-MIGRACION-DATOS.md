@@ -64,7 +64,7 @@ select (select count(*) from profiles) perfiles,
    definiciones de las funciones/policies modificadas (`pg_get_functiondef`, `pg_policies`). Con Supabase: punto de restauración (PITR) o backup manual.
 2. **Ensayo:** crear una rama de Supabase (`create_branch`), aplicar las 6 migraciones, correr `supabase/tests/registration` adaptado y las
    consultas de conciliación. **No se hizo** (requiere autorización y costo); el arnés local valida la lógica sobre un esquema simulado.
-3. **Reversión por migración:** `…100000` y `…130000`/`…140000` son `CREATE OR REPLACE`/`DROP POLICY`: se revierten reaplicando la definición
+3. **Reversión por migración:** `…100000`, `…130000`, `…140000` y `…160000` son `CREATE OR REPLACE`/`DROP POLICY`: se revierten reaplicando la definición
    previa (guardada en el respaldo de funciones/policies). `…110000` es aditiva (`DROP FUNCTION`/`TABLE` las retira). `…120000` y `…150000`:
    `UPDATE` inverso con los valores del respaldo (`name='KREOON'`, `default_role='client'`, `registration_require_invite=true`, `primary_color='#7700b8'`).
 4. **Conciliación posterior:** repetir el dry-run; los conteos de perfiles, miembros y `auth.users` deben ser idénticos; `organizations` = 1 fila.

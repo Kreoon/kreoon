@@ -9,12 +9,12 @@
 Los hallazgos H1–H3 son explotables hoy. La migración `…100000` no depende de ningún código nuevo.
 1. Respaldo (ver `03-MIGRACION-DATOS.md`, sección *Respaldo y reversión*).
 2. Ensayo en rama de Supabase (`create_branch`) y correr el arnés adaptado.
-3. Aplicar `20260930100000_lockdown_membership_paths.sql`.
+3. Aplicar `20260930100000_lockdown_membership_paths.sql` y `20260930160000_brand_members_insert_scope.sql` (ambas solo cierran accesos indebidos).
 4. Verificar (SQL abajo). Efecto esperado en el frontend **actual**: el alta de "cliente" por `register_user_to_organization` deja de funcionar (intencional).
 
 ### Tiempo B — lanzamiento
 1. Desplegar el frontend de esta rama (Vercel).
-2. Aplicar, en este orden: `…110000` → `…130000` → `…140000`.
+2. Aplicar, en este orden: `…110000` → `…130000` → `…140000` → `…160000`.
 3. Desplegar edge functions modificadas: `public-registration`, `client-onboarding-claim`, `auth-email-proxy`, `notify-new-member`,
    `kreoon-bootstrap`, `migrate-to-kreoon`, `sync-to-kreoon`, `sync-user-permissions`, `bulk-password-reset` (+ `_shared/legacyToolGuard.ts`).
 4. Configuración externa (no verificable desde el repo — **hacerlo antes del paso 5**):

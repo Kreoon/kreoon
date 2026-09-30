@@ -16,7 +16,7 @@ $RUN $P -d t -f "$DIR/00_stub_schema.sql" >/dev/null
 $RUN $P -d t -f "$DIR/05_stub_onboarding.sql" >/dev/null
 $RUN $P -d t -f "$DIR/10_seed.sql" >/dev/null
 if [ "${1:-}" != "--before" ]; then
-  for f in 20260930100000_lockdown_membership_paths.sql 20260930110000_creator_registration_core.sql 20260930130000_creator_onboarding_and_unpublished_profiles.sql; do
+  for f in 20260930100000_lockdown_membership_paths.sql 20260930110000_creator_registration_core.sql 20260930130000_creator_onboarding_and_unpublished_profiles.sql 20260930160000_brand_members_insert_scope.sql; do
     $RUN $P -d t -f "$MIG/$f" >/dev/null
   done
 fi

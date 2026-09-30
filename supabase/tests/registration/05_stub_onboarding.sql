@@ -51,3 +51,14 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM creator_profiles WHERE id = publish_profile_blocks.profile_id AND user_id = auth.uid()) THEN RAISE EXCEPTION 'No autorizado'; END IF;
   UPDATE creator_profiles SET builder_has_draft = false WHERE id = publish_profile_blocks.profile_id; RETURN true; END $f$;
 GRANT EXECUTE ON FUNCTION public.publish_profile_blocks(uuid) TO authenticated;
+
+-- Marcas (policies VIVAS antes de la migracion 7)
+CREATE TABLE public.brands (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, owner_id uuid);
+CREATE TABLE public.brand_members (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), brand_id uuid REFERENCES public.brands(id), user_id uuid, role text DEFAULT 'member', status text DEFAULT 'active');
+ALTER TABLE public.brands ENABLE ROW LEVEL SECURITY; ALTER TABLE public.brand_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY brands_insert ON public.brands FOR INSERT TO authenticated WITH CHECK (owner_id = auth.uid() OR public.is_platform_root(auth.uid()));
+CREATE POLICY brands_select ON public.brands FOR SELECT TO authenticated USING (true);
+CREATE POLICY brand_members_select ON public.brand_members FOR SELECT TO authenticated USING (true);
+CREATE POLICY brand_members_insert ON public.brand_members FOR INSERT TO authenticated
+  WITH CHECK ((user_id = auth.uid()) OR (brand_id IN (SELECT b.id FROM public.brands b WHERE b.owner_id = auth.uid())) OR public.is_platform_root(auth.uid()));
+GRANT SELECT,INSERT ON public.brands, public.brand_members TO authenticated;
