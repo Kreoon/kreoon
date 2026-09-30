@@ -199,7 +199,7 @@ export function EscrowDetailDrawer({
 
                 {/* Creator */}
                 <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
-                  <p className="text-xs text-emerald-400 mb-2">Creador</p>
+                  <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-2">Creador</p>
                   <div className="flex items-center gap-3">
                     {creator ? (
                       <>

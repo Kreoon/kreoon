@@ -43,7 +43,7 @@ export default function AcademiaSpaceClassroomPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-6">
           <KreoonSkeleton variant="text" width="40%" height={36} />
           <KreoonSkeleton variant="text" width="25%" height={14} />
@@ -59,7 +59,7 @@ export default function AcademiaSpaceClassroomPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-primary hover:text-primary/80">
@@ -97,7 +97,7 @@ export default function AcademiaSpaceClassroomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       {/* Owner action bar */}

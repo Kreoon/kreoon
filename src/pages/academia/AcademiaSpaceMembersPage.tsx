@@ -19,7 +19,7 @@ export default function AcademiaSpaceMembersPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando creadores...
       </div>
     );
@@ -27,7 +27,7 @@ export default function AcademiaSpaceMembersPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-primary hover:text-primary/80">
@@ -38,7 +38,7 @@ export default function AcademiaSpaceMembersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         <div className="flex items-end justify-between mb-6 flex-wrap gap-3">

@@ -201,7 +201,7 @@ function Seccion({
   children: React.ReactNode;
 }) {
   return (
-    <div className="mb-3 rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/60 p-3">
+    <div className="mb-3 rounded-sm border border-kreoon-border bg-muted/60 p-3">
       <p className="mb-1 text-sm font-medium text-kreoon-text-primary">
         <span aria-hidden="true">{emoji}</span> {titulo}
       </p>
@@ -261,7 +261,7 @@ function CampoLista({
           {items.map((item, index) => (
             <span
               key={`${etiqueta}-${index}`}
-              className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary px-2 py-0.5 text-xs text-kreoon-text-primary"
+              className="rounded-sm border border-kreoon-border bg-muted px-2 py-0.5 text-xs text-kreoon-text-primary"
             >
               {item}
             </span>

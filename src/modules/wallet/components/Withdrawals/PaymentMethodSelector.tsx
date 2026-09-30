@@ -156,7 +156,7 @@ export function PaymentMethodSelector({
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-foreground truncate">{method.label}</p>
                       {method.is_verified && (
-                        <Shield className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                        <Shield className="h-3 w-3 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
                       )}
                       {method.is_default && (
                         <Badge variant="outline" className="text-[10px] h-5">

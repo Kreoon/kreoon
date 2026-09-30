@@ -30,7 +30,7 @@ export function AuthTabs({
   return (
     <div
       className={cn(
-        "relative flex w-full rounded-full bg-kreoon-bg-secondary p-1",
+        "relative flex w-full rounded-full bg-muted p-1",
         "transition-[box-shadow] duration-300",
         className,
       )}

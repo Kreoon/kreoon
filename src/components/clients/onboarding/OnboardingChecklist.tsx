@@ -167,7 +167,7 @@ export function OnboardingChecklist({ clientId, form, onChanged }: Props) {
         {secciones.map(({ paso, omitida, estado }) => (
           <div
             key={paso.key}
-            className="flex items-center justify-between gap-3 rounded-sm bg-kreoon-bg-secondary/40 px-2.5 py-2"
+            className="flex items-center justify-between gap-3 rounded-sm bg-muted/40 px-2.5 py-2"
           >
             <div className="flex min-w-0 items-center gap-2">
               <Icono ok={!omitida && estado === 'completo'} parcial={estado === 'incompleto'} />

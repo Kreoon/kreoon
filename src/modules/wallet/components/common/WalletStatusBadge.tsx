@@ -16,7 +16,7 @@ const STATUS_CONFIG: Record<WalletStatus, {
 }> = {
   active: {
     icon: CheckCircle2,
-    className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
     dotColor: 'bg-emerald-400',
   },
   frozen: {
@@ -26,7 +26,7 @@ const STATUS_CONFIG: Record<WalletStatus, {
   },
   suspended: {
     icon: Ban,
-    className: 'bg-red-500/10 text-red-400 border-red-500/20',
+    className: 'bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20',
     dotColor: 'bg-red-400',
   },
 };

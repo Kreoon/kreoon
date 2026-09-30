@@ -31,7 +31,7 @@ export function MoneyDisplay({
   const prevAmount = useRef(amount);
 
   // Determine color based on amount
-  const colorClass = amount > 0 ? 'text-emerald-400' : amount < 0 ? 'text-red-400' : 'text-foreground';
+  const colorClass = amount > 0 ? 'text-emerald-700 dark:text-emerald-400' : amount < 0 ? 'text-red-700 dark:text-red-400' : 'text-foreground';
 
   // Animated version using spring
   const springValue = useSpring(amount, {
@@ -92,7 +92,7 @@ export function MoneyText({
   showSign = false,
   className,
 }: Omit<MoneyDisplayProps, 'size' | 'animated'>) {
-  const colorClass = amount > 0 ? 'text-emerald-400' : amount < 0 ? 'text-red-400' : '';
+  const colorClass = amount > 0 ? 'text-emerald-700 dark:text-emerald-400' : amount < 0 ? 'text-red-700 dark:text-red-400' : '';
   const sign = showSign ? (amount > 0 ? '+' : amount < 0 ? '' : '') : '';
 
   return (

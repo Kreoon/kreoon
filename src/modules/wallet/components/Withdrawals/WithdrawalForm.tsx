@@ -254,12 +254,12 @@ export function WithdrawalForm({
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Comisión ({selectedMethod.typeLabel})</span>
-                <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
+                <span className="text-amber-700 dark:text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
               </div>
               <div className="h-px bg-[hsl(270,100%,60%,0.1)]" />
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-medium">Recibirás</span>
-                <span className="text-lg font-bold text-emerald-400">
+                <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
                   {formatCurrency(netAmount, wallet.currency)}
                 </span>
               </div>

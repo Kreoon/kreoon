@@ -102,7 +102,7 @@ export function EscrowStatusCard({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
             <div>
               <p className="text-xs text-muted-foreground">Creador ({escrow.creator_percentage}%)</p>
-              <p className="text-sm font-medium text-emerald-400">{escrow.formattedCreatorAmount}</p>
+              <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">{escrow.formattedCreatorAmount}</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Editor ({escrow.editor_percentage}%)</p>

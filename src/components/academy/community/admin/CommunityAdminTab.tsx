@@ -94,7 +94,7 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-kreoon-bg-card border-border">
+      <Card className="p-5 bg-card border-border">
         <h3 className="font-semibold mb-3">Crear nueva categoría</h3>
         <div className="flex flex-col sm:flex-row gap-2">
           <div>
@@ -102,7 +102,7 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
             <select
               value={newEmoji}
               onChange={(e) => setNewEmoji(e.target.value)}
-              className="mt-1 bg-kreoon-bg-secondary border border-border rounded-lg px-3 py-2 text-base focus:outline-none focus:border-primary/50"
+              className="mt-1 bg-muted border border-border rounded-lg px-3 py-2 text-base focus:outline-none focus:border-primary/50"
               aria-label="Emoji de la categoría"
             >
               {EMOJI_OPTIONS.map((e) => (
@@ -116,7 +116,7 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Ej: Recursos, Tips, Networking..."
-              className="mt-1 bg-kreoon-bg-secondary border-border"
+              className="mt-1 bg-muted border-border"
               maxLength={30}
             />
           </div>
@@ -133,7 +133,7 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
         </div>
       </Card>
 
-      <Card className="p-5 bg-kreoon-bg-card border-border">
+      <Card className="p-5 bg-card border-border">
         <h3 className="font-semibold mb-3">
           Categorías existentes ({categories.filter((c: any) => c.is_active).length})
         </h3>
@@ -151,7 +151,7 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
                   onChange={(e) =>
                     togglePermission.mutate({ id: c.id, who_can_post: e.target.value })
                   }
-                  className="text-xs bg-kreoon-bg-secondary border border-border rounded px-2 py-1"
+                  className="text-xs bg-muted border border-border rounded px-2 py-1"
                   aria-label={`Quién puede postear en ${c.name}`}
                 >
                   <option value="all">Todos</option>

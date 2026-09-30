@@ -181,10 +181,10 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                       <Icon
                         className={cn(
                           'h-5 w-5',
-                          withdrawal.status === 'pending' && 'text-amber-400',
+                          withdrawal.status === 'pending' && 'text-amber-700 dark:text-amber-400',
                           withdrawal.status === 'processing' && 'text-blue-400 animate-spin',
-                          withdrawal.status === 'completed' && 'text-emerald-400',
-                          withdrawal.status === 'rejected' && 'text-red-400',
+                          withdrawal.status === 'completed' && 'text-emerald-700 dark:text-emerald-400',
+                          withdrawal.status === 'rejected' && 'text-red-700 dark:text-red-400',
                           withdrawal.status === 'cancelled' && 'text-muted-foreground'
                         )}
                       />
@@ -200,10 +200,10 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                           variant="outline"
                           className={cn(
                             'text-[10px]',
-                            withdrawal.status === 'pending' && 'border-amber-500/30 text-amber-400',
+                            withdrawal.status === 'pending' && 'border-amber-500/30 text-amber-700 dark:text-amber-400',
                             withdrawal.status === 'processing' && 'border-blue-500/30 text-blue-400',
-                            withdrawal.status === 'completed' && 'border-emerald-500/30 text-emerald-400',
-                            withdrawal.status === 'rejected' && 'border-red-500/30 text-red-400',
+                            withdrawal.status === 'completed' && 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400',
+                            withdrawal.status === 'rejected' && 'border-red-500/30 text-red-700 dark:text-red-400',
                             withdrawal.status === 'cancelled' && 'border-gray-500/30 text-muted-foreground'
                           )}
                         >

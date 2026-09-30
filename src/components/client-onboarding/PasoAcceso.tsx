@@ -32,7 +32,7 @@ import { claimAccount, type LegalDocument } from './api';
  */
 
 const INPUT_CLASSES =
-  'min-h-[44px] text-base bg-kreoon-bg-secondary border-kreoon-border ' +
+  'min-h-[44px] text-base bg-muted border-kreoon-border ' +
   'placeholder:text-kreoon-text-muted/60 focus-visible:ring-kreoon-purple-500/50 ' +
   'focus-visible:border-kreoon-purple-400';
 
@@ -334,7 +334,7 @@ export function PasoAcceso({
           />
 
           {legalDocuments.length > 0 && (
-            <div className="space-y-3 rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 p-3">
+            <div className="space-y-3 rounded-sm border border-kreoon-border bg-muted/50 p-3">
               {legalDocuments.map((doc) => (
                 <div key={doc.id} className="flex items-start gap-2.5">
                   <Checkbox

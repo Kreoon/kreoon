@@ -94,7 +94,7 @@ export const KreoonEmptyState = React.forwardRef<
       {/* Área del icono */}
       <motion.div
         className={cn(
-          "mb-4 flex shrink-0 items-center justify-center rounded-full bg-kreoon-bg-secondary text-kreoon-text-muted",
+          "mb-4 flex shrink-0 items-center justify-center rounded-full bg-muted text-kreoon-text-muted",
           config.iconWrapper
         )}
         initial={{ y: 0 }}

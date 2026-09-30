@@ -136,13 +136,13 @@ export function WalletPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Balance Disponible</p>
-                  <p className="text-2xl font-bold text-emerald-400 mt-1">
+                  <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
                     {walletDisplay.formattedAvailable}
                   </p>
                 </div>
                 <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Pendiente de Retiro</p>
-                  <p className="text-2xl font-bold text-amber-400 mt-1">
+                  <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
                     {walletDisplay.formattedPending}
                   </p>
                 </div>

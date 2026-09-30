@@ -163,7 +163,7 @@ ${details}
             <div className="p-4 rounded-sm bg-emerald-500/5 border border-emerald-500/10">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Monto a pagar</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-1">
+                <p className="text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
                   {withdrawal.formattedNetAmount}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -257,9 +257,9 @@ ${details}
               {/* Warning for large amounts */}
               {withdrawal.net_amount > 1000 && (
                 <div className="flex items-start gap-3 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
-                  <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-muted-foreground">
-                    <p className="font-medium text-amber-400">Monto considerable</p>
+                    <p className="font-medium text-amber-700 dark:text-amber-400">Monto considerable</p>
                     <p className="text-xs mt-1">
                       Verifica cuidadosamente los datos antes de procesar este pago.
                     </p>

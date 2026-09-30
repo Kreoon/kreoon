@@ -75,7 +75,7 @@ export function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl border-2 border-border bg-kreoon-bg-card">
+      <DialogContent className="max-w-sm rounded-3xl border-2 border-border bg-card">
         <DialogHeader>
           <DialogTitle className="text-xl font-extrabold text-foreground flex items-center gap-2">
             <span aria-hidden="true">📢</span> Compartir

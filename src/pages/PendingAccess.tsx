@@ -112,7 +112,7 @@ export default function PendingAccess() {
 
   if (loading || !rolesLoaded || loadingOrg) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-kreoon-bg-primary">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-kreoon-purple-500" />
       </div>
     );
@@ -120,7 +120,7 @@ export default function PendingAccess() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-kreoon-bg-primary">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-kreoon-purple-500" />
       </div>
     );
@@ -128,7 +128,7 @@ export default function PendingAccess() {
 
   if (roles.length > 0 && !isPending) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-kreoon-bg-primary">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-kreoon-purple-500" />
       </div>
     );

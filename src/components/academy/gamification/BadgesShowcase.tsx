@@ -179,7 +179,7 @@ function BadgeDetailDialog({
       {badge && (
         <DialogContent
           className={cn(
-            'max-w-sm border-2 bg-kreoon-bg-secondary text-center rounded-3xl',
+            'max-w-sm border-2 bg-muted text-center rounded-3xl',
             RARITY_STYLES[badge.rarity].border,
             earned && RARITY_STYLES[badge.rarity].shine
           )}

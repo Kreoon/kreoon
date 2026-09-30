@@ -171,7 +171,7 @@ export function RoleBadgeCard({
         } as React.CSSProperties
       }
     >
-      <div className="rounded-[10px] bg-kreoon-bg-card">
+      <div className="rounded-[10px] bg-card">
         <div className={cn("rounded-[10px]", sizeClasses.card)}>
           {/* Header */}
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">

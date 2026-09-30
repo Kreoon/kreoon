@@ -59,7 +59,7 @@ export default function AcademiaPlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando curso...
       </div>
     );
@@ -67,7 +67,7 @@ export default function AcademiaPlayerPage() {
 
   if (!user || !course || !enrollment) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>No tienes acceso a este curso.</p>
         <Button onClick={() => navigate(`/academia/${spaceSlug}/${courseSlug}`)}>
@@ -135,12 +135,12 @@ export default function AcademiaPlayerPage() {
   const completionPct = Math.round(enrollment.completion_pct);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       <div className="flex flex-col lg:flex-row flex-1">
         {/* Sidebar lecciones */}
-        <aside className="lg:w-96 border-b lg:border-b-0 lg:border-r border-border bg-kreoon-bg-secondary flex-shrink-0">
+        <aside className="lg:w-96 border-b lg:border-b-0 lg:border-r border-border bg-muted flex-shrink-0">
           <div className="p-5 border-b border-border">
             <Link
               to={`/academia/${spaceSlug}/${courseSlug}`}
@@ -181,7 +181,7 @@ export default function AcademiaPlayerPage() {
                   <div className="px-5 pt-4 pb-2 flex items-center gap-2">
                     <span
                       className="h-6 w-6 rounded-lg flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-                      style={{ backgroundColor: `${KREOON_PURPLE}25`, color: '#c084fc' }}
+                      style={{ backgroundColor: `${KREOON_PURPLE}25`, color: 'hsl(var(--primary))' }}
                     >
                       {mi + 1}
                     </span>

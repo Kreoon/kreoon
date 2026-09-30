@@ -104,7 +104,7 @@ function CompactDistribution({
           <span
             className={cn(
               'font-medium',
-              r.type === 'creator' && 'text-emerald-400',
+              r.type === 'creator' && 'text-emerald-700 dark:text-emerald-400',
               r.type === 'editor' && 'text-blue-400',
               r.type === 'platform' && 'text-primary'
             )}
@@ -174,7 +174,7 @@ function FullDistribution({
   const getTextColor = (type: Recipient['type']) => {
     switch (type) {
       case 'creator':
-        return 'text-emerald-400';
+        return 'text-emerald-700 dark:text-emerald-400';
       case 'editor':
         return 'text-blue-400';
       case 'platform':
@@ -281,7 +281,7 @@ function FullDistribution({
 function StatusBadge({ status }: { status: Recipient['status'] }) {
   if (status === 'released') {
     return (
-      <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400 bg-emerald-500/10 gap-1">
+      <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 gap-1">
         <CheckCircle className="h-2.5 w-2.5" />
         Liberado
       </Badge>
@@ -296,7 +296,7 @@ function StatusBadge({ status }: { status: Recipient['status'] }) {
     );
   }
   return (
-    <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-400 bg-amber-500/10 gap-1">
+    <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-700 dark:text-amber-400 bg-amber-500/10 gap-1">
       <Clock className="h-2.5 w-2.5" />
       Pendiente
     </Badge>

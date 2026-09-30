@@ -106,7 +106,7 @@ export function WithdrawalsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 rounded-sm bg-gradient-to-br from-emerald-500/20 to-emerald-600/10">
-              <ArrowUpRight className="h-8 w-8 text-emerald-400" />
+              <ArrowUpRight className="h-8 w-8 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
@@ -125,7 +125,7 @@ export function WithdrawalsPage() {
       {/* Warning Alerts */}
       {!paymentMethods || paymentMethods.length === 0 ? (
         <Alert className="mb-6 bg-amber-500/5 border-amber-500/20">
-          <AlertCircle className="h-4 w-4 text-amber-400" />
+          <AlertCircle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
           <AlertDescription className="text-amber-200">
             Debes agregar al menos un método de pago antes de solicitar retiros.{' '}
             <button
@@ -154,7 +154,7 @@ export function WithdrawalsPage() {
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Balance Disponible</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
               {walletDisplay.formattedAvailable}
             </p>
           </CardContent>
@@ -162,7 +162,7 @@ export function WithdrawalsPage() {
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Pendiente de Retiro</p>
-            <p className="text-2xl font-bold text-amber-400 mt-1">
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
               {walletDisplay.formattedPending}
             </p>
           </CardContent>

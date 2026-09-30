@@ -145,7 +145,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
       className="group relative"
     >
       <div
-        className="relative overflow-hidden rounded-xl bg-kreoon-bg-card shadow-lg hover:shadow-kreoon-glow-sm transition-shadow"
+        className="relative overflow-hidden rounded-xl bg-card shadow-lg hover:shadow-kreoon-glow-sm transition-shadow"
         style={{ aspectRatio: "9/16" }}
       >
         {/* Thumbnail - siempre visible hasta que el video cargue */}
@@ -170,7 +170,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
 
         {/* Loading spinner cuando está visible pero no ha cargado */}
         {isVisible && !isPlaying && !thumbnailUrl && (
-          <div className="absolute inset-0 flex items-center justify-center bg-kreoon-bg-card z-[2]">
+          <div className="absolute inset-0 flex items-center justify-center bg-card z-[2]">
             <Loader2 className="h-6 w-6 animate-spin text-kreoon-purple-500" />
           </div>
         )}

@@ -68,7 +68,7 @@ export function ApproveContentModal({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-emerald-500/10">
-              <CheckCircle className="h-6 w-6 text-emerald-400" />
+              <CheckCircle className="h-6 w-6 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
               <DialogTitle>Aprobar Contenido</DialogTitle>
@@ -85,7 +85,7 @@ export function ApproveContentModal({
 
           {/* Warning */}
           <Alert className="bg-amber-500/5 border-amber-500/20">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
             <AlertDescription className="text-xs">
               Esta acción es irreversible. Los fondos serán transferidos inmediatamente.
             </AlertDescription>
@@ -108,7 +108,7 @@ export function ApproveContentModal({
                     className={cn(
                       'h-6 w-6 transition-colors',
                       (hoveredStar !== null ? star <= hoveredStar : star <= rating)
-                        ? 'text-amber-400 fill-amber-400'
+                        ? 'text-amber-700 dark:text-amber-400 fill-amber-400'
                         : 'text-muted-foreground'
                     )}
                   />
@@ -211,7 +211,7 @@ export function RequestChangesModal({
             <span
               className={cn(
                 'font-medium',
-                remainingRevisions > 1 ? 'text-foreground' : 'text-amber-400'
+                remainingRevisions > 1 ? 'text-foreground' : 'text-amber-700 dark:text-amber-400'
               )}
             >
               {remainingRevisions} de {maxRevisions}
@@ -315,7 +315,7 @@ export function OpenDisputeModal({
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-red-500/10">
-              <AlertTriangle className="h-6 w-6 text-red-400" />
+              <AlertTriangle className="h-6 w-6 text-red-700 dark:text-red-400" />
             </div>
             <div>
               <DialogTitle>Abrir Disputa</DialogTitle>
@@ -329,7 +329,7 @@ export function OpenDisputeModal({
         <div className="space-y-4 py-4">
           {/* Warning */}
           <Alert className="bg-amber-500/5 border-amber-500/20">
-            <AlertTriangle className="h-4 w-4 text-amber-400" />
+            <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
             <AlertDescription className="text-xs">
               Una disputa congela los fondos hasta que el equipo de Kreoon resuelva el caso.
               Tiempo estimado de resolución: 3-5 días hábiles.

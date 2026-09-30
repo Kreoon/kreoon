@@ -78,7 +78,7 @@ export function MemberCard({
                 style={{
                   borderColor: `${KREOON_PURPLE}40`,
                   backgroundColor: `${KREOON_PURPLE}20`,
-                  color: '#c084fc',
+                  color: 'hsl(var(--primary))',
                 }}
               >
                 Instructor

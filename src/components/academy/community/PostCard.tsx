@@ -80,7 +80,7 @@ export function PostCard({
   return (
     <article
       className={cn(
-        'rounded-3xl bg-kreoon-bg-card border-2 border-border p-5 md:p-6',
+        'rounded-3xl bg-card border-2 border-border p-5 md:p-6',
         'motion-safe:hover:border-border motion-safe:hover:-translate-y-0.5 transition-all duration-300',
         post.is_pinned && 'border-l-4'
       )}
@@ -128,7 +128,7 @@ export function PostCard({
               <MoreHorizontal className="h-4 w-4" />
             </button>
             {showActions && (
-              <div className="absolute right-0 top-7 z-10 bg-kreoon-bg-secondary border border-border rounded-lg overflow-hidden min-w-[140px]">
+              <div className="absolute right-0 top-7 z-10 bg-muted border border-border rounded-lg overflow-hidden min-w-[140px]">
                 <button
                   onClick={handleDelete}
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-700 dark:text-rose-300 hover:bg-rose-500/10"

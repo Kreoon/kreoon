@@ -32,7 +32,7 @@ const variantClasses: Record<KreoonButtonVariant, string> = {
   primary:
     "bg-kreoon-gradient text-kreoon-text-primary font-medium shadow-kreoon-glow-sm hover:shadow-kreoon-glow active:scale-[0.98] border border-kreoon-border",
   secondary:
-    "bg-kreoon-bg-secondary text-kreoon-text-primary border border-kreoon-border hover:bg-kreoon-bg-card hover:border-kreoon-purple-400/30 hover:shadow-kreoon-glow-sm active:scale-[0.98]",
+    "bg-muted text-kreoon-text-primary border border-kreoon-border hover:bg-card hover:border-kreoon-purple-400/30 hover:shadow-kreoon-glow-sm active:scale-[0.98]",
   ghost:
     "bg-transparent text-kreoon-text-primary hover:bg-kreoon-purple-500/10 hover:text-kreoon-text-primary active:scale-[0.98]",
   outline:

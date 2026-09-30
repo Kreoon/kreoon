@@ -164,7 +164,7 @@ export function CurrencyConverter({
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Spread ({(quote.spread * 100).toFixed(1)}%)</span>
-              <span className="text-amber-400">
+              <span className="text-amber-700 dark:text-amber-400">
                 -{formatCurrencyAmount(quote.spreadAmount, toCurrency)}
               </span>
             </div>

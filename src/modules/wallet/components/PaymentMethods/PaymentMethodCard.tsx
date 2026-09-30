@@ -111,7 +111,7 @@ export function PaymentMethodCard({
             <div className="flex items-center gap-2 mb-1">
               <p className="font-medium text-foreground truncate">{method.label}</p>
               {method.is_verified && (
-                <Shield className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                <Shield className="h-4 w-4 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
               )}
             </div>
             <p className="text-sm text-muted-foreground">{method.typeLabel}</p>
@@ -128,7 +128,7 @@ export function PaymentMethodCard({
                 </Badge>
               )}
               {method.is_verified && (
-                <Badge variant="outline" className="border-emerald-500/30 text-emerald-400">
+                <Badge variant="outline" className="border-emerald-500/30 text-emerald-700 dark:text-emerald-400">
                   <Shield className="h-3 w-3 mr-1" />
                   Verificado
                 </Badge>
@@ -164,7 +164,7 @@ export function PaymentMethodCard({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => setShowDeleteDialog(true)}
-                    className="text-red-400 focus:text-red-400"
+                    className="text-red-700 dark:text-red-400 focus:text-red-400"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
                     Eliminar

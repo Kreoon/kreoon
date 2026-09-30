@@ -269,7 +269,7 @@ export function PageLoader() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-kreoon-bg-primary"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background"
           role="status"
           aria-live="polite"
           aria-label="Cargando"
@@ -324,7 +324,7 @@ export function PageLoader() {
             </motion.div>
 
             {/* Barra de progreso */}
-            <div className="relative w-32 h-[2px] bg-white/10 rounded-full overflow-hidden">
+            <div className="relative w-32 h-[2px] bg-foreground/10 rounded-full overflow-hidden">
               <motion.div
                 initial={{ x: "-100%" }}
                 animate={{ x: "100%" }}

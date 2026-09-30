@@ -181,7 +181,7 @@ export function WalletErrorState({
       )}
     >
       <div className="p-4 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
-        <AlertCircle className="h-10 w-10 text-red-400" />
+        <AlertCircle className="h-10 w-10 text-red-700 dark:text-red-400" />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-2">
         Algo salió mal
@@ -191,7 +191,7 @@ export function WalletErrorState({
         <Button
           variant="outline"
           onClick={onAction}
-          className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+          className="border-red-500/30 text-red-700 dark:text-red-400 hover:bg-red-500/10"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
           Reintentar
@@ -217,7 +217,7 @@ export function InsufficientBalanceState({
       )}
     >
       <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
-        <Wallet className="h-8 w-8 text-amber-400" />
+        <Wallet className="h-8 w-8 text-amber-700 dark:text-amber-400" />
       </div>
       <h3 className="text-base font-semibold text-foreground mb-2">
         Fondos insuficientes

@@ -72,7 +72,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-sm bg-amber-500/10">
-                <Clock className="h-6 w-6 text-amber-400" />
+                <Clock className="h-6 w-6 text-amber-700 dark:text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
@@ -167,7 +167,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
             </div>
           ) : filteredWithdrawals.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <CheckCircle className="h-12 w-12 text-emerald-400/30 mb-4" />
+              <CheckCircle className="h-12 w-12 text-emerald-700 dark:text-emerald-400/30 mb-4" />
               <p className="text-muted-foreground">No hay solicitudes pendientes</p>
             </div>
           ) : (

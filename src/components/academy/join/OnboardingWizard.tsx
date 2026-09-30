@@ -118,7 +118,7 @@ export function OnboardingWizard({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg rounded-3xl border-2 border-border bg-kreoon-bg-card p-0 overflow-hidden">
+      <DialogContent className="max-w-lg rounded-3xl border-2 border-border bg-card p-0 overflow-hidden">
         {/* Header con progress */}
         <div
           className="p-5 md:p-6 border-b border-border"

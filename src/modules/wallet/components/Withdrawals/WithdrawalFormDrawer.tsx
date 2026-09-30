@@ -193,11 +193,11 @@ export function WithdrawalFormDrawer({
               <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Comisión estimada</span>
-                  <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
+                  <span className="text-amber-700 dark:text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Recibirás</span>
-                  <span className="font-semibold text-emerald-400">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                     {formatCurrency(netAmount, wallet.currency)}
                   </span>
                 </div>
@@ -319,7 +319,7 @@ export function WithdrawalFormDrawer({
             className="space-y-6 text-center py-8"
           >
             <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+              <CheckCircle2 className="h-10 w-10 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-2">

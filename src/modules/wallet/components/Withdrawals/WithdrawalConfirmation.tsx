@@ -69,7 +69,7 @@ export function WithdrawalConfirmation({
         <CardContent className="pt-6 space-y-4">
           <div className="text-center pb-4 border-b border-[hsl(270,100%,60%,0.1)]">
             <p className="text-sm text-muted-foreground mb-1">Monto a recibir</p>
-            <p className="text-4xl font-bold text-emerald-400">
+            <p className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
               {formatCurrency(netAmount, currency)}
             </p>
           </div>
@@ -81,12 +81,12 @@ export function WithdrawalConfirmation({
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Comisión</span>
-              <span className="text-sm text-amber-400">-{formatCurrency(fee, currency)}</span>
+              <span className="text-sm text-amber-700 dark:text-amber-400">-{formatCurrency(fee, currency)}</span>
             </div>
             <div className="h-px bg-[hsl(270,100%,60%,0.1)]" />
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-foreground">Recibirás</span>
-              <span className="text-lg font-bold text-emerald-400">
+              <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">
                 {formatCurrency(netAmount, currency)}
               </span>
             </div>
@@ -124,7 +124,7 @@ export function WithdrawalConfirmation({
 
       {/* Warning */}
       <Alert className="bg-amber-500/5 border-amber-500/20">
-        <AlertTriangle className="h-4 w-4 text-amber-400" />
+        <AlertTriangle className="h-4 w-4 text-amber-700 dark:text-amber-400" />
         <AlertDescription className="text-xs text-muted-foreground">
           Una vez solicitado, el monto quedará en estado "Pendiente" hasta que
           nuestro equipo procese el pago. Puedes cancelar la solicitud mientras

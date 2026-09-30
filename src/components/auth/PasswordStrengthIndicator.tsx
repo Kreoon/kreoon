@@ -93,7 +93,7 @@ export function PasswordStrengthIndicator({
     <div className={cn("space-y-2", className)}>
       {showBar && (
         <div className="flex items-center gap-2">
-          <div className="flex h-1.5 flex-1 gap-0.5 overflow-hidden rounded-full bg-kreoon-bg-card">
+          <div className="flex h-1.5 flex-1 gap-0.5 overflow-hidden rounded-full bg-card">
             {[0, 1, 2, 3].map((i) => (
               <div
                 key={i}

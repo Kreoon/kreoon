@@ -122,7 +122,7 @@ export default function AcademiaSpaceHomePage() {
   // aparece falsamente para users que sí están suscritos).
   if (isLoading || (!!user && spaceId && membershipLoading)) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary">
+      <div className="min-h-screen bg-background">
         <KreoonSkeleton variant="rectangular" width="100%" height={240} />
         <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-16 relative space-y-6">
           <div className="flex items-end gap-4">
@@ -150,7 +150,7 @@ export default function AcademiaSpaceHomePage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-primary hover:text-primary/80">
@@ -178,7 +178,7 @@ export default function AcademiaSpaceHomePage() {
   const featuredCourses = courses.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <MetaPixel
         pixelId={plugins?.meta_pixel_id ?? null}
         enabled={!!plugins?.meta_pixel_enabled}

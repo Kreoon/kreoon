@@ -121,7 +121,7 @@ export function RecentTransactions({
                       className={cn(
                         'h-5 w-5',
                         transaction.isCredit
-                          ? 'text-emerald-400'
+                          ? 'text-emerald-700 dark:text-emerald-400'
                           : 'text-primary'
                       )}
                     />
@@ -153,7 +153,7 @@ export function RecentTransactions({
                     <p
                       className={cn(
                         'text-sm font-semibold',
-                        transaction.isCredit ? 'text-emerald-400' : 'text-foreground'
+                        transaction.isCredit ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground'
                       )}
                     >
                       {transaction.isCredit ? '+' : '-'}

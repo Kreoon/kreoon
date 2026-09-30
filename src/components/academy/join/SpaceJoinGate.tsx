@@ -177,7 +177,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   };
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       {/* HERO */}
       <div
         className="relative h-64 md:h-80 overflow-hidden"

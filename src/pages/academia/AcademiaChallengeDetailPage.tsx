@@ -89,7 +89,7 @@ export default function AcademiaChallengeDetailPage() {
 
   if (!space || !challenge) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando…
       </div>
     );
@@ -98,7 +98,7 @@ export default function AcademiaChallengeDetailPage() {
   const currentOrder = participant?.current_checkpoint_order ?? 0;
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-5">
         <div className="flex items-center gap-3">

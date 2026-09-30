@@ -103,7 +103,7 @@ export const SettingsSidebar = memo(({
       <div className="space-y-6">
         {visibleGroups.map((group, groupIndex) => (
           <Card key={group.id} className="overflow-hidden">
-            <CardHeader className="pb-3 bg-zinc-50 dark:bg-kreoon-bg-card">
+            <CardHeader className="pb-3 bg-zinc-50 dark:bg-card">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                   <group.icon className="h-5 w-5 text-primary" />
@@ -127,7 +127,7 @@ export const SettingsSidebar = memo(({
                       className={cn(
                         "w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150",
                         canAccess
-                          ? "hover:bg-zinc-100 dark:hover:bg-kreoon-bg-card active:bg-zinc-200 dark:active:bg-zinc-800"
+                          ? "hover:bg-zinc-100 dark:hover:bg-card active:bg-zinc-200 dark:active:bg-zinc-800"
                           : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-card/20"
                       )}
                     >
@@ -188,7 +188,7 @@ export const SettingsSidebar = memo(({
               </div>
               
               {/* Section items */}
-              <div className="space-y-0.5 bg-zinc-50 dark:bg-kreoon-bg-card rounded-lg p-1">
+              <div className="space-y-0.5 bg-zinc-50 dark:bg-card rounded-lg p-1">
                 {group.sections.map((section, idx) => {
                   const canAccess = section.permission.canAccess;
                   const isActive = activeSection === section.key;

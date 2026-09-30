@@ -11,14 +11,14 @@ export default function AcademiaLeaderboardPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando ranking...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         <div className="mb-6">

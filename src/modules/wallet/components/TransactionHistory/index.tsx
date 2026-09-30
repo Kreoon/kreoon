@@ -97,11 +97,11 @@ export function TransactionHistory({
           <Card className="bg-emerald-500/5 border-emerald-500/10">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-sm bg-emerald-500/10">
-                <TrendingUp className="h-5 w-5 text-emerald-400" />
+                <TrendingUp className="h-5 w-5 text-emerald-700 dark:text-emerald-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Ingresos</p>
-                <p className="text-lg font-semibold text-emerald-400">
+                <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
                   +{formatCurrency(summary.income, currency)}
                 </p>
               </div>
@@ -110,11 +110,11 @@ export function TransactionHistory({
           <Card className="bg-red-500/5 border-red-500/10">
             <CardContent className="p-4 flex items-center gap-3">
               <div className="p-2 rounded-sm bg-red-500/10">
-                <TrendingDown className="h-5 w-5 text-red-400" />
+                <TrendingDown className="h-5 w-5 text-red-700 dark:text-red-400" />
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Egresos</p>
-                <p className="text-lg font-semibold text-red-400">
+                <p className="text-lg font-semibold text-red-700 dark:text-red-400">
                   -{formatCurrency(summary.expenses, currency)}
                 </p>
               </div>
@@ -131,8 +131,8 @@ export function TransactionHistory({
                   className={cn(
                     'text-lg font-semibold',
                     summary.income - summary.expenses >= 0
-                      ? 'text-emerald-400'
-                      : 'text-red-400'
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-red-700 dark:text-red-400'
                   )}
                 >
                   {summary.income - summary.expenses >= 0 ? '+' : ''}

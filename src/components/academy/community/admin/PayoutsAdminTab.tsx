@@ -64,7 +64,7 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
       </div>
 
       {/* Salud financiera ampliada */}
-      <Card className="p-5 bg-kreoon-bg-card border-border space-y-3">
+      <Card className="p-5 bg-card border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -139,7 +139,7 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
 
       {/* Link al Stripe Dashboard del owner */}
       {dashboardLink && (
-        <Card className="p-4 bg-kreoon-bg-card border-border">
+        <Card className="p-4 bg-card border-border">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <p className="font-semibold text-sm">Ver detalle en Stripe</p>
@@ -158,7 +158,7 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
       )}
 
       {/* Estado de miembros */}
-      <Card className="p-5 bg-kreoon-bg-card border-border">
+      <Card className="p-5 bg-card border-border">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" style={{ color: accentColor }} />
@@ -197,7 +197,7 @@ function BigStat({
 }) {
   return (
     <Card
-      className={`p-5 ${primary ? 'border-2' : 'border'} bg-kreoon-bg-card`}
+      className={`p-5 ${primary ? 'border-2' : 'border'} bg-card`}
       style={primary ? { borderColor: `${color}50` } : { borderColor: 'rgba(255,255,255,.1)' }}
     >
       <div className="flex items-start justify-between mb-2">

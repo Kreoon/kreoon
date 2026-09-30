@@ -94,7 +94,7 @@ export function JoinSpaceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl border-2 border-border bg-kreoon-bg-card">
+      <DialogContent className="max-w-md rounded-3xl border-2 border-border bg-card">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-3">
             {spaceLogoUrl ? (

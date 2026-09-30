@@ -96,9 +96,9 @@ function HorizontalTimeline({
                     )}
                   >
                     {step.status === 'completed' ? (
-                      <Check className={cn(iconSize, 'text-emerald-400')} />
+                      <Check className={cn(iconSize, 'text-emerald-700 dark:text-emerald-400')} />
                     ) : step.status === 'error' ? (
-                      <AlertTriangle className={cn(iconSize, 'text-red-400')} />
+                      <AlertTriangle className={cn(iconSize, 'text-red-700 dark:text-red-400')} />
                     ) : (
                       <Icon
                         className={cn(
@@ -164,10 +164,10 @@ function HorizontalTimeline({
               <p
                 className={cn(
                   'text-xs truncate',
-                  step.status === 'completed' && 'text-emerald-400',
+                  step.status === 'completed' && 'text-emerald-700 dark:text-emerald-400',
                   step.status === 'current' && 'text-foreground',
                   step.status === 'pending' && 'text-muted-foreground',
-                  step.status === 'error' && 'text-red-400',
+                  step.status === 'error' && 'text-red-700 dark:text-red-400',
                   step.status === 'skipped' && 'text-muted-foreground'
                 )}
               >
@@ -236,9 +236,9 @@ function VerticalTimeline({
               )}
             >
               {step.status === 'completed' ? (
-                <Check className={cn(iconSize, 'text-emerald-400')} />
+                <Check className={cn(iconSize, 'text-emerald-700 dark:text-emerald-400')} />
               ) : step.status === 'error' ? (
-                <AlertTriangle className={cn(iconSize, 'text-red-400')} />
+                <AlertTriangle className={cn(iconSize, 'text-red-700 dark:text-red-400')} />
               ) : (
                 <Icon
                   className={cn(
@@ -263,10 +263,10 @@ function VerticalTimeline({
                   className={cn(
                     size === 'sm' ? 'text-sm' : size === 'md' ? 'text-base' : 'text-lg',
                     'font-medium',
-                    step.status === 'completed' && 'text-emerald-400',
+                    step.status === 'completed' && 'text-emerald-700 dark:text-emerald-400',
                     step.status === 'current' && 'text-foreground',
                     step.status === 'pending' && 'text-muted-foreground',
-                    step.status === 'error' && 'text-red-400',
+                    step.status === 'error' && 'text-red-700 dark:text-red-400',
                     step.status === 'skipped' && 'text-muted-foreground line-through'
                   )}
                 >

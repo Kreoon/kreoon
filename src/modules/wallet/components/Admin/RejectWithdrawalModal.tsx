@@ -79,7 +79,7 @@ export function RejectWithdrawalModal({
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-full bg-red-500/10">
-              <XCircle className="h-6 w-6 text-red-400" />
+              <XCircle className="h-6 w-6 text-red-700 dark:text-red-400" />
             </div>
             <AlertDialogTitle>Rechazar Retiro</AlertDialogTitle>
           </div>
@@ -87,7 +87,7 @@ export function RejectWithdrawalModal({
             <div className="space-y-4">
               {/* Warning */}
               <div className="flex items-start gap-3 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
-                <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm text-muted-foreground">
                   <p>
                     Esta acción devolverá <strong>{withdrawal.formattedNetAmount}</strong> al

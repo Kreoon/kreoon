@@ -102,7 +102,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-4">
           <KreoonSkeleton variant="text" width="35%" height={28} />
           <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6 pt-4">
@@ -124,7 +124,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Academia no encontrada
       </div>
     );
@@ -132,7 +132,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (!user || space.owner_id !== user.id) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Solo el owner puede acceder al admin del space.</p>
       </div>
@@ -143,7 +143,7 @@ export default function AcademiaSpaceAdminPage() {
   const isPro = space.plan_slug === 'pro';
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center justify-between mb-6">

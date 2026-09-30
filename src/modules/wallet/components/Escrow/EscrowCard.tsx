@@ -97,7 +97,7 @@ export function EscrowCard({
               <LockIcon
                 className={cn(
                   'h-5 w-5',
-                  isLocked ? 'text-amber-400' : 'text-emerald-400'
+                  isLocked ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'
                 )}
               />
             </div>

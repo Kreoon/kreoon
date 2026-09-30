@@ -111,7 +111,7 @@ export function TransactionDetail({
                 className={cn(
                   'h-7 w-7',
                   transaction.isCredit
-                    ? 'text-emerald-400'
+                    ? 'text-emerald-700 dark:text-emerald-400'
                     : 'text-primary'
                 )}
               />
@@ -148,7 +148,7 @@ export function TransactionDetail({
           <p
             className={cn(
               'text-3xl font-bold',
-              transaction.isCredit ? 'text-emerald-400' : 'text-foreground'
+              transaction.isCredit ? 'text-emerald-700 dark:text-emerald-400' : 'text-foreground'
             )}
           >
             {transaction.isCredit ? '+' : '-'}

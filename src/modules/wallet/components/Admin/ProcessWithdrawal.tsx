@@ -122,7 +122,7 @@ export function ProcessWithdrawalDialog({
               <p className="text-sm text-muted-foreground">{profile?.email}</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-emerald-400">{withdrawal.formattedNetAmount}</p>
+              <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{withdrawal.formattedNetAmount}</p>
               <p className="text-xs text-muted-foreground">
                 Solicitado: {withdrawal.formattedAmount} (Fee: {withdrawal.formattedFee})
               </p>

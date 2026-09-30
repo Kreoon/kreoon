@@ -55,7 +55,7 @@ export default function BlogPage() {
                 </p>
 
                 <div className="flex flex-col items-center gap-8">
-                  <div className="flex items-center gap-4 px-6 py-4 rounded-xl border border-kreoon-purple-500/20 bg-kreoon-bg-card/50 backdrop-blur-sm">
+                  <div className="flex items-center gap-4 px-6 py-4 rounded-xl border border-kreoon-purple-500/20 bg-card/50 backdrop-blur-sm">
                     <div className="h-12 w-12 rounded-full bg-kreoon-purple-500/10 flex items-center justify-center">
                       <Clock className="h-6 w-6 text-kreoon-purple-400" />
                     </div>

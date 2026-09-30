@@ -83,7 +83,7 @@ function lazyWithRetry<T extends ComponentType<any>>(
 
 // Loading fallback component - Premium animated loader
 const SuspenseLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-kreoon-bg-primary">
+  <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
         <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/20 blur-xl animate-pulse" />
@@ -1353,8 +1353,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       storageKey="kreoon-theme"
     >
       <AppContent />

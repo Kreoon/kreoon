@@ -44,7 +44,7 @@ export default function AcademiaCoursePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary">
+      <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
@@ -64,7 +64,7 @@ export default function AcademiaCoursePage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Este curso no existe o no está publicado.</p>
         <Link to={`/academia/${spaceSlug}`} className="text-primary hover:text-primary/80">
@@ -109,7 +109,7 @@ export default function AcademiaCoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       {/* Owner bar */}
@@ -282,7 +282,7 @@ export default function AcademiaCoursePage() {
                           className="h-10 w-10 rounded-xl flex items-center justify-center text-lg font-extrabold flex-shrink-0"
                           style={{
                             backgroundColor: `${KREOON_PURPLE}25`,
-                            color: '#c084fc',
+                            color: 'hsl(var(--primary))',
                           }}
                         >
                           {moduleLocked ? <Lock className="h-4 w-4" /> : mi + 1}

@@ -51,7 +51,7 @@ export function BillingAdminTab({ isPro, accentColor = '#8B5CF6' }: BillingAdmin
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-kreoon-bg-card border-border">
+      <Card className="p-5 bg-card border-border">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <div
@@ -91,7 +91,7 @@ export function BillingAdminTab({ isPro, accentColor = '#8B5CF6' }: BillingAdmin
 
       {/* Comparativa de planes solo si está en Hobby */}
       {!isPro && (
-        <Card className="p-5 bg-kreoon-bg-card border-primary/30">
+        <Card className="p-5 bg-card border-primary/30">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <h3 className="text-lg font-bold flex items-center gap-2">
@@ -131,7 +131,7 @@ export function BillingAdminTab({ isPro, accentColor = '#8B5CF6' }: BillingAdmin
       )}
 
       {/* Método de pago */}
-      <Card className="p-5 bg-kreoon-bg-card border-border">
+      <Card className="p-5 bg-card border-border">
         <h3 className="font-semibold mb-3">Método de pago</h3>
         <p className="text-sm text-muted-foreground">
           Tu suscripción se cobra mensualmente vía Stripe. Para gestionar tu método de pago,
