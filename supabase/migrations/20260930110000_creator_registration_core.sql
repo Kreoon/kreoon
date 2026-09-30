@@ -260,4 +260,58 @@ $$;
 REVOKE ALL ON FUNCTION public.complete_creator_signup(text, uuid[], jsonb, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.complete_creator_signup(text, uuid[], jsonb, boolean) TO authenticated, service_role;
 
+-- ─── get_my_creator_signup_state: lectura (sin escribir) del estado de la identidad ───────────
+-- Permite a la UI decidir con evidencia del servidor: ¿ya es miembro?, ¿tiene membresias en otras
+-- organizaciones?, ¿que documentos le faltan? No crea nada: visitar una URL no concede membresia.
+CREATE OR REPLACE FUNCTION public.get_my_creator_signup_state(p_slug text)
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  o organizations%ROWTYPE;
+  v_is_member boolean;
+  v_has_other boolean;
+  v_missing jsonb;
+BEGIN
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'unauthorized';
+  END IF;
+
+  o := public._resolve_signup_org(p_slug);
+  IF o.id IS NULL THEN
+    RETURN jsonb_build_object('status', 'not_found');
+  END IF;
+  IF o.deleted_at IS NOT NULL OR COALESCE(o.is_blocked, false) THEN
+    RETURN jsonb_build_object('status', 'inactive');
+  END IF;
+
+  SELECT EXISTS (SELECT 1 FROM organization_members
+                  WHERE organization_id = o.id AND user_id = v_uid AND deleted_at IS NULL) INTO v_is_member;
+  SELECT EXISTS (SELECT 1 FROM organization_members
+                  WHERE user_id = v_uid AND organization_id <> o.id AND deleted_at IS NULL) INTO v_has_other;
+
+  SELECT COALESCE(jsonb_agg(jsonb_build_object(
+           'document_id', d.document_id, 'document_type', d.document_type,
+           'title', d.title, 'version', d.version, 'summary', d.summary) ORDER BY d.document_type), '[]'::jsonb)
+    INTO v_missing
+  FROM public.list_registration_documents('talent') d
+  WHERE NOT EXISTS (SELECT 1 FROM user_legal_consents c
+                     WHERE c.user_id = v_uid AND c.document_id = d.document_id AND c.accepted = true);
+
+  RETURN jsonb_build_object(
+    'status', CASE WHEN COALESCE(o.is_registration_open, false) THEN 'open' ELSE 'closed' END,
+    'organization', jsonb_build_object('id', o.id, 'slug', o.slug, 'name', o.name, 'logo_url', o.logo_url),
+    'is_member', v_is_member,
+    'has_other_memberships', v_has_other,
+    'missing_documents', v_missing
+  );
+END;
+$$;
+REVOKE ALL ON FUNCTION public.get_my_creator_signup_state(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_creator_signup_state(text) TO authenticated, service_role;
+
 NOTIFY pgrst, 'reload schema';

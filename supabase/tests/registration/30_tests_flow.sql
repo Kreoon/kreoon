@@ -73,3 +73,27 @@ DO $$ BEGIN
   EXCEPTION WHEN unique_violation THEN INSERT INTO pg_temp.results VALUES ('T34 solo una org predeterminada', true, ''); END; END $$;
 INSERT INTO pg_temp.results SELECT 'T35 get_default_registration_org', public.get_default_registration_org()->>'slug'='org-a', '';
 
+
+-- T36-T40 estado de la identidad (solo lectura)
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
+RESET ROLE;
+DELETE FROM public.organization_members WHERE user_id='00000000-0000-0000-0000-0000000000c1';
+DELETE FROM public.organization_member_roles WHERE user_id='00000000-0000-0000-0000-0000000000c1';
+DELETE FROM public.user_legal_consents WHERE user_id='00000000-0000-0000-0000-0000000000c1';
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
+INSERT INTO pg_temp.results SELECT 'T36 estado: no miembro, 2 docs pendientes, sin otras membresias',
+  (s->>'is_member')::boolean = false AND jsonb_array_length(s->'missing_documents') = 2 AND (s->>'has_other_memberships')::boolean = false, s::text
+  FROM (SELECT public.get_my_creator_signup_state('org-a') s) x;
+RESET ROLE;
+INSERT INTO pg_temp.results SELECT 'T37 consultar el estado NO crea membresia', count(*)=0, '' FROM public.organization_members WHERE user_id='00000000-0000-0000-0000-0000000000c1';
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000a2');
+INSERT INTO pg_temp.results SELECT 'T38 estado: ya miembro de A', (public.get_my_creator_signup_state('org-a')->>'is_member')::boolean, '';
+SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');
+INSERT INTO pg_temp.results SELECT 'T38b estado: admin de A consultando B => otras membresias, no miembro',
+  (s->>'has_other_memberships')::boolean AND NOT (s->>'is_member')::boolean, s::text
+  FROM (SELECT public.get_my_creator_signup_state('org-b') s) x;
+SET ROLE anon;
+DO $$ BEGIN
+  BEGIN PERFORM public.get_my_creator_signup_state('org-a'); INSERT INTO pg_temp.results VALUES ('T39 anon no consulta estado', false, '');
+  EXCEPTION WHEN insufficient_privilege THEN INSERT INTO pg_temp.results VALUES ('T39 anon no consulta estado', true, ''); END; END $$;
+RESET ROLE;
