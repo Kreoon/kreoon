@@ -32,7 +32,7 @@ function MiniStat({ label, value, total, icon: Icon, color }: MiniStatProps) {
   const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] hover:bg-white/[0.04] transition-colors">
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40 hover:bg-muted/40 transition-colors">
       <div className={cn("w-9 h-9 rounded-sm flex items-center justify-center", color)}>
         <Icon className="h-4 w-4" />
       </div>

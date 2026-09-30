@@ -79,7 +79,7 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
     <div className="rounded border border-border overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 hover:bg-muted/40 transition-colors text-left"
       >
         <span className="text-sm font-medium capitalize">{month}</span>
         <div className="flex items-center gap-2">
@@ -593,7 +593,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
                 </div>
 
                 {loadingBilling ? (
-                  <div className="h-12 rounded border border-border animate-pulse bg-white/[0.03]" />
+                  <div className="h-12 rounded border border-border animate-pulse bg-muted/40" />
                 ) : (
                   <div className="space-y-2">
                     {fillmakersByMonth.map(([month, items], idx) => (
@@ -635,7 +635,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
                 </h3>
 
                 {loadingBilling ? (
-                  <div className="h-12 rounded border border-border animate-pulse bg-white/[0.03]" />
+                  <div className="h-12 rounded border border-border animate-pulse bg-muted/40" />
                 ) : (
                   <div className="space-y-2">
                     {projectsByMonth.map(([month, items], idx) => (

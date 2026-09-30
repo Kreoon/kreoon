@@ -264,8 +264,8 @@ function TextArea({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       rows={4}
-      className="w-full px-4 py-3 rounded-sm bg-white/5 border border-white/10
-                 text-white placeholder-gray-500
+      className="w-full px-4 py-3 rounded-sm bg-muted/40 border border-border
+                 text-foreground placeholder-muted-foreground
                  focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20
                  transition-all resize-none"
     />

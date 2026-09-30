@@ -135,7 +135,7 @@ function MetricCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-2.5 p-2.5 rounded-sm bg-white/[0.03] border border-border">
+    <div className="flex items-center gap-2.5 p-2.5 rounded-sm bg-muted/40 border border-border">
       <Icon className="h-4 w-4 text-[#a855f7] flex-shrink-0" />
       <div className="min-w-0">
         <p className="text-[10px] text-muted-foreground/70">{label}</p>

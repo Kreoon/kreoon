@@ -33,7 +33,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
         {services.map((service) => (
           <div
             key={service.id}
-            className="rounded-sm bg-white/[0.03] border border-border p-2.5"
+            className="rounded-sm bg-muted/40 border border-border p-2.5"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-xs text-muted-foreground font-medium truncate flex-1">

@@ -329,7 +329,7 @@ const PlatformCRMDashboard = () => {
                         return (
                           <tr
                             key={interaction.id}
-                            className="border-b border-white/[0.03] last:border-0 hover:bg-white/[0.02] transition-colors"
+                            className="border-b border-border last:border-0 hover:bg-muted/40 transition-colors"
                           >
                             <td className="py-3 pr-4">
                               <div className="flex items-center gap-2">

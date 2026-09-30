@@ -92,7 +92,7 @@ interface StatBoxProps {
 
 function StatBox({ label, value, icon: Icon, color, subtitle }: StatBoxProps) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02]">
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40">
       <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", color)}>
         <Icon className="h-5 w-5" />
       </div>
@@ -123,7 +123,7 @@ function ModuleBar({ module, calls, tokens, cost, maxCalls }: ModuleBarProps) {
   const displayName = MODULE_LABELS[module] || module.replace(/-/g, ' ').replace(/ai/gi, 'AI').replace(/_/g, ' ');
 
   return (
-    <div className="group hover:bg-white/[0.02] p-2 rounded-sm transition-colors">
+    <div className="group hover:bg-muted/40 p-2 rounded-sm transition-colors">
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm text-muted-foreground capitalize truncate flex-1">{displayName}</span>
         <div className="flex items-center gap-3 text-xs text-muted-foreground/70">

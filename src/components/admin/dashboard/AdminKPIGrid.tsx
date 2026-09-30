@@ -49,7 +49,7 @@ function StatCard({ title, value, subtitle, icon: Icon, trend, color, onClick }:
   return (
     <Card
       className={cn(
-        "p-4 md:p-5 hover:bg-white/[0.02] transition-colors",
+        "p-4 md:p-5 hover:bg-muted/40 transition-colors",
         onClick && "cursor-pointer hover:ring-1 hover:ring-border"
       )}
       onClick={onClick}

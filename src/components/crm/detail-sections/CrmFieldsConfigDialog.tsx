@@ -97,7 +97,7 @@ export function CrmFieldsConfigDialog({
               {activeDefs.map((def) => (
                 <div
                   key={def.id}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-sm bg-white/[0.03] border border-border"
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-sm bg-muted/40 border border-border"
                 >
                   <GripVertical className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
                   <span className="text-xs text-muted-foreground flex-1 truncate">{def.name}</span>

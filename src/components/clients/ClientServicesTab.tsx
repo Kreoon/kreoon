@@ -73,7 +73,7 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
     <div className="rounded border border-border overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 hover:bg-muted/40 transition-colors text-left"
       >
         <span className="text-sm font-medium capitalize">{month}</span>
         <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export function ClientServicesTab({
             { label: 'Grabaciones', value: fillmakers.length, icon: Camera, color: 'text-violet-400' },
             { label: 'Proyectos', value: projects.length, icon: FolderKanban, color: 'text-blue-400' },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="p-3 rounded border border-border bg-white/[0.02] text-center">
+            <div key={label} className="p-3 rounded border border-border bg-muted/40 text-center">
               <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
               <p className="text-lg font-bold">{value}</p>
               <p className="text-xs text-muted-foreground">{label}</p>

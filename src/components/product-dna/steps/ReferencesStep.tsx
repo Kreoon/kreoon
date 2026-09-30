@@ -130,7 +130,7 @@ function LinkSection({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="flex-1 px-3 py-2 rounded-sm bg-muted/50 border border-border
-                     text-sm text-foreground placeholder:text-gray-500
+                     text-sm text-foreground placeholder:text-muted-foreground
                      focus:outline-none focus:border-purple-500/50"
         />
         <button

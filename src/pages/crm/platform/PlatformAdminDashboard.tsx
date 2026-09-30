@@ -71,7 +71,7 @@ function QuickActionsCard() {
           <Link key={index} to={action.href}>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-2 h-auto py-3 px-3 bg-white/[0.02] hover:bg-white/[0.05]"
+              className="w-full justify-start gap-2 h-auto py-3 px-3 bg-muted/40 hover:bg-muted/40"
             >
               <action.icon className="h-4 w-4 text-muted-foreground/70" />
               <span className="text-sm text-muted-foreground">{action.label}</span>
@@ -324,7 +324,7 @@ export default function PlatformAdminDashboard() {
                 {distribution.data.by_role.slice(0, 12).map((item, index) => (
                   <div
                     key={index}
-                    className="p-3 rounded-sm bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+                    className="p-3 rounded-sm bg-muted/40 hover:bg-muted/40 transition-colors"
                   >
                     <p className="text-xs text-muted-foreground/70 truncate capitalize">
                       {item.role.replace(/_/g, " ")}

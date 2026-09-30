@@ -38,7 +38,7 @@ function SyncKpiCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40 border border-white/[0.08]">
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40 border border-border">
       <div className={cn('p-2 rounded-sm', color)}>
         <Icon className="h-4 w-4" />
       </div>
@@ -121,7 +121,7 @@ function ActivityRow({ entry }: { entry: PancakeSyncActivityEntry }) {
   });
 
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-white/[0.05] last:border-0">
+    <div className="flex items-center gap-3 py-2 border-b border-border last:border-0">
       <div
         className={cn(
           'p-1.5 rounded-full shrink-0',
@@ -219,7 +219,7 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
     <Card className="overflow-hidden">
       {/* Header colapsable */}
       <button
-        className="w-full flex items-center justify-between p-5 hover:bg-white/[0.02] transition-colors text-left"
+        className="w-full flex items-center justify-between p-5 hover:bg-muted/40 transition-colors text-left"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="flex items-center gap-3">

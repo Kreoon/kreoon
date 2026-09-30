@@ -501,8 +501,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                     placeholder="Ej: Webinar gratuito Be Light / Vlight Solution"
                     disabled={processingStep !== 'idle'}
                     className="w-full px-3 py-2 rounded-sm text-xs
-                               bg-white/5 border border-white/10
-                               text-white placeholder-white/25
+                               bg-muted/40 border border-border
+                               text-foreground placeholder-muted-foreground
                                focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
                                disabled:opacity-40 transition-colors"
                   />
@@ -519,8 +519,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                     rows={2}
                     disabled={processingStep !== 'idle'}
                     className="w-full px-3 py-2 rounded-sm text-xs
-                               bg-white/5 border border-white/10
-                               text-white placeholder-white/25
+                               bg-muted/40 border border-border
+                               text-foreground placeholder-muted-foreground
                                focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
                                disabled:opacity-40 resize-none transition-colors"
                   />

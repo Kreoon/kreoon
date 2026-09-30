@@ -85,7 +85,7 @@ function TierCard({ tier, count, total }: TierCardProps) {
 
   return (
     <div
-      className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+      className="flex items-center gap-3 p-3 rounded-sm bg-muted/40 hover:bg-muted/40 transition-colors"
       style={{ borderLeft: `3px solid ${color}` }}
     >
       <div

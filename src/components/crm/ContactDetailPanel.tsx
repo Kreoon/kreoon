@@ -558,7 +558,7 @@ export function ContactDetailPanel({
                               'border-border bg-muted/40',
                               config.glowColor,
                             )
-                          : 'border-border bg-white/[0.02] hover:bg-muted/40 hover:border-border',
+                          : 'border-border bg-muted/40 hover:bg-muted/40 hover:border-border',
                       )}
                     >
                       <Icon

@@ -60,7 +60,7 @@ export function KPIDetailTable<T>({
             {pageData.map((item, idx) => (
               <tr
                 key={getRowKey(item, page * pageSize + idx)}
-                className="border-b border-border hover:bg-white/[0.03] transition-colors"
+                className="border-b border-border hover:bg-muted/40 transition-colors"
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn("py-2.5 px-3 text-muted-foreground", col.className)}>
