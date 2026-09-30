@@ -47,6 +47,31 @@ const handler = async (req: Request): Promise<Response> => {
     const payload: NewMemberPayload = await req.json();
     const { user_id, organization_id, role, user_name, user_email } = payload;
 
+    // Autorización: solo el propio miembro, con membresía real en esa organización, puede disparar el
+    // aviso. Antes era pública y aceptaba organization_id/role/email del body (spam a admins).
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: callerData } = jwt ? await supabase.auth.getUser(jwt) : { data: { user: null } };
+    const caller = callerData?.user;
+    if (!caller || caller.id !== user_id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", organization_id)
+      .eq("user_id", user_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     console.log("Processing new member notification:", { user_id, organization_id, role });
 
     // Get organization details

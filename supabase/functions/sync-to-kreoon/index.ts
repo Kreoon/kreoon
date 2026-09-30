@@ -1,3 +1,4 @@
+import { legacyToolGuard } from "../_shared/legacyToolGuard.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -126,6 +127,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Herramienta heredada: deshabilitada por defecto (ver _shared/legacyToolGuard.ts).
+  const legacyDisabled = legacyToolGuard();
+  if (legacyDisabled) return legacyDisabled;
+
   try {
     // Legacy source database
     const sourceUrl = Deno.env.get('SUPABASE_URL');
@@ -160,7 +165,8 @@ serve(async (req) => {
     const { action, tables, secret, orgId } = await req.json();
 
     // Simple auth check
-    if (secret !== 'kreoon-sync-2026') {
+    const expectedSecret = Deno.env.get('SYNC_TO_KREOON_SECRET');
+    if (!expectedSecret || secret !== expectedSecret) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

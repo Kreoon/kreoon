@@ -89,6 +89,21 @@ Deno.serve(async (req) => {
     return jsonResponse(req, { error: "invalid_json" }, 400);
   }
 
+  // Relanzamiento: esta función CREA cuentas de cliente (auth.admin.createUser + membresía con rol
+  // client). En esta fase no se permiten altas nuevas de marcas/clientes por ninguna ruta pública;
+  // el futuro onboarding comercial lo reabrirá con autorización explícita. Las cuentas y formularios
+  // ya existentes no se tocan (get/submit/process siguen operativos en sus propias funciones).
+  if (Deno.env.get("CLIENT_ONBOARDING_CLAIM_ENABLED") !== "true") {
+    return jsonResponse(
+      req,
+      {
+        error: "client_signups_closed",
+        message: "La creación de nuevas cuentas de cliente no está disponible por ahora. Si ya tienes cuenta, inicia sesión.",
+      },
+      403,
+    );
+  }
+
   const token = body?.token;
   if (!isWellFormedToken(token)) {
     return jsonResponse(

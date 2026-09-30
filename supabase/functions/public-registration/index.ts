@@ -5,7 +5,15 @@
  * desde sitios externos como ugccolombia.co
  *
  * ENDPOINTS:
- * - POST /public-registration { type: 'creator' | 'brand', ... }
+ * - POST /public-registration { type: 'creator', ... }
+ *
+ * DEPRECADO (relanzamiento): el registro público canónico es https://kreoon.com/registro/:organizationSlug
+ * (RPC complete_creator_signup). Esta función solo se conserva como puente para el formulario externo
+ * de ugccolombia.co mientras ese sitio se actualiza, y SOLO acepta creadores:
+ *   - type 'brand' (u otro) → 403: el alta pública de marcas está cerrada, también en backend.
+ *   - PUBLIC_REGISTRATION_ENABLED=false → 410 con la URL canónica (interruptor sin redeploy).
+ *   - No registra consentimientos: no hay evidencia de qué documentos vio el formulario externo; se
+ *     aceptan, con versión y fecha, en el onboarding (accept_registration_documents).
  *
  * El usuario se registra en KREOON, se asigna a la organizacion UGC Colombia,
  * y queda como miembro de la comunidad partner "UGC Colombia" con beneficios:
@@ -63,17 +71,7 @@ interface CreatorRegistration {
   legal_accepted: boolean;
 }
 
-interface BrandRegistration {
-  type: "brand";
-  email: string;
-  password: string;
-  company_name: string;
-  contact_name: string;
-  phone?: string;
-  legal_accepted: boolean;
-}
-
-type RegistrationRequest = CreatorRegistration | BrandRegistration;
+type RegistrationRequest = CreatorRegistration;
 
 interface CommunityInfo {
   id: string;
@@ -243,10 +241,28 @@ serve(async (req: Request) => {
   try {
     const body = await req.json();
 
-    // Type es opcional, por defecto es 'creator'
-    const registrationType = body.type && ["creator", "brand"].includes(body.type)
-      ? body.type
-      : "creator";
+    // Interruptor de apagado: cuando ugccolombia.co enlace al registro canónico, se desactiva aquí.
+    if (Deno.env.get("PUBLIC_REGISTRATION_ENABLED") === "false") {
+      return new Response(
+        JSON.stringify({
+          error: "registration_moved",
+          message: "El registro ahora se hace en la página de inscripción de UGC Colombia.",
+          url: "https://kreoon.com/registro/ugc-colombia",
+        }),
+        { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Solo creadores. Marcas (y cualquier otro tipo) no pueden darse de alta por esta vía.
+    if (body.type !== undefined && body.type !== "creator") {
+      return new Response(
+        JSON.stringify({
+          error: "signup_closed",
+          message: "El registro público de marcas y organizaciones no está disponible. Solo se aceptan creadores.",
+        }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (!body.email || !body.password) {
       return new Response(
@@ -308,11 +324,7 @@ serve(async (req: Request) => {
       console.warn("[public-registration] Owner not found, continuing without referral");
     }
 
-    if (registrationType === "creator") {
-      return await registerCreator(supabase, body as CreatorRegistration, orgId, community, ownerId, corsHeaders);
-    } else {
-      return await registerBrand(supabase, body as BrandRegistration, orgId, community, ownerId, corsHeaders);
-    }
+    return await registerCreator(supabase, body as CreatorRegistration, orgId, community, ownerId, corsHeaders);
   } catch (error) {
     console.error("[public-registration] Error:", error);
     return new Response(
@@ -348,7 +360,6 @@ async function registerCreator(
       full_name: data.full_name,
       registration_source: "ugccolombia.co",
       registration_type: "creator",
-      partner_community: community?.name || "KREOON by UGC Colombia",
       legal_accepted_at: new Date().toISOString(),
       legal_accepted_from: "ugccolombia.co",
     },
@@ -371,15 +382,16 @@ async function registerCreator(
   const userId = authData.user.id;
 
   // 2. Create profile as freelance (no organization, no badge yet)
-  const { error: profileError } = await supabase.from("profiles").insert({
+  // El trigger on_auth_user_created (handle_new_user) ya insertó el perfil con este id: un INSERT chocaba
+  // por PK y registration_source/phone quedaban sin guardar (644/645 perfiles con source nulo). Upsert.
+  const { error: profileError } = await supabase.from("profiles").upsert({
     id: userId,
     email: data.email.toLowerCase(),
     full_name: data.full_name,
     phone: data.phone || null,
     registration_source: "ugccolombia.co",
-    // No current_organization_id - queda como freelance
-    // No badge - se asigna cuando sea aprobado
-  });
+    // No current_organization_id: la membresía se confirma en /registro/:slug/continuar
+  }, { onConflict: "id" });
 
   if (profileError) {
     console.error("[public-registration] Profile error:", profileError);
@@ -522,166 +534,6 @@ async function registerCreator(
   );
 }
 
-async function registerBrand(
-  supabase: ReturnType<typeof createClient>,
-  data: BrandRegistration,
-  orgId: string,
-  community: CommunityInfo | null,
-  ownerId: string | null,
-  corsHeaders: Record<string, string>
-): Promise<Response> {
-  console.log("[public-registration] Registering brand:", data.email);
-
-  // Create referral entry (before user creation to have the referral ID)
-  let referralId: string | null = null;
-  if (ownerId) {
-    referralId = await getOrCreateReferral(supabase, ownerId, data.email.toLowerCase());
-    console.log("[public-registration] Created referral:", referralId);
-  }
-
-  // 1. Create auth user
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email: data.email.toLowerCase(),
-    password: data.password,
-    email_confirm: false,
-    user_metadata: {
-      full_name: data.contact_name,
-      company_name: data.company_name,
-      registration_source: "ugccolombia.co",
-      registration_type: "brand",
-      partner_community: community?.name || "KREOON by UGC Colombia",
-      legal_accepted_at: new Date().toISOString(),
-      legal_accepted_from: "ugccolombia.co",
-    },
-  });
-
-  if (authError || !authData.user) {
-    console.error("[public-registration] Auth error:", authError);
-    if (authError?.message?.includes("already registered")) {
-      return new Response(
-        JSON.stringify({ error: "Este email ya esta registrado" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    return new Response(
-      JSON.stringify({ error: "Error al crear la cuenta. Intenta de nuevo." }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  const userId = authData.user.id;
-
-  // 2. Create profile as independent (no organization, no badge yet)
-  const { error: profileError } = await supabase.from("profiles").insert({
-    id: userId,
-    email: data.email.toLowerCase(),
-    full_name: data.contact_name,
-    phone: data.phone || null,
-    registration_source: "ugccolombia.co",
-    // No current_organization_id - queda como independiente
-    // No badge - se asigna cuando sea aprobado
-  });
-
-  if (profileError) {
-    console.error("[public-registration] Profile error:", profileError);
-  }
-
-  // 3. Activate referral (link user to UGC Colombia owner for commissions)
-  if (referralId) {
-    await activateReferral(supabase, referralId, userId);
-    console.log("[public-registration] Activated referral for user:", userId);
-  }
-
-  // 4. Create join request for UGC Colombia (pending approval)
-  const { error: joinRequestError } = await supabase.from("organization_join_requests").insert({
-    organization_id: orgId,
-    user_id: userId,
-    requested_role: "client",
-    status: "pending",
-    source: "ugccolombia.co",
-    message: `Marca: ${data.company_name} - Contacto: ${data.contact_name} - Registro desde ugccolombia.co`,
-  });
-
-  if (joinRequestError) {
-    console.error("[public-registration] Join request error:", joinRequestError);
-  }
-
-  // 5. Track pending membership (benefits activate on approval)
-  if (community) {
-    const { error: trackingError } = await supabase.from("partner_community_memberships").insert({
-      community_id: community.id,
-      user_id: userId,
-      status: "pending",
-      free_months_granted: 0,
-      commission_discount_applied: 0,
-      bonus_tokens_granted: 0,
-      metadata: {
-        registration_source: "ugccolombia.co",
-        registration_type: "brand",
-        company_name: data.company_name,
-        registered_at: new Date().toISOString(),
-        pending_benefits: {
-          free_months: community.free_months,
-          bonus_tokens: community.bonus_ai_tokens,
-          commission_discount: community.commission_discount_points,
-          badge_text: community.custom_badge_text,
-          badge_color: community.custom_badge_color,
-        },
-      },
-    });
-
-    if (trackingError) {
-      console.error("[public-registration] Tracking error:", trackingError);
-    }
-  }
-
-  // 6. Send magic link email (auto-login on click)
-  const { data: linkData, error: emailError } = await supabase.auth.admin.generateLink({
-    type: "magiclink",
-    email: data.email.toLowerCase(),
-    options: {
-      redirectTo: "https://kreoon.com/welcome/ugc-colombia",
-    },
-  });
-
-  if (emailError) {
-    console.error("[public-registration] Email link error:", emailError);
-  }
-
-  // 9. Send welcome email via Resend with magic link
-  const magicLink = linkData?.properties?.action_link || "https://kreoon.com/auth";
-  try {
-    await resend.emails.send({
-      from: "KREOON <noreply@kreoon.com>",
-      to: [data.email],
-      subject: "¡Bienvenido a KREOON by UGC Colombia! 🚀",
-      html: getBrandWelcomeEmail(data.contact_name, data.company_name, community, magicLink),
-    });
-  } catch (e) {
-    console.error("[public-registration] Resend error:", e);
-  }
-
-  console.log("[public-registration] Brand registered successfully:", userId, "Pending approval for:", community?.name);
-
-  return new Response(
-    JSON.stringify({
-      success: true,
-      message: "Registro exitoso. Ya puedes explorar KREOON. Tu solicitud para unirte a KREOON by UGC Colombia esta en revision.",
-      user_id: userId,
-      login_url: "https://kreoon.com/auth",
-      status: "pending_approval",
-      referral_active: !!referralId,
-      pending_benefits: community ? {
-        free_months: community.free_months,
-        bonus_tokens: community.bonus_ai_tokens,
-        badge: community.custom_badge_text,
-        commission_discount: community.commission_discount_points,
-      } : null,
-    }),
-    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
-}
-
 function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, loginUrl: string): string {
   const pendingBenefits = community ? `
     <div class="benefits">
@@ -780,100 +632,3 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
   `;
 }
 
-function getBrandWelcomeEmail(contactName: string, companyName: string, community: CommunityInfo | null, loginUrl: string): string {
-  const pendingBenefits = community ? `
-    <div class="benefits">
-      <p style="color: #fbbf24; font-weight: 600; margin-bottom: 12px;">⏳ Beneficios pendientes (se activan al aprobar tu solicitud):</p>
-      <ul style="color: #d4d4d8; margin: 0; padding-left: 20px;">
-        ${community.free_months > 0 ? `<li>${community.free_months} mes${community.free_months > 1 ? 'es' : ''} gratis de suscripcion</li>` : ''}
-        ${community.bonus_ai_tokens > 0 ? `<li>${community.bonus_ai_tokens} tokens AI de bienvenida</li>` : ''}
-        ${community.commission_discount_points > 0 ? `<li>Descuento en comisiones del marketplace</li>` : ''}
-        <li>Badge exclusivo "${community.custom_badge_text}" en tu perfil</li>
-        <li>Acceso prioritario a creadores verificados</li>
-      </ul>
-    </div>
-  ` : '';
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 40px; }
-    .container { max-width: 560px; margin: 0 auto; background: #111; border-radius: 16px; padding: 40px; border: 1px solid #222; }
-    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
-    .logo { font-size: 24px; font-weight: bold; }
-    .logo-ugc { color: #f97316; }
-    .logo-x { color: #666; margin: 0 4px; }
-    .logo-kreoon { color: #22c55e; }
-    .badge { display: inline-block; background: #fbbf24; color: #0a0a0a; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; }
-    h1 { font-size: 28px; margin: 0 0 16px; }
-    p { font-size: 16px; line-height: 1.6; color: #a1a1aa; margin: 16px 0; }
-    .highlight { color: #f97316; }
-    .button { display: inline-block; background: linear-gradient(135deg, #f97316, #ea580c); color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 24px 0; }
-    .benefits { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #fbbf2433; }
-    .status-box { background: #1a1a1a; border-radius: 12px; padding: 20px; margin: 24px 0; border: 1px solid #22c55e33; }
-    .features { background: #1a1a1a; border-radius: 12px; padding: 24px; margin: 24px 0; }
-    .feature { display: flex; align-items: flex-start; gap: 12px; margin: 16px 0; }
-    .feature-icon { font-size: 20px; }
-    .feature-text { color: #d4d4d8; }
-    .footer { margin-top: 32px; padding-top: 24px; border-top: 1px solid #222; font-size: 14px; color: #71717a; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <span class="logo">
-        <span class="logo-kreoon">KREOON</span>
-        <span class="logo-x"> by </span>
-        <span class="logo-ugc">UGC Colombia</span>
-      </span>
-    </div>
-
-    <h1>¡Bienvenido, ${contactName}! 🚀 <span class="badge">En revision</span></h1>
-
-    <p>El registro de <span class="highlight">${companyName}</span> ha sido exitoso.</p>
-
-    <div class="status-box">
-      <p style="color: #22c55e; font-weight: 600; margin: 0 0 8px;">✅ Ya puedes explorar KREOON</p>
-      <p style="color: #a1a1aa; margin: 0; font-size: 14px;">Tu cuenta esta activa. Puedes ver creadores y explorar la plataforma.</p>
-    </div>
-
-    <p>Tu solicitud para unirte a la <strong style="color: #f97316;">Comunidad KREOON by UGC Colombia</strong> esta en revision. Te notificaremos cuando sea aprobada.</p>
-
-    ${pendingBenefits}
-
-    <div class="features">
-      <p style="color: #22c55e; font-weight: 600; margin: 0 0 16px;">Mientras tanto puedes:</p>
-      <div class="feature">
-        <span class="feature-icon">🔍</span>
-        <span class="feature-text"><strong>Explorar creadores</strong> disponibles</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">📋</span>
-        <span class="feature-text"><strong>Conocer la plataforma</strong> y sus funciones</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">💼</span>
-        <span class="feature-text"><strong>Completar tu perfil</strong> de marca</span>
-      </div>
-      <div class="feature">
-        <span class="feature-icon">📈</span>
-        <span class="feature-text"><strong>Planear tu estrategia</strong> de contenido UGC</span>
-      </div>
-    </div>
-
-    <a href="${loginUrl}" class="button">Ingresar a la Plataforma</a>
-
-    <p style="font-size: 14px;">Haz click en el boton para acceder automaticamente (link valido por 24h).</p>
-
-    <div class="footer">
-      <p>¿Preguntas? Escribenos a <a href="mailto:hola@ugccolombia.co" style="color: #f97316;">hola@ugccolombia.co</a></p>
-      <p style="margin-top: 16px;">© 2026 KREOON by UGC Colombia</p>
-    </div>
-  </div>
-</body>
-</html>
-  `;
-}
