@@ -26,6 +26,12 @@ interface CreatorSignupFormProps {
   onGoogle: () => void;
 }
 
+/**
+ * Google solo se muestra cuando el proveedor está configurado en Supabase Auth. No es verificable
+ * desde el cliente: se controla con VITE_GOOGLE_AUTH_ENABLED=false (por defecto visible).
+ */
+const GOOGLE_ENABLED = import.meta.env.VITE_GOOGLE_AUTH_ENABLED !== "false";
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const MIN_PASSWORD_LENGTH = 8;
 
@@ -82,22 +88,26 @@ export function CreatorSignupForm(props: CreatorSignupFormProps) {
         </Alert>
       ) : null}
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleGoogle}
-        disabled={busy}
-        className="h-12 w-full gap-3 rounded-xl text-base"
-      >
-        {googleLoading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <GoogleMark />}
-        Continuar con Google
-      </Button>
+      {GOOGLE_ENABLED ? (
+        <>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleGoogle}
+          disabled={busy}
+          className="h-12 w-full gap-3 rounded-xl text-base"
+        >
+          {googleLoading ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden /> : <GoogleMark />}
+          Continuar con Google
+        </Button>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden>
-        <span className="h-px flex-1 bg-border" />
-        o con tu correo
-        <span className="h-px flex-1 bg-border" />
-      </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground" aria-hidden>
+          <span className="h-px flex-1 bg-border" />
+          o con tu correo
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        </>
+      ) : null}
 
       <form onSubmit={handleSubmit} noValidate className="space-y-4">
         <div className="space-y-1.5">
