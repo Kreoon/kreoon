@@ -154,8 +154,8 @@ export default function PartnerCommunityLanding() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-card to-black p-4">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Comunidad no disponible</h1>
-          <p className="text-zinc-400 mb-6">{error || "Esta comunidad no existe o ya no esta activa."}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Comunidad no disponible</h1>
+          <p className="text-muted-foreground mb-6">{error || "Esta comunidad no existe o ya no esta activa."}</p>
           <Button asChild variant="outline">
             <Link to="/">Ir al inicio</Link>
           </Button>
@@ -178,7 +178,7 @@ export default function PartnerCommunityLanding() {
   return (
     <div className={cn("min-h-screen", `bg-gradient-to-br ${bgGradient}`)}>
       {/* Header */}
-      <header className="border-b border-zinc-800">
+      <header className="border-b border-border">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {community.metadata?.partner_logo_url ? (
@@ -188,12 +188,12 @@ export default function PartnerCommunityLanding() {
                 className="h-8 object-contain"
               />
             ) : (
-              <Link to="/" className="text-xl font-bold text-white">
+              <Link to="/" className="text-xl font-bold text-foreground">
                 KREOON
               </Link>
             )}
-            <span className="text-zinc-600">×</span>
-            <span className="text-zinc-400 font-medium">{community.name}</span>
+            <span className="text-muted-foreground">×</span>
+            <span className="text-muted-foreground font-medium">{community.name}</span>
           </div>
           <Badge
             variant="outline"
@@ -219,7 +219,7 @@ export default function PartnerCommunityLanding() {
             />
           )}
 
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
             {heroTitle.includes('KREOON') ? (
               <>
                 {heroTitle.split('KREOON')[0]}
@@ -238,7 +238,7 @@ export default function PartnerCommunityLanding() {
             {heroSubtitle}
           </p>
 
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             {community.description}
           </p>
 
@@ -250,7 +250,7 @@ export default function PartnerCommunityLanding() {
 
           {/* Video embed if provided */}
           {community.metadata?.video_url && (
-            <div className="max-w-2xl mx-auto mb-8 rounded-sm overflow-hidden border border-zinc-800">
+            <div className="max-w-2xl mx-auto mb-8 rounded-sm overflow-hidden border border-border">
               <iframe
                 src={community.metadata.video_url}
                 className="w-full aspect-video"
@@ -265,7 +265,7 @@ export default function PartnerCommunityLanding() {
       {/* Beneficios */}
       <section className="py-12 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
             Tus beneficios exclusivos
           </h2>
 
@@ -273,7 +273,7 @@ export default function PartnerCommunityLanding() {
             {/* Beneficio 1: Meses gratis */}
             {community.benefits.free_months > 0 && (
               <Card
-                className="bg-card/50 border-zinc-800 p-6 transition-all duration-300 hover:scale-105"
+                className="bg-card/50 border-border p-6 transition-all duration-300 hover:scale-105"
                 style={{ '--hover-border': themeColor } as React.CSSProperties}
               >
                 <div
@@ -282,10 +282,10 @@ export default function PartnerCommunityLanding() {
                 >
                   <Gift className="w-6 h-6" style={{ color: themeColor }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   {community.benefits.free_months} meses gratis
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-muted-foreground">
                   Obtén {community.benefits.free_months} meses gratis en tu primer plan de suscripción.
                   Sin compromiso, cancela cuando quieras.
                 </p>
@@ -294,14 +294,14 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 2: Descuento en comisiones */}
             {community.benefits.commission_discount_points > 0 && (
-              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-border p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
                   <Percent className="w-6 h-6 text-emerald-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   -{community.benefits.commission_discount_points}% en comisiones
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-muted-foreground">
                   Descuento permanente en las comisiones del marketplace.
                   Pagas menos en cada proyecto que contrates.
                 </p>
@@ -310,14 +310,14 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 3: Badge especial */}
             {community.benefits.custom_badge && (
-              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-border p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
                   <Star className="w-6 h-6 text-purple-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Etiqueta exclusiva
                 </h3>
-                <p className="text-zinc-400 mb-3">
+                <p className="text-muted-foreground mb-3">
                   Tu marca lucirá la etiqueta "{community.benefits.custom_badge.text}" en el marketplace.
                 </p>
                 <Badge
@@ -335,16 +335,16 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio extra: Tokens AI */}
             {community.benefits.bonus_ai_tokens > 0 && (
-              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
+              <Card className="bg-card/50 border-border p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-foreground">
                       +{community.benefits.bonus_ai_tokens.toLocaleString()} Tokens IA
                     </h3>
-                    <p className="text-zinc-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       Tokens de bienvenida para usar con las funciones de inteligencia artificial.
                     </p>
                   </div>
@@ -359,7 +359,7 @@ export default function PartnerCommunityLanding() {
               {community.metadata.features.map((feature, idx) => {
                 const IconComponent = ICON_MAP[feature.icon || 'check'] || CheckCircle2;
                 return (
-                  <Card key={idx} className="bg-card/50 border-zinc-800 p-6 hover:border-zinc-700 transition-colors">
+                  <Card key={idx} className="bg-card/50 border-border p-6 hover:border-border transition-colors">
                     <div className="flex items-start gap-4">
                       <div
                         className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
@@ -368,8 +368,8 @@ export default function PartnerCommunityLanding() {
                         <IconComponent className="w-5 h-5" style={{ color: themeColor }} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
-                        <p className="text-sm text-zinc-400">{feature.description}</p>
+                        <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
                   </Card>
@@ -384,13 +384,13 @@ export default function PartnerCommunityLanding() {
       {community.metadata?.testimonials && community.metadata.testimonials.length > 0 && (
         <section className="py-12 px-4 bg-card/30">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
               Lo que dicen nuestros miembros
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {community.metadata.testimonials.map((testimonial, idx) => (
-                <Card key={idx} className="bg-card/50 border-zinc-800 p-6">
-                  <p className="text-zinc-300 mb-4 italic">"{testimonial.text}"</p>
+                <Card key={idx} className="bg-card/50 border-border p-6">
+                  <p className="text-muted-foreground mb-4 italic">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3">
                     {testimonial.avatar_url ? (
                       <img
@@ -400,15 +400,15 @@ export default function PartnerCommunityLanding() {
                       />
                     ) : (
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-foreground font-bold"
                         style={{ backgroundColor: themeColor }}
                       >
                         {testimonial.name.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <p className="text-white font-medium">{testimonial.name}</p>
-                      <p className="text-zinc-500 text-sm">{testimonial.role}</p>
+                      <p className="text-foreground font-medium">{testimonial.name}</p>
+                      <p className="text-muted-foreground text-sm">{testimonial.role}</p>
                     </div>
                   </div>
                 </Card>
@@ -428,10 +428,10 @@ export default function PartnerCommunityLanding() {
               borderColor: `${themeColor}30`
             }}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
               {ctaTitle}
             </h2>
-            <p className="text-zinc-300 mb-8">
+            <p className="text-muted-foreground mb-8">
               {ctaSubtitle}
             </p>
 
@@ -448,7 +448,7 @@ export default function PartnerCommunityLanding() {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
 
-            <p className="text-zinc-500 text-sm mt-6">
+            <p className="text-muted-foreground text-sm mt-6">
               El registro es gratuito. Los beneficios se aplican automaticamente.
             </p>
           </Card>
@@ -456,14 +456,14 @@ export default function PartnerCommunityLanding() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-zinc-500">
+      <footer className="border-t border-border py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
-            <Link to="/" className="hover:text-white transition-colors">KREOON</Link>
+            <Link to="/" className="hover:text-foreground transition-colors">KREOON</Link>
             <span>•</span>
-            <Link to="/privacy" className="hover:text-white transition-colors">Privacidad</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacidad</Link>
             <span>•</span>
-            <Link to="/terms" className="hover:text-white transition-colors">Terminos</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terminos</Link>
           </div>
           <div>
             © {new Date().getFullYear()} KREOON. Todos los derechos reservados.

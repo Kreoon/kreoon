@@ -24,8 +24,8 @@ const STATUS_COLORS: Record<ProjectStatus, string> = {
   completed: 'bg-cyan-500/20 text-cyan-300',
   cancelled: 'bg-red-500/20 text-red-300',
   // Board de Organización
-  draft: 'bg-gray-500/20 text-gray-300',
-  script_pending: 'bg-gray-500/20 text-gray-300',
+  draft: 'bg-gray-500/20 text-muted-foreground',
+  script_pending: 'bg-gray-500/20 text-muted-foreground',
   script_approved: 'bg-blue-500/20 text-blue-300',
   assigned: 'bg-violet-500/20 text-violet-300',
   recording: 'bg-amber-500/20 text-amber-300',
@@ -88,7 +88,7 @@ function MarketplaceProjectCard({
     >
       {/* Header: title + status */}
       <div className="flex items-start justify-between gap-2 mb-3">
-        <h4 className="text-sm font-medium text-white truncate flex-1">
+        <h4 className="text-sm font-medium text-foreground truncate flex-1">
           {project.brief?.product_name || project.package_name || 'Proyecto'}
         </h4>
         <span className={`text-[10px] px-2 py-0.5 rounded-full whitespace-nowrap ${STATUS_COLORS[project.status]}`}>
@@ -105,11 +105,11 @@ function MarketplaceProjectCard({
             {project.creator.display_name.charAt(0)}
           </div>
         )}
-        <span className="text-gray-400 text-xs truncate">{project.creator.display_name}</span>
+        <span className="text-muted-foreground text-xs truncate">{project.creator.display_name}</span>
       </div>
 
       {/* Brand + package */}
-      <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
+      <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
         <Briefcase className="h-3 w-3 flex-shrink-0" />
         <span className="truncate">{project.brand_name}</span>
         {project.package_name && (
@@ -122,10 +122,10 @@ function MarketplaceProjectCard({
       </div>
 
       {/* Footer: price + deadline */}
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">
+      <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
         <div className="flex items-center gap-1">
           {project.payment_method === 'payment' ? (
-            <span className="text-white text-xs font-semibold flex items-center gap-1">
+            <span className="text-foreground text-xs font-semibold flex items-center gap-1">
               <DollarSign className="h-3 w-3 text-green-400" />
               {project.total_price.toLocaleString()} {project.currency}
             </span>
@@ -134,7 +134,7 @@ function MarketplaceProjectCard({
           )}
         </div>
         {project.deadline && (
-          <span className="text-gray-500 text-xs flex items-center gap-1">
+          <span className="text-muted-foreground text-xs flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {new Date(project.deadline).toLocaleDateString('es-CO', { month: 'short', day: 'numeric' })}
           </span>
@@ -144,11 +144,11 @@ function MarketplaceProjectCard({
       {/* Deliverables progress */}
       {project.deliverables_count > 0 && (
         <div className="mt-2">
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
             <span>Entregables</span>
             <span>{project.deliverables_approved}/{project.deliverables_count}</span>
           </div>
-          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1 bg-muted/50 rounded-full overflow-hidden">
             <div
               className="h-full bg-purple-500 rounded-full transition-all"
               style={{ width: `${(project.deliverables_approved / project.deliverables_count) * 100}%` }}
@@ -260,13 +260,13 @@ export function MarketplaceBoardView() {
       {/* Search + Actions */}
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">
-          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Buscar proyecto..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="h-9 w-full rounded-sm border border-white/10 bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-gray-500"
+            className="h-9 w-full rounded-sm border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 transition-all placeholder:text-muted-foreground"
           />
         </div>
         <Badge variant="outline" className="text-xs whitespace-nowrap">

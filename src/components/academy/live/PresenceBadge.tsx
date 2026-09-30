@@ -12,7 +12,7 @@ export function PresenceBadge({ spaceId, className, variant = 'full' }: Presence
 
   if (variant === 'compact') {
     return (
-      <span className={cn('inline-flex items-center gap-1 text-xs text-emerald-300', className)}>
+      <span className={cn('inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-300', className)}>
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
@@ -26,7 +26,7 @@ export function PresenceBadge({ spaceId, className, variant = 'full' }: Presence
     <span
       className={cn(
         'inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs',
-        'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+        'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
         className
       )}
     >

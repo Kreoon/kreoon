@@ -79,7 +79,7 @@ export function LessonCommentSection({
     comments.reduce((sum, c) => sum + (c.replies?.length ?? 0), 0);
 
   return (
-    <section className="rounded-2xl bg-white/[0.03] border border-white/10 p-5">
+    <section className="rounded-2xl bg-muted/30 border border-border p-5">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-base font-semibold flex items-center gap-2">
           <MessageCircle className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function LessonCommentSection({
               onClick={() => setSort(s)}
               className={cn(
                 'px-2 py-1 rounded transition-colors',
-                sort === s ? 'bg-white/10 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                sort === s ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               {s === 'featured' ? 'Destacados' : s === 'recent' ? 'Recientes' : 'Populares'}
@@ -108,10 +108,10 @@ export function LessonCommentSection({
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Comparte tu duda, idea o aporte sobre esta lección..."
-            className="w-full min-h-20 rounded-lg bg-black/30 border border-white/10 p-3 text-sm focus:outline-none focus:border-purple-500/50"
+            className="w-full min-h-20 rounded-lg bg-muted border border-border p-3 text-sm focus:outline-none focus:border-primary/50"
           />
           <div className="mt-2 flex items-center justify-between gap-2">
-            <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
               <input
                 type="checkbox"
                 checked={withTimestamp}
@@ -137,9 +137,9 @@ export function LessonCommentSection({
 
       {/* Lista */}
       {isLoading ? (
-        <div className="text-zinc-500 text-sm py-6 text-center">Cargando comentarios...</div>
+        <div className="text-muted-foreground text-sm py-6 text-center">Cargando comentarios...</div>
       ) : sorted.length === 0 ? (
-        <div className="text-zinc-500 text-sm py-6 text-center">Sé el primero en comentar.</div>
+        <div className="text-muted-foreground text-sm py-6 text-center">Sé el primero en comentar.</div>
       ) : (
         <ul className="space-y-4">
           {sorted.map((c) => (
@@ -225,18 +225,18 @@ function CommentItem({
       ? 'border-cyan-500/40 bg-cyan-500/5'
       : comment.is_pinned
       ? 'border-amber-500/30 bg-amber-500/5'
-      : 'border-white/5 bg-white/[0.02]'
+      : 'border-border bg-muted/30'
   );
 
   return (
     <div className={containerCls}>
       {comment.is_featured && (
-        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-cyan-300 mb-2">
+        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-cyan-700 dark:text-cyan-300 mb-2">
           <Sparkles className="h-3 w-3" /> Respuesta destacada del instructor
         </div>
       )}
       {comment.is_pinned && !comment.is_featured && (
-        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-amber-300 mb-2">
+        <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-300 mb-2">
           <Pin className="h-3 w-3" /> Fijado
         </div>
       )}
@@ -258,7 +258,7 @@ function CommentItem({
                 Instructor
               </span>
             )}
-            <span className="text-[10px] text-zinc-500">{timeAgo}</span>
+            <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
             {typeof comment.video_timestamp_seconds === 'number' && (
               <TimestampChip
                 seconds={comment.video_timestamp_seconds}
@@ -268,7 +268,7 @@ function CommentItem({
               />
             )}
           </div>
-          <p className="text-sm text-zinc-200 mt-1 whitespace-pre-wrap break-words">
+          <p className="text-sm text-foreground mt-1 whitespace-pre-wrap break-words">
             {comment.body}
           </p>
 
@@ -283,7 +283,7 @@ function CommentItem({
               }
               className={cn(
                 'flex items-center gap-1 transition-colors',
-                comment.is_liked_by_me ? 'text-rose-300' : 'text-zinc-500 hover:text-zinc-300'
+                comment.is_liked_by_me ? 'text-rose-700 dark:text-rose-300' : 'text-muted-foreground hover:text-foreground'
               )}
             >
               <Heart
@@ -294,7 +294,7 @@ function CommentItem({
             {!comment.parent_id && (
               <button
                 onClick={isReplying ? onReplyCancel : onReplyOpen}
-                className="text-zinc-500 hover:text-zinc-300"
+                className="text-muted-foreground hover:text-foreground"
               >
                 {isReplying ? 'Cancelar' : 'Responder'}
               </button>
@@ -308,7 +308,7 @@ function CommentItem({
                     featured: !comment.is_featured,
                   })
                 }
-                className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1"
+                className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 flex items-center gap-1"
               >
                 <Sparkles className="h-3 w-3" />
                 {comment.is_featured ? 'Quitar destacado' : 'Destacar'}
@@ -321,7 +321,7 @@ function CommentItem({
                     del.mutate({ commentId: comment.id, lessonId });
                   }
                 }}
-                className="text-rose-400/70 hover:text-rose-300 flex items-center gap-1"
+                className="text-rose-600 dark:text-rose-400/70 hover:text-rose-700 dark:hover:text-rose-300 flex items-center gap-1"
               >
                 <Trash2 className="h-3 w-3" />
               </button>
@@ -329,12 +329,12 @@ function CommentItem({
           </div>
 
           {isReplying && (
-            <div className="mt-3 pl-3 border-l border-white/10">
+            <div className="mt-3 pl-3 border-l border-border">
               <textarea
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Tu respuesta..."
-                className="w-full min-h-16 rounded-lg bg-black/30 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500/50"
+                className="w-full min-h-16 rounded-lg bg-muted border border-border p-2 text-sm focus:outline-none focus:border-primary/50"
                 autoFocus
               />
               <div className="mt-2 flex justify-end gap-2">
@@ -356,7 +356,7 @@ function CommentItem({
 
           {/* Replies */}
           {comment.replies && comment.replies.length > 0 && (
-            <ul className="mt-3 space-y-3 pl-3 border-l border-white/10">
+            <ul className="mt-3 space-y-3 pl-3 border-l border-border">
               {comment.replies.map((r) => (
                 <li key={r.id}>
                   <ReplyItem
@@ -404,7 +404,7 @@ function ReplyItem({
 
   if (comment.is_deleted) {
     return (
-      <div className="text-xs text-zinc-600 italic">[comentario eliminado]</div>
+      <div className="text-xs text-muted-foreground italic">[comentario eliminado]</div>
     );
   }
 
@@ -422,9 +422,9 @@ function ReplyItem({
               Instructor
             </span>
           )}
-          <span className="text-[10px] text-zinc-500">{timeAgo}</span>
+          <span className="text-[10px] text-muted-foreground">{timeAgo}</span>
         </div>
-        <p className="text-sm text-zinc-300 mt-0.5 whitespace-pre-wrap break-words">
+        <p className="text-sm text-muted-foreground mt-0.5 whitespace-pre-wrap break-words">
           {comment.body}
         </p>
         <div className="mt-1 flex items-center gap-3 text-[10px]">
@@ -438,7 +438,7 @@ function ReplyItem({
             }
             className={cn(
               'flex items-center gap-1 transition-colors',
-              comment.is_liked_by_me ? 'text-rose-300' : 'text-zinc-500 hover:text-zinc-300'
+              comment.is_liked_by_me ? 'text-rose-700 dark:text-rose-300' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             <Heart className={cn('h-3 w-3', comment.is_liked_by_me && 'fill-rose-400')} />
@@ -451,7 +451,7 @@ function ReplyItem({
                   del.mutate({ commentId: comment.id, lessonId });
                 }
               }}
-              className="text-rose-400/70 hover:text-rose-300"
+              className="text-rose-600 dark:text-rose-400/70 hover:text-rose-700 dark:hover:text-rose-300"
             >
               <Trash2 className="h-3 w-3" />
             </button>

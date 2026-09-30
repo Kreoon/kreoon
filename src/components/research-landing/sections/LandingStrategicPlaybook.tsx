@@ -58,17 +58,17 @@ export function LandingStrategicPlaybook({ contentStrategy }: Props) {
             <div className="flex items-center gap-2 mb-2">
               <div className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
               <h4 className={`text-sm font-semibold ${colors.text}`}>{phase.label}</h4>
-              <span className="text-[10px] text-white/30">{phase.desc}</span>
+              <span className="text-[10px] text-muted-foreground/70">{phase.desc}</span>
             </div>
 
             {data.positioning && (
-              <p className="text-xs text-white/60 mb-2">{data.positioning}</p>
+              <p className="text-xs text-muted-foreground mb-2">{data.positioning}</p>
             )}
 
             {items.length > 0 && (
               <ul className="space-y-1 mt-2">
                 {items.map((item: any, i: number) => (
-                  <li key={i} className="text-xs text-white/60 flex gap-2">
+                  <li key={i} className="text-xs text-muted-foreground flex gap-2">
                     <span className={`${colors.text} shrink-0`}>•</span>
                     {safeStr(item)}
                   </li>
@@ -77,7 +77,7 @@ export function LandingStrategicPlaybook({ contentStrategy }: Props) {
             )}
 
             {data.hookTypes && (
-              <p className="text-xs text-white/40 mt-2"><span className="text-white/50">Hooks:</span> {data.hookTypes}</p>
+              <p className="text-xs text-muted-foreground/70 mt-2"><span className="text-muted-foreground">Hooks:</span> {data.hookTypes}</p>
             )}
           </div>
         );

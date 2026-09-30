@@ -63,7 +63,7 @@ function TagInput({
             }
           }}
           placeholder={placeholder}
-          className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="flex-1 bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
         />
         <button
           type="button"
@@ -84,7 +84,7 @@ function TagInput({
               <button
                 type="button"
                 onClick={() => onChange(value.filter((_, j) => j !== i))}
-                className="hover:text-white transition-colors"
+                className="hover:text-foreground transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -107,49 +107,49 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
             <FileText className="h-5 w-5 text-green-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-white">Modo Manual</h3>
-            <p className="text-sm text-gray-400">Sin campos obligatorios. Puedes agregar detalles despues de crear el proyecto.</p>
+            <h3 className="font-semibold text-foreground">Modo Manual</h3>
+            <p className="text-sm text-muted-foreground">Sin campos obligatorios. Puedes agregar detalles despues de crear el proyecto.</p>
           </div>
         </div>
 
         {/* Product name (optional) */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground/80">
-            Nombre del producto / marca <span className="text-gray-500">(opcional)</span>
+            Nombre del producto / marca <span className="text-muted-foreground">(opcional)</span>
           </label>
           <input
             value={data.product_name}
             onChange={e => onChange('product_name', e.target.value)}
             placeholder="Ej: Proteina Vegana NaturalFit"
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-green-500"
+            className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-green-500"
           />
         </div>
 
         {/* Manual script textarea (optional) */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground/80">
-            Guion / Instrucciones <span className="text-gray-500">(opcional)</span>
+            Guion / Instrucciones <span className="text-muted-foreground">(opcional)</span>
           </label>
           <textarea
             value={manualScript || ''}
             onChange={e => onManualScriptChange?.(e.target.value)}
             placeholder="Pega aqui el guion o instrucciones si ya los tienes..."
             rows={8}
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-green-500 resize-none font-mono"
+            className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-green-500 resize-none font-mono"
           />
-          <p className="text-xs text-gray-500">Puedes agregar esto despues en el detalle del proyecto</p>
+          <p className="text-xs text-muted-foreground">Puedes agregar esto despues en el detalle del proyecto</p>
         </div>
 
         {/* Optional deadline */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-foreground/80">
-            Fecha limite <span className="text-gray-500">(opcional)</span>
+            Fecha limite <span className="text-muted-foreground">(opcional)</span>
           </label>
           <input
             type="date"
             value={data.deadline || ''}
             onChange={e => onChange('deadline', e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-green-500"
+            className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm focus:outline-none focus:border-green-500"
           />
         </div>
       </div>
@@ -168,20 +168,20 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
           value={data.product_name}
           onChange={e => onChange('product_name', e.target.value)}
           placeholder="Ej: Proteina Vegana NaturalFit"
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
         />
       </div>
 
       {/* Product URL */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-foreground/80">
-          URL del producto <span className="text-gray-500">(opcional)</span>
+          URL del producto <span className="text-muted-foreground">(opcional)</span>
         </label>
         <input
           value={data.product_url || ''}
           onChange={e => onChange('product_url', e.target.value)}
           placeholder="https://tuproducto.com"
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -193,7 +193,7 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
         <select
           value={data.objective}
           onChange={e => onChange('objective', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un objetivo</option>
           {OBJECTIVES.map(obj => (
@@ -209,7 +209,7 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
           value={data.target_audience}
           onChange={e => onChange('target_audience', e.target.value)}
           placeholder="Ej: Mujeres 25-40, interesadas en fitness"
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-purple-500"
         />
       </div>
 
@@ -229,7 +229,7 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
         <select
           value={data.tone}
           onChange={e => onChange('tone', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm focus:outline-none focus:border-purple-500 [&>option]:bg-card"
         >
           <option value="">Selecciona un tono</option>
           {TONES.map(t => (
@@ -261,27 +261,27 @@ export function HiringStepBrief({ data, onChange, creationMode, manualScript, on
       {/* Deadline */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-foreground/80">
-          Fecha limite <span className="text-gray-500">(opcional)</span>
+          Fecha limite <span className="text-muted-foreground">(opcional)</span>
         </label>
         <input
           type="date"
           value={data.deadline || ''}
           onChange={e => onChange('deadline', e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm focus:outline-none focus:border-purple-500"
         />
       </div>
 
       {/* Notes */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-foreground/80">
-          Notas adicionales <span className="text-gray-500">(opcional)</span>
+          Notas adicionales <span className="text-muted-foreground">(opcional)</span>
         </label>
         <textarea
           value={data.notes || ''}
           onChange={e => onChange('notes', e.target.value)}
           placeholder="Referencias, instrucciones especiales, etc."
           rows={3}
-          className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2.5 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:border-purple-500 resize-none"
+          className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2.5 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-purple-500 resize-none"
         />
       </div>
     </div>

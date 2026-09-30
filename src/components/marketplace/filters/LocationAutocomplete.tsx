@@ -173,7 +173,7 @@ export function LocationAutocomplete({
         }}
         className={cn(
           'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm text-left transition-colors',
-          'bg-secondary/50 dark:bg-white/5 border border-border/20 dark:border-white/10',
+          'bg-secondary/50 dark:bg-muted/50 border border-border/20 dark:border-border',
           'hover:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500',
           isOpen && 'border-purple-500/50 ring-1 ring-purple-500'
         )}
@@ -219,7 +219,7 @@ export function LocationAutocomplete({
               placeholder="Escribe para buscar..."
               className={cn(
                 'w-full px-3 py-2 rounded-md text-sm',
-                'bg-secondary/50 dark:bg-white/5 border border-border/20 dark:border-white/10',
+                'bg-secondary/50 dark:bg-muted/50 border border-border/20 dark:border-border',
                 'text-foreground placeholder:text-muted-foreground/50',
                 'focus:outline-none focus:ring-1 focus:ring-purple-500'
               )}

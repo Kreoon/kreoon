@@ -68,28 +68,28 @@ export function GifPicker({ onSelect, onClose }: Props) {
 
   if (!GIPHY_KEY) {
     return (
-      <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-background p-4 shadow-2xl">
-        <div className="flex items-start gap-2 text-amber-300">
+      <div className="absolute z-50 mt-2 w-80 rounded-xl border border-border bg-background p-4 shadow-2xl">
+        <div className="flex items-start gap-2 text-amber-700 dark:text-amber-300">
           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <div className="text-xs">
             <p className="font-medium">GIF picker no configurado</p>
-            <p className="text-zinc-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               Conseguí una API key gratis en{' '}
               <a
                 href="https://developers.giphy.com/dashboard/"
                 target="_blank"
                 rel="noreferrer"
-                className="text-violet-400 hover:text-violet-300 underline"
+                className="text-primary hover:text-primary/80 underline"
               >
                 developers.giphy.com
               </a>{' '}
-              y agregala como <code className="bg-black/30 px-1 rounded">VITE_GIPHY_API_KEY</code> en Vercel env vars.
+              y agregala como <code className="bg-muted px-1 rounded">VITE_GIPHY_API_KEY</code> en Vercel env vars.
             </p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="mt-3 w-full text-xs text-zinc-400 hover:text-zinc-200"
+          className="mt-3 w-full text-xs text-muted-foreground hover:text-foreground"
         >
           Cerrar
         </button>
@@ -98,28 +98,28 @@ export function GifPicker({ onSelect, onClose }: Props) {
   }
 
   return (
-    <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-background shadow-2xl overflow-hidden">
-      <div className="p-3 border-b border-white/5">
+    <div className="absolute z-50 mt-2 w-80 rounded-xl border border-border bg-background shadow-2xl overflow-hidden">
+      <div className="p-3 border-b border-border">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar GIFs..."
             autoFocus
-            className="bg-black/30 border-white/10 text-sm pl-8 h-8"
+            className="bg-muted border-border text-sm pl-8 h-8"
           />
         </div>
       </div>
       <div className="max-h-72 overflow-y-auto p-2">
         {loading && results.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-zinc-500 text-xs">
+          <div className="flex items-center justify-center py-8 text-muted-foreground text-xs">
             <Loader2 className="h-4 w-4 animate-spin mr-2" /> Buscando...
           </div>
         ) : error ? (
-          <div className="text-xs text-rose-300 p-3 text-center">{error}</div>
+          <div className="text-xs text-rose-700 dark:text-rose-300 p-3 text-center">{error}</div>
         ) : results.length === 0 ? (
-          <div className="text-xs text-zinc-500 p-3 text-center">Sin resultados</div>
+          <div className="text-xs text-muted-foreground p-3 text-center">Sin resultados</div>
         ) : (
           <div className="grid grid-cols-2 gap-1.5">
             {results.map((g) => (
@@ -129,7 +129,7 @@ export function GifPicker({ onSelect, onClose }: Props) {
                   onSelect(g.images.original.url);
                   onClose();
                 }}
-                className="group relative aspect-square bg-black/30 rounded overflow-hidden hover:ring-2 hover:ring-violet-500 transition-all"
+                className="group relative aspect-square bg-muted rounded overflow-hidden hover:ring-2 hover:ring-primary transition-all"
                 title={g.title}
               >
                 <img
@@ -143,9 +143,9 @@ export function GifPicker({ onSelect, onClose }: Props) {
           </div>
         )}
       </div>
-      <div className="px-3 py-2 border-t border-white/5 text-[10px] text-zinc-600 flex items-center justify-between">
+      <div className="px-3 py-2 border-t border-border text-[10px] text-muted-foreground flex items-center justify-between">
         <span>Powered by GIPHY</span>
-        <button onClick={onClose} className="hover:text-zinc-300">Cerrar</button>
+        <button onClick={onClose} className="hover:text-foreground">Cerrar</button>
       </div>
     </div>
   );

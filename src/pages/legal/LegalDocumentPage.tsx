@@ -117,7 +117,7 @@ export function LegalDocumentPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 border-b border-white/10">
+      <header className="sticky top-0 z-50 bg-background/80 border-b border-border">
         <div className="container max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="sm" asChild>
@@ -161,14 +161,14 @@ export function LegalDocumentPage() {
                 "[&_li]:text-foreground/80",
                 "[&_a]:text-purple-400 [&_a]:underline [&_a]:hover:text-purple-300",
                 "[&_table]:w-full [&_table]:border-collapse [&_table]:mb-6",
-                "[&_th]:bg-white/5 [&_th]:border [&_th]:border-white/10 [&_th]:p-3 [&_th]:text-left [&_th]:font-medium",
-                "[&_td]:border [&_td]:border-white/10 [&_td]:p-3",
+                "[&_th]:bg-muted/50 [&_th]:border [&_th]:border-border [&_th]:p-3 [&_th]:text-left [&_th]:font-medium",
+                "[&_td]:border [&_td]:border-border [&_td]:p-3",
                 "[&_address]:not-italic [&_address]:text-foreground/70",
-                "[&_.legal-meta]:text-sm [&_.legal-meta]:text-muted-foreground [&_.legal-meta]:mb-8 [&_.legal-meta]:p-4 [&_.legal-meta]:bg-white/5 [&_.legal-meta]:rounded-sm",
+                "[&_.legal-meta]:text-sm [&_.legal-meta]:text-muted-foreground [&_.legal-meta]:mb-8 [&_.legal-meta]:p-4 [&_.legal-meta]:bg-muted/50 [&_.legal-meta]:rounded-sm",
                 "[&_.legal-warning]:bg-orange-500/10 [&_.legal-warning]:border [&_.legal-warning]:border-orange-500/30 [&_.legal-warning]:p-4 [&_.legal-warning]:rounded-sm [&_.legal-warning]:my-4",
                 "[&_.legal-highlight]:bg-purple-500/10 [&_.legal-highlight]:border [&_.legal-highlight]:border-purple-500/30 [&_.legal-highlight]:p-4 [&_.legal-highlight]:rounded-sm [&_.legal-highlight]:my-4",
                 "[&_.legal-table]:overflow-x-auto",
-                "[&_.legal-footer]:mt-12 [&_.legal-footer]:pt-6 [&_.legal-footer]:border-t [&_.legal-footer]:border-white/10 [&_.legal-footer]:text-sm [&_.legal-footer]:text-muted-foreground",
+                "[&_.legal-footer]:mt-12 [&_.legal-footer]:pt-6 [&_.legal-footer]:border-t [&_.legal-footer]:border-border [&_.legal-footer]:text-sm [&_.legal-footer]:text-muted-foreground",
                 "[&_section]:mb-8",
                 "[&_dl]:space-y-4 [&_dl]:mb-6",
                 "[&_dt]:font-medium [&_dt]:text-foreground",
@@ -188,7 +188,7 @@ export function LegalDocumentPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 py-8 mt-12">
+      <footer className="border-t border-border py-8 mt-12">
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="text-sm text-muted-foreground">

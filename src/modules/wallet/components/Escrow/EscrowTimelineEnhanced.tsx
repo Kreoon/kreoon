@@ -105,7 +105,7 @@ function HorizontalTimeline({
                           iconSize,
                           step.status === 'current' && 'text-primary',
                           step.status === 'pending' && 'text-muted-foreground',
-                          step.status === 'skipped' && 'text-gray-500'
+                          step.status === 'skipped' && 'text-muted-foreground'
                         )}
                       />
                     )}
@@ -165,10 +165,10 @@ function HorizontalTimeline({
                 className={cn(
                   'text-xs truncate',
                   step.status === 'completed' && 'text-emerald-400',
-                  step.status === 'current' && 'text-white',
+                  step.status === 'current' && 'text-foreground',
                   step.status === 'pending' && 'text-muted-foreground',
                   step.status === 'error' && 'text-red-400',
-                  step.status === 'skipped' && 'text-gray-500'
+                  step.status === 'skipped' && 'text-muted-foreground'
                 )}
               >
                 {step.label.split(' ')[0]}
@@ -245,7 +245,7 @@ function VerticalTimeline({
                     iconSize,
                     step.status === 'current' && 'text-primary',
                     step.status === 'pending' && 'text-muted-foreground',
-                    step.status === 'skipped' && 'text-gray-500'
+                    step.status === 'skipped' && 'text-muted-foreground'
                   )}
                 />
               )}
@@ -264,10 +264,10 @@ function VerticalTimeline({
                     size === 'sm' ? 'text-sm' : size === 'md' ? 'text-base' : 'text-lg',
                     'font-medium',
                     step.status === 'completed' && 'text-emerald-400',
-                    step.status === 'current' && 'text-white',
+                    step.status === 'current' && 'text-foreground',
                     step.status === 'pending' && 'text-muted-foreground',
                     step.status === 'error' && 'text-red-400',
-                    step.status === 'skipped' && 'text-gray-500 line-through'
+                    step.status === 'skipped' && 'text-muted-foreground line-through'
                   )}
                 >
                   {step.label}
@@ -295,7 +295,7 @@ function VerticalTimeline({
                   className={cn(
                     'mt-1',
                     size === 'sm' ? 'text-[10px]' : 'text-xs',
-                    'text-[hsl(270,30%,45%)]'
+                    'text-muted-foreground'
                   )}
                 >
                   {new Date(step.timestamp).toLocaleDateString('es-CO', {

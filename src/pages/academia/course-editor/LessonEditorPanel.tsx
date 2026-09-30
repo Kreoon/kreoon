@@ -120,7 +120,7 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-zinc-400" />
+          <Icon className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-bold truncate max-w-xs">{form.title || 'Lección sin título'}</h2>
         </div>
         <div className="flex items-center gap-3">
@@ -139,15 +139,15 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
 
       {/* ── Básico ── */}
       <section className="space-y-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Básico</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Básico</h3>
         <div className="space-y-1">
           <Label>Título de la lección *</Label>
-          <Input value={form.title} onChange={(e) => set('title', e.target.value)} className="bg-white/5 border-white/10" placeholder="Ej: Introducción al UGC" />
+          <Input value={form.title} onChange={(e) => set('title', e.target.value)} className="bg-muted/50 border-border" placeholder="Ej: Introducción al UGC" />
         </div>
 
         <div className="space-y-1">
           <Label>Tipo de lección</Label>
-          <select value={form.type} onChange={(e) => set('type', e.target.value)} className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm text-zinc-100 focus:outline-none">
+          <select value={form.type} onChange={(e) => set('type', e.target.value)} className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm text-foreground focus:outline-none">
             <option value="video">Video</option>
             <option value="text">Texto / Artículo</option>
             <option value="quiz">Quiz</option>
@@ -182,12 +182,12 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
 
       {/* ── Video ── */}
       {(form.type === 'video' || form.type === 'live') && (
-        <section className="space-y-4 pt-4 border-t border-white/5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Video</h3>
+        <section className="space-y-4 pt-4 border-t border-border">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Video</h3>
 
           <div className="space-y-1">
             <Label>Fuente del video</Label>
-            <select value={form.video_source} onChange={(e) => set('video_source', e.target.value)} className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm text-zinc-100 focus:outline-none">
+            <select value={form.video_source} onChange={(e) => set('video_source', e.target.value)} className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm text-foreground focus:outline-none">
               {VIDEO_SOURCES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
@@ -200,17 +200,17 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
                 onUploaded={(videoId) => set('video_bunny_id', videoId)}
               />
               {form.video_bunny_id && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Video actual: <span className="font-mono">{form.video_bunny_id}</span>
                 </p>
               )}
-              <details className="text-xs text-zinc-600">
-                <summary className="cursor-pointer hover:text-zinc-400">Pegar un Video ID existente en vez de subir</summary>
+              <details className="text-xs text-muted-foreground">
+                <summary className="cursor-pointer hover:text-foreground">Pegar un Video ID existente en vez de subir</summary>
                 <Input
                   value={form.video_bunny_id}
                   onChange={(e) => set('video_bunny_id', e.target.value)}
                   placeholder="Ej: a1b2c3d4-e5f6-..."
-                  className="bg-white/5 border-white/10 font-mono text-sm mt-2"
+                  className="bg-muted/50 border-border font-mono text-sm mt-2"
                 />
               </details>
             </div>
@@ -236,10 +236,10 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
                   : form.video_source === 'drive' ? 'https://drive.google.com/file/d/...'
                   : 'https://...'
                 }
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
               {form.video_source === 'youtube' && (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Acepta: URL completa, youtu.be/..., shorts/... o el ID del video (11 caracteres). El timestamp &amp;t= se ignora.
                 </p>
               )}
@@ -247,7 +247,7 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
               {form.video_source === 'youtube' && (() => {
                 const thumb = youTubeThumbnail(form.video_url);
                 return thumb ? (
-                  <div className="relative rounded-lg overflow-hidden w-40 aspect-video bg-black/40">
+                  <div className="relative rounded-lg overflow-hidden w-40 aspect-video bg-muted">
                     <img src={thumb} alt="Thumbnail" className="w-full h-full object-cover" />
                     <span className="absolute bottom-1 right-1 text-[9px] bg-black/70 text-white px-1 rounded">YouTube</span>
                   </div>
@@ -259,18 +259,18 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label>Duración (segundos)</Label>
-              <Input type="number" min={0} value={form.video_duration_seconds} onChange={(e) => set('video_duration_seconds', e.target.value)} placeholder="Ej: 720" className="bg-white/5 border-white/10" />
+              <Input type="number" min={0} value={form.video_duration_seconds} onChange={(e) => set('video_duration_seconds', e.target.value)} placeholder="Ej: 720" className="bg-muted/50 border-border" />
               {form.video_duration_seconds && (
-                <p className="text-xs text-zinc-500">{Math.floor(Number(form.video_duration_seconds) / 60)} min {Number(form.video_duration_seconds) % 60} seg</p>
+                <p className="text-xs text-muted-foreground">{Math.floor(Number(form.video_duration_seconds) / 60)} min {Number(form.video_duration_seconds) % 60} seg</p>
               )}
             </div>
             <div className="space-y-1">
               <Label>Thumbnail URL (opcional)</Label>
-              <Input value={form.video_thumbnail_url} onChange={(e) => set('video_thumbnail_url', e.target.value)} placeholder="https://..." className="bg-white/5 border-white/10" />
+              <Input value={form.video_thumbnail_url} onChange={(e) => set('video_thumbnail_url', e.target.value)} placeholder="https://..." className="bg-muted/50 border-border" />
               {form.video_source === 'youtube' && form.video_url && !form.video_thumbnail_url && (
                 <button
                   type="button"
-                  className="text-xs text-purple-400 hover:text-purple-300 underline"
+                  className="text-xs text-primary hover:text-primary/80 underline"
                   onClick={() => {
                     const thumb = youTubeThumbnail(form.video_url);
                     if (thumb) set('video_thumbnail_url', thumb);
@@ -286,8 +286,8 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
 
       {/* ── Contenido ── */}
       {form.type === 'text' && (
-        <section className="space-y-4 pt-4 border-t border-white/5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+        <section className="space-y-4 pt-4 border-t border-border">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Contenido de la lección
           </h3>
           <div className="space-y-1">
@@ -297,7 +297,7 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
               onChange={(html) => set('content', html)}
               placeholder="Escribe aquí el contenido completo de la lección..."
             />
-            <p className="text-[11px] text-zinc-500">
+            <p className="text-[11px] text-muted-foreground">
               Encabezados, negrita, listas, enlaces, imágenes, tablas, código y modo HTML. Toggle el ícono del ojo para editar HTML directo.
             </p>
           </div>
@@ -305,21 +305,21 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
       )}
 
       {/* ── Descargables ── */}
-      <section className="space-y-4 pt-4 border-t border-white/5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500 flex items-center gap-1.5">
+      <section className="space-y-4 pt-4 border-t border-border">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
           <Download className="h-3.5 w-3.5" /> Recursos descargables
         </h3>
 
         {form.resources.length > 0 && (
           <div className="space-y-2">
             {form.resources.map((r, idx) => (
-              <div key={idx} className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2">
-                <Download className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+              <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                <Download className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-zinc-200 truncate">{r.name}</p>
-                  <p className="text-xs text-zinc-500 truncate">{r.url}</p>
+                  <p className="text-sm text-foreground truncate">{r.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{r.url}</p>
                 </div>
-                <button onClick={() => removeResource(idx)} className="text-zinc-600 hover:text-rose-400 transition-colors p-1">
+                <button onClick={() => removeResource(idx)} className="text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 transition-colors p-1">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
@@ -332,38 +332,38 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
             value={newResource.name}
             onChange={(e) => setNewResource((p) => ({ ...p, name: e.target.value }))}
             placeholder="Nombre (ej: Guía PDF)"
-            className="bg-white/5 border-white/10 flex-1"
+            className="bg-muted/50 border-border flex-1"
           />
           <Input
             value={newResource.url}
             onChange={(e) => setNewResource((p) => ({ ...p, url: e.target.value }))}
             placeholder="URL del archivo"
-            className="bg-white/5 border-white/10 flex-1"
+            className="bg-muted/50 border-border flex-1"
           />
-          <Button size="sm" variant="outline" className="border-white/10 shrink-0" onClick={addResource}>
+          <Button size="sm" variant="outline" className="border-border shrink-0" onClick={addResource}>
             <Plus className="h-3.5 w-3.5" />
           </Button>
         </div>
-        <p className="text-xs text-zinc-600">Pega la URL de un PDF, hoja de cálculo, presentación o cualquier archivo para que los alumnos lo descarguen.</p>
+        <p className="text-xs text-muted-foreground">Pega la URL de un PDF, hoja de cálculo, presentación o cualquier archivo para que los alumnos lo descarguen.</p>
       </section>
 
       {/* ── Configuración ── */}
-      <section className="space-y-4 pt-4 border-t border-white/5">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Configuración</h3>
+      <section className="space-y-4 pt-4 border-t border-border">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Configuración</h3>
 
         <div className="space-y-3">
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-sm text-zinc-200">Vista previa gratuita</p>
-              <p className="text-xs text-zinc-500">No-inscritos pueden ver esta lección gratis</p>
+              <p className="text-sm text-foreground">Vista previa gratuita</p>
+              <p className="text-xs text-muted-foreground">No-inscritos pueden ver esta lección gratis</p>
             </div>
             <input type="checkbox" checked={form.is_free_preview} onChange={(e) => set('is_free_preview', e.target.checked)} className="h-4 w-4 accent-purple-500" />
           </label>
 
           <label className="flex items-center justify-between cursor-pointer">
             <div>
-              <p className="text-sm text-zinc-200">Lección requerida</p>
-              <p className="text-xs text-zinc-500">Debe completarse para el certificado</p>
+              <p className="text-sm text-foreground">Lección requerida</p>
+              <p className="text-xs text-muted-foreground">Debe completarse para el certificado</p>
             </div>
             <input type="checkbox" checked={form.is_required} onChange={(e) => set('is_required', e.target.checked)} className="h-4 w-4 accent-purple-500" />
           </label>
@@ -375,9 +375,9 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
               min={0}
               value={form.drip_days_after_enroll}
               onChange={(e) => set('drip_days_after_enroll', e.target.value)}
-              className="bg-white/5 border-white/10 w-32"
+              className="bg-muted/50 border-border w-32"
             />
-            <p className="text-xs text-zinc-600">0 = disponible inmediatamente al inscribirse</p>
+            <p className="text-xs text-muted-foreground">0 = disponible inmediatamente al inscribirse</p>
           </div>
 
           {/* Condiciones de desbloqueo de la lección */}
@@ -390,7 +390,7 @@ export function LessonEditorPanel({ lesson: initialLesson, spaceId, accentColor 
             onLogicChange={setUnlockLogic}
             accentColor={accentColor}
           />
-          <p className="text-[11px] text-zinc-500">
+          <p className="text-[11px] text-muted-foreground">
             Las condiciones se guardan al instante. La lógica Y/O se aplica al pulsar «Guardar».
           </p>
         </div>

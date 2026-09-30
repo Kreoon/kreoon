@@ -52,9 +52,9 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
 
   if (isLoading) {
     return (
-      <Card className="bg-white/5 border-white/10 p-6">
-        <div className="flex items-center gap-2 text-white/40 text-sm">
-          <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white/70 animate-spin" />
+      <Card className="bg-muted/50 border-border p-6">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <span className="w-3 h-3 rounded-full border-2 border-border border-t-foreground/70 animate-spin" />
           Calculando rentabilidad...
         </div>
       </Card>
@@ -62,16 +62,16 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
   }
 
   return (
-    <Card className="bg-white/5 border-white/10">
+    <Card className="bg-muted/50 border-border">
       <div className="p-6 pb-4 flex items-center gap-3">
         <BarChart3 className="w-5 h-5 text-purple-400 shrink-0" />
         <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             ¿Qué campañas dejan plata?
-            <span className="text-sm font-normal text-white/40">— {selectedCurrency}</span>
+            <span className="text-sm font-normal text-muted-foreground">— {selectedCurrency}</span>
             <HelpTip text="Por cada campaña te muestra: cuánto vendiste, cuánto pagaste a creadores y editores, y cuánto te quedó. Verde = ganancia. Rojo = pérdida. Sirve para decidir qué clientes te conviene mantener." />
           </h3>
-          <p className="text-white/40 text-sm">
+          <p className="text-muted-foreground text-sm">
             Margen real = lo que vendiste − lo que pagaste a creadores/editores − otros costos
           </p>
         </div>
@@ -79,7 +79,7 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
 
       {filteredRows.length === 0 ? (
         <div className="px-6 pb-6">
-          <p className="text-white/30 text-sm">Sin paquetes activos en {selectedCurrency}</p>
+          <p className="text-muted-foreground/60 text-sm">Sin paquetes activos en {selectedCurrency}</p>
         </div>
       ) : (
         <>
@@ -112,13 +112,13 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-green-400 text-xs font-bold shrink-0">#{idx + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-white text-sm font-medium truncate flex items-center gap-1.5">
+                          <p className="text-foreground text-sm font-medium truncate flex items-center gap-1.5">
                             <span className="font-medium opacity-50 shrink-0">
                               #{String(row.campaign_number ?? 0).padStart(4, '0')}
                             </span>
                             {row.package_name}
                           </p>
-                          <p className="text-white/40 text-xs truncate">{row.client_name}</p>
+                          <p className="text-muted-foreground text-xs truncate">{row.client_name}</p>
                         </div>
                       </div>
                       <span className="text-green-300 text-sm font-bold shrink-0 ml-2">
@@ -140,13 +140,13 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
                       <div className="flex items-center gap-2 min-w-0">
                         <span className="text-red-400 text-xs font-bold shrink-0">#{idx + 1}</span>
                         <div className="min-w-0">
-                          <p className="text-white text-sm font-medium truncate flex items-center gap-1.5">
+                          <p className="text-foreground text-sm font-medium truncate flex items-center gap-1.5">
                             <span className="font-medium opacity-50 shrink-0">
                               #{String(row.campaign_number ?? 0).padStart(4, '0')}
                             </span>
                             {row.package_name}
                           </p>
-                          <p className="text-white/40 text-xs truncate">{row.client_name}</p>
+                          <p className="text-muted-foreground text-xs truncate">{row.client_name}</p>
                         </div>
                       </div>
                       <span className="text-red-300 text-sm font-bold shrink-0 ml-2">
@@ -161,16 +161,16 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
 
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead className="text-white/70">Paquete</TableHead>
-                <TableHead className="text-white/70">Cliente</TableHead>
-                <TableHead className="text-white/70 text-center">Proyectos</TableHead>
-                <TableHead className="text-white/70 text-right">Valor paquete</TableHead>
-                <TableHead className="text-white/70 text-right">Costo talento</TableHead>
-                <TableHead className="text-white/70 text-right">Otros costos</TableHead>
-                <TableHead className="text-white/70 text-right">Costos ext.</TableHead>
-                <TableHead className="text-white/70 text-right">Margen $</TableHead>
-                <TableHead className="text-white/70 text-center">Margen %</TableHead>
+              <TableRow className="border-border">
+                <TableHead className="text-muted-foreground">Paquete</TableHead>
+                <TableHead className="text-muted-foreground">Cliente</TableHead>
+                <TableHead className="text-muted-foreground text-center">Proyectos</TableHead>
+                <TableHead className="text-muted-foreground text-right">Valor paquete</TableHead>
+                <TableHead className="text-muted-foreground text-right">Costo talento</TableHead>
+                <TableHead className="text-muted-foreground text-right">Otros costos</TableHead>
+                <TableHead className="text-muted-foreground text-right">Costos ext.</TableHead>
+                <TableHead className="text-muted-foreground text-right">Margen $</TableHead>
+                <TableHead className="text-muted-foreground text-center">Margen %</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -180,9 +180,9 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
                 return (
                   <TableRow
                     key={row.package_id}
-                    className={`border-white/10 hover:bg-white/5 ${noContent ? 'opacity-50' : ''}`}
+                    className={`border-border hover:bg-muted/50 ${noContent ? 'opacity-50' : ''}`}
                   >
-                    <TableCell className="text-white font-medium">
+                    <TableCell className="text-foreground font-medium">
                       <span className="flex items-center gap-2">
                         <span className="font-medium opacity-50 shrink-0">
                           #{String(row.campaign_number ?? 0).padStart(4, '0')}
@@ -190,7 +190,7 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
                         {row.package_name}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/70">{row.client_name}</TableCell>
+                    <TableCell className="text-muted-foreground">{row.client_name}</TableCell>
                     <TableCell className="text-center">
                       {noContent ? (
                         <span className="flex items-center justify-center gap-1 text-yellow-400/70 text-xs">
@@ -198,41 +198,41 @@ export function ProfitabilitySection({ orgId, selectedCurrency }: Props) {
                           Sin vincular
                         </span>
                       ) : (
-                        <span className="text-white/60 text-xs">
+                        <span className="text-muted-foreground text-xs">
                           {row.content_count}/{row.content_quantity}
                         </span>
                       )}
                     </TableCell>
-                    <TableCell className="text-white text-right">
+                    <TableCell className="text-foreground text-right">
                       {formatCurrency(row.total_value, selectedCurrency)}
                     </TableCell>
                     <TableCell className="text-right">
                       {row.talent_cost > 0
                         ? <span className="text-orange-300">{formatCurrency(row.talent_cost, selectedCurrency)}</span>
-                        : <span className="text-white/25">—</span>
+                        : <span className="text-muted-foreground/60">—</span>
                       }
                     </TableCell>
                     <TableCell className="text-right">
                       {row.other_costs > 0
-                        ? <span className="text-white/60">{formatCurrency(row.other_costs, selectedCurrency)}</span>
-                        : <span className="text-white/25">—</span>
+                        ? <span className="text-muted-foreground">{formatCurrency(row.other_costs, selectedCurrency)}</span>
+                        : <span className="text-muted-foreground/60">—</span>
                       }
                     </TableCell>
                     <TableCell className="text-right">
                       {external > 0
                         ? <span className="text-purple-300">{formatCurrency(external, selectedCurrency)}</span>
-                        : <span className="text-white/25">—</span>
+                        : <span className="text-muted-foreground/60">—</span>
                       }
                     </TableCell>
                     <TableCell className={`text-right font-semibold ${row.gross_margin >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {noContent
-                        ? <span className="text-white/25">—</span>
+                        ? <span className="text-muted-foreground/60">—</span>
                         : formatCurrency(row.gross_margin, selectedCurrency)
                       }
                     </TableCell>
                     <TableCell className="text-center">
                       {noContent ? (
-                        <span className="text-white/25 text-xs">—</span>
+                        <span className="text-muted-foreground/60 text-xs">—</span>
                       ) : (
                         <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${marginBadgeClass(row.gross_margin_pct)}`}>
                           <span className={marginColor(row.gross_margin_pct)}>

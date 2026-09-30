@@ -91,9 +91,9 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
                 transition={{ duration: 0.2 }}
               >
                 {isHidden ? (
-                  <div className="text-4xl font-bold text-white">•••••••</div>
+                  <div className="text-4xl font-bold text-foreground">•••••••</div>
                 ) : (
-                  <div className="text-4xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
                     {wallet.formattedTotal}
                   </div>
                 )}

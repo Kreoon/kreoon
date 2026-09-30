@@ -22,9 +22,9 @@ function HealthStatus({ label, count, color, icon: Icon }: HealthStatusProps) {
         <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1">
-        <span className="text-sm text-white/70">{label}</span>
+        <span className="text-sm text-muted-foreground">{label}</span>
       </div>
-      <span className="text-lg font-semibold text-white">{count}</span>
+      <span className="text-lg font-semibold text-foreground">{count}</span>
     </div>
   );
 }
@@ -78,8 +78,8 @@ function HealthRing({ score }: HealthRingProps) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-white">{score}</span>
-        <span className="text-xs text-white/50">Health Score</span>
+        <span className="text-3xl font-bold text-foreground">{score}</span>
+        <span className="text-xs text-muted-foreground/70">Health Score</span>
       </div>
     </div>
   );
@@ -92,11 +92,11 @@ function HealthRing({ score }: HealthRingProps) {
 function HealthWidgetSkeleton() {
   return (
     <Card className="p-4 md:p-6 animate-pulse">
-      <div className="h-5 w-32 bg-white/10 rounded mb-4" />
-      <div className="h-32 w-32 bg-white/5 rounded-full mx-auto mb-4" />
+      <div className="h-5 w-32 bg-muted rounded mb-4" />
+      <div className="h-32 w-32 bg-muted/40 rounded-full mx-auto mb-4" />
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-8 bg-white/5 rounded-sm" />
+          <div key={i} className="h-8 bg-muted/40 rounded-sm" />
         ))}
       </div>
     </Card>
@@ -148,7 +148,7 @@ export function AdminHealthWidget({ stats, isLoading }: AdminHealthWidgetProps) 
 
   return (
     <Card className="p-4 md:p-6">
-      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
         <Activity className="h-5 w-5 text-cyan-400" />
         Salud de Plataforma
       </h3>
@@ -176,10 +176,10 @@ export function AdminHealthWidget({ stats, isLoading }: AdminHealthWidgetProps) 
       )}
 
       {/* Summary */}
-      <div className="mt-4 pt-4 border-t border-white/10">
+      <div className="mt-4 pt-4 border-t border-border">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-white/50">Usuarios monitoreados</span>
-          <span className="text-white font-semibold">{total}</span>
+          <span className="text-muted-foreground/70">Usuarios monitoreados</span>
+          <span className="text-foreground font-semibold">{total}</span>
         </div>
       </div>
     </Card>

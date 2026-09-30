@@ -651,7 +651,7 @@ export function EnhancedContentCard({
         </div>
 
         {/* 3. FOOTER */}
-        <div className="flex flex-wrap items-center px-3.5 py-2 border-t border-zinc-100 dark:border-white/[0.06]">
+        <div className="flex flex-wrap items-center px-3.5 py-2 border-t border-zinc-100 dark:border-border">
           {showField("deadline") && content.deadline && (
             <div
               className={cn(
@@ -713,7 +713,7 @@ export function EnhancedContentCard({
           <div className="px-3.5 pb-3 pt-1">
             <Progress
               value={getProgress()}
-              className="h-1.5 bg-zinc-100 dark:bg-white/[0.08] rounded-full [&>div]:rounded-full [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 dark:[&>div]:from-purple-400 dark:[&>div]:to-pink-400"
+              className="h-1.5 bg-zinc-100 dark:bg-muted/40 rounded-full [&>div]:rounded-full [&>div]:bg-gradient-to-r [&>div]:from-purple-500 [&>div]:to-pink-500 dark:[&>div]:from-purple-400 dark:[&>div]:to-pink-400"
             />
           </div>
         )}

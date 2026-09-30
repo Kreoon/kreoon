@@ -148,7 +148,7 @@ export function TransactionDetail({
           <p
             className={cn(
               'text-3xl font-bold',
-              transaction.isCredit ? 'text-emerald-400' : 'text-white'
+              transaction.isCredit ? 'text-emerald-400' : 'text-foreground'
             )}
           >
             {transaction.isCredit ? '+' : '-'}
@@ -160,7 +160,7 @@ export function TransactionDetail({
         {transaction.description && (
           <div>
             <p className="text-sm text-muted-foreground mb-1">Descripción</p>
-            <p className="text-white">{transaction.description}</p>
+            <p className="text-foreground">{transaction.description}</p>
           </div>
         )}
 
@@ -183,7 +183,7 @@ export function TransactionDetail({
                     {row.value}
                   </Badge>
                 ) : (
-                  <span className="text-sm text-white font-medium">
+                  <span className="text-sm text-foreground font-medium">
                     {row.value}
                   </span>
                 )}
@@ -208,7 +208,7 @@ export function TransactionDetail({
             <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
             <div>
               <p className="text-sm text-muted-foreground mb-2">Información Adicional</p>
-              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-xs font-mono text-[hsl(270,30%,70%)] overflow-auto">
+              <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-xs font-mono text-muted-foreground overflow-auto">
                 <pre>{JSON.stringify(transaction.metadata, null, 2)}</pre>
               </div>
             </div>

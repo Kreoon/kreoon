@@ -109,7 +109,7 @@ export function PaymentMethodCard({
           {/* Details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <p className="font-medium text-white truncate">{method.label}</p>
+              <p className="font-medium text-foreground truncate">{method.label}</p>
               {method.is_verified && (
                 <Shield className="h-4 w-4 text-emerald-400 flex-shrink-0" />
               )}

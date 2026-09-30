@@ -85,7 +85,7 @@ export function QuizEngine({
 
   if (isLoading || !quiz) {
     return (
-      <div className="flex items-center justify-center p-12 text-zinc-400">
+      <div className="flex items-center justify-center p-12 text-muted-foreground">
         Cargando evaluación...
       </div>
     );
@@ -160,7 +160,7 @@ export function QuizEngine({
 
   // ─────────────── RENDER ───────────────
   const containerClass = cn(
-    'rounded-2xl border border-white/10 bg-background text-zinc-100 shadow-xl',
+    'rounded-2xl border border-border bg-background text-foreground shadow-xl',
     mode === 'overlay' && 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4',
     mode === 'page' && 'mx-auto max-w-3xl p-6 md:p-10',
     mode === 'inline' && 'p-6'
@@ -171,7 +171,7 @@ export function QuizEngine({
       {phase === 'intro' && (
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold">{quiz.title}</h2>
-          {quiz.description && <p className="text-zinc-400">{quiz.description}</p>}
+          {quiz.description && <p className="text-muted-foreground">{quiz.description}</p>}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 text-sm">
             <Stat label="Preguntas" value={totalQ.toString()} />
             <Stat label="Aprobación" value={`${quiz.passing_score_pct}%`} />
@@ -199,7 +199,7 @@ export function QuizEngine({
       {phase === 'question' && currentQ && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <div className="text-sm text-zinc-400">
+            <div className="text-sm text-muted-foreground">
               Pregunta {qIndex + 1} de {totalQ}
             </div>
             {secondsLeft != null && (
@@ -209,7 +209,7 @@ export function QuizEngine({
               </div>
             )}
           </div>
-          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden mb-6">
+          <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden mb-6">
             <div
               className="h-full transition-all duration-300"
               style={{ width: `${((qIndex + 1) / totalQ) * 100}%`, backgroundColor: accentColor }}
@@ -269,7 +269,7 @@ export function QuizEngine({
       )}
 
       {phase === 'submitting' && (
-        <div className="flex flex-col items-center gap-3 py-12 text-zinc-300">
+        <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
           <div
             className="animate-spin h-10 w-10 border-2 rounded-full"
             style={{ borderColor: accentColor, borderTopColor: 'transparent' }}
@@ -281,11 +281,11 @@ export function QuizEngine({
       {phase === 'result' && result && (
         <div className="text-center space-y-4">
           {result.passed ? (
-            <CheckCircle2 className="h-16 w-16 text-emerald-400 mx-auto" />
+            <CheckCircle2 className="h-16 w-16 text-emerald-600 dark:text-emerald-400 mx-auto" />
           ) : result.has_pending_manual ? (
-            <Clock className="h-16 w-16 text-amber-400 mx-auto" />
+            <Clock className="h-16 w-16 text-amber-600 dark:text-amber-400 mx-auto" />
           ) : (
-            <XCircle className="h-16 w-16 text-rose-400 mx-auto" />
+            <XCircle className="h-16 w-16 text-rose-600 dark:text-rose-400 mx-auto" />
           )}
           <h2 className="text-2xl font-bold">
             {result.passed
@@ -294,12 +294,12 @@ export function QuizEngine({
               ? 'En revisión'
               : 'No aprobado'}
           </h2>
-          <p className="text-zinc-400">
+          <p className="text-muted-foreground">
             {result.has_pending_manual
               ? 'Algunas respuestas requieren revisión manual del instructor.'
               : `Obtuviste ${result.score_pct.toFixed(1)}% de ${quiz.passing_score_pct}% requerido.`}
           </p>
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm text-muted-foreground">
             {result.earned_points} / {result.total_points} puntos
           </div>
           <div className="flex justify-center gap-3 pt-4">
@@ -321,7 +321,7 @@ export function QuizEngine({
           {onClose && (
             <button
               onClick={onClose}
-              className="absolute -top-3 -right-3 rounded-full bg-zinc-800 p-1.5 hover:bg-zinc-700 z-10"
+              className="absolute -top-3 -right-3 rounded-full bg-muted p-1.5 hover:bg-muted z-10"
             >
               <X className="h-4 w-4" />
             </button>
@@ -338,8 +338,8 @@ export function QuizEngine({
 // ─── Helpers ───
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg bg-white/5 p-3">
-      <div className="text-xs text-zinc-500 uppercase tracking-wide">{label}</div>
+    <div className="rounded-lg bg-muted/50 p-3">
+      <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
       <div className="text-base font-semibold mt-1">{value}</div>
     </div>
   );
@@ -390,8 +390,8 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
               className={cn(
                 'w-full text-left p-3 rounded-lg border transition-colors',
                 checked
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-muted/50 hover:border-border'
               )}
               style={checked ? { borderColor: accentColor, backgroundColor: `${accentColor}1a` } : undefined}
             >
@@ -399,7 +399,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
                 <div
                   className={cn(
                     'h-4 w-4 rounded-full border-2 flex-shrink-0',
-                    checked ? 'border-transparent' : 'border-zinc-600'
+                    checked ? 'border-transparent' : 'border-border'
                   )}
                   style={checked ? { backgroundColor: accentColor } : undefined}
                 />
@@ -416,7 +416,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
     const sel = new Set(answer?.selected_option_ids ?? []);
     return (
       <div className="space-y-2">
-        <p className="text-xs text-zinc-500">Selecciona todas las opciones correctas.</p>
+        <p className="text-xs text-muted-foreground">Selecciona todas las opciones correctas.</p>
         {options.map((opt) => {
           const checked = sel.has(opt.id);
           return (
@@ -431,8 +431,8 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
               className={cn(
                 'w-full text-left p-3 rounded-lg border transition-colors',
                 checked
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-muted/50 hover:border-border'
               )}
               style={checked ? { borderColor: accentColor, backgroundColor: `${accentColor}1a` } : undefined}
             >
@@ -440,7 +440,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
                 <div
                   className={cn(
                     'h-4 w-4 rounded border-2 flex-shrink-0 flex items-center justify-center',
-                    checked ? 'border-transparent' : 'border-zinc-600'
+                    checked ? 'border-transparent' : 'border-border'
                   )}
                   style={checked ? { backgroundColor: accentColor } : undefined}
                 >
@@ -468,10 +468,10 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
         <textarea
           value={answer?.text_answer ?? ''}
           onChange={(e) => onChange({ text_answer: e.target.value })}
-          className="w-full min-h-32 rounded-lg bg-white/5 border border-white/10 p-3 text-zinc-100 focus:outline-none focus:border-purple-500"
+          className="w-full min-h-32 rounded-lg bg-muted/50 border border-border p-3 text-foreground focus:outline-none focus:border-primary"
           placeholder="Escribe tu respuesta..."
         />
-        <div className="mt-2 text-xs text-zinc-500">{(answer?.text_answer ?? '').length} caracteres</div>
+        <div className="mt-2 text-xs text-muted-foreground">{(answer?.text_answer ?? '').length} caracteres</div>
       </div>
     );
   }
@@ -506,14 +506,14 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
                 'w-full text-left p-3 rounded-lg border transition-colors',
                 isChecked
                   ? 'border-emerald-500 bg-emerald-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                  : 'border-border bg-muted/50 hover:border-border'
               )}
             >
               <div className="flex items-center gap-3">
                 <div
                   className={cn(
                     'h-4 w-4 rounded border-2 flex-shrink-0 flex items-center justify-center',
-                    isChecked ? 'bg-emerald-500 border-transparent' : 'border-zinc-600'
+                    isChecked ? 'bg-emerald-500 border-transparent' : 'border-border'
                   )}
                 >
                   {isChecked && <CheckCircle2 className="h-3 w-3 text-white" />}
@@ -529,7 +529,7 @@ function QuestionRenderer({ question, answer, onChange, attemptId, accentColor, 
 
   if (question.type === 'matching') {
     return (
-      <div className="text-sm text-zinc-400 p-4 bg-white/5 rounded-lg">
+      <div className="text-sm text-muted-foreground p-4 bg-muted/50 rounded-lg">
         Tipo "relacionar" disponible en próxima versión.
       </div>
     );
@@ -563,7 +563,7 @@ function OrderingQuestion({
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
-          <p className="text-xs text-zinc-500">Arrastra para reordenar.</p>
+          <p className="text-xs text-muted-foreground">Arrastra para reordenar.</p>
           {items.map((item, idx) => (
             <SortableItem key={item.id} id={item.id} text={item.option_text} idx={idx + 1} />
           ))}
@@ -580,14 +580,14 @@ function SortableItem({ id, text, idx }: { id: string; text: string; idx: number
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-3 p-3 rounded-lg border border-white/10 bg-white/5',
+        'flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/50',
         isDragging && 'opacity-50'
       )}
     >
-      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-zinc-500">
+      <button {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground">
         <GripVertical className="h-4 w-4" />
       </button>
-      <span className="text-sm text-zinc-500 font-mono w-6">{idx}.</span>
+      <span className="text-sm text-muted-foreground font-mono w-6">{idx}.</span>
       <span>{text}</span>
     </div>
   );
@@ -633,22 +633,22 @@ function FileUploadQuestion({
   return (
     <div>
       {answer?.file_url ? (
-        <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
+        <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
           <div className="flex items-center gap-3">
-            <Upload className="h-4 w-4 text-emerald-400" />
+            <Upload className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span className="text-sm truncate">{answer.file_name}</span>
           </div>
           <button
             onClick={() => onChange({ file_url: null, file_name: null })}
-            className="text-rose-400 hover:text-rose-300 text-sm"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 text-sm"
           >
             Quitar
           </button>
         </div>
       ) : (
-        <label className="block cursor-pointer border-2 border-dashed border-white/10 rounded-lg p-8 text-center hover:border-white/20 transition-colors">
-          <Upload className="h-8 w-8 mx-auto text-zinc-500 mb-2" />
-          <span className="text-sm text-zinc-400">
+        <label className="block cursor-pointer border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-border transition-colors">
+          <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+          <span className="text-sm text-muted-foreground">
             {uploading ? 'Subiendo...' : 'Haz clic o arrastra un archivo'}
           </span>
           <input

@@ -55,14 +55,14 @@ export function AssignUserDropdown({
         className="w-64 bg-popover border-[#8b5cf6]/30"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-2 border-b border-white/10">
+        <div className="p-2 border-b border-border">
           <div className="relative">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
             <Input
               placeholder={placeholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 bg-white/5 border-white/10 text-sm text-[#f8fafc]"
+              className="pl-8 h-8 bg-muted/50 border-border text-sm text-[#f8fafc]"
             />
           </div>
         </div>
@@ -73,7 +73,7 @@ export function AssignUserDropdown({
               <button
                 type="button"
                 onClick={() => handleSelect(null)}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors hover:bg-red-500/20 text-red-400 mb-1 border-b border-white/10 pb-2"
+                className="w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors hover:bg-red-500/20 text-red-400 mb-1 border-b border-border pb-2"
               >
                 <X className="h-4 w-4" />
                 <span className="text-sm">Quitar asignacion</span>
@@ -86,7 +86,7 @@ export function AssignUserDropdown({
                 onClick={() => handleSelect(user)}
                 className={cn(
                   "w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors",
-                  "hover:bg-white/10 text-[#f8fafc]",
+                  "hover:bg-muted text-[#f8fafc]",
                   currentUserId === user.id && "bg-primary/20"
                 )}
               >

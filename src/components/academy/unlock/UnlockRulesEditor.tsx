@@ -65,7 +65,7 @@ interface Props {
 }
 
 const selectCls =
-  'w-full rounded-md bg-black/30 border border-white/10 p-2 text-sm text-zinc-100 focus:outline-none focus:border-purple-500/50';
+  'w-full rounded-md bg-muted border border-border p-2 text-sm text-foreground focus:outline-none focus:border-primary/50';
 
 export function UnlockRulesEditor({
   spaceId,
@@ -138,21 +138,21 @@ export function UnlockRulesEditor({
   });
 
   return (
-    <div className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+    <div className="space-y-3 rounded-2xl border border-border bg-muted/30 p-4">
       <div className="flex items-center gap-2">
         <Lock className="h-4 w-4" style={{ color: accentColor }} />
-        <span className="text-sm font-semibold text-zinc-100">Condiciones de desbloqueo</span>
+        <span className="text-sm font-semibold text-foreground">Condiciones de desbloqueo</span>
       </div>
 
       {/* Lógica Y / O (solo relevante con 2+ condiciones) */}
       {rules.length > 1 && (
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-zinc-400">El alumno debe cumplir</span>
-          <div className="inline-flex rounded-lg border border-white/10 overflow-hidden">
+          <span className="text-muted-foreground">El alumno debe cumplir</span>
+          <div className="inline-flex rounded-lg border border-border overflow-hidden">
             <button
               type="button"
               onClick={() => onLogicChange('all')}
-              className={cn('px-3 py-1 font-bold', unlockLogic === 'all' ? 'text-white' : 'text-zinc-400')}
+              className={cn('px-3 py-1 font-bold', unlockLogic === 'all' ? 'text-white' : 'text-muted-foreground')}
               style={unlockLogic === 'all' ? { backgroundColor: accentColor } : undefined}
             >
               TODAS (Y)
@@ -160,7 +160,7 @@ export function UnlockRulesEditor({
             <button
               type="button"
               onClick={() => onLogicChange('any')}
-              className={cn('px-3 py-1 font-bold', unlockLogic === 'any' ? 'text-white' : 'text-zinc-400')}
+              className={cn('px-3 py-1 font-bold', unlockLogic === 'any' ? 'text-white' : 'text-muted-foreground')}
               style={unlockLogic === 'any' ? { backgroundColor: accentColor } : undefined}
             >
               AL MENOS UNA (O)
@@ -171,7 +171,7 @@ export function UnlockRulesEditor({
 
       {/* Lista de condiciones actuales */}
       {rules.length === 0 ? (
-        <p className="text-[11px] text-zinc-500">
+        <p className="text-[11px] text-muted-foreground">
           Sin condiciones: disponible para todos los inscritos. Agrega una abajo para restringir el acceso.
         </p>
       ) : (
@@ -179,13 +179,13 @@ export function UnlockRulesEditor({
           {rules.map((r) => (
             <li
               key={r.id}
-              className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm text-zinc-200"
+              className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-sm text-foreground"
             >
               <span className="flex-1 min-w-0">{describeRule(r, { courses, modules, lessons, quizzes, badges })}</span>
               <button
                 type="button"
                 onClick={() => removeRule.mutate({ id: r.id, target_type: r.target_type, target_id: r.target_id })}
-                className="text-zinc-500 hover:text-red-400 transition-colors"
+                className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400 transition-colors"
                 title="Quitar condición"
               >
                 <Trash2 className="h-4 w-4" />
@@ -272,8 +272,8 @@ function AddRuleForm({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-dashed border-white/15 p-3">
-      <Label className="text-[11px] text-zinc-400">Agregar condición</Label>
+    <div className="space-y-2 rounded-xl border border-dashed border-border p-3">
+      <Label className="text-[11px] text-muted-foreground">Agregar condición</Label>
       <select value={type} onChange={(e) => setType(e.target.value as UnlockRuleType)} className={selectCls}>
         <option value="">Elige un tipo de condición…</option>
         {(Object.keys(RULE_CATALOG) as UnlockRuleType[]).map((rt) => (

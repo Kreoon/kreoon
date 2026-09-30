@@ -23,8 +23,8 @@ export function HiringStepPayment({
             <div className="flex items-start gap-3">
               <Shield className="h-6 w-6 text-purple-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-white font-semibold">Pago protegido por Kreoon</h3>
-                <p className="text-gray-400 text-sm mt-1">
+                <h3 className="text-foreground font-semibold">Pago protegido por Kreoon</h3>
+                <p className="text-muted-foreground text-sm mt-1">
                   Tu dinero se mantiene en un escrow seguro y solo se libera cuando apruebes
                   el contenido entregado por el creador.
                 </p>
@@ -52,9 +52,9 @@ export function HiringStepPayment({
           </div>
 
           {/* Amount */}
-          <div className="bg-white/5 rounded-sm p-5 flex items-center justify-between">
-            <span className="text-gray-400">Total a pagar</span>
-            <span className="text-3xl font-bold text-white">
+          <div className="bg-muted/50 rounded-sm p-5 flex items-center justify-between">
+            <span className="text-muted-foreground">Total a pagar</span>
+            <span className="text-3xl font-bold text-foreground">
               ${selectedPackage.price.toLocaleString()} {selectedPackage.currency}
             </span>
           </div>
@@ -66,8 +66,8 @@ export function HiringStepPayment({
             <div className="flex items-start gap-3">
               <Gift className="h-6 w-6 text-green-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-white font-semibold">Canje de producto</h3>
-                <p className="text-gray-400 text-sm mt-1">
+                <h3 className="text-foreground font-semibold">Canje de producto</h3>
+                <p className="text-muted-foreground text-sm mt-1">
                   Envias tu producto al creador a cambio de contenido. No hay pago monetario
                   involucrado en este proyecto.
                 </p>
@@ -95,31 +95,31 @@ export function HiringStepPayment({
           </div>
 
           {/* Exchange info */}
-          <div className="bg-white/5 rounded-sm p-5 flex items-center gap-4">
+          <div className="bg-muted/50 rounded-sm p-5 flex items-center gap-4">
             <Package className="h-8 w-8 text-green-400 flex-shrink-0" />
             <div>
-              <p className="text-white font-semibold">Sin costo monetario</p>
-              <p className="text-gray-500 text-sm">Solo necesitas enviar tu producto al creador</p>
+              <p className="text-foreground font-semibold">Sin costo monetario</p>
+              <p className="text-muted-foreground text-sm">Solo necesitas enviar tu producto al creador</p>
             </div>
           </div>
         </>
       )}
 
       {/* Trust badges */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <div className="flex items-center gap-2.5 text-gray-500 text-xs">
+      <div className="border-t border-border pt-4 space-y-3">
+        <div className="flex items-center gap-2.5 text-muted-foreground text-xs">
           <Lock className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Escrow seguro</span>
         </div>
-        <div className="flex items-center gap-2.5 text-gray-500 text-xs">
+        <div className="flex items-center gap-2.5 text-muted-foreground text-xs">
           <FileText className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Contrato digital</span>
         </div>
-        <div className="flex items-center gap-2.5 text-gray-500 text-xs">
+        <div className="flex items-center gap-2.5 text-muted-foreground text-xs">
           <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Garantia de entrega</span>
         </div>
-        <div className="flex items-center gap-2.5 text-gray-500 text-xs">
+        <div className="flex items-center gap-2.5 text-muted-foreground text-xs">
           <MessageSquare className="h-3.5 w-3.5 flex-shrink-0" />
           <span>Comunicacion protegida dentro de Kreoon</span>
         </div>
@@ -144,7 +144,7 @@ export function HiringStepPayment({
         )}
       </button>
       {paymentMethod === 'payment' && !isSubmitting && (
-        <p className="text-center text-xs text-gray-600">
+        <p className="text-center text-xs text-muted-foreground">
           Serás redirigido a Stripe para completar el pago de forma segura
         </p>
       )}

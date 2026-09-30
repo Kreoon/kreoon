@@ -51,7 +51,7 @@ export function OrgDetailPanel({ org, onClose }: OrgDetailPanelProps) {
               'px-2 py-0.5 rounded-full text-[10px] font-semibold',
               isActive
                 ? 'bg-green-500/20 text-green-400'
-                : 'bg-white/10 text-white/50',
+                : 'bg-muted text-muted-foreground/70',
             )}
           >
             {isActive ? 'Activa' : 'Inactiva'}
@@ -72,14 +72,14 @@ export function OrgDetailPanel({ org, onClose }: OrgDetailPanelProps) {
       {/* Activity */}
       <DetailSection title="Actividad">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Última actividad</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Última actividad</span>
+          <span className="text-muted-foreground">
             {org.last_activity_at
               ? formatDistanceToNow(new Date(org.last_activity_at), { addSuffix: true, locale: es })
               : 'Sin actividad'}
           </span>
-          <span className="text-white/40">Creada</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Creada</span>
+          <span className="text-muted-foreground">
             {formatDistanceToNow(new Date(org.created_at), { addSuffix: true, locale: es })}
           </span>
         </div>
@@ -91,14 +91,14 @@ export function OrgDetailPanel({ org, onClose }: OrgDetailPanelProps) {
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             {org.settings.subscription_plan && (
               <>
-                <span className="text-white/40">Plan</span>
-                <span className="text-white/70 capitalize">{org.settings.subscription_plan}</span>
+                <span className="text-muted-foreground/70">Plan</span>
+                <span className="text-muted-foreground capitalize">{org.settings.subscription_plan}</span>
               </>
             )}
             {org.settings.marketplace_enabled != null && (
               <>
-                <span className="text-white/40">Marketplace</span>
-                <span className="text-white/70">
+                <span className="text-muted-foreground/70">Marketplace</span>
+                <span className="text-muted-foreground">
                   {org.settings.marketplace_enabled ? 'Habilitado' : 'Deshabilitado'}
                 </span>
               </>
@@ -114,7 +114,7 @@ export function OrgDetailPanel({ org, onClose }: OrgDetailPanelProps) {
             href={`/org/${org.slug || org.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-[#8b5cf6]/40 hover:bg-[#8b5cf6]/10 transition-all"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm bg-muted/40 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-[#8b5cf6]/40 hover:bg-[#8b5cf6]/10 transition-all"
           >
             <ExternalLink className="h-3 w-3" />
             Ver organización
@@ -135,11 +135,11 @@ function MetricCard({
   value: string | number;
 }) {
   return (
-    <div className="flex items-center gap-2.5 p-2.5 rounded-sm bg-white/[0.03] border border-white/5">
+    <div className="flex items-center gap-2.5 p-2.5 rounded-sm bg-white/[0.03] border border-border">
       <Icon className="h-4 w-4 text-[#a855f7] flex-shrink-0" />
       <div className="min-w-0">
-        <p className="text-[10px] text-white/40">{label}</p>
-        <p className="text-sm text-white font-semibold truncate">{value}</p>
+        <p className="text-[10px] text-muted-foreground/70">{label}</p>
+        <p className="text-sm text-foreground font-semibold truncate">{value}</p>
       </div>
     </div>
   );

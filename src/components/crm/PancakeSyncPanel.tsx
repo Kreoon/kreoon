@@ -38,13 +38,13 @@ function SyncKpiCard({
   color: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/5 border border-white/[0.08]">
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40 border border-white/[0.08]">
       <div className={cn('p-2 rounded-sm', color)}>
         <Icon className="h-4 w-4" />
       </div>
       <div>
-        <p className="text-xl font-bold text-white leading-none">{value}</p>
-        <p className="text-[11px] text-white/50 mt-0.5">{label}</p>
+        <p className="text-xl font-bold text-foreground leading-none">{value}</p>
+        <p className="text-[11px] text-muted-foreground/70 mt-0.5">{label}</p>
       </div>
     </div>
   );
@@ -70,12 +70,12 @@ function SyncProgressBar({
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-white/60">{label}</span>
-        <span className="text-xs text-white/40">
+        <span className="text-xs text-muted-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground/70">
           {synced}/{total}
         </span>
       </div>
-      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden flex">
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden flex">
         <div
           className="bg-green-500 transition-all duration-500"
           style={{ width: `${syncedPct}%` }}
@@ -89,7 +89,7 @@ function SyncProgressBar({
           style={{ width: `${errorPct}%` }}
         />
       </div>
-      <div className="flex gap-3 text-[10px] text-white/40">
+      <div className="flex gap-3 text-[10px] text-muted-foreground/70">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
           {synced} sync
@@ -133,10 +133,10 @@ function ActivityRow({ entry }: { entry: PancakeSyncActivityEntry }) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-medium text-white/80 capitalize">{entry.action}</span>
+          <span className="text-xs font-medium text-muted-foreground capitalize">{entry.action}</span>
           <Badge
             variant="outline"
-            className="text-[10px] px-1.5 py-0 border-white/10 text-white/40 h-4"
+            className="text-[10px] px-1.5 py-0 border-border text-muted-foreground/70 h-4"
           >
             {entry.entity_type}
           </Badge>
@@ -145,7 +145,7 @@ function ActivityRow({ entry }: { entry: PancakeSyncActivityEntry }) {
           ) : (
             <ArrowLeft className="h-3 w-3 text-purple-400/60 shrink-0" />
           )}
-          <span className="text-[10px] text-white/30">
+          <span className="text-[10px] text-muted-foreground/70">
             {isOutgoing ? 'Pancake' : 'Kreoon'}
           </span>
         </div>
@@ -154,7 +154,7 @@ function ActivityRow({ entry }: { entry: PancakeSyncActivityEntry }) {
         )}
       </div>
 
-      <span className="text-[10px] text-white/30 shrink-0">{time}</span>
+      <span className="text-[10px] text-muted-foreground/70 shrink-0">{time}</span>
     </div>
   );
 }
@@ -203,12 +203,12 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
     return (
       <Card className="p-5">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-5 h-5 rounded-full bg-white/10 animate-pulse" />
-          <div className="h-4 w-40 bg-white/10 rounded animate-pulse" />
+          <div className="w-5 h-5 rounded-full bg-muted animate-pulse" />
+          <div className="h-4 w-40 bg-muted rounded animate-pulse" />
         </div>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-10 bg-white/5 rounded animate-pulse" />
+            <div key={i} className="h-10 bg-muted/40 rounded animate-pulse" />
           ))}
         </div>
       </Card>
@@ -225,7 +225,7 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className={cn('w-2.5 h-2.5 rounded-full animate-pulse', statusConfig.color)} />
-            <span className="text-sm font-semibold text-white">Pancake CRM</span>
+            <span className="text-sm font-semibold text-foreground">Pancake CRM</span>
           </div>
           <Badge
             variant="outline"
@@ -234,21 +234,21 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
             {statusConfig.label}
           </Badge>
           {pancakeTotal !== null && (
-            <Badge variant="outline" className="text-[10px] px-2 border-white/10 text-white/50">
+            <Badge variant="outline" className="text-[10px] px-2 border-border text-muted-foreground/70">
               {pancakeTotal.toLocaleString('es-CO')} contactos
             </Badge>
           )}
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-white/40">
+          <div className="flex items-center gap-1.5 text-muted-foreground/70">
             <Clock className="h-3 w-3" />
             <span className="text-xs">{lastSyncText}</span>
           </div>
           <Button
             size="sm"
             variant="ghost"
-            className="h-7 px-2 text-white/50 hover:text-white hover:bg-white/5"
+            className="h-7 px-2 text-muted-foreground/70 hover:text-foreground hover:bg-muted/40"
             onClick={(e) => {
               e.stopPropagation();
               onSync();
@@ -259,16 +259,16 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
             <span className="ml-1.5 text-xs">Sincronizar</span>
           </Button>
           {expanded ? (
-            <ChevronUp className="h-4 w-4 text-white/30" />
+            <ChevronUp className="h-4 w-4 text-muted-foreground/70" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-white/30" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground/70" />
           )}
         </div>
       </button>
 
       {/* Cuerpo expandible */}
       {expanded && (
-        <div className="px-5 pb-5 border-t border-white/5 space-y-5">
+        <div className="px-5 pb-5 border-t border-border space-y-5">
           {/* KPIs de sync */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
             <SyncKpiCard
@@ -300,7 +300,7 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
           {/* Barras de progreso por tipo */}
           {totalInMap > 0 && (
             <div className="space-y-4">
-              <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider">
+              <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
                 Progreso por tipo
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -323,13 +323,13 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
           )}
 
           {/* Estado de la integración */}
-          <div className="flex items-center gap-4 text-xs text-white/40">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground/70">
             <span className="flex items-center gap-1.5">
               <Users className="h-3 w-3" />
               Sync usuarios: {config?.sync_users_enabled ? (
                 <span className="text-green-400">Activo</span>
               ) : (
-                <span className="text-white/30">Inactivo</span>
+                <span className="text-muted-foreground/70">Inactivo</span>
               )}
             </span>
             <span className="flex items-center gap-1.5">
@@ -337,7 +337,7 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
               Sync orgs: {config?.sync_organizations_enabled ? (
                 <span className="text-green-400">Activo</span>
               ) : (
-                <span className="text-white/30">Inactivo</span>
+                <span className="text-muted-foreground/70">Inactivo</span>
               )}
             </span>
           </div>
@@ -345,7 +345,7 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
           {/* Log de actividad reciente */}
           {activity.length > 0 && (
             <div className="space-y-2">
-              <h4 className="text-xs font-medium text-white/40 uppercase tracking-wider">
+              <h4 className="text-xs font-medium text-muted-foreground/70 uppercase tracking-wider">
                 Actividad reciente
               </h4>
               <div>
@@ -358,8 +358,8 @@ export function PancakeSyncPanel({ data, isLoading, isSyncing, onSync }: Pancake
 
           {activity.length === 0 && !isLoading && (
             <div className="py-6 text-center">
-              <RefreshCw className="h-6 w-6 text-white/10 mx-auto mb-2" />
-              <p className="text-sm text-white/30">Sin actividad de sync registrada</p>
+              <RefreshCw className="h-6 w-6 text-muted-foreground/70 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground/70">Sin actividad de sync registrada</p>
             </div>
           )}
         </div>

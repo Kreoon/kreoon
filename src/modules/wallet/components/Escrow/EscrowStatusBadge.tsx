@@ -81,7 +81,7 @@ const STATUS_CONFIG: Record<
     icon: XCircle,
     label: 'Cancelado',
     description: 'El escrow fue cancelado y los fondos fueron devueltos.',
-    color: 'text-gray-400 border-gray-500/30',
+    color: 'text-muted-foreground border-gray-500/30',
     bgColor: 'bg-gray-500/10',
   },
 };

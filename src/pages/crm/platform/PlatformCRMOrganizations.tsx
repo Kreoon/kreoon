@@ -72,9 +72,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground/70">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>
@@ -170,16 +170,16 @@ const PlatformCRMOrganizations = () => {
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white">Organizaciones</h1>
-              <p className="text-white/60">Todas las organizaciones del ecosistema Kreoon</p>
+              <h1 className="text-3xl font-bold text-foreground">Organizaciones</h1>
+              <p className="text-muted-foreground">Todas las organizaciones del ecosistema Kreoon</p>
             </div>
             <div className="flex gap-3 items-center">
               <ViewModeToggle value={viewMode} onChange={setViewMode} />
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
                 <Input
                   placeholder="Buscar organización..."
-                  className="w-64 bg-white/5 border-white/10 pl-9"
+                  className="w-64 bg-muted/40 border-border pl-9"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -198,7 +198,7 @@ const PlatformCRMOrganizations = () => {
           {/* ========== FILTERS ========== */}
           <div className="flex flex-wrap gap-3">
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40 bg-white/5 border-white/10"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectTrigger className="w-40 bg-muted/40 border-border"><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="active">Activas</SelectItem>
@@ -206,7 +206,7 @@ const PlatformCRMOrganizations = () => {
               </SelectContent>
             </Select>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-48 bg-white/5 border-white/10"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+              <SelectTrigger className="w-48 bg-muted/40 border-border"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="created_desc">Más recientes</SelectItem>
                 <SelectItem value="created_asc">Más antiguas</SelectItem>
@@ -214,19 +214,19 @@ const PlatformCRMOrganizations = () => {
                 <SelectItem value="content_desc">Más contenidos</SelectItem>
               </SelectContent>
             </Select>
-            <div className="ml-auto text-sm text-white/40 self-center">{filtered.length} organizaciones</div>
+            <div className="ml-auto text-sm text-muted-foreground/70 self-center">{filtered.length} organizaciones</div>
           </div>
 
           {/* ========== CONTENT ========== */}
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-white/40">Cargando organizaciones...</p>
+              <p className="text-sm text-muted-foreground/70">Cargando organizaciones...</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center">
-              <Building2 className="h-10 w-10 text-white/10 mx-auto mb-3" />
-              <p className="text-sm text-white/40">
+              <Building2 className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground/70">
                 {search || statusFilter !== "all" ? "Sin resultados para los filtros aplicados" : "Aún no hay organizaciones"}
               </p>
             </div>
@@ -254,8 +254,8 @@ const PlatformCRMOrganizations = () => {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-white font-medium truncate">{org.name}</p>
-                        <p className="text-white/40 text-xs truncate">{org.slug}</p>
+                        <p className="text-foreground font-medium truncate">{org.name}</p>
+                        <p className="text-muted-foreground/70 text-xs truncate">{org.slug}</p>
                       </div>
                       <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0", cfg.class)}>
                         {cfg.label}
@@ -263,20 +263,20 @@ const PlatformCRMOrganizations = () => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       <div className="text-center">
-                        <p className="text-white font-semibold text-sm">{org.member_count}</p>
-                        <p className="text-[10px] text-white/40">Miembros</p>
+                        <p className="text-foreground font-semibold text-sm">{org.member_count}</p>
+                        <p className="text-[10px] text-muted-foreground/70">Miembros</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-white font-semibold text-sm">{org.creator_count}</p>
-                        <p className="text-[10px] text-white/40">Talento</p>
+                        <p className="text-foreground font-semibold text-sm">{org.creator_count}</p>
+                        <p className="text-[10px] text-muted-foreground/70">Talento</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-white font-semibold text-sm">{org.content_count}</p>
-                        <p className="text-[10px] text-white/40">Contenido</p>
+                        <p className="text-foreground font-semibold text-sm">{org.content_count}</p>
+                        <p className="text-[10px] text-muted-foreground/70">Contenido</p>
                       </div>
                       <div className="text-center">
                         <p className="text-green-400 font-semibold text-sm">{formatCurrency(org.total_spent)}</p>
-                        <p className="text-[10px] text-white/40">Gastado</p>
+                        <p className="text-[10px] text-muted-foreground/70">Gastado</p>
                       </div>
                     </div>
                   </Card>
@@ -293,7 +293,7 @@ const PlatformCRMOrganizations = () => {
                   <div
                     key={org.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
+                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors",
                       selectedOrg?.id === org.id && "bg-[#8b5cf6]/10 border border-[#8b5cf6]/30",
                     )}
                     onClick={() => handleSelectOrg(org)}
@@ -306,10 +306,10 @@ const PlatformCRMOrganizations = () => {
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-white text-sm font-medium truncate">{org.name}</p>
+                      <p className="text-foreground text-sm font-medium truncate">{org.name}</p>
                     </div>
-                    <span className="text-xs text-white/50 hidden sm:inline">{org.member_count} miembros</span>
-                    <span className="text-xs text-white/50 hidden md:inline">{org.content_count} cont.</span>
+                    <span className="text-xs text-muted-foreground/70 hidden sm:inline">{org.member_count} miembros</span>
+                    <span className="text-xs text-muted-foreground/70 hidden md:inline">{org.content_count} cont.</span>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0", cfg.class)}>
                       {cfg.label}
                     </span>
@@ -322,14 +322,14 @@ const PlatformCRMOrganizations = () => {
             <Card>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-white/70">Organización</TableHead>
-                    <TableHead className="text-white/70">Miembros</TableHead>
-                    <TableHead className="text-white/70 hidden md:table-cell">Talento</TableHead>
-                    <TableHead className="text-white/70 hidden md:table-cell">Contenidos</TableHead>
-                    <TableHead className="text-white/70 hidden lg:table-cell">Gastado</TableHead>
-                    <TableHead className="text-white/70 hidden lg:table-cell">Últ. Actividad</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Organización</TableHead>
+                    <TableHead className="text-muted-foreground">Miembros</TableHead>
+                    <TableHead className="text-muted-foreground hidden md:table-cell">Talento</TableHead>
+                    <TableHead className="text-muted-foreground hidden md:table-cell">Contenidos</TableHead>
+                    <TableHead className="text-muted-foreground hidden lg:table-cell">Gastado</TableHead>
+                    <TableHead className="text-muted-foreground hidden lg:table-cell">Últ. Actividad</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -340,7 +340,7 @@ const PlatformCRMOrganizations = () => {
                       <TableRow
                         key={org.id}
                         className={cn(
-                          "border-white/10 hover:bg-white/5 cursor-pointer",
+                          "border-border hover:bg-muted/40 cursor-pointer",
                           selectedOrg?.id === org.id && "bg-[#8b5cf6]/10",
                         )}
                         onClick={() => handleSelectOrg(org)}
@@ -355,16 +355,16 @@ const PlatformCRMOrganizations = () => {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <p className="text-white font-medium truncate">{org.name}</p>
-                              <p className="text-white/40 text-xs truncate">{org.slug}</p>
+                              <p className="text-foreground font-medium truncate">{org.name}</p>
+                              <p className="text-muted-foreground/70 text-xs truncate">{org.slug}</p>
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white">{org.member_count}</TableCell>
-                        <TableCell className="text-white hidden md:table-cell">{org.creator_count}</TableCell>
-                        <TableCell className="text-white hidden md:table-cell">{org.content_count}</TableCell>
+                        <TableCell className="text-foreground">{org.member_count}</TableCell>
+                        <TableCell className="text-foreground hidden md:table-cell">{org.creator_count}</TableCell>
+                        <TableCell className="text-foreground hidden md:table-cell">{org.content_count}</TableCell>
                         <TableCell className="text-green-400 hidden lg:table-cell">{formatCurrency(org.total_spent)}</TableCell>
-                        <TableCell className="text-white/50 hidden lg:table-cell">
+                        <TableCell className="text-muted-foreground/70 hidden lg:table-cell">
                           {org.last_activity_at
                             ? formatDistanceToNow(new Date(org.last_activity_at), { addSuffix: true, locale: es })
                             : "—"}

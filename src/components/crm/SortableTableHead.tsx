@@ -24,7 +24,7 @@ export function SortableTableHead({
 
   return (
     <TableHead
-      className={cn('text-white/70 cursor-pointer select-none hover:text-white/90 transition-colors', className)}
+      className={cn('text-muted-foreground cursor-pointer select-none hover:text-muted-foreground transition-colors', className)}
       onClick={() => onSort(fieldKey)}
     >
       <div className="flex items-center gap-1">

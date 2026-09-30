@@ -207,7 +207,7 @@ export function UserAssignmentSection({
 
       {/* Metadata: Cliente, fechas - condicional */}
       {!compact && (showClient || content.created_at || content.deadline) && (
-        <div className="pt-2 border-t border-white/5">
+        <div className="pt-2 border-t border-border/50">
           <ProjectMetadata
             clientName={showClient ? content.client?.name : undefined}
             createdAt={content.created_at}

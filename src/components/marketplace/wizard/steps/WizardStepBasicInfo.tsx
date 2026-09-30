@@ -37,8 +37,8 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Tu perfil profesional</h2>
-        <p className="text-gray-400 text-sm">
+        <h2 className="text-2xl font-bold text-foreground">Tu perfil profesional</h2>
+        <p className="text-muted-foreground text-sm">
           Esta informacion sera visible en tu perfil del marketplace
         </p>
       </div>
@@ -46,7 +46,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
       {/* Banner preview */}
       <div className="relative rounded-sm overflow-hidden">
         <div
-          className="h-40 md:h-48 bg-gradient-to-br from-purple-900/60 via-[#1a1a2e] to-blue-900/60"
+          className="h-40 md:h-48 bg-gradient-to-br from-primary/20 via-muted to-accent"
           style={bannerUrl ? { backgroundImage: `url(${bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
         />
 
@@ -57,14 +57,14 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
               {avatarUrl ? (
                 <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
               ) : (
-                <User className="h-8 w-8 text-gray-600" />
+                <User className="h-8 w-8 text-muted-foreground" />
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="pt-6 text-xs text-gray-500">
+      <div className="pt-6 text-xs text-muted-foreground">
         Puedes cambiar tu foto y banner desde tu perfil social (Settings &gt; Perfil)
       </div>
 
@@ -77,7 +77,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             value={data.display_name}
             onChange={(e) => update('display_name', e.target.value)}
             placeholder="Tu nombre o nombre artistico"
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
           />
         </div>
 
@@ -88,10 +88,10 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             value={data.tagline}
             onChange={(e) => update('tagline', e.target.value.slice(0, 100))}
             placeholder="Ej: Creador de contenido lifestyle | Especialista en reels"
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             maxLength={100}
           />
-          <p className="text-xs text-gray-600 mt-1 text-right">{data.tagline.length}/100</p>
+          <p className="text-xs text-muted-foreground mt-1 text-right">{data.tagline.length}/100</p>
         </div>
 
         <div>
@@ -101,10 +101,10 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             onChange={(e) => update('bio_full', e.target.value.slice(0, 1000))}
             placeholder="Cuenta tu historia, experiencia y que te hace unico como creador..."
             rows={5}
-            className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
+            className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
             maxLength={1000}
           />
-          <p className="text-xs text-gray-600 mt-1 text-right">{data.bio_full.length}/1000</p>
+          <p className="text-xs text-muted-foreground mt-1 text-right">{data.bio_full.length}/1000</p>
         </div>
 
         {/* Location */}
@@ -119,7 +119,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
               value={data.location_city}
               onChange={(e) => update('location_city', e.target.value)}
               placeholder="Tu ciudad"
-              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+              className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             />
           </div>
           <div>
@@ -127,7 +127,7 @@ export function WizardStepBasicInfo({ data, avatarUrl, bannerUrl, onChange }: Wi
             <select
               value={data.location_country}
               onChange={(e) => update('location_country', e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+              className="w-full bg-muted/50 border border-border rounded-sm px-4 py-3 text-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
             >
               {COUNTRIES.map(c => (
                 <option key={c.code} value={c.code} className="bg-card">{c.label}</option>

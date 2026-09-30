@@ -40,7 +40,7 @@ const SHARE_OPTIONS: ShareOption[] = [
     label: 'Twitter / X',
     icon: Twitter,
     color: 'bg-black',
-    hoverColor: 'hover:bg-gray-800',
+    hoverColor: 'hover:bg-card',
     getUrl: (url, text) =>
       `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
   },
@@ -109,10 +109,10 @@ export function ProfileShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background border-gray-800">
+      <DialogContent className="sm:max-w-md bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-white">Compartir perfil</DialogTitle>
-          <DialogDescription className="text-gray-400">
+          <DialogTitle className="text-foreground">Compartir perfil</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Comparte el perfil de {profile.display_name} en tus redes sociales
           </DialogDescription>
         </DialogHeader>
@@ -126,7 +126,7 @@ export function ProfileShareDialog({
                 <Button
                   key={option.id}
                   onClick={() => handleShare(option)}
-                  className={`${option.color} ${option.hoverColor} text-white justify-start gap-2`}
+                  className={`${option.color} ${option.hoverColor} text-foreground justify-start gap-2`}
                 >
                   <Icon className="h-4 w-4" />
                   {option.label}
@@ -137,20 +137,20 @@ export function ProfileShareDialog({
 
           {/* Copy link */}
           <div className="space-y-2">
-            <p className="text-sm text-gray-400">O copia el enlace directo:</p>
+            <p className="text-sm text-muted-foreground">O copia el enlace directo:</p>
             <div className="flex gap-2">
               <div className="relative flex-1">
-                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   readOnly
                   value={shareUrl}
-                  className="pl-9 bg-card border-gray-700 text-gray-300 text-sm"
+                  className="pl-9 bg-card border-border text-muted-foreground text-sm"
                 />
               </div>
               <Button
                 onClick={handleCopyLink}
                 variant="outline"
-                className="border-gray-700 hover:bg-gray-800"
+                className="border-border hover:bg-card"
               >
                 {copied ? (
                   <Check className="h-4 w-4 text-green-500" />

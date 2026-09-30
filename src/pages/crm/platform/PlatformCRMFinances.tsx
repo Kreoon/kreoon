@@ -158,11 +158,11 @@ const PlatformCRMFinances = () => {
     return (
       <div className="min-h-screen p-4 md:p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-10 w-48 bg-white/10 rounded" />
+          <div className="h-10 w-48 bg-muted rounded" />
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-white/5 rounded-sm" />)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-32 bg-muted/40 rounded-sm" />)}
           </div>
-          <div className="h-96 bg-white/5 rounded-sm" />
+          <div className="h-96 bg-muted/40 rounded-sm" />
         </div>
       </div>
     );
@@ -174,12 +174,12 @@ const PlatformCRMFinances = () => {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">Finanzas</h1>
-            <p className="text-white/60">Ingresos, suscripciones y pagos de la plataforma</p>
+            <h1 className="text-3xl font-bold text-foreground">Finanzas</h1>
+            <p className="text-muted-foreground">Ingresos, suscripciones y pagos de la plataforma</p>
           </div>
           <div className="flex gap-3">
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-40 bg-white/5 border-white/10">
+              <SelectTrigger className="w-40 bg-muted/40 border-border">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -189,7 +189,7 @@ const PlatformCRMFinances = () => {
                 <SelectItem value="365">Último año</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" className="border-white/10">
+            <Button variant="outline" className="border-border">
               <Download className="w-4 h-4 mr-2" /> Exportar
             </Button>
           </div>
@@ -202,9 +202,9 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-green-500/20 rounded-sm">
                 <DollarSign className="w-5 h-5 text-green-400" />
               </div>
-              <span className="text-white/60 text-sm">MRR</span>
+              <span className="text-muted-foreground text-sm">MRR</span>
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats?.mrr || 0)}</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats?.mrr || 0)}</p>
             <p className="text-green-400 text-sm mt-1">
               ARR: {formatCurrency(stats?.arr || 0)}
             </p>
@@ -215,9 +215,9 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-blue-500/20 rounded-sm">
                 <TrendingUp className="w-5 h-5 text-blue-400" />
               </div>
-              <span className="text-white/60 text-sm">Ingresos ({period}d)</span>
+              <span className="text-muted-foreground text-sm">Ingresos ({period}d)</span>
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats?.revenue_period || 0)}</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats?.revenue_period || 0)}</p>
             <p className={`text-sm mt-1 ${revenueGrowth >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {revenueGrowth >= 0 ? '+' : ''}{revenueGrowth.toFixed(1)}% vs período anterior
             </p>
@@ -228,9 +228,9 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-purple-500/20 rounded-sm">
                 <Wallet className="w-5 h-5 text-purple-400" />
               </div>
-              <span className="text-white/60 text-sm">Pagos a Talento</span>
+              <span className="text-muted-foreground text-sm">Pagos a Talento</span>
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats?.payouts_period || 0)}</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats?.payouts_period || 0)}</p>
             <p className="text-purple-400 text-sm mt-1">
               Pendientes: {formatCurrency(stats?.payouts_pending || 0)}
             </p>
@@ -241,9 +241,9 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-orange-500/20 rounded-sm">
                 <FileText className="w-5 h-5 text-orange-400" />
               </div>
-              <span className="text-white/60 text-sm">Por Cobrar</span>
+              <span className="text-muted-foreground text-sm">Por Cobrar</span>
             </div>
-            <p className="text-3xl font-bold text-white">{formatCurrency(stats?.invoices_pending_amount || 0)}</p>
+            <p className="text-3xl font-bold text-foreground">{formatCurrency(stats?.invoices_pending_amount || 0)}</p>
             <p className="text-orange-400 text-sm mt-1">
               {stats?.invoices_pending_count || 0} facturas · {stats?.invoices_overdue_count || 0} vencidas
             </p>
@@ -254,9 +254,9 @@ const PlatformCRMFinances = () => {
               <div className="p-2 bg-teal-500/20 rounded-sm">
                 <Building2 className="w-5 h-5 text-teal-400" />
               </div>
-              <span className="text-white/60 text-sm">Orgs Activas</span>
+              <span className="text-muted-foreground text-sm">Orgs Activas</span>
             </div>
-            <p className="text-3xl font-bold text-white">{activeOrgsCount}</p>
+            <p className="text-3xl font-bold text-foreground">{activeOrgsCount}</p>
             <p className="text-teal-400 text-sm mt-1">
               {subscriptions.length} total suscripciones
             </p>
@@ -265,7 +265,7 @@ const PlatformCRMFinances = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-white/5 border border-white/10">
+          <TabsList className="bg-muted/40 border border-border">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="subscriptions">Suscripciones</TabsTrigger>
             <TabsTrigger value="transactions">Transacciones</TabsTrigger>
@@ -278,8 +278,8 @@ const PlatformCRMFinances = () => {
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Revenue chart */}
-            <Card className="lg:col-span-2 bg-white/5 border-white/10 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Ingresos vs Pagos (12 meses)</h3>
+            <Card className="lg:col-span-2 bg-muted/40 border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Ingresos vs Pagos (12 meses)</h3>
               <LazyChartContainer height={300}>
                 <ResponsiveContainer width="100%" height={300}>
                   <LazyBarChart data={revenueData || []}>
@@ -299,8 +299,8 @@ const PlatformCRMFinances = () => {
             </Card>
 
             {/* Subscriptions by plan */}
-            <Card className="bg-white/5 border-white/10 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Suscripciones por Plan</h3>
+            <Card className="bg-muted/40 border-border p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Suscripciones por Plan</h3>
               <div className="space-y-4">
                 {(stats?.subscriptions_by_plan || []).map(item => (
                   <div key={item.plan} className="flex items-center justify-between">
@@ -308,13 +308,13 @@ const PlatformCRMFinances = () => {
                       <span className={`px-2 py-1 rounded-full text-xs ${SUBSCRIPTION_PLAN_COLORS[item.plan]}`}>
                         {SUBSCRIPTION_PLAN_LABELS[item.plan]}
                       </span>
-                      <span className="text-white/50">{item.count} orgs</span>
+                      <span className="text-muted-foreground/70">{item.count} orgs</span>
                     </div>
-                    <span className="text-white font-medium">{formatCurrency(item.mrr)}/mo</span>
+                    <span className="text-foreground font-medium">{formatCurrency(item.mrr)}/mo</span>
                   </div>
                 ))}
                 {(!stats?.subscriptions_by_plan || stats.subscriptions_by_plan.length === 0) && (
-                  <p className="text-white/30 text-sm text-center py-4">Sin suscripciones activas</p>
+                  <p className="text-muted-foreground/70 text-sm text-center py-4">Sin suscripciones activas</p>
                 )}
               </div>
 
@@ -345,47 +345,47 @@ const PlatformCRMFinances = () => {
             </Card>
 
             {/* Recent transactions */}
-            <Card className="lg:col-span-3 bg-white/5 border-white/10 p-6">
+            <Card className="lg:col-span-3 bg-muted/40 border-border p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Transacciones Recientes</h3>
+                <h3 className="text-lg font-semibold text-foreground">Transacciones Recientes</h3>
                 <Button variant="ghost" size="sm" onClick={() => setActiveTab('transactions')}>
                   Ver todas
                 </Button>
               </div>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">Fecha</TableHead>
-                    <TableHead className="text-white/70">Tipo</TableHead>
-                    <TableHead className="text-white/70">Descripción</TableHead>
-                    <TableHead className="text-white/70">Monto</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">Fecha</TableHead>
+                    <TableHead className="text-muted-foreground">Tipo</TableHead>
+                    <TableHead className="text-muted-foreground">Descripción</TableHead>
+                    <TableHead className="text-muted-foreground">Monto</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recentTransactions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-white/30 py-8">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground/70 py-8">
                         Sin transacciones recientes
                       </TableCell>
                     </TableRow>
                   )}
                   {recentTransactions.map(tx => (
-                    <TableRow key={tx.id} className="border-white/10">
-                      <TableCell className="text-white/50">
+                    <TableRow key={tx.id} className="border-border">
+                      <TableCell className="text-muted-foreground/70">
                         {format(new Date(tx.created_at), 'dd MMM yyyy', { locale: es })}
                       </TableCell>
                       <TableCell>
-                        <span className="text-white/70">
+                        <span className="text-muted-foreground">
                           {TRANSACTION_TYPE_LABELS[tx.transaction_type as TransactionType] || tx.transaction_type}
                         </span>
                       </TableCell>
-                      <TableCell className="text-white/70">{tx.description || '-'}</TableCell>
+                      <TableCell className="text-muted-foreground">{tx.description || '-'}</TableCell>
                       <TableCell className={tx.amount >= 0 ? 'text-green-400' : 'text-red-400'}>
                         {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${TRANSACTION_STATUS_COLORS[tx.status as TransactionStatus] || 'bg-white/10 text-white/50'}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${TRANSACTION_STATUS_COLORS[tx.status as TransactionStatus] || 'bg-muted text-muted-foreground/70'}`}>
                           {TRANSACTION_STATUS_LABELS[tx.status as TransactionStatus] || tx.status}
                         </span>
                       </TableCell>
@@ -399,31 +399,31 @@ const PlatformCRMFinances = () => {
 
         {/* Tab: Subscriptions */}
         {activeTab === 'subscriptions' && (
-          <Card className="bg-white/5 border-white/10">
+          <Card className="bg-muted/40 border-border">
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/70">Organización</TableHead>
-                  <TableHead className="text-white/70">Plan</TableHead>
-                  <TableHead className="text-white/70">Ciclo</TableHead>
-                  <TableHead className="text-white/70">Monto/mes</TableHead>
-                  <TableHead className="text-white/70">Estado</TableHead>
-                  <TableHead className="text-white/70">Último pago</TableHead>
-                  <TableHead className="text-white/70">Próximo cobro</TableHead>
-                  <TableHead className="text-white/70"></TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground">Organización</TableHead>
+                  <TableHead className="text-muted-foreground">Plan</TableHead>
+                  <TableHead className="text-muted-foreground">Ciclo</TableHead>
+                  <TableHead className="text-muted-foreground">Monto/mes</TableHead>
+                  <TableHead className="text-muted-foreground">Estado</TableHead>
+                  <TableHead className="text-muted-foreground">Último pago</TableHead>
+                  <TableHead className="text-muted-foreground">Próximo cobro</TableHead>
+                  <TableHead className="text-muted-foreground"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {subscriptions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-white/30 py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground/70 py-8">
                       Sin suscripciones registradas
                     </TableCell>
                   </TableRow>
                 )}
                 {subscriptions.map(sub => (
-                  <TableRow key={sub.id} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="text-white">
+                  <TableRow key={sub.id} className="border-border hover:bg-muted/40">
+                    <TableCell className="text-foreground">
                       <span className="font-medium">
                         {sub.organization_name || sub.organization_id.substring(0, 8) + '…'}
                       </span>
@@ -433,7 +433,7 @@ const PlatformCRMFinances = () => {
                         {SUBSCRIPTION_PLAN_LABELS[sub.plan]}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/70">
+                    <TableCell className="text-muted-foreground">
                       {sub.billing_cycle === 'monthly' ? 'Mensual' : 'Anual'}
                     </TableCell>
                     <TableCell className="text-green-400">{formatCurrency(sub.amount_monthly)}</TableCell>
@@ -441,12 +441,12 @@ const PlatformCRMFinances = () => {
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         sub.status === 'active' ? 'bg-green-500/20 text-green-300' :
                         sub.status === 'past_due' ? 'bg-red-500/20 text-red-300' :
-                        'bg-white/10 text-white/50'
+                        'bg-muted text-muted-foreground/70'
                       }`}>
                         {SUBSCRIPTION_STATUS_LABELS[sub.status]}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/50 text-sm">
+                    <TableCell className="text-muted-foreground/70 text-sm">
                       {sub.current_period_start
                         ? format(new Date(sub.current_period_start), 'dd MMM yyyy', { locale: es })
                         : sub.started_at
@@ -454,7 +454,7 @@ const PlatformCRMFinances = () => {
                           : '—'
                       }
                     </TableCell>
-                    <TableCell className="text-white/50 text-sm">
+                    <TableCell className="text-muted-foreground/70 text-sm">
                       {sub.current_period_end
                         ? format(new Date(sub.current_period_end), 'dd MMM yyyy', { locale: es })
                         : '—'
@@ -477,7 +477,7 @@ const PlatformCRMFinances = () => {
           <>
             <div className="flex gap-3 mb-4">
               <Select value={txFilter} onValueChange={setTxFilter}>
-                <SelectTrigger className="w-52 bg-white/5 border-white/10">
+                <SelectTrigger className="w-52 bg-muted/40 border-border">
                   <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -490,51 +490,51 @@ const PlatformCRMFinances = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-muted/40 border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">Fecha</TableHead>
-                    <TableHead className="text-white/70">Tipo</TableHead>
-                    <TableHead className="text-white/70">Descripción</TableHead>
-                    <TableHead className="text-white/70">Monto</TableHead>
-                    <TableHead className="text-white/70">Comisión</TableHead>
-                    <TableHead className="text-white/70">Neto</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">Fecha</TableHead>
+                    <TableHead className="text-muted-foreground">Tipo</TableHead>
+                    <TableHead className="text-muted-foreground">Descripción</TableHead>
+                    <TableHead className="text-muted-foreground">Monto</TableHead>
+                    <TableHead className="text-muted-foreground">Comisión</TableHead>
+                    <TableHead className="text-muted-foreground">Neto</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTransactions.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-white/30 py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground/70 py-8">
                         Sin transacciones
                       </TableCell>
                     </TableRow>
                   )}
                   {filteredTransactions.map(tx => (
-                    <TableRow key={tx.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="text-white/50">
+                    <TableRow key={tx.id} className="border-border hover:bg-muted/40">
+                      <TableCell className="text-muted-foreground/70">
                         {format(new Date(tx.created_at), 'dd MMM yyyy', { locale: es })}
                       </TableCell>
                       <TableCell>
-                        <span className="text-white/70">
+                        <span className="text-muted-foreground">
                           {TRANSACTION_TYPE_LABELS[tx.transaction_type as TransactionType] || tx.transaction_type}
                         </span>
                       </TableCell>
-                      <TableCell className="text-white/70 max-w-[200px] truncate">
+                      <TableCell className="text-muted-foreground max-w-[200px] truncate">
                         {tx.description || '-'}
                       </TableCell>
                       <TableCell className={tx.amount >= 0 ? 'text-green-400' : 'text-red-400'}>
                         {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
                       </TableCell>
-                      <TableCell className="text-white/50">
+                      <TableCell className="text-muted-foreground/70">
                         {tx.fee_amount ? formatCurrency(tx.fee_amount) : '-'}
                       </TableCell>
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="text-foreground font-medium">
                         {formatCurrency(tx.net_amount)}
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${TRANSACTION_STATUS_COLORS[tx.status as TransactionStatus] || 'bg-white/10 text-white/50'}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${TRANSACTION_STATUS_COLORS[tx.status as TransactionStatus] || 'bg-muted text-muted-foreground/70'}`}>
                           {TRANSACTION_STATUS_LABELS[tx.status as TransactionStatus] || tx.status}
                         </span>
                       </TableCell>
@@ -551,7 +551,7 @@ const PlatformCRMFinances = () => {
           <>
             <div className="flex gap-3 mb-4">
               <Select value={invoiceFilter} onValueChange={setInvoiceFilter}>
-                <SelectTrigger className="w-40 bg-white/5 border-white/10">
+                <SelectTrigger className="w-40 bg-muted/40 border-border">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -563,40 +563,40 @@ const PlatformCRMFinances = () => {
                 </SelectContent>
               </Select>
             </div>
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-muted/40 border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">N° Factura</TableHead>
-                    <TableHead className="text-white/70">Organización</TableHead>
-                    <TableHead className="text-white/70">Subtotal</TableHead>
-                    <TableHead className="text-white/70">Impuesto</TableHead>
-                    <TableHead className="text-white/70">Total</TableHead>
-                    <TableHead className="text-white/70">Vencimiento</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
-                    <TableHead className="text-white/70"></TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">N° Factura</TableHead>
+                    <TableHead className="text-muted-foreground">Organización</TableHead>
+                    <TableHead className="text-muted-foreground">Subtotal</TableHead>
+                    <TableHead className="text-muted-foreground">Impuesto</TableHead>
+                    <TableHead className="text-muted-foreground">Total</TableHead>
+                    <TableHead className="text-muted-foreground">Vencimiento</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead className="text-muted-foreground"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredInvoices.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-white/30 py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground/70 py-8">
                         Sin facturas
                       </TableCell>
                     </TableRow>
                   )}
                   {filteredInvoices.map(inv => (
-                    <TableRow key={inv.id} className="border-white/10 hover:bg-white/5">
-                      <TableCell className="text-white font-mono text-sm">{inv.invoice_number}</TableCell>
-                      <TableCell className="text-white/70">{inv.billing_name || inv.organization_id}</TableCell>
-                      <TableCell className="text-white/70">{formatCurrency(inv.subtotal)}</TableCell>
-                      <TableCell className="text-white/50">{formatCurrency(inv.tax_amount)}</TableCell>
-                      <TableCell className="text-white font-medium">{formatCurrency(inv.total)}</TableCell>
-                      <TableCell className="text-white/50">
+                    <TableRow key={inv.id} className="border-border hover:bg-muted/40">
+                      <TableCell className="text-foreground font-mono text-sm">{inv.invoice_number}</TableCell>
+                      <TableCell className="text-muted-foreground">{inv.billing_name || inv.organization_id}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatCurrency(inv.subtotal)}</TableCell>
+                      <TableCell className="text-muted-foreground/70">{formatCurrency(inv.tax_amount)}</TableCell>
+                      <TableCell className="text-foreground font-medium">{formatCurrency(inv.total)}</TableCell>
+                      <TableCell className="text-muted-foreground/70">
                         {format(new Date(inv.due_date), 'dd MMM yyyy', { locale: es })}
                       </TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${INVOICE_STATUS_COLORS[inv.status as InvoiceStatus] || 'bg-white/10 text-white/50'}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs ${INVOICE_STATUS_COLORS[inv.status as InvoiceStatus] || 'bg-muted text-muted-foreground/70'}`}>
                           {INVOICE_STATUS_LABELS[inv.status as InvoiceStatus] || inv.status}
                         </span>
                       </TableCell>
@@ -618,21 +618,21 @@ const PlatformCRMFinances = () => {
           <>
             {/* Payout stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <Card className="bg-white/5 border-white/10 p-4">
-                <p className="text-white/50 text-sm">Pendientes de aprobar</p>
+              <Card className="bg-muted/40 border-border p-4">
+                <p className="text-muted-foreground/70 text-sm">Pendientes de aprobar</p>
                 <p className="text-2xl font-bold text-yellow-400">
                   {payouts.filter(p => p.status === 'pending').length}
                 </p>
               </Card>
-              <Card className="bg-white/5 border-white/10 p-4">
-                <p className="text-white/50 text-sm">En proceso</p>
+              <Card className="bg-muted/40 border-border p-4">
+                <p className="text-muted-foreground/70 text-sm">En proceso</p>
                 <p className="text-2xl font-bold text-blue-400">
                   {payouts.filter(p => p.status === 'processing').length}
                 </p>
               </Card>
-              <Card className="bg-white/5 border-white/10 p-4">
-                <p className="text-white/50 text-sm">Monto pendiente</p>
-                <p className="text-2xl font-bold text-white">
+              <Card className="bg-muted/40 border-border p-4">
+                <p className="text-muted-foreground/70 text-sm">Monto pendiente</p>
+                <p className="text-2xl font-bold text-foreground">
                   {formatCurrency(
                     payouts
                       .filter(p => ['pending', 'approved', 'processing'].includes(p.status))
@@ -640,8 +640,8 @@ const PlatformCRMFinances = () => {
                   )}
                 </p>
               </Card>
-              <Card className="bg-white/5 border-white/10 p-4">
-                <p className="text-white/50 text-sm">Pagado este período</p>
+              <Card className="bg-muted/40 border-border p-4">
+                <p className="text-muted-foreground/70 text-sm">Pagado este período</p>
                 <p className="text-2xl font-bold text-green-400">
                   {formatCurrency(stats?.payouts_period || 0)}
                 </p>
@@ -651,7 +651,7 @@ const PlatformCRMFinances = () => {
             {/* Filtros + total visible */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <Select value={payoutFilter} onValueChange={setPayoutFilter}>
-                <SelectTrigger className="w-40 bg-white/5 border-white/10">
+                <SelectTrigger className="w-40 bg-muted/40 border-border">
                   <SelectValue placeholder="Estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -663,7 +663,7 @@ const PlatformCRMFinances = () => {
                 </SelectContent>
               </Select>
               <Select value={payoutMonth} onValueChange={setPayoutMonth}>
-                <SelectTrigger className="w-44 bg-white/5 border-white/10">
+                <SelectTrigger className="w-44 bg-muted/40 border-border">
                   <SelectValue placeholder="Mes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -677,57 +677,57 @@ const PlatformCRMFinances = () => {
               </Select>
               {filteredPayouts.length > 0 && (
                 <div className="ml-auto flex items-center gap-2 text-sm">
-                  <span className="text-white/40">{filteredPayouts.length} pagos</span>
-                  <span className="text-white/20">·</span>
-                  <span className="text-white/70">Total neto:</span>
+                  <span className="text-muted-foreground/70">{filteredPayouts.length} pagos</span>
+                  <span className="text-muted-foreground/70">·</span>
+                  <span className="text-muted-foreground">Total neto:</span>
                   <span className="text-green-400 font-semibold">{formatCurrency(filteredPayoutsTotal)}</span>
                 </div>
               )}
             </div>
 
             {/* Payouts table */}
-            <Card className="bg-white/5 border-white/10">
+            <Card className="bg-muted/40 border-border">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10">
-                    <TableHead className="text-white/70">Talento</TableHead>
-                    <TableHead className="text-white/70">Monto bruto</TableHead>
-                    <TableHead className="text-white/70">Comisión</TableHead>
-                    <TableHead className="text-white/70">Neto</TableHead>
-                    <TableHead className="text-white/70">Método</TableHead>
-                    <TableHead className="text-white/70">Solicitado</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
-                    <TableHead className="text-white/70">Acciones</TableHead>
+                  <TableRow className="border-border">
+                    <TableHead className="text-muted-foreground">Talento</TableHead>
+                    <TableHead className="text-muted-foreground">Monto bruto</TableHead>
+                    <TableHead className="text-muted-foreground">Comisión</TableHead>
+                    <TableHead className="text-muted-foreground">Neto</TableHead>
+                    <TableHead className="text-muted-foreground">Método</TableHead>
+                    <TableHead className="text-muted-foreground">Solicitado</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
+                    <TableHead className="text-muted-foreground">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPayouts.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-white/30 py-8">
+                      <TableCell colSpan={8} className="text-center text-muted-foreground/70 py-8">
                         Sin pagos registrados
                       </TableCell>
                     </TableRow>
                   )}
                   {filteredPayouts.map(payout => (
-                    <TableRow key={payout.id} className="border-white/10 hover:bg-white/5">
+                    <TableRow key={payout.id} className="border-border hover:bg-muted/40">
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-300 text-sm font-medium">
                             {payout.creator_id?.charAt(0) || '?'}
                           </div>
-                          <span className="text-white">{payout.creator_id}</span>
+                          <span className="text-foreground">{payout.creator_id}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-white">{formatCurrency(payout.gross_amount)}</TableCell>
-                      <TableCell className="text-white/50">{formatCurrency(payout.platform_fee)}</TableCell>
+                      <TableCell className="text-foreground">{formatCurrency(payout.gross_amount)}</TableCell>
+                      <TableCell className="text-muted-foreground/70">{formatCurrency(payout.platform_fee)}</TableCell>
                       <TableCell className="text-green-400 font-medium">{formatCurrency(payout.net_amount)}</TableCell>
-                      <TableCell className="text-white/70">
+                      <TableCell className="text-muted-foreground">
                         {payout.payment_method
                           ? PAYMENT_METHOD_LABELS[payout.payment_method as PaymentMethod] || payout.payment_method
                           : '-'
                         }
                       </TableCell>
-                      <TableCell className="text-white/50">
+                      <TableCell className="text-muted-foreground/70">
                         {formatDistanceToNow(new Date(payout.requested_at), { locale: es, addSuffix: true })}
                       </TableCell>
                       <TableCell>

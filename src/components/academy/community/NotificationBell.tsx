@@ -42,7 +42,7 @@ export function NotificationBell({ spaceId, accentColor = '#8B5CF6' }: Notificat
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-lg hover:bg-white/5 text-zinc-300 transition-colors"
+        className="relative p-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors"
         aria-label="Notificaciones"
       >
         <Bell className="h-5 w-5" />
@@ -57,13 +57,13 @@ export function NotificationBell({ spaceId, accentColor = '#8B5CF6' }: Notificat
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-80 max-h-[28rem] rounded-xl border border-white/10 bg-background shadow-2xl overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
+        <div className="absolute right-0 top-12 z-50 w-80 max-h-[28rem] rounded-xl border border-border bg-background shadow-2xl overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="font-semibold text-sm">Notificaciones</h3>
             {unread > 0 && (
               <button
                 onClick={() => markRead.mutate(spaceId)}
-                className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1"
+                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1"
               >
                 <Check className="h-3 w-3" /> Marcar todo
               </button>
@@ -72,26 +72,26 @@ export function NotificationBell({ spaceId, accentColor = '#8B5CF6' }: Notificat
 
           <div className="flex-1 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-sm text-zinc-500">Sin notificaciones aún</div>
+              <div className="p-8 text-center text-sm text-muted-foreground">Sin notificaciones aún</div>
             ) : (
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y divide-border">
                 {notifications.map((n) => (
                   <li key={n.id}>
                     <button
                       onClick={() => handleClick(n)}
                       className={cn(
-                        'w-full text-left px-4 py-3 hover:bg-white/5 transition-colors',
-                        !n.is_read && 'bg-purple-500/5'
+                        'w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors',
+                        !n.is_read && 'bg-primary/5'
                       )}
                     >
                       <div className="flex items-start gap-3">
                         <Avatar profile={n.sender} accentColor={accentColor} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-zinc-100 line-clamp-2">{n.title}</div>
+                          <div className="text-sm text-foreground line-clamp-2">{n.title}</div>
                           {n.body && (
-                            <div className="text-xs text-zinc-400 mt-0.5 line-clamp-2">{n.body}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</div>
                           )}
-                          <div className="text-[10px] text-zinc-500 mt-1">
+                          <div className="text-[10px] text-muted-foreground mt-1">
                             {(() => {
                               try {
                                 return formatDistanceToNow(new Date(n.created_at), {

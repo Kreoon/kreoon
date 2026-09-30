@@ -157,7 +157,7 @@ export function MarketplaceUniverse() {
         {/* Desktop: Connections Galaxy Visualization */}
         <motion.div
           style={{ rotate }}
-          className="hidden lg:block relative h-[650px] w-full max-w-5xl mx-auto border border-white/5 rounded-full bg-white/[0.01] will-change-transform"
+          className="hidden lg:block relative h-[650px] w-full max-w-5xl mx-auto border border-white/5 rounded-full bg-muted/40 will-change-transform"
         >
           {/* Central Logo / Core */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">

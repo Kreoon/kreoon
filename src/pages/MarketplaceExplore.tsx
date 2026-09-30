@@ -62,8 +62,8 @@ interface FilterSidebarProps {
 function FilterSidebar({ filters, onApply, resultCount, organizations, filterOptions }: FilterSidebarProps) {
   return (
     <aside className="hidden lg:block w-[280px] shrink-0" aria-label="Filtros de busqueda">
-      <div className="sticky top-[73px] rounded-lg border border-border/10 bg-card/50 dark:bg-white/5 dark:border-white/10 overflow-hidden max-h-[calc(100vh-100px)] overflow-y-auto">
-        <div className="px-4 py-3 border-b border-border/10 dark:border-white/10 flex items-center justify-between">
+      <div className="sticky top-[73px] rounded-lg border border-border/10 bg-card/50 dark:bg-muted/50 dark:border-border overflow-hidden max-h-[calc(100vh-100px)] overflow-y-auto">
+        <div className="px-4 py-3 border-b border-border/10 dark:border-border flex items-center justify-between">
           <span className="text-sm font-semibold text-foreground">Filtros</span>
           {resultCount > 0 && (
             <span
@@ -145,7 +145,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
           }
           className={cn(
             'w-full rounded-md px-3 py-2 text-sm',
-            'bg-secondary/50 dark:bg-white/5 border border-border/20 dark:border-white/10',
+            'bg-secondary/50 dark:bg-muted/50 border border-border/20 dark:border-border',
             'text-foreground focus:outline-none focus:ring-1 focus:ring-purple-500',
           )}
         >
@@ -220,7 +220,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                   active
                     ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                    : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                    : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                 )}
               >
                 {labels[lvl]}
@@ -259,7 +259,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
             }
             className={cn(
               'w-full rounded-md px-3 py-2 text-sm',
-              'bg-secondary/50 dark:bg-white/5 border border-border/20 dark:border-white/10',
+              'bg-secondary/50 dark:bg-muted/50 border border-border/20 dark:border-border',
               'text-foreground placeholder:text-muted-foreground/50',
               'focus:outline-none focus:ring-1 focus:ring-purple-500',
             )}
@@ -280,7 +280,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
             }
             className={cn(
               'w-full rounded-md px-3 py-2 text-sm',
-              'bg-secondary/50 dark:bg-white/5 border border-border/20 dark:border-white/10',
+              'bg-secondary/50 dark:bg-muted/50 border border-border/20 dark:border-border',
               'text-foreground placeholder:text-muted-foreground/50',
               'focus:outline-none focus:ring-1 focus:ring-purple-500',
             )}
@@ -309,7 +309,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
           className={cn(
             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 focus-visible:ring-offset-1',
-            filters.accepts_exchange === true ? 'bg-purple-600' : 'bg-muted dark:bg-white/10',
+            filters.accepts_exchange === true ? 'bg-purple-600' : 'bg-muted dark:bg-muted',
           )}
           aria-label="Filtrar creadores que aceptan canje"
         >
@@ -340,7 +340,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                 filters.rating_min === val
                   ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                  : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
               )}
             >
               {val === null ? 'Todas' : `${val}+`}
@@ -376,7 +376,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
 
       {/* Sección expandible de filtros avanzados */}
       {showAdvanced && (
-        <div className="space-y-5 pt-2 border-t border-border/10 dark:border-white/10">
+        <div className="space-y-5 pt-2 border-t border-border/10 dark:border-border">
           {/* Tipo de Talento */}
           <fieldset className="space-y-2 border-0 p-0 m-0">
             <legend className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -393,7 +393,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                     filters.marketplace_roles.includes(role.value)
                       ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                      : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                   )}
                 >
                   {role.label}
@@ -417,7 +417,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                     filters.organization_id === null
                       ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                      : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                   )}
                 >
                   Todas
@@ -432,7 +432,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                       filters.organization_id === org.id
                         ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                        : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                        : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                     )}
                   >
                     {org.logo_url ? (
@@ -468,7 +468,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                       filters.specializations.includes(spec)
                         ? cn(getSpecializationBgColor(spec), 'border-primary/40', getSpecializationColor(spec))
-                        : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                        : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                     )}
                   >
                     {getSpecializationLabel(spec)}
@@ -494,7 +494,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                     filters.languages.includes(lang)
                       ? 'bg-purple-600/30 text-purple-300 border-purple-500/40'
-                      : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                      : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50',
                   )}
                 >
                   {lang}
@@ -532,7 +532,7 @@ function FilterModalInline({ filters, onApply, resultCount, organizations = [], 
       )}
 
       {/* Contador de resultados al pie */}
-      <div className="pt-2 border-t border-border/10 dark:border-white/10 text-center">
+      <div className="pt-2 border-t border-border/10 dark:border-border text-center">
         <span
           className="text-xs text-muted-foreground"
           aria-live="polite"
@@ -582,7 +582,7 @@ function MobileFilterSheetLocal({
       <div
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50',
-          'bg-card dark:bg-background border-t border-border/70 dark:border-white/10',
+          'bg-card dark:bg-background border-t border-border/70 dark:border-border',
           'rounded-t-2xl transition-transform duration-300 lg:hidden',
           open ? 'translate-y-0' : 'translate-y-full',
         )}
@@ -596,7 +596,7 @@ function MobileFilterSheetLocal({
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border/70 dark:border-white/10">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/70 dark:border-border">
           <span className="text-base font-semibold text-foreground">Filtros</span>
           <button
             onClick={onClose}
@@ -725,7 +725,7 @@ export default function MarketplaceExplore() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Header sticky ─────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/10 dark:border-white/10">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border/10 dark:border-border">
         <div className="px-4 md:px-6 py-3 space-y-3">
           {/* Barra de búsqueda */}
           <MarketplaceSearchBar
@@ -780,7 +780,7 @@ export default function MarketplaceExplore() {
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
                 activeFilterCount > 0
                   ? 'border-purple-500/50 bg-purple-600/20 text-purple-300'
-                  : 'border-border/20 dark:border-white/10 bg-muted/30 dark:bg-white/5 text-muted-foreground hover:text-foreground hover:bg-muted/50',
+                  : 'border-border/20 dark:border-border bg-muted/30 dark:bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted/50',
               )}
               aria-label={
                 activeFilterCount > 0

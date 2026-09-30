@@ -94,75 +94,75 @@ export function NotificationPreferencesPanel({ spaceId }: Props) {
   }
 
   if (isLoading) {
-    return <div className="text-zinc-400 text-sm py-8 text-center">Cargando preferencias...</div>;
+    return <div className="text-muted-foreground text-sm py-8 text-center">Cargando preferencias...</div>;
   }
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <div className="flex items-center gap-2">
-          <Bell className="h-4 w-4 text-violet-400" />
+          <Bell className="h-4 w-4 text-primary" />
           <h3 className="font-semibold">Qué notificaciones querés recibir</h3>
         </div>
 
         <Toggle
-          icon={<UserPlus className="h-4 w-4 text-emerald-400" />}
+          icon={<UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
           label="Nuevos miembros se unen"
           description="Cuando alguien se inscribe a la academia"
           checked={draft.notify_new_member}
           onChange={(v) => set('notify_new_member', v)}
         />
         <Toggle
-          icon={<MessageSquare className="h-4 w-4 text-violet-400" />}
+          icon={<MessageSquare className="h-4 w-4 text-primary" />}
           label="Nuevos posts en el feed"
           description="Cuando un miembro publica algo nuevo"
           checked={draft.notify_new_post}
           onChange={(v) => set('notify_new_post', v)}
         />
         <Toggle
-          icon={<MessageSquare className="h-4 w-4 text-sky-400" />}
+          icon={<MessageSquare className="h-4 w-4 text-sky-600 dark:text-sky-400" />}
           label="Comentarios en mis posts"
           description="Cuando alguien comenta en algo que publiqué"
           checked={draft.notify_new_comment_on_my_post}
           onChange={(v) => set('notify_new_comment_on_my_post', v)}
         />
         <Toggle
-          icon={<MessageSquare className="h-4 w-4 text-sky-400" />}
+          icon={<MessageSquare className="h-4 w-4 text-sky-600 dark:text-sky-400" />}
           label="Respuestas a mis comentarios"
           description="Hilo de discusión activo"
           checked={draft.notify_reply_to_my_comment}
           onChange={(v) => set('notify_reply_to_my_comment', v)}
         />
         <Toggle
-          icon={<TrendingUp className="h-4 w-4 text-rose-400" />}
+          icon={<TrendingUp className="h-4 w-4 text-rose-600 dark:text-rose-400" />}
           label="Reacciones en mis posts"
           description="Puede ser ruidoso si publicás seguido"
           checked={draft.notify_reaction_on_my_post}
           onChange={(v) => set('notify_reaction_on_my_post', v)}
         />
         <Toggle
-          icon={<Sparkles className="h-4 w-4 text-amber-400" />}
+          icon={<Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />}
           label="Cuando subo de nivel"
           description="Solo a vos cuando alcanzás un nivel nuevo"
           checked={draft.notify_level_up}
           onChange={(v) => set('notify_level_up', v)}
         />
         <Toggle
-          icon={<DollarSign className="h-4 w-4 text-emerald-400" />}
+          icon={<DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
           label="Pagos / ingresos recibidos"
           description="Si sos owner: cada vez que entra dinero a tu academia"
           checked={draft.notify_payment_received}
           onChange={(v) => set('notify_payment_received', v)}
         />
         <Toggle
-          icon={<Bell className="h-4 w-4 text-zinc-400" />}
+          icon={<Bell className="h-4 w-4 text-muted-foreground" />}
           label="Recordatorios de eventos"
           description="30 min antes de cada evento del calendario"
           checked={draft.notify_event_reminder}
           onChange={(v) => set('notify_event_reminder', v)}
         />
         <Toggle
-          icon={<Bell className="h-4 w-4 text-zinc-400" />}
+          icon={<Bell className="h-4 w-4 text-muted-foreground" />}
           label="Resumen semanal por email"
           description="Lo más relevante de tu academia, cada lunes"
           checked={draft.weekly_digest}
@@ -170,17 +170,17 @@ export function NotificationPreferencesPanel({ spaceId }: Props) {
         />
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <h3 className="font-semibold">Cómo recibirlas</h3>
         <Toggle
-          icon={<Volume2 className="h-4 w-4 text-violet-400" />}
+          icon={<Volume2 className="h-4 w-4 text-primary" />}
           label="Sonido"
           description="Pequeño tono al llegar una notif (cuando la app está abierta)"
           checked={draft.sound_enabled}
           onChange={(v) => set('sound_enabled', v)}
         />
         <Toggle
-          icon={<Monitor className="h-4 w-4 text-violet-400" />}
+          icon={<Monitor className="h-4 w-4 text-primary" />}
           label="Notificaciones de escritorio"
           description="Te aparecen en el sistema operativo aunque tengas otra pestaña"
           checked={draft.desktop_push_enabled}
@@ -191,7 +191,7 @@ export function NotificationPreferencesPanel({ spaceId }: Props) {
       <Button
         onClick={() => saveMutation.mutate()}
         disabled={saveMutation.isPending}
-        className="bg-violet-500 hover:bg-violet-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         <Save className="h-4 w-4 mr-2" />
         {saveMutation.isPending ? 'Guardando...' : 'Guardar preferencias'}
@@ -214,8 +214,8 @@ function Toggle({
       <div className="flex gap-3 flex-1 min-w-0">
         <div className="mt-0.5">{icon}</div>
         <div className="min-w-0">
-          <div className="text-sm font-medium text-zinc-100">{label}</div>
-          <div className="text-xs text-zinc-500">{description}</div>
+          <div className="text-sm font-medium text-foreground">{label}</div>
+          <div className="text-xs text-muted-foreground">{description}</div>
         </div>
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />

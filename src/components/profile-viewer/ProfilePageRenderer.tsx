@@ -70,7 +70,7 @@ function PreviewBanner() {
 function KreoonBranding() {
   return (
     <footer
-      className="py-6 text-center border-t border-white/5"
+      className="py-6 text-center border-t border-border/50"
       aria-label="Powered by Kreoon"
     >
       <a

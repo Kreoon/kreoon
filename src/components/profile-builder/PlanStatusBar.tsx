@@ -23,7 +23,7 @@ const PLAN_CONFIG: Record<
   creator_free: {
     label: 'Free',
     icon: Sparkles,
-    color: 'text-zinc-400',
+    color: 'text-muted-foreground',
     bgColor: 'bg-zinc-500/10',
   },
   creator_pro: {
@@ -81,7 +81,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
                       ? 'text-green-400'
                       : commissionRate <= 0.25
                         ? 'text-amber-400'
-                        : 'text-zinc-400'
+                        : 'text-muted-foreground'
                   )}
                 >
                   {(commissionRate * 100).toFixed(0)}%

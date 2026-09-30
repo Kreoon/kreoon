@@ -45,24 +45,24 @@ export function WizardStepPublish({
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Listo para publicar</h2>
-        <p className="text-gray-400 text-sm">Revisa tu perfil antes de hacerlo visible en el marketplace</p>
+        <h2 className="text-2xl font-bold text-foreground">Listo para publicar</h2>
+        <p className="text-muted-foreground text-sm">Revisa tu perfil antes de hacerlo visible en el marketplace</p>
       </div>
 
       {/* Completion summary */}
-      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-4">
+      <div className="bg-muted/50 rounded-sm border border-border p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-medium">Completitud del perfil</h3>
+          <h3 className="text-foreground font-medium">Completitud del perfil</h3>
           <span className={cn(
             'text-lg font-bold',
-            completionPct === 100 ? 'text-green-400' : completionPct >= 60 ? 'text-yellow-400' : 'text-gray-400'
+            completionPct === 100 ? 'text-green-400' : completionPct >= 60 ? 'text-yellow-400' : 'text-muted-foreground'
           )}>
             {completionPct}%
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
           <div
             className={cn(
               'h-full rounded-full transition-all duration-500',
@@ -79,11 +79,11 @@ export function WizardStepPublish({
               {item.completed ? (
                 <CheckCircle2 className="h-5 w-5 text-green-400 flex-shrink-0" />
               ) : (
-                <Circle className="h-5 w-5 text-gray-600 flex-shrink-0" />
+                <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
               )}
               <span className={cn(
                 'text-sm',
-                item.completed ? 'text-foreground/80' : 'text-gray-500'
+                item.completed ? 'text-foreground/80' : 'text-muted-foreground'
               )}>
                 {item.label}
                 {item.required && <span className="text-red-400 ml-1">*</span>}
@@ -94,8 +94,8 @@ export function WizardStepPublish({
       </div>
 
       {/* Profile preview card */}
-      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-4">
-        <h3 className="text-white font-medium flex items-center gap-2">
+      <div className="bg-muted/50 rounded-sm border border-border p-6 space-y-4">
+        <h3 className="text-foreground font-medium flex items-center gap-2">
           <Eye className="h-4 w-4" />
           Vista previa
         </h3>
@@ -105,16 +105,16 @@ export function WizardStepPublish({
             {avatarUrl ? (
               <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-600 text-xl font-bold">
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xl font-bold">
                 {draft.basic.display_name?.[0] || '?'}
               </div>
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="text-white font-semibold text-lg">{draft.basic.display_name || 'Tu nombre'}</h4>
-            <p className="text-gray-400 text-sm mt-0.5">{draft.basic.tagline || 'Tu tagline profesional'}</p>
+            <h4 className="text-foreground font-semibold text-lg">{draft.basic.display_name || 'Tu nombre'}</h4>
+            <p className="text-muted-foreground text-sm mt-0.5">{draft.basic.tagline || 'Tu tagline profesional'}</p>
             {draft.basic.location_city && (
-              <p className="text-gray-500 text-xs mt-1">
+              <p className="text-muted-foreground text-xs mt-1">
                 {draft.basic.location_city}{draft.basic.location_country ? `, ${draft.basic.location_country}` : ''}
               </p>
             )}
@@ -125,7 +125,7 @@ export function WizardStepPublish({
                 </span>
               ))}
               {draft.roles.length > 3 && (
-                <span className="px-2 py-0.5 bg-white/10 text-gray-400 rounded-full text-[10px]">
+                <span className="px-2 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px]">
                   +{draft.roles.length - 3}
                 </span>
               )}
@@ -134,17 +134,17 @@ export function WizardStepPublish({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-          <div className="text-center p-2 bg-white/5 rounded-sm">
-            <p className="text-white font-semibold">{portfolioCount}</p>
-            <p className="text-gray-500 text-[10px]">Portafolio</p>
+          <div className="text-center p-2 bg-muted/50 rounded-sm">
+            <p className="text-foreground font-semibold">{portfolioCount}</p>
+            <p className="text-muted-foreground text-[10px]">Portafolio</p>
           </div>
-          <div className="text-center p-2 bg-white/5 rounded-sm">
-            <p className="text-white font-semibold">{servicesCount}</p>
-            <p className="text-gray-500 text-[10px]">Servicios</p>
+          <div className="text-center p-2 bg-muted/50 rounded-sm">
+            <p className="text-foreground font-semibold">{servicesCount}</p>
+            <p className="text-muted-foreground text-[10px]">Servicios</p>
           </div>
-          <div className="text-center p-2 bg-white/5 rounded-sm">
-            <p className="text-white font-semibold">{draft.expertise.categories.length}</p>
-            <p className="text-gray-500 text-[10px]">Categorias</p>
+          <div className="text-center p-2 bg-muted/50 rounded-sm">
+            <p className="text-foreground font-semibold">{draft.expertise.categories.length}</p>
+            <p className="text-muted-foreground text-[10px]">Categorias</p>
           </div>
         </div>
       </div>
@@ -158,7 +158,7 @@ export function WizardStepPublish({
             'w-full flex items-center justify-center gap-3 py-4 rounded-sm text-base font-semibold transition-all',
             requiredComplete && !saving
               ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-500/20'
-              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              : 'bg-card text-muted-foreground cursor-not-allowed'
           )}
         >
           {saving ? (
@@ -177,7 +177,7 @@ export function WizardStepPublish({
         <button
           onClick={onSaveDraft}
           disabled={saving}
-          className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-foreground/80 rounded-sm text-sm font-medium transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-3 bg-muted/50 hover:bg-muted text-foreground/80 rounded-sm text-sm font-medium transition-colors"
         >
           <Save className="h-4 w-4" />
           Guardar como borrador

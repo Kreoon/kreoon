@@ -73,7 +73,7 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                     'h-5 w-5',
                     step.status === 'current' && 'text-primary',
                     step.status === 'pending' && 'text-muted-foreground',
-                    step.status === 'skipped' && 'text-gray-500'
+                    step.status === 'skipped' && 'text-muted-foreground'
                   )}
                 />
               )}
@@ -86,9 +86,9 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                   className={cn(
                     'font-medium',
                     step.status === 'completed' && 'text-emerald-400',
-                    step.status === 'current' && 'text-white',
+                    step.status === 'current' && 'text-foreground',
                     step.status === 'pending' && 'text-muted-foreground',
-                    step.status === 'skipped' && 'text-gray-500 line-through'
+                    step.status === 'skipped' && 'text-muted-foreground line-through'
                   )}
                 >
                   {step.label}
@@ -106,7 +106,7 @@ export function EscrowTimeline({ steps, className }: EscrowTimelineProps) {
                 </p>
               )}
               {step.timestamp && (
-                <p className="text-xs text-[hsl(270,30%,45%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {new Date(step.timestamp).toLocaleDateString('es-CO', {
                     month: 'short',
                     day: 'numeric',

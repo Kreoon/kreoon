@@ -44,7 +44,7 @@ const CATEGORY_COLORS: Record<CostCategory, string> = {
   agencia:    'bg-orange-500/15 text-orange-400 border-orange-500/30',
   impuesto:   'bg-red-500/15 text-red-400 border-red-500/30',
   talento:    'bg-green-500/15 text-green-400 border-green-500/30',
-  otro:       'bg-gray-500/15 text-gray-400 border-gray-500/30',
+  otro:       'bg-gray-500/15 text-muted-foreground border-gray-500/30',
 };
 
 const CATEGORY_BAR_COLORS: Record<CostCategory, string> = {
@@ -251,7 +251,7 @@ export function CostsTab({ orgId, packages }: Props) {
     <div className="space-y-6">
       {/* ─── Sub-tabs ──────────────────────────────────────────── */}
       <Tabs value={subTab} onValueChange={v => setSubTab(v as 'lista' | 'recurrentes')}>
-        <TabsList className="bg-white/5 border border-white/10">
+        <TabsList className="bg-muted/50 border border-border">
           <TabsTrigger value="lista" className="gap-1.5">
             🧾 Lista de costos
           </TabsTrigger>
@@ -285,10 +285,10 @@ export function CostsTab({ orgId, packages }: Props) {
             <div className="p-2 bg-red-500/20 rounded">
               <TrendingDown className="w-5 h-5 text-red-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Total costos</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Total costos</span>
             <HelpTip text="Suma de TODOS los gastos registrados en el período seleccionado." />
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-foreground">
             {formatCurrency(overview?.total_costs ?? 0, currency)}
           </p>
           <p className="text-red-400 text-xs mt-1">gastado en el período</p>
@@ -311,10 +311,10 @@ export function CostsTab({ orgId, packages }: Props) {
                 : 'text-green-400'
               }`} />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">% de ingresos</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">% de ingresos</span>
             <HelpTip text="Cuánto de cada peso que cobras se va en costos. Lo ideal es estar por debajo de 30%." />
           </div>
-          <p className="text-2xl font-bold text-white">{(overview?.pct_of_income ?? 0).toFixed(1)}%</p>
+          <p className="text-2xl font-bold text-foreground">{(overview?.pct_of_income ?? 0).toFixed(1)}%</p>
           <div className="flex items-center justify-between mt-1">
             <p className={`text-xs ${
               pctSemaphore === 'red' ? 'text-red-400'
@@ -336,10 +336,10 @@ export function CostsTab({ orgId, packages }: Props) {
             <div className="p-2 bg-orange-500/20 rounded">
               <Award className="w-5 h-5 text-orange-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Mayor gasto</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Mayor gasto</span>
             <HelpTip text="La categoría donde más estás gastando en este período." />
           </div>
-          <p className="text-lg font-bold text-white leading-tight">
+          <p className="text-lg font-bold text-foreground leading-tight">
             {overview?.top_category
               ? COST_CATEGORY_LABELS[overview.top_category as CostCategory] ?? overview.top_category
               : '—'}
@@ -356,10 +356,10 @@ export function CostsTab({ orgId, packages }: Props) {
             <div className="p-2 bg-purple-500/20 rounded">
               <Link2 className="w-5 h-5 text-purple-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">De campañas</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">De campañas</span>
             <HelpTip text="Costos vinculados a una campaña específica (sirven para calcular la rentabilidad real de cada paquete)." />
           </div>
-          <p className="text-2xl font-bold text-white">
+          <p className="text-2xl font-bold text-foreground">
             {formatCurrency(overview?.linked_amount ?? 0, currency)}
           </p>
           <p className="text-purple-400 text-xs mt-1">
@@ -370,8 +370,8 @@ export function CostsTab({ orgId, packages }: Props) {
 
       {/* ─── Gráfico por categoría ────────────────────────── */}
       {overview && overview.costs_by_category.length > 0 && (
-        <Card className="bg-white/5 border-white/10 p-5">
-          <h3 className="text-base font-semibold text-white mb-4">Gastos por categoría</h3>
+        <Card className="bg-muted/50 border-border p-5">
+          <h3 className="text-base font-semibold text-foreground mb-4">Gastos por categoría</h3>
           <div className="space-y-3">
             {overview.costs_by_category.map(cat => {
               const widthPct = maxCategoryAmount > 0 ? (cat.total / maxCategoryAmount) * 100 : 0;
@@ -383,17 +383,17 @@ export function CostsTab({ orgId, packages }: Props) {
                   className="block w-full text-left group"
                 >
                   <div className="flex items-center justify-between gap-3 mb-1">
-                    <span className="text-white text-sm font-medium">
+                    <span className="text-foreground text-sm font-medium">
                       {COST_CATEGORY_LABELS[catKey] ?? cat.category}
                       {filterCats.includes(catKey) && (
                         <span className="ml-2 text-[10px] text-primary">✓ filtrado</span>
                       )}
                     </span>
-                    <span className="text-white/70 text-sm whitespace-nowrap">
+                    <span className="text-muted-foreground text-sm whitespace-nowrap">
                       {formatCurrency(cat.total, currency)}
                     </span>
                   </div>
-                  <div className="relative h-2.5 bg-white/5 rounded-full overflow-hidden">
+                  <div className="relative h-2.5 bg-muted/50 rounded-full overflow-hidden">
                     <div
                       className={`absolute inset-y-0 left-0 ${CATEGORY_BAR_COLORS[catKey] ?? 'bg-gray-500'} rounded-full transition-all group-hover:opacity-80`}
                       style={{ width: `${widthPct}%` }}
@@ -406,7 +406,7 @@ export function CostsTab({ orgId, packages }: Props) {
           {filterCats.length > 0 && (
             <button
               onClick={() => setFilterCats([])}
-              className="mt-3 text-xs text-white/40 hover:text-white"
+              className="mt-3 text-xs text-muted-foreground hover:text-foreground"
             >
               Limpiar filtros de categoría
             </button>
@@ -415,31 +415,31 @@ export function CostsTab({ orgId, packages }: Props) {
       )}
 
       {/* ─── Filtros + tabla ─────────────────────────────── */}
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/50 border-border">
         <div className="p-5 pb-3 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="text-base font-semibold text-white">Lista de costos</h3>
-            <p className="text-white/40 text-xs">{visibleCosts.length} costo{visibleCosts.length !== 1 ? 's' : ''} · {formatCurrency(totalVisible, currency)}</p>
+            <h3 className="text-base font-semibold text-foreground">Lista de costos</h3>
+            <p className="text-muted-foreground text-xs">{visibleCosts.length} costo{visibleCosts.length !== 1 ? 's' : ''} · {formatCurrency(totalVisible, currency)}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             <select
               value={linkageFilter}
               onChange={e => setLinkageFilter(e.target.value as LinkageFilter)}
-              className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+              className="bg-muted/50 border border-border rounded text-xs text-foreground px-2 py-1 h-7"
             >
-              <option value="all" className="bg-[#111]">Todos</option>
-              <option value="linked" className="bg-[#111]">Solo campañas</option>
-              <option value="general" className="bg-[#111]">Solo generales</option>
+              <option value="all" className="bg-background">Todos</option>
+              <option value="linked" className="bg-background">Solo campañas</option>
+              <option value="general" className="bg-background">Solo generales</option>
             </select>
 
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
               <Input
                 placeholder="Buscar concepto"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="bg-white/5 border-white/10 text-white text-xs h-7 pl-7 w-44"
+                className="bg-muted/50 border-border text-foreground text-xs h-7 pl-7 w-44"
               />
             </div>
 
@@ -466,22 +466,22 @@ export function CostsTab({ orgId, packages }: Props) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="text-white/60 text-xs">Concepto</TableHead>
-                <TableHead className="text-white/60 text-xs">Categoría</TableHead>
-                <TableHead className="text-white/60 text-xs">Campaña</TableHead>
-                <TableHead className="text-white/60 text-xs">Fecha</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Monto</TableHead>
-                <TableHead className="text-white/60 text-xs w-20">Soporte</TableHead>
+              <TableRow className="border-border hover:bg-transparent">
+                <TableHead className="text-muted-foreground text-xs">Concepto</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Categoría</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Campaña</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Fecha</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Monto</TableHead>
+                <TableHead className="text-muted-foreground text-xs w-20">Soporte</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {visibleCosts.map(cost => (
-                <TableRow key={cost.id} className="border-white/5 hover:bg-white/3">
+                <TableRow key={cost.id} className="border-border hover:bg-muted/50">
                   <TableCell>
                     <div>
-                      <p className="font-medium text-sm text-white">{cost.name}</p>
+                      <p className="font-medium text-sm text-foreground">{cost.name}</p>
                       {cost.notes && (
                         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{cost.notes}</p>
                       )}
@@ -502,7 +502,7 @@ export function CostsTab({ orgId, packages }: Props) {
                   <TableCell className="text-sm text-muted-foreground">
                     {format(parseISO(cost.cost_date), 'd MMM yyyy', { locale: es })}
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-white">
+                  <TableCell className="text-right font-semibold text-foreground">
                     {formatCurrency(cost.amount, cost.currency)}
                   </TableCell>
                   <TableCell>
@@ -553,7 +553,7 @@ export function CostsTab({ orgId, packages }: Props) {
 
       {/* Dialog crear/editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-border text-foreground">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar costo' : 'Registrar costo'}</DialogTitle>
           </DialogHeader>
@@ -565,7 +565,7 @@ export function CostsTab({ orgId, packages }: Props) {
                 value={form.name}
                 onChange={e => f('name', e.target.value)}
                 placeholder="Ej. Suscripción CapCut, Arriendo estudio…"
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
 
@@ -578,7 +578,7 @@ export function CostsTab({ orgId, packages }: Props) {
                   value={form.amount}
                   onChange={e => f('amount', e.target.value)}
                   placeholder="0"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <div>
@@ -586,12 +586,12 @@ export function CostsTab({ orgId, packages }: Props) {
                 <select
                   value={form.currency}
                   onChange={e => f('currency', e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white"
+                  className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground"
                 >
-                  <option value="COP" className="bg-[#111]">COP</option>
-                  <option value="USD" className="bg-[#111]">USD</option>
-                  <option value="EUR" className="bg-[#111]">EUR</option>
-                  <option value="MXN" className="bg-[#111]">MXN</option>
+                  <option value="COP" className="bg-background">COP</option>
+                  <option value="USD" className="bg-background">USD</option>
+                  <option value="EUR" className="bg-background">EUR</option>
+                  <option value="MXN" className="bg-background">MXN</option>
                 </select>
               </div>
             </div>
@@ -614,10 +614,10 @@ export function CostsTab({ orgId, packages }: Props) {
                 <select
                   value={form.category}
                   onChange={e => f('category', e.target.value as CostCategory)}
-                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white"
+                  className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground"
                 >
                   {Object.entries(COST_CATEGORY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k} className="bg-[#111]">{v}</option>
+                    <option key={k} value={k} className="bg-background">{v}</option>
                   ))}
                 </select>
               </div>
@@ -627,7 +627,7 @@ export function CostsTab({ orgId, packages }: Props) {
                   type="date"
                   value={form.cost_date}
                   onChange={e => f('cost_date', e.target.value)}
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
             </div>
@@ -637,11 +637,11 @@ export function CostsTab({ orgId, packages }: Props) {
               <select
                 value={form.client_package_id}
                 onChange={e => f('client_package_id', e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground"
               >
-                <option value="" className="bg-[#111]">Sin vinculación</option>
+                <option value="" className="bg-background">Sin vinculación</option>
                 {packages.map(pkg => (
-                  <option key={pkg.id} value={pkg.id} className="bg-[#111]">
+                  <option key={pkg.id} value={pkg.id} className="bg-background">
                     #{String(pkg.campaign_number).padStart(4, '0')} {pkg.name} — {pkg.client_name}
                   </option>
                 ))}
@@ -655,7 +655,7 @@ export function CostsTab({ orgId, packages }: Props) {
                 onChange={e => f('notes', e.target.value)}
                 placeholder="Descripción adicional, referencia, proveedor…"
                 rows={2}
-                className="bg-white/5 border-white/10 resize-none"
+                className="bg-muted/50 border-border resize-none"
               />
             </div>
 
@@ -669,13 +669,13 @@ export function CostsTab({ orgId, packages }: Props) {
                 onChange={handleFile}
               />
               {pendingFileUrl ? (
-                <div className="flex items-center gap-2 p-2 rounded-sm border border-white/10 bg-white/5">
+                <div className="flex items-center gap-2 p-2 rounded-sm border border-border bg-muted/50">
                   <Paperclip className="h-4 w-4 text-primary shrink-0" />
                   <span className="text-xs text-muted-foreground flex-1 truncate">
                     {pendingFile?.name ?? 'Soporte adjunto'}
                   </span>
                   <a href={pendingFileUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-white" />
+                    <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
                   </a>
                   <button
                     type="button"
@@ -690,7 +690,7 @@ export function CostsTab({ orgId, packages }: Props) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gap-2 border-white/10 bg-white/5 hover:bg-white/10 w-full"
+                  className="gap-2 border-border bg-muted/50 hover:bg-muted w-full"
                   onClick={() => fileRef.current?.click()}
                 >
                   <Paperclip className="h-4 w-4" />

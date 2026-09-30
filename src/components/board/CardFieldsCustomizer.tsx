@@ -158,19 +158,19 @@ export function CardFieldsCustomizer({
       >
         <div className="space-y-3">
           {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
-            <h4 className="text-sm font-medium text-white">Personalizar tarjeta</h4>
+          <div className="flex items-center justify-between pb-2 border-b border-border">
+            <h4 className="text-sm font-medium text-foreground">Personalizar tarjeta</h4>
             <span className="text-xs text-zinc-500">
               {visibleCount} campos
             </span>
           </div>
 
           {/* Presets rápidos */}
-          <div className="flex flex-wrap gap-1 pb-2 border-b border-white/10">
+          <div className="flex flex-wrap gap-1 pb-2 border-b border-border">
             <Button
               variant="ghost"
               size="sm"
-              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-white hover:bg-purple-500/20"
+              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-foreground hover:bg-purple-500/20"
               onClick={() => onFieldsChange(presets.minimal)}
             >
               Mínimo
@@ -178,7 +178,7 @@ export function CardFieldsCustomizer({
             <Button
               variant="ghost"
               size="sm"
-              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-white hover:bg-purple-500/20"
+              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-foreground hover:bg-purple-500/20"
               onClick={() => onFieldsChange(presets.standard)}
             >
               Estándar
@@ -186,7 +186,7 @@ export function CardFieldsCustomizer({
             <Button
               variant="ghost"
               size="sm"
-              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-white hover:bg-purple-500/20"
+              className="text-[10px] h-6 px-2 text-zinc-400 hover:text-foreground hover:bg-purple-500/20"
               onClick={() => onFieldsChange(presets.full)}
             >
               Completo
@@ -194,7 +194,7 @@ export function CardFieldsCustomizer({
             <Button
               variant="ghost"
               size="sm"
-              className="text-[10px] h-6 px-2 text-emerald-400 hover:text-white hover:bg-emerald-500/20"
+              className="text-[10px] h-6 px-2 text-emerald-400 hover:text-foreground hover:bg-emerald-500/20"
               onClick={() => onFieldsChange(presets.payments)}
             >
               💰 Pagos
@@ -215,7 +215,7 @@ export function CardFieldsCustomizer({
                   open={isExpanded}
                   onOpenChange={() => toggleCategory(category)}
                 >
-                  <CollapsibleTrigger className="flex items-center justify-between w-full p-1.5 rounded hover:bg-white/5 transition-colors">
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-1.5 rounded hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-2">
                       {isExpanded ? (
                         <ChevronDown className={cn("h-3 w-3", CATEGORY_COLORS[category])} />
@@ -243,7 +243,7 @@ export function CardFieldsCustomizer({
                             "flex items-center gap-2 p-1.5 rounded-md transition-colors cursor-pointer",
                             isVisible
                               ? "bg-purple-500/10 hover:bg-purple-500/20"
-                              : "hover:bg-white/5",
+                              : "hover:bg-muted/50",
                             isRequired && "opacity-70 cursor-not-allowed"
                           )}
                           onClick={() => !isRequired && toggleField(field.key)}
@@ -258,7 +258,7 @@ export function CardFieldsCustomizer({
                             <Label
                               className={cn(
                                 "text-xs cursor-pointer",
-                                isVisible ? "text-white" : "text-zinc-400"
+                                isVisible ? "text-foreground" : "text-zinc-400"
                               )}
                             >
                               {field.label}
@@ -279,11 +279,11 @@ export function CardFieldsCustomizer({
           </div>
 
           {/* Footer */}
-          <div className="pt-2 border-t border-white/10 flex justify-between">
+          <div className="pt-2 border-t border-border flex justify-between">
             <Button
               variant="ghost"
               size="sm"
-              className="text-xs text-zinc-400 hover:text-white h-7"
+              className="text-xs text-zinc-400 hover:text-foreground h-7"
               onClick={() => {
                 onFieldsChange(CARD_CUSTOMIZABLE_FIELDS.map((f) => f.key));
                 setExpandedCategories(new Set(Object.keys(fieldsByCategory)));

@@ -55,7 +55,7 @@ function useOrgsDetail() {
 }
 
 const TIER_COLORS: Record<string, string> = {
-  free: "border-white/20 text-white/50",
+  free: "border-border text-muted-foreground/70",
   starter: "border-blue-500/50 text-blue-400",
   pro: "border-purple-500/50 text-purple-400",
   enterprise: "border-yellow-500/50 text-yellow-400",
@@ -89,7 +89,7 @@ export function OrganizationsDetailSheet({ stats }: OrganizationsDetailSheetProp
     {
       key: "name",
       header: "Organizacion",
-      render: (o) => <span className="font-medium text-white">{o.name}</span>,
+      render: (o) => <span className="font-medium text-foreground">{o.name}</span>,
     },
     {
       key: "tier",
@@ -106,13 +106,13 @@ export function OrganizationsDetailSheet({ stats }: OrganizationsDetailSheetProp
     {
       key: "members",
       header: "Miembros",
-      render: (o) => <span className="text-white/60">{o.member_count}</span>,
+      render: (o) => <span className="text-muted-foreground">{o.member_count}</span>,
     },
     {
       key: "created",
       header: "Registro",
       render: (o) => (
-        <span className="text-white/50 text-xs">
+        <span className="text-muted-foreground/70 text-xs">
           {new Date(o.created_at).toLocaleDateString("es-CO")}
         </span>
       ),
@@ -137,7 +137,7 @@ export function OrganizationsDetailSheet({ stats }: OrganizationsDetailSheetProp
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start flex-wrap">
+        <TabsList className="bg-muted/40 w-full justify-start flex-wrap">
           <TabsTrigger value="all" className="text-xs">Todas</TabsTrigger>
           {tiers.map((t) => (
             <TabsTrigger key={t} value={t} className="text-xs capitalize">{t}</TabsTrigger>
@@ -152,7 +152,7 @@ export function OrganizationsDetailSheet({ stats }: OrganizationsDetailSheetProp
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+        <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
           Cargando organizaciones...
         </div>
       ) : (

@@ -72,19 +72,19 @@ export function CustomSlugInput({ currentCode, codeId, onSave, isSaving }: Custo
 
   return (
     <div className="space-y-2">
-      <label className="text-sm text-white/70">Personalizar tu slug</label>
+      <label className="text-sm text-muted-foreground">Personalizar tu slug</label>
       <div className="flex items-center gap-2">
         <div className="flex-1 relative">
           <Input
             value={slug}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="MI-CODIGO"
-            className="bg-white/5 border-white/10 font-mono uppercase pr-8"
+            className="bg-muted/50 border-border font-mono uppercase pr-8"
             maxLength={30}
           />
           {/* Status icon */}
           <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
-            {validating && <Loader2 className="w-4 h-4 text-white/30 animate-spin" />}
+            {validating && <Loader2 className="w-4 h-4 text-muted-foreground/70 animate-spin" />}
             {!validating && validation?.valid && <Check className="w-4 h-4 text-green-400" />}
             {!validating && validation && !validation.valid && slug.length >= 3 && <X className="w-4 h-4 text-red-400" />}
           </div>
@@ -100,7 +100,7 @@ export function CustomSlugInput({ currentCode, codeId, onSave, isSaving }: Custo
       </div>
       {/* Preview */}
       {slug && (
-        <p className="text-xs text-white/40">
+        <p className="text-xs text-muted-foreground/70">
           Preview: <span className="text-purple-300">kreoon.com/r/{slug || '...'}</span>
         </p>
       )}

@@ -159,7 +159,7 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
               'px-2 py-0.5 rounded-full text-[10px] font-semibold',
               creator.is_available
                 ? 'bg-green-500/20 text-green-400'
-                : 'bg-white/10 text-white/50',
+                : 'bg-muted text-muted-foreground/70',
             )}
           >
             {creator.is_available ? 'Disponible' : 'No disponible'}
@@ -178,15 +178,15 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
       }
       menuItems={isPlatformAdmin ? (
         <>
-          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" />
             {isPlatformAdminUser ? 'Quitar admin' : 'Hacer admin'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-muted-foreground">
             <KeyRound className="h-3.5 w-3.5" />
             Reset contraseña
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuSeparator className="bg-muted" />
           <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-red-400">
             <Ban className="h-3.5 w-3.5" />
             {isBanned ? 'Desbloquear' : 'Bloquear'}
@@ -203,8 +203,8 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
       {/* Loading indicator for full detail */}
       {fullLoading && (
         <div className="space-y-3">
-          <Skeleton className="h-16 rounded-sm bg-white/5" />
-          <Skeleton className="h-12 rounded-sm bg-white/5" />
+          <Skeleton className="h-16 rounded-sm bg-muted/40" />
+          <Skeleton className="h-12 rounded-sm bg-muted/40" />
         </div>
       )}
 
@@ -310,10 +310,10 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
           configAction={
             <button
               onClick={() => setShowFieldsConfig(true)}
-              className="p-1 rounded hover:bg-white/10 transition-colors"
+              className="p-1 rounded hover:bg-muted transition-colors"
               title="Configurar campos"
             >
-              <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+              <Settings className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
             </button>
           }
         />
@@ -322,35 +322,35 @@ export function TalentDetailPanel({ creator, onClose, onUpdate }: TalentDetailPa
       {/* Status */}
       <DetailSection title="Estado">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Disponible</span>
+          <span className="text-muted-foreground/70">Disponible</span>
           <span className="flex items-center gap-1">
             {creator.is_available ? (
               <CheckCircle2 className="h-3 w-3 text-green-400" />
             ) : (
               <XCircle className="h-3 w-3 text-red-400" />
             )}
-            <span className="text-white/70">{creator.is_available ? 'Sí' : 'No'}</span>
+            <span className="text-muted-foreground">{creator.is_available ? 'Sí' : 'No'}</span>
           </span>
-          <span className="text-white/40">Verificado</span>
+          <span className="text-muted-foreground/70">Verificado</span>
           <span className="flex items-center gap-1">
             {creator.is_verified ? (
               <CheckCircle2 className="h-3 w-3 text-blue-400" />
             ) : (
-              <XCircle className="h-3 w-3 text-white/30" />
+              <XCircle className="h-3 w-3 text-muted-foreground/70" />
             )}
-            <span className="text-white/70">{creator.is_verified ? 'Sí' : 'No'}</span>
+            <span className="text-muted-foreground">{creator.is_verified ? 'Sí' : 'No'}</span>
           </span>
-          <span className="text-white/40">Activo</span>
+          <span className="text-muted-foreground/70">Activo</span>
           <span className="flex items-center gap-1">
             {creator.is_active ? (
               <CheckCircle2 className="h-3 w-3 text-green-400" />
             ) : (
-              <Clock className="h-3 w-3 text-white/30" />
+              <Clock className="h-3 w-3 text-muted-foreground/70" />
             )}
-            <span className="text-white/70">{creator.is_active ? 'Sí' : 'No'}</span>
+            <span className="text-muted-foreground">{creator.is_active ? 'Sí' : 'No'}</span>
           </span>
-          <span className="text-white/40">Registrado</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Registrado</span>
+          <span className="text-muted-foreground">
             {format(new Date(creator.created_at), 'd MMM yyyy', { locale: es })}
           </span>
         </div>

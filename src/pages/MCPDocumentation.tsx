@@ -385,12 +385,12 @@ function CopyableBlock({ content }: { content: string }) {
 
   return (
     <div className="relative group">
-      <pre className="bg-background border border-[#2a2a3a] text-[#c9d1d9] text-xs leading-relaxed p-5 rounded-xl overflow-x-auto max-h-80 font-mono whitespace-pre-wrap">
+      <pre className="bg-muted border border-border text-foreground text-xs leading-relaxed p-5 rounded-xl overflow-x-auto max-h-80 font-mono whitespace-pre-wrap">
         {content}
       </pre>
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 flex items-center gap-1.5 bg-[#1e1e2e] hover:bg-[#2a2a3a] border border-[#3a3a4a] text-gray-300 text-xs px-3 py-1.5 rounded-lg transition-all"
+        className="absolute top-3 right-3 flex items-center gap-1.5 bg-muted hover:bg-muted/70 border border-border text-muted-foreground text-xs px-3 py-1.5 rounded-lg transition-all"
       >
         {copied ? (
           <><Check className="w-3 h-3 text-green-400" /> Copiado</>
@@ -533,22 +533,22 @@ export default function MCPDocumentation() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background text-gray-200 font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans">
 
       {/* Header sticky */}
       <div className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-[#1e1e2e] px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Volver
         </button>
         <div className="flex items-center gap-2">
-          <span className="text-white font-bold tracking-tight">KREOON</span>
+          <span className="text-foreground font-bold tracking-tight">KREOON</span>
           <span className="text-purple-400 font-bold">MCP</span>
         </div>
-        <Badge variant="outline" className="text-xs border-purple-500/40 text-purple-300 bg-purple-500/10">
+        <Badge variant="outline" className="text-xs border-purple-500/40 text-primary bg-purple-500/10">
           v3.2.0
         </Badge>
       </div>
@@ -557,40 +557,40 @@ export default function MCPDocumentation() {
 
         {/* Hero */}
         <section className="text-center space-y-4">
-          <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs px-3 py-1 rounded-full mb-2">
+          <div className="inline-flex items-center gap-2 bg-purple-500/10 border border-purple-500/20 text-primary text-xs px-3 py-1 rounded-full mb-2">
             <Zap className="w-3 h-3" />
             Model Context Protocol — Production Ready
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
+          <h1 className="text-4xl sm:text-5xl font-bold text-foreground leading-tight">
             Kreoon MCP Server
           </h1>
-          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Conecta cualquier agente de IA con Kreoon. Control operativo completo: guiones, creadores, proyectos, content board y marketplace.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">39 herramientas</span>
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
-            <span className="bg-[#1e1e2e] border border-[#2a2a3a] text-gray-300 text-sm px-4 py-1.5 rounded-full">REST API</span>
+            <span className="bg-muted border border-border text-muted-foreground text-sm px-4 py-1.5 rounded-full">39 herramientas</span>
+            <span className="bg-muted border border-border text-muted-foreground text-sm px-4 py-1.5 rounded-full">OAuth 2.0</span>
+            <span className="bg-muted border border-border text-muted-foreground text-sm px-4 py-1.5 rounded-full">Claude Desktop</span>
+            <span className="bg-muted border border-border text-muted-foreground text-sm px-4 py-1.5 rounded-full">Claude.ai Web</span>
+            <span className="bg-muted border border-border text-muted-foreground text-sm px-4 py-1.5 rounded-full">REST API</span>
           </div>
         </section>
 
         {/* Lenguaje natural — Casos de uso */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Hablale en lenguaje natural
           </h2>
-          <p className="text-gray-400 leading-relaxed">
-            Este MCP está optimizado para que escribas como hablás. El LLM cliente lee las instrucciones del servidor en cada <code className="bg-[#1e1e2e] px-1 py-0.5 rounded text-purple-300">initialize</code> y elige las tools correctas. Algunos ejemplos:
+          <p className="text-muted-foreground leading-relaxed">
+            Este MCP está optimizado para que escribas como hablás. El LLM cliente lee las instrucciones del servidor en cada <code className="bg-muted px-1 py-0.5 rounded text-primary">initialize</code> y elige las tools correctas. Algunos ejemplos:
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#2a2a3a]">
-                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Lo que dice el usuario</th>
-                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Tools que se invocan</th>
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left text-muted-foreground font-normal text-xs uppercase tracking-wider">Lo que dice el usuario</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-normal text-xs uppercase tracking-wider">Tools que se invocan</th>
                 </tr>
               </thead>
               <tbody>
@@ -611,8 +611,8 @@ export default function MCPDocumentation() {
                   { say: '"Aprueba el guion / Pide cambios"', tools: 'approve_content_script' },
                 ].map((row, i) => (
                   <tr key={i} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}>
-                    <td className="px-4 py-3 text-gray-300 text-xs">{row.say}</td>
-                    <td className="px-4 py-3 font-mono text-purple-300 text-xs">{row.tools}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{row.say}</td>
+                    <td className="px-4 py-3 font-mono text-primary text-xs">{row.tools}</td>
                   </tr>
                 ))}
               </tbody>
@@ -626,12 +626,12 @@ export default function MCPDocumentation() {
                 <Shield className="w-4 h-4 text-amber-400" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-white font-semibold text-base">⚠️ El MCP nunca inventa</h3>
-                <p className="text-gray-300 text-sm leading-relaxed">
-                  Si algo no está claro (qué marca, qué producto, qué plataforma, qué etapa de funnel, qué componentes del producto…) el LLM cliente <strong className="text-white">debe preguntar antes de actuar</strong>. Nunca asume datos. Nunca inventa UUIDs ni ingredientes. Esta regla viaja en el <code className="bg-[#1e1e2e] px-1 py-0.5 rounded text-purple-300">initialize</code> del servidor.
+                <h3 className="text-foreground font-semibold text-base">⚠️ El MCP nunca inventa</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  Si algo no está claro (qué marca, qué producto, qué plataforma, qué etapa de funnel, qué componentes del producto…) el LLM cliente <strong className="text-foreground">debe preguntar antes de actuar</strong>. Nunca asume datos. Nunca inventa UUIDs ni ingredientes. Esta regla viaja en el <code className="bg-muted px-1 py-0.5 rounded text-primary">initialize</code> del servidor.
                 </p>
-                <p className="text-gray-400 text-xs leading-relaxed pt-1">
-                  Reglas de edición de guiones: <strong className="text-white">"ajusta esta frase"</strong> → edición quirúrgica con <code className="text-purple-300">update_content_item</code>. <strong className="text-white">"Rediseña"</strong> → <code className="text-purple-300">generate_content_block</code> (reemplaza el bloque con las skills internas).
+                <p className="text-muted-foreground text-xs leading-relaxed pt-1">
+                  Reglas de edición de guiones: <strong className="text-foreground">"ajusta esta frase"</strong> → edición quirúrgica con <code className="text-primary">update_content_item</code>. <strong className="text-foreground">"Rediseña"</strong> → <code className="text-primary">generate_content_block</code> (reemplaza el bloque con las skills internas).
                 </p>
               </div>
             </div>
@@ -640,11 +640,11 @@ export default function MCPDocumentation() {
 
         {/* ¿Qué es? */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Cpu className="w-6 h-6 text-purple-400" />
             ¿Qué es el MCP de Kreoon?
           </h2>
-          <p className="text-gray-400 leading-relaxed">
+          <p className="text-muted-foreground leading-relaxed">
             MCP (Model Context Protocol) es el estándar abierto de Anthropic para conectar agentes de IA con herramientas externas. El servidor MCP de Kreoon expone el control operativo completo de la plataforma como herramientas que cualquier IA puede invocar: crear proyectos, buscar creadores, generar guiones, aprobar scripts, registrar entregas y gestionar pagos, todo desde una conversación.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -655,8 +655,8 @@ export default function MCPDocumentation() {
             ].map((item) => (
               <div key={item.title} className="bg-background border border-[#1e1e2e] rounded-xl p-4 space-y-2">
                 <div className="text-purple-400">{item.icon}</div>
-                <p className="text-white text-sm font-semibold">{item.title}</p>
-                <p className="text-gray-400 text-xs leading-relaxed">{item.desc}</p>
+                <p className="text-foreground text-sm font-semibold">{item.title}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -664,7 +664,7 @@ export default function MCPDocumentation() {
 
         {/* Cómo conectar */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Code2 className="w-6 h-6 text-purple-400" />
             Cómo conectar
           </h2>
@@ -672,12 +672,12 @@ export default function MCPDocumentation() {
           {/* Claude Desktop */}
           <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">01</span>
-              <h3 className="text-white font-semibold">Claude Desktop</h3>
+              <span className="bg-purple-500/20 text-primary text-xs font-mono px-2 py-0.5 rounded">01</span>
+              <h3 className="text-foreground font-semibold">Claude Desktop</h3>
             </div>
-            <p className="text-gray-400 text-sm">Instala el cliente MCP y agrégalo a la configuración de Claude Desktop:</p>
+            <p className="text-muted-foreground text-sm">Instala el cliente MCP y agrégalo a la configuración de Claude Desktop:</p>
             <CopyableBlock content={`npm install -g kreoon-mcp-client`} />
-            <p className="text-gray-500 text-xs mt-1">Luego en <code className="bg-[#1e1e2e] px-1 py-0.5 rounded text-purple-300">claude_desktop_config.json</code>:</p>
+            <p className="text-muted-foreground text-xs mt-1">Luego en <code className="bg-muted px-1 py-0.5 rounded text-primary">claude_desktop_config.json</code>:</p>
             <CopyableBlock content={`{
   "mcpServers": {
     "kreoon": {
@@ -693,21 +693,21 @@ export default function MCPDocumentation() {
           {/* Claude.ai web */}
           <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">02</span>
-              <h3 className="text-white font-semibold">Claude.ai Web (OAuth)</h3>
+              <span className="bg-purple-500/20 text-primary text-xs font-mono px-2 py-0.5 rounded">02</span>
+              <h3 className="text-foreground font-semibold">Claude.ai Web (OAuth)</h3>
             </div>
-            <p className="text-gray-400 text-sm">En <strong className="text-white">Claude.ai → Settings → Connectors → Add custom connector</strong>, ingresa:</p>
+            <p className="text-muted-foreground text-sm">En <strong className="text-foreground">Claude.ai → Settings → Connectors → Add custom connector</strong>, ingresa:</p>
             <CopyableBlock content={`https://mcp.kreoon.com`} />
-            <p className="text-gray-400 text-sm">Claude.ai detecta OAuth automáticamente y te redirige al formulario de Kreoon donde ingresas tu API key. No necesitas poner la key en la URL.</p>
+            <p className="text-muted-foreground text-sm">Claude.ai detecta OAuth automáticamente y te redirige al formulario de Kreoon donde ingresas tu API key. No necesitas poner la key en la URL.</p>
           </div>
 
           {/* REST API */}
           <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">03</span>
-              <h3 className="text-white font-semibold">REST API directo</h3>
+              <span className="bg-purple-500/20 text-primary text-xs font-mono px-2 py-0.5 rounded">03</span>
+              <h3 className="text-foreground font-semibold">REST API directo</h3>
             </div>
-            <p className="text-gray-400 text-sm">Para integrar con cualquier herramienta o agente personalizado:</p>
+            <p className="text-muted-foreground text-sm">Para integrar con cualquier herramienta o agente personalizado:</p>
             <CopyableBlock content={`# Listar herramientas
 curl -H "Authorization: Bearer sk-kreoon-..." \\
   https://mcp.kreoon.com/v1/tools
@@ -723,17 +723,17 @@ curl -X POST \\
 
         {/* Tabla de herramientas */}
         <section className="space-y-6">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Zap className="w-6 h-6 text-purple-400" />
             Herramientas disponibles
-            <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30 ml-2">39 tools</Badge>
+            <Badge className="bg-purple-500/20 text-primary border-purple-500/30 ml-2">39 tools</Badge>
           </h2>
 
           {TOOL_GROUPS.map((group) => (
             <div key={group.name} className="space-y-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-purple-300 uppercase tracking-wider">{group.name}</h3>
-                <span className="text-gray-600 text-xs">({group.count})</span>
+                <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">{group.name}</h3>
+                <span className="text-muted-foreground text-xs">({group.count})</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -743,10 +743,10 @@ curl -X POST \\
                         key={tool.name}
                         className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}
                       >
-                        <td className="px-4 py-3 font-mono text-purple-300 text-xs whitespace-nowrap">{tool.name}</td>
-                        <td className="px-4 py-3 text-gray-400 text-xs">{tool.desc}</td>
+                        <td className="px-4 py-3 font-mono text-primary text-xs whitespace-nowrap">{tool.name}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{tool.desc}</td>
                         <td className="px-4 py-3 text-right whitespace-nowrap">
-                          <span className="bg-[#1e1e2e] text-gray-400 text-xs font-mono px-2 py-0.5 rounded">{tool.scope}</span>
+                          <span className="bg-muted text-muted-foreground text-xs font-mono px-2 py-0.5 rounded">{tool.scope}</span>
                         </td>
                       </tr>
                     ))}
@@ -759,24 +759,24 @@ curl -X POST \\
 
         {/* Scopes */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield className="w-6 h-6 text-purple-400" />
             Scopes de autorización
           </h2>
-          <p className="text-gray-400 text-sm">Los scopes se derivan automáticamente de tu rol en la organización en cada request — no se eligen al crear la key. Si tu rol cambia (o dejas la organización), la key se ajusta o se invalida en la siguiente llamada. Las herramientas verifican el scope y el rol antes de ejecutar.</p>
+          <p className="text-muted-foreground text-sm">Los scopes se derivan automáticamente de tu rol en la organización en cada request — no se eligen al crear la key. Si tu rol cambia (o dejas la organización), la key se ajusta o se invalida en la siguiente llamada. Las herramientas verifican el scope y el rol antes de ejecutar.</p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-[#2a2a3a]">
-                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Scope</th>
-                  <th className="px-4 py-3 text-left text-gray-500 font-normal text-xs uppercase tracking-wider">Acceso</th>
+                <tr className="border-b border-border">
+                  <th className="px-4 py-3 text-left text-muted-foreground font-normal text-xs uppercase tracking-wider">Scope</th>
+                  <th className="px-4 py-3 text-left text-muted-foreground font-normal text-xs uppercase tracking-wider">Acceso</th>
                 </tr>
               </thead>
               <tbody>
                 {SCOPES.map((s, i) => (
                   <tr key={s.scope} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}>
-                    <td className="px-4 py-3 font-mono text-purple-300 text-xs whitespace-nowrap">{s.scope}</td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{s.desc}</td>
+                    <td className="px-4 py-3 font-mono text-primary text-xs whitespace-nowrap">{s.scope}</td>
+                    <td className="px-4 py-3 text-muted-foreground text-xs">{s.desc}</td>
                   </tr>
                 ))}
               </tbody>
@@ -786,7 +786,7 @@ curl -X POST \\
 
         {/* OAuth Flow */}
         <section className="space-y-4">
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield className="w-6 h-6 text-purple-400" />
             Flujo OAuth 2.0
           </h2>
@@ -800,12 +800,12 @@ curl -X POST \\
             ].map((item) => (
               <div key={item.step} className="bg-background border border-[#1e1e2e] rounded-xl p-4 space-y-2">
                 <span className="text-purple-400 font-mono text-xs font-bold">Paso {item.step}</span>
-                <p className="text-white text-sm font-semibold">{item.title}</p>
-                <p className="text-gray-500 text-xs leading-relaxed">{item.desc}</p>
+                <p className="text-foreground text-sm font-semibold">{item.title}</p>
+                <p className="text-muted-foreground text-xs leading-relaxed">{item.desc}</p>
               </div>
             ))}
           </div>
-          <p className="text-gray-500 text-xs">Después del OAuth, todas las llamadas a <code className="bg-[#1e1e2e] px-1 rounded text-purple-300">/mcp</code> van con <code className="bg-[#1e1e2e] px-1 rounded text-purple-300">Authorization: Bearer sk-kreoon-...</code></p>
+          <p className="text-muted-foreground text-xs">Después del OAuth, todas las llamadas a <code className="bg-muted px-1 rounded text-primary">/mcp</code> van con <code className="bg-muted px-1 rounded text-primary">Authorization: Bearer sk-kreoon-...</code></p>
         </section>
 
         {/* Bloque markdown para entrenar IAs */}
@@ -816,8 +816,8 @@ curl -X POST \\
                 <Copy className="w-4 h-4 text-purple-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">Entrena tu IA con esta documentación</h2>
-                <p className="text-gray-400 text-sm mt-1">
+                <h2 className="text-xl font-bold text-foreground">Entrena tu IA con esta documentación</h2>
+                <p className="text-muted-foreground text-sm mt-1">
                   Copia este bloque Markdown y pégalo en el contexto de ChatGPT, Gemini, o cualquier IA para que entienda cómo conectar y usar el MCP de Kreoon.
                 </p>
               </div>
@@ -827,7 +827,7 @@ curl -X POST \\
         </section>
 
         {/* Footer */}
-        <footer className="text-center text-gray-600 text-xs pt-8 pb-4 border-t border-[#1e1e2e]">
+        <footer className="text-center text-muted-foreground text-xs pt-8 pb-4 border-t border-[#1e1e2e]">
           <p>Kreoon MCP Server v3.2.0 — <a href="https://mcp.kreoon.com/health" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">mcp.kreoon.com</a></p>
           <p className="mt-1">Genera tu API key en <a href="https://app.kreoon.com/settings" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">app.kreoon.com/settings</a></p>
         </footer>

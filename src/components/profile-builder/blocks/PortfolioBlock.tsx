@@ -243,10 +243,10 @@ function PortfolioItemCard({
               )}
             >
               {config.showTitles && item.title && (
-                <p className="text-sm text-white font-medium truncate">{item.title}</p>
+                <p className="text-sm text-foreground font-medium truncate">{item.title}</p>
               )}
               {config.showMetrics && (item.viewsCount || item.likesCount) && (
-                <div className="flex items-center gap-3 mt-1 text-[10px] text-white/80">
+                <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
                   {item.viewsCount !== undefined && (
                     <span className="flex items-center gap-1">
                       <Eye className="h-3 w-3" />
@@ -269,7 +269,7 @@ function PortfolioItemCard({
       {/* Featured badge (para ambos tipos) */}
       {config.showFeaturedBadge && item.isFeatured && (
         <div className="absolute top-2 left-2 z-10 pointer-events-none">
-          <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/90 text-white border-0">
+          <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/90 text-foreground border-0">
             <Star className="h-2.5 w-2.5 fill-current" />
           </Badge>
         </div>

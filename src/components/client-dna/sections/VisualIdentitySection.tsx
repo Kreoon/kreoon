@@ -58,7 +58,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(primaryColors.length > 0 || secondaryColors.length > 0 || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(primaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Colores Primarios</p>
@@ -76,7 +76,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           )}
 
           {(secondaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                 <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Colores Secundarios</p>
@@ -105,7 +105,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           {isEditing ? (
             <EditableText value={data.color_psychology || data.color_meaning} onChange={change('color_psychology') as (v: string) => void} multiline placeholder="Psicología del color..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">{colorPsychology}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground">{colorPsychology}</p>
           )}
         </div>
       )}
@@ -114,7 +114,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(typographyStyle || imageryStyle || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(typographyStyle || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
               <div className="flex items-center gap-2 mb-3">
                 <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Estilo Tipográfico</p>
@@ -122,13 +122,13 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
               {isEditing ? (
                 <EditableText value={data.typography_style} onChange={change('typography_style') as (v: string) => void} placeholder="Estilo tipográfico..." />
               ) : (
-                <p className="text-sm text-zinc-900 dark:text-zinc-100">{typographyStyle}</p>
+                <p className="text-sm text-foreground dark:text-foreground">{typographyStyle}</p>
               )}
             </div>
           )}
 
           {(imageryStyle || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
               <div className="flex items-center gap-2 mb-3">
                 <Image className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Estilo de Imágenes</p>
@@ -136,7 +136,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
               {isEditing ? (
                 <EditableText value={data.imagery_style || data.photography_style} onChange={change('imagery_style') as (v: string) => void} placeholder="Estilo de imágenes..." />
               ) : (
-                <p className="text-sm text-zinc-900 dark:text-zinc-100">{imageryStyle}</p>
+                <p className="text-sm text-foreground dark:text-foreground">{imageryStyle}</p>
               )}
             </div>
           )}
@@ -145,8 +145,8 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Mood Keywords */}
       {(moodKeywords.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Palabras Clave del Mood</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Palabras Clave del Mood</p>
           {isEditing ? (
             <EditableTags items={data.mood_keywords || []} onChange={change('mood_keywords') as (v: string[]) => void} color="emerald" placeholder="Agregar keyword..." />
           ) : (
@@ -166,8 +166,8 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Visual Preview Mockup (display only) */}
       {!isEditing && primaryColors.length > 0 && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Vista Previa de Paleta</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">Vista Previa de Paleta</p>
           <div className="relative h-32 rounded-lg overflow-hidden">
             <div
               className="absolute inset-0"
@@ -178,8 +178,8 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
             <div className="absolute inset-0 bg-card/20" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-white/80 text-sm font-medium mb-1">Tu Marca</p>
-                <p className="text-zinc-100 text-lg font-bold tracking-wide">IDENTIDAD VISUAL</p>
+                <p className="text-muted-foreground text-sm font-medium mb-1">Tu Marca</p>
+                <p className="text-foreground text-lg font-bold tracking-wide">IDENTIDAD VISUAL</p>
               </div>
             </div>
           </div>
@@ -203,10 +203,10 @@ function ColorSwatch({ color, size = 'medium' }: { color: string; size?: 'small'
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className={`${sizeClasses[size]} rounded-lg border-2 border-zinc-300 dark:border-white/20 shadow-lg ${bgClass}`}
+        className={`${sizeClasses[size]} rounded-lg border-2 border-zinc-300 dark:border-border shadow-lg ${bgClass}`}
         style={bgStyle}
       />
-      <span className="text-xs text-zinc-400 font-mono">{color}</span>
+      <span className="text-xs text-muted-foreground font-mono">{color}</span>
     </div>
   );
 }

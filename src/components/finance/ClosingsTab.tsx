@@ -51,10 +51,10 @@ function WaterfallChart({ income, costs, payroll, net, currency }: WaterfallProp
     <div className="space-y-3">
       <div>
         <div className="flex items-center justify-between mb-1">
-          <span className="text-sm text-white/70">Cobrado en período</span>
+          <span className="text-sm text-muted-foreground">Cobrado en período</span>
           <span className="text-sm font-semibold text-green-400">{fmt(income, currency)}</span>
         </div>
-        <div className="h-3 bg-white/5 rounded overflow-hidden">
+        <div className="h-3 bg-muted/50 rounded overflow-hidden">
           <div className="h-full bg-green-500 rounded" style={{ width: `${w(income)}%` }} />
         </div>
       </div>
@@ -62,13 +62,13 @@ function WaterfallChart({ income, costs, payroll, net, currency }: WaterfallProp
       {costs > 0 && (
         <div className="pl-4 border-l-2 border-red-500/30">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm text-white/70 flex items-center gap-1">
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
               <TrendingDown className="w-3 h-3 text-red-400" />
               Costos operativos
             </span>
             <span className="text-sm font-semibold text-red-400">−{fmt(costs, currency)}</span>
           </div>
-          <div className="h-3 bg-white/5 rounded overflow-hidden">
+          <div className="h-3 bg-muted/50 rounded overflow-hidden">
             <div className="h-full bg-red-500/70 rounded" style={{ width: `${w(costs)}%` }} />
           </div>
         </div>
@@ -77,13 +77,13 @@ function WaterfallChart({ income, costs, payroll, net, currency }: WaterfallProp
       {payroll > 0 && (
         <div className="pl-4 border-l-2 border-orange-500/30">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm text-white/70 flex items-center gap-1">
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
               <TrendingDown className="w-3 h-3 text-orange-400" />
               Nómina talento
             </span>
             <span className="text-sm font-semibold text-orange-400">−{fmt(payroll, currency)}</span>
           </div>
-          <div className="h-3 bg-white/5 rounded overflow-hidden">
+          <div className="h-3 bg-muted/50 rounded overflow-hidden">
             <div className="h-full bg-orange-500/70 rounded" style={{ width: `${w(payroll)}%` }} />
           </div>
         </div>
@@ -122,7 +122,7 @@ function ExpandedClosing({ closing, orgId }: { closing: OrgFinancialClosing; org
   if (!summary) return null;
 
   return (
-    <div className="px-4 pb-4 pt-2 space-y-4 border-t border-white/5">
+    <div className="px-4 pb-4 pt-2 space-y-4 border-t border-border">
       {summary.income_by_client.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Ingresos por cliente</p>
@@ -185,7 +185,7 @@ function PeriodSummaryCard({
   if (!summary) return null;
 
   return (
-    <div className="rounded-sm border border-white/10 bg-white/3 p-4 space-y-3">
+    <div className="rounded-sm border border-border bg-muted/30 p-4 space-y-3">
       <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Vista previa</p>
       <div className="grid grid-cols-3 gap-3">
         <div className="text-center">
@@ -472,9 +472,9 @@ export function ClosingsTab({ orgId }: Props) {
             <div className="p-2 bg-green-500/20 rounded">
               <TrendingUp className="w-5 h-5 text-green-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Ingresos</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Ingresos</span>
           </div>
-          <p className="text-2xl font-bold text-white">{fmt(globalOverview?.total_revenue ?? 0, currency)}</p>
+          <p className="text-2xl font-bold text-foreground">{fmt(globalOverview?.total_revenue ?? 0, currency)}</p>
           <p className="text-green-400 text-xs mt-1">cobrado en el período</p>
         </Card>
 
@@ -483,9 +483,9 @@ export function ClosingsTab({ orgId }: Props) {
             <div className="p-2 bg-red-500/20 rounded">
               <TrendingDown className="w-5 h-5 text-red-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Costos</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Costos</span>
           </div>
-          <p className="text-2xl font-bold text-white">{fmt(globalOverview?.total_costs ?? 0, currency)}</p>
+          <p className="text-2xl font-bold text-foreground">{fmt(globalOverview?.total_costs ?? 0, currency)}</p>
           <p className="text-red-400 text-xs mt-1">operativos + plataforma</p>
         </Card>
 
@@ -494,9 +494,9 @@ export function ClosingsTab({ orgId }: Props) {
             <div className="p-2 bg-orange-500/20 rounded">
               <FileText className="w-5 h-5 text-orange-400" />
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Nómina</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Nómina</span>
           </div>
-          <p className="text-2xl font-bold text-white">{fmt(globalOverview?.payroll ?? 0, currency)}</p>
+          <p className="text-2xl font-bold text-foreground">{fmt(globalOverview?.payroll ?? 0, currency)}</p>
           <p className="text-orange-400 text-xs mt-1">pagado a talento</p>
         </Card>
 
@@ -511,9 +511,9 @@ export function ClosingsTab({ orgId }: Props) {
                 ? <TrendingUp className="w-5 h-5 text-purple-400" />
                 : <TrendingDown className="w-5 h-5 text-red-400" />}
             </div>
-            <span className="text-white/60 text-xs uppercase tracking-wide">Utilidad neta</span>
+            <span className="text-muted-foreground text-xs uppercase tracking-wide">Utilidad neta</span>
           </div>
-          <p className={`text-2xl font-bold ${(globalOverview?.net_profit ?? 0) >= 0 ? 'text-white' : 'text-red-300'}`}>
+          <p className={`text-2xl font-bold ${(globalOverview?.net_profit ?? 0) >= 0 ? 'text-foreground' : 'text-red-300'}`}>
             {fmt(globalOverview?.net_profit ?? 0, currency)}
           </p>
           <p className={`text-xs mt-1 ${(globalOverview?.net_profit ?? 0) >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
@@ -524,11 +524,11 @@ export function ClosingsTab({ orgId }: Props) {
 
       {/* ─── Waterfall del período actual ─────────────────── */}
       {globalOverview && (
-        <Card className="bg-white/5 border-white/10 p-5">
+        <Card className="bg-muted/50 border-border p-5">
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-cyan-400" />
-            <h3 className="text-base font-semibold text-white">Flujo del período</h3>
-            <span className="text-xs text-white/40 ml-2">
+            <h3 className="text-base font-semibold text-foreground">Flujo del período</h3>
+            <span className="text-xs text-muted-foreground ml-2">
               {format(parseISO(startDate), 'd MMM', { locale: es })} — {format(parseISO(endDate), 'd MMM yyyy', { locale: es })}
             </span>
           </div>
@@ -543,11 +543,11 @@ export function ClosingsTab({ orgId }: Props) {
       )}
 
       {/* ─── Lista de cierres ──────────────────────────────── */}
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/50 border-border">
         <div className="p-5 pb-3 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="text-base font-semibold text-white">Cierres registrados</h3>
-            <p className="text-white/40 text-xs">
+            <h3 className="text-base font-semibold text-foreground">Cierres registrados</h3>
+            <p className="text-muted-foreground text-xs">
               {filteredClosings.length} cierre{filteredClosings.length !== 1 ? 's' : ''} de {closings.length}
             </p>
           </div>
@@ -556,22 +556,22 @@ export function ClosingsTab({ orgId }: Props) {
             <select
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value as StatusFilter)}
-              className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+              className="bg-muted/50 border border-border rounded text-xs text-foreground px-2 py-1 h-7"
             >
-              <option value="all" className="bg-[#111]">Todos</option>
-              <option value="open" className="bg-[#111]">Abiertos</option>
-              <option value="closed" className="bg-[#111]">Cerrados</option>
+              <option value="all" className="bg-background">Todos</option>
+              <option value="open" className="bg-background">Abiertos</option>
+              <option value="closed" className="bg-background">Cerrados</option>
             </select>
 
             {availableYears.length > 1 && (
               <select
                 value={yearFilter}
                 onChange={e => setYearFilter(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+                className="bg-muted/50 border border-border rounded text-xs text-foreground px-2 py-1 h-7"
               >
-                <option value="all" className="bg-[#111]">Todos los años</option>
+                <option value="all" className="bg-background">Todos los años</option>
                 {availableYears.map(y => (
-                  <option key={y} value={y} className="bg-[#111]">{y}</option>
+                  <option key={y} value={y} className="bg-background">{y}</option>
                 ))}
               </select>
             )}
@@ -608,7 +608,7 @@ export function ClosingsTab({ orgId }: Props) {
               const net = closing.total_income - closing.total_costs;
               const isExp = expanded === closing.id;
               return (
-                <div key={closing.id} className="rounded-sm border border-white/10 bg-card overflow-hidden">
+                <div key={closing.id} className="rounded-sm border border-border bg-card overflow-hidden">
                   <div className="flex items-center gap-4 p-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -708,7 +708,7 @@ export function ClosingsTab({ orgId }: Props) {
 
       {/* Dialog nuevo cierre */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-border text-foreground">
           <DialogHeader>
             <DialogTitle>Nuevo cierre financiero</DialogTitle>
           </DialogHeader>
@@ -720,18 +720,18 @@ export function ClosingsTab({ orgId }: Props) {
                 value={form.name}
                 onChange={e => f('name', e.target.value)}
                 placeholder="Ej. Cierre Mayo 2026"
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Fecha inicio *</label>
-                <Input type="date" value={form.period_start} onChange={e => f('period_start', e.target.value)} className="bg-white/5 border-white/10" />
+                <Input type="date" value={form.period_start} onChange={e => f('period_start', e.target.value)} className="bg-muted/50 border-border" />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Fecha fin *</label>
-                <Input type="date" value={form.period_end} onChange={e => f('period_end', e.target.value)} className="bg-white/5 border-white/10" />
+                <Input type="date" value={form.period_end} onChange={e => f('period_end', e.target.value)} className="bg-muted/50 border-border" />
               </div>
             </div>
 
@@ -740,12 +740,12 @@ export function ClosingsTab({ orgId }: Props) {
               <select
                 value={form.currency}
                 onChange={e => f('currency', e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground"
               >
-                <option value="COP" className="bg-[#111]">COP</option>
-                <option value="USD" className="bg-[#111]">USD</option>
-                <option value="EUR" className="bg-[#111]">EUR</option>
-                <option value="MXN" className="bg-[#111]">MXN</option>
+                <option value="COP" className="bg-background">COP</option>
+                <option value="USD" className="bg-background">USD</option>
+                <option value="EUR" className="bg-background">EUR</option>
+                <option value="MXN" className="bg-background">MXN</option>
               </select>
             </div>
 
@@ -760,7 +760,7 @@ export function ClosingsTab({ orgId }: Props) {
                 onChange={e => f('notes', e.target.value)}
                 placeholder="Observaciones, acuerdos…"
                 rows={2}
-                className="bg-white/5 border-white/10 resize-none"
+                className="bg-muted/50 border-border resize-none"
               />
             </div>
           </div>

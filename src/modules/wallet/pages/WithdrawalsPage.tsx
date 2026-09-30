@@ -109,7 +109,7 @@ export function WithdrawalsPage() {
               <ArrowUpRight className="h-8 w-8 text-emerald-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
                 Retiros
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -144,7 +144,7 @@ export function WithdrawalsPage() {
           <AlertCircle className="h-4 w-4 text-primary" />
           <AlertDescription>
             El monto mínimo de retiro es $50.000 COP. Tu balance disponible actual es{' '}
-            <span className="font-medium text-white">{walletDisplay.formattedAvailable}</span>
+            <span className="font-medium text-foreground">{walletDisplay.formattedAvailable}</span>
           </AlertDescription>
         </Alert>
       ) : null}
@@ -170,7 +170,7 @@ export function WithdrawalsPage() {
         <Card className="bg-[hsl(270,100%,60%,0.03)] border-[hsl(270,100%,60%,0.1)]">
           <CardContent className="p-4">
             <p className="text-sm text-muted-foreground">Métodos de Pago</p>
-            <p className="text-2xl font-bold text-white mt-1">
+            <p className="text-2xl font-bold text-foreground mt-1">
               {paymentMethods?.length || 0}
             </p>
           </CardContent>
@@ -189,7 +189,7 @@ export function WithdrawalsPage() {
             <WithdrawalStatusTimeline withdrawal={activeWithdrawal} />
             <div className="mt-4 flex items-center justify-between">
               <div>
-                <p className="text-xl font-bold text-white">
+                <p className="text-xl font-bold text-foreground">
                   {activeWithdrawal.formattedNetAmount || activeWithdrawal.formattedAmount}
                 </p>
                 <p className="text-xs text-muted-foreground">
@@ -212,8 +212,8 @@ export function WithdrawalsPage() {
           <TabsTrigger
             value="history"
             className={cn(
-              'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-              'text-muted-foreground hover:text-white transition-colors'
+              'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-foreground',
+              'text-muted-foreground hover:text-foreground transition-colors'
             )}
           >
             <History className="h-4 w-4" />
@@ -222,8 +222,8 @@ export function WithdrawalsPage() {
           <TabsTrigger
             value="payment-methods"
             className={cn(
-              'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-              'text-muted-foreground hover:text-white transition-colors'
+              'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-foreground',
+              'text-muted-foreground hover:text-foreground transition-colors'
             )}
           >
             <CreditCard className="h-4 w-4" />

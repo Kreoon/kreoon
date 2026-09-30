@@ -624,7 +624,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     <aside
       className={cn(
         "fixed left-4 top-4 bottom-4 z-50 flex flex-col",
-        "rounded-2xl border border-white/10",
+        "rounded-2xl border border-border",
         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         "bg-white dark:bg-background shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]",
         collapsed ? "w-[72px]" : "w-64"
@@ -634,7 +634,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       <div className="h-full flex flex-col">
         {/* Logo - fixed at top */}
         <div className={cn(
-          "shrink-0 flex h-16 items-center border-b border-white/5 px-4 bg-transparent",
+          "shrink-0 flex h-16 items-center border-b border-border/50 px-4 bg-transparent",
           collapsed ? "justify-center" : "justify-between"
         )}>
           {/* hasCustomLogo: white-label activo Y hay un logo real (no el favicon por defecto) */}

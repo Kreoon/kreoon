@@ -152,7 +152,7 @@ function CreatorCardComponent({ creator, onClick }: CreatorCardProps) {
           animate={{ opacity: isHovered && !videoLoaded ? 0.8 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
             <Play className="h-6 w-6 text-white fill-white ml-1" />
           </div>
         </motion.div>

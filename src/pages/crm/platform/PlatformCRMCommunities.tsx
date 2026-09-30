@@ -173,9 +173,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground/70">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>
@@ -190,7 +190,7 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   active: { label: "Activa", class: "bg-green-500/20 text-green-300" },
   inactive: { label: "Inactiva", class: "bg-red-500/20 text-red-300" },
   scheduled: { label: "Programada", class: "bg-blue-500/20 text-blue-300" },
-  expired: { label: "Expirada", class: "bg-gray-500/20 text-gray-300" },
+  expired: { label: "Expirada", class: "bg-gray-500/20 text-muted-foreground" },
 };
 
 function getCommunityStatus(community: CommunityWithMetrics): string {
@@ -1051,7 +1051,7 @@ function MembersTab({ community }: { community: CommunityWithMetrics }) {
                   "text-[10px]",
                   member.status === 'active'
                     ? "bg-green-500/20 text-green-300"
-                    : "bg-gray-500/20 text-gray-300"
+                    : "bg-gray-500/20 text-muted-foreground"
                 )}
               >
                 {member.status === 'active' ? 'Activo' : member.status}
@@ -1242,7 +1242,7 @@ function CommunityDetailPanel({
             {community.logo_url ? (
               <img src={community.logo_url} alt="" className="w-12 h-12 rounded-sm object-cover" />
             ) : (
-              <Users2 className="w-6 h-6 text-white" />
+              <Users2 className="w-6 h-6 text-foreground" />
             )}
           </div>
           <div>
@@ -1524,8 +1524,8 @@ const PlatformCRMCommunities = () => {
         {/* ========== HEADER ========== */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white">Comunidades</h1>
-            <p className="text-white/60">Gestiona las comunidades de partners de Kreoon</p>
+            <h1 className="text-3xl font-bold text-foreground">Comunidades</h1>
+            <p className="text-muted-foreground">Gestiona las comunidades de partners de Kreoon</p>
           </div>
           <div className="flex gap-3 items-center">
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -1547,10 +1547,10 @@ const PlatformCRMCommunities = () => {
             </Dialog>
             <ViewModeToggle value={viewMode} onChange={setViewMode} />
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
               <Input
                 placeholder="Buscar comunidad..."
-                className="w-64 bg-white/5 border-white/10 pl-9"
+                className="w-64 bg-muted/40 border-border pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -1569,7 +1569,7 @@ const PlatformCRMCommunities = () => {
         {/* ========== FILTERS ========== */}
         <div className="flex flex-wrap gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 bg-white/5 border-white/10"><SelectValue placeholder="Estado" /></SelectTrigger>
+            <SelectTrigger className="w-40 bg-muted/40 border-border"><SelectValue placeholder="Estado" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
               <SelectItem value="active">Activas</SelectItem>
@@ -1579,7 +1579,7 @@ const PlatformCRMCommunities = () => {
             </SelectContent>
           </Select>
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48 bg-white/5 border-white/10"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
+            <SelectTrigger className="w-48 bg-muted/40 border-border"><SelectValue placeholder="Ordenar por" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="created_desc">Mas recientes</SelectItem>
               <SelectItem value="created_asc">Mas antiguas</SelectItem>
@@ -1587,19 +1587,19 @@ const PlatformCRMCommunities = () => {
               <SelectItem value="redemptions_desc">Mas redenciones</SelectItem>
             </SelectContent>
           </Select>
-          <div className="ml-auto text-sm text-white/40 self-center">{filtered.length} comunidades</div>
+          <div className="ml-auto text-sm text-muted-foreground/70 self-center">{filtered.length} comunidades</div>
         </div>
 
         {/* ========== CONTENT ========== */}
         {isLoading ? (
           <div className="p-12 text-center">
             <div className="w-8 h-8 border-2 border-amber-500/30 border-t-amber-500 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-white/40">Cargando comunidades...</p>
+            <p className="text-sm text-muted-foreground/70">Cargando comunidades...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-12 text-center">
-            <Users2 className="h-10 w-10 text-white/10 mx-auto mb-3" />
-            <p className="text-sm text-white/40">
+            <Users2 className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground/70">
               {search || statusFilter !== "all" ? "Sin resultados para los filtros aplicados" : "Aun no hay comunidades"}
             </p>
           </div>
@@ -1626,12 +1626,12 @@ const PlatformCRMCommunities = () => {
                       {community.logo_url ? (
                         <img src={community.logo_url} alt="" className="w-12 h-12 rounded-sm object-cover" />
                       ) : (
-                        <Users2 className="w-6 h-6 text-white" />
+                        <Users2 className="w-6 h-6 text-foreground" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-white font-medium truncate">{community.name}</p>
-                      <p className="text-white/40 text-xs truncate">/{community.slug}</p>
+                      <p className="text-foreground font-medium truncate">{community.name}</p>
+                      <p className="text-muted-foreground/70 text-xs truncate">/{community.slug}</p>
                     </div>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0", cfg.class)}>
                       {cfg.label}
@@ -1639,20 +1639,20 @@ const PlatformCRMCommunities = () => {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <div className="text-center">
-                      <p className="text-white font-semibold text-sm">{community.member_count}</p>
-                      <p className="text-[10px] text-white/40">Miembros</p>
+                      <p className="text-foreground font-semibold text-sm">{community.member_count}</p>
+                      <p className="text-[10px] text-muted-foreground/70">Miembros</p>
                     </div>
                     <div className="text-center">
                       <p className="text-amber-400 font-semibold text-sm">{community.free_months}</p>
-                      <p className="text-[10px] text-white/40">Meses</p>
+                      <p className="text-[10px] text-muted-foreground/70">Meses</p>
                     </div>
                     <div className="text-center">
                       <p className="text-green-400 font-semibold text-sm">{community.commission_discount_points}%</p>
-                      <p className="text-[10px] text-white/40">Desc.</p>
+                      <p className="text-[10px] text-muted-foreground/70">Desc.</p>
                     </div>
                     <div className="text-center">
                       <p className="text-purple-400 font-semibold text-sm">{community.current_redemptions}</p>
-                      <p className="text-[10px] text-white/40">Usos</p>
+                      <p className="text-[10px] text-muted-foreground/70">Usos</p>
                     </div>
                   </div>
                 </Card>
@@ -1669,7 +1669,7 @@ const PlatformCRMCommunities = () => {
                 <div
                   key={community.id}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
+                    "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors",
                     selectedCommunity?.id === community.id && "bg-amber-500/10 border border-amber-500/30",
                   )}
                   onClick={() => handleSelectCommunity(community)}
@@ -1681,13 +1681,13 @@ const PlatformCRMCommunities = () => {
                     {community.logo_url ? (
                       <img src={community.logo_url} alt="" className="w-8 h-8 rounded-sm object-cover" />
                     ) : (
-                      <span className="text-xs font-bold text-white">{getInitials(community.name)}</span>
+                      <span className="text-xs font-bold text-foreground">{getInitials(community.name)}</span>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-white text-sm font-medium truncate">{community.name}</p>
+                    <p className="text-foreground text-sm font-medium truncate">{community.name}</p>
                   </div>
-                  <span className="text-xs text-white/50 hidden sm:inline">{community.member_count} miembros</span>
+                  <span className="text-xs text-muted-foreground/70 hidden sm:inline">{community.member_count} miembros</span>
                   <span className="text-xs text-amber-400 hidden md:inline">{community.free_months} meses</span>
                   <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0", cfg.class)}>
                     {cfg.label}
@@ -1701,14 +1701,14 @@ const PlatformCRMCommunities = () => {
           <Card>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/70">Comunidad</TableHead>
-                  <TableHead className="text-white/70">Miembros</TableHead>
-                  <TableHead className="text-white/70 hidden md:table-cell">Meses Gratis</TableHead>
-                  <TableHead className="text-white/70 hidden md:table-cell">Descuento</TableHead>
-                  <TableHead className="text-white/70 hidden lg:table-cell">Tokens</TableHead>
-                  <TableHead className="text-white/70 hidden lg:table-cell">Redenciones</TableHead>
-                  <TableHead className="text-white/70">Estado</TableHead>
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground">Comunidad</TableHead>
+                  <TableHead className="text-muted-foreground">Miembros</TableHead>
+                  <TableHead className="text-muted-foreground hidden md:table-cell">Meses Gratis</TableHead>
+                  <TableHead className="text-muted-foreground hidden md:table-cell">Descuento</TableHead>
+                  <TableHead className="text-muted-foreground hidden lg:table-cell">Tokens</TableHead>
+                  <TableHead className="text-muted-foreground hidden lg:table-cell">Redenciones</TableHead>
+                  <TableHead className="text-muted-foreground">Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1719,7 +1719,7 @@ const PlatformCRMCommunities = () => {
                     <TableRow
                       key={community.id}
                       className={cn(
-                        "border-white/10 hover:bg-white/5 cursor-pointer",
+                        "border-border hover:bg-muted/40 cursor-pointer",
                         selectedCommunity?.id === community.id && "bg-amber-500/10",
                       )}
                       onClick={() => handleSelectCommunity(community)}
@@ -1733,23 +1733,23 @@ const PlatformCRMCommunities = () => {
                             {community.logo_url ? (
                               <img src={community.logo_url} alt="" className="w-10 h-10 rounded-sm object-cover" />
                             ) : (
-                              <Users2 className="w-5 h-5 text-white" />
+                              <Users2 className="w-5 h-5 text-foreground" />
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-white font-medium truncate">{community.name}</p>
-                            <p className="text-white/40 text-xs truncate">/{community.slug}</p>
+                            <p className="text-foreground font-medium truncate">{community.name}</p>
+                            <p className="text-muted-foreground/70 text-xs truncate">/{community.slug}</p>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-white">{community.member_count}</TableCell>
+                      <TableCell className="text-foreground">{community.member_count}</TableCell>
                       <TableCell className="text-amber-400 hidden md:table-cell">{community.free_months}</TableCell>
                       <TableCell className="text-green-400 hidden md:table-cell">{community.commission_discount_points}%</TableCell>
                       <TableCell className="text-purple-400 hidden lg:table-cell">{community.bonus_ai_tokens}</TableCell>
-                      <TableCell className="text-white hidden lg:table-cell">
+                      <TableCell className="text-foreground hidden lg:table-cell">
                         {community.current_redemptions}
                         {community.max_redemptions && (
-                          <span className="text-white/40">/{community.max_redemptions}</span>
+                          <span className="text-muted-foreground/70">/{community.max_redemptions}</span>
                         )}
                       </TableCell>
                       <TableCell>

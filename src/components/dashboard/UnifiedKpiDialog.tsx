@@ -27,7 +27,7 @@ const MKT_STATUS_COLORS: Record<string, string> = {
   revision: 'bg-pink-500/20 text-pink-400',
   approved: 'bg-green-500/20 text-green-400',
   completed: 'bg-cyan-500/20 text-cyan-400',
-  cancelled: 'bg-gray-500/20 text-gray-400',
+  cancelled: 'bg-gray-500/20 text-muted-foreground',
   overdue: 'bg-red-500/20 text-red-400',
 };
 
@@ -70,7 +70,7 @@ function StatsHeader({
     <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 mb-4 rounded-sm bg-card/60 dark:bg-card/80 border border-zinc-700/40">
       <div className="flex items-center gap-3 divide-x divide-zinc-700/40">
         <div className="text-center pr-3">
-          <p className="text-base font-bold text-white">{total}</p>
+          <p className="text-base font-bold text-foreground">{total}</p>
           <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Total</p>
         </div>
         <div className="text-center px-3">
@@ -189,7 +189,7 @@ export function UnifiedKpiDialog({
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] bg-background border-zinc-800 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            <span className="text-base font-bold text-white">{title}</span>
+            <span className="text-base font-bold text-foreground">{title}</span>
             <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
               {total}
             </Badge>
@@ -224,11 +224,11 @@ export function UnifiedKpiDialog({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white line-clamp-1">{item.title}</p>
+                          <p className="text-sm font-medium text-foreground line-clamp-1">{item.title}</p>
                           <p className="text-xs text-zinc-500">{item.client?.name || 'Sin cliente'}</p>
                         </div>
                         <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-zinc-300">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                             {STATUS_LABELS[item.status as keyof typeof STATUS_LABELS] || item.status}
                           </span>
                           {myPay > 0 && (
@@ -265,7 +265,7 @@ export function UnifiedKpiDialog({
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white line-clamp-1">
+                          <p className="text-sm font-medium text-foreground line-clamp-1">
                             {project.brief?.product_name || 'Sin título'}
                           </p>
                           <p className="text-xs text-zinc-500">{project.brand_name || 'Sin marca'}</p>
@@ -273,7 +273,7 @@ export function UnifiedKpiDialog({
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           <span className={cn(
                             'text-[10px] px-1.5 py-0.5 rounded-full',
-                            MKT_STATUS_COLORS[project.status] || 'bg-zinc-700/50 text-zinc-300',
+                            MKT_STATUS_COLORS[project.status] || 'bg-muted text-muted-foreground',
                           )}>
                             {MKT_STATUS_LABELS[project.status] || project.status}
                           </span>

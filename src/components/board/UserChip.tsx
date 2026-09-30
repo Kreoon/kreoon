@@ -16,7 +16,7 @@ export const UserChip = forwardRef<HTMLDivElement, UserChipProps>(
       ref={ref}
       className={cn(
         "flex items-center gap-2 rounded-sm py-1 pr-3 pl-1 transition-all",
-        "bg-white/5 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]",
+        "bg-muted/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.2)]",
         className
       )}
     >

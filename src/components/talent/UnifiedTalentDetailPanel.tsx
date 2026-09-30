@@ -379,8 +379,8 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
       {/* Loading for full detail */}
       {fullLoading && hasRelationship && (
         <div className="space-y-3">
-          <Skeleton className="h-16 rounded-sm bg-white/5" />
-          <Skeleton className="h-12 rounded-sm bg-white/5" />
+          <Skeleton className="h-16 rounded-sm bg-muted/50" />
+          <Skeleton className="h-12 rounded-sm bg-muted/50" />
         </div>
       )}
 
@@ -428,20 +428,20 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
       {hasInternal && (
         <DetailSection title="Rendimiento Interno">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-            <span className="text-white/40">Contenido creado</span>
-            <span className="text-white/70 font-medium flex items-center gap-1">
+            <span className="text-muted-foreground">Contenido creado</span>
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
               <Video className="h-3 w-3 text-blue-400" />
               {member.content_count}
             </span>
-            <span className="text-white/40">Tareas activas</span>
-            <span className="text-white/70 font-medium flex items-center gap-1">
+            <span className="text-muted-foreground">Tareas activas</span>
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-info" />
               {member.active_tasks}
             </span>
             {member.up_points > 0 && (
               <>
-                <span className="text-white/40">UP Points</span>
-                <span className="text-white/70 font-medium flex items-center gap-1">
+                <span className="text-muted-foreground">UP Points</span>
+                <span className="text-muted-foreground font-medium flex items-center gap-1">
                   <Zap className="h-3 w-3 text-primary" />
                   {member.up_points} {member.up_level && `(${member.up_level})`}
                 </span>
@@ -449,8 +449,8 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
             )}
             {member.avg_star_rating != null && member.avg_star_rating > 0 && (
               <>
-                <span className="text-white/40">Rating promedio</span>
-                <span className="text-white/70 font-medium flex items-center gap-1">
+                <span className="text-muted-foreground">Rating promedio</span>
+                <span className="text-muted-foreground font-medium flex items-center gap-1">
                   <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                   {member.avg_star_rating.toFixed(1)} ({member.rated_content_count} calificados)
                 </span>
@@ -458,8 +458,8 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
             )}
             {member.ai_recommended_level && (
               <>
-                <span className="text-white/40">Nivel IA</span>
-                <span className="text-white/70 font-medium flex items-center gap-1">
+                <span className="text-muted-foreground">Nivel IA</span>
+                <span className="text-muted-foreground font-medium flex items-center gap-1">
                   <Brain className="h-3 w-3 text-amber-400" />
                   {member.ai_recommended_level}
                 </span>
@@ -498,7 +498,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
               ))}
             </div>
           ) : (
-            <p className="text-xs text-white/30 mb-2">Sin roles asignados</p>
+            <p className="text-xs text-muted-foreground/60 mb-2">Sin roles asignados</p>
           )}
 
           {rolePickerOpen ? (
@@ -517,7 +517,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                   size="sm"
                   variant="ghost"
                   onClick={() => setRolePickerOpen(false)}
-                  className="h-7 text-xs text-white/50"
+                  className="h-7 text-xs text-muted-foreground"
                 >
                   Cancelar
                 </Button>
@@ -528,7 +528,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
               size="sm"
               variant="ghost"
               onClick={() => setRolePickerOpen(true)}
-              className="h-7 text-xs bg-white/5 hover:bg-white/10 text-white/60"
+              className="h-7 text-xs bg-muted/50 hover:bg-muted text-muted-foreground"
             >
               <Shield className="h-3 w-3 mr-1.5" />
               Agregar rol
@@ -631,7 +631,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                   'h-8 px-3 text-xs border transition-all',
                   isFavorite
                     ? 'bg-pink-500/20 border-pink-500/30 text-pink-400 hover:bg-pink-500/30'
-                    : 'bg-white/5 border-white/10 text-white/50 hover:text-pink-400 hover:bg-pink-500/10',
+                    : 'bg-muted/50 border-border text-muted-foreground hover:text-pink-400 hover:bg-pink-500/10',
                 )}
               >
                 <Heart className={cn('h-3.5 w-3.5 mr-1.5', isFavorite && 'fill-current')} />
@@ -647,7 +647,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                   'h-8 px-3 text-xs border transition-all',
                   isBlocked
                     ? 'bg-red-500/20 border-red-500/30 text-red-400'
-                    : 'bg-white/5 border-white/10 text-white/50 hover:text-red-400 hover:bg-red-500/10',
+                    : 'bg-muted/50 border-border text-muted-foreground hover:text-red-400 hover:bg-red-500/10',
                 )}
               >
                 <Ban className="h-3.5 w-3.5 mr-1.5" />
@@ -657,20 +657,20 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <span className="text-white/40">Colaboraciones</span>
-              <span className="text-white/70 font-medium flex items-center gap-1">
+              <span className="text-muted-foreground">Colaboraciones</span>
+              <span className="text-muted-foreground font-medium flex items-center gap-1">
                 <Briefcase className="h-3 w-3 text-blue-400" />
                 {member.times_worked_together}
               </span>
-              <span className="text-white/40">Pagado</span>
-              <span className="text-white/70 font-medium flex items-center gap-1">
+              <span className="text-muted-foreground">Pagado</span>
+              <span className="text-muted-foreground font-medium flex items-center gap-1">
                 <DollarSign className="h-3 w-3 text-green-400" />
                 {formatCurrency(member.total_paid)}
               </span>
               {member.average_rating_given != null && (
                 <>
-                  <span className="text-white/40">Rating dado</span>
-                  <span className="text-white/70 font-medium flex items-center gap-1">
+                  <span className="text-muted-foreground">Rating dado</span>
+                  <span className="text-muted-foreground font-medium flex items-center gap-1">
                     <Star className="h-3 w-3 text-amber-400" />
                     {member.average_rating_given.toFixed(1)}
                   </span>
@@ -678,9 +678,9 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
               )}
               {member.last_collaboration_at && (
                 <>
-                  <span className="text-white/40">Última colab.</span>
-                  <span className="text-white/70 flex items-center gap-1">
-                    <Calendar className="h-3 w-3 text-white/30" />
+                  <span className="text-muted-foreground">Última colab.</span>
+                  <span className="text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-muted-foreground/60" />
                     {formatDistanceToNow(new Date(member.last_collaboration_at), { addSuffix: true, locale: es })}
                   </span>
                 </>
@@ -696,9 +696,9 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                 onChange={e => setTagInput(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
                 placeholder="Agregar etiqueta..."
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8 flex-1"
+                className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 text-xs h-8 flex-1"
               />
-              <Button type="button" variant="ghost" size="icon" onClick={addTag} className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white/50">
+              <Button type="button" variant="ghost" size="icon" onClick={addTag} className="h-8 w-8 bg-muted/50 hover:bg-muted text-muted-foreground">
                 <Plus className="h-3.5 w-3.5" />
               </Button>
             </div>
@@ -726,9 +726,9 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
               onChange={e => handleNotesChange(e.target.value)}
               placeholder="Notas sobre este talento..."
               rows={3}
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none text-xs"
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 resize-none text-xs"
             />
-            {updateRelationship.isPending && <p className="text-[10px] text-white/30">Guardando...</p>}
+            {updateRelationship.isPending && <p className="text-[10px] text-muted-foreground/60">Guardando...</p>}
           </DetailSection>
 
           {/* Custom Fields */}
@@ -737,8 +737,8 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
             fieldDefs={fieldDefs.filter(d => d.is_active)}
             onChange={handleCustomFieldChange}
             configAction={
-              <button onClick={() => setShowFieldsConfig(true)} className="p-1 rounded hover:bg-white/10 transition-colors" title="Configurar campos">
-                <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+              <button onClick={() => setShowFieldsConfig(true)} className="p-1 rounded hover:bg-muted transition-colors" title="Configurar campos">
+                <Settings className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground" />
               </button>
             }
           />
@@ -805,10 +805,10 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
         <DetailSection title={`Contenido (${assignedContent.length})`}>
           {loadingContent ? (
             <div className="space-y-2">
-              {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 bg-white/5 rounded" />)}
+              {[1, 2, 3].map(i => <Skeleton key={i} className="h-8 bg-muted/50 rounded" />)}
             </div>
           ) : assignedContent.length === 0 ? (
-            <p className="text-xs text-white/30">Sin contenido asignado</p>
+            <p className="text-xs text-muted-foreground/60">Sin contenido asignado</p>
           ) : (
             <>
               {/* Filter tabs */}
@@ -825,7 +825,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                       'px-2 py-0.5 rounded text-[10px] font-medium transition-all',
                       contentFilter === tab.key
                         ? 'bg-primary text-white'
-                        : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/60',
+                        : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
                     )}
                   >
                     {tab.label}
@@ -842,7 +842,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                   : assignedContent;
                 const visible = list.slice(0, 20);
                 return list.length === 0 ? (
-                  <p className="text-xs text-white/30">Sin contenido en este filtro</p>
+                  <p className="text-xs text-muted-foreground/60">Sin contenido en este filtro</p>
                 ) : (
                   <div className="space-y-1.5 max-h-[280px] overflow-y-auto pr-1">
                     {visible.map(c => {
@@ -851,18 +851,18 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                         ? Math.floor((Date.now() - assignedAt.getTime()) / 86400000)
                         : null;
                       return (
-                        <div key={c.id} className="flex items-start justify-between text-xs p-1.5 rounded bg-white/5 gap-2 group">
+                        <div key={c.id} className="flex items-start justify-between text-xs p-1.5 rounded bg-muted/50 gap-2 group">
                           <div className="min-w-0 flex-1">
-                            <p className="text-white/70 truncate">{c.title || 'Sin título'}</p>
+                            <p className="text-muted-foreground truncate">{c.title || 'Sin título'}</p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <p className="text-[10px] text-white/30">{(c as any).client?.name}</p>
+                              <p className="text-[10px] text-muted-foreground/60">{(c as any).client?.name}</p>
                               {assignedAt && (
-                                <p className="text-[10px] text-white/25">
+                                <p className="text-[10px] text-muted-foreground/60">
                                   {format(assignedAt, "d MMM yyyy", { locale: es })}
                                   {daysAgo !== null && (
                                     <span className={cn(
                                       'ml-1',
-                                      daysAgo > 14 ? 'text-warning/70' : 'text-white/25',
+                                      daysAgo > 14 ? 'text-warning/70' : 'text-muted-foreground/60',
                                     )}>
                                       · {daysAgo === 0 ? 'hoy' : `hace ${daysAgo}d`}
                                     </span>
@@ -890,7 +890,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                                 onClick={() => handleUnassign(c)}
                                 disabled={unassigningId === c.id}
                                 title="Desasignar"
-                                className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 flex items-center justify-center rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 disabled:opacity-50"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 flex items-center justify-center rounded hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400 disabled:opacity-50"
                               >
                                 {unassigningId === c.id
                                   ? <span className="h-2.5 w-2.5 border border-current border-t-transparent rounded-full animate-spin block" />
@@ -903,7 +903,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
                       );
                     })}
                     {list.length > 20 && (
-                      <p className="text-[10px] text-white/30 text-center pt-1">+{list.length - 20} más</p>
+                      <p className="text-[10px] text-muted-foreground/60 text-center pt-1">+{list.length - 20} más</p>
                     )}
                   </div>
                 );
@@ -918,7 +918,7 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
         <DetailSection title="Embajador">
           <div className="flex items-center gap-2">
             <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-            <span className="text-sm text-white/70 font-medium capitalize">{member.ambassador_level}</span>
+            <span className="text-sm text-muted-foreground font-medium capitalize">{member.ambassador_level}</span>
           </div>
         </DetailSection>
       )}
@@ -926,8 +926,8 @@ export function UnifiedTalentDetailPanel({ member, organizationId, onClose, onUp
       {/* Info */}
       <DetailSection title="Info">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">ID</span>
-          <span className="text-white/50 font-mono text-[10px] truncate">{member.id}</span>
+          <span className="text-muted-foreground">ID</span>
+          <span className="text-muted-foreground font-mono text-[10px] truncate">{member.id}</span>
         </div>
       </DetailSection>
 

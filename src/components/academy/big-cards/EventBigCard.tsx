@@ -51,9 +51,9 @@ export function EventBigCard({ event, accentColor = '#8B5CF6', compact = false }
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
               <span className="text-sm" aria-hidden="true">{emoji}</span>
-              <div className="text-sm font-bold text-zinc-100 truncate">{event.title}</div>
+              <div className="text-sm font-bold text-foreground truncate">{event.title}</div>
             </div>
-            <div className="text-[11px] text-zinc-400 flex items-center gap-2">
+            <div className="text-[11px] text-muted-foreground flex items-center gap-2">
               <span>{format(dt, 'HH:mm')}</span>
               {event.rsvp_count != null && (
                 <span className="flex items-center gap-1">
@@ -146,10 +146,10 @@ export function EventBigCard({ event, accentColor = '#8B5CF6', compact = false }
         </h3>
 
         {event.description && (
-          <p className="text-sm text-zinc-400 line-clamp-2 leading-relaxed">{event.description}</p>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{event.description}</p>
         )}
 
-        <div className="flex items-center gap-3 text-sm text-zinc-300">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Calendar className="h-4 w-4" style={{ color: accentColor }} aria-hidden="true" />
             {format(dt, "EEEE d 'a las' HH:mm", { locale: es })}
@@ -158,7 +158,7 @@ export function EventBigCard({ event, accentColor = '#8B5CF6', compact = false }
 
         <div className="flex items-center gap-3 pt-1">
           {event.rsvp_count != null && (
-            <span className="flex items-center gap-1.5 text-xs text-zinc-400">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="h-3.5 w-3.5" aria-hidden="true" />
               {event.rsvp_count} {event.rsvp_count === 1 ? 'asistente' : 'asistentes'}
             </span>

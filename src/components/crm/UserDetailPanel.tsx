@@ -182,15 +182,15 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       }
       menuItems={isPlatformAdmin ? (
         <>
-          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-3.5 w-3.5" />
             {user.is_platform_admin ? 'Quitar admin' : 'Hacer admin'}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-white/70">
+          <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-muted-foreground">
             <KeyRound className="h-3.5 w-3.5" />
             Reset contraseña
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-white/10" />
+          <DropdownMenuSeparator className="bg-muted" />
           <DropdownMenuItem onClick={() => {}} className="gap-2 text-xs text-red-400">
             <Ban className="h-3.5 w-3.5" />
             {user.is_banned ? 'Desbloquear' : 'Bloquear'}
@@ -207,8 +207,8 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       {/* Loading indicator for full detail */}
       {fullLoading && (
         <div className="space-y-3">
-          <Skeleton className="h-16 rounded-sm bg-white/5" />
-          <Skeleton className="h-12 rounded-sm bg-white/5" />
+          <Skeleton className="h-16 rounded-sm bg-muted/40" />
+          <Skeleton className="h-12 rounded-sm bg-muted/40" />
         </div>
       )}
 
@@ -358,7 +358,7 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
             </div>
           </div>
           <div className="flex-1 space-y-1.5">
-            <p className="text-[10px] text-white/40">
+            <p className="text-[10px] text-muted-foreground/70">
               {user.health_score >= 70
                 ? 'Usuario activo y saludable'
                 : user.health_score >= 40
@@ -372,16 +372,16 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       {/* Activity */}
       <DetailSection title="Actividad">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Logins totales</span>
-          <span className="text-white/70 font-medium">{user.total_logins}</span>
-          <span className="text-white/40">Acciones</span>
-          <span className="text-white/70 font-medium">{user.total_actions}</span>
-          <span className="text-white/40">Días inactivo</span>
-          <span className={cn('font-medium', (user.days_since_last_activity ?? 0) > 14 ? 'text-red-400' : 'text-white/70')}>
+          <span className="text-muted-foreground/70">Logins totales</span>
+          <span className="text-muted-foreground font-medium">{user.total_logins}</span>
+          <span className="text-muted-foreground/70">Acciones</span>
+          <span className="text-muted-foreground font-medium">{user.total_actions}</span>
+          <span className="text-muted-foreground/70">Días inactivo</span>
+          <span className={cn('font-medium', (user.days_since_last_activity ?? 0) > 14 ? 'text-red-400' : 'text-muted-foreground')}>
             {user.days_since_last_activity ?? '—'}
           </span>
-          <span className="text-white/40">Último login</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Último login</span>
+          <span className="text-muted-foreground">
             {user.last_login_at
               ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
               : 'Nunca'}
@@ -416,10 +416,10 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
           configAction={
             <button
               onClick={() => setShowFieldsConfig(true)}
-              className="p-1 rounded hover:bg-white/10 transition-colors"
+              className="p-1 rounded hover:bg-muted transition-colors"
               title="Configurar campos"
             >
-              <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+              <Settings className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
             </button>
           }
         />
@@ -428,13 +428,13 @@ export function UserDetailPanel({ user, onClose, onUpdate }: UserDetailPanelProp
       {/* Info */}
       <DetailSection title="Info">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Creado</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Creado</span>
+          <span className="text-muted-foreground">
             {format(new Date(user.created_at), "d MMM yyyy", { locale: es })}
           </span>
           {user.needs_attention && (
             <>
-              <span className="text-white/40">Estado</span>
+              <span className="text-muted-foreground/70">Estado</span>
               <span className="flex items-center gap-1 text-red-400">
                 <AlertTriangle className="h-3 w-3" />
                 Necesita atención

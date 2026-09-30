@@ -77,7 +77,7 @@ export function SolutionRolesSection() {
                 className={`group relative text-left p-6 rounded-sm border transition-all duration-300 backdrop-blur-md ${
                   activeTab.id === role.id
                     ? "bg-white/5 border-kreoon-purple-500/50 shadow-kreoon-glow-sm"
-                    : "bg-transparent border-white/5 hover:border-white/20 hover:bg-white/[0.02]"
+                    : "bg-transparent border-white/5 hover:border-white/20 hover:bg-muted/40"
                 }`}
               >
                 <div className="flex items-center gap-4">

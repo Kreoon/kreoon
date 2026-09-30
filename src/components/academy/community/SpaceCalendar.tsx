@@ -62,7 +62,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
         <div className="flex justify-end">
           <Button
             onClick={() => setShowCreate((v) => !v)}
-            className="bg-purple-500 hover:bg-purple-600 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             <Plus className="h-4 w-4 mr-2" /> Nuevo evento
           </Button>
@@ -70,14 +70,14 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
       )}
 
       {showCreate && (
-        <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+        <Card className="p-5 bg-muted/50 border-border space-y-3">
           <h3 className="font-semibold">Nuevo evento</h3>
           <div>
             <Label>Título</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
           </div>
           <div>
@@ -85,7 +85,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-16"
+              className="w-full bg-muted border border-border rounded p-2 text-sm h-16"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -95,7 +95,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
                 type="datetime-local"
                 value={startsAt}
                 onChange={(e) => setStartsAt(e.target.value)}
-                className="bg-black/30 border-white/10"
+                className="bg-muted border-border"
               />
             </div>
             <div>
@@ -104,7 +104,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
                 type="datetime-local"
                 value={endsAt}
                 onChange={(e) => setEndsAt(e.target.value)}
-                className="bg-black/30 border-white/10"
+                className="bg-muted border-border"
               />
             </div>
           </div>
@@ -114,7 +114,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as EventType)}
-                className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
+                className="w-full bg-muted border border-border rounded p-2 text-sm"
               >
                 <option value="live_call">Live call</option>
                 <option value="workshop">Workshop</option>
@@ -129,7 +129,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
                 value={meetingUrl}
                 onChange={(e) => setMeetingUrl(e.target.value)}
                 placeholder="https://zoom.us/..."
-                className="bg-black/30 border-white/10"
+                className="bg-muted border-border"
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
             <Button variant="outline" onClick={reset}>
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={create.isPending} className="bg-purple-500 hover:bg-purple-600 text-white">
+            <Button onClick={handleCreate} disabled={create.isPending} className="bg-primary hover:bg-primary/90 text-white">
               {create.isPending ? 'Creando...' : 'Crear evento'}
             </Button>
           </div>
@@ -145,7 +145,7 @@ export function SpaceCalendar({ spaceId, isOwner, accentColor = '#8B5CF6' }: Spa
       )}
 
       {isLoading ? (
-        <div className="text-zinc-500 text-center py-8">Cargando eventos...</div>
+        <div className="text-muted-foreground text-center py-8">Cargando eventos...</div>
       ) : (
         <>
           <Section title="Próximos eventos" events={upcoming} onRsvp={rsvp.mutate} accentColor={accentColor} />
@@ -175,7 +175,7 @@ function Section({
     <div>
       <h3 className="font-semibold mb-3">{title}</h3>
       {events.length === 0 ? (
-        <Card className="p-6 text-center bg-white/5 border-white/10 text-zinc-500 text-sm">
+        <Card className="p-6 text-center bg-muted/50 border-border text-muted-foreground text-sm">
           {pastMode ? 'Sin eventos pasados' : 'Sin eventos próximos'}
         </Card>
       ) : (
@@ -208,7 +208,7 @@ function EventRow({
   })();
 
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="flex items-start gap-4">
         <div
           className="rounded-lg p-3 text-center flex-shrink-0"
@@ -221,19 +221,19 @@ function EventRow({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <h4 className="font-semibold truncate">{event.title}</h4>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 uppercase">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 border border-border uppercase">
               {event.type}
             </span>
           </div>
           {event.description && (
-            <p className="text-xs text-zinc-400 line-clamp-2">{event.description}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2">{event.description}</p>
           )}
           {event.meeting_url && (
             <a
               href={event.meeting_url}
               target="_blank"
               rel="noreferrer"
-              className="mt-1 inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300"
+              className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80"
             >
               <Video className="h-3 w-3" /> Unirse <ExternalLink className="h-2.5 w-2.5" />
             </a>
@@ -248,8 +248,8 @@ function EventRow({
                 className={cn(
                   'text-[10px] px-2 py-1 rounded border flex items-center gap-1',
                   myRsvp === s
-                    ? 'border-purple-500 bg-purple-500/15 text-purple-200'
-                    : 'border-white/10 text-zinc-500 hover:text-zinc-300'
+                    ? 'border-primary bg-primary/15 text-primary'
+                    : 'border-border text-muted-foreground hover:text-foreground'
                 )}
               >
                 {myRsvp === s && <Check className="h-2.5 w-2.5" />}

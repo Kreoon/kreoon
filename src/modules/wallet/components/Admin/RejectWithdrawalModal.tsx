@@ -88,7 +88,7 @@ export function RejectWithdrawalModal({
               {/* Warning */}
               <div className="flex items-start gap-3 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
                 <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-[hsl(270,30%,70%)]">
+                <div className="text-sm text-muted-foreground">
                   <p>
                     Esta acción devolverá <strong>{withdrawal.formattedNetAmount}</strong> al
                     balance disponible del usuario.
@@ -145,7 +145,7 @@ export function RejectWithdrawalModal({
                   <p className="text-xs text-muted-foreground mb-1">
                     El usuario verá este mensaje:
                   </p>
-                  <p className="text-sm text-white">{finalReason || '...'}</p>
+                  <p className="text-sm text-foreground">{finalReason || '...'}</p>
                 </div>
               )}
             </div>

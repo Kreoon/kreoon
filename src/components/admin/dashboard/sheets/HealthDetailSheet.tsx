@@ -107,8 +107,8 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       header: "Usuario",
       render: (u) => (
         <div>
-          <p className="font-medium text-white">{u.full_name}</p>
-          <p className="text-xs text-white/40">{u.email}</p>
+          <p className="font-medium text-foreground">{u.full_name}</p>
+          <p className="text-xs text-muted-foreground/70">{u.email}</p>
         </div>
       ),
     },
@@ -117,7 +117,7 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       header: "Score",
       render: (u) => (
         <div className="flex items-center gap-2">
-          <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden">
+          <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
             <div
               className={cn(
                 "h-full rounded-full",
@@ -126,7 +126,7 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
               style={{ width: `${u.health_score}%` }}
             />
           </div>
-          <span className="text-xs text-white/60">{u.health_score}%</span>
+          <span className="text-xs text-muted-foreground">{u.health_score}%</span>
         </div>
       ),
     },
@@ -147,9 +147,9 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       header: "Inactividad",
       render: (u) =>
         u.days_inactive < 0 ? (
-          <span className="text-white/30 text-xs">Nunca</span>
+          <span className="text-muted-foreground/70 text-xs">Nunca</span>
         ) : (
-          <span className={cn("text-xs", u.days_inactive > 30 ? "text-red-400" : u.days_inactive > 14 ? "text-yellow-400" : "text-white/50")}>
+          <span className={cn("text-xs", u.days_inactive > 30 ? "text-red-400" : u.days_inactive > 14 ? "text-yellow-400" : "text-muted-foreground/70")}>
             {u.days_inactive}d
           </span>
         ),
@@ -158,7 +158,7 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       key: "last_active",
       header: "Ultima actividad",
       render: (u) => (
-        <span className="text-white/50 text-xs">
+        <span className="text-muted-foreground/70 text-xs">
           {u.last_active_at ? new Date(u.last_active_at).toLocaleDateString("es-CO") : "Nunca"}
         </span>
       ),
@@ -185,7 +185,7 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start">
+        <TabsList className="bg-muted/40 w-full justify-start">
           <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
           <TabsTrigger value="at_risk" className="text-xs">En Riesgo</TabsTrigger>
           <TabsTrigger value="churning" className="text-xs">Churning</TabsTrigger>
@@ -200,7 +200,7 @@ export function HealthDetailSheet({ stats }: HealthDetailSheetProps) {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+        <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
           Cargando datos de salud...
         </div>
       ) : (

@@ -49,7 +49,7 @@ export function SpaceLeaderboard({ spaceId }: SpaceLeaderboardProps) {
               'flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold rounded-2xl transition-all',
               period === t.id
                 ? 'text-white shadow-lg'
-                : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
             )}
             style={
               period === t.id
@@ -68,13 +68,13 @@ export function SpaceLeaderboard({ spaceId }: SpaceLeaderboardProps) {
       {isLoading ? (
         <BigCard className="p-10 text-center">
           <div className="text-5xl mb-3" aria-hidden="true">⏳</div>
-          <div className="text-sm text-zinc-400">Cargando ranking...</div>
+          <div className="text-sm text-muted-foreground">Cargando ranking...</div>
         </BigCard>
       ) : rows.length === 0 ? (
         <BigCard className="p-10 text-center border-dashed">
           <div className="text-6xl mb-3" aria-hidden="true">🌱</div>
-          <h3 className="text-lg font-bold text-zinc-100 mb-1">Aún sin actividad</h3>
-          <p className="text-sm text-zinc-400">
+          <h3 className="text-lg font-bold text-foreground mb-1">Aún sin actividad</h3>
+          <p className="text-sm text-muted-foreground">
             Sé el primero en ganar XP y aparece en el podio
           </p>
         </BigCard>
@@ -88,7 +88,7 @@ export function SpaceLeaderboard({ spaceId }: SpaceLeaderboardProps) {
           {/* Resto */}
           {rest.length > 0 && (
             <BigCard className="p-2">
-              <ul className="divide-y divide-white/5">
+              <ul className="divide-y divide-border">
                 {rest.map((r, i) => (
                   <li key={r.id}>
                     <RankRow rank={i + 4} row={r} points={pointsValue(r)} />
@@ -106,7 +106,7 @@ export function SpaceLeaderboard({ spaceId }: SpaceLeaderboardProps) {
               gradient="purple"
               className="p-4 sticky bottom-4 z-10"
             >
-              <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
                 🎯 Tu posición
               </div>
               <RankRow rank={myRank} row={me} points={pointsValue(me)} highlight />
@@ -134,7 +134,7 @@ function RankRow({
     <div
       className={cn(
         'flex items-center gap-3 py-3 px-3 rounded-2xl',
-        highlight && 'bg-white/[0.03]'
+        highlight && 'bg-muted/30'
       )}
     >
       <span
@@ -142,16 +142,16 @@ function RankRow({
         aria-hidden="true"
       >
         {medal ?? (
-          <span className="text-sm font-bold text-zinc-500 tabular-nums">{rank}</span>
+          <span className="text-sm font-bold text-muted-foreground tabular-nums">{rank}</span>
         )}
       </span>
       <Avatar profile={row.user} size={40} />
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-bold text-zinc-100 truncate">
+        <div className="text-sm font-bold text-foreground truncate">
           {row.user?.full_name ?? 'Usuario'}
         </div>
         <div className="mt-1 flex items-center gap-2">
-          <div className="h-1.5 rounded-full bg-white/5 overflow-hidden flex-1 max-w-[120px]">
+          <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden flex-1 max-w-[120px]">
             <div
               className="h-full rounded-full"
               style={{
@@ -160,7 +160,7 @@ function RankRow({
               }}
             />
           </div>
-          <span className="text-[10px] font-bold text-zinc-500 uppercase">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase">
             Nv {row.level}
           </span>
         </div>
@@ -172,7 +172,7 @@ function RankRow({
         >
           {points.toLocaleString()}
         </div>
-        <div className="text-[10px] text-zinc-500 font-bold uppercase">XP</div>
+        <div className="text-[10px] text-muted-foreground font-bold uppercase">XP</div>
       </div>
     </div>
   );
@@ -184,14 +184,14 @@ function Avatar({ profile, size = 32 }: { profile: any; size?: number }) {
       <img
         src={profile.avatar_url}
         alt=""
-        className="rounded-2xl object-cover border-2 border-white/10 flex-shrink-0"
+        className="rounded-2xl object-cover border-2 border-border flex-shrink-0"
         style={{ height: size, width: size }}
       />
     );
   }
   return (
     <div
-      className="rounded-2xl flex items-center justify-center font-extrabold text-white border-2 border-white/10 flex-shrink-0"
+      className="rounded-2xl flex items-center justify-center font-extrabold text-white border-2 border-border flex-shrink-0"
       style={{
         height: size,
         width: size,

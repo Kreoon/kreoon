@@ -150,20 +150,20 @@ export function ClientUserDetailPanel({
       {/* Contact Info */}
       <DetailSection title="Contacto">
         <div className="space-y-2">
-          <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-white/5">
+          <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-muted/40">
             <div className="flex items-center gap-2 min-w-0">
-              <Mail className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-              <span className="text-xs text-white/70 truncate">
+              <Mail className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+              <span className="text-xs text-muted-foreground truncate">
                 {user.email}
               </span>
             </div>
             <CopyButton text={user.email} />
           </div>
           {user.phone && (
-            <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-white/5">
+            <div className="flex items-center justify-between py-1.5 px-2 rounded-sm bg-muted/40">
               <div className="flex items-center gap-2 min-w-0">
-                <Phone className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-                <span className="text-xs text-white/70">{user.phone}</span>
+                <Phone className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                <span className="text-xs text-muted-foreground">{user.phone}</span>
               </div>
               <div className="flex items-center gap-1">
                 <CopyButton text={user.phone} />
@@ -171,7 +171,7 @@ export function ClientUserDetailPanel({
                   href={`https://wa.me/${user.phone.replace(/[^0-9+]/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors text-white/30 hover:text-green-400"
+                  className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground/70 hover:text-green-400"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MessageCircle className="h-3 w-3" />
@@ -180,9 +180,9 @@ export function ClientUserDetailPanel({
             </div>
           )}
           {user.city && (
-            <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm bg-white/5">
-              <MapPin className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-              <span className="text-xs text-white/70">{user.city}</span>
+            <div className="flex items-center gap-2 py-1.5 px-2 rounded-sm bg-muted/40">
+              <MapPin className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+              <span className="text-xs text-muted-foreground">{user.city}</span>
             </div>
           )}
         </div>
@@ -194,7 +194,7 @@ export function ClientUserDetailPanel({
         action={
           <Badge
             variant="outline"
-            className="text-[10px] h-5 bg-white/5 text-white/50 border-white/10"
+            className="text-[10px] h-5 bg-muted/40 text-muted-foreground/70 border-border"
           >
             {user.linked_companies.length}
           </Badge>
@@ -211,12 +211,12 @@ export function ClientUserDetailPanel({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Building2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-xs text-white/80 font-medium truncate">
+                    <span className="text-xs text-muted-foreground font-medium truncate">
                       {company.client_name}
                     </span>
                     <div className="flex items-center gap-1 flex-shrink-0">
-                      <RoleIcon className="h-3 w-3 text-white/30" />
-                      <span className="text-[10px] text-white/40">
+                      <RoleIcon className="h-3 w-3 text-muted-foreground/70" />
+                      <span className="text-[10px] text-muted-foreground/70">
                         {ROLE_LABEL[company.role] || company.role}
                       </span>
                     </div>
@@ -227,7 +227,7 @@ export function ClientUserDetailPanel({
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 text-white/30 hover:text-red-400 hover:bg-red-500/10"
+                          className="h-6 w-6 text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10"
                           disabled={loading}
                         >
                           <Unlink className="h-3 w-3" />
@@ -276,10 +276,10 @@ export function ClientUserDetailPanel({
                 key={company.id}
                 onClick={() => handleLink(company.id)}
                 disabled={loading}
-                className="w-full flex items-center gap-2 py-2 px-2.5 rounded-sm border border-dashed border-white/10 hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-colors text-left disabled:opacity-50"
+                className="w-full flex items-center gap-2 py-2 px-2.5 rounded-sm border border-dashed border-border hover:border-emerald-500/30 hover:bg-emerald-500/5 transition-colors text-left disabled:opacity-50"
               >
-                <LinkIcon className="h-3.5 w-3.5 text-white/30" />
-                <span className="text-xs text-white/60">{company.name}</span>
+                <LinkIcon className="h-3.5 w-3.5 text-muted-foreground/70" />
+                <span className="text-xs text-muted-foreground">{company.name}</span>
               </button>
             ))}
           </div>
@@ -289,26 +289,26 @@ export function ClientUserDetailPanel({
       {/* Details */}
       <DetailSection title="Detalles">
         <div className="grid grid-cols-2 gap-2">
-          <div className="py-1.5 px-2 rounded-sm bg-white/5">
-            <p className="text-[10px] text-white/30 uppercase">Registrado</p>
-            <p className="text-xs text-white/70 mt-0.5">
+          <div className="py-1.5 px-2 rounded-sm bg-muted/40">
+            <p className="text-[10px] text-muted-foreground/70 uppercase">Registrado</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {formatDistanceToNow(new Date(user.created_at), {
                 addSuffix: true,
                 locale: es,
               })}
             </p>
           </div>
-          <div className="py-1.5 px-2 rounded-sm bg-white/5">
-            <p className="text-[10px] text-white/30 uppercase">Empresas</p>
-            <p className="text-xs text-white/70 mt-0.5">
+          <div className="py-1.5 px-2 rounded-sm bg-muted/40">
+            <p className="text-[10px] text-muted-foreground/70 uppercase">Empresas</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {user.linked_companies.length}
             </p>
           </div>
         </div>
         {user.bio && (
-          <div className="py-1.5 px-2 rounded-sm bg-white/5 mt-2">
-            <p className="text-[10px] text-white/30 uppercase">Bio</p>
-            <p className="text-xs text-white/70 mt-0.5 line-clamp-3">
+          <div className="py-1.5 px-2 rounded-sm bg-muted/40 mt-2">
+            <p className="text-[10px] text-muted-foreground/70 uppercase">Bio</p>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-3">
               {user.bio}
             </p>
           </div>

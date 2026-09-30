@@ -50,11 +50,11 @@ const TIER_BADGE: Record<string, { label: string; className: string; icon: typeo
 };
 
 const THUMBNAIL_GRADIENTS = [
-  'from-purple-900 to-card',
-  'from-blue-900 to-card',
-  'from-emerald-900 to-card',
-  'from-pink-900 to-card',
-  'from-amber-900 to-card',
+  'from-purple-500/25 to-card',
+  'from-blue-500/25 to-card',
+  'from-emerald-500/25 to-card',
+  'from-pink-500/25 to-card',
+  'from-amber-500/25 to-card',
 ];
 
 function getThumbnailGradient(id: string): string {
@@ -72,11 +72,11 @@ export function TemplateCard({ template, onSelect, onLike, onSave }: TemplateCar
 
   const tierBadge = template.min_tier_required ? TIER_BADGE[template.min_tier_required] : null;
   const TierIcon = tierBadge?.icon;
-  const categoryColor = CATEGORY_COLORS[template.category] ?? 'bg-gray-500/15 text-gray-400';
+  const categoryColor = CATEGORY_COLORS[template.category] ?? 'bg-gray-500/15 text-muted-foreground';
 
   return (
     <article
-      className="group relative rounded-xl overflow-hidden bg-card border border-gray-800 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 cursor-pointer"
+      className="group relative rounded-xl overflow-hidden bg-card border border-border hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -99,7 +99,7 @@ export function TemplateCard({ template, onSelect, onLike, onSave }: TemplateCar
               getThumbnailGradient(template.id),
             )}
           >
-            <span className="text-white/20 text-5xl font-bold select-none">
+            <span className="text-muted-foreground/50 text-5xl font-bold select-none">
               {template.name.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -181,7 +181,7 @@ export function TemplateCard({ template, onSelect, onLike, onSave }: TemplateCar
         </div>
 
         {/* Nombre */}
-        <h3 className="text-sm font-semibold text-white truncate mb-1 group-hover:text-purple-300 transition-colors">
+        <h3 className="text-sm font-semibold text-foreground truncate mb-1 group-hover:text-primary transition-colors">
           {template.name}
         </h3>
 
@@ -202,16 +202,16 @@ export function TemplateCard({ template, onSelect, onLike, onSave }: TemplateCar
                 </span>
               </div>
             )}
-            <span className="text-xs text-gray-400 truncate">{template.author_name}</span>
+            <span className="text-xs text-muted-foreground truncate">{template.author_name}</span>
           </div>
 
           {/* Stats */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
-            <span className="flex items-center gap-1 text-xs text-gray-500">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Users className="h-3 w-3" />
               {formatCount(template.use_count)}
             </span>
-            <span className="flex items-center gap-1 text-xs text-gray-500">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Heart className="h-3 w-3" />
               {formatCount(template.like_count)}
             </span>

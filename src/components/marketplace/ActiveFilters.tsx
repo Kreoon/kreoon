@@ -116,7 +116,7 @@ export const ActiveFilters = memo(function ActiveFilters({ filters, onRemoveFilt
       ))}
       <button
         onClick={onClearAll}
-        className="text-purple-400 hover:text-white text-sm underline transition-colors"
+        className="text-purple-400 hover:text-foreground text-sm underline transition-colors"
       >
         Limpiar todo
       </button>

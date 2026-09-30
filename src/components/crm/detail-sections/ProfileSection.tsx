@@ -40,12 +40,12 @@ export function ProfileSection({
 
         {/* Bio */}
         {displayBio && (
-          <p className="text-xs text-white/70 leading-relaxed whitespace-pre-line">{displayBio}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{displayBio}</p>
         )}
 
         {/* Banner / Cover image */}
         {displayImage && (
-          <div className="rounded-sm overflow-hidden border border-white/10">
+          <div className="rounded-sm overflow-hidden border border-border">
             <img
               src={displayImage}
               alt="Banner"
@@ -60,7 +60,7 @@ export function ProfileSection({
             href={videoUrl}
             target="_blank"
             rel="noopener"
-            className="block relative rounded-sm overflow-hidden border border-white/10 group"
+            className="block relative rounded-sm overflow-hidden border border-border group"
           >
             {videoThumb ? (
               <img
@@ -69,14 +69,14 @@ export function ProfileSection({
                 className="w-full max-h-32 object-cover"
               />
             ) : (
-              <div className="w-full h-24 bg-white/5 flex items-center justify-center">
-                <span className="text-[10px] text-white/30">Video</span>
+              <div className="w-full h-24 bg-muted/40 flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground/70">Video</span>
               </div>
             )}
             {/* Play overlay */}
             <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
-                <Play className="h-5 w-5 text-white fill-white" />
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-muted transition-colors">
+                <Play className="h-5 w-5 text-foreground fill-white" />
               </div>
             </div>
           </a>

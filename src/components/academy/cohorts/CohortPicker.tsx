@@ -37,18 +37,18 @@ export function CohortPicker({ courseId, selectedCohortId, onSelect, accentColor
   });
 
   if (isLoading)
-    return <div className="text-zinc-500 text-sm">Cargando cohortes disponibles…</div>;
+    return <div className="text-muted-foreground text-sm">Cargando cohortes disponibles…</div>;
 
   if (!cohorts?.length)
     return (
-      <Card className="bg-white/5 border-white/10 p-4 text-center text-zinc-400 text-sm">
+      <Card className="bg-muted/50 border-border p-4 text-center text-muted-foreground text-sm">
         No hay cohortes abiertas. Pronto se publicarán nuevas fechas.
       </Card>
     );
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-zinc-400 font-medium">Elige tu cohorte</p>
+      <p className="text-xs text-muted-foreground font-medium">Elige tu cohorte</p>
       {cohorts.map((c) => {
         const isFull = c.seats_total != null && c.seats_taken >= c.seats_total;
         const isSelected = selectedCohortId === c.id;
@@ -58,18 +58,18 @@ export function CohortPicker({ courseId, selectedCohortId, onSelect, accentColor
             type="button"
             disabled={isFull}
             onClick={() => onSelect(c.id)}
-            className={`w-full text-left transition-all ${isFull ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/5'}`}
+            className={`w-full text-left transition-all ${isFull ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted/50'}`}
           >
             <Card
               className={`p-4 border ${
-                isSelected ? 'border-2' : 'border-white/10'
-              } bg-white/5`}
+                isSelected ? 'border-2' : 'border-border'
+              } bg-muted/50`}
               style={isSelected ? { borderColor: accentColor } : undefined}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-zinc-100 truncate">{c.name}</p>
-                  <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1.5">
+                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
                     <Calendar className="h-3 w-3" />
                     Inicia{' '}
                     {new Date(c.start_date).toLocaleDateString('es-CO', {
@@ -91,16 +91,16 @@ export function CohortPicker({ courseId, selectedCohortId, onSelect, accentColor
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   {c.status === 'in_progress' && (
-                    <Badge className="bg-emerald-500/15 text-emerald-300 border-emerald-500/20 text-[10px]">
+                    <Badge className="bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/20 text-[10px]">
                       En curso
                     </Badge>
                   )}
                   {isFull ? (
-                    <span className="flex items-center gap-1 text-[10px] text-zinc-500">
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Lock className="h-3 w-3" /> Llena
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-zinc-400">
+                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                       <Users className="h-3 w-3" />
                       {c.seats_total ? `${c.seats_taken}/${c.seats_total}` : `${c.seats_taken} inscritos`}
                     </span>

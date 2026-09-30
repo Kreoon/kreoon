@@ -140,11 +140,11 @@ export function EscrowDetailDrawer({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-medium text-white">Resumen Financiero</h3>
+                <h3 className="text-sm font-medium text-foreground">Resumen Financiero</h3>
               </div>
               <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-center">
                 <p className="text-sm text-muted-foreground">Total bloqueado</p>
-                <p className="text-3xl font-bold text-white mt-1">{escrow.formattedTotal}</p>
+                <p className="text-3xl font-bold text-foreground mt-1">{escrow.formattedTotal}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Moneda: {escrow.currency}
                 </p>
@@ -160,7 +160,7 @@ export function EscrowDetailDrawer({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-medium text-white">Timeline</h3>
+                <h3 className="text-sm font-medium text-foreground">Timeline</h3>
               </div>
               {escrow.timelineSteps && (
                 <EscrowTimelineEnhanced
@@ -177,7 +177,7 @@ export function EscrowDetailDrawer({
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-medium text-white">Participantes</h3>
+                <h3 className="text-sm font-medium text-foreground">Participantes</h3>
               </div>
 
               <div className="space-y-3">
@@ -189,7 +189,7 @@ export function EscrowDetailDrawer({
                       <Building2 className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-white">{payer.name || 'Cliente'}</p>
+                      <p className="font-medium text-foreground">{payer.name || 'Cliente'}</p>
                       <p className="text-xs text-muted-foreground">
                         Balance después: {formatCurrency(payer.balanceAfter || 0, escrow.currency)}
                       </p>
@@ -210,7 +210,7 @@ export function EscrowDetailDrawer({
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-white">
+                          <p className="font-medium text-foreground">
                             {creator.full_name || `@${creator.username}`}
                           </p>
                           <p className="text-xs text-muted-foreground">
@@ -238,7 +238,7 @@ export function EscrowDetailDrawer({
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-white">
+                            <p className="font-medium text-foreground">
                               {editor.full_name || `@${editor.username}`}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -273,7 +273,7 @@ export function EscrowDetailDrawer({
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-medium text-white">Notas (Admin)</h3>
+                    <h3 className="text-sm font-medium text-foreground">Notas (Admin)</h3>
                   </div>
                   <Textarea
                     value={notes}
@@ -284,7 +284,7 @@ export function EscrowDetailDrawer({
                   {escrow.notes && (
                     <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
                       <p className="text-xs text-muted-foreground mb-1">Notas previas:</p>
-                      <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
+                      <p className="text-sm text-muted-foreground">{escrow.notes}</p>
                     </div>
                   )}
                 </div>

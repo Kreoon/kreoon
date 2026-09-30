@@ -373,7 +373,7 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
             className={cn(
               'p-2 rounded-sm min-w-[44px] min-h-[44px]',
               'flex items-center justify-center',
-              'text-gray-500 hover:text-red-400',
+              'text-muted-foreground hover:text-red-400',
               'hover:bg-red-500/10 transition-all duration-150',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
@@ -399,8 +399,8 @@ export function KiroChat({ onStateChange, currentZone = 'general', awardPoints, 
         {messages.length === 0 && (
           <div className="text-center py-6">
             <div className="text-2xl mb-2">🤖</div>
-            <p className="text-gray-400 text-sm">{zoneConfig.greeting}</p>
-            <p className="text-gray-600 text-xs mt-2">
+            <p className="text-muted-foreground text-sm">{zoneConfig.greeting}</p>
+            <p className="text-muted-foreground text-xs mt-2">
               Pregúntame lo que necesites sobre esta zona
             </p>
           </div>

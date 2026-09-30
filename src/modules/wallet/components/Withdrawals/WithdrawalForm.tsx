@@ -250,7 +250,7 @@ export function WithdrawalForm({
             <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Monto solicitado</span>
-                <span className="text-white">{formatCurrency(amount, wallet.currency)}</span>
+                <span className="text-foreground">{formatCurrency(amount, wallet.currency)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Comisión ({selectedMethod.typeLabel})</span>

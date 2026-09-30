@@ -115,9 +115,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground/70">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>
@@ -149,12 +149,12 @@ const getUserTypeLabel = (userType: string | null) => {
 };
 
 const getUserTypeColor = (userType: string | null) => {
-  if (!userType) return "bg-white/10 text-white/50";
+  if (!userType) return "bg-muted text-muted-foreground/70";
   const colors: Record<string, string> = {
     brand: "bg-emerald-500/20 text-emerald-300",
     talent: "bg-pink-500/20 text-pink-300",
   };
-  return colors[userType] || "bg-white/10 text-white/70";
+  return colors[userType] || "bg-muted text-muted-foreground";
 };
 
 // Helper to check if avatar URL is valid (not null, not empty, not whitespace)
@@ -196,7 +196,7 @@ const getOrgRoleColor = (role: string | null) => {
     marketing_director: "bg-emerald-500/20 text-emerald-300",
     trafficker: "bg-rose-500/20 text-rose-300",
   };
-  return colors[role] || "bg-white/10 text-white/70";
+  return colors[role] || "bg-muted text-muted-foreground";
 };
 
 function getHealthColor(score: number) {
@@ -598,15 +598,15 @@ const PlatformCRMPeople = () => {
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-white">Personas</h1>
-              <p className="text-white/60">Gestiona todos los usuarios de la plataforma</p>
+              <h1 className="text-3xl font-bold text-foreground">Personas</h1>
+              <p className="text-muted-foreground">Gestiona todos los usuarios de la plataforma</p>
             </div>
             <div className="flex gap-3 items-center">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
                 <Input
                   placeholder="Buscar..."
-                  className="w-64 bg-white/5 border-white/10 pl-9"
+                  className="w-64 bg-muted/40 border-border pl-9"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -617,44 +617,44 @@ const PlatformCRMPeople = () => {
 
           {/* ========== TABS ========== */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="bg-white/5 border border-white/10 p-1">
+            <TabsList className="bg-muted/40 border border-border p-1">
               <TabsTrigger
                 value="sin_rol"
-                className="data-[state=active]:bg-white/10 data-[state=active]:text-white gap-2"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground gap-2"
               >
                 <UserCircle className="h-4 w-4" />
                 Sin Rol
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/10 text-xs">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-muted text-xs">
                   {tabCounts.sin_rol}
                 </span>
               </TabsTrigger>
               <TabsTrigger
                 value="clientes"
-                className="data-[state=active]:bg-white/10 data-[state=active]:text-white gap-2"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground gap-2"
               >
                 <Building2 className="h-4 w-4" />
                 Clientes / Marcas
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/10 text-xs">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-muted text-xs">
                   {tabCounts.clientes}
                 </span>
               </TabsTrigger>
               <TabsTrigger
                 value="freelancers"
-                className="data-[state=active]:bg-white/10 data-[state=active]:text-white gap-2"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground gap-2"
               >
                 <Briefcase className="h-4 w-4" />
                 Freelancers
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/10 text-xs">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-muted text-xs">
                   {tabCounts.freelancers}
                 </span>
               </TabsTrigger>
               <TabsTrigger
                 value="en_org"
-                className="data-[state=active]:bg-white/10 data-[state=active]:text-white gap-2"
+                className="data-[state=active]:bg-muted data-[state=active]:text-foreground gap-2"
               >
                 <Users className="h-4 w-4" />
                 En Organizaciones
-                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/10 text-xs">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-muted text-xs">
                   {tabCounts.en_org}
                 </span>
               </TabsTrigger>
@@ -682,12 +682,12 @@ const PlatformCRMPeople = () => {
                     "gap-1.5",
                     orgRoleSubTab === key
                       ? "bg-purple-600 hover:bg-purple-700 text-white"
-                      : "bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
+                      : "bg-muted/40 border-border hover:bg-muted text-muted-foreground"
                   )}
                 >
                   <SubIcon className="h-3.5 w-3.5" />
                   {label}
-                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/10 text-[10px]">
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full bg-muted text-[10px]">
                     {orgSubTabCounts[key]}
                   </span>
                 </Button>
@@ -717,7 +717,7 @@ const PlatformCRMPeople = () => {
             {activeTab === "freelancers" ? (
               <>
                 <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-                  <SelectTrigger className="w-48 bg-white/5 border-white/10">
+                  <SelectTrigger className="w-48 bg-muted/40 border-border">
                     <SelectValue placeholder="Categoría" />
                   </SelectTrigger>
                   <SelectContent>
@@ -729,7 +729,7 @@ const PlatformCRMPeople = () => {
                 </Select>
 
                 <Select value={roleFilter} onValueChange={setRoleFilter}>
-                  <SelectTrigger className="w-48 bg-white/5 border-white/10">
+                  <SelectTrigger className="w-48 bg-muted/40 border-border">
                     <SelectValue placeholder="Rol" />
                   </SelectTrigger>
                   <SelectContent className="max-h-60">
@@ -743,7 +743,7 @@ const PlatformCRMPeople = () => {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40 bg-white/5 border-white/10">
+                  <SelectTrigger className="w-40 bg-muted/40 border-border">
                     <SelectValue placeholder="Estado" />
                   </SelectTrigger>
                   <SelectContent>
@@ -754,7 +754,7 @@ const PlatformCRMPeople = () => {
                   </SelectContent>
                 </Select>
 
-                <div className="ml-auto text-sm text-white/40 self-center">
+                <div className="ml-auto text-sm text-muted-foreground/70 self-center">
                   {filteredCreators.length} freelancers
                 </div>
               </>
@@ -763,8 +763,8 @@ const PlatformCRMPeople = () => {
                 {/* Organization filter - only shown in en_org tab */}
                 {activeTab === "en_org" && uniqueOrganizations.length > 0 && (
                   <Select value={orgFilter} onValueChange={setOrgFilter}>
-                    <SelectTrigger className="w-56 bg-white/5 border-white/10">
-                      <Building2 className="w-4 h-4 mr-2 text-white/50" />
+                    <SelectTrigger className="w-56 bg-muted/40 border-border">
+                      <Building2 className="w-4 h-4 mr-2 text-muted-foreground/70" />
                       <SelectValue placeholder="Organización" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
@@ -779,7 +779,7 @@ const PlatformCRMPeople = () => {
                 )}
 
                 <Select value={healthFilter} onValueChange={setHealthFilter}>
-                  <SelectTrigger className="w-48 bg-white/5 border-white/10">
+                  <SelectTrigger className="w-48 bg-muted/40 border-border">
                     <SelectValue placeholder="Estado de salud" />
                   </SelectTrigger>
                   <SelectContent>
@@ -792,7 +792,7 @@ const PlatformCRMPeople = () => {
                 </Select>
 
                 <Select value={activityFilter} onValueChange={setActivityFilter}>
-                  <SelectTrigger className="w-48 bg-white/5 border-white/10">
+                  <SelectTrigger className="w-48 bg-muted/40 border-border">
                     <SelectValue placeholder="Actividad" />
                   </SelectTrigger>
                   <SelectContent>
@@ -804,7 +804,7 @@ const PlatformCRMPeople = () => {
                   </SelectContent>
                 </Select>
 
-                <div className="ml-auto text-sm text-white/40 self-center">
+                <div className="ml-auto text-sm text-muted-foreground/70 self-center">
                   {filteredUsers.length} usuarios
                 </div>
               </>
@@ -815,7 +815,7 @@ const PlatformCRMPeople = () => {
           {isLoading && (
             <div className="p-12 text-center">
               <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-white/40">Cargando...</p>
+              <p className="text-sm text-muted-foreground/70">Cargando...</p>
             </div>
           )}
 
@@ -824,8 +824,8 @@ const PlatformCRMPeople = () => {
             <>
               {filteredUsers.length === 0 ? (
                 <div className="p-12 text-center">
-                  <Users className="h-10 w-10 text-white/10 mx-auto mb-3" />
-                  <p className="text-sm text-white/40">
+                  <Users className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground/70">
                     {search || healthFilter !== "all" || activityFilter !== "all"
                       ? "Sin resultados para los filtros aplicados"
                       : activeTab === "sin_rol"
@@ -858,8 +858,8 @@ const PlatformCRMPeople = () => {
                             </div>
                           )}
                           <div className="min-w-0 flex-1">
-                            <p className="text-white font-medium truncate">{user.full_name || "Sin nombre"}</p>
-                            <p className="text-white/40 text-xs truncate">{user.email}</p>
+                            <p className="text-foreground font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                            <p className="text-muted-foreground/70 text-xs truncate">{user.email}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between">
@@ -888,11 +888,11 @@ const PlatformCRMPeople = () => {
                           </div>
                         </div>
                         {user.organization_name && (
-                          <p className="text-[10px] text-white/30 mt-2 truncate">{user.organization_name}</p>
+                          <p className="text-[10px] text-muted-foreground/70 mt-2 truncate">{user.organization_name}</p>
                         )}
 
                         {/* Fechas */}
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/5 text-[10px] text-white/40">
+                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[10px] text-muted-foreground/70">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
                             {format(new Date(user.created_at), "d MMM yy", { locale: es })}
@@ -917,7 +917,7 @@ const PlatformCRMPeople = () => {
                       <div
                         key={user.id}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
+                          "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors",
                           selectedUser?.id === user.id && "bg-[#8b5cf6]/10 border border-[#8b5cf6]/30",
                         )}
                         onClick={() => handleSelectUser(user)}
@@ -930,7 +930,7 @@ const PlatformCRMPeople = () => {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="text-white text-sm font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                          <p className="text-foreground text-sm font-medium truncate">{user.full_name || "Sin nombre"}</p>
                         </div>
                         <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getUserTypeColor(user.user_type))}>
                           {getUserTypeLabel(user.user_type)}
@@ -945,7 +945,7 @@ const PlatformCRMPeople = () => {
                             <FileX className="w-3 h-3" />
                           </span>
                         )}
-                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                        <span className="text-[10px] text-muted-foreground/70 hidden lg:inline">
                           {user.last_login_at
                             ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
                             : "Nunca"}
@@ -964,15 +964,15 @@ const PlatformCRMPeople = () => {
                 <Card>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-white/10 hover:bg-transparent">
-                        <TableHead className="text-white/70">Usuario</TableHead>
-                        <TableHead className="text-white/70">Tipo</TableHead>
-                        <TableHead className="text-white/70 hidden md:table-cell">Organización</TableHead>
-                        <TableHead className="text-white/70">Legal</TableHead>
-                        <TableHead className="text-white/70">Health Score</TableHead>
-                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
-                        <TableHead className="text-white/70 hidden lg:table-cell">Últ. Login</TableHead>
-                        <TableHead className="text-white/70">Estado</TableHead>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">Usuario</TableHead>
+                        <TableHead className="text-muted-foreground">Tipo</TableHead>
+                        <TableHead className="text-muted-foreground hidden md:table-cell">Organización</TableHead>
+                        <TableHead className="text-muted-foreground">Legal</TableHead>
+                        <TableHead className="text-muted-foreground">Health Score</TableHead>
+                        <TableHead className="text-muted-foreground hidden lg:table-cell">Registro</TableHead>
+                        <TableHead className="text-muted-foreground hidden lg:table-cell">Últ. Login</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -983,7 +983,7 @@ const PlatformCRMPeople = () => {
                           <TableRow
                             key={user.id}
                             className={cn(
-                              "border-white/10 hover:bg-white/5 cursor-pointer",
+                              "border-border hover:bg-muted/40 cursor-pointer",
                               selectedUser?.id === user.id && "bg-[#8b5cf6]/10",
                             )}
                             onClick={() => handleSelectUser(user)}
@@ -998,8 +998,8 @@ const PlatformCRMPeople = () => {
                                   </div>
                                 )}
                                 <div className="min-w-0">
-                                  <p className="text-white font-medium truncate">{user.full_name || "Sin nombre"}</p>
-                                  <p className="text-white/40 text-xs truncate">{user.email}</p>
+                                  <p className="text-foreground font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                                  <p className="text-muted-foreground/70 text-xs truncate">{user.email}</p>
                                 </div>
                               </div>
                             </TableCell>
@@ -1008,7 +1008,7 @@ const PlatformCRMPeople = () => {
                                 {getUserTypeLabel(user.user_type)}
                               </span>
                             </TableCell>
-                            <TableCell className="text-white/70 hidden md:table-cell">{user.organization_name || "—"}</TableCell>
+                            <TableCell className="text-muted-foreground hidden md:table-cell">{user.organization_name || "—"}</TableCell>
                             <TableCell>
                               {user.onboarding_completed ? (
                                 <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-500/20 text-green-400 w-fit" title={`${user.consent_count || 0} consentimientos`}>
@@ -1027,15 +1027,15 @@ const PlatformCRMPeople = () => {
                                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", hc.bg, hc.text)}>
                                   {user.health_score}
                                 </div>
-                                <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
+                                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                                   <div className={cn("h-full rounded-full", hc.bar)} style={{ width: `${Math.min(user.health_score, 100)}%` }} />
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                            <TableCell className="text-muted-foreground/70 text-sm hidden lg:table-cell">
                               {format(new Date(user.created_at), "d MMM yyyy", { locale: es })}
                             </TableCell>
-                            <TableCell className="text-white/50 hidden lg:table-cell">
+                            <TableCell className="text-muted-foreground/70 hidden lg:table-cell">
                               {user.last_login_at
                                 ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
                                 : "Nunca"}
@@ -1060,8 +1060,8 @@ const PlatformCRMPeople = () => {
             <>
               {filteredCreators.length === 0 ? (
                 <div className="p-12 text-center">
-                  <Video className="h-10 w-10 text-white/10 mx-auto mb-3" />
-                  <p className="text-sm text-white/40">
+                  <Video className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground/70">
                     {search || categoryFilter !== "all" || roleFilter !== "all" || statusFilter !== "all"
                       ? "Sin resultados para los filtros aplicados"
                       : "Aún no hay freelancers registrados"}
@@ -1077,8 +1077,8 @@ const PlatformCRMPeople = () => {
                         key={creator.id}
                         onClick={() => handleSelectCreator(creator)}
                         className={cn(
-                          "p-4 hover:bg-white/10 transition-colors cursor-pointer",
-                          selectedCreator?.id === creator.id && "ring-1 ring-[#8b5cf6] bg-white/10"
+                          "p-4 hover:bg-muted transition-colors cursor-pointer",
+                          selectedCreator?.id === creator.id && "ring-1 ring-[#8b5cf6] bg-muted"
                         )}
                       >
                         <div className="flex items-start gap-3 mb-3">
@@ -1097,8 +1097,8 @@ const PlatformCRMPeople = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-white font-medium truncate">{creator.full_name}</p>
-                            <p className="text-white/50 text-sm truncate">
+                            <p className="text-foreground font-medium truncate">{creator.full_name}</p>
+                            <p className="text-muted-foreground/70 text-sm truncate">
                               {creator.username ? `@${creator.username}` : creator.email}
                             </p>
                           </div>
@@ -1111,7 +1111,7 @@ const PlatformCRMPeople = () => {
                             </span>
                           )}
                           {role && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                               {SPECIFIC_ROLE_LABELS[role]}
                             </span>
                           )}
@@ -1134,21 +1134,21 @@ const PlatformCRMPeople = () => {
                             <Star className="w-4 h-4 fill-current" />
                             <span>{creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "N/A"}</span>
                           </div>
-                          <span className="text-white/50">{creator.completed_projects} proyectos</span>
+                          <span className="text-muted-foreground/70">{creator.completed_projects} proyectos</span>
                         </div>
 
                         <div className="flex items-center justify-between text-sm mt-2">
                           <span className="text-green-400">{formatCurrency(creator.total_earned)}</span>
                           <span className={cn(
                             "px-2 py-0.5 rounded-full text-xs",
-                            creator.is_active ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/50"
+                            creator.is_active ? "bg-green-500/20 text-green-300" : "bg-muted text-muted-foreground/70"
                           )}>
                             {creator.is_active ? "Activo" : "Inactivo"}
                           </span>
                         </div>
 
                         {/* Fecha de registro */}
-                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-white/5 text-xs text-white/40">
+                        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border text-xs text-muted-foreground/70">
                           <Calendar className="w-3 h-3" />
                           <span>Registro: {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}</span>
                         </div>
@@ -1165,7 +1165,7 @@ const PlatformCRMPeople = () => {
                         key={creator.id}
                         onClick={() => handleSelectCreator(creator)}
                         className={cn(
-                          "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                          "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors border border-transparent",
                           selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
                         )}
                       >
@@ -1182,8 +1182,8 @@ const PlatformCRMPeople = () => {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-white font-medium truncate">{creator.full_name}</p>
-                          <p className="text-xs text-white/40 truncate">{creator.email}</p>
+                          <p className="text-sm text-foreground font-medium truncate">{creator.full_name}</p>
+                          <p className="text-xs text-muted-foreground/70 truncate">{creator.email}</p>
                         </div>
                         {category && (
                           <span className={cn("text-[10px] px-2 py-0.5 rounded-full hidden sm:inline-flex", TALENT_CATEGORY_COLORS[category])}>
@@ -1204,13 +1204,13 @@ const PlatformCRMPeople = () => {
                           <Star className="w-3.5 h-3.5 fill-current" />
                           {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
                         </div>
-                        <span className="text-xs text-white/50 hidden md:inline">{creator.completed_projects} proy.</span>
-                        <span className="text-[10px] text-white/30 hidden lg:inline">
+                        <span className="text-xs text-muted-foreground/70 hidden md:inline">{creator.completed_projects} proy.</span>
+                        <span className="text-[10px] text-muted-foreground/70 hidden lg:inline">
                           {format(new Date(creator.created_at), "d MMM yy", { locale: es })}
                         </span>
                         <span className={cn(
                           "px-2 py-0.5 rounded-full text-[10px]",
-                          creator.is_active ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/50"
+                          creator.is_active ? "bg-green-500/20 text-green-300" : "bg-muted text-muted-foreground/70"
                         )}>
                           {creator.is_active ? "Activo" : "Inactivo"}
                         </span>
@@ -1222,16 +1222,16 @@ const PlatformCRMPeople = () => {
                 <Card>
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-white/10 hover:bg-transparent">
-                        <TableHead className="text-white/70">Freelancer</TableHead>
-                        <TableHead className="text-white/70">Categoría</TableHead>
-                        <TableHead className="text-white/70 hidden md:table-cell">Rol</TableHead>
-                        <TableHead className="text-white/70">Legal</TableHead>
-                        <TableHead className="text-white/70">Rating</TableHead>
-                        <TableHead className="text-white/70 hidden md:table-cell">Proyectos</TableHead>
-                        <TableHead className="text-white/70 hidden lg:table-cell">Ganado</TableHead>
-                        <TableHead className="text-white/70 hidden lg:table-cell">Registro</TableHead>
-                        <TableHead className="text-white/70">Estado</TableHead>
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="text-muted-foreground">Freelancer</TableHead>
+                        <TableHead className="text-muted-foreground">Categoría</TableHead>
+                        <TableHead className="text-muted-foreground hidden md:table-cell">Rol</TableHead>
+                        <TableHead className="text-muted-foreground">Legal</TableHead>
+                        <TableHead className="text-muted-foreground">Rating</TableHead>
+                        <TableHead className="text-muted-foreground hidden md:table-cell">Proyectos</TableHead>
+                        <TableHead className="text-muted-foreground hidden lg:table-cell">Ganado</TableHead>
+                        <TableHead className="text-muted-foreground hidden lg:table-cell">Registro</TableHead>
+                        <TableHead className="text-muted-foreground">Estado</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1243,7 +1243,7 @@ const PlatformCRMPeople = () => {
                             key={creator.id}
                             onClick={() => handleSelectCreator(creator)}
                             className={cn(
-                              "border-white/10 hover:bg-white/5 cursor-pointer",
+                              "border-border hover:bg-muted/40 cursor-pointer",
                               selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10"
                             )}
                           >
@@ -1262,8 +1262,8 @@ const PlatformCRMPeople = () => {
                                   )}
                                 </div>
                                 <div className="min-w-0">
-                                  <p className="text-white font-medium truncate">{creator.full_name}</p>
-                                  <p className="text-white/50 text-sm truncate">{creator.email}</p>
+                                  <p className="text-foreground font-medium truncate">{creator.full_name}</p>
+                                  <p className="text-muted-foreground/70 text-sm truncate">{creator.email}</p>
                                 </div>
                               </div>
                             </TableCell>
@@ -1273,10 +1273,10 @@ const PlatformCRMPeople = () => {
                                   {TALENT_CATEGORY_LABELS[category]}
                                 </span>
                               ) : (
-                                <span className="text-white/30 text-xs">—</span>
+                                <span className="text-muted-foreground/70 text-xs">—</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-white/70 hidden md:table-cell">
+                            <TableCell className="text-muted-foreground hidden md:table-cell">
                               {role ? SPECIFIC_ROLE_LABELS[role] : "—"}
                             </TableCell>
                             <TableCell>
@@ -1298,15 +1298,15 @@ const PlatformCRMPeople = () => {
                                 {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "N/A"}
                               </div>
                             </TableCell>
-                            <TableCell className="text-white hidden md:table-cell">{creator.completed_projects}</TableCell>
+                            <TableCell className="text-foreground hidden md:table-cell">{creator.completed_projects}</TableCell>
                             <TableCell className="text-green-400 hidden lg:table-cell">{formatCurrency(creator.total_earned)}</TableCell>
-                            <TableCell className="text-white/50 text-sm hidden lg:table-cell">
+                            <TableCell className="text-muted-foreground/70 text-sm hidden lg:table-cell">
                               {format(new Date(creator.created_at), "d MMM yyyy", { locale: es })}
                             </TableCell>
                             <TableCell>
                               <span className={cn(
                                 "px-2 py-1 rounded-full text-xs",
-                                creator.is_active ? "bg-green-500/20 text-green-300" : "bg-white/10 text-white/50"
+                                creator.is_active ? "bg-green-500/20 text-green-300" : "bg-muted text-muted-foreground/70"
                               )}>
                                 {creator.is_active ? "Activo" : "Inactivo"}
                               </span>

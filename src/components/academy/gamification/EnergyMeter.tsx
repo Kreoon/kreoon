@@ -42,14 +42,14 @@ export function EnergyMeter({ energy, size = 'md', showLabel = true }: EnergyMet
         style={{ color }}
         aria-hidden="true"
       />
-      <div className={cn('relative bg-white/5 rounded-full overflow-hidden', sizes[size].bar)}>
+      <div className={cn('relative bg-muted/50 rounded-full overflow-hidden', sizes[size].bar)}>
         <div
           className="h-full transition-all duration-500"
           style={{ width: `${energy}%`, backgroundColor: color }}
         />
       </div>
       {showLabel && (
-        <span className={cn(sizes[size].text, 'text-zinc-300 font-mono')}>{energy}</span>
+        <span className={cn(sizes[size].text, 'text-muted-foreground font-mono')}>{energy}</span>
       )}
     </div>
   );

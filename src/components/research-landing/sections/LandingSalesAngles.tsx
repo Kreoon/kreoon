@@ -52,11 +52,11 @@ export function LandingSalesAngles({ salesAnglesData }: Props) {
       {/* Angles Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {filtered.map((angle: any, i: number) => {
-          const typeClass = TYPE_COLORS[angle.type?.toLowerCase()] || 'bg-white/10 text-white/60 border-white/10';
+          const typeClass = TYPE_COLORS[angle.type?.toLowerCase()] || 'bg-muted text-muted-foreground border-border';
           return (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4 space-y-2">
+            <div key={i} className="bg-muted/40 border border-border rounded-sm p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium text-white/90">{safeStr(angle.angle, `Angulo ${i + 1}`)}</p>
+                <p className="text-sm font-medium text-foreground">{safeStr(angle.angle, `Angulo ${i + 1}`)}</p>
                 {angle.type && (
                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full border shrink-0 ${typeClass}`}>
                     {angle.type}
@@ -71,18 +71,18 @@ export function LandingSalesAngles({ salesAnglesData }: Props) {
               )}
 
               {angle.whyItWorks && (
-                <p className="text-xs text-white/40">{angle.whyItWorks}</p>
+                <p className="text-xs text-muted-foreground/70">{angle.whyItWorks}</p>
               )}
 
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {angle.avatar && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">{angle.avatar}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/70">{angle.avatar}</span>
                 )}
                 {angle.emotion && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">{angle.emotion}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/70">{angle.emotion}</span>
                 )}
                 {angle.funnelPhase && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/40">{angle.funnelPhase}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground/70">{angle.funnelPhase}</span>
                 )}
               </div>
             </div>

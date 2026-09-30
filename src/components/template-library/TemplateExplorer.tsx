@@ -143,10 +143,10 @@ export function TemplateExplorer({ onSelect, useTemplatesHook }: TemplateExplore
           <div className="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-4">
             <Sparkles className="h-8 w-8 text-purple-400" />
           </div>
-          <h3 className="text-white font-semibold text-lg mb-2">
+          <h3 className="text-foreground font-semibold text-lg mb-2">
             No se encontraron plantillas
           </h3>
-          <p className="text-gray-400 text-sm max-w-xs">
+          <p className="text-muted-foreground text-sm max-w-xs">
             Intenta cambiar los filtros o la categoria para ver mas resultados.
           </p>
         </div>

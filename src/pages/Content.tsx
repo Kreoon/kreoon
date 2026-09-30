@@ -201,14 +201,14 @@ const Content = () => {
           />
 
           {/* View Mode Toggle: Portafolio | Marketplace */}
-          <div className="flex items-center gap-1 bg-muted rounded-sm p-1 w-fit border border-white/5">
+          <div className="flex items-center gap-1 bg-muted rounded-sm p-1 w-fit border border-border">
             <button
               onClick={() => handleViewChange('portafolio')}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
                 viewMode === 'portafolio'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Film className="h-4 w-4" />
@@ -220,7 +220,7 @@ const Content = () => {
                 "flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all",
                 viewMode === 'marketplace'
                   ? "bg-purple-600/20 text-purple-300 border border-purple-500/30"
-                  : "text-gray-500 hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <ShoppingBag className="h-4 w-4" />
@@ -249,13 +249,13 @@ const Content = () => {
             {/* Search + Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <input
                   type="text"
                   placeholder="Buscar por proyecto, creador o marca..."
                   value={mktSearch}
                   onChange={(e) => setMktSearch(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-sm pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                  className="w-full bg-muted/50 border border-border rounded-sm pl-10 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50"
                 />
               </div>
               <div className="flex gap-2 overflow-x-auto scrollbar-none">
@@ -266,7 +266,7 @@ const Content = () => {
                     className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors whitespace-nowrap ${
                       mktFilter === tab.key
                         ? 'bg-purple-600 text-white'
-                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                        : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
                     }`}
                   >
                     {tab.label} ({tab.count})
@@ -278,11 +278,11 @@ const Content = () => {
             {/* Marketplace Project Grid */}
             {filteredProjects.length === 0 ? (
               <div className="text-center py-16">
-                <FolderOpen className="h-12 w-12 mx-auto text-gray-600 mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
+                <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
                   {mktFilter === 'all' ? 'Aún no tienes contenido' : 'Sin resultados'}
                 </h3>
-                <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+                <p className="text-muted-foreground text-sm mb-6 max-w-md mx-auto">
                   {mktFilter === 'all'
                     ? isCreator
                       ? 'Explora el marketplace y acepta propuestas para comenzar a crear contenido'
@@ -307,14 +307,14 @@ const Content = () => {
                     className="group relative rounded-sm overflow-hidden cursor-pointer hover:ring-2 hover:ring-purple-500/50 transition-all"
                     onClick={() => navigate('/board?view=marketplace')}
                   >
-                    <div className="aspect-[9/16] bg-gradient-to-br from-purple-900/40 via-[#1a1a2e] to-blue-900/40 flex items-center justify-center relative">
+                    <div className="aspect-[9/16] bg-gradient-to-br from-primary/15 via-muted to-accent flex items-center justify-center relative">
                       <div className="flex flex-col items-center gap-2">
-                        <Film className="h-8 w-8 text-gray-700" />
-                        <span className="text-[10px] text-gray-600 font-medium">{project.package_name}</span>
+                        <Film className="h-8 w-8 text-muted-foreground/40" />
+                        <span className="text-[10px] text-muted-foreground font-medium">{project.package_name}</span>
                       </div>
 
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                        <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-90 group-hover:scale-100">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity scale-90 group-hover:scale-100">
                           <Play className="h-5 w-5 text-white ml-0.5" />
                         </div>
                       </div>
@@ -345,11 +345,11 @@ const Content = () => {
                               {(isCreator ? project.brand_name : project.creator.display_name).charAt(0)}
                             </div>
                           )}
-                          <span className="text-white text-[11px] font-medium truncate">
+                          <span className="text-foreground text-[11px] font-medium truncate">
                             {isCreator ? project.brand_name : `@${project.creator.display_name}`}
                           </span>
                         </div>
-                        <p className="text-white text-xs font-medium leading-tight line-clamp-2">
+                        <p className="text-foreground text-xs font-medium leading-tight line-clamp-2">
                           {project.brief.product_name}
                         </p>
                         <div className="flex items-center gap-1.5 mt-1.5">
@@ -358,7 +358,7 @@ const Content = () => {
                               <Gift className="h-2.5 w-2.5" /> Canje
                             </span>
                           ) : (
-                            <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
                               <DollarSign className="h-2.5 w-2.5" />
                               {project.total_price.toLocaleString()}
                               <span className={project.payment_status === 'released' ? 'text-green-400' : 'text-yellow-400'}>

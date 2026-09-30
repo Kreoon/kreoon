@@ -90,7 +90,7 @@ export function SpaceNotificationsPanel({ spaceId, isOwner }: SpaceNotifications
       <Button
         onClick={() => save.mutate()}
         disabled={save.isPending}
-        className="bg-purple-500 hover:bg-purple-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         {save.isPending ? 'Guardando...' : 'Guardar preferencias'}
       </Button>
@@ -110,13 +110,13 @@ function Section({
   onToggle: (key: keyof SpaceNotificationSettings) => void;
 }) {
   return (
-    <Card className="p-5 bg-white/5 border-white/10">
+    <Card className="p-5 bg-muted/50 border-border">
       <h3 className="font-semibold mb-3">{title}</h3>
       <div className="space-y-1">
         {fields.map((f) => (
           <label
             key={f.key as string}
-            className="flex items-center justify-between py-2 cursor-pointer hover:bg-white/5 px-2 rounded"
+            className="flex items-center justify-between py-2 cursor-pointer hover:bg-muted/50 px-2 rounded"
           >
             <span className="text-sm">{f.label}</span>
             <button
@@ -124,7 +124,7 @@ function Section({
               onClick={() => onToggle(f.key)}
               className={cn(
                 'relative w-9 h-5 rounded-full transition-colors',
-                draft[f.key] ? 'bg-purple-500' : 'bg-zinc-700'
+                draft[f.key] ? 'bg-primary' : 'bg-muted'
               )}
             >
               <span

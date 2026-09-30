@@ -160,7 +160,7 @@ export default function AcademiaCreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-zinc-100 py-8 px-4">
+    <div className="min-h-screen bg-background text-foreground py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-8">
@@ -170,37 +170,37 @@ export default function AcademiaCreatePage() {
                 className={cn(
                   'h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold',
                   i < step
-                    ? 'bg-purple-500 text-white'
+                    ? 'bg-primary text-white'
                     : i === step
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500'
-                    : 'bg-white/5 text-zinc-500 border border-white/10'
+                    ? 'bg-primary/20 text-primary border border-primary'
+                    : 'bg-muted/50 text-muted-foreground border border-border'
                 )}
               >
                 {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
               </div>
-              <span className={cn('text-xs', i === step ? 'text-zinc-100' : 'text-zinc-500')}>
+              <span className={cn('text-xs', i === step ? 'text-foreground' : 'text-muted-foreground')}>
                 {s}
               </span>
-              {i < STEPS.length - 1 && <div className="flex-1 h-px bg-white/10" />}
+              {i < STEPS.length - 1 && <div className="flex-1 h-px bg-muted" />}
             </div>
           ))}
         </div>
 
-        <Card className="p-6 md:p-8 bg-white/5 border-white/10">
+        <Card className="p-6 md:p-8 bg-muted/50 border-border">
           {step === 0 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Cuéntanos sobre tu academia</h2>
-              <p className="text-sm text-zinc-400">Crea tu espacio educativo en Kreoon.</p>
+              <p className="text-sm text-muted-foreground">Crea tu espacio educativo en Kreoon.</p>
               <div>
                 <Label>Nombre de la academia</Label>
                 <Input
                   value={spaceName}
                   onChange={(e) => setSpaceName(e.target.value)}
                   placeholder="Academia de Creadores Pro"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
                 {spaceName && (
-                  <p className="mt-1 text-xs text-zinc-500">URL: /academia/{slugify(spaceName)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">URL: /academia/{slugify(spaceName)}</p>
                 )}
               </div>
               <div>
@@ -209,7 +209,7 @@ export default function AcademiaCreatePage() {
                   value={spaceDescription}
                   onChange={(e) => setSpaceDescription(e.target.value)}
                   placeholder="Qué enseñas y a quién"
-                  className="w-full mt-1 rounded-md bg-white/5 border border-white/10 p-2 text-sm h-24 focus:outline-none focus:border-purple-500"
+                  className="w-full mt-1 rounded-md bg-muted/50 border border-border p-2 text-sm h-24 focus:outline-none focus:border-primary"
                 />
               </div>
               <div>
@@ -219,9 +219,9 @@ export default function AcademiaCreatePage() {
                     type="color"
                     value={accentColor}
                     onChange={(e) => setAccentColor(e.target.value)}
-                    className="h-10 w-10 rounded cursor-pointer bg-transparent border border-white/10"
+                    className="h-10 w-10 rounded cursor-pointer bg-transparent border border-border"
                   />
-                  <span className="text-sm text-zinc-400">{accentColor}</span>
+                  <span className="text-sm text-muted-foreground">{accentColor}</span>
                 </div>
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function AcademiaCreatePage() {
                   value={courseTitle}
                   onChange={(e) => setCourseTitle(e.target.value)}
                   placeholder="UGC desde cero hasta primer cliente"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <div>
@@ -244,7 +244,7 @@ export default function AcademiaCreatePage() {
                 <textarea
                   value={courseDescription}
                   onChange={(e) => setCourseDescription(e.target.value)}
-                  className="w-full mt-1 rounded-md bg-white/5 border border-white/10 p-2 text-sm h-24 focus:outline-none focus:border-purple-500"
+                  className="w-full mt-1 rounded-md bg-muted/50 border border-border p-2 text-sm h-24 focus:outline-none focus:border-primary"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -253,7 +253,7 @@ export default function AcademiaCreatePage() {
                   <select
                     value={courseDifficulty}
                     onChange={(e) => setCourseDifficulty(e.target.value as CourseDifficulty)}
-                    className="w-full mt-1 rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500"
+                    className="w-full mt-1 rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary"
                   >
                     <option value="beginner">Principiante</option>
                     <option value="intermediate">Intermedio</option>
@@ -268,7 +268,7 @@ export default function AcademiaCreatePage() {
                     step={1}
                     value={coursePrice}
                     onChange={(e) => setCoursePrice(Number(e.target.value))}
-                    className="bg-white/5 border-white/10"
+                    className="bg-muted/50 border-border"
                   />
                 </div>
               </div>
@@ -278,15 +278,15 @@ export default function AcademiaCreatePage() {
           {step === 2 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Lecciones</h2>
-              <p className="text-sm text-zinc-400">Agrega al menos una lección. Podrás añadir más después.</p>
+              <p className="text-sm text-muted-foreground">Agrega al menos una lección. Podrás añadir más después.</p>
               {lessons.map((l, i) => (
-                <Card key={i} className="p-4 bg-black/30 border-white/10 space-y-3">
+                <Card key={i} className="p-4 bg-muted border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <Label>Lección {i + 1}</Label>
                     {lessons.length > 1 && (
                       <button
                         onClick={() => setLessons((arr) => arr.filter((_, j) => j !== i))}
-                        className="text-rose-400 hover:text-rose-300 text-sm"
+                        className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 text-sm"
                       >
                         Quitar
                       </button>
@@ -298,7 +298,7 @@ export default function AcademiaCreatePage() {
                       setLessons((arr) => arr.map((x, j) => (j === i ? { ...x, title: e.target.value } : x)))
                     }
                     placeholder="Título"
-                    className="bg-white/5 border-white/10"
+                    className="bg-muted/50 border-border"
                   />
                   <div className="grid grid-cols-3 gap-2">
                     <select
@@ -308,7 +308,7 @@ export default function AcademiaCreatePage() {
                           arr.map((x, j) => (j === i ? { ...x, videoSource: e.target.value } : x))
                         )
                       }
-                      className="rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500"
+                      className="rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary"
                     >
                       <option value="youtube">YouTube</option>
                       <option value="vimeo">Vimeo</option>
@@ -324,7 +324,7 @@ export default function AcademiaCreatePage() {
                         )
                       }
                       placeholder="URL del video"
-                      className="col-span-2 bg-white/5 border-white/10"
+                      className="col-span-2 bg-muted/50 border-border"
                     />
                   </div>
                 </Card>
@@ -341,7 +341,7 @@ export default function AcademiaCreatePage() {
           {step === 3 && (
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Certificado</h2>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-black/30 border border-white/10">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted border border-border">
                 <input
                   type="checkbox"
                   checked={certEnabled}
@@ -356,7 +356,7 @@ export default function AcademiaCreatePage() {
                   <Input
                     value={certTitle}
                     onChange={(e) => setCertTitle(e.target.value)}
-                    className="bg-white/5 border-white/10"
+                    className="bg-muted/50 border-border"
                   />
                 </div>
               )}
@@ -365,13 +365,13 @@ export default function AcademiaCreatePage() {
 
           {/* Error */}
           {errorMsg && (
-            <p className="mt-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">
+            <p className="mt-4 text-sm text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">
               {errorMsg}
             </p>
           )}
 
           {/* Navigation */}
-          <div className="mt-8 flex items-center justify-between pt-6 border-t border-white/5">
+          <div className="mt-8 flex items-center justify-between pt-6 border-t border-border">
             <Button
               variant="outline"
               onClick={() => setStep((s) => Math.max(0, s - 1))}
@@ -383,7 +383,7 @@ export default function AcademiaCreatePage() {
               <Button
                 onClick={() => setStep((s) => s + 1)}
                 disabled={!canNext}
-                className="bg-purple-500 hover:bg-purple-600 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 Siguiente <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
@@ -391,7 +391,7 @@ export default function AcademiaCreatePage() {
               <Button
                 onClick={handleFinish}
                 disabled={submitting}
-                className="bg-purple-500 hover:bg-purple-600 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 {submitting ? 'Creando...' : 'Crear academia'}
               </Button>

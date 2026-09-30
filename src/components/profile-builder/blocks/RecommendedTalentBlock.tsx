@@ -172,10 +172,10 @@ function RecommendedTalentBlockComponent({ block, isEditing, isSelected, onUpdat
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
             className={cn(
-              'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
+              'w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center transition-all',
               canScrollLeft
-                ? 'hover:bg-white/20 text-white'
-                : 'opacity-30 cursor-not-allowed text-gray-500',
+                ? 'hover:bg-muted text-foreground'
+                : 'opacity-30 cursor-not-allowed text-muted-foreground',
             )}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -184,10 +184,10 @@ function RecommendedTalentBlockComponent({ block, isEditing, isSelected, onUpdat
             onClick={() => scroll('right')}
             disabled={!canScrollRight}
             className={cn(
-              'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
+              'w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center transition-all',
               canScrollRight
-                ? 'hover:bg-white/20 text-white'
-                : 'opacity-30 cursor-not-allowed text-gray-500',
+                ? 'hover:bg-muted text-foreground'
+                : 'opacity-30 cursor-not-allowed text-muted-foreground',
             )}
           >
             <ChevronRight className="h-4 w-4" />

@@ -139,7 +139,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             {/* Icono de video si es video */}
             {featuredMedia.type === 'video' && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-white/20">
+                <div className="w-11 h-11 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center border border-border">
                   <Play className="h-5 w-5 text-white fill-white ml-0.5" />
                 </div>
               </div>
@@ -189,7 +189,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
           <Heart
             className={cn(
               'h-4 w-4 transition-all',
-              isFavorite ? 'text-red-500 fill-red-500' : 'text-white',
+              isFavorite ? 'text-red-500 fill-red-500' : 'text-foreground',
             )}
           />
         </button>
@@ -230,7 +230,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             {/* Name + Org */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="font-semibold text-white text-sm truncate">
+                <span className="font-semibold text-foreground text-sm truncate">
                   {creator.display_name}
                 </span>
               </div>
@@ -245,7 +245,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   ) : (
                     <Building2 className="h-3 w-3 text-white/60" />
                   )}
-                  <span className="text-[10px] text-white/60 truncate">{creator.organization_name}</span>
+                  <span className="text-[10px] text-muted-foreground truncate">{creator.organization_name}</span>
                 </div>
               )}
             </div>
@@ -263,27 +263,27 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
                   {getSpecializationLabel(primarySpec as Specialization)}
                 </span>
               ) : primaryCategory ? (
-                <span className="text-[10px] text-white/70 bg-white/10 px-1.5 py-0.5 rounded truncate">
+                <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded truncate">
                   {primaryCategory}
                 </span>
               ) : null}
               {creator.rating_count > 0 && (
                 <div className="flex items-center gap-0.5">
                   <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                  <span className="text-white text-[11px] font-medium">
+                  <span className="text-foreground text-[11px] font-medium">
                     {creator.rating_avg.toFixed(1)}
                   </span>
-                  <span className="text-white/50 text-[10px]">({creator.rating_count})</span>
+                  <span className="text-muted-foreground text-[10px]">({creator.rating_count})</span>
                 </div>
               )}
             </div>
             {/* Price */}
             {creator.base_price != null && (
-              <div className="flex-shrink-0 bg-white/10 backdrop-blur-sm px-2 py-0.5 rounded">
+              <div className="flex-shrink-0 bg-muted backdrop-blur-sm px-2 py-0.5 rounded">
                 <span className="text-white text-xs font-semibold">
                   ${creator.base_price.toLocaleString()}
                 </span>
-                <span className="text-white/50 text-[10px] ml-0.5">
+                <span className="text-muted-foreground text-[10px] ml-0.5">
                   {creator.currency}
                 </span>
               </div>
@@ -295,10 +295,10 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out pointer-events-none group-hover:pointer-events-auto"
             aria-hidden="true"
           >
-            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-white/10 mt-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-border mt-1.5">
               {/* Location */}
               {(creator.location_city || creator.location_country) && (
-                <div className="flex items-center gap-0.5 text-white/60 text-[10px]">
+                <div className="flex items-center gap-0.5 text-muted-foreground text-[10px]">
                   <MapPin className="h-2.5 w-2.5" />
                   <span className="truncate max-w-[80px]">
                     {creator.location_city || creator.location_country}
@@ -316,7 +316,7 @@ function CreatorCardComponent({ creator, onClick, className, priority = false }:
 
               {/* Additional specs on hover */}
               {creator.specializations && creator.specializations.length > 1 && (
-                <span className="text-white/40 text-[10px]">
+                <span className="text-muted-foreground text-[10px]">
                   +{creator.specializations.length - 1} skills
                 </span>
               )}

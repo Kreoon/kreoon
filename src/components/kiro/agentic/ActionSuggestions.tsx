@@ -137,8 +137,8 @@ const ActionButton = memo(function ActionButton({
       onClick={handleClick}
       className={cn(
         'group flex items-center gap-3 w-full p-3 rounded-sm',
-        'bg-white/5 border border-white/10',
-        'hover:bg-white/10 hover:border-violet-500/30',
+        'bg-muted/40 border border-border',
+        'hover:bg-muted hover:border-violet-500/30',
         'active:scale-[0.98] transition-all duration-150'
       )}
     >
@@ -149,16 +149,16 @@ const ActionButton = memo(function ActionButton({
 
       {/* Texto */}
       <div className="flex-grow text-left min-w-0">
-        <div className="text-sm font-medium text-white truncate">
+        <div className="text-sm font-medium text-foreground truncate">
           {action.label}
         </div>
-        <div className="text-xs text-gray-400 truncate">
+        <div className="text-xs text-muted-foreground truncate">
           {action.description}
         </div>
       </div>
 
       {/* Flecha */}
-      <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
+      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-violet-400 group-hover:translate-x-1 transition-all" />
     </motion.button>
   );
 });
@@ -186,7 +186,7 @@ function ConfidenceIndicator({ confidence }: ConfidenceIndicatorProps) {
           )}
         />
       ))}
-      <span className="text-[10px] text-gray-500 ml-1">{percentage}%</span>
+      <span className="text-[10px] text-muted-foreground ml-1">{percentage}%</span>
     </div>
   );
 }
@@ -267,10 +267,10 @@ export const ActionSuggestions = memo(function ActionSuggestions({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-violet-400" />
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-foreground">
               KIRO sugiere
             </span>
             <ConfidenceIndicator confidence={intentResult.confidence} />
@@ -278,15 +278,15 @@ export const ActionSuggestions = memo(function ActionSuggestions({
 
           <button
             onClick={onDismiss}
-            className="p-1 rounded hover:bg-white/10 transition-colors"
+            className="p-1 rounded hover:bg-muted transition-colors"
             aria-label="Descartar sugerencias"
           >
-            <X className="w-4 h-4 text-gray-400" />
+            <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
 
         {/* Explicación */}
-        <div className="px-4 py-2 bg-white/5">
+        <div className="px-4 py-2 bg-muted/50">
           <p className="text-xs text-foreground/80">{explanation}</p>
         </div>
 
@@ -304,7 +304,7 @@ export const ActionSuggestions = memo(function ActionSuggestions({
 
         {/* Footer con keywords (solo en desarrollo) */}
         {process.env.NODE_ENV === 'development' && intentResult.matchedKeywords.length > 0 && (
-          <div className="px-4 py-2 border-t border-white/5">
+          <div className="px-4 py-2 border-t border-border/50">
             <div className="flex flex-wrap gap-1">
               {intentResult.matchedKeywords.map((kw, i) => (
                 <span
@@ -315,7 +315,7 @@ export const ActionSuggestions = memo(function ActionSuggestions({
                 </span>
               ))}
             </div>
-            <div className="text-[10px] text-gray-600 mt-1">
+            <div className="text-[10px] text-muted-foreground mt-1">
               Procesado en {intentResult.processingTime.toFixed(2)}ms
             </div>
           </div>

@@ -109,7 +109,7 @@ export function ApproveContentModal({
                       'h-6 w-6 transition-colors',
                       (hoveredStar !== null ? star <= hoveredStar : star <= rating)
                         ? 'text-amber-400 fill-amber-400'
-                        : 'text-[hsl(270,30%,40%)]'
+                        : 'text-muted-foreground'
                     )}
                   />
                 </button>
@@ -211,7 +211,7 @@ export function RequestChangesModal({
             <span
               className={cn(
                 'font-medium',
-                remainingRevisions > 1 ? 'text-white' : 'text-amber-400'
+                remainingRevisions > 1 ? 'text-foreground' : 'text-amber-400'
               )}
             >
               {remainingRevisions} de {maxRevisions}

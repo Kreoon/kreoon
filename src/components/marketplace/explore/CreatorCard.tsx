@@ -173,7 +173,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
         {firstMedia && !imgError ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-[#1a1a35] animate-pulse" />
+              <div className="absolute inset-0 bg-muted animate-pulse" />
             )}
             <img
               src={resolveThumb(firstMedia)}
@@ -205,7 +205,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
           />
         ) : (
           // Fallback: initial con fondo degradado
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-background">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-background">
             <span className="text-5xl font-bold text-purple-400/60 select-none" aria-hidden="true">
               {creator.display_name.charAt(0).toUpperCase()}
             </span>

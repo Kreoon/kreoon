@@ -346,7 +346,7 @@ export default function PublicCreatorPage() {
 
       {/* Badge de nivel UP — overlay fijo, no forma parte del builder de bloques */}
       {profile.level && LEVEL_LABELS[profile.level] && (
-        <div className="fixed top-3 left-3 z-40 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 text-xs font-medium text-white">
+        <div className="fixed top-3 left-3 z-40 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-sm border border-border text-xs font-medium text-white">
           Nivel {LEVEL_LABELS[profile.level]}
         </div>
       )}

@@ -9,7 +9,7 @@ interface ConnectionTestResultProps {
 export function ConnectionTestResultDisplay({ result, testing }: ConnectionTestResultProps) {
   if (testing) {
     return (
-      <div className="flex items-center gap-2 rounded-sm bg-gray-800/50 border border-gray-700/50 p-3 mt-3">
+      <div className="flex items-center gap-2 rounded-sm bg-card/50 border border-border p-3 mt-3">
         <Loader2 className="h-4 w-4 animate-spin text-purple-400 shrink-0" />
         <span className="text-sm text-foreground/80">Probando conexión...</span>
       </div>
@@ -35,9 +35,9 @@ export function ConnectionTestResultDisplay({ result, testing }: ConnectionTestR
         <p className={`text-sm font-medium ${result.success ? 'text-green-300' : 'text-red-300'}`}>
           {result.success ? 'Conexión exitosa' : 'Error de conexión'}
         </p>
-        <p className="text-xs text-gray-400 mt-0.5">{result.message}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{result.message}</p>
         {result.details && Object.keys(result.details).length > 0 && (
-          <pre className="text-xs text-gray-500 mt-1 overflow-x-auto">
+          <pre className="text-xs text-muted-foreground mt-1 overflow-x-auto">
             {JSON.stringify(result.details, null, 2)}
           </pre>
         )}

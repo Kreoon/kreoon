@@ -50,7 +50,7 @@ const ORG_INTERACTION_TYPES: InteractionTypeOption[] = [
   { value: 'whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'text-green-400' },
   { value: 'proposal_sent', label: 'Propuesta enviada', icon: FileText, color: 'text-orange-400' },
   { value: 'contract_signed', label: 'Contrato firmado', icon: FileSignature, color: 'text-emerald-400' },
-  { value: 'note', label: 'Nota', icon: StickyNote, color: 'text-white/50' },
+  { value: 'note', label: 'Nota', icon: StickyNote, color: 'text-muted-foreground/70' },
 ];
 
 const LEAD_INTERACTION_TYPES: InteractionTypeOption[] = [
@@ -59,7 +59,7 @@ const LEAD_INTERACTION_TYPES: InteractionTypeOption[] = [
   { value: 'call', label: 'Llamada', icon: Phone, color: 'text-yellow-400' },
   { value: 'meeting', label: 'Reunión', icon: Video, color: 'text-purple-400' },
   { value: 'demo', label: 'Demo', icon: Video, color: 'text-purple-400' },
-  { value: 'note', label: 'Nota', icon: StickyNote, color: 'text-white/50' },
+  { value: 'note', label: 'Nota', icon: StickyNote, color: 'text-muted-foreground/70' },
 ];
 
 const OUTCOMES: InteractionOutcome[] = ['positive', 'neutral', 'negative'];
@@ -125,13 +125,13 @@ export function AddInteractionModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white">Registrar interaccion</DialogTitle>
+          <DialogTitle className="text-foreground">Registrar interaccion</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           {/* Interaction Type as icon grid */}
           <div className="space-y-2">
-            <Label className="text-white/70 text-xs">Tipo de interaccion</Label>
+            <Label className="text-muted-foreground text-xs">Tipo de interaccion</Label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {types.map((t) => {
                 const Icon = t.icon;
@@ -145,11 +145,11 @@ export function AddInteractionModal({
                       'flex flex-col items-center gap-1 p-2.5 rounded-sm border transition-all text-center',
                       isSelected
                         ? 'border-[#8b5cf6]/60 bg-[#8b5cf6]/10 shadow-[0_0_15px_rgba(139,92,246,0.15)]'
-                        : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',
+                        : 'border-border bg-muted/40 hover:bg-muted hover:border-border',
                     )}
                   >
-                    <Icon className={cn('h-4 w-4', isSelected ? t.color : 'text-white/40')} />
-                    <span className={cn('text-[10px] leading-tight', isSelected ? 'text-white/90' : 'text-white/40')}>
+                    <Icon className={cn('h-4 w-4', isSelected ? t.color : 'text-muted-foreground/70')} />
+                    <span className={cn('text-[10px] leading-tight', isSelected ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
                       {t.label}
                     </span>
                   </button>
@@ -163,39 +163,39 @@ export function AddInteractionModal({
 
           {/* Subject */}
           <div className="space-y-1.5">
-            <Label className="text-white/70 text-xs">Asunto</Label>
+            <Label className="text-muted-foreground text-xs">Asunto</Label>
             <Input
               {...form.register('subject')}
               placeholder="Ej: Seguimiento propuesta Q1"
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
             />
           </div>
 
           {/* Content */}
           <div className="space-y-1.5">
-            <Label className="text-white/70 text-xs">Contenido / Notas</Label>
+            <Label className="text-muted-foreground text-xs">Contenido / Notas</Label>
             <Textarea
               {...form.register('content')}
               placeholder="Describe la interaccion..."
               rows={3}
-              className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+              className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
             />
           </div>
 
           {/* Outcome (only for contacts) */}
           {showOutcome && (
             <div className="space-y-1.5">
-              <Label className="text-white/70 text-xs">Resultado</Label>
+              <Label className="text-muted-foreground text-xs">Resultado</Label>
               <Select
                 value={form.watch('outcome')}
                 onValueChange={(v) => form.setValue('outcome', v)}
               >
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-muted/40 border-border text-foreground">
                   <SelectValue placeholder="Seleccionar resultado" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-[#8b5cf6]/30">
                   {OUTCOMES.map((o) => (
-                    <SelectItem key={o} value={o} className="text-white focus:bg-white/10">
+                    <SelectItem key={o} value={o} className="text-foreground focus:bg-muted">
                       {INTERACTION_OUTCOME_LABELS[o]}
                     </SelectItem>
                   ))}
@@ -207,19 +207,19 @@ export function AddInteractionModal({
           {/* Next Action */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-white/70 text-xs">Siguiente accion</Label>
+              <Label className="text-muted-foreground text-xs">Siguiente accion</Label>
               <Input
                 {...form.register('next_action')}
                 placeholder="Ej: Enviar propuesta"
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-white/70 text-xs">Fecha</Label>
+              <Label className="text-muted-foreground text-xs">Fecha</Label>
               <Input
                 {...form.register('next_action_date')}
                 type="date"
-                className="bg-white/5 border-white/10 text-white [color-scheme:dark]"
+                className="bg-muted/40 border-border text-foreground [color-scheme:dark]"
               />
             </div>
           </div>
@@ -230,7 +230,7 @@ export function AddInteractionModal({
               type="button"
               variant="ghost"
               onClick={() => onOpenChange(false)}
-              className="text-white/50 hover:text-white hover:bg-white/10"
+              className="text-muted-foreground/70 hover:text-foreground hover:bg-muted"
             >
               Cancelar
             </Button>
@@ -240,7 +240,7 @@ export function AddInteractionModal({
               className="bg-gradient-to-r from-[#7c3aed] to-[#ec4899] hover:opacity-90 text-white"
             >
               {isSubmitting ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                <div className="w-4 h-4 border-2 border-border border-t-white rounded-full animate-spin mr-2" />
               ) : selectedTypeConfig ? (
                 <selectedTypeConfig.icon className="h-4 w-4 mr-2" />
               ) : null}

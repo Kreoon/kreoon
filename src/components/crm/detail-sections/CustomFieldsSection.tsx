@@ -57,7 +57,7 @@ function FieldStars({ value }: { value: number }) {
           key={i}
           className={cn(
             'h-3 w-3',
-            i < value ? 'text-amber-400 fill-amber-400' : 'text-white/10',
+            i < value ? 'text-amber-400 fill-amber-400' : 'text-muted-foreground/70',
           )}
         />
       ))}
@@ -71,7 +71,7 @@ function PillList({ items }: { items: string[] }) {
       {items.map((item) => (
         <span
           key={item}
-          className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/60 border border-white/10"
+          className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground border border-border"
         >
           {item}
         </span>
@@ -84,23 +84,23 @@ function ColorSwatch({ color }: { color: string }) {
   return (
     <div className="flex items-center gap-2">
       <div
-        className="w-4 h-4 rounded border border-white/20"
+        className="w-4 h-4 rounded border border-border"
         style={{ backgroundColor: color }}
       />
-      <span className="text-xs text-white/50">{color}</span>
+      <span className="text-xs text-muted-foreground/70">{color}</span>
     </div>
   );
 }
 
 function ReadOnlyField({ fieldDef, value }: { fieldDef: FieldDef; value: unknown }) {
-  if (value == null || value === '') return <span className="text-xs text-white/30">--</span>;
+  if (value == null || value === '') return <span className="text-xs text-muted-foreground/70">--</span>;
 
   switch (fieldDef.field_type) {
     case 'checkbox':
       return value ? (
         <Check className="h-3.5 w-3.5 text-green-400" />
       ) : (
-        <X className="h-3.5 w-3.5 text-white/20" />
+        <X className="h-3.5 w-3.5 text-muted-foreground/70" />
       );
 
     case 'rating':
@@ -121,13 +121,13 @@ function ReadOnlyField({ fieldDef, value }: { fieldDef: FieldDef; value: unknown
       return <PillList items={Array.isArray(value) ? value.map(String) : [String(value)]} />;
 
     case 'currency':
-      return <span className="text-xs text-white/70">{formatCurrencyValue(value)}</span>;
+      return <span className="text-xs text-muted-foreground">{formatCurrencyValue(value)}</span>;
 
     case 'date':
-      return <span className="text-xs text-white/70">{formatDateValue(value)}</span>;
+      return <span className="text-xs text-muted-foreground">{formatDateValue(value)}</span>;
 
     case 'datetime':
-      return <span className="text-xs text-white/70">{formatDatetimeValue(value)}</span>;
+      return <span className="text-xs text-muted-foreground">{formatDatetimeValue(value)}</span>;
 
     case 'url':
       return (
@@ -152,7 +152,7 @@ function ReadOnlyField({ fieldDef, value }: { fieldDef: FieldDef; value: unknown
       );
 
     default:
-      return <span className="text-xs text-white/70">{String(value)}</span>;
+      return <span className="text-xs text-muted-foreground">{String(value)}</span>;
   }
 }
 
@@ -179,10 +179,10 @@ function EditableField({
           onClick={() => onChange(!value)}
           className={cn(
             'w-4 h-4 rounded border flex items-center justify-center',
-            value ? 'bg-purple-500 border-purple-400' : 'bg-white/5 border-white/20',
+            value ? 'bg-purple-500 border-purple-400' : 'bg-muted/40 border-border',
           )}
         >
-          {value && <Check className="h-2.5 w-2.5 text-white" />}
+          {value && <Check className="h-2.5 w-2.5 text-foreground" />}
         </button>
       );
 
@@ -191,7 +191,7 @@ function EditableField({
         <select
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white/70 outline-none focus:border-purple-500/50"
+          className="w-full bg-muted/40 border border-border rounded px-2 py-1 text-xs text-muted-foreground outline-none focus:border-purple-500/50"
         >
           <option value="">--</option>
           {fieldDef.options?.map((opt) => (
@@ -208,7 +208,7 @@ function EditableField({
           value={String(localValue)}
           onChange={(e) => setLocalValue(e.target.value)}
           onBlur={handleBlur}
-          className="h-7 text-xs bg-white/5 border-white/10"
+          className="h-7 text-xs bg-muted/40 border-border"
           type={
             fieldDef.field_type === 'number' || fieldDef.field_type === 'currency'
               ? 'number'
@@ -234,7 +234,7 @@ export function CustomFieldsSection({
   if (!fieldDefs || fieldDefs.length === 0) {
     return (
       <DetailSection title="Campos personalizados" action={configAction}>
-        <p className="text-xs text-white/30">Sin campos personalizados</p>
+        <p className="text-xs text-muted-foreground/70">Sin campos personalizados</p>
       </DetailSection>
     );
   }
@@ -246,7 +246,7 @@ export function CustomFieldsSection({
           const value = customFields[fd.id] ?? customFields[fd.name];
           return (
             <div key={fd.id}>
-              <p className="text-[10px] text-white/40 mb-0.5">{fd.name}</p>
+              <p className="text-[10px] text-muted-foreground/70 mb-0.5">{fd.name}</p>
               {onChange ? (
                 <EditableField
                   fieldDef={fd}

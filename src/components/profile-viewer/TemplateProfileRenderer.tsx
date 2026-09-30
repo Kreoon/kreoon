@@ -75,7 +75,7 @@ function ProfileError({ message, onBack }: { message: string; onBack: () => void
 
 function KreoonBranding() {
   return (
-    <footer className="py-6 text-center border-t border-white/5" aria-label="Powered by Kreoon">
+    <footer className="py-6 text-center border-t border-border/50" aria-label="Powered by Kreoon">
       <a
         href="https://kreoon.com"
         target="_blank"

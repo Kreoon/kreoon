@@ -111,12 +111,12 @@ function CompactDistribution({
           >
             {r.type === 'creator' ? 'Creador' : r.type === 'editor' ? 'Editor' : 'Fee'}:
           </span>
-          <span className="text-white">
+          <span className="text-foreground">
             {formatCurrency(r.amount, currency)}
           </span>
           <span className="text-muted-foreground">({r.percentage}%)</span>
           {index < recipients.length - 1 && (
-            <span className="text-[hsl(270,30%,40%)] mx-1">│</span>
+            <span className="text-muted-foreground mx-1">│</span>
           )}
         </span>
       ))}
@@ -186,7 +186,7 @@ function FullDistribution({
     <div className={cn('space-y-4', className)}>
       {/* Distribution bar */}
       <div className="space-y-2">
-        <p className="text-sm font-medium text-white">Distribución de Fondos</p>
+        <p className="text-sm font-medium text-foreground">Distribución de Fondos</p>
         <div className="h-3 rounded-full overflow-hidden flex bg-[hsl(270,100%,60%,0.1)]">
           {recipients.map((r, index) => (
             <div
@@ -247,7 +247,7 @@ function FullDistribution({
                       <StatusBadge status={r.status} />
                     )}
                   </div>
-                  <p className="font-medium text-white truncate">
+                  <p className="font-medium text-foreground truncate">
                     {r.status === 'unassigned'
                       ? 'Por asignar'
                       : r.name || (r.username ? `@${r.username}` : r.type === 'platform' ? 'Kreoon' : 'Usuario')}
@@ -270,7 +270,7 @@ function FullDistribution({
       {/* Total */}
       <div className="flex items-center justify-between pt-3 border-t border-[hsl(270,100%,60%,0.1)]">
         <span className="text-sm text-muted-foreground">Total en Escrow</span>
-        <span className="text-lg font-bold text-white">
+        <span className="text-lg font-bold text-foreground">
           {formatCurrency(totalAmount, currency)}
         </span>
       </div>
@@ -289,7 +289,7 @@ function StatusBadge({ status }: { status: Recipient['status'] }) {
   }
   if (status === 'unassigned') {
     return (
-      <Badge variant="outline" className="text-[10px] border-[hsl(270,30%,40%)] text-muted-foreground gap-1">
+      <Badge variant="outline" className="text-[10px] border-border text-muted-foreground gap-1">
         <HelpCircle className="h-2.5 w-2.5" />
         Sin asignar
       </Badge>

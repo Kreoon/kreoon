@@ -33,7 +33,7 @@ export function NoWalletState({ className, onAction }: EmptyStateProps) {
           <Wallet className="h-12 w-12 text-primary" />
         </div>
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Tu billetera está siendo creada
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6">
@@ -67,7 +67,7 @@ export function NoTransactionsState({ className }: EmptyStateProps) {
       <div className="p-4 rounded-full bg-[hsl(270,100%,60%,0.1)] border border-[hsl(270,100%,60%,0.1)] mb-4">
         <FileText className="h-10 w-10 text-[hsl(270,100%,70%,0.5)]" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Sin movimientos todavía
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs">
@@ -92,7 +92,7 @@ export function NoWithdrawalsState({ className, onAction }: EmptyStateProps) {
       <div className="p-4 rounded-full bg-[hsl(270,100%,60%,0.1)] border border-[hsl(270,100%,60%,0.1)] mb-4">
         <ArrowUpCircle className="h-10 w-10 text-[hsl(270,100%,70%,0.5)]" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Sin solicitudes de retiro
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6">
@@ -123,7 +123,7 @@ export function NoEscrowsState({ className }: EmptyStateProps) {
       <div className="p-4 rounded-full bg-[hsl(270,100%,60%,0.1)] border border-[hsl(270,100%,60%,0.1)] mb-4">
         <Lock className="h-10 w-10 text-[hsl(270,100%,70%,0.5)]" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Sin escrows activos
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs">
@@ -148,7 +148,7 @@ export function NoPaymentMethodsState({ className, onAction }: EmptyStateProps) 
       <div className="p-4 rounded-full bg-[hsl(270,100%,60%,0.1)] border border-[hsl(270,100%,60%,0.1)] mb-4">
         <CreditCard className="h-10 w-10 text-[hsl(270,100%,70%,0.5)]" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Sin métodos de pago
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6">
@@ -183,7 +183,7 @@ export function WalletErrorState({
       <div className="p-4 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
         <AlertCircle className="h-10 w-10 text-red-400" />
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Algo salió mal
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs mb-6">{message}</p>
@@ -219,15 +219,15 @@ export function InsufficientBalanceState({
       <div className="p-3 rounded-full bg-amber-500/10 border border-amber-500/20 mb-4">
         <Wallet className="h-8 w-8 text-amber-400" />
       </div>
-      <h3 className="text-base font-semibold text-white mb-2">
+      <h3 className="text-base font-semibold text-foreground mb-2">
         Fondos insuficientes
       </h3>
       <p className="text-sm text-muted-foreground max-w-xs">
         {requiredAmount && availableAmount ? (
           <>
-            Necesitas <span className="text-white font-medium">{requiredAmount}</span>{' '}
+            Necesitas <span className="text-foreground font-medium">{requiredAmount}</span>{' '}
             pero solo tienes{' '}
-            <span className="text-white font-medium">{availableAmount}</span> disponibles.
+            <span className="text-foreground font-medium">{availableAmount}</span> disponibles.
           </>
         ) : (
           'No tienes suficiente balance disponible para esta operación.'

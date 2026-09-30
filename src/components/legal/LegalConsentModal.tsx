@@ -115,7 +115,7 @@ export function LegalConsentModal({
         className={cn(
           "sm:max-w-[600px] max-h-[90vh] overflow-hidden",
           "bg-gradient-to-br from-background/95 via-background/98 to-background/95",
-          "border-white/10"
+          "border-border"
         )}
         onPointerDownOutside={(e) => {
           if (blockClose && requiredDocs.length > 0) {
@@ -209,7 +209,7 @@ export function LegalConsentModal({
             </ScrollArea>
 
             {/* Footer */}
-            <div className="flex flex-col gap-3 pt-4 border-t border-white/10">
+            <div className="flex flex-col gap-3 pt-4 border-t border-border">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Shield className="w-4 h-4" />
                 <span>
@@ -280,7 +280,7 @@ function DocumentItem({
         "p-4 rounded-sm border transition-all",
         isAccepted
           ? "border-green-500/30 bg-green-500/5"
-          : "border-white/10 bg-white/5"
+          : "border-border bg-muted/50"
       )}
     >
       <div className="flex items-start gap-3">

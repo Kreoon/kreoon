@@ -68,7 +68,7 @@ export function WithdrawalStatusCard({
       label: 'La solicitud fue rechazada',
     },
     cancelled: {
-      color: 'text-gray-400',
+      color: 'text-muted-foreground',
       bgColor: 'bg-gray-500/10',
       label: 'Solicitud cancelada',
     },
@@ -103,7 +103,7 @@ export function WithdrawalStatusCard({
         {/* Amount summary */}
         <div className="text-center">
           <p className="text-sm text-muted-foreground mb-1">Monto a recibir</p>
-          <p className="text-3xl font-bold text-white">{withdrawal.formattedNetAmount}</p>
+          <p className="text-3xl font-bold text-foreground">{withdrawal.formattedNetAmount}</p>
           <p className="text-xs text-muted-foreground mt-1">
             Solicitado: {withdrawal.formattedAmount} (Fee: {withdrawal.formattedFee})
           </p>
@@ -139,7 +139,7 @@ export function WithdrawalStatusCard({
         {withdrawal.status === 'rejected' && withdrawal.rejection_reason && (
           <div className="p-4 rounded-sm bg-red-500/10 border border-red-500/20">
             <p className="text-sm text-red-400 font-medium mb-1">Motivo del rechazo:</p>
-            <p className="text-sm text-[hsl(270,30%,70%)]">{withdrawal.rejection_reason}</p>
+            <p className="text-sm text-muted-foreground">{withdrawal.rejection_reason}</p>
           </div>
         )}
 
@@ -187,7 +187,7 @@ function DetailRow({
     <div className="flex items-center justify-between">
       <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
-        <span className="text-sm text-white">{value}</span>
+        <span className="text-sm text-foreground">{value}</span>
         {copyValue && onCopy && (
           <Button
             variant="ghost"
@@ -277,7 +277,7 @@ export function WithdrawalList({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-white">{withdrawal.formattedNetAmount}</p>
+                  <p className="font-medium text-foreground">{withdrawal.formattedNetAmount}</p>
                   <Badge variant="outline" className={cn('text-[10px]', withdrawal.statusColor)}>
                     {withdrawal.statusLabel}
                   </Badge>

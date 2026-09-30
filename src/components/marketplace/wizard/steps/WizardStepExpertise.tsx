@@ -69,8 +69,8 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Tu expertise</h2>
-        <p className="text-gray-400 text-sm">Define tus habilidades y areas de especializacion</p>
+        <h2 className="text-2xl font-bold text-foreground">Tu expertise</h2>
+        <p className="text-muted-foreground text-sm">Define tus habilidades y areas de especializacion</p>
       </div>
 
       {/* Categories */}
@@ -85,7 +85,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
                 data.categories.includes(cat.id)
                   ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
-                  : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
               )}
             >
               {cat.label}
@@ -106,7 +106,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
                 data.content_types.includes(type)
                   ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
-                  : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
               )}
             >
               {type}
@@ -127,7 +127,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
                 'px-3 py-2 rounded-sm text-xs font-medium transition-all border text-center',
                 data.platforms.includes(p.id)
                   ? 'bg-pink-500/20 text-pink-300 border-pink-500/40'
-                  : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
               )}
             >
               {p.label}
@@ -148,11 +148,11 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
                 'p-3 rounded-sm border text-left transition-all',
                 data.experience_level === level.value
                   ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:border-white/20'
+                  : 'border-border bg-muted/50 hover:border-border'
               )}
             >
-              <p className="text-white text-sm font-medium">{level.label}</p>
-              <p className="text-gray-500 text-xs">{level.desc}</p>
+              <p className="text-foreground text-sm font-medium">{level.label}</p>
+              <p className="text-muted-foreground text-xs">{level.desc}</p>
             </button>
           ))}
         </div>
@@ -170,7 +170,7 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-all border',
                 data.languages.includes(lang.id)
                   ? 'bg-green-500/20 text-green-300 border-green-500/40'
-                  : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                  : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
               )}
             >
               {lang.label}
@@ -187,10 +187,10 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
             {data.custom_tags.map(tag => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 text-white text-xs"
+                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted text-foreground text-xs"
               >
                 {tag}
-                <X className="h-3 w-3 cursor-pointer text-gray-400 hover:text-white" onClick={() => removeCustomTag(tag)} />
+                <X className="h-3 w-3 cursor-pointer text-muted-foreground hover:text-foreground" onClick={() => removeCustomTag(tag)} />
               </span>
             ))}
           </div>
@@ -202,12 +202,12 @@ export function WizardStepExpertise({ data, onChange }: WizardStepExpertiseProps
             onChange={(e) => setCustomTag(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
             placeholder="Ej: Animacion 3D, Storytelling..."
-            className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+            className="flex-1 bg-muted/50 border border-border rounded-sm px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
           />
           <button
             onClick={addCustomTag}
             disabled={!customTag.trim()}
-            className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-foreground/80 rounded-sm text-sm transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 bg-muted hover:bg-muted text-foreground/80 rounded-sm text-sm transition-colors disabled:opacity-50"
           >
             <Plus className="h-4 w-4" />
           </button>

@@ -49,7 +49,7 @@ export function AIFeedbackWidget({ executionId, onClose }: AIFeedbackWidgetProps
             type="button"
             onClick={() => handleStarClick(star)}
             className={cn(
-              "w-7 h-7 p-0.5 transition-colors rounded hover:bg-white/10",
+              "w-7 h-7 p-0.5 transition-colors rounded hover:bg-muted",
               rating !== null && rating >= star ? "text-yellow-500" : "text-muted-foreground hover:text-yellow-500/70"
             )}
             aria-label={`${star} estrella${star > 1 ? "s" : ""}`}
@@ -81,7 +81,7 @@ export function AIFeedbackWidget({ executionId, onClose }: AIFeedbackWidgetProps
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto p-1 rounded text-muted-foreground hover:text-foreground hover:bg-white/10"
+          className="ml-auto p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted"
           aria-label="Cerrar"
         >
           <X className="w-4 h-4" />

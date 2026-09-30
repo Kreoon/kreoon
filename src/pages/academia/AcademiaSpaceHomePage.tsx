@@ -150,10 +150,10 @@ export default function AcademiaSpaceHomePage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Volver a Academia
         </Link>
       </div>
@@ -178,7 +178,7 @@ export default function AcademiaSpaceHomePage() {
   const featuredCourses = courses.slice(0, 4);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
       <MetaPixel
         pixelId={plugins?.meta_pixel_id ?? null}
         enabled={!!plugins?.meta_pixel_enabled}
@@ -190,7 +190,7 @@ export default function AcademiaSpaceHomePage() {
         style={{
           background: space.cover_image_url
             ? `url(${space.cover_image_url}) center ${space.cover_position ?? 50}% / cover no-repeat`
-            : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, #0a0a0f)`,
+            : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, hsl(var(--background)))`,
         }}
       >
         {/* Degradado superior: funde el borde de arriba con la página */}
@@ -206,11 +206,11 @@ export default function AcademiaSpaceHomePage() {
             <img
               src={space.logo_url}
               alt={space.name}
-              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl object-cover border-4 border-[#0a0a0f] shadow-2xl flex-shrink-0"
+              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl object-cover border-4 border-background shadow-2xl flex-shrink-0"
             />
           ) : (
             <div
-              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl border-4 border-[#0a0a0f] shadow-2xl flex items-center justify-center flex-shrink-0 text-5xl"
+              className="h-24 w-24 md:h-32 md:w-32 rounded-3xl border-4 border-background shadow-2xl flex items-center justify-center flex-shrink-0 text-5xl"
               style={{ backgroundColor: `${spaceAccent}40` }}
               aria-hidden="true"
             >
@@ -218,11 +218,11 @@ export default function AcademiaSpaceHomePage() {
             </div>
           )}
           <div className="flex-1 min-w-0 pb-1">
-            <h1 className="text-3xl md:text-5xl font-extrabold mb-3 text-white leading-[1.1] text-balance">
+            <h1 className="text-3xl md:text-5xl font-extrabold mb-3 text-foreground leading-[1.1] text-balance">
               {space.name}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-zinc-300 flex-wrap">
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 border border-border">
                 <Users className="h-3.5 w-3.5" />
                 {space.member_count} miembros
               </span>
@@ -244,7 +244,7 @@ export default function AcademiaSpaceHomePage() {
         {/* Descripción + acciones — fila propia con aire */}
         <div className="flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 mb-8">
           {space.description && (
-            <p className="text-sm md:text-base text-zinc-300 max-w-2xl line-clamp-2 leading-relaxed lg:flex-1">
+            <p className="text-sm md:text-base text-muted-foreground max-w-2xl line-clamp-2 leading-relaxed lg:flex-1">
               {space.description}
             </p>
           )}
@@ -276,7 +276,7 @@ export default function AcademiaSpaceHomePage() {
                 {myMembership?.stripe_subscription_id && (
                   <ManageSubscriptionButton
                     spaceSlug={spaceSlug!}
-                    className="border border-white/10 rounded-2xl px-4 py-5 text-zinc-300 hover:bg-white/5"
+                    className="border border-border rounded-2xl px-4 py-5 text-muted-foreground hover:bg-muted/50"
                   />
                 )}
               </>
@@ -285,14 +285,14 @@ export default function AcademiaSpaceHomePage() {
               onClick={() => setShareOpen(true)}
               variant="outline"
               title="Compartir esta academia (+100 XP por referido)"
-              className="border-2 border-white/15 rounded-2xl px-5 py-5 hover:bg-white/5 font-bold"
+              className="border-2 border-border rounded-2xl px-5 py-5 hover:bg-muted/50 font-bold"
             >
               <Share2 className="h-4 w-4 mr-2" /> Compartir
             </Button>
             <Link to={`/academia/${spaceSlug}/classroom`}>
               <Button
                 variant="outline"
-                className="border-2 border-white/15 rounded-2xl px-5 py-5 hover:bg-white/5 font-bold"
+                className="border-2 border-border rounded-2xl px-5 py-5 hover:bg-muted/50 font-bold"
               >
                 <GraduationCap className="h-4 w-4 mr-2" /> Ver cursos
               </Button>
@@ -308,7 +308,7 @@ export default function AcademiaSpaceHomePage() {
       {/* Owner quick-actions */}
       {isOwner && (
         <div
-          className="border-b border-white/10 sticky top-[49px] z-10 backdrop-blur-sm"
+          className="border-b border-border sticky top-[49px] z-10 backdrop-blur-sm"
           style={{ backgroundColor: `${accent}12` }}
         >
           <div className="max-w-7xl mx-auto px-4 md:px-8 h-11 flex items-center justify-between gap-3">
@@ -318,21 +318,21 @@ export default function AcademiaSpaceHomePage() {
             <div className="flex items-center gap-1">
               <Button
                 size="sm" variant="ghost"
-                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1"
                 onClick={() => navigate(`/academia/${spaceSlug}/gestionar`)}
               >
                 <Plus className="h-3 w-3" /> Crear curso
               </Button>
               <Button
                 size="sm" variant="ghost"
-                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1"
                 onClick={() => navigate(`/academia/${spaceSlug}/admin?tab=settings`)}
               >
                 <Settings className="h-3 w-3" /> Editar space
               </Button>
               <Button
                 size="sm" variant="ghost"
-                className="h-7 text-xs text-zinc-400 hover:text-zinc-100 gap-1"
+                className="h-7 text-xs text-muted-foreground hover:text-foreground gap-1"
                 onClick={() => navigate(`/academia/${spaceSlug}/admin`)}
               >
                 <BarChart2 className="h-3 w-3" /> Panel admin
@@ -462,7 +462,7 @@ export default function AcademiaSpaceHomePage() {
                     <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#a855f7' }}>
                       Tu nivel
                     </div>
-                    <div className="font-extrabold text-base text-white">{myGami.title}</div>
+                    <div className="font-extrabold text-base text-foreground">{myGami.title}</div>
                   </div>
                 </div>
                 <LevelBadge
@@ -473,7 +473,7 @@ export default function AcademiaSpaceHomePage() {
                   accentColor={accent}
                   size="md"
                 />
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-border">
                   <EnergyMeter energy={myGami.energy ?? 100} size="sm" />
                   <StreakFlame days={myGami.streak_days ?? 0} size="sm" />
                 </div>
@@ -485,7 +485,7 @@ export default function AcademiaSpaceHomePage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl" aria-hidden="true">📅</span>
-                  <h2 className="font-extrabold text-base text-zinc-100">Próximos eventos</h2>
+                  <h2 className="font-extrabold text-base text-foreground">Próximos eventos</h2>
                 </div>
                 <Link
                   to={`/academia/${spaceSlug}/calendar`}
@@ -498,7 +498,7 @@ export default function AcademiaSpaceHomePage() {
               {upcomingEvents.length === 0 ? (
                 <div className="flex items-center gap-3 py-3">
                   <div className="text-3xl opacity-60" aria-hidden="true">🌙</div>
-                  <div className="text-sm text-zinc-400">Sin eventos próximos</div>
+                  <div className="text-sm text-muted-foreground">Sin eventos próximos</div>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -519,7 +519,7 @@ export default function AcademiaSpaceHomePage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl" aria-hidden="true">🏆</span>
-                  <h2 className="font-extrabold text-base text-zinc-100">Top semana</h2>
+                  <h2 className="font-extrabold text-base text-foreground">Top semana</h2>
                 </div>
                 <Link
                   to={`/academia/${spaceSlug}/leaderboard`}
@@ -533,7 +533,7 @@ export default function AcademiaSpaceHomePage() {
               {leaderboard.length === 0 ? (
                 <div className="flex items-center gap-3 py-3">
                   <div className="text-3xl opacity-60" aria-hidden="true">😴</div>
-                  <div className="text-sm text-zinc-400">Sin actividad esta semana</div>
+                  <div className="text-sm text-muted-foreground">Sin actividad esta semana</div>
                 </div>
               ) : (
                 <ul className="space-y-2">
@@ -544,14 +544,14 @@ export default function AcademiaSpaceHomePage() {
                         key={row.id}
                         className={cn(
                           'flex items-center gap-3 rounded-2xl p-2.5 transition-all',
-                          i < 3 ? 'bg-white/5' : 'hover:bg-white/[0.02]'
+                          i < 3 ? 'bg-muted/50' : 'hover:bg-muted/30'
                         )}
                       >
                         <span className="text-xl w-7 text-center" aria-hidden="true">
-                          {medal ?? <span className="text-sm font-bold text-zinc-500">{i + 1}</span>}
+                          {medal ?? <span className="text-sm font-bold text-muted-foreground">{i + 1}</span>}
                         </span>
                         <MiniAvatar profile={row.user} accentColor={accent} size={36} />
-                        <span className="flex-1 truncate text-sm font-semibold text-zinc-200">
+                        <span className="flex-1 truncate text-sm font-semibold text-foreground">
                           {row.user?.full_name ?? 'Usuario'}
                         </span>
                         <span
@@ -575,7 +575,7 @@ export default function AcademiaSpaceHomePage() {
               <BigCard className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl" aria-hidden="true">🏅</span>
-                  <h2 className="font-extrabold text-base text-zinc-100">Mis insignias</h2>
+                  <h2 className="font-extrabold text-base text-foreground">Mis insignias</h2>
                 </div>
                 <BadgesShowcase spaceId={(space as any).id} accentColor={accent} compact />
               </BigCard>
@@ -586,7 +586,7 @@ export default function AcademiaSpaceHomePage() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl" aria-hidden="true">👥</span>
-                  <h2 className="font-extrabold text-base text-zinc-100">Miembros</h2>
+                  <h2 className="font-extrabold text-base text-foreground">Miembros</h2>
                 </div>
                 <Link
                   to={`/academia/${spaceSlug}/members`}
@@ -596,8 +596,8 @@ export default function AcademiaSpaceHomePage() {
                   Ver todos
                 </Link>
               </div>
-              <div className="text-xs text-zinc-400 mb-3">
-                {space.member_count} totales · <span className="text-emerald-400 font-bold">{onlineCount} en línea</span>
+              <div className="text-xs text-muted-foreground mb-3">
+                {space.member_count} totales · <span className="text-emerald-600 dark:text-emerald-400 font-bold">{onlineCount} en línea</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {newMembers.map((m: any) => (
@@ -671,7 +671,7 @@ function SectionHeader({
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-2.5">
         <span className="text-2xl" aria-hidden="true">{emoji}</span>
-        <h2 className="font-extrabold text-lg text-zinc-100">{title}</h2>
+        <h2 className="font-extrabold text-lg text-foreground">{title}</h2>
       </div>
       {action}
     </div>
@@ -680,9 +680,9 @@ function SectionHeader({
 
 function EmptyState({ emoji, message }: { emoji: string; message: string }) {
   return (
-    <Card className="rounded-2xl p-8 text-center bg-white/[0.02] border-2 border-dashed border-white/10">
+    <Card className="rounded-2xl p-8 text-center bg-muted/30 border-2 border-dashed border-border">
       <div className="text-5xl mb-2" aria-hidden="true">{emoji}</div>
-      <div className="text-sm text-zinc-400">{message}</div>
+      <div className="text-sm text-muted-foreground">{message}</div>
     </Card>
   );
 }
@@ -714,7 +714,7 @@ function MiniPostCard({
           <MiniAvatar profile={post.author} accentColor={accentColor} size={36} />
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-bold text-sm truncate text-zinc-100">
+              <span className="font-bold text-sm truncate text-foreground">
                 {post.author?.full_name ?? 'Usuario'}
               </span>
               {post.category && (
@@ -728,25 +728,25 @@ function MiniPostCard({
                   {post.category.emoji} {post.category.name}
                 </span>
               )}
-              <span className="text-[10px] text-zinc-500">· {timeAgo}</span>
+              <span className="text-[10px] text-muted-foreground">· {timeAgo}</span>
             </div>
           </div>
           {post.is_pinned && <Pin className="h-3.5 w-3.5" style={{ color: accentColor }} />}
         </div>
-        {post.title && <h3 className="font-bold mb-1 leading-snug text-zinc-100">{post.title}</h3>}
+        {post.title && <h3 className="font-bold mb-1 leading-snug text-foreground">{post.title}</h3>}
         <div
-          className="prose prose-invert prose-sm max-w-none text-sm text-zinc-300 line-clamp-3"
+          className="prose prose-invert prose-sm max-w-none text-sm text-muted-foreground line-clamp-3"
           dangerouslySetInnerHTML={{ __html: html }}
         />
         {(post.like_count > 0 || post.comment_count > 0) && (
           <div className="mt-2 flex items-center gap-3 text-xs">
             {post.like_count > 0 && (
-              <span className="flex items-center gap-1 text-rose-300">
+              <span className="flex items-center gap-1 text-rose-700 dark:text-rose-300">
                 ❤️ {post.like_count}
               </span>
             )}
             {post.comment_count > 0 && (
-              <span className="flex items-center gap-1 text-zinc-400">
+              <span className="flex items-center gap-1 text-muted-foreground">
                 💬 {post.comment_count}
               </span>
             )}
@@ -771,14 +771,14 @@ function MiniAvatar({
       <img
         src={profile.avatar_url}
         alt=""
-        className="rounded-full object-cover flex-shrink-0 border-2 border-white/10"
+        className="rounded-full object-cover flex-shrink-0 border-2 border-border"
         style={{ height: size, width: size }}
       />
     );
   }
   return (
     <div
-      className="rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 border-2 border-white/10"
+      className="rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 border-2 border-border"
       style={{
         height: size,
         width: size,

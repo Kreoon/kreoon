@@ -46,7 +46,7 @@ export function ContinueLearningBigCard({
           style={
             !coverImageUrl
               ? {
-                  background: `linear-gradient(135deg, ${KREOON_PURPLE}30, #0a0a0f)`,
+                  background: `linear-gradient(135deg, ${KREOON_PURPLE}30, hsl(var(--background)))`,
                 }
               : undefined
           }
@@ -98,22 +98,22 @@ export function ContinueLearningBigCard({
           >
             Continúa donde lo dejaste
           </div>
-          <h2 className="text-2xl md:text-3xl font-extrabold leading-tight text-white">
+          <h2 className="text-2xl md:text-3xl font-extrabold leading-tight text-foreground">
             {courseTitle}
           </h2>
           {nextLessonTitle && (
-            <p className="text-sm text-zinc-400">
-              Próxima lección: <span className="text-zinc-200 font-medium">{nextLessonTitle}</span>
+            <p className="text-sm text-muted-foreground">
+              Próxima lección: <span className="text-foreground font-medium">{nextLessonTitle}</span>
             </p>
           )}
 
           {/* Progreso visual */}
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs font-semibold mb-2">
-              <span className="text-zinc-300">{motivation}</span>
+              <span className="text-muted-foreground">{motivation}</span>
               <span style={{ color: KREOON_PURPLE }}>{pct}%</span>
             </div>
-            <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+            <div className="h-3 bg-muted/50 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-1000 motion-safe:animate-in motion-safe:slide-in-from-left"
                 style={{
@@ -123,7 +123,7 @@ export function ContinueLearningBigCard({
                 }}
               />
             </div>
-            <div className="mt-1.5 text-[11px] text-zinc-500">
+            <div className="mt-1.5 text-[11px] text-muted-foreground">
               Te falta {remaining}% para completar el curso
             </div>
           </div>

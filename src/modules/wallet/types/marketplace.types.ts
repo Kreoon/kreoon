@@ -153,14 +153,14 @@ export const CONTRACT_STATUS_LABELS: Record<MarketplaceContractStatus, string> =
 };
 
 export const CONTRACT_STATUS_COLORS: Record<MarketplaceContractStatus, string> = {
-  draft: 'bg-gray-500/10 text-gray-400',
+  draft: 'bg-gray-500/10 text-muted-foreground',
   pending_payment: 'bg-amber-500/10 text-amber-500',
   active: 'bg-blue-500/10 text-blue-500',
   delivered: 'bg-purple-500/10 text-purple-500',
   revision: 'bg-orange-500/10 text-orange-500',
   completed: 'bg-emerald-500/10 text-emerald-500',
   disputed: 'bg-red-500/10 text-red-500',
-  cancelled: 'bg-gray-500/10 text-gray-500',
+  cancelled: 'bg-gray-500/10 text-muted-foreground',
   refunded: 'bg-pink-500/10 text-pink-500',
 };
 
@@ -184,7 +184,7 @@ export const DELIVERABLE_STATUS_LABELS: Record<DeliverableStatus, string> = {
 };
 
 export const DELIVERABLE_STATUS_COLORS: Record<DeliverableStatus, string> = {
-  pending: 'bg-gray-500/10 text-gray-400',
+  pending: 'bg-gray-500/10 text-muted-foreground',
   delivered: 'bg-blue-500/10 text-blue-500',
   approved: 'bg-emerald-500/10 text-emerald-500',
   rejected: 'bg-red-500/10 text-red-500',

@@ -45,7 +45,7 @@ export function FinanceFiltersBar({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-3 bg-white/[0.02] border border-white/5 rounded-md mb-4">
+    <div className="flex flex-wrap items-center gap-2 px-4 md:px-6 py-3 bg-muted/30 border border-border rounded-md mb-4">
       {/* Chips de período */}
       <div className="flex flex-wrap items-center gap-1">
         {PERIOD_CHIPS.map(p => (
@@ -58,7 +58,7 @@ export function FinanceFiltersBar({
             className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
               period === p
                 ? 'bg-primary/20 text-primary border border-primary/30'
-                : 'text-white/50 hover:text-white hover:bg-white/5 border border-transparent'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent'
             }`}
           >
             {PERIOD_LABELS[p]}
@@ -74,7 +74,7 @@ export function FinanceFiltersBar({
               setTempStart(startDate);
               setTempEnd(endDate);
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs text-white/60 hover:text-white hover:bg-white/5 border border-white/10"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-border"
           >
             <CalendarIcon className="h-3 w-3" />
             {format(parseISO(startDate), 'd MMM', { locale: es })}
@@ -82,7 +82,7 @@ export function FinanceFiltersBar({
             {format(parseISO(endDate), 'd MMM yyyy', { locale: es })}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="bg-background border-white/10 text-white w-72 p-3">
+        <PopoverContent className="bg-background border-border text-foreground w-72 p-3">
           <div className="space-y-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Desde</label>
@@ -90,7 +90,7 @@ export function FinanceFiltersBar({
                 type="date"
                 value={tempStart}
                 onChange={e => setTempStart(e.target.value)}
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
             <div>
@@ -99,7 +99,7 @@ export function FinanceFiltersBar({
                 type="date"
                 value={tempEnd}
                 onChange={e => setTempEnd(e.target.value)}
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
             <Button onClick={applyCustom} size="sm" className="w-full">
@@ -113,15 +113,15 @@ export function FinanceFiltersBar({
 
       {/* Selector de moneda */}
       {availableCurrencies.length > 1 && (
-        <div className="flex items-center gap-0.5 bg-white/5 border border-white/10 rounded p-0.5">
+        <div className="flex items-center gap-0.5 bg-muted/50 border border-border rounded p-0.5">
           {availableCurrencies.map(cur => (
             <button
               key={cur}
               onClick={() => setCurrency(cur)}
               className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                 currency === cur
-                  ? 'bg-white/15 text-white'
-                  : 'text-white/40 hover:text-white/70'
+                  ? 'bg-muted text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {cur}
@@ -134,14 +134,14 @@ export function FinanceFiltersBar({
       <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
         connected
           ? 'bg-green-500/15 text-green-400 border border-green-500/30'
-          : 'bg-white/5 text-white/30 border border-white/10'
+          : 'bg-muted/50 text-muted-foreground/60 border border-border'
       }`}>
-        <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-white/30'}`} />
+        <span className={`w-1.5 h-1.5 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-muted-foreground/40'}`} />
         {connected ? 'En vivo' : '...'}
       </span>
 
       {lastUpdated && (
-        <span className="text-[10px] text-white/30 flex items-center gap-1">
+        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
           <Activity className="h-2.5 w-2.5" />
           {format(lastUpdated, 'HH:mm:ss')}
         </span>

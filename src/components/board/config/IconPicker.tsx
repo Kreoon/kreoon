@@ -75,7 +75,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           variant="outline"
           size="sm"
           className={cn(
-            "gap-2 border-white/20 bg-white/5 hover:bg-white/10",
+            "gap-2 border-border bg-muted/50 hover:bg-muted",
             "focus:ring-[#a855f7]/50 focus:border-primary/50",
             className
           )}
@@ -96,7 +96,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
           placeholder="Buscar ícono..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="mb-3 h-8 bg-white/5 border-white/20 text-[#f8fafc] text-sm"
+          className="mb-3 h-8 bg-muted/50 border-border text-[#f8fafc] text-sm"
         />
         <div className="grid grid-cols-5 gap-1.5 max-h-[200px] overflow-y-auto">
           {filtered.map((item) => {
@@ -112,7 +112,7 @@ export function IconPicker({ value, onChange, className }: IconPickerProps) {
                 }}
                 className={cn(
                   "h-9 w-9 flex items-center justify-center rounded-sm transition-all",
-                  "hover:bg-white/10 hover:border-primary/50",
+                  "hover:bg-muted hover:border-primary/50",
                   isSelected
                     ? "bg-primary/20 border border-primary text-primary"
                     : "border border-transparent text-[#94a3b8]"

@@ -84,7 +84,7 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
             onClick={() => setCategoryId(null)}
             className={cn(
               'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-              categoryId === null ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'
+              categoryId === null ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
             )}
           >
             📰 Todos
@@ -95,7 +95,7 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
               onClick={() => setCategoryId(c.id)}
               className={cn(
                 'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-                categoryId === c.id ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'
+                categoryId === c.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
               )}
             >
               <span className="mr-2">{c.emoji}</span>
@@ -114,8 +114,8 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
             className={cn(
               'px-3 py-1.5 rounded-full text-xs whitespace-nowrap border',
               categoryId === null
-                ? 'border-purple-500 text-zinc-100 bg-purple-500/10'
-                : 'border-white/10 text-zinc-500'
+                ? 'border-primary text-foreground bg-primary/10'
+                : 'border-border text-muted-foreground'
             )}
           >
             📰 Todos
@@ -127,8 +127,8 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs whitespace-nowrap border',
                 categoryId === c.id
-                  ? 'border-purple-500 text-zinc-100 bg-purple-500/10'
-                  : 'border-white/10 text-zinc-500'
+                  ? 'border-primary text-foreground bg-primary/10'
+                  : 'border-border text-muted-foreground'
               )}
             >
               {c.emoji} {c.name}
@@ -143,11 +143,11 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
 
         {/* Posts */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12 text-zinc-500">
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
             <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando feed...
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-12 text-zinc-500">
+          <div className="text-center py-12 text-muted-foreground">
             Aún no hay posts en esta categoría. ¡Sé el primero!
           </div>
         ) : (
@@ -159,7 +159,7 @@ export function SpaceFeed({ spaceId, ownerId, accentColor = '#8B5CF6', highlight
                 className={cn(
                   'rounded-2xl transition-all duration-500 scroll-mt-24',
                   highlighted === post.id &&
-                    'ring-2 ring-purple-500 ring-offset-2 ring-offset-[#0a0a0f]'
+                    'ring-2 ring-primary ring-offset-2 ring-offset-background'
                 )}
               >
                 <PostCard

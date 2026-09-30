@@ -81,9 +81,9 @@ const ROLE_COLORS: Record<TalentPaymentRole, string> = {
   creator: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
   editor: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
   mixed: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-  manual: 'bg-white/10 text-white/60 border-white/10',
+  manual: 'bg-muted text-muted-foreground border-border',
   fillmaker: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
-  legacy: 'bg-white/10 text-white/40 border-white/10',
+  legacy: 'bg-muted text-muted-foreground border-border',
 };
 
 function RoleBadge({ role }: { role: TalentPaymentRole | null }) {
@@ -112,14 +112,14 @@ interface KpiCardProps {
 function KpiCard({ icon, label, value, sub, alert }: KpiCardProps) {
   return (
     <Card
-      className={`bg-white/5 border-white/10 p-5 ${alert ? 'border-red-500/40 bg-red-500/5' : ''}`}
+      className={`bg-muted/50 border-border p-5 ${alert ? 'border-red-500/40 bg-red-500/5' : ''}`}
     >
       <div className="flex items-center gap-2 mb-1">
-        <span className={alert ? 'text-red-400' : 'text-white/50'}>{icon}</span>
-        <span className="text-white/60 text-sm">{label}</span>
+        <span className={alert ? 'text-red-400' : 'text-muted-foreground'}>{icon}</span>
+        <span className="text-muted-foreground text-sm">{label}</span>
       </div>
-      <div className={`text-2xl font-bold ${alert ? 'text-red-300' : 'text-white'}`}>{value}</div>
-      {sub && <div className="text-xs text-white/40 mt-1">{sub}</div>}
+      <div className={`text-2xl font-bold ${alert ? 'text-red-300' : 'text-foreground'}`}>{value}</div>
+      {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
     </Card>
   );
 }
@@ -149,23 +149,23 @@ function PaymentRow({ payment, orgId }: PaymentRowProps) {
   const contentCount = payment.content_ids?.length ?? 0;
 
   return (
-    <div className="flex items-center justify-between gap-3 py-3 px-4 bg-white/[0.03] rounded-lg border border-white/5 hover:bg-white/[0.06] transition-colors">
+    <div className="flex items-center justify-between gap-3 py-3 px-4 bg-muted/30 rounded-lg border border-border hover:bg-muted/50 transition-colors">
       {/* Talent info */}
       <div className="flex items-center gap-3 min-w-0">
         <Avatar className="h-9 w-9 flex-shrink-0">
           <AvatarImage src={payment.talent?.avatar_url ?? undefined} />
-          <AvatarFallback className="bg-white/10 text-white/70 text-xs">
+          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
             {getTalentInitials(payment.talent?.full_name)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-white text-sm font-medium truncate">
+          <p className="text-foreground text-sm font-medium truncate">
             {payment.talent?.full_name ?? 'Talento desconocido'}
           </p>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <RoleBadge role={payment.role} />
             {contentCount > 0 && (
-              <span className="text-white/40 text-xs">{contentCount} contenido{contentCount !== 1 ? 's' : ''}</span>
+              <span className="text-muted-foreground text-xs">{contentCount} contenido{contentCount !== 1 ? 's' : ''}</span>
             )}
           </div>
         </div>
@@ -173,7 +173,7 @@ function PaymentRow({ payment, orgId }: PaymentRowProps) {
 
       {/* Amount + action */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        <span className="text-white font-semibold text-sm">
+        <span className="text-foreground font-semibold text-sm">
           {formatPaymentCurrency(payment.amount, payment.currency)}
         </span>
         <Button
@@ -195,20 +195,20 @@ function PaymentRow({ payment, orgId }: PaymentRowProps) {
 
 function PaidHistoryRow({ payment }: { payment: EnrichedTalentPayment }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2.5 px-4 bg-white/[0.02] rounded-lg border border-white/5">
+    <div className="flex items-center justify-between gap-3 py-2.5 px-4 bg-muted/30 rounded-lg border border-border">
       <div className="flex items-center gap-3 min-w-0">
         <Avatar className="h-7 w-7 flex-shrink-0">
           <AvatarImage src={payment.talent?.avatar_url ?? undefined} />
-          <AvatarFallback className="bg-white/10 text-white/60 text-xs">
+          <AvatarFallback className="bg-muted text-muted-foreground text-xs">
             {getTalentInitials(payment.talent?.full_name)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-white/80 text-sm truncate">
+          <p className="text-foreground text-sm truncate">
             {payment.talent?.full_name ?? 'Talento desconocido'}
           </p>
           {payment.cycle_label && (
-            <p className="text-white/40 text-xs truncate">{payment.cycle_label}</p>
+            <p className="text-muted-foreground text-xs truncate">{payment.cycle_label}</p>
           )}
         </div>
       </div>
@@ -221,7 +221,7 @@ function PaidHistoryRow({ payment }: { payment: EnrichedTalentPayment }) {
             {formatPaymentCurrency(payment.amount, payment.currency)}
           </p>
           {payment.payment_date && (
-            <p className="text-white/40 text-xs">{formatDate(payment.payment_date)}</p>
+            <p className="text-muted-foreground text-xs">{formatDate(payment.payment_date)}</p>
           )}
         </div>
       </div>
@@ -245,7 +245,7 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 rounded-lg bg-white/5 animate-pulse" />
+          <div key={i} className="h-16 rounded-lg bg-muted/50 animate-pulse" />
         ))}
       </div>
     );
@@ -312,11 +312,11 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
           label="Próximo vencimiento"
           value={
             kpis.nextDueDate ? (
-              <span className={nextDueAlert ? 'text-red-300' : 'text-white'}>
+              <span className={nextDueAlert ? 'text-red-300' : 'text-foreground'}>
                 {formatDate(kpis.nextDueDate)}
               </span>
             ) : (
-              <span className="text-white/40 text-base font-normal">Sin fecha</span>
+              <span className="text-muted-foreground text-base font-normal">Sin fecha</span>
             )
           }
           sub={
@@ -339,10 +339,10 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
       {/* ── Pendientes agrupados por corte ── */}
       <div className="space-y-5">
         {pendingPayments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-white/[0.02] rounded-xl border border-white/5">
+          <div className="flex flex-col items-center justify-center py-12 text-center bg-muted/30 rounded-xl border border-border">
             <CheckCircle2 className="w-10 h-10 text-green-400/40 mb-3" />
-            <p className="text-white/60 font-medium">No hay pagos pendientes</p>
-            <p className="text-white/30 text-sm mt-1">
+            <p className="text-muted-foreground font-medium">No hay pagos pendientes</p>
+            <p className="text-muted-foreground/60 text-sm mt-1">
               El próximo corte es el 15 o el último día del mes.
             </p>
           </div>
@@ -358,8 +358,8 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
                 {/* Group header */}
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <Clock className={`w-4 h-4 ${groupAlert ? 'text-red-400' : 'text-white/40'}`} />
-                    <span className={`text-sm font-semibold ${groupAlert ? 'text-red-300' : 'text-white/80'}`}>
+                    <Clock className={`w-4 h-4 ${groupAlert ? 'text-red-400' : 'text-muted-foreground'}`} />
+                    <span className={`text-sm font-semibold ${groupAlert ? 'text-red-300' : 'text-foreground'}`}>
                       {cycleLabel}
                     </span>
                     {dueDate && (
@@ -367,7 +367,7 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
                         className={`text-xs px-2 py-0 ${
                           groupAlert
                             ? 'bg-red-500/20 text-red-300 border-red-500/30'
-                            : 'bg-white/10 text-white/50 border-white/10'
+                            : 'bg-muted text-muted-foreground border-border'
                         }`}
                         variant="outline"
                       >
@@ -375,7 +375,7 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
                       </Badge>
                     )}
                   </div>
-                  <span className="text-white/50 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     Total: {formatPaymentCurrency(groupTotal, 'COP')}
                   </span>
                 </div>
@@ -394,10 +394,10 @@ export function TalentPayrollPanel({ orgId }: TalentPayrollPanelProps) {
 
       {/* ── Historial pagados ── */}
       {paidPayments.length > 0 && (
-        <div className="border-t border-white/10 pt-4">
+        <div className="border-t border-border pt-4">
           <button
             onClick={() => setHistoryOpen((v) => !v)}
-            className="flex items-center gap-2 text-white/50 hover:text-white/80 transition-colors text-sm w-full"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm w-full"
           >
             {historyOpen ? (
               <ChevronUp className="w-4 h-4" />

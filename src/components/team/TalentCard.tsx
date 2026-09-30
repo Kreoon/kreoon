@@ -225,7 +225,7 @@ export function TalentCard({ talent, onClick, onAmbassadorToggle, isAdmin, showK
                     "text-[10px]",
                     talent.up_level === 'diamond' ? 'text-cyan-400 border-cyan-400/30' :
                     talent.up_level === 'gold' ? 'text-yellow-400 border-yellow-400/30' :
-                    talent.up_level === 'silver' ? 'text-gray-400 border-gray-400/30' :
+                    talent.up_level === 'silver' ? 'text-muted-foreground border-gray-400/30' :
                     'text-orange-400 border-orange-400/30'
                   )}>
                     {talent.up_level}

@@ -35,7 +35,7 @@ const TIER_CONFIG: Record<
   creator_free: {
     label: 'Free',
     icon: Sparkles,
-    color: 'text-zinc-400',
+    color: 'text-muted-foreground',
     bgColor: 'bg-zinc-500/10',
   },
   creator_pro: {
@@ -426,7 +426,7 @@ export function TemplateSelector({
                       <div className="w-[220px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
                         {/* Phone frame */}
                         <div className="bg-background p-1">
-                          <div className="w-12 h-1 bg-zinc-800 rounded-full mx-auto mb-1" />
+                          <div className="w-12 h-1 bg-card rounded-full mx-auto mb-1" />
                           <TemplatePreview template={previewTemplate} className="rounded-lg" />
                         </div>
                       </div>
@@ -510,7 +510,7 @@ export function TemplateSelector({
                     }
                   }}
                   style={{ backgroundColor: previewTemplate.config.accentColor }}
-                  className="text-white"
+                  className="text-foreground"
                 >
                   {(() => {
                     const requiredTier = getRequiredTierForTemplate(previewTemplate.name);

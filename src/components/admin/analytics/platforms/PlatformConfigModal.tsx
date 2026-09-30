@@ -182,7 +182,7 @@ export function PlatformConfigModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl bg-card border-gray-800 text-white max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl bg-card border-border text-foreground max-h-[90dvh] sm:max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div
@@ -191,13 +191,13 @@ export function PlatformConfigModal({
             />
             <DialogTitle className="text-xl">{info.name}</DialogTitle>
           </div>
-          <DialogDescription className="text-gray-400">
+          <DialogDescription className="text-muted-foreground">
             {info.description}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={tab} onValueChange={setTab} className="mt-2">
-          <TabsList className="grid w-full grid-cols-2 bg-gray-800/50">
+          <TabsList className="grid w-full grid-cols-2 bg-card/50">
             <TabsTrigger value="credentials">Credenciales</TabsTrigger>
             <TabsTrigger value="mapping">Mapeo de Eventos</TabsTrigger>
           </TabsList>
@@ -218,7 +218,7 @@ export function PlatformConfigModal({
         </Tabs>
 
         {/* Footer actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-800">
+        <div className="flex items-center justify-between pt-4 border-t border-border">
           <div className="flex items-center gap-2">
             {config && (
               <Button
@@ -240,7 +240,7 @@ export function PlatformConfigModal({
                 size="sm"
                 onClick={handleTest}
                 disabled={isTesting || saving}
-                className="bg-gray-800/50 border-gray-700"
+                className="bg-card/50 border-border"
               >
                 {isTesting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />

@@ -215,7 +215,7 @@ export default function MarketplacePage() {
     <ScrollArea className="h-full">
       <div className="min-h-full bg-background">
         {/* Sticky header area */}
-        <div className="sticky top-0 z-30 bg-background/95 border-b border-white/5">
+        <div className="sticky top-0 z-30 bg-background/95 border-b border-border">
           <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             {/* Search bar */}
             <div className="py-4">
@@ -287,7 +287,7 @@ export default function MarketplacePage() {
                 <h3 className="text-foreground font-semibold text-sm">
                   Muestra tu talento en el marketplace
                 </h3>
-                <p className="text-gray-400 text-xs mt-0.5">
+                <p className="text-muted-foreground text-xs mt-0.5">
                   Crea tu perfil de creador y deja que las marcas te encuentren. Tu contenido ya publicado se agregará automáticamente.
                 </p>
               </div>
@@ -300,7 +300,7 @@ export default function MarketplacePage() {
               </button>
               <button
                 onClick={() => setBannerDismissed(true)}
-                className="absolute top-2 right-2 text-gray-500 hover:text-foreground text-xs px-1.5 py-0.5 rounded"
+                className="absolute top-2 right-2 text-muted-foreground hover:text-foreground text-xs px-1.5 py-0.5 rounded"
               >
                 ×
               </button>

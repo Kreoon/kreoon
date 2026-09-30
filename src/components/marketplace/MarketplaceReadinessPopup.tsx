@@ -94,7 +94,7 @@ export function MarketplaceReadinessPopup() {
       <DialogContent className="sm:max-w-md bg-gradient-to-br from-card via-card to-purple-950 border-purple-500/30">
         <button
           onClick={handleDismiss}
-          className="absolute right-4 top-4 text-white/50 hover:text-white transition-colors"
+          className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-4 w-4" />
         </button>
@@ -103,21 +103,21 @@ export function MarketplaceReadinessPopup() {
           <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center mb-4">
             <AlertCircle className="h-8 w-8 text-amber-400" />
           </div>
-          <DialogTitle className="text-xl text-white">
+          <DialogTitle className="text-xl text-foreground">
             Completa tu perfil para el Marketplace
           </DialogTitle>
-          <DialogDescription className="text-white/60 mt-2">
+          <DialogDescription className="text-muted-foreground mt-2">
             Para aparecer en el marketplace y recibir propuestas de campañas, necesitas completar estos requisitos:
           </DialogDescription>
         </DialogHeader>
 
         {/* Progress bar */}
         <div className="mt-4 mb-6">
-          <div className="flex justify-between text-xs text-white/50 mb-2">
+          <div className="flex justify-between text-xs text-muted-foreground mb-2">
             <span>{completedCount} de {requirements.length} completados</span>
             <span>{Math.round(progress)}%</span>
           </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2 bg-muted rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
@@ -136,7 +136,7 @@ export function MarketplaceReadinessPopup() {
                   "p-4 rounded-sm border transition-all",
                   req.completed
                     ? "bg-emerald-500/10 border-emerald-500/30"
-                    : "bg-white/5 border-white/10 hover:border-purple-500/30"
+                    : "bg-muted/50 border-border hover:border-purple-500/30"
                 )}
               >
                 <div className="flex items-start gap-3">
@@ -153,12 +153,12 @@ export function MarketplaceReadinessPopup() {
                   <div className="flex-1 min-w-0">
                     <p className={cn(
                       "font-medium",
-                      req.completed ? "text-emerald-400" : "text-white"
+                      req.completed ? "text-emerald-400" : "text-foreground"
                     )}>
                       {req.label}
                       {req.completed && " ✓"}
                     </p>
-                    <p className="text-sm text-white/50 mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-0.5">
                       {req.description}
                     </p>
                   </div>
@@ -184,13 +184,13 @@ export function MarketplaceReadinessPopup() {
           <Button
             variant="ghost"
             onClick={handleDismiss}
-            className="text-white/50 hover:text-white/70"
+            className="text-muted-foreground hover:text-muted-foreground"
           >
             Recordarme después
           </Button>
         </div>
 
-        <p className="text-center text-[11px] text-white/30 mt-2">
+        <p className="text-center text-[11px] text-muted-foreground/60 mt-2">
           Este recordatorio aparecerá cada vez que inicies sesión hasta que completes tu perfil
         </p>
       </DialogContent>

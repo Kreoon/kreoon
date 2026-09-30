@@ -64,7 +64,7 @@ function ColorChip({ color }: { color: string }) {
   return (
     <div className="flex items-center gap-1.5">
       <div
-        className="h-5 w-5 rounded-full border border-white/20 shadow-sm"
+        className="h-5 w-5 rounded-full border border-border shadow-sm"
         style={{ backgroundColor: color }}
       />
       <span className="text-xs font-mono text-muted-foreground">{color}</span>
@@ -130,7 +130,7 @@ function EditableTagList({
             {item}
             <button
               onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-              className="ml-1 hover:text-white"
+              className="ml-1 hover:text-foreground"
             >
               <X className="h-2.5 w-2.5" />
             </button>

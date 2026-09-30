@@ -39,7 +39,7 @@ export default function AcademiaManagePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <Loader2 className="h-6 w-6 animate-spin mr-2" /> Cargando...
       </div>
     );
@@ -47,10 +47,10 @@ export default function AcademiaManagePage() {
 
   if (!space || !isOwner) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <GraduationCap className="h-10 w-10" />
         <p>No tienes acceso a gestionar esta academia.</p>
-        <Link to="/academia/dashboard" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia/dashboard" className="text-primary hover:text-primary/80">
           Volver al panel
         </Link>
       </div>
@@ -58,13 +58,13 @@ export default function AcademiaManagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="border-b border-white/10 bg-black/30 sticky top-0 z-10 backdrop-blur">
+      <div className="border-b border-border bg-background/80 sticky top-0 z-10 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 md:px-8 h-14 flex items-center gap-4">
           <Link
             to={`/academia/${spaceSlug}`}
-            className="text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -76,10 +76,10 @@ export default function AcademiaManagePage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="font-semibold text-sm truncate">{space.name}</h1>
-            <p className="text-xs text-zinc-500">Gestión de academia</p>
+            <p className="text-xs text-muted-foreground">Gestión de academia</p>
           </div>
           <Link to={`/academia/${spaceSlug}`} target="_blank">
-            <Button variant="outline" size="sm" className="text-xs gap-1.5 border-white/10">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5 border-border">
               <Eye className="h-3.5 w-3.5" /> Ver pública
             </Button>
           </Link>
@@ -88,7 +88,7 @@ export default function AcademiaManagePage() {
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-white/10 mb-8">
+        <div className="flex gap-1 border-b border-border mb-8">
           {([
             { id: 'cursos', label: 'Cursos', icon: BookOpen },
             { id: 'configuracion', label: 'Configuración', icon: Settings },
@@ -99,8 +99,8 @@ export default function AcademiaManagePage() {
               className={cn(
                 'flex items-center gap-2 px-4 py-3 text-sm border-b-2 -mb-px transition-colors',
                 tab === id
-                  ? 'border-purple-500 text-zinc-100'
-                  : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                  ? 'border-primary text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
               <Icon className="h-4 w-4" /> {label}
@@ -165,7 +165,7 @@ function CoursesTab({
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-zinc-400 py-12 justify-center">
+      <div className="flex items-center gap-2 text-muted-foreground py-12 justify-center">
         <Loader2 className="h-5 w-5 animate-spin" /> Cargando cursos...
       </div>
     );
@@ -174,13 +174,13 @@ function CoursesTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           {courses.length} curso{courses.length !== 1 ? 's' : ''}
         </p>
         <Button
           size="sm"
           onClick={() => setShowNewCourse(true)}
-          className="bg-purple-500 hover:bg-purple-600 text-white gap-1.5"
+          className="bg-primary hover:bg-primary/90 text-white gap-1.5"
         >
           <Plus className="h-4 w-4" /> Nuevo curso
         </Button>
@@ -200,13 +200,13 @@ function CoursesTab({
       )}
 
       {courses.length === 0 && !showNewCourse ? (
-        <Card className="p-12 text-center bg-white/5 border-white/10 text-zinc-500">
+        <Card className="p-12 text-center bg-muted/50 border-border text-muted-foreground">
           <BookOpen className="h-8 w-8 mx-auto mb-3 opacity-40" />
           <p className="mb-4">No hay cursos aún. Crea el primero.</p>
           <Button
             size="sm"
             onClick={() => setShowNewCourse(true)}
-            className="bg-purple-500 hover:bg-purple-600 text-white gap-1.5"
+            className="bg-primary hover:bg-primary/90 text-white gap-1.5"
           >
             <Plus className="h-4 w-4" /> Crear primer curso
           </Button>
@@ -216,7 +216,7 @@ function CoursesTab({
           {courses.map((course) => (
             <Card
               key={course.id}
-              className="flex items-center gap-4 p-4 bg-white/5 border-white/10 hover:border-white/20 transition-colors"
+              className="flex items-center gap-4 p-4 bg-muted/50 border-border hover:border-border transition-colors"
             >
               {/* Portada */}
               <div
@@ -230,8 +230,8 @@ function CoursesTab({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-zinc-100 truncate">{course.title}</h3>
-                <div className="flex items-center gap-3 mt-1 text-xs text-zinc-500">
+                <h3 className="font-medium text-foreground truncate">{course.title}</h3>
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                   <span className="capitalize">{course.difficulty}</span>
                   <span>•</span>
                   <span>{course.enrolled_count ?? 0} inscritos</span>
@@ -244,8 +244,8 @@ function CoursesTab({
                 className={cn(
                   'flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border transition-colors',
                   course.status === 'published'
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-                    : 'bg-zinc-500/10 border-zinc-500/30 text-zinc-400 hover:bg-zinc-500/20'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                    : 'bg-muted border-border text-muted-foreground hover:bg-muted'
                 )}
               >
                 {course.status === 'published' ? (
@@ -259,13 +259,13 @@ function CoursesTab({
               <div className="relative">
                 <button
                   onClick={() => setOpenMenu(openMenu === course.id ? null : course.id)}
-                  className="p-1.5 text-zinc-500 hover:text-zinc-200 rounded transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-foreground rounded transition-colors"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </button>
                 {openMenu === course.id && (
                   <div
-                    className="absolute right-0 top-8 z-20 w-44 rounded-xl bg-card border border-white/10 shadow-xl py-1"
+                    className="absolute right-0 top-8 z-20 w-44 rounded-xl bg-card border border-border shadow-xl py-1"
                     onMouseLeave={() => setOpenMenu(null)}
                   >
                     <button
@@ -273,7 +273,7 @@ function CoursesTab({
                         setOpenMenu(null);
                         navigate(`/academia/${spaceSlug}/${course.slug}`);
                       }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5"
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50"
                     >
                       <Eye className="h-3.5 w-3.5" /> Ver curso
                     </button>
@@ -282,7 +282,7 @@ function CoursesTab({
                         setOpenMenu(null);
                         navigate(`/academia/${spaceSlug}/${course.slug}/edit`);
                       }}
-                      className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-zinc-300 hover:bg-white/5"
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:bg-muted/50"
                     >
                       <Pencil className="h-3.5 w-3.5" /> Editar curso
                     </button>
@@ -382,10 +382,10 @@ function NewCourseForm({
   }
 
   return (
-    <Card className="p-6 bg-purple-500/5 border-purple-500/20 space-y-5">
+    <Card className="p-6 bg-primary/5 border-primary/20 space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-100">Nuevo curso</h3>
-        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 transition-colors">
+        <h3 className="font-semibold text-foreground">Nuevo curso</h3>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -397,11 +397,11 @@ function NewCourseForm({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ej: UGC desde cero hasta primer cliente"
-            className="bg-white/5 border-white/10"
+            className="bg-muted/50 border-border"
             autoFocus
           />
           {title && (
-            <p className="text-xs text-zinc-500">URL: /academia/.../{slugify(title)}</p>
+            <p className="text-xs text-muted-foreground">URL: /academia/.../{slugify(title)}</p>
           )}
         </div>
 
@@ -411,7 +411,7 @@ function NewCourseForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500 resize-none"
+            className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary resize-none"
           />
         </div>
 
@@ -420,7 +420,7 @@ function NewCourseForm({
           <select
             value={difficulty}
             onChange={(e) => setDifficulty(e.target.value as CourseDifficulty)}
-            className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500"
+            className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary"
           >
             <option value="beginner">Principiante</option>
             <option value="intermediate">Intermedio</option>
@@ -436,14 +436,14 @@ function NewCourseForm({
             step={1}
             value={price}
             onChange={(e) => setPrice(Math.min(10000, Math.max(0, Number(e.target.value))))}
-            className="bg-white/5 border-white/10"
+            className="bg-muted/50 border-border"
           />
         </div>
       </div>
 
       {/* Primera lección opcional */}
-      <div className="border-t border-white/10 pt-4 space-y-3">
-        <p className="text-xs text-zinc-500">Primera lección (opcional — puedes agregarla después)</p>
+      <div className="border-t border-border pt-4 space-y-3">
+        <p className="text-xs text-muted-foreground">Primera lección (opcional — puedes agregarla después)</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="md:col-span-2 space-y-1">
             <Label>Título de la lección</Label>
@@ -451,7 +451,7 @@ function NewCourseForm({
               value={lessonTitle}
               onChange={(e) => setLessonTitle(e.target.value)}
               placeholder="Ej: Introducción al UGC"
-              className="bg-white/5 border-white/10"
+              className="bg-muted/50 border-border"
             />
           </div>
           <div className="space-y-1">
@@ -459,7 +459,7 @@ function NewCourseForm({
             <select
               value={lessonSource}
               onChange={(e) => setLessonSource(e.target.value)}
-              className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500"
+              className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary"
             >
               <option value="youtube">YouTube</option>
               <option value="vimeo">Vimeo</option>
@@ -475,7 +475,7 @@ function NewCourseForm({
                 value={lessonUrl}
                 onChange={(e) => setLessonUrl(e.target.value)}
                 placeholder="https://..."
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
           )}
@@ -483,19 +483,19 @@ function NewCourseForm({
       </div>
 
       {error && (
-        <p className="text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">
+        <p className="text-sm text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-md px-3 py-2">
           {error}
         </p>
       )}
 
       <div className="flex items-center justify-end gap-3 pt-2">
-        <Button variant="ghost" onClick={onClose} size="sm" className="text-zinc-400">
+        <Button variant="ghost" onClick={onClose} size="sm" className="text-muted-foreground">
           Cancelar
         </Button>
         <Button
           onClick={handleCreate}
           disabled={saving || !title.trim()}
-          className="bg-purple-500 hover:bg-purple-600 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
           size="sm"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
@@ -537,15 +537,15 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <Card className="p-6 bg-white/5 border-white/10 space-y-5">
-        <h2 className="font-semibold text-zinc-100">Información general</h2>
+      <Card className="p-6 bg-muted/50 border-border space-y-5">
+        <h2 className="font-semibold text-foreground">Información general</h2>
 
         <div className="space-y-1">
           <Label>Nombre de la academia</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="bg-white/5 border-white/10"
+            className="bg-muted/50 border-border"
           />
         </div>
 
@@ -555,7 +555,7 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full rounded-md bg-white/5 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500 resize-none"
+            className="w-full rounded-md bg-muted/50 border border-border p-2 text-sm focus:outline-none focus:border-primary resize-none"
           />
         </div>
 
@@ -566,15 +566,15 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
               type="color"
               value={accentColor}
               onChange={(e) => setAccentColor(e.target.value)}
-              className="h-9 w-9 rounded cursor-pointer bg-transparent border border-white/10"
+              className="h-9 w-9 rounded cursor-pointer bg-transparent border border-border"
             />
-            <span className="text-sm text-zinc-400 font-mono">{accentColor}</span>
+            <span className="text-sm text-muted-foreground font-mono">{accentColor}</span>
           </div>
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/10 space-y-5">
-        <h2 className="font-semibold text-zinc-100">Imágenes</h2>
+      <Card className="p-6 bg-muted/50 border-border space-y-5">
+        <h2 className="font-semibold text-foreground">Imágenes</h2>
 
         <div className="space-y-1">
           <Label>URL de portada (cover)</Label>
@@ -582,7 +582,7 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
             value={coverUrl}
             onChange={(e) => setCoverUrl(e.target.value)}
             placeholder="https://..."
-            className="bg-white/5 border-white/10"
+            className="bg-muted/50 border-border"
           />
           {coverUrl && (
             <img src={coverUrl} alt="Cover" className="mt-2 h-24 w-full object-cover rounded-lg" />
@@ -595,7 +595,7 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
             value={logoUrl}
             onChange={(e) => setLogoUrl(e.target.value)}
             placeholder="https://..."
-            className="bg-white/5 border-white/10"
+            className="bg-muted/50 border-border"
           />
           {logoUrl && (
             <img src={logoUrl} alt="Logo" className="mt-2 h-16 w-16 object-cover rounded-xl" />
@@ -603,8 +603,8 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
         </div>
       </Card>
 
-      <Card className="p-6 bg-white/5 border-white/10">
-        <h2 className="font-semibold text-zinc-100 mb-4">Visibilidad</h2>
+      <Card className="p-6 bg-muted/50 border-border">
+        <h2 className="font-semibold text-foreground mb-4">Visibilidad</h2>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -613,8 +613,8 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
             className="h-4 w-4 accent-purple-500"
           />
           <div>
-            <p className="text-sm text-zinc-200">Academia pública</p>
-            <p className="text-xs text-zinc-500">Visible en el explorador de academias</p>
+            <p className="text-sm text-foreground">Academia pública</p>
+            <p className="text-xs text-muted-foreground">Visible en el explorador de academias</p>
           </div>
         </label>
       </Card>
@@ -623,7 +623,7 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
         <Button
           onClick={handleSave}
           disabled={updateSpace.isPending || !name.trim()}
-          className="bg-purple-500 hover:bg-purple-600 text-white gap-2"
+          className="bg-primary hover:bg-primary/90 text-white gap-2"
         >
           {updateSpace.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -632,7 +632,7 @@ function ConfigTab({ space, onSaved }: { space: any; onSaved: () => void }) {
           )}
           Guardar cambios
         </Button>
-        {saved && <span className="text-sm text-emerald-400">¡Guardado!</span>}
+        {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">¡Guardado!</span>}
       </div>
     </div>
   );

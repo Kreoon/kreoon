@@ -34,7 +34,7 @@ export function LessonDripBadge({ lessonId, className }: Props) {
     <span
       className={cn(
         'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full',
-        'bg-amber-500/10 border border-amber-500/30 text-amber-300',
+        'bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300',
         className
       )}
       title={`Esta lección se desbloquea ${data.daysUntil} días después de tu inscripción al curso`}

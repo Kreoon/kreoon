@@ -62,10 +62,10 @@ const COLOR_MAP: Record<string, string> = {
   meeting: 'text-purple-400 bg-purple-500/15',
   demo: 'text-purple-400 bg-purple-500/15',
   form_submitted: 'text-cyan-400 bg-cyan-500/15',
-  page_visited: 'text-gray-400 bg-gray-500/15',
+  page_visited: 'text-muted-foreground bg-gray-500/15',
   proposal_sent: 'text-orange-400 bg-orange-500/15',
   contract_signed: 'text-emerald-400 bg-emerald-500/15',
-  note: 'text-white/50 bg-white/10',
+  note: 'text-muted-foreground/70 bg-muted',
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -102,7 +102,7 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
         <div className={cn('w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0', colors)}>
           <Icon className="h-4 w-4" />
         </div>
-        <div className="w-px flex-1 bg-white/10 mt-1" />
+        <div className="w-px flex-1 bg-muted mt-1" />
       </div>
 
       {/* Content */}
@@ -110,7 +110,7 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-medium text-white/90">
+              <span className="text-sm font-medium text-muted-foreground">
                 {TYPE_LABELS[type] ?? type}
               </span>
               {outcome && (
@@ -118,7 +118,7 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
                   className={cn(
                     'px-1.5 py-0.5 rounded text-[10px] font-medium',
                     outcome === 'positive' && 'bg-green-500/15 text-green-400',
-                    outcome === 'neutral' && 'bg-gray-500/15 text-gray-400',
+                    outcome === 'neutral' && 'bg-gray-500/15 text-muted-foreground',
                     outcome === 'negative' && 'bg-red-500/15 text-red-400',
                   )}
                 >
@@ -127,10 +127,10 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
               )}
             </div>
             {interaction.subject && (
-              <p className="text-xs text-white/60 mt-0.5">{interaction.subject}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{interaction.subject}</p>
             )}
           </div>
-          <span className="text-[10px] text-white/30 flex-shrink-0 whitespace-nowrap">
+          <span className="text-[10px] text-muted-foreground/70 flex-shrink-0 whitespace-nowrap">
             {formatDistanceToNow(new Date(interaction.created_at), { addSuffix: true, locale: es })}
           </span>
         </div>
@@ -147,7 +147,7 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
             </button>
             {expanded && (
               <div
-                className="mt-2 p-3 rounded-sm text-xs text-white/70 leading-relaxed whitespace-pre-wrap"
+                className="mt-2 p-3 rounded-sm text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap"
                 style={{
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(255, 255, 255, 0.05)',
@@ -163,9 +163,9 @@ function InteractionItem({ interaction }: { interaction: AnyInteraction }) {
         {nextAction && (
           <div className="mt-1.5 flex items-center gap-1.5">
             <span className="text-[10px] text-yellow-400/70 font-medium">Siguiente:</span>
-            <span className="text-[10px] text-white/50">{nextAction}</span>
+            <span className="text-[10px] text-muted-foreground/70">{nextAction}</span>
             {'next_action_date' in interaction && (interaction as OrgContactInteraction).next_action_date && (
-              <span className="text-[10px] text-white/30">
+              <span className="text-[10px] text-muted-foreground/70">
                 ({format(new Date((interaction as OrgContactInteraction).next_action_date!), 'd MMM', { locale: es })})
               </span>
             )}
@@ -188,8 +188,8 @@ export function InteractionTimeline({ interactions, isLoading }: InteractionTime
   if (interactions.length === 0) {
     return (
       <div className="text-center py-12">
-        <StickyNote className="h-8 w-8 text-white/15 mx-auto mb-2" />
-        <p className="text-sm text-white/30">Sin interacciones registradas</p>
+        <StickyNote className="h-8 w-8 text-muted-foreground/70 mx-auto mb-2" />
+        <p className="text-sm text-muted-foreground/70">Sin interacciones registradas</p>
       </div>
     );
   }

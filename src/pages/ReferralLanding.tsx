@@ -138,8 +138,8 @@ export default function ReferralLanding() {
                 </div>
               )}
               <div className="flex flex-col items-center gap-1">
-                <p className="text-white/70 text-sm">
-                  <span className="font-semibold text-white">{referrer.name ?? "Alguien"}</span>{" "}
+                <p className="text-muted-foreground text-sm">
+                  <span className="font-semibold text-foreground">{referrer.name ?? "Alguien"}</span>{" "}
                   te invito a unirte a KREOON
                 </p>
                 {referrer.tier && referrer.tier !== "starter" && REFERRAL_TIERS[referrer.tier as ReferralTierKey] && (
@@ -150,7 +150,7 @@ export default function ReferralLanding() {
 
             {/* Bilateral rewards */}
             {rewards && (
-              <div className="flex items-center gap-3 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-white/10">
+              <div className="flex items-center gap-3 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-border">
                 <Gift className="w-8 h-8 text-purple-400 shrink-0" />
                 <div className="text-left">
                   <p className="text-white text-sm font-semibold">Al registrarte recibes:</p>
@@ -176,7 +176,7 @@ export default function ReferralLanding() {
             )}
 
             {/* Value prop */}
-            <p className="text-white/60 text-sm max-w-md leading-relaxed">
+            <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
               La plataforma para creadores de contenido. Gestiona tu trabajo, muestra tu portafolio
               y conecta con oportunidades.
             </p>
@@ -192,7 +192,7 @@ export default function ReferralLanding() {
               </button>
             </div>
 
-            <p className="text-white/30 text-xs">
+            <p className="text-muted-foreground/60 text-xs">
               Al registrarte con este enlace, ambos reciben beneficios en el programa de referidos.
             </p>
           </>
@@ -203,7 +203,7 @@ export default function ReferralLanding() {
               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
                 <AlertCircle className="h-8 w-8 text-red-400" />
               </div>
-              <p className="text-white/70 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {errorMsg ?? "Este enlace de referido no es valido."}
               </p>
             </div>

@@ -77,7 +77,7 @@ export function WithdrawalConfirmation({
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Monto solicitado</span>
-              <span className="text-sm text-white">{formatCurrency(amount, currency)}</span>
+              <span className="text-sm text-foreground">{formatCurrency(amount, currency)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Comisión</span>
@@ -85,7 +85,7 @@ export function WithdrawalConfirmation({
             </div>
             <div className="h-px bg-[hsl(270,100%,60%,0.1)]" />
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-white">Recibirás</span>
+              <span className="text-sm font-medium text-foreground">Recibirás</span>
               <span className="text-lg font-bold text-emerald-400">
                 {formatCurrency(netAmount, currency)}
               </span>
@@ -102,7 +102,7 @@ export function WithdrawalConfirmation({
             <Icon className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-white">{paymentMethod.label}</p>
+            <p className="font-medium text-foreground">{paymentMethod.label}</p>
             <p className="text-sm text-muted-foreground truncate">
               {paymentMethod.summary}
             </p>
@@ -117,7 +117,7 @@ export function WithdrawalConfirmation({
       <div className="flex items-center gap-3 p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)]">
         <Clock className="h-4 w-4 text-primary" />
         <div>
-          <p className="text-sm text-white">Tiempo estimado</p>
+          <p className="text-sm text-foreground">Tiempo estimado</p>
           <p className="text-xs text-muted-foreground">{processingTime}</p>
         </div>
       </div>
@@ -125,7 +125,7 @@ export function WithdrawalConfirmation({
       {/* Warning */}
       <Alert className="bg-amber-500/5 border-amber-500/20">
         <AlertTriangle className="h-4 w-4 text-amber-400" />
-        <AlertDescription className="text-xs text-[hsl(270,30%,70%)]">
+        <AlertDescription className="text-xs text-muted-foreground">
           Una vez solicitado, el monto quedará en estado "Pendiente" hasta que
           nuestro equipo procese el pago. Puedes cancelar la solicitud mientras
           esté pendiente.

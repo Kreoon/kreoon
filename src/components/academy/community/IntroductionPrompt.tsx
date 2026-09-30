@@ -47,7 +47,7 @@ export function IntroductionPrompt({ spaceId, spaceName, accentColor = '#8B5CF6'
     >
       <button
         onClick={() => setDismissed(true)}
-        className="absolute top-3 right-3 text-zinc-500 hover:text-zinc-300"
+        className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -60,7 +60,7 @@ export function IntroductionPrompt({ spaceId, spaceName, accentColor = '#8B5CF6'
         </div>
         <div className="flex-1">
           <h3 className="font-semibold mb-1">¡Bienvenido a {spaceName}!</h3>
-          <p className="text-sm text-zinc-400 mb-3">
+          <p className="text-sm text-muted-foreground mb-3">
             Preséntate para que la comunidad te conozca y dale un punto de partida a tu camino acá.
           </p>
 
@@ -78,7 +78,7 @@ export function IntroductionPrompt({ spaceId, spaceName, accentColor = '#8B5CF6'
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                className="w-full min-h-24 rounded-lg bg-black/30 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500/50"
+                className="w-full min-h-24 rounded-lg bg-muted border border-border p-2 text-sm focus:outline-none focus:border-primary/50"
                 placeholder={template}
               />
               <div className="flex gap-2">

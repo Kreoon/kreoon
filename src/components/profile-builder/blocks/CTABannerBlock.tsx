@@ -105,22 +105,22 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
         <div
           className={cn(
             'group relative mb-4',
-            isEditing && isSelected && 'cursor-pointer hover:bg-white/10 rounded-md py-1 transition-colors'
+            isEditing && isSelected && 'cursor-pointer hover:bg-muted rounded-md py-1 transition-colors'
           )}
           onClick={() => isEditing && isSelected && openEditor('headline', config.headline || 'Listo para comenzar?')}
         >
           {isHtml(config.headline || '') ? (
             <SafeHtml
               html={config.headline || 'Listo para comenzar?'}
-              className="text-2xl md:text-3xl lg:text-4xl font-bold text-white"
+              className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground"
             />
           ) : (
-            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground">
               {config.headline || 'Listo para comenzar?'}
             </h2>
           )}
           {isEditing && isSelected && (
-            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
 
@@ -128,21 +128,21 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
         <div
           className={cn(
             'group relative mb-6',
-            isEditing && isSelected && 'cursor-pointer hover:bg-white/10 rounded-md py-1 transition-colors'
+            isEditing && isSelected && 'cursor-pointer hover:bg-muted rounded-md py-1 transition-colors'
           )}
           onClick={() => isEditing && isSelected && openEditor('subtext', config.subtext || '')}
         >
           {config.subtext ? (
             isHtml(config.subtext) ? (
-              <SafeHtml html={config.subtext} className="text-lg text-white/90" />
+              <SafeHtml html={config.subtext} className="text-lg text-foreground" />
             ) : (
-              <p className="text-lg text-white/90">{config.subtext}</p>
+              <p className="text-lg text-foreground">{config.subtext}</p>
             )
           ) : isEditing && isSelected ? (
-            <span className="text-white/40 italic">Haz clic para agregar descripcion...</span>
+            <span className="text-muted-foreground italic">Haz clic para agregar descripcion...</span>
           ) : null}
           {isEditing && isSelected && config.subtext && (
-            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           )}
         </div>
 
@@ -173,7 +173,7 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
             <Button
               size="lg"
               variant="outline"
-              className="border-white/30 text-white hover:bg-white/10 font-semibold px-8"
+              className="border-border text-foreground hover:bg-muted font-semibold px-8"
               asChild
             >
               <a href={config.secondaryButtonUrl || '#portfolio'}>
@@ -185,8 +185,8 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
       </div>
 
       {/* Decorative elements */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-muted rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-muted rounded-full blur-2xl translate-y-1/2 -translate-x-1/2" />
 
       {/* Editor Popup */}
       <TextFormatPopup

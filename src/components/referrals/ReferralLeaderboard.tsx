@@ -58,29 +58,29 @@ export function ReferralLeaderboard({ entries, currentUserId, isLoading }: Refer
                   key={entry.id}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-sm',
-                    isMe ? 'bg-purple-500/10 ring-1 ring-purple-500/30' : 'bg-white/5',
+                    isMe ? 'bg-purple-500/10 ring-1 ring-purple-500/30' : 'bg-muted/50',
                   )}
                 >
-                  <span className="text-white/40 text-xs w-6 text-center font-mono">
+                  <span className="text-muted-foreground/70 text-xs w-6 text-center font-mono">
                     #{entry.rank_position}
                   </span>
                   {entry.avatar_url ? (
                     <img src={entry.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white/40 text-xs">
+                    <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground/70 text-xs">
                       {(entry.full_name || '?')[0]?.toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-xs font-medium truncate">
+                    <p className="text-foreground text-xs font-medium truncate">
                       {entry.full_name || 'Usuario'}
                       {isMe && <span className="text-purple-400 ml-1">(tu)</span>}
                     </p>
                   </div>
                   <TierBadge tierKey={(entry.referral_tier || 'starter') as ReferralTierKey} size="sm" showLabel={false} />
                   <div className="text-right">
-                    <p className="text-white text-xs font-semibold">{entry.referrals_count}</p>
-                    <p className="text-white/30 text-[9px]">referidos</p>
+                    <p className="text-foreground text-xs font-semibold">{entry.referrals_count}</p>
+                    <p className="text-muted-foreground/70 text-[9px]">referidos</p>
                   </div>
                 </div>
               );
@@ -119,7 +119,7 @@ function PodiumEntry({
       ) : (
         <div
           className={cn(
-            'rounded-full flex items-center justify-center font-bold text-white/80 border-2',
+            'rounded-full flex items-center justify-center font-bold text-muted-foreground border-2',
             rank === 1 ? 'w-14 h-14 text-lg' : 'w-10 h-10 text-sm',
           )}
           style={{ borderColor: color, backgroundColor: `${color}30` }}
@@ -127,10 +127,10 @@ function PodiumEntry({
           {(entry.full_name || '?')[0]?.toUpperCase()}
         </div>
       )}
-      <p className="text-white text-[10px] font-medium text-center truncate max-w-full">
+      <p className="text-foreground text-[10px] font-medium text-center truncate max-w-full">
         {isCurrentUser ? 'Tu' : (entry.full_name || 'Usuario').split(' ')[0]}
       </p>
-      <p className="text-white/50 text-[9px]">{entry.referrals_count} ref.</p>
+      <p className="text-muted-foreground text-[9px]">{entry.referrals_count} ref.</p>
       <div className={cn('w-full rounded-t-md flex items-end justify-center pb-1', height)} style={{ backgroundColor: `${color}30` }}>
         <span className="font-bold text-sm" style={{ color }}>#{rank}</span>
       </div>

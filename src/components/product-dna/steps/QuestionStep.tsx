@@ -27,12 +27,12 @@ export function QuestionStep({ questions, responses, onResponse }: QuestionStepP
         >
           {/* Question Header */}
           <div>
-            <h3 className="text-lg font-medium text-white flex items-center gap-2">
+            <h3 className="text-lg font-medium text-foreground flex items-center gap-2">
               {question.title}
               {question.required && <span className="text-pink-400">*</span>}
             </h3>
             {question.subtitle && (
-              <p className="text-sm text-gray-400 mt-1">{question.subtitle}</p>
+              <p className="text-sm text-muted-foreground mt-1">{question.subtitle}</p>
             )}
           </div>
 
@@ -98,7 +98,7 @@ function SingleSelect({
             className={`relative p-4 rounded-sm border text-left transition-all ${
               isSelected
                 ? 'border-purple-500/50 bg-purple-500/10'
-                : 'border-white/10 bg-white/5 hover:bg-white/10'
+                : 'border-border bg-muted/40 hover:bg-muted'
             }`}
           >
             {/* Recommended Badge */}
@@ -118,11 +118,11 @@ function SingleSelect({
 
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-white">{option.label}</span>
+                  <span className="font-medium text-foreground">{option.label}</span>
                   {isSelected && <Check className="w-4 h-4 text-purple-400" />}
                 </div>
                 {option.description && (
-                  <p className="text-sm text-gray-500 mt-1">{option.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
                 )}
               </div>
             </div>
@@ -161,7 +161,7 @@ function MultiSelect({
   return (
     <div className="space-y-3">
       {max && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Selecciona hasta {max} opciones • {value.length}/{max}
         </p>
       )}
@@ -176,15 +176,15 @@ function MultiSelect({
               className={`p-3 rounded-sm border text-left transition-all ${
                 isSelected
                   ? 'border-purple-500/50 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  : 'border-border bg-muted/40 hover:bg-muted'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm text-white">{option.label}</span>
+                <span className="text-sm text-foreground">{option.label}</span>
                 {isSelected && <Check className="w-4 h-4 text-purple-400" />}
               </div>
               {option.description && (
-                <p className="text-xs text-gray-500 mt-1">{option.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{option.description}</p>
               )}
             </button>
           );
@@ -221,7 +221,7 @@ function ChipsSelect({
   return (
     <div className="space-y-3">
       {max && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Selecciona hasta {max} • {value.length}/{max}
         </p>
       )}
@@ -236,7 +236,7 @@ function ChipsSelect({
               className={`px-4 py-2 rounded-full border text-sm transition-all ${
                 isSelected
                   ? 'border-purple-500/50 bg-purple-500/20 text-purple-300'
-                  : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'
+                  : 'border-border bg-muted/40 text-muted-foreground hover:bg-muted'
               }`}
             >
               {option.label}

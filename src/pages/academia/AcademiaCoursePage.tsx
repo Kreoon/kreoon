@@ -64,10 +64,10 @@ export default function AcademiaCoursePage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Este curso no existe o no está publicado.</p>
-        <Link to={`/academia/${spaceSlug}`} className="text-purple-400 hover:text-purple-300">
+        <Link to={`/academia/${spaceSlug}`} className="text-primary hover:text-primary/80">
           Volver a la academia
         </Link>
       </div>
@@ -109,13 +109,13 @@ export default function AcademiaCoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       {/* Owner bar */}
       {isOwner && (
         <div
-          className="border-b border-white/5 sticky top-[57px] z-10 backdrop-blur-md"
+          className="border-b border-border sticky top-[57px] z-10 backdrop-blur-md"
           style={{ backgroundColor: `${KREOON_PURPLE}12` }}
         >
           <div className="max-w-7xl mx-auto px-4 md:px-8 h-12 flex items-center justify-between gap-3">
@@ -126,7 +126,7 @@ export default function AcademiaCoursePage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs gap-1 text-zinc-300 rounded-xl"
+                className="h-8 text-xs gap-1 text-muted-foreground rounded-xl"
                 onClick={() => navigate(`/academia/${spaceSlug}/${courseSlug}/edit?tab=content`)}
               >
                 <Settings className="h-3.5 w-3.5" /> Módulos
@@ -153,7 +153,7 @@ export default function AcademiaCoursePage() {
         style={
           !course.cover_image_url
             ? {
-                background: `linear-gradient(135deg, ${KREOON_PURPLE}50 0%, ${KREOON_PURPLE}20 50%, #0a0a0f 100%)`,
+                background: `linear-gradient(135deg, ${KREOON_PURPLE}50 0%, ${KREOON_PURPLE}20 50%, hsl(var(--background)) 100%)`,
               }
             : undefined
         }
@@ -175,48 +175,48 @@ export default function AcademiaCoursePage() {
             <div>
               <Link
                 to={`/academia/${spaceSlug}`}
-                className="text-xs uppercase tracking-widest text-zinc-400 hover:text-white font-bold"
+                className="text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold"
               >
                 ← {course.space?.name}
               </Link>
-              <h1 className="text-3xl md:text-5xl font-extrabold mt-3 mb-4 text-white leading-tight">
+              <h1 className="text-3xl md:text-5xl font-extrabold mt-3 mb-4 text-foreground leading-tight">
                 {course.title}
               </h1>
               {course.description && (
                 <div
-                  className="prose prose-invert prose-base md:prose-lg max-w-3xl text-zinc-300 leading-relaxed
-                    prose-p:my-2 prose-strong:text-white prose-headings:text-white
-                    prose-a:text-purple-400 hover:prose-a:text-purple-300
+                  className="prose prose-invert prose-base md:prose-lg max-w-3xl text-muted-foreground leading-relaxed
+                    prose-p:my-2 prose-strong:text-foreground prose-headings:text-foreground
+                    prose-a:text-primary hover:prose-a:text-primary/80
                     prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5
-                    prose-img:rounded-2xl prose-blockquote:border-l-purple-500"
+                    prose-img:rounded-2xl prose-blockquote:border-l-primary"
                   dangerouslySetInnerHTML={{ __html: sanitizeHTML(course.description) }}
                 />
               )}
 
               {/* Stats inline */}
-              <div className="flex items-center gap-4 mt-5 text-sm text-zinc-300 flex-wrap">
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+              <div className="flex items-center gap-4 mt-5 text-sm text-muted-foreground flex-wrap">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border">
                   <CheckCircle2 className="h-4 w-4" style={{ color: KREOON_PURPLE }} />
                   {lessonsCount} lecciones
                 </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border">
                   <Clock className="h-4 w-4" style={{ color: KREOON_PURPLE }} />
                   {course.total_duration_minutes > 0
                     ? `${Math.round(course.total_duration_minutes / 60)}h`
                     : 'Variable'}
                 </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border">
                   <BarChart3 className="h-4 w-4" style={{ color: KREOON_PURPLE }} />
                   {labelDifficulty(course.difficulty)}
                 </span>
                 {(course.enrolled_count ?? 0) > 0 && (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/50 border border-border">
                     <Users className="h-4 w-4" style={{ color: KREOON_PURPLE }} />
                     {course.enrolled_count} alumnos
                   </span>
                 )}
                 {course.certificate_enabled && (
-                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300">
                     <Award className="h-4 w-4" />
                     Certificado
                   </span>
@@ -232,11 +232,11 @@ export default function AcademiaCoursePage() {
                     <img
                       src={course.instructor.avatar_url}
                       alt={`Avatar de ${course.instructor.full_name ?? 'instructor'}`}
-                      className="h-16 w-16 rounded-2xl object-cover border-2 border-white/10 shadow-lg"
+                      className="h-16 w-16 rounded-2xl object-cover border-2 border-border shadow-lg"
                     />
                   ) : (
                     <div
-                      className="h-16 w-16 rounded-2xl flex items-center justify-center border-2 border-white/10 shadow-lg text-2xl font-bold text-white"
+                      className="h-16 w-16 rounded-2xl flex items-center justify-center border-2 border-border shadow-lg text-2xl font-bold text-white"
                       style={{
                         background: `linear-gradient(135deg, ${KREOON_PURPLE}80, ${KREOON_PURPLE}40)`,
                       }}
@@ -245,10 +245,10 @@ export default function AcademiaCoursePage() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       🎓 Instructor
                     </div>
-                    <div className="font-extrabold text-lg text-white">
+                    <div className="font-extrabold text-lg text-foreground">
                       {course.instructor.full_name ?? 'Instructor'}
                     </div>
                   </div>
@@ -258,9 +258,9 @@ export default function AcademiaCoursePage() {
 
             {/* Currículum */}
             <div>
-              <h2 className="text-2xl font-extrabold mb-4 flex items-center gap-2 text-white">
+              <h2 className="text-2xl font-extrabold mb-4 flex items-center gap-2 text-foreground">
                 <span aria-hidden="true">📚</span> Currículum
-                <span className="text-sm font-normal text-zinc-400 ml-2">
+                <span className="text-sm font-normal text-muted-foreground ml-2">
                   {modules.length} módulo{modules.length !== 1 ? 's' : ''} · {lessonsCount} lecciones
                 </span>
               </h2>
@@ -276,7 +276,7 @@ export default function AcademiaCoursePage() {
                     <BigCard key={m.id} className="overflow-hidden">
                       <button
                         onClick={() => toggleModule(m.id)}
-                        className="w-full p-5 flex items-center gap-3 hover:bg-white/[0.02] transition-colors text-left"
+                        className="w-full p-5 flex items-center gap-3 hover:bg-muted/30 transition-colors text-left"
                       >
                         <div
                           className="h-10 w-10 rounded-xl flex items-center justify-center text-lg font-extrabold flex-shrink-0"
@@ -288,27 +288,27 @@ export default function AcademiaCoursePage() {
                           {moduleLocked ? <Lock className="h-4 w-4" /> : mi + 1}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-extrabold text-base md:text-lg text-white">
+                          <h3 className="font-extrabold text-base md:text-lg text-foreground">
                             {m.title}
                           </h3>
-                          <div className="text-xs text-zinc-400 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {lessons.length} lección{lessons.length !== 1 ? 'es' : ''}
-                            {moduleLocked && <span className="text-amber-300/80"> · 🔒 Bloqueado</span>}
+                            {moduleLocked && <span className="text-amber-700 dark:text-amber-300/80"> · 🔒 Bloqueado</span>}
                           </div>
                         </div>
                         <ChevronDown
                           className={cn(
-                            'h-5 w-5 text-zinc-400 transition-transform flex-shrink-0',
+                            'h-5 w-5 text-muted-foreground transition-transform flex-shrink-0',
                             isOpen && 'rotate-180'
                           )}
                           aria-hidden="true"
                         />
                       </button>
                       {isOpen && (
-                        <div className="border-t border-white/5">
+                        <div className="border-t border-border">
                           {m.description && (
                             <p
-                              className="px-5 py-3 text-sm text-zinc-400 leading-relaxed bg-white/[0.02]"
+                              className="px-5 py-3 text-sm text-muted-foreground leading-relaxed bg-muted/30"
                               dangerouslySetInnerHTML={{ __html: sanitizeHTML(m.description) }}
                             />
                           )}
@@ -317,7 +317,7 @@ export default function AcademiaCoursePage() {
                               <UnlockRequirements evaluation={moduleEval} compact />
                             </div>
                           )}
-                          <ul className="divide-y divide-white/5">
+                          <ul className="divide-y divide-border">
                             {lessons.map((l, li) => {
                               const canPreview = l.is_free_preview || isEnrolled || isOwner;
                               const lessonConditionLocked =
@@ -329,7 +329,7 @@ export default function AcademiaCoursePage() {
                                   key={l.id}
                                   className={cn(
                                     'px-5 py-3 flex items-center gap-3',
-                                    canAccess && 'hover:bg-white/[0.03] cursor-pointer'
+                                    canAccess && 'hover:bg-muted/40 cursor-pointer'
                                   )}
                                   onClick={() => {
                                     if (canAccess) {
@@ -340,7 +340,7 @@ export default function AcademiaCoursePage() {
                                   }}
                                 >
                                   <span
-                                    className="text-xs font-bold text-zinc-500 tabular-nums w-6 text-right"
+                                    className="text-xs font-bold text-muted-foreground tabular-nums w-6 text-right"
                                     aria-hidden="true"
                                   >
                                     {li + 1}
@@ -351,28 +351,28 @@ export default function AcademiaCoursePage() {
                                       style={{ color: KREOON_PURPLE }}
                                     />
                                   ) : (
-                                    <Lock className={cn('h-4 w-4', lessonConditionLocked ? 'text-amber-400/80' : 'text-zinc-600')} />
+                                    <Lock className={cn('h-4 w-4', lessonConditionLocked ? 'text-amber-600 dark:text-amber-400/80' : 'text-muted-foreground')} />
                                   )}
                                   <span
                                     className={cn(
                                       'flex-1 text-sm',
-                                      canAccess ? 'text-zinc-200' : 'text-zinc-500'
+                                      canAccess ? 'text-foreground' : 'text-muted-foreground'
                                     )}
                                   >
                                     {l.title}
                                     {lessonConditionLocked && lessonEval?.requirements?.[0]?.label && !moduleLocked && (
-                                      <span className="block text-[11px] text-amber-300/70 font-normal mt-0.5">
+                                      <span className="block text-[11px] text-amber-700 dark:text-amber-300/70 font-normal mt-0.5">
                                         🔒 {lessonEval.requirements.find((r) => !r.met)?.label ?? 'Requisitos pendientes'}
                                       </span>
                                     )}
                                   </span>
                                   {l.duration_minutes && (
-                                    <span className="text-[11px] text-zinc-500 tabular-nums">
+                                    <span className="text-[11px] text-muted-foreground tabular-nums">
                                       {l.duration_minutes}min
                                     </span>
                                   )}
                                   {l.is_free_preview && !isEnrolled && (
-                                    <span className="text-[10px] uppercase font-bold tracking-wide text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                    <span className="text-[10px] uppercase font-bold tracking-wide text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-full">
                                       Vista previa
                                     </span>
                                   )}
@@ -384,7 +384,7 @@ export default function AcademiaCoursePage() {
                                           `/academia/${spaceSlug}/${courseSlug}/edit?lesson=${l.id}`
                                         );
                                       }}
-                                      className="text-zinc-500 hover:text-zinc-200 p-1"
+                                      className="text-muted-foreground hover:text-foreground p-1"
                                       title="Editar lección"
                                     >
                                       <Pencil className="h-3.5 w-3.5" />
@@ -406,17 +406,17 @@ export default function AcademiaCoursePage() {
           {/* Sidebar precio + CTA */}
           <aside className="lg:sticky lg:top-24 h-fit space-y-4">
             <BigCard accentColor={KREOON_PURPLE} glow className="p-6">
-              <div className="text-4xl md:text-5xl font-extrabold mb-1 text-white">
+              <div className="text-4xl md:text-5xl font-extrabold mb-1 text-foreground">
                 {course.is_free ? '✨ Gratis' : `US$${course.price_usd}`}
               </div>
-              <div className="text-xs text-zinc-400 mb-5">
+              <div className="text-xs text-muted-foreground mb-5">
                 {course.is_free ? 'Acceso completo · sin pago' : 'Pago único · acceso de por vida'}
               </div>
 
               {courseLocked ? (
                 <div className="space-y-3">
                   <Button
-                    className="w-full h-12 rounded-2xl font-extrabold text-base bg-white/5 text-zinc-400 cursor-not-allowed"
+                    className="w-full h-12 rounded-2xl font-extrabold text-base bg-muted/50 text-muted-foreground cursor-not-allowed"
                     disabled
                   >
                     <Lock className="h-4 w-4 mr-2" /> Curso bloqueado
@@ -454,7 +454,7 @@ export default function AcademiaCoursePage() {
                 </Button>
               )}
 
-              <ul className="mt-6 space-y-3 text-sm text-zinc-200">
+              <ul className="mt-6 space-y-3 text-sm text-foreground">
                 {[
                   { emoji: '📚', text: `${lessonsCount} lecciones premium` },
                   {

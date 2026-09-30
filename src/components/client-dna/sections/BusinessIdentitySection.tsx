@@ -42,12 +42,12 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
 
       {/* Description */}
       {(data.description || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Descripción</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Descripción</p>
           {isEditing ? (
             <EditableText value={data.description} onChange={change('description')} multiline placeholder="Descripción del negocio..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{data.description}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground leading-relaxed">{data.description}</p>
           )}
         </div>
       )}
@@ -62,22 +62,22 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.origin_story} onChange={change('origin_story')} multiline placeholder="Historia de origen..." />
           ) : (
-            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed italic">{data.origin_story}</p>
+            <p className="text-foreground dark:text-muted-foreground leading-relaxed italic">{data.origin_story}</p>
           )}
         </div>
       )}
 
       {/* Mission */}
       {(data.mission || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2 mb-2">
             <Target className="w-4 h-4 text-pink-500" />
-            <p className="text-xs text-zinc-500 uppercase tracking-wider">Misión</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">Misión</p>
           </div>
           {isEditing ? (
             <EditableText value={data.mission} onChange={change('mission')} multiline placeholder="Misión del negocio..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{data.mission}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground leading-relaxed">{data.mission}</p>
           )}
         </div>
       )}
@@ -92,19 +92,19 @@ export function BusinessIdentitySection({ data, isEditing, onFieldChange }: Prop
           {isEditing ? (
             <EditableText value={data.unique_factor} onChange={change('unique_factor')} placeholder="Factor único..." />
           ) : (
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{data.unique_factor}</p>
+            <p className="text-sm text-foreground dark:text-foreground font-medium">{data.unique_factor}</p>
           )}
         </div>
       )}
 
       {/* Competitive Landscape */}
       {(data.competitive_landscape || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Panorama Competitivo</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Panorama Competitivo</p>
           {isEditing ? (
             <EditableText value={data.competitive_landscape} onChange={change('competitive_landscape')} multiline placeholder="Panorama competitivo..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{data.competitive_landscape}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground leading-relaxed">{data.competitive_landscape}</p>
           )}
         </div>
       )}
@@ -126,12 +126,12 @@ function InfoCard({
   onChange?: (value: string) => void;
 }) {
   return (
-    <div className={`p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50 ${className}`}>
-      <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">{label}</p>
+    <div className={`p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border ${className}`}>
+      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
       {isEditing && onChange ? (
         <EditableText value={value} onChange={onChange} placeholder={label + '...'} />
       ) : (
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+        <p className="text-sm font-semibold text-foreground dark:text-foreground">{value}</p>
       )}
     </div>
   );

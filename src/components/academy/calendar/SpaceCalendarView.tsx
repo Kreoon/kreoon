@@ -52,14 +52,14 @@ export function SpaceCalendarView({ spaceId, isOwner, accentColor = '#8B5CF6' }:
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCursor(addMonths(cursor, -1))}
-            className="p-2 rounded hover:bg-white/5 text-zinc-300"
+            className="p-2 rounded hover:bg-muted/50 text-muted-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <h2 className="font-bold text-lg capitalize">{format(cursor, 'MMMM yyyy', { locale: es })}</h2>
           <button
             onClick={() => setCursor(addMonths(cursor, 1))}
-            className="p-2 rounded hover:bg-white/5 text-zinc-300"
+            className="p-2 rounded hover:bg-muted/50 text-muted-foreground"
           >
             <ChevronRight className="h-4 w-4" />
           </button>
@@ -68,14 +68,14 @@ export function SpaceCalendarView({ spaceId, isOwner, accentColor = '#8B5CF6' }:
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 border border-white/10 rounded p-0.5">
+          <div className="flex items-center gap-1 border border-border rounded p-0.5">
             {(['month', 'week', 'agenda'] as ViewMode[]).map((v) => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 className={cn(
                   'px-2.5 py-1 text-xs rounded transition-colors flex items-center gap-1',
-                  view === v ? 'bg-white/10 text-zinc-100' : 'text-zinc-500 hover:text-zinc-300'
+                  view === v ? 'bg-muted text-foreground' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 {v === 'agenda' ? <List className="h-3 w-3" /> : <CalendarIcon className="h-3 w-3" />}
@@ -104,7 +104,7 @@ export function SpaceCalendarView({ spaceId, isOwner, accentColor = '#8B5CF6' }:
 
       {/* Vista */}
       {isLoading ? (
-        <div className="text-zinc-500 text-center py-12">Cargando eventos...</div>
+        <div className="text-muted-foreground text-center py-12">Cargando eventos...</div>
       ) : view === 'month' ? (
         <MonthGrid
           cursor={cursor}
@@ -169,10 +169,10 @@ function MonthGrid({
   const today = new Date();
 
   return (
-    <Card className="p-2 bg-white/5 border-white/10">
+    <Card className="p-2 bg-muted/50 border-border">
       <div className="grid grid-cols-7 gap-1 mb-1">
         {dayNames.map((n) => (
-          <div key={n} className="text-[10px] uppercase tracking-wide text-zinc-500 text-center py-1">
+          <div key={n} className="text-[10px] uppercase tracking-wide text-muted-foreground text-center py-1">
             {n}
           </div>
         ))}
@@ -189,7 +189,7 @@ function MonthGrid({
               onClick={() => onDayClick(day)}
               className={cn(
                 'min-h-[88px] p-1.5 rounded border text-left transition-colors',
-                inMonth ? 'border-white/10 hover:bg-white/5' : 'border-transparent opacity-30',
+                inMonth ? 'border-border hover:bg-muted/50' : 'border-transparent opacity-30',
                 isToday && 'ring-1'
               )}
               style={isToday ? { borderColor: accentColor } : undefined}
@@ -197,7 +197,7 @@ function MonthGrid({
               <div
                 className={cn(
                   'text-xs font-semibold mb-1',
-                  isToday ? 'text-zinc-100' : 'text-zinc-400'
+                  isToday ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {format(day, 'd')}
@@ -214,7 +214,7 @@ function MonthGrid({
                   </div>
                 ))}
                 {dayEvents.length > 3 && (
-                  <div className="text-[10px] text-zinc-500 px-1">+{dayEvents.length - 3} más</div>
+                  <div className="text-[10px] text-muted-foreground px-1">+{dayEvents.length - 3} más</div>
                 )}
               </div>
             </button>
@@ -249,11 +249,11 @@ function WeekView({
         const evs = eventsByDay.get(key) ?? [];
         return (
           <div key={key}>
-            <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1.5">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1.5">
               {format(d, 'EEEE d', { locale: es })}
             </div>
             {evs.length === 0 ? (
-              <div className="text-xs text-zinc-600 italic pl-2 mb-2">Sin eventos</div>
+              <div className="text-xs text-muted-foreground italic pl-2 mb-2">Sin eventos</div>
             ) : (
               <div className="space-y-2">
                 {evs.map((ev) => (
@@ -289,7 +289,7 @@ function AgendaView({
   onCancel: (e: AcademySpaceEventFull) => void;
 }) {
   if (events.length === 0) {
-    return <div className="text-zinc-500 text-center py-12">Sin eventos en este mes.</div>;
+    return <div className="text-muted-foreground text-center py-12">Sin eventos en este mes.</div>;
   }
   return (
     <div className="space-y-2">

@@ -84,7 +84,7 @@ export function BunnyVideoUploader({ lessonId, onUploaded }: BunnyVideoUploaderP
         type="button"
         variant="outline"
         size="sm"
-        className="border-white/10 gap-2"
+        className="border-border gap-2"
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
       >
@@ -93,12 +93,12 @@ export function BunnyVideoUploader({ lessonId, onUploaded }: BunnyVideoUploaderP
       </Button>
 
       {done && (
-        <p className="text-xs text-emerald-400 flex items-center gap-1">
+        <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
           <CheckCircle2 className="h-3.5 w-3.5" /> Video subido, procesando en Bunny (puede tardar unos minutos en estar listo para reproducir).
         </p>
       )}
       {error && (
-        <p className="text-xs text-rose-400 flex items-center gap-1">
+        <p className="text-xs text-rose-600 dark:text-rose-400 flex items-center gap-1">
           <AlertCircle className="h-3.5 w-3.5" /> {error}
         </p>
       )}

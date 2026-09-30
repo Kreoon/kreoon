@@ -288,7 +288,7 @@ export function TikTokSettings({ accountId, accountName, onChange }: TikTokSetti
   // ── Steps ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] overflow-hidden">
+    <div className="rounded-2xl border border-border bg-muted/20 overflow-hidden">
 
       {/* Header */}
       <div className="px-5 pt-5 pb-4 space-y-3">
@@ -404,7 +404,7 @@ export function TikTokSettings({ accountId, accountName, onChange }: TikTokSetti
 
             {/* Resumen y acuerdo */}
             {settings.privacyLevel && (
-              <div className="mt-4 p-3.5 rounded-xl bg-muted/30 border border-white/8 space-y-2">
+              <div className="mt-4 p-3.5 rounded-xl bg-muted/30 border border-border space-y-2">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Resumen</p>
                 <SummaryLine emoji={PRIVACY_OPTIONS.find(o => o.value === settings.privacyLevel)?.emoji || '🔒'}
                   text={`Lo verán: ${PRIVACY_OPTIONS.find(o => o.value === settings.privacyLevel)?.label || ''}`} />

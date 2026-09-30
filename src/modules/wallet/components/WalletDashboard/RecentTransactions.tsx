@@ -130,7 +130,7 @@ export function RecentTransactions({
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-white truncate">
+                      <p className="text-sm font-medium text-foreground truncate">
                         {transaction.typeLabel}
                       </p>
                       <Badge
@@ -153,7 +153,7 @@ export function RecentTransactions({
                     <p
                       className={cn(
                         'text-sm font-semibold',
-                        transaction.isCredit ? 'text-emerald-400' : 'text-white'
+                        transaction.isCredit ? 'text-emerald-400' : 'text-foreground'
                       )}
                     >
                       {transaction.isCredit ? '+' : '-'}

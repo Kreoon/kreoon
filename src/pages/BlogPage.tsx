@@ -42,7 +42,7 @@ export default function BlogPage() {
                   <span className="h-px w-8 bg-gradient-to-l from-transparent to-kreoon-purple-500/60" />
                 </div>
 
-                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6">
                   Blog{" "}
                   <span className="bg-gradient-to-r from-kreoon-purple-400 to-kreoon-purple-600 bg-clip-text text-transparent">
                     Kreoon
@@ -60,7 +60,7 @@ export default function BlogPage() {
                       <Clock className="h-6 w-6 text-kreoon-purple-400" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-medium text-white">Muy pronto</p>
+                      <p className="text-sm font-medium text-foreground">Muy pronto</p>
                       <p className="text-xs text-kreoon-text-muted">
                         Artículos, guías y recursos para creadores
                       </p>
@@ -87,10 +87,10 @@ export default function BlogPage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 + i * 0.1 }}
-                        className="p-6 rounded-xl border border-white/5 bg-white/[0.02] hover:border-kreoon-purple-500/30 transition-colors"
+                        className="p-6 rounded-xl border border-border bg-muted/40 hover:border-kreoon-purple-500/30 transition-colors"
                       >
                         <FileText className="h-8 w-8 text-kreoon-purple-400 mb-4" />
-                        <h3 className="text-lg font-semibold text-white mb-2">
+                        <h3 className="text-lg font-semibold text-foreground mb-2">
                           {item.title}
                         </h3>
                         <p className="text-sm text-kreoon-text-muted">{item.desc}</p>
@@ -100,7 +100,7 @@ export default function BlogPage() {
 
                   <button
                     onClick={() => handleOpenAuth("register")}
-                    className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-white font-medium transition-colors"
+                    className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-foreground font-medium transition-colors"
                   >
                     Únete y sé el primero en saber
                     <ArrowRight className="h-4 w-4" />

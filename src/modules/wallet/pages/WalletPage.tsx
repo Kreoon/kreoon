@@ -72,7 +72,7 @@ export function WalletPage() {
             <Wallet className="h-8 w-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
               Mi Billetera
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -93,8 +93,8 @@ export function WalletPage() {
                 key={tab.value}
                 value={tab.value}
                 className={cn(
-                  'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-white',
-                  'text-muted-foreground hover:text-white transition-colors'
+                  'flex items-center gap-2 px-4 py-2.5 data-[state=active]:bg-[hsl(270,100%,60%,0.15)] data-[state=active]:text-foreground',
+                  'text-muted-foreground hover:text-foreground transition-colors'
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function WalletPage() {
                 </div>
                 <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)]">
                   <p className="text-sm text-muted-foreground">Mínimo de Retiro</p>
-                  <p className="text-2xl font-bold text-white mt-1">
+                  <p className="text-2xl font-bold text-foreground mt-1">
                     $50.000 COP
                   </p>
                 </div>

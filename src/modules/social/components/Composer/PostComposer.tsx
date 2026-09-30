@@ -746,7 +746,7 @@ export function PostComposer({ initialData, campaignId, brandUsername, onSuccess
 
           {/* Resumen */}
           {selectedAccountIds.length > 0 && (
-            <div className="p-4 rounded-2xl bg-muted/30 border-2 border-white/8 space-y-2">
+            <div className="p-4 rounded-2xl bg-muted/30 border-2 border-border space-y-2">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Resumen ✅</p>
               <div className="flex flex-wrap gap-1.5">
                 {accounts.filter(a => selectedAccountIds.includes(a.id)).map(a => (

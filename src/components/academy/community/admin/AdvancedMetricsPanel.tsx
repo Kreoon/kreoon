@@ -18,7 +18,7 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
   const { data: metrics, isLoading } = useAcademyAdvancedMetrics(spaceId);
 
   if (isLoading || !metrics) {
-    return <div className="text-zinc-500 p-8 text-center text-sm">Calculando LTV, cohort y net MRR...</div>;
+    return <div className="text-muted-foreground p-8 text-center text-sm">Calculando LTV, cohort y net MRR...</div>;
   }
 
   const ltvDisplay = metrics.ltv_usd !== null
@@ -81,7 +81,7 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
       {/* CAC note */}
       {metrics.cac_payback_months === null && (
         <Card className="p-3 bg-blue-500/5 border-blue-500/20">
-          <div className="flex items-start gap-2 text-xs text-blue-300">
+          <div className="flex items-start gap-2 text-xs text-blue-700 dark:text-blue-300">
             <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
             <span>
               <strong>CAC payback</strong> mide cuántos meses tarda un miembro en pagar lo que costó traerlo.
@@ -92,9 +92,9 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
       )}
 
       {/* MRR breakdown del mes */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-emerald-400" />
+          <TrendingUp className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
           MRR breakdown — mes actual
         </h3>
         <div className="grid grid-cols-3 gap-3">
@@ -120,9 +120,9 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
       </Card>
 
       {/* Net new MRR 12 meses (bar chart) */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <TrendingUp className="h-4 w-4 text-violet-400" />
+          <TrendingUp className="h-4 w-4 text-primary" />
           Net new MRR — últimos 12 meses
         </h3>
         <ResponsiveContainer width="100%" height={220}>
@@ -151,7 +151,7 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
             <Bar dataKey="churned_mrr_neg" stackId="a" fill="#f43f5e" radius={[0, 0, 4, 4]} />
           </BarChart>
         </ResponsiveContainer>
-        <div className="flex items-center gap-4 text-xs text-zinc-400 mt-2">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2">
           <span className="flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-sm bg-emerald-500" /> Nuevo MRR
           </span>
@@ -162,13 +162,13 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
       </Card>
 
       {/* Cohort retention */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <Heart className="h-4 w-4 text-amber-400" />
+          <Heart className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           Retención por cohorte
         </h3>
         {metrics.cohort_retention.length === 0 ? (
-          <div className="text-zinc-500 text-sm py-4">
+          <div className="text-muted-foreground text-sm py-4">
             Aún no hay cohortes. Aparecerán cuando tengas miembros de distintos meses.
           </div>
         ) : (
@@ -184,10 +184,10 @@ export function AdvancedMetricsPanel({ spaceId }: Props) {
       {metrics.monthly_churn_rate_pct >= 10 && (
         <Card className="p-4 bg-rose-500/5 border-rose-500/20">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 text-rose-400 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400 mt-0.5 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-rose-200">Churn elevado: {metrics.monthly_churn_rate_pct}%</p>
-              <p className="text-xs text-zinc-300 mt-1">
+              <p className="font-medium text-rose-800 dark:text-rose-200">Churn elevado: {metrics.monthly_churn_rate_pct}%</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Más del 10% de tus miembros cancela cada mes. Posibles causas: onboarding débil,
                 falta de valor percibido en el primer mes, comunidad fantasma, o cancelaciones
                 anti-incumplimiento (cobros que rebotan). Revisar primero las cancelaciones de los
@@ -205,14 +205,14 @@ function BigStat({
   icon: Icon, label, value, subtext, color,
 }: { icon: any; label: string; value: string; subtext: string; color: string }) {
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="h-9 w-9 rounded-lg flex items-center justify-center mb-2"
            style={{ backgroundColor: `${color}26` }}>
         <Icon className="h-4 w-4" style={{ color }} />
       </div>
       <div className="text-2xl font-bold" style={{ color }}>{value}</div>
-      <div className="text-[10px] text-zinc-300 uppercase tracking-wide mt-1">{label}</div>
-      <div className="text-[10px] text-zinc-500 mt-0.5">{subtext}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">{label}</div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{subtext}</div>
     </Card>
   );
 }
@@ -223,8 +223,8 @@ function BreakdownCard({
   return (
     <div className="rounded-lg p-3 border" style={{ borderColor: `${color}33`, backgroundColor: `${color}0d` }}>
       <div className="text-xl font-bold" style={{ color }}>{value}</div>
-      <div className="text-[10px] text-zinc-400 uppercase tracking-wide mt-0.5">{label}</div>
-      <div className="text-[10px] text-zinc-500 mt-0.5">{subtext}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">{label}</div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{subtext}</div>
     </div>
   );
 }
@@ -245,8 +245,8 @@ function CohortRow({
                        : '#f43f5e';
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-20 text-zinc-400 text-xs">{cohort.cohort_label}</span>
-      <div className="flex-1 h-6 rounded-md bg-white/5 overflow-hidden relative">
+      <span className="w-20 text-muted-foreground text-xs">{cohort.cohort_label}</span>
+      <div className="flex-1 h-6 rounded-md bg-muted/50 overflow-hidden relative">
         <div
           className="h-full transition-all"
           style={{

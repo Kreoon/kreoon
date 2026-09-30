@@ -59,7 +59,7 @@ function useCreatorsDetail() {
 }
 
 const LEVEL_COLORS: Record<string, string> = {
-  beginner: "border-white/20 text-white/50",
+  beginner: "border-border text-muted-foreground/70",
   intermediate: "border-blue-500/50 text-blue-400",
   advanced: "border-purple-500/50 text-purple-400",
   expert: "border-yellow-500/50 text-yellow-400",
@@ -93,8 +93,8 @@ export function CreatorsDetailSheet({ stats }: CreatorsDetailSheetProps) {
       header: "Creador",
       render: (c) => (
         <div>
-          <p className="font-medium text-white">{c.full_name}</p>
-          <p className="text-xs text-white/40">{c.email}</p>
+          <p className="font-medium text-foreground">{c.full_name}</p>
+          <p className="text-xs text-muted-foreground/70">{c.email}</p>
         </div>
       ),
     },
@@ -135,17 +135,17 @@ export function CreatorsDetailSheet({ stats }: CreatorsDetailSheetProps) {
         c.rating ? (
           <div className="flex items-center gap-1">
             <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-            <span className="text-white/60">{c.rating.toFixed(1)}</span>
+            <span className="text-muted-foreground">{c.rating.toFixed(1)}</span>
           </div>
         ) : (
-          <span className="text-white/30">-</span>
+          <span className="text-muted-foreground/70">-</span>
         ),
     },
     {
       key: "created",
       header: "Registro",
       render: (c) => (
-        <span className="text-white/50 text-xs">
+        <span className="text-muted-foreground/70 text-xs">
           {new Date(c.created_at).toLocaleDateString("es-CO")}
         </span>
       ),
@@ -171,7 +171,7 @@ export function CreatorsDetailSheet({ stats }: CreatorsDetailSheetProps) {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start">
+        <TabsList className="bg-muted/40 w-full justify-start">
           <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
           <TabsTrigger value="verified" className="text-xs">Verificados</TabsTrigger>
           <TabsTrigger value="available" className="text-xs">Disponibles</TabsTrigger>
@@ -185,7 +185,7 @@ export function CreatorsDetailSheet({ stats }: CreatorsDetailSheetProps) {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+        <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
           Cargando creadores...
         </div>
       ) : (

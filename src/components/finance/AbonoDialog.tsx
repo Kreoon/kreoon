@@ -98,15 +98,15 @@ export function AbonoDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="bg-[#111] border-white/10 text-white max-w-md">
+      <DialogContent className="bg-background border-border text-foreground max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-white flex items-center gap-2">
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <PlusCircle className="w-4 h-4 text-green-400" />
             Registrar Abono
           </DialogTitle>
           <div className="pt-1">
-            <p className="text-white/60 text-sm">
-              <span className="text-white font-medium">{packageName}</span>
+            <p className="text-muted-foreground text-sm">
+              <span className="text-foreground font-medium">{packageName}</span>
               {' · '}{clientName}
             </p>
             <p className="text-orange-400 text-xs mt-0.5">
@@ -117,7 +117,7 @@ export function AbonoDialog({
 
         <div className="space-y-4 py-2">
           <div>
-            <label className="text-white/70 text-xs font-medium block mb-1">
+            <label className="text-muted-foreground text-xs font-medium block mb-1">
               Monto <span className="text-red-400">*</span>
             </label>
             <Input
@@ -127,51 +127,51 @@ export function AbonoDialog({
               placeholder={`Ej. ${currency === 'COP' ? '500000' : '500'}`}
               value={form.amount}
               onChange={e => handleField('amount', e.target.value)}
-              className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-white/30"
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50"
             />
           </div>
 
           <div>
-            <label className="text-white/70 text-xs font-medium block mb-1">Método de pago</label>
+            <label className="text-muted-foreground text-xs font-medium block mb-1">Método de pago</label>
             <select
               value={form.payment_method}
               onChange={e => handleField('payment_method', e.target.value as PackagePaymentMethod)}
-              className="w-full bg-white/5 border border-white/15 text-white rounded-md px-3 py-2 text-sm focus:outline-none focus:border-white/30"
+              className="w-full bg-muted/50 border border-border text-foreground rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary/50"
             >
               {PAYMENT_METHODS.map(m => (
-                <option key={m} value={m} className="bg-[#111]">{m}</option>
+                <option key={m} value={m} className="bg-background">{m}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="text-white/70 text-xs font-medium block mb-1">Número de referencia</label>
+            <label className="text-muted-foreground text-xs font-medium block mb-1">Número de referencia</label>
             <Input
               placeholder="Opcional"
               value={form.reference_number}
               onChange={e => handleField('reference_number', e.target.value)}
-              className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-white/30"
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50"
             />
           </div>
 
           <div>
-            <label className="text-white/70 text-xs font-medium block mb-1">Fecha de pago</label>
+            <label className="text-muted-foreground text-xs font-medium block mb-1">Fecha de pago</label>
             <Input
               type="date"
               value={form.payment_date}
               onChange={e => handleField('payment_date', e.target.value)}
-              className="bg-white/5 border-white/15 text-white focus:border-white/30"
+              className="bg-muted/50 border-border text-foreground focus:border-primary/50"
             />
           </div>
 
           <div>
-            <label className="text-white/70 text-xs font-medium block mb-1">Notas</label>
+            <label className="text-muted-foreground text-xs font-medium block mb-1">Notas</label>
             <Textarea
               placeholder="Opcional"
               rows={2}
               value={form.notes}
               onChange={e => handleField('notes', e.target.value)}
-              className="bg-white/5 border-white/15 text-white placeholder:text-white/30 focus:border-white/30 resize-none"
+              className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground focus:border-primary/50 resize-none"
             />
           </div>
         </div>
@@ -181,7 +181,7 @@ export function AbonoDialog({
             variant="ghost"
             onClick={handleClose}
             disabled={loading}
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             Cancelar
           </Button>

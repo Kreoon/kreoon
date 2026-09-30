@@ -56,31 +56,31 @@ export function ClientsWithoutDNA({ onSelectClient }: ClientsWithoutDNAProps) {
           <AlertCircle className="w-5 h-5 text-orange-400" />
         </div>
         <div>
-          <h3 className="font-semibold text-white">Clientes sin ADN</h3>
+          <h3 className="font-semibold text-foreground">Clientes sin ADN</h3>
           <p className="text-sm text-orange-400">{clients.length} clientes pendientes</p>
         </div>
       </div>
 
       {/* Client List */}
-      <div className="divide-y divide-white/5">
+      <div className="divide-y divide-border">
         {clients.slice(0, 5).map((client) => (
           <button
             key={client.id}
             onClick={() => onSelectClient?.(client.id)}
-            className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left"
+            className="w-full flex items-center justify-between p-4 hover:bg-muted/40 transition-colors text-left"
           >
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
-                <User className="w-4 h-4 text-gray-400" />
+              <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center">
+                <User className="w-4 h-4 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-white">{client.name}</p>
+                <p className="font-medium text-foreground">{client.name}</p>
                 {client.contact_email && (
-                  <p className="text-sm text-gray-400">{client.contact_email}</p>
+                  <p className="text-sm text-muted-foreground">{client.contact_email}</p>
                 )}
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-500" />
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
         ))}
       </div>

@@ -25,14 +25,14 @@ export function OrgTeamSection({ members, accentColor }: OrgTeamSectionProps) {
   if (members.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-500">No hay miembros visibles en este equipo</p>
+        <p className="text-muted-foreground">No hay miembros visibles en este equipo</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-white">Equipo ({members.length})</h2>
+      <h2 className="text-lg font-semibold text-foreground">Equipo ({members.length})</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {members.map(member => {
           const initials = member.full_name
@@ -45,7 +45,7 @@ export function OrgTeamSection({ members, accentColor }: OrgTeamSectionProps) {
           return (
             <div
               key={member.user_id}
-              className="flex items-center gap-3 p-3 rounded-sm border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
+              className="flex items-center gap-3 p-3 rounded-sm border border-border bg-muted/40 hover:bg-muted/50 transition-colors"
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={member.avatar_url || ''} alt={member.full_name} />
@@ -57,7 +57,7 @@ export function OrgTeamSection({ members, accentColor }: OrgTeamSectionProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{member.full_name}</p>
+                <p className="text-sm font-medium text-foreground truncate">{member.full_name}</p>
                 <Badge
                   variant="secondary"
                   className="text-[10px] mt-0.5"

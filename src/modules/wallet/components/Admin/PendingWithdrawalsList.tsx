@@ -251,7 +251,7 @@ export function PendingWithdrawalsList({
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-white truncate max-w-[150px]">
+                              <p className="font-medium text-foreground truncate max-w-[150px]">
                                 {profile?.full_name || 'Usuario'}
                               </p>
                               <p className="text-xs text-muted-foreground truncate max-w-[150px]">
@@ -262,7 +262,7 @@ export function PendingWithdrawalsList({
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-semibold text-white">
+                            <p className="font-semibold text-foreground">
                               {withdrawal.formattedNetAmount}
                             </p>
                             <p className="text-xs text-muted-foreground">

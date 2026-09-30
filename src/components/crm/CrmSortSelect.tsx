@@ -29,7 +29,7 @@ export function CrmSortSelect({
         value={value}
         onValueChange={(key) => onChange(key, direction)}
       >
-        <SelectTrigger className="w-44 h-9 bg-white/5 border-white/10 text-white/70 text-xs">
+        <SelectTrigger className="w-44 h-9 bg-muted/40 border-border text-muted-foreground text-xs">
           <SelectValue placeholder="Ordenar por" />
         </SelectTrigger>
         <SelectContent>
@@ -42,7 +42,7 @@ export function CrmSortSelect({
       </Select>
       <button
         onClick={() => onChange(value, direction === 'asc' ? 'desc' : 'asc')}
-        className="p-2 rounded-sm bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white/60 hover:text-white/90"
+        className="p-2 rounded-sm bg-muted/40 border border-border hover:bg-muted transition-colors text-muted-foreground hover:text-muted-foreground"
         title={direction === 'asc' ? 'Ascendente (A→Z, menor→mayor)' : 'Descendente (Z→A, mayor→menor)'}
       >
         {direction === 'asc' ? (

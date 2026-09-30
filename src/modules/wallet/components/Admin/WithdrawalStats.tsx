@@ -79,7 +79,7 @@ function StatCard({
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-white mt-1">{value}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1 mt-2">
                 {change >= 0 ? (

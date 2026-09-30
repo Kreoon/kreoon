@@ -62,7 +62,7 @@ function QuickActionsCard() {
 
   return (
     <Card className="p-4 md:p-6">
-      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+      <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
         <ExternalLink className="h-5 w-5 text-purple-400" />
         Acciones Rápidas
       </h3>
@@ -73,8 +73,8 @@ function QuickActionsCard() {
               variant="ghost"
               className="w-full justify-start gap-2 h-auto py-3 px-3 bg-white/[0.02] hover:bg-white/[0.05]"
             >
-              <action.icon className="h-4 w-4 text-white/50" />
-              <span className="text-sm text-white/70">{action.label}</span>
+              <action.icon className="h-4 w-4 text-muted-foreground/70" />
+              <span className="text-sm text-muted-foreground">{action.label}</span>
             </Button>
           </Link>
         ))}
@@ -157,10 +157,10 @@ function DashboardHeader({
           <LayoutDashboard className="h-6 w-6 text-purple-400" />
         </div>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">
             Admin Dashboard
           </h1>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-muted-foreground/70">
             Panel de control de plataforma
           </p>
         </div>
@@ -247,7 +247,7 @@ export default function PlatformAdminDashboard() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="bg-white/5 border border-white/10 p-1 w-full sm:w-auto overflow-x-auto">
+        <TabsList className="bg-muted/40 border border-border p-1 w-full sm:w-auto overflow-x-auto">
           <TabsTrigger
             value="overview"
             className="data-[state=active]:bg-purple-500/20"
@@ -316,7 +316,7 @@ export default function PlatformAdminDashboard() {
 
           {distribution.data && distribution.data.by_role.length > 0 && (
             <Card className="p-4 md:p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Users className="h-5 w-5 text-purple-400" />
                 Distribución por Rol
               </h3>
@@ -326,10 +326,10 @@ export default function PlatformAdminDashboard() {
                     key={index}
                     className="p-3 rounded-sm bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
                   >
-                    <p className="text-xs text-white/50 truncate capitalize">
+                    <p className="text-xs text-muted-foreground/70 truncate capitalize">
                       {item.role.replace(/_/g, " ")}
                     </p>
-                    <p className="text-lg font-semibold text-white">
+                    <p className="text-lg font-semibold text-foreground">
                       {item.count}
                     </p>
                   </div>
@@ -368,7 +368,7 @@ export default function PlatformAdminDashboard() {
         </TabsContent>
       </Tabs>
 
-      <div className="text-center text-xs text-white/30 pt-4">
+      <div className="text-center text-xs text-muted-foreground/70 pt-4">
         Datos actualizados:{" "}
         {stats.data?.generated_at
           ? new Date(stats.data.generated_at).toLocaleString("es-CO")

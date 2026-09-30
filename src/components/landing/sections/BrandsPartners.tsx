@@ -162,7 +162,7 @@ export function BrandsPartners() {
               hoveringRef.current = false;
               lastTimeRef.current = 0;
             }}
-            className="relative overflow-hidden rounded-2xl border border-kreoon-purple-500/15 bg-white/[0.015] py-10 sm:py-12 cursor-grab active:cursor-grabbing select-none touch-pan-x"
+            className="relative overflow-hidden rounded-2xl border border-kreoon-purple-500/15 bg-muted/40 py-10 sm:py-12 cursor-grab active:cursor-grabbing select-none touch-pan-x"
           >
             <ul
               ref={trackRef}

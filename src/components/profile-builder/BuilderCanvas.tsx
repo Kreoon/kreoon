@@ -189,7 +189,7 @@ export function BuilderCanvas({
           'flex flex-col gap-0 mx-auto transition-all duration-200 rounded-lg',
           DEVICE_WIDTH[previewDevice],
           // Aplicar tema directamente
-          builderConfig.theme === 'dark' ? 'bg-background text-zinc-100' : 'bg-white text-zinc-900',
+          builderConfig.theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-zinc-900',
         )}
         style={{
           // Aplicar todas las variables CSS del tema
@@ -219,7 +219,7 @@ export function BuilderCanvas({
             className={cn(
               'flex flex-col items-center justify-center gap-5',
               'min-h-[400px] rounded-xl border-2 border-dashed',
-              'border-zinc-700 bg-gradient-to-b from-card/80 to-background/50',
+              'border-border bg-gradient-to-b from-card/80 to-background/50',
               'p-8',
             )}
             aria-label="Canvas vacío"
@@ -230,10 +230,10 @@ export function BuilderCanvas({
             </div>
 
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-semibold text-zinc-200">
+              <h3 className="text-lg font-semibold text-foreground">
                 Construye tu perfil profesional
               </h3>
-              <p className="text-sm text-zinc-500 max-w-sm">
+              <p className="text-sm text-muted-foreground max-w-sm">
                 Arrastra bloques desde el panel izquierdo para crear tu portafolio y empezar a vender tus servicios
               </p>
             </div>
@@ -246,7 +246,7 @@ export function BuilderCanvas({
                   'gap-1.5 px-3 py-1',
                   isPremium
                     ? 'border-amber-500/50 text-amber-400 bg-amber-500/10'
-                    : 'border-zinc-700 text-zinc-400 bg-zinc-800/50'
+                    : 'border-border text-muted-foreground bg-muted/50'
                 )}
               >
                 {isPremium ? (
@@ -263,7 +263,7 @@ export function BuilderCanvas({
                   'gap-1.5 px-3 py-1',
                   commissionRate <= 0.15
                     ? 'border-green-500/50 text-green-400 bg-green-500/10'
-                    : 'border-zinc-700 text-zinc-400 bg-zinc-800/50'
+                    : 'border-border text-muted-foreground bg-muted/50'
                 )}
               >
                 <TrendingDown className="h-3.5 w-3.5" />
@@ -274,7 +274,7 @@ export function BuilderCanvas({
             {/* Drop zone */}
             <div className="mt-2">
               <DropZone id="canvas-empty-drop" className="w-56" />
-              <p className="text-center text-[10px] text-zinc-600 mt-2">
+              <p className="text-center text-[10px] text-muted-foreground mt-2">
                 o haz clic en un bloque del panel
               </p>
             </div>

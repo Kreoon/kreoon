@@ -68,9 +68,9 @@ export function AgingSection({ orgId, selectedCurrency }: Props) {
 
   if (isLoading) {
     return (
-      <Card className="bg-white/5 border-white/10 p-6">
-        <div className="flex items-center gap-2 text-white/40 text-sm">
-          <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white/70 animate-spin" />
+      <Card className="bg-muted/50 border-border p-6">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <span className="w-3 h-3 rounded-full border-2 border-border border-t-foreground/70 animate-spin" />
           Calculando cartera...
         </div>
       </Card>
@@ -78,16 +78,16 @@ export function AgingSection({ orgId, selectedCurrency }: Props) {
   }
 
   return (
-    <Card className="bg-white/5 border-white/10">
+    <Card className="bg-muted/50 border-border">
       <div className="p-6 pb-4 flex items-center gap-3">
         <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0" />
         <div>
-          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
             ¿Quién te debe y desde cuándo?
-            <span className="text-sm font-normal text-white/40">— {selectedCurrency}</span>
+            <span className="text-sm font-normal text-muted-foreground">— {selectedCurrency}</span>
             <HelpTip text="Aging = antigüedad de la deuda. Mientras más tiempo pase sin cobrar, más difícil es recuperar el dinero. Una deuda de más de 90 días suele considerarse incobrable." />
           </h3>
-          <p className="text-white/40 text-sm">Cada deuda se ubica según cuántos días tiene de retraso. Verde = al día. Rojo = más de 60 días vencido.</p>
+          <p className="text-muted-foreground text-sm">Cada deuda se ubica según cuántos días tiene de retraso. Verde = al día. Rojo = más de 60 días vencido.</p>
         </div>
       </div>
 
@@ -97,11 +97,11 @@ export function AgingSection({ orgId, selectedCurrency }: Props) {
             key={bucket}
             className={`bg-gradient-to-br ${AGING_CARD_STYLES[bucket]} border rounded-lg p-4`}
           >
-            <p className="text-white/50 text-xs mb-1">{AGING_BUCKET_LABELS[bucket]}</p>
-            <p className="text-white font-bold text-sm leading-tight">
+            <p className="text-muted-foreground text-xs mb-1">{AGING_BUCKET_LABELS[bucket]}</p>
+            <p className="text-foreground font-bold text-sm leading-tight">
               {total > 0 ? formatCurrency(total, selectedCurrency) : '—'}
             </p>
-            <p className="text-white/40 text-xs mt-1">{count} paquete{count !== 1 ? 's' : ''}</p>
+            <p className="text-muted-foreground text-xs mt-1">{count} paquete{count !== 1 ? 's' : ''}</p>
           </div>
         ))}
       </div>
@@ -118,28 +118,28 @@ export function AgingSection({ orgId, selectedCurrency }: Props) {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10">
-              <TableHead className="text-white/70">Cliente</TableHead>
-              <TableHead className="text-white/70">Paquete</TableHead>
-              <TableHead className="text-white/70 text-right">Pendiente</TableHead>
-              <TableHead className="text-white/70">Vencimiento</TableHead>
-              <TableHead className="text-white/70 text-center">Días vencido</TableHead>
-              <TableHead className="text-white/70">Bucket</TableHead>
-              <TableHead className="text-white/70 text-center">Risk score</TableHead>
+            <TableRow className="border-border">
+              <TableHead className="text-muted-foreground">Cliente</TableHead>
+              <TableHead className="text-muted-foreground">Paquete</TableHead>
+              <TableHead className="text-muted-foreground text-right">Pendiente</TableHead>
+              <TableHead className="text-muted-foreground">Vencimiento</TableHead>
+              <TableHead className="text-muted-foreground text-center">Días vencido</TableHead>
+              <TableHead className="text-muted-foreground">Bucket</TableHead>
+              <TableHead className="text-muted-foreground text-center">Risk score</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {overdueRows.map(row => (
-              <TableRow key={row.package_id} className="border-white/10 hover:bg-white/5">
-                <TableCell className="text-white font-medium">{row.client_name}</TableCell>
-                <TableCell className="text-white/70">{row.package_name}</TableCell>
+              <TableRow key={row.package_id} className="border-border hover:bg-muted/50">
+                <TableCell className="text-foreground font-medium">{row.client_name}</TableCell>
+                <TableCell className="text-muted-foreground">{row.package_name}</TableCell>
                 <TableCell className="text-right text-orange-400 font-semibold">
                   {formatCurrency(row.pending_amount, selectedCurrency)}
                 </TableCell>
-                <TableCell className="text-white/50 text-sm">
+                <TableCell className="text-muted-foreground text-sm">
                   {row.due_date
                     ? format(new Date(row.due_date), 'dd MMM yyyy', { locale: es })
-                    : <span className="text-white/30">—</span>
+                    : <span className="text-muted-foreground/60">—</span>
                   }
                 </TableCell>
                 <TableCell className="text-center">

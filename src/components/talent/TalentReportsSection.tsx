@@ -45,8 +45,8 @@ const STATUS_CONFIG: Record<TalentContentStatus, {
   },
   not_approved: {
     label: 'En producción',
-    chipClass: 'border-zinc-400 bg-zinc-500/10 text-zinc-600 dark:text-zinc-400',
-    badgeClass: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400',
+    chipClass: 'border-zinc-400 bg-zinc-500/10 text-muted-foreground dark:text-muted-foreground',
+    badgeClass: 'bg-zinc-100 text-muted-foreground dark:bg-card dark:text-muted-foreground',
     icon: AlertCircle,
   },
   barter: {
@@ -299,7 +299,7 @@ export function TalentReportsSection({ organizationId, userId, talentName }: Tal
               {sf.label}
               {count > 0 && (
                 <span className={`rounded-full px-1.5 py-0 text-[10px] font-semibold ${
-                  isActive ? 'bg-white/20' : 'bg-muted text-muted-foreground'
+                  isActive ? 'bg-muted' : 'bg-muted text-muted-foreground'
                 }`}>
                   {count}
                 </span>

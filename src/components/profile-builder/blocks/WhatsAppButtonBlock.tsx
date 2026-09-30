@@ -120,7 +120,7 @@ function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }
       )}
       aria-label="Contactar por WhatsApp"
     >
-      <MessageCircle className="h-7 w-7 text-white" />
+      <MessageCircle className="h-7 w-7 text-foreground" />
 
       {/* Pulse ring animation */}
       {config.pulseAnimation && (

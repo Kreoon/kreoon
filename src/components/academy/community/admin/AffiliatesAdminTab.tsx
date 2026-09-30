@@ -50,9 +50,9 @@ export function AffiliatesAdminTab({ spaceId, spaceSlug, accentColor = '#8B5CF6'
       {isOwner && <OwnerConfig cfg={spaceCfg} spaceId={spaceId} />}
 
       {!isEnabled ? (
-        <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
+        <Card className="p-8 text-center bg-muted/50 border-border text-muted-foreground">
           <Handshake className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium text-zinc-300">Programa de afiliados no activo</p>
+          <p className="text-sm font-medium text-muted-foreground">Programa de afiliados no activo</p>
           <p className="text-xs mt-1">
             {isOwner
               ? 'Activá el toggle de arriba para que tus miembros generen links de referido.'
@@ -101,14 +101,14 @@ function OwnerConfig({ cfg, spaceId }: { cfg?: SpaceConfig; spaceId: string }) {
   });
 
   return (
-    <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+    <Card className="p-5 bg-muted/50 border-border space-y-3">
       <h3 className="font-semibold flex items-center gap-2">
-        <Power className="h-4 w-4 text-violet-400" /> Programa de afiliados
+        <Power className="h-4 w-4 text-primary" /> Programa de afiliados
       </h3>
       <div className="flex items-center justify-between gap-3">
         <div>
           <Label>Activar programa</Label>
-          <p className="text-[10px] text-zinc-500 mt-0.5">
+          <p className="text-[10px] text-muted-foreground mt-0.5">
             Cuando ON, miembros generan links y ganan comisión por cada referido que pague.
           </p>
         </div>
@@ -121,12 +121,12 @@ function OwnerConfig({ cfg, spaceId }: { cfg?: SpaceConfig; spaceId: string }) {
             type="number" min={0} max={50} step={0.5}
             value={pct}
             onChange={(e) => setPct(e.target.value)}
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
-          <p className="text-[10px] text-zinc-500 mt-0.5">Entre 0% y 50%</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">Entre 0% y 50%</p>
         </div>
         <Button onClick={() => save.mutate()} disabled={save.isPending}
-                className="bg-violet-500 hover:bg-violet-600 text-white">
+                className="bg-primary hover:bg-primary/90 text-white">
           <Save className="h-4 w-4 mr-2" /> Guardar
         </Button>
       </div>
@@ -147,7 +147,7 @@ function MyAffiliateLink({ spaceId, spaceSlug, accentColor }: { spaceId: string;
     retry: false,
   });
 
-  if (isLoading) return <Card className="p-6 text-center text-zinc-500 text-sm">Cargando tu link...</Card>;
+  if (isLoading) return <Card className="p-6 text-center text-muted-foreground text-sm">Cargando tu link...</Card>;
   if (error || !link) return null;
 
   const url = `${window.location.origin}/a/${spaceSlug}?ref=${encodeURIComponent(link.code)}`;
@@ -165,17 +165,17 @@ function MyAffiliateLink({ spaceId, spaceSlug, accentColor }: { spaceId: string;
 
   return (
     <>
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
           <Handshake className="h-4 w-4" style={{ color: accentColor }} /> Tu link de afiliado
         </h3>
         <div className="flex gap-2">
-          <Input value={url} readOnly className="bg-black/30 border-white/10 font-mono text-xs" />
+          <Input value={url} readOnly className="bg-muted border-border font-mono text-xs" />
           <Button onClick={copy} className="text-white" style={{ backgroundColor: accentColor }}>
             <Copy className="h-4 w-4 mr-1.5" /> Copiar
           </Button>
         </div>
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-muted-foreground">
           Comisión: <strong>{pct}%</strong> sobre cada miembro que se suscriba usando tu link.
         </p>
       </Card>
@@ -191,13 +191,13 @@ function MyAffiliateLink({ spaceId, spaceSlug, accentColor }: { spaceId: string;
 
 function StatCard({ icon: Icon, label, value, accent }: { icon: any; label: string; value: string; accent: string }) {
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="h-9 w-9 rounded-lg flex items-center justify-center mb-2"
            style={{ backgroundColor: `${accent}26` }}>
         <Icon className="h-4 w-4" style={{ color: accent }} />
       </div>
       <div className="text-2xl font-bold" style={{ color: accent }}>{value}</div>
-      <div className="text-[10px] text-zinc-300 uppercase tracking-wide mt-1">{label}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">{label}</div>
     </Card>
   );
 }
@@ -218,7 +218,7 @@ function OwnerAffiliatesList({ spaceId, accentColor }: { spaceId: string; accent
 
   if (links.length === 0) {
     return (
-      <Card className="p-6 text-center text-zinc-500 text-sm">
+      <Card className="p-6 text-center text-muted-foreground text-sm">
         <Users className="h-8 w-8 mx-auto mb-2 opacity-40" />
         Aún no hay afiliados generando links.
       </Card>
@@ -226,20 +226,20 @@ function OwnerAffiliatesList({ spaceId, accentColor }: { spaceId: string; accent
   }
 
   return (
-    <Card className="p-5 bg-white/5 border-white/10">
+    <Card className="p-5 bg-muted/50 border-border">
       <h3 className="font-semibold flex items-center gap-2 mb-3">
         <Users className="h-4 w-4" style={{ color: accentColor }} />
         Afiliados ({links.length})
       </h3>
-      <ul className="divide-y divide-white/5">
+      <ul className="divide-y divide-border">
         {(links as any[]).map((l) => (
           <li key={l.id} className="py-3 flex items-center gap-3">
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-medium text-zinc-100 truncate font-mono">{l.code}</div>
-              <div className="text-[11px] text-zinc-500">user {String(l.user_id).slice(0, 8)} · {l.commission_pct}%</div>
+              <div className="text-sm font-medium text-foreground truncate font-mono">{l.code}</div>
+              <div className="text-[11px] text-muted-foreground">user {String(l.user_id).slice(0, 8)} · {l.commission_pct}%</div>
             </div>
             <div className="text-right text-xs">
-              <div className="text-zinc-300">{l.clicks} clicks · {l.conversions} conv.</div>
+              <div className="text-muted-foreground">{l.clicks} clicks · {l.conversions} conv.</div>
               <div className="font-bold" style={{ color: accentColor }}>
                 ${Number(l.earned_total_usd ?? 0).toFixed(2)}
               </div>

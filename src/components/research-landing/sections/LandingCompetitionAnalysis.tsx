@@ -14,40 +14,40 @@ function CompetitorCard({ competitor, index }: { competitor: any; index: number 
   const weaknesses = safeArray(competitor.weaknesses);
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
-      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors text-left">
+    <div className="bg-muted/40 border border-border rounded-sm overflow-hidden">
+      <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between p-4 hover:bg-muted/40 transition-colors text-left">
         <div className="flex items-center gap-3">
-          <div className="h-7 w-7 rounded-sm bg-white/10 flex items-center justify-center text-white/50 text-xs font-bold shrink-0">
+          <div className="h-7 w-7 rounded-sm bg-muted flex items-center justify-center text-muted-foreground text-xs font-bold shrink-0">
             {index + 1}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{name}</p>
-            {competitor.differentiator && <p className="text-xs text-white/40 truncate max-w-[300px]">{competitor.differentiator}</p>}
+            <p className="text-sm font-semibold text-foreground">{name}</p>
+            {competitor.differentiator && <p className="text-xs text-muted-foreground/70 truncate max-w-[300px]">{competitor.differentiator}</p>}
           </div>
         </div>
-        {expanded ? <ChevronUp className="h-4 w-4 text-white/30" /> : <ChevronDown className="h-4 w-4 text-white/30" />}
+        {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground/70" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/70" />}
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3 border-t border-white/[0.06] pt-3">
+        <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
           {competitor.valueProposition && (
             <div>
-              <h6 className="text-[10px] text-white/40 uppercase mb-1">Propuesta de Valor</h6>
-              <p className="text-xs text-white/60">{competitor.valueProposition}</p>
+              <h6 className="text-[10px] text-muted-foreground/70 uppercase mb-1">Propuesta de Valor</h6>
+              <p className="text-xs text-muted-foreground">{competitor.valueProposition}</p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             {competitor.price && (
               <div>
-                <h6 className="text-[10px] text-white/40 uppercase mb-1">Precio</h6>
-                <p className="text-xs text-white/60">{competitor.price}</p>
+                <h6 className="text-[10px] text-muted-foreground/70 uppercase mb-1">Precio</h6>
+                <p className="text-xs text-muted-foreground">{competitor.price}</p>
               </div>
             )}
             {competitor.tone && (
               <div>
-                <h6 className="text-[10px] text-white/40 uppercase mb-1">Tono</h6>
-                <p className="text-xs text-white/60">{competitor.tone}</p>
+                <h6 className="text-[10px] text-muted-foreground/70 uppercase mb-1">Tono</h6>
+                <p className="text-xs text-muted-foreground">{competitor.tone}</p>
               </div>
             )}
           </div>
@@ -58,7 +58,7 @@ function CompetitorCard({ competitor, index }: { competitor: any; index: number 
                 <h6 className="text-[10px] text-green-300/60 uppercase mb-1.5">Fortalezas</h6>
                 <ul className="space-y-1">
                   {strengths.map((s: any, i: number) => (
-                    <li key={i} className="text-xs text-white/60 flex gap-1.5"><span className="text-green-400 shrink-0">+</span>{safeStr(s)}</li>
+                    <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span className="text-green-400 shrink-0">+</span>{safeStr(s)}</li>
                   ))}
                 </ul>
               </div>
@@ -68,7 +68,7 @@ function CompetitorCard({ competitor, index }: { competitor: any; index: number 
                 <h6 className="text-[10px] text-red-300/60 uppercase mb-1.5">Debilidades</h6>
                 <ul className="space-y-1">
                   {weaknesses.map((w: any, i: number) => (
-                    <li key={i} className="text-xs text-white/60 flex gap-1.5"><span className="text-red-400 shrink-0">-</span>{safeStr(w)}</li>
+                    <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span className="text-red-400 shrink-0">-</span>{safeStr(w)}</li>
                   ))}
                 </ul>
               </div>
@@ -102,20 +102,20 @@ export function LandingCompetitionAnalysis({ competitorAnalysis }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left py-2 px-2 text-white/40 font-medium">Competidor</th>
-              <th className="text-left py-2 px-2 text-white/40 font-medium">Diferenciador</th>
-              <th className="text-left py-2 px-2 text-white/40 font-medium">Precio</th>
-              <th className="text-left py-2 px-2 text-white/40 font-medium">Tono</th>
+            <tr className="border-b border-border">
+              <th className="text-left py-2 px-2 text-muted-foreground/70 font-medium">Competidor</th>
+              <th className="text-left py-2 px-2 text-muted-foreground/70 font-medium">Diferenciador</th>
+              <th className="text-left py-2 px-2 text-muted-foreground/70 font-medium">Precio</th>
+              <th className="text-left py-2 px-2 text-muted-foreground/70 font-medium">Tono</th>
             </tr>
           </thead>
           <tbody>
             {competitors.slice(0, 10).map((c: any, i: number) => (
-              <tr key={i} className="border-b border-white/[0.04]">
-                <td className="py-2 px-2 text-white/70 font-medium">{c.name || `#${i + 1}`}</td>
-                <td className="py-2 px-2 text-white/50 max-w-[200px] truncate">{c.differentiator || '-'}</td>
-                <td className="py-2 px-2 text-white/50">{c.price || '-'}</td>
-                <td className="py-2 px-2 text-white/50">{c.tone || '-'}</td>
+              <tr key={i} className="border-b border-border">
+                <td className="py-2 px-2 text-muted-foreground font-medium">{c.name || `#${i + 1}`}</td>
+                <td className="py-2 px-2 text-muted-foreground max-w-[200px] truncate">{c.differentiator || '-'}</td>
+                <td className="py-2 px-2 text-muted-foreground">{c.price || '-'}</td>
+                <td className="py-2 px-2 text-muted-foreground">{c.tone || '-'}</td>
               </tr>
             ))}
           </tbody>

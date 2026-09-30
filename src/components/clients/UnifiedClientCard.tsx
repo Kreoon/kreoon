@@ -222,7 +222,7 @@ export function UnifiedClientCard({
             )}
 
             {!isEmpresa && entity.contact_type && (
-              <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/60 border-white/10">
+              <Badge variant="outline" className="text-[10px] h-5 bg-muted/40 text-muted-foreground border-border">
                 {CONTACT_TYPE_LABELS[entity.contact_type]}
               </Badge>
             )}
@@ -234,7 +234,7 @@ export function UnifiedClientCard({
             )}
 
             {isEmpresa && entity.category && (
-              <Badge variant="outline" className="text-[10px] h-5 bg-white/5 text-white/60 border-white/10">
+              <Badge variant="outline" className="text-[10px] h-5 bg-muted/40 text-muted-foreground border-border">
                 {entity.category}
               </Badge>
             )}
@@ -313,7 +313,7 @@ export function UnifiedClientCard({
           {entity.main_contact && (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Contacto</span>
-              <p className="text-xs text-white/70 truncate flex items-center gap-1">
+              <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 <Contact className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
                 {entity.main_contact}
               </p>
@@ -333,7 +333,7 @@ export function UnifiedClientCard({
           {entity.phone && (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Teléfono</span>
-              <p className="text-xs text-white/60 flex items-center gap-1">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Phone className="h-3 w-3 flex-shrink-0" />
                 {entity.phone}
               </p>
@@ -343,7 +343,7 @@ export function UnifiedClientCard({
           {(entity.city || entity.country) && (
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] text-muted-foreground/60 w-[48px] shrink-0">Ciudad</span>
-              <p className="text-xs text-white/50 flex items-center gap-1">
+              <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
                 <MapPin className="h-3 w-3 flex-shrink-0" />
                 {[entity.city, entity.country].filter(Boolean).join(', ')}
               </p>
@@ -371,7 +371,7 @@ export function UnifiedClientCard({
                 {entity.tiktok && (
                   <a href={`https://tiktok.com/${entity.tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    className="text-muted-foreground hover:text-white transition-colors" title={entity.tiktok}>
+                    className="text-muted-foreground hover:text-foreground transition-colors" title={entity.tiktok}>
                     <span className="text-[10px] font-bold leading-none">TT</span>
                   </a>
                 )}
@@ -397,15 +397,15 @@ export function UnifiedClientCard({
         /* ── INFORMACIÓN DE CONTACTO (personas) ── */
         <div className="space-y-1 mb-2 flex-1">
           {entity.company && (
-            <p className="text-xs text-white/50 flex items-center gap-1">
+            <p className="text-xs text-muted-foreground/70 flex items-center gap-1">
               <Building2 className="h-3 w-3" />
               {entity.company}
-              {entity.position && <span className="text-white/30">· {entity.position}</span>}
+              {entity.position && <span className="text-muted-foreground/70">· {entity.position}</span>}
             </p>
           )}
           {entity.pipeline_stage && (
-            <p className="text-xs text-white/40">
-              Etapa: <span className="text-white/60">{entity.pipeline_stage}</span>
+            <p className="text-xs text-muted-foreground/70">
+              Etapa: <span className="text-muted-foreground">{entity.pipeline_stage}</span>
             </p>
           )}
         </div>

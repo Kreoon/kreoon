@@ -89,9 +89,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground/70">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>
@@ -124,7 +124,7 @@ const getRoleLabel = (role: string | null) => {
 };
 
 const getRoleColor = (role: string | null) => {
-  if (!role) return "bg-white/10 text-white/50";
+  if (!role) return "bg-muted text-muted-foreground/70";
   const colors: Record<string, string> = {
     admin: "bg-purple-500/20 text-purple-300",
     team_leader: "bg-green-500/20 text-green-300",
@@ -138,7 +138,7 @@ const getRoleColor = (role: string | null) => {
     marketing_director: "bg-emerald-500/20 text-emerald-300",
     trafficker: "bg-rose-500/20 text-rose-300",
   };
-  return colors[role] || "bg-white/10 text-white/70";
+  return colors[role] || "bg-muted text-muted-foreground";
 };
 
 function getHealthColor(score: number) {
@@ -270,16 +270,16 @@ const PlatformCRMUsers = () => {
           {/* ========== HEADER ========== */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-white">Usuarios</h1>
-              <p className="text-white/60">Todos los usuarios registrados en la plataforma</p>
+              <h1 className="text-3xl font-bold text-foreground">Usuarios</h1>
+              <p className="text-muted-foreground">Todos los usuarios registrados en la plataforma</p>
             </div>
             <div className="flex gap-3 items-center">
               <ViewModeToggle value={viewMode} onChange={setViewMode} />
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
                 <Input
                   placeholder="Buscar usuario..."
-                  className="w-64 bg-white/5 border-white/10 pl-9"
+                  className="w-64 bg-muted/40 border-border pl-9"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -300,13 +300,13 @@ const PlatformCRMUsers = () => {
             <Card className="!bg-red-500/5 !border-red-500/20 p-4">
               <div className="flex items-center gap-2 mb-3">
                 <AlertTriangle className="w-5 h-5 text-red-400" />
-                <h3 className="text-white font-semibold">Requieren Atención Inmediata</h3>
+                <h3 className="text-foreground font-semibold">Requieren Atención Inmediata</h3>
               </div>
               <div className="space-y-2">
                 {usersNeedingAttention.slice(0, 5).map((user) => (
                   <div
                     key={user.user_id}
-                    className="flex items-center justify-between p-2 bg-white/5 rounded-sm cursor-pointer hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-2 bg-muted/40 rounded-sm cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => {
                       const found = users.find((u) => u.id === user.user_id);
                       if (found) handleSelectUser(found);
@@ -317,8 +317,8 @@ const PlatformCRMUsers = () => {
                         {user.health_score}
                       </div>
                       <div>
-                        <p className="text-white text-sm">{user.full_name || "Sin nombre"}</p>
-                        <p className="text-white/40 text-xs">
+                        <p className="text-foreground text-sm">{user.full_name || "Sin nombre"}</p>
+                        <p className="text-muted-foreground/70 text-xs">
                           {user.days_since_last_activity != null
                             ? `${user.days_since_last_activity} días inactivo`
                             : "Sin actividad registrada"}
@@ -328,7 +328,7 @@ const PlatformCRMUsers = () => {
                   </div>
                 ))}
                 {usersNeedingAttention.length > 5 && (
-                  <p className="text-xs text-white/30 text-center pt-1">+{usersNeedingAttention.length - 5} más</p>
+                  <p className="text-xs text-muted-foreground/70 text-center pt-1">+{usersNeedingAttention.length - 5} más</p>
                 )}
               </div>
             </Card>
@@ -354,14 +354,14 @@ const PlatformCRMUsers = () => {
                   'h-8 gap-1.5 text-xs rounded-full border transition-all',
                   quickFilter === key
                     ? 'bg-[#8b5cf6]/20 border-[#8b5cf6]/50 text-[#c084fc]'
-                    : 'border-white/10 text-white/50 hover:text-white/70 hover:border-white/20',
+                    : 'border-border text-muted-foreground/70 hover:text-muted-foreground hover:border-border',
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
                 <span className={cn(
                   'ml-0.5 text-[10px] px-1.5 py-0 rounded-full',
-                  quickFilter === key ? 'bg-[#8b5cf6]/30 text-[#c084fc]' : 'bg-white/5 text-white/30',
+                  quickFilter === key ? 'bg-[#8b5cf6]/30 text-[#c084fc]' : 'bg-muted/40 text-muted-foreground/70',
                 )}>
                   {quickCounts[key]}
                 </span>
@@ -372,7 +372,7 @@ const PlatformCRMUsers = () => {
           {/* ========== FILTERS ========== */}
           <div className="flex flex-wrap gap-3">
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-48 bg-white/5 border-white/10"><SelectValue placeholder="Rol en plataforma" /></SelectTrigger>
+              <SelectTrigger className="w-48 bg-muted/40 border-border"><SelectValue placeholder="Rol en plataforma" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="admin">Administrador</SelectItem>
@@ -386,7 +386,7 @@ const PlatformCRMUsers = () => {
               </SelectContent>
             </Select>
             <Select value={healthFilter} onValueChange={setHealthFilter}>
-              <SelectTrigger className="w-48 bg-white/5 border-white/10"><SelectValue placeholder="Estado de salud" /></SelectTrigger>
+              <SelectTrigger className="w-48 bg-muted/40 border-border"><SelectValue placeholder="Estado de salud" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="healthy">Saludable (70+)</SelectItem>
@@ -396,7 +396,7 @@ const PlatformCRMUsers = () => {
               </SelectContent>
             </Select>
             <Select value={activityFilter} onValueChange={setActivityFilter}>
-              <SelectTrigger className="w-48 bg-white/5 border-white/10"><SelectValue placeholder="Actividad" /></SelectTrigger>
+              <SelectTrigger className="w-48 bg-muted/40 border-border"><SelectValue placeholder="Actividad" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="today">Hoy</SelectItem>
@@ -405,19 +405,19 @@ const PlatformCRMUsers = () => {
                 <SelectItem value="inactive">Inactivos (30+ días)</SelectItem>
               </SelectContent>
             </Select>
-            <div className="ml-auto text-sm text-white/40 self-center">{filtered.length} usuarios</div>
+            <div className="ml-auto text-sm text-muted-foreground/70 self-center">{filtered.length} usuarios</div>
           </div>
 
           {/* ========== CONTENT ========== */}
           {isLoading ? (
             <div className="p-12 text-center">
               <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-sm text-white/40">Cargando usuarios...</p>
+              <p className="text-sm text-muted-foreground/70">Cargando usuarios...</p>
             </div>
           ) : filtered.length === 0 ? (
             <div className="p-12 text-center">
-              <Users className="h-10 w-10 text-white/10 mx-auto mb-3" />
-              <p className="text-sm text-white/40">
+              <Users className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground/70">
                 {search || roleFilter !== "all" || healthFilter !== "all" || activityFilter !== "all"
                   ? "Sin resultados para los filtros aplicados"
                   : "Aún no hay usuarios registrados"}
@@ -447,8 +447,8 @@ const PlatformCRMUsers = () => {
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-white font-medium truncate">{user.full_name || "Sin nombre"}</p>
-                        <p className="text-white/40 text-xs truncate">{user.email}</p>
+                        <p className="text-foreground font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                        <p className="text-muted-foreground/70 text-xs truncate">{user.email}</p>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -485,7 +485,7 @@ const PlatformCRMUsers = () => {
                       </div>
                     </div>
                     {user.organization_name && (
-                      <p className="text-[10px] text-white/30 mt-2 truncate">{user.organization_name}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-2 truncate">{user.organization_name}</p>
                     )}
                   </Card>
                 );
@@ -501,7 +501,7 @@ const PlatformCRMUsers = () => {
                   <div
                     key={user.id}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-white/5 cursor-pointer transition-colors",
+                      "flex items-center gap-3 px-4 py-2.5 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors",
                       selectedUser?.id === user.id && "bg-[#8b5cf6]/10 border border-[#8b5cf6]/30",
                     )}
                     onClick={() => handleSelectUser(user)}
@@ -514,7 +514,7 @@ const PlatformCRMUsers = () => {
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-white text-sm font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                      <p className="text-foreground text-sm font-medium truncate">{user.full_name || "Sin nombre"}</p>
                     </div>
                     <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium hidden sm:inline", getRoleColor(user.role))}>
                       {getRoleLabel(user.role)}
@@ -554,15 +554,15 @@ const PlatformCRMUsers = () => {
             <Card>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-transparent">
-                    <TableHead className="text-white/70">Usuario</TableHead>
-                    <TableHead className="text-white/70">Rol</TableHead>
-                    <TableHead className="text-white/70 hidden md:table-cell">Organización</TableHead>
-                    <TableHead className="text-white/70">Health Score</TableHead>
-                    <TableHead className="text-white/70 hidden md:table-cell">Logins</TableHead>
-                    <TableHead className="text-white/70 hidden md:table-cell">Acciones</TableHead>
-                    <TableHead className="text-white/70 hidden lg:table-cell">Últ. Login</TableHead>
-                    <TableHead className="text-white/70">Estado</TableHead>
+                  <TableRow className="border-border hover:bg-transparent">
+                    <TableHead className="text-muted-foreground">Usuario</TableHead>
+                    <TableHead className="text-muted-foreground">Rol</TableHead>
+                    <TableHead className="text-muted-foreground hidden md:table-cell">Organización</TableHead>
+                    <TableHead className="text-muted-foreground">Health Score</TableHead>
+                    <TableHead className="text-muted-foreground hidden md:table-cell">Logins</TableHead>
+                    <TableHead className="text-muted-foreground hidden md:table-cell">Acciones</TableHead>
+                    <TableHead className="text-muted-foreground hidden lg:table-cell">Últ. Login</TableHead>
+                    <TableHead className="text-muted-foreground">Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -573,7 +573,7 @@ const PlatformCRMUsers = () => {
                       <TableRow
                         key={user.id}
                         className={cn(
-                          "border-white/10 hover:bg-white/5 cursor-pointer",
+                          "border-border hover:bg-muted/40 cursor-pointer",
                           selectedUser?.id === user.id && "bg-[#8b5cf6]/10",
                         )}
                         onClick={() => handleSelectUser(user)}
@@ -588,8 +588,8 @@ const PlatformCRMUsers = () => {
                               </div>
                             )}
                             <div className="min-w-0">
-                              <p className="text-white font-medium truncate">{user.full_name || "Sin nombre"}</p>
-                              <p className="text-white/40 text-xs truncate">{user.email}</p>
+                              <p className="text-foreground font-medium truncate">{user.full_name || "Sin nombre"}</p>
+                              <p className="text-muted-foreground/70 text-xs truncate">{user.email}</p>
                             </div>
                           </div>
                         </TableCell>
@@ -598,27 +598,27 @@ const PlatformCRMUsers = () => {
                             {getRoleLabel(user.role)}
                           </span>
                         </TableCell>
-                        <TableCell className="text-white/70 hidden md:table-cell">{user.organization_name || "—"}</TableCell>
+                        <TableCell className="text-muted-foreground hidden md:table-cell">{user.organization_name || "—"}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className={cn("w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold", hc.bg, hc.text)}>
                               {user.health_score}
                             </div>
-                            <div className="w-20 h-2 bg-white/10 rounded-full overflow-hidden">
+                            <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
                               <div className={cn("h-full rounded-full", hc.bar)} style={{ width: `${Math.min(user.health_score, 100)}%` }} />
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="text-white hidden md:table-cell">{user.total_logins}</TableCell>
-                        <TableCell className="text-white hidden md:table-cell">{user.total_actions}</TableCell>
-                        <TableCell className="text-white/50 hidden lg:table-cell">
+                        <TableCell className="text-foreground hidden md:table-cell">{user.total_logins}</TableCell>
+                        <TableCell className="text-foreground hidden md:table-cell">{user.total_actions}</TableCell>
+                        <TableCell className="text-muted-foreground/70 hidden lg:table-cell">
                           {user.last_login_at
                             ? formatDistanceToNow(new Date(user.last_login_at), { addSuffix: true, locale: es })
                             : "Nunca"}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1 items-center">
-                            <span className={cn("px-2 py-0.5 rounded-full text-[10px]", HEALTH_STATUS_COLORS[status] || "bg-white/10 text-white/50")}>
+                            <span className={cn("px-2 py-0.5 rounded-full text-[10px]", HEALTH_STATUS_COLORS[status] || "bg-muted text-muted-foreground/70")}>
                               {HEALTH_STATUS_LABELS[status] || status}
                             </span>
                             {user.is_platform_admin && (

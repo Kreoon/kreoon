@@ -155,7 +155,7 @@ export function WithdrawalStatusTimeline({
                 className={cn(
                   'font-medium',
                   step.status === 'completed' && 'text-emerald-400',
-                  step.status === 'current' && 'text-white',
+                  step.status === 'current' && 'text-foreground',
                   step.status === 'pending' && 'text-muted-foreground',
                   step.status === 'error' && 'text-red-400'
                 )}
@@ -166,7 +166,7 @@ export function WithdrawalStatusTimeline({
                 {step.description}
               </p>
               {step.timestamp && (
-                <p className="text-xs text-[hsl(270,30%,45%)] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {step.timestamp}
                 </p>
               )}

@@ -110,7 +110,7 @@ function ProjectRow({ project, statusLabels }: { project: MarketplaceProject; st
   return (
     <button
       onClick={() => navigate('/board?view=marketplace')}
-      className="w-full bg-card/60 border border-white/5 rounded-sm p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
+      className="w-full bg-card/60 border border-border rounded-sm p-4 flex items-center gap-4 hover:border-purple-500/30 transition-all text-left"
     >
       {project.creator.avatar_url ? (
         <img src={project.creator.avatar_url} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
@@ -121,17 +121,17 @@ function ProjectRow({ project, statusLabels }: { project: MarketplaceProject; st
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-medium truncate">{project.brief.product_name}</span>
+          <span className="text-foreground text-sm font-medium truncate">{project.brief.product_name}</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${STATUS_COLORS[project.status]}`}>
             {statusLabels[project.status]}
           </span>
         </div>
-        <p className="text-gray-500 text-xs truncate">
+        <p className="text-muted-foreground text-xs truncate">
           {project.creator.display_name} — {project.brand_name}
         </p>
       </div>
       {project.payment_method === 'payment' ? (
-        <p className="text-white text-sm font-semibold flex-shrink-0">${project.total_price.toLocaleString()}</p>
+        <p className="text-foreground text-sm font-semibold flex-shrink-0">${project.total_price.toLocaleString()}</p>
       ) : (
         <span className="text-green-400 text-xs font-medium flex-shrink-0">Canje</span>
       )}
@@ -214,14 +214,14 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
       {!hideKpis && (
         <div className={`grid grid-cols-2 ${kpis.length > 4 ? 'lg:grid-cols-5' : 'lg:grid-cols-4'} gap-3`}>
           {kpis.map(kpi => (
-            <div key={kpi.label} className="bg-card/80 border border-white/10 rounded-sm p-4">
+            <div key={kpi.label} className="bg-card/80 border border-border rounded-sm p-4">
               <div className="flex items-center gap-3">
                 <div className={`w-9 h-9 rounded-sm flex items-center justify-center ${kpi.color}`}>
                   <kpi.icon className="h-4 w-4" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-white">{kpi.value}</p>
-                  <p className="text-gray-500 text-xs">{kpi.label}</p>
+                  <p className="text-xl font-bold text-foreground">{kpi.value}</p>
+                  <p className="text-muted-foreground text-xs">{kpi.label}</p>
                 </div>
               </div>
             </div>
@@ -238,8 +238,8 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
                 <Wallet className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xl font-bold text-white">${availableBalance.toLocaleString()}</p>
-                <p className="text-gray-500 text-xs">Balance Disponible</p>
+                <p className="text-xl font-bold text-foreground">${availableBalance.toLocaleString()}</p>
+                <p className="text-muted-foreground text-xs">Balance Disponible</p>
               </div>
             </div>
           </div>
@@ -249,8 +249,8 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
                 <Clock className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xl font-bold text-white">${pendingBalance.toLocaleString()}</p>
-                <p className="text-gray-500 text-xs">Por Cobrar</p>
+                <p className="text-xl font-bold text-foreground">${pendingBalance.toLocaleString()}</p>
+                <p className="text-muted-foreground text-xs">Por Cobrar</p>
               </div>
             </div>
           </div>
@@ -266,7 +266,7 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
             className={`flex items-center gap-2 font-semibold px-5 py-2.5 rounded-sm text-sm transition-colors ${
               action.primary
                 ? 'bg-purple-600 hover:bg-purple-500 text-white'
-                : 'border border-white/20 text-white hover:bg-white/5'
+                : 'border border-border text-foreground hover:bg-muted/50'
             }`}
           >
             <action.icon className="h-4 w-4" />
@@ -278,7 +278,7 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
       {/* Novedades: Overdue & Urgent */}
       {(overdueProjects.length > 0 || urgentProjects.length > 0) && (
         <div className="space-y-3">
-          <h3 className="text-base font-semibold text-white flex items-center gap-2">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-400" />
             Novedades
           </h3>
@@ -296,19 +296,19 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
                   <button
                     key={project.id}
                     onClick={() => navigate('/board?view=marketplace')}
-                    className="w-full flex items-center gap-3 bg-white/5 rounded-sm p-3 hover:bg-white/10 transition-colors text-left"
+                    className="w-full flex items-center gap-3 bg-muted/50 rounded-sm p-3 hover:bg-muted transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0">
                       <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{project.brief.product_name}</p>
-                      <p className="text-gray-500 text-xs truncate">{project.creator.display_name}</p>
+                      <p className="text-foreground text-sm font-medium truncate">{project.brief.product_name}</p>
+                      <p className="text-muted-foreground text-xs truncate">{project.creator.display_name}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="text-red-400 text-xs font-semibold">{daysOverdue}d vencido</p>
                       {project.overdue_action && (
-                        <p className="text-gray-500 text-[10px]">
+                        <p className="text-muted-foreground text-[10px]">
                           {project.overdue_action === 'extend' ? 'Extendido' :
                            project.overdue_action === 'reassign' ? 'Reasignando' : 'Cancelando'}
                         </p>
@@ -333,14 +333,14 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
                   <button
                     key={project.id}
                     onClick={() => navigate('/board?view=marketplace')}
-                    className="w-full flex items-center gap-3 bg-white/5 rounded-sm p-3 hover:bg-white/10 transition-colors text-left"
+                    className="w-full flex items-center gap-3 bg-muted/50 rounded-sm p-3 hover:bg-muted transition-colors text-left"
                   >
                     <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center flex-shrink-0">
                       <Calendar className="h-3.5 w-3.5 text-amber-400" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">{project.brief.product_name}</p>
-                      <p className="text-gray-500 text-xs truncate">{project.creator.display_name}</p>
+                      <p className="text-foreground text-sm font-medium truncate">{project.brief.product_name}</p>
+                      <p className="text-muted-foreground text-xs truncate">{project.creator.display_name}</p>
                     </div>
                     <p className="text-amber-400 text-xs font-semibold flex-shrink-0">
                       {daysLeft === 0 ? 'Hoy' : `${daysLeft}d restantes`}
@@ -356,7 +356,7 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
       {/* Recent Projects */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-white">Proyectos recientes</h3>
+          <h3 className="text-base font-semibold text-foreground">Proyectos recientes</h3>
           <button
             onClick={() => navigate('/board?view=marketplace')}
             className="text-purple-400 hover:text-purple-300 text-sm flex items-center gap-1 transition-colors"
@@ -366,9 +366,9 @@ export function MarketplaceDashboardTab({ role, externalProjects, hideKpis }: Ma
         </div>
 
         {recentProjects.length === 0 ? (
-          <div className="bg-card/40 border border-white/5 rounded-sm p-8 text-center">
-            <FolderKanban className="h-10 w-10 mx-auto text-gray-600 mb-3" />
-            <p className="text-gray-400 text-sm">Sin proyectos activos en el marketplace</p>
+          <div className="bg-card/40 border border-border rounded-sm p-8 text-center">
+            <FolderKanban className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+            <p className="text-muted-foreground text-sm">Sin proyectos activos en el marketplace</p>
             <button
               onClick={() => navigate('/marketplace')}
               className="mt-3 text-purple-400 hover:text-purple-300 text-sm transition-colors"

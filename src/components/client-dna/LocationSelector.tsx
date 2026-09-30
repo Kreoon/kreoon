@@ -59,8 +59,8 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
 
       {/* Búsqueda */}
       <div className="relative">
-        <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50 rounded-lg">
-          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
+        <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white dark:bg-[#1a1a24] border border-zinc-200 dark:border-border rounded-lg">
+          <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
           <input
             type="text"
             value={searchTerm}
@@ -73,7 +73,7 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
             className="flex-1 bg-transparent text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500
                        text-xs sm:text-sm outline-none min-w-0"
           />
-          <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400 shrink-0" />
+          <ChevronDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground shrink-0" />
         </div>
 
         {/* Dropdown */}
@@ -90,8 +90,8 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
                            disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <span>{location.flag}</span>
-                <span className="text-zinc-900 dark:text-white truncate">{location.name}</span>
-                <span className="text-zinc-500 text-[10px] sm:text-xs ml-auto shrink-0">{location.type}</span>
+                <span className="text-foreground dark:text-foreground truncate">{location.name}</span>
+                <span className="text-muted-foreground text-[10px] sm:text-xs ml-auto shrink-0">{location.type}</span>
               </button>
             ))}
           </div>
@@ -111,7 +111,7 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
               <span className="truncate max-w-[80px] sm:max-w-none">{location.name}</span>
               <button
                 onClick={() => removeLocation(location.code)}
-                className="ml-0.5 sm:ml-1 hover:text-purple-800 dark:hover:text-white transition-colors"
+                className="ml-0.5 sm:ml-1 hover:text-purple-800 dark:hover:text-foreground transition-colors"
               >
                 <X className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
               </button>
@@ -119,7 +119,7 @@ export function LocationSelector({ selectedLocations, onChange }: LocationSelect
           ))}
           <button
             onClick={() => onChange([])}
-            className="text-[10px] sm:text-xs text-zinc-500 hover:text-red-500 dark:hover:text-red-400 underline ml-0.5 sm:ml-1 transition-colors"
+            className="text-[10px] sm:text-xs text-muted-foreground hover:text-red-500 dark:hover:text-red-400 underline ml-0.5 sm:ml-1 transition-colors"
           >
             Limpiar todo
           </button>

@@ -24,15 +24,15 @@ export function CreatorCardSkeleton() {
         <div className="absolute bottom-0 inset-x-0 px-3 pb-3 pt-6 space-y-2">
           {/* Avatar + nombre */}
           <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-7 h-7 rounded-full bg-muted/60 dark:bg-white/10 flex-shrink-0" />
+            <div className="w-7 h-7 rounded-full bg-muted/60 dark:bg-muted flex-shrink-0" />
             <div className="flex-1 space-y-1.5">
-              <div className="h-3.5 rounded bg-muted/60 dark:bg-white/10 w-3/4" />
-              <div className="h-2.5 rounded bg-muted/40 dark:bg-white/5 w-1/2" />
+              <div className="h-3.5 rounded bg-muted/60 dark:bg-muted w-3/4" />
+              <div className="h-2.5 rounded bg-muted/40 dark:bg-muted/50 w-1/2" />
             </div>
           </div>
           {/* Categoria + precio */}
           <div className="flex items-center justify-between gap-2">
-            <div className="h-5 rounded bg-muted/40 dark:bg-white/5 w-2/5" />
+            <div className="h-5 rounded bg-muted/40 dark:bg-muted/50 w-2/5" />
             <div className="h-5 rounded bg-purple-500/10 w-1/4" />
           </div>
         </div>

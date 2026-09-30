@@ -19,7 +19,7 @@ export function ViewModeToggle({ value, onChange, className }: ViewModeTogglePro
   return (
     <div
       className={cn(
-        'inline-flex items-center rounded-sm border border-white/10 bg-white/5 p-0.5',
+        'inline-flex items-center rounded-sm border border-border bg-muted/40 p-0.5',
         className,
       )}
     >
@@ -32,8 +32,8 @@ export function ViewModeToggle({ value, onChange, className }: ViewModeTogglePro
           className={cn(
             'flex items-center gap-1.5 px-2.5 py-1.5 rounded-sm text-xs font-medium transition-all',
             value === key
-              ? 'bg-[#8b5cf6] text-white shadow-sm'
-              : 'text-white/40 hover:text-white/70 hover:bg-white/5',
+              ? 'bg-[#8b5cf6] text-foreground shadow-sm'
+              : 'text-muted-foreground/70 hover:text-muted-foreground hover:bg-muted/40',
           )}
         >
           <Icon className="h-3.5 w-3.5" />

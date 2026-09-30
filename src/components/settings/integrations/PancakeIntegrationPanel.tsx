@@ -38,7 +38,7 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  color = 'text-white/70'
+  color = 'text-muted-foreground'
 }: {
   label: string;
   value: number;
@@ -46,13 +46,13 @@ function StatCard({
   color?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/5 border border-white/10">
-      <div className={cn('p-2 rounded-sm bg-white/5', color)}>
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/50 border border-border">
+      <div className={cn('p-2 rounded-sm bg-muted/50', color)}>
         <Icon className="h-4 w-4" />
       </div>
       <div>
-        <p className="text-lg font-bold text-white">{value}</p>
-        <p className="text-xs text-white/50">{label}</p>
+        <p className="text-lg font-bold text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
       </div>
     </div>
   );
@@ -67,7 +67,7 @@ function LogEntry({ entry }: { entry: PancakeSyncLogEntry }) {
   });
 
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+    <div className="flex items-center gap-3 py-2 border-b border-border last:border-0">
       <div className={cn(
         'p-1.5 rounded-full',
         isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
@@ -76,7 +76,7 @@ function LogEntry({ entry }: { entry: PancakeSyncLogEntry }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-white/70 capitalize">{entry.action}</span>
+          <span className="text-xs font-medium text-muted-foreground capitalize">{entry.action}</span>
           <Badge variant="outline" className="text-[10px] px-1.5 py-0">
             {entry.entity_type}
           </Badge>
@@ -91,7 +91,7 @@ function LogEntry({ entry }: { entry: PancakeSyncLogEntry }) {
           <p className="text-[10px] text-red-400 truncate mt-0.5">{entry.error_message}</p>
         )}
       </div>
-      <span className="text-[10px] text-white/30">{time}</span>
+      <span className="text-[10px] text-muted-foreground/60">{time}</span>
     </div>
   );
 }
@@ -185,8 +185,8 @@ export function PancakeIntegrationPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Pancake CRM</h3>
-          <p className="text-sm text-white/50">
+          <h3 className="text-lg font-semibold text-foreground">Pancake CRM</h3>
+          <p className="text-sm text-muted-foreground">
             Sincronizacion bidireccional de usuarios y organizaciones
           </p>
         </div>
@@ -263,9 +263,9 @@ export function PancakeIntegrationPanel() {
 
       {/* Config */}
       {isConnected && config && (
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-muted/50 border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-white/70 flex items-center gap-2">
+            <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Configuracion
             </CardTitle>
@@ -273,8 +273,8 @@ export function PancakeIntegrationPanel() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-white/70">Sincronizar usuarios</p>
-                <p className="text-xs text-white/40">Nuevos usuarios y actualizaciones de perfil</p>
+                <p className="text-sm text-muted-foreground">Sincronizar usuarios</p>
+                <p className="text-xs text-muted-foreground">Nuevos usuarios y actualizaciones de perfil</p>
               </div>
               <Switch
                 checked={config.sync_users_enabled}
@@ -283,11 +283,11 @@ export function PancakeIntegrationPanel() {
                 }
               />
             </div>
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted" />
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-white/70">Sincronizar organizaciones</p>
-                <p className="text-xs text-white/40">Nuevas orgs y cambios de membresia</p>
+                <p className="text-sm text-muted-foreground">Sincronizar organizaciones</p>
+                <p className="text-xs text-muted-foreground">Nuevas orgs y cambios de membresia</p>
               </div>
               <Switch
                 checked={config.sync_organizations_enabled}
@@ -296,9 +296,9 @@ export function PancakeIntegrationPanel() {
                 }
               />
             </div>
-            <Separator className="bg-white/10" />
+            <Separator className="bg-muted" />
             <div>
-              <p className="text-xs text-white/40 mb-1">Shop ID</p>
+              <p className="text-xs text-muted-foreground mb-1">Shop ID</p>
               <code className="text-xs text-purple-400 bg-purple-500/10 px-2 py-1 rounded">
                 {config.shop_id}
               </code>
@@ -309,16 +309,16 @@ export function PancakeIntegrationPanel() {
 
       {/* Webhook Config */}
       {isConnected && (
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-muted/50 border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-white/70">Webhook de Pancake</CardTitle>
-            <CardDescription className="text-white/40">
+            <CardTitle className="text-sm text-muted-foreground">Webhook de Pancake</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Configura este webhook en Pancake para recibir cambios
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="text-xs text-white/40 mb-1">URL del Webhook</p>
+              <p className="text-xs text-muted-foreground mb-1">URL del Webhook</p>
               <div className="flex items-center gap-2">
                 <code className="flex-1 text-xs text-blue-400 bg-blue-500/10 px-2 py-1.5 rounded truncate">
                   {webhookUrl}
@@ -333,9 +333,9 @@ export function PancakeIntegrationPanel() {
               </div>
             </div>
             <div>
-              <p className="text-xs text-white/40 mb-1">Header de autenticacion</p>
+              <p className="text-xs text-muted-foreground mb-1">Header de autenticacion</p>
               <div className="flex items-center gap-2">
-                <code className="text-xs text-white/70 bg-white/5 px-2 py-1.5 rounded">
+                <code className="text-xs text-muted-foreground bg-muted/50 px-2 py-1.5 rounded">
                   x-pancake-secret: {config?.webhook_secret?.slice(0, 8)}...
                 </code>
                 <Button
@@ -370,7 +370,7 @@ export function PancakeIntegrationPanel() {
           <Button
             variant="ghost"
             onClick={() => refetchLogs()}
-            className="text-white/50 hover:text-white/70"
+            className="text-muted-foreground hover:text-foreground"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar log
@@ -380,9 +380,9 @@ export function PancakeIntegrationPanel() {
 
       {/* Recent Logs */}
       {isConnected && logs && logs.length > 0 && (
-        <Card className="bg-white/5 border-white/10">
+        <Card className="bg-muted/50 border-border">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-white/70">Actividad reciente</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">Actividad reciente</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="max-h-64 overflow-y-auto">

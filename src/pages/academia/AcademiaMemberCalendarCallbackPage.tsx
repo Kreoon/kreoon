@@ -35,24 +35,24 @@ export default function AcademiaMemberCalendarCallbackPage() {
   }, [params, exchange]);
 
   return (
-    <div className="min-h-screen bg-background text-zinc-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-4">
         {status === 'loading' && (
           <>
-            <Loader2 className="h-12 w-12 mx-auto text-purple-400 animate-spin" />
+            <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin" />
             <h1 className="text-xl font-bold">Conectando tu Google Calendar...</h1>
           </>
         )}
         {status === 'success' && (
           <>
-            <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-400" />
+            <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-600 dark:text-emerald-400" />
             <h1 className="text-xl font-bold">¡Conectado!</h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Ahora los eventos a los que digas "Voy" se agregarán a tu Google Calendar.
             </p>
             <Button
               onClick={() => navigate('/academia/dashboard')}
-              className="bg-purple-500 hover:bg-purple-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               Continuar
             </Button>
@@ -60,9 +60,9 @@ export default function AcademiaMemberCalendarCallbackPage() {
         )}
         {status === 'error' && (
           <>
-            <XCircle className="h-12 w-12 mx-auto text-rose-400" />
+            <XCircle className="h-12 w-12 mx-auto text-rose-600 dark:text-rose-400" />
             <h1 className="text-xl font-bold">Error al conectar</h1>
-            <p className="text-sm text-zinc-400">{errorMsg}</p>
+            <p className="text-sm text-muted-foreground">{errorMsg}</p>
             <Button onClick={() => navigate('/academia/dashboard')} variant="outline">
               Volver
             </Button>

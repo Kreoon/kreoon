@@ -73,15 +73,15 @@ export function TemplateCategoryTabs({
   }, []);
 
   return (
-    <div className="relative flex items-center border-b border-gray-800">
+    <div className="relative flex items-center border-b border-border">
       {/* Flecha izquierda */}
       {showLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 z-10 w-7 h-7 rounded-md bg-card border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
+          className="absolute left-0 z-10 w-7 h-7 rounded-md bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors"
           aria-label="Desplazar categorias a la izquierda"
         >
-          <ChevronLeft className="h-4 w-4 text-gray-400" />
+          <ChevronLeft className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
 
@@ -109,7 +109,7 @@ export function TemplateCategoryTabs({
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-150 border',
                 isActive
                   ? 'bg-purple-600/20 border-purple-500/50 text-purple-300'
-                  : 'border-transparent text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted',
               )}
             >
               <Icon className="h-4 w-4 flex-shrink-0" />
@@ -120,7 +120,7 @@ export function TemplateCategoryTabs({
                     'text-xs px-1.5 py-0.5 rounded-full',
                     isActive
                       ? 'bg-purple-500/30 text-purple-300'
-                      : 'bg-gray-800 text-gray-500',
+                      : 'bg-muted text-muted-foreground',
                   )}
                 >
                   {count}
@@ -135,10 +135,10 @@ export function TemplateCategoryTabs({
       {showRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 z-10 w-7 h-7 rounded-md bg-card border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
+          className="absolute right-0 z-10 w-7 h-7 rounded-md bg-card border border-border flex items-center justify-center hover:bg-muted transition-colors"
           aria-label="Desplazar categorias a la derecha"
         >
-          <ChevronRight className="h-4 w-4 text-gray-400" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
     </div>

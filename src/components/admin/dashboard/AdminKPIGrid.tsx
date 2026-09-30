@@ -50,14 +50,14 @@ function StatCard({ title, value, subtitle, icon: Icon, trend, color, onClick }:
     <Card
       className={cn(
         "p-4 md:p-5 hover:bg-white/[0.02] transition-colors",
-        onClick && "cursor-pointer hover:ring-1 hover:ring-white/20"
+        onClick && "cursor-pointer hover:ring-1 hover:ring-border"
       )}
       onClick={onClick}
     >
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-xs md:text-sm text-white/50 mb-1 truncate">{title}</p>
-          <p className="text-2xl md:text-3xl font-bold text-white">{value}</p>
+          <p className="text-xs md:text-sm text-muted-foreground/70 mb-1 truncate">{title}</p>
+          <p className="text-2xl md:text-3xl font-bold text-foreground">{value}</p>
           {trend && trend.value > 0 && (
             <div
               className={cn(
@@ -73,7 +73,7 @@ function StatCard({ title, value, subtitle, icon: Icon, trend, color, onClick }:
               <span>{trend.isPositive ? "+" : "-"}{trend.value}%</span>
             </div>
           )}
-          {subtitle && <p className="text-xs text-white/30 mt-1 truncate">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground/70 mt-1 truncate">{subtitle}</p>}
         </div>
         <div className={cn("w-10 h-10 md:w-12 md:h-12 rounded-sm flex items-center justify-center shrink-0 ml-2", c.bg)}>
           <Icon className={cn("h-5 w-5 md:h-6 md:w-6", c.icon)} />
@@ -92,10 +92,10 @@ function StatCardSkeleton() {
     <Card className="p-4 md:p-5 animate-pulse">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="h-4 w-20 bg-white/10 rounded mb-2" />
-          <div className="h-8 w-16 bg-white/10 rounded" />
+          <div className="h-4 w-20 bg-muted rounded mb-2" />
+          <div className="h-8 w-16 bg-muted rounded" />
         </div>
-        <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 rounded-sm" />
+        <div className="w-10 h-10 md:w-12 md:h-12 bg-muted rounded-sm" />
       </div>
     </Card>
   );

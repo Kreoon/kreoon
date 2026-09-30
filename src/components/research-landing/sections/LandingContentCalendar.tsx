@@ -36,7 +36,7 @@ function CopyButton({ text }: { text: string }) {
     } catch { /* ignore */ }
   };
   return (
-    <button onClick={handleCopy} className="text-white/20 hover:text-white/50 transition-colors" title="Copiar copy">
+    <button onClick={handleCopy} className="text-muted-foreground/50 hover:text-muted-foreground transition-colors" title="Copiar copy">
       {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
     </button>
   );
@@ -65,9 +65,9 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
       {weeklyThemes.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           {weeklyThemes.map((wt: any, i: number) => (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-2.5 text-center">
-              <p className="text-[10px] text-white/30 uppercase">Semana {wt.week || i + 1}</p>
-              <p className="text-xs font-medium text-white/70 mt-0.5">{wt.theme || '-'}</p>
+            <div key={i} className="bg-muted/40 border border-border rounded-sm p-2.5 text-center">
+              <p className="text-[10px] text-muted-foreground/70 uppercase">Semana {wt.week || i + 1}</p>
+              <p className="text-xs font-medium text-muted-foreground mt-0.5">{wt.theme || '-'}</p>
             </div>
           ))}
         </div>
@@ -90,24 +90,24 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
       <div className="space-y-2">
         {filtered.map((item: any, i: number) => {
           const isExpanded = expandedItem === i;
-          const pillarClass = PILLAR_COLORS[item.pillar?.toLowerCase()] || 'bg-white/10 text-white/50';
-          const esferaClass = ESFERA_COLORS[item.esferaPhase?.toLowerCase()] || 'text-white/40';
+          const pillarClass = PILLAR_COLORS[item.pillar?.toLowerCase()] || 'bg-muted text-muted-foreground';
+          const esferaClass = ESFERA_COLORS[item.esferaPhase?.toLowerCase()] || 'text-muted-foreground/70';
 
           return (
-            <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
+            <div key={i} className="bg-muted/40 border border-border rounded-sm overflow-hidden">
               <button
                 onClick={() => setExpandedItem(isExpanded ? null : i)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-white/[0.02] transition-colors text-left"
+                className="w-full flex items-center gap-3 p-3 hover:bg-muted/40 transition-colors text-left"
               >
                 <div className="text-center shrink-0 w-10">
-                  <p className="text-[10px] text-white/30">S{item.week || '?'}</p>
-                  <p className="text-xs font-bold text-white/50">D{item.day || '?'}</p>
+                  <p className="text-[10px] text-muted-foreground/70">S{item.week || '?'}</p>
+                  <p className="text-xs font-bold text-muted-foreground">D{item.day || '?'}</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/80 truncate">{item.title || 'Sin titulo'}</p>
+                  <p className="text-sm text-muted-foreground truncate">{item.title || 'Sin titulo'}</p>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    {item.format && <span className="text-[10px] text-white/40">{item.format}</span>}
-                    {item.platform && <span className="text-[10px] text-white/30">· {item.platform}</span>}
+                    {item.format && <span className="text-[10px] text-muted-foreground/70">{item.format}</span>}
+                    {item.platform && <span className="text-[10px] text-muted-foreground/70">· {item.platform}</span>}
                   </div>
                 </div>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full border shrink-0 ${pillarClass}`}>
@@ -116,32 +116,32 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
               </button>
 
               {isExpanded && (
-                <div className="px-3 pb-3 pt-1 border-t border-white/[0.04] space-y-2">
+                <div className="px-3 pb-3 pt-1 border-t border-border space-y-2">
                   {item.hook && (
                     <div>
-                      <h6 className="text-[10px] text-white/30 uppercase">Hook</h6>
+                      <h6 className="text-[10px] text-muted-foreground/70 uppercase">Hook</h6>
                       <p className="text-xs text-purple-300/80 italic">"{item.hook}"</p>
                     </div>
                   )}
                   {item.description && (
                     <div>
-                      <h6 className="text-[10px] text-white/30 uppercase">Descripcion</h6>
-                      <p className="text-xs text-white/60">{item.description}</p>
+                      <h6 className="text-[10px] text-muted-foreground/70 uppercase">Descripcion</h6>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
                     </div>
                   )}
                   {item.copy && (
                     <div>
                       <div className="flex items-center justify-between">
-                        <h6 className="text-[10px] text-white/30 uppercase">Copy</h6>
+                        <h6 className="text-[10px] text-muted-foreground/70 uppercase">Copy</h6>
                         <CopyButton text={item.copy} />
                       </div>
-                      <p className="text-xs text-white/60 whitespace-pre-line">{item.copy}</p>
+                      <p className="text-xs text-muted-foreground whitespace-pre-line">{item.copy}</p>
                     </div>
                   )}
                   {item.cta && (
                     <div>
-                      <h6 className="text-[10px] text-white/30 uppercase">CTA</h6>
-                      <p className="text-xs text-white/60">{item.cta}</p>
+                      <h6 className="text-[10px] text-muted-foreground/70 uppercase">CTA</h6>
+                      <p className="text-xs text-muted-foreground">{item.cta}</p>
                     </div>
                   )}
                   <div className="flex flex-wrap gap-1">
@@ -151,10 +151,10 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
                   </div>
                   <div className="flex gap-2 text-[10px]">
                     {item.esferaPhase && <span className={esferaClass}>{item.esferaPhase}</span>}
-                    {item.avatar && <span className="text-white/30">{item.avatar}</span>}
+                    {item.avatar && <span className="text-muted-foreground/70">{item.avatar}</span>}
                   </div>
                   {item.productionNotes && (
-                    <p className="text-[10px] text-white/30 italic">{item.productionNotes}</p>
+                    <p className="text-[10px] text-muted-foreground/70 italic">{item.productionNotes}</p>
                   )}
                 </div>
               )}
@@ -174,14 +174,14 @@ export function LandingContentCalendar({ contentCalendar }: Props) {
                 const pct = Math.round((count / calendar.length) * 100);
                 return (
                   <div key={pillar} className="flex items-center gap-2">
-                    <span className="text-xs text-white/50 w-20 capitalize">{pillar}</span>
-                    <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
+                    <span className="text-xs text-muted-foreground w-20 capitalize">{pillar}</span>
+                    <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="text-xs text-white/40 w-10 text-right">{pct}%</span>
+                    <span className="text-xs text-muted-foreground/70 w-10 text-right">{pct}%</span>
                   </div>
                 );
               })}

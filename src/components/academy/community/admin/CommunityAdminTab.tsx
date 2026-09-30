@@ -94,15 +94,15 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-kreoon-bg-card border-white/10">
+      <Card className="p-5 bg-kreoon-bg-card border-border">
         <h3 className="font-semibold mb-3">Crear nueva categoría</h3>
         <div className="flex flex-col sm:flex-row gap-2">
           <div>
-            <Label className="text-xs text-zinc-300">Emoji</Label>
+            <Label className="text-xs text-muted-foreground">Emoji</Label>
             <select
               value={newEmoji}
               onChange={(e) => setNewEmoji(e.target.value)}
-              className="mt-1 bg-kreoon-bg-secondary border border-white/10 rounded-lg px-3 py-2 text-base focus:outline-none focus:border-purple-500/50"
+              className="mt-1 bg-kreoon-bg-secondary border border-border rounded-lg px-3 py-2 text-base focus:outline-none focus:border-primary/50"
               aria-label="Emoji de la categoría"
             >
               {EMOJI_OPTIONS.map((e) => (
@@ -111,12 +111,12 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
             </select>
           </div>
           <div className="flex-1">
-            <Label className="text-xs text-zinc-300">Nombre</Label>
+            <Label className="text-xs text-muted-foreground">Nombre</Label>
             <Input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Ej: Recursos, Tips, Networking..."
-              className="mt-1 bg-kreoon-bg-secondary border-white/10"
+              className="mt-1 bg-kreoon-bg-secondary border-border"
               maxLength={30}
             />
           </div>
@@ -133,25 +133,25 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
         </div>
       </Card>
 
-      <Card className="p-5 bg-kreoon-bg-card border-white/10">
+      <Card className="p-5 bg-kreoon-bg-card border-border">
         <h3 className="font-semibold mb-3">
           Categorías existentes ({categories.filter((c: any) => c.is_active).length})
         </h3>
         {isLoading ? (
-          <div className="text-zinc-400 text-sm">Cargando...</div>
+          <div className="text-muted-foreground text-sm">Cargando...</div>
         ) : (
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-border">
             {(categories as any[]).map((c) => (
               <li key={c.id} className={cn('flex items-center gap-3 py-3', !c.is_active && 'opacity-40')}>
-                <GripVertical className="h-4 w-4 text-zinc-500 flex-shrink-0" aria-hidden="true" />
+                <GripVertical className="h-4 w-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
                 <span className="text-xl" aria-hidden="true">{c.emoji}</span>
-                <span className="flex-1 font-medium text-zinc-100">{c.name}</span>
+                <span className="flex-1 font-medium text-foreground">{c.name}</span>
                 <select
                   value={c.who_can_post}
                   onChange={(e) =>
                     togglePermission.mutate({ id: c.id, who_can_post: e.target.value })
                   }
-                  className="text-xs bg-kreoon-bg-secondary border border-white/10 rounded px-2 py-1"
+                  className="text-xs bg-kreoon-bg-secondary border border-border rounded px-2 py-1"
                   aria-label={`Quién puede postear en ${c.name}`}
                 >
                   <option value="all">Todos</option>
@@ -166,13 +166,13 @@ export function CommunityAdminTab({ spaceId, accentColor = '#8B5CF6' }: Communit
                       }
                     }}
                     aria-label={`Eliminar categoría ${c.name}`}
-                    className="text-rose-400 hover:text-rose-300 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
+                    className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
                   >
                     <Trash2 className="h-4 w-4" aria-hidden="true" />
                   </button>
                 )}
                 {c.is_default && (
-                  <span className="text-[10px] text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded">
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded">
                     Default
                   </span>
                 )}

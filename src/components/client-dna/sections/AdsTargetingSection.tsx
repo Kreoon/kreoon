@@ -87,7 +87,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
       {/* Platform Tabs */}
       {hasPlatformData && (
         <>
-          <div className="flex gap-2 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800">
+          <div className="flex gap-2 p-1 rounded-lg bg-zinc-100 dark:bg-card">
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               const Icon = tab.icon;
@@ -98,8 +98,8 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg
                              text-sm font-medium transition-colors duration-150 ${
                     isActive
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-zinc-100 shadow-lg'
-                      : 'text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-foreground shadow-lg'
+                      : 'text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:bg-zinc-50 dark:hover:bg-card'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -189,7 +189,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
                 const updated = [...adCopyAngles, { angle_name: '', headline: '', body: '', cta: '' }];
                 onFieldChange?.('ad_copy_angles', updated);
               }}
-              className="w-full p-3 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 text-sm text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors duration-150"
+              className="w-full p-3 rounded-lg border border-dashed border-zinc-300 dark:border-border text-sm text-muted-foreground hover:text-foreground dark:hover:text-foreground hover:border-zinc-400 dark:hover:border-border transition-colors duration-150"
             >
               + Agregar ángulo
             </button>
@@ -199,7 +199,7 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
 
       {/* Old fields fallback: hashtags & negative keywords */}
       {(data.hashtags?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2 mb-3">
             <Hash className="w-4 h-4 text-pink-600 dark:text-pink-400" />
             <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Hashtags</p>
@@ -221,8 +221,8 @@ export function AdsTargetingSection({ data, isEditing, onFieldChange }: Props) {
         </div>
       )}
       {(data.negative_keywords?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Keywords Negativas</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-3">Keywords Negativas</p>
           {isEditing ? (
             <EditableTags items={data.negative_keywords || []} onChange={change('negative_keywords') as (v: string[]) => void} color="red" placeholder="Agregar keyword negativa..." />
           ) : (
@@ -277,7 +277,7 @@ function PlatformTargeting({
 
         const textColorClass = colors.split(' ').slice(0, 2).join(' ');
         return (
-          <div key={i} className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <div key={i} className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
             <div className="flex items-center gap-2 mb-3">
               <Icon className={`w-4 h-4 ${textColorClass}`} />
               <p className={`text-sm font-medium ${textColorClass}`}>{section.label}</p>
@@ -319,12 +319,12 @@ function HookItem({ hook, index }: { hook: string; index: number }) {
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 group">
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-zinc-100 dark:bg-card border border-zinc-200 dark:border-border group">
       <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center
                       text-xs font-bold text-amber-600 dark:text-amber-400 flex-shrink-0">
         {index + 1}
       </span>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300 flex-1">"{hook}"</p>
+      <p className="text-sm text-foreground dark:text-muted-foreground flex-1">"{hook}"</p>
       <button
         onClick={copyHook}
         className="p-1.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100
@@ -333,7 +333,7 @@ function HookItem({ hook, index }: { hook: string; index: number }) {
         {copied ? (
           <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
         ) : (
-          <Copy className="w-4 h-4 text-zinc-400" />
+          <Copy className="w-4 h-4 text-muted-foreground" />
         )}
       </button>
     </div>
@@ -373,7 +373,7 @@ function AdCopyAngleCard({
   const gradient = colors[index % colors.length];
 
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-700/50 overflow-hidden">
+    <div className="rounded-lg border border-zinc-200 dark:border-border overflow-hidden">
       {isEditing ? (
         <div className="p-4 space-y-3">
           <div className="flex items-center gap-3">
@@ -383,17 +383,17 @@ function AdCopyAngleCard({
             </div>
             <EditableText value={angle.angle_name} onChange={(v) => onAngleFieldChange?.('angle_name', v)} placeholder="Nombre del ángulo..." />
           </div>
-          <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 space-y-3">
+          <div className="p-3 rounded-lg bg-zinc-100 dark:bg-card space-y-3">
             <div>
-              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Headline</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Headline</p>
               <EditableText value={angle.headline} onChange={(v) => onAngleFieldChange?.('headline', v)} placeholder="Headline..." />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Body</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Body</p>
               <EditableText value={angle.body} onChange={(v) => onAngleFieldChange?.('body', v)} multiline placeholder="Body..." />
             </div>
             <div>
-              <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">CTA</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">CTA</p>
               <EditableText value={angle.cta} onChange={(v) => onAngleFieldChange?.('cta', v)} placeholder="CTA..." />
             </div>
           </div>
@@ -402,20 +402,20 @@ function AdCopyAngleCard({
         <>
           <button
             onClick={onToggle}
-            className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors duration-150"
+            className="w-full p-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-card transition-colors duration-150"
           >
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient}
                               flex items-center justify-center text-white text-sm font-bold`}>
                 {index + 1}
               </div>
-              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{angle.angle_name}</p>
+              <p className="text-sm font-medium text-foreground dark:text-foreground">{angle.angle_name}</p>
             </div>
-            <ChevronDown className={`w-5 h-5 text-zinc-400 transition-[transform] duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-5 h-5 text-muted-foreground transition-[transform] duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
           </button>
 
           {isExpanded && (
-            <div className="px-4 pb-4 space-y-3 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="px-4 pb-4 space-y-3 border-t border-zinc-100 dark:border-border">
               <CopyableField
                 label="Headline"
                 value={angle.headline}
@@ -454,9 +454,9 @@ function CopyableField({
   onCopy: () => void;
 }) {
   return (
-    <div className="p-3 rounded-lg bg-zinc-100 dark:bg-zinc-800 group">
+    <div className="p-3 rounded-lg bg-zinc-100 dark:bg-card group">
       <div className="flex items-center justify-between mb-1">
-        <p className="text-xs text-zinc-500 uppercase tracking-wider">{label}</p>
+        <p className="text-xs text-muted-foreground uppercase tracking-wider">{label}</p>
         <button
           onClick={onCopy}
           className="p-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 opacity-0 group-hover:opacity-100
@@ -465,11 +465,11 @@ function CopyableField({
           {copied ? (
             <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
           ) : (
-            <Copy className="w-3 h-3 text-zinc-400" />
+            <Copy className="w-3 h-3 text-muted-foreground" />
           )}
         </button>
       </div>
-      <p className="text-sm text-zinc-700 dark:text-zinc-300">{value}</p>
+      <p className="text-sm text-foreground dark:text-muted-foreground">{value}</p>
     </div>
   );
 }

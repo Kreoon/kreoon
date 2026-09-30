@@ -79,9 +79,9 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
 
   if (isLoading) {
     return (
-      <Card className="bg-white/5 border-white/10 p-6">
-        <div className="flex items-center gap-2 text-white/40 text-sm">
-          <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white/70 animate-spin" />
+      <Card className="bg-muted/50 border-border p-6">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <span className="w-3 h-3 rounded-full border-2 border-border border-t-foreground/70 animate-spin" />
           Calculando flujo de caja...
         </div>
       </Card>
@@ -89,14 +89,14 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
   }
 
   return (
-    <Card className="bg-white/5 border-white/10">
+    <Card className="bg-muted/50 border-border">
       <div className="p-6 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <Activity className="w-5 h-5 text-cyan-400 shrink-0" />
           <div>
-            <h3 className="text-lg font-semibold text-white flex items-center gap-2 flex-wrap">
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 flex-wrap">
               ¿Cuánto dinero vas a tener las próximas semanas?
-              <span className="text-sm font-normal text-white/40">— {selectedCurrency} · 12 semanas</span>
+              <span className="text-sm font-normal text-muted-foreground">— {selectedCurrency} · 12 semanas</span>
               {isHistoricalFallback && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/30">
                   📊 Estimado con historial
@@ -106,14 +106,14 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
                 ? "No tienes cuotas ni gastos recurrentes configurados. La proyección usa el promedio mensual de los últimos 6 meses prorrateado por semana. Para mayor precisión configura cuotas o gastos recurrentes."
                 : "Predicción de cuánto vas a recibir (verde) y cuánto vas a gastar (rojo) cada semana. El escenario 'Conservador' asume que solo cobras el 70% de lo esperado."} />
             </h3>
-            <p className="text-white/40 text-sm">
+            <p className="text-muted-foreground text-sm">
               {isHistoricalFallback
                 ? 'Basado en tu actividad de los últimos 6 meses · baja confianza'
                 : 'Si el balance neto es negativo, vas a necesitar reservas o cobrar más rápido'}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-white/5 border border-white/10 rounded-md p-1 self-start sm:self-auto">
+        <div className="flex items-center gap-1 bg-muted/50 border border-border rounded-md p-1 self-start sm:self-auto">
           {(['conservador', 'base', 'optimista'] as CashFlowScenario[]).map(s => (
             <button
               key={s}
@@ -121,7 +121,7 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
               className={`px-3 py-1.5 rounded-sm text-xs font-medium transition-all ${
                 scenario === s
                   ? SCENARIO_ACTIVE_STYLES[s]
-                  : 'text-white/30 hover:text-white/60'
+                  : 'text-muted-foreground/60 hover:text-foreground'
               }`}
             >
               {SCENARIO_LABELS[s]}
@@ -133,22 +133,22 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
       <div className="px-6 pb-4 grid grid-cols-3 gap-3">
         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
           <p className="text-green-400 text-xs font-medium mb-1">Ingresos proyectados</p>
-          <p className="text-white text-base font-bold leading-tight">{formatCurrency(totalInflow, selectedCurrency)}</p>
+          <p className="text-foreground text-base font-bold leading-tight">{formatCurrency(totalInflow, selectedCurrency)}</p>
         </div>
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
           <p className="text-red-400 text-xs font-medium mb-1">Egresos proyectados</p>
-          <p className="text-white text-base font-bold leading-tight">{formatCurrency(totalOutflow, selectedCurrency)}</p>
+          <p className="text-foreground text-base font-bold leading-tight">{formatCurrency(totalOutflow, selectedCurrency)}</p>
         </div>
         <div className={`border rounded-lg p-3 ${totalNet >= 0 ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-red-900/20 border-red-700/30'}`}>
           <p className={`text-xs font-medium mb-1 ${totalNet >= 0 ? 'text-cyan-400' : 'text-red-400'}`}>Balance neto 12 sem.</p>
-          <p className={`text-base font-bold leading-tight ${totalNet >= 0 ? 'text-white' : 'text-red-300'}`}>{formatCurrency(totalNet, selectedCurrency)}</p>
+          <p className={`text-base font-bold leading-tight ${totalNet >= 0 ? 'text-foreground' : 'text-red-300'}`}>{formatCurrency(totalNet, selectedCurrency)}</p>
         </div>
       </div>
 
       {weeks.length === 0 ? (
         <div className="px-6 pb-6 space-y-1">
-          <p className="text-white/30 text-sm">Sin datos para proyectar el flujo de caja en {selectedCurrency}.</p>
-          <p className="text-white/20 text-xs">Agrega cuotas de pago a los paquetes para ver la proyección.</p>
+          <p className="text-muted-foreground/60 text-sm">Sin datos para proyectar el flujo de caja en {selectedCurrency}.</p>
+          <p className="text-muted-foreground/60 text-xs">Agrega cuotas de pago a los paquetes para ver la proyección.</p>
         </div>
       ) : (
         <>
@@ -190,7 +190,7 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
                 </LazyComposedChart>
               </ResponsiveContainer>
             </LazyChartContainer>
-            <div className="flex items-center gap-5 mt-2 text-xs text-white/35 justify-center">
+            <div className="flex items-center gap-5 mt-2 text-xs text-muted-foreground/60 justify-center">
               <span className="flex items-center gap-1.5">
                 <span className="w-3 h-1 rounded-full inline-block bg-green-500" />
                 Ingresos
@@ -200,7 +200,7 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
                 Egresos
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-1 rounded-full inline-block bg-white/60" />
+                <span className="w-3 h-1 rounded-full inline-block bg-muted-foreground" />
                 Balance neto
               </span>
             </div>
@@ -208,12 +208,12 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
 
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead className="text-white/70">Semana</TableHead>
-                <TableHead className="text-white/70 text-right">Ingresos</TableHead>
-                <TableHead className="text-white/70 text-right">Egresos</TableHead>
-                <TableHead className="text-white/70 text-right">Neto</TableHead>
-                <TableHead className="text-white/70 text-center">Confianza</TableHead>
+              <TableRow className="border-border">
+                <TableHead className="text-muted-foreground">Semana</TableHead>
+                <TableHead className="text-muted-foreground text-right">Ingresos</TableHead>
+                <TableHead className="text-muted-foreground text-right">Egresos</TableHead>
+                <TableHead className="text-muted-foreground text-right">Neto</TableHead>
+                <TableHead className="text-muted-foreground text-center">Confianza</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,20 +221,20 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
                 const d = chartData[idx];
                 const netPositive = d.net >= 0;
                 return (
-                  <TableRow key={w.week_number} className="border-white/10 hover:bg-white/5">
-                    <TableCell className="text-white/70 text-sm">
-                      <span className="font-medium text-white">S{w.week_number}</span>
-                      <span className="text-white/30 ml-2 text-xs">
+                  <TableRow key={w.week_number} className="border-border hover:bg-muted/50">
+                    <TableCell className="text-muted-foreground text-sm">
+                      <span className="font-medium text-foreground">S{w.week_number}</span>
+                      <span className="text-muted-foreground/60 ml-2 text-xs">
                         {format(new Date(w.week_start), 'dd MMM', { locale: es })} – {format(new Date(w.week_end), 'dd MMM', { locale: es })}
                       </span>
                     </TableCell>
                     <TableCell className="text-green-400 text-right">
-                      {d.inflow > 0 ? formatCurrency(d.inflow, selectedCurrency) : <span className="text-white/20">—</span>}
+                      {d.inflow > 0 ? formatCurrency(d.inflow, selectedCurrency) : <span className="text-muted-foreground/60">—</span>}
                     </TableCell>
                     <TableCell className="text-red-400 text-right">
-                      {d.outflow > 0 ? formatCurrency(d.outflow, selectedCurrency) : <span className="text-white/20">—</span>}
+                      {d.outflow > 0 ? formatCurrency(d.outflow, selectedCurrency) : <span className="text-muted-foreground/60">—</span>}
                     </TableCell>
-                    <TableCell className={`text-right font-semibold ${netPositive ? 'text-white' : 'text-red-400'}`}>
+                    <TableCell className={`text-right font-semibold ${netPositive ? 'text-foreground' : 'text-red-400'}`}>
                       {formatCurrency(d.net, selectedCurrency)}
                     </TableCell>
                     <TableCell className="text-center">
@@ -243,7 +243,7 @@ export function CashFlowSection({ orgId, selectedCurrency }: Props) {
                           {w.confidence_score}%
                         </span>
                       ) : (
-                        <span className="text-white/20 text-xs">—</span>
+                        <span className="text-muted-foreground/60 text-xs">—</span>
                       )}
                     </TableCell>
                   </TableRow>

@@ -132,7 +132,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-white">{segment.label}</span>
+                      <span className="text-sm font-medium text-foreground">{segment.label}</span>
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -149,7 +149,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
                     </span>
                   </div>
                 </div>
-                <span className="text-sm font-semibold text-white">{segment.formatted}</span>
+                <span className="text-sm font-semibold text-foreground">{segment.formatted}</span>
               </motion.div>
             );
           })}
@@ -159,7 +159,7 @@ export function BalanceBreakdown({ wallet, className }: BalanceBreakdownProps) {
         <div className="pt-3 border-t border-[hsl(270,100%,60%,0.1)]">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Balance Total</span>
-            <span className="text-lg font-bold bg-gradient-to-r from-white to-[hsl(270,100%,80%)] bg-clip-text text-transparent">
+            <span className="text-lg font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
               {wallet.formattedTotal}
             </span>
           </div>

@@ -29,7 +29,7 @@ export function DNAHistoryList({
     <div className="space-y-3 sm:space-y-4">
       <div className="flex items-center gap-2 mb-3 sm:mb-4">
         <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
-        <h3 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Historial de Versiones</h3>
+        <h3 className="text-base sm:text-lg font-semibold text-foreground dark:text-foreground">Historial de Versiones</h3>
       </div>
 
       <div className="space-y-2 sm:space-y-3">
@@ -42,7 +42,7 @@ export function DNAHistoryList({
               className={`rounded-lg border transition-colors ${
                 isActive
                   ? 'border-purple-300 dark:border-purple-500/50 bg-purple-50 dark:bg-purple-500/10'
-                  : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
+                  : 'border-zinc-200 dark:border-border bg-white dark:bg-[#14141f] hover:bg-zinc-50 dark:hover:bg-card/50'
               }`}
             >
               <div className="p-3 sm:p-4">
@@ -53,14 +53,14 @@ export function DNAHistoryList({
                                     font-bold text-sm sm:text-lg shrink-0 ${
                       isActive
                         ? 'bg-purple-500 text-white'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400'
+                        : 'bg-zinc-100 dark:bg-card text-muted-foreground dark:text-muted-foreground'
                     }`}>
                       v{dna.version}
                     </div>
 
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm sm:font-medium text-zinc-900 dark:text-white">
+                        <span className="text-sm sm:font-medium text-foreground dark:text-foreground">
                           Versión {dna.version}
                         </span>
                         {isActive && (
@@ -72,7 +72,7 @@ export function DNAHistoryList({
                           </span>
                         )}
                       </div>
-                      <p className="text-[10px] sm:text-sm text-zinc-500 dark:text-zinc-400 truncate">
+                      <p className="text-[10px] sm:text-sm text-muted-foreground dark:text-muted-foreground truncate">
                         {formatDate(dna.created_at)}
                       </p>
                     </div>
@@ -108,19 +108,19 @@ export function DNAHistoryList({
 
                 {/* Quick Summary */}
                 {dna.emotional_analysis && (
-                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-zinc-100 dark:border-zinc-800">
+                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-zinc-100 dark:border-border">
                     <div className="grid grid-cols-3 gap-2 sm:gap-4">
                       <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs text-zinc-500">Estado</p>
-                        <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white capitalize truncate">{dna.emotional_analysis.overall_mood}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Estado</p>
+                        <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground capitalize truncate">{dna.emotional_analysis.overall_mood}</p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs text-zinc-500">Confianza</p>
-                        <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white">{dna.emotional_analysis.confidence_level}%</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Confianza</p>
+                        <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground">{dna.emotional_analysis.confidence_level}%</p>
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[10px] sm:text-xs text-zinc-500">Regiones</p>
-                        <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white">{dna.audience_locations?.length || 0}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground">Regiones</p>
+                        <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground">{dna.audience_locations?.length || 0}</p>
                       </div>
                     </div>
                   </div>

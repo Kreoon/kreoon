@@ -76,8 +76,8 @@ export function ReferralManagement() {
         <Card className="!bg-purple-500/5 !border-purple-500/20">
           <CardContent className="pt-6">
             <div className="text-center mb-4">
-              <h3 className="text-white font-semibold mb-1">Desbloquea la Plataforma</h3>
-              <p className="text-white/50 text-xs">
+              <h3 className="text-foreground font-semibold mb-1">Desbloquea la Plataforma</h3>
+              <p className="text-muted-foreground text-xs">
                 Invita a 3 personas que completen su perfil en el marketplace.
               </p>
             </div>
@@ -85,7 +85,7 @@ export function ReferralManagement() {
               <ReferralProgressRing qualified={qualifiedCount} />
             </div>
             {remaining > 0 && (
-              <p className="text-center text-sm text-white/60 mt-4">
+              <p className="text-center text-sm text-muted-foreground mt-4">
                 Te {remaining === 1 ? 'falta' : 'faltan'}{' '}
                 <strong className="text-purple-300">{remaining} {remaining === 1 ? 'llave' : 'llaves'}</strong>
               </p>
@@ -145,8 +145,8 @@ export function ReferralManagement() {
       {/* 5. Custom Slug */}
       {primaryCode && (
         <Card className="p-6">
-          <h3 className="text-white font-semibold text-sm mb-3">Personalizar tu Link</h3>
-          <p className="text-white/50 text-xs mb-4">
+          <h3 className="text-foreground font-semibold text-sm mb-3">Personalizar tu Link</h3>
+          <p className="text-muted-foreground text-xs mb-4">
             Cambia tu codigo de referido por uno personalizado. Solo letras, numeros y guiones.
           </p>
           <CustomSlugInput
@@ -181,7 +181,7 @@ export function ReferralManagement() {
               {referralsList.map((ref: any) => (
                 <div
                   key={ref.id}
-                  className="flex items-center gap-3 px-3 py-2 rounded-sm bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2 rounded-sm bg-muted/50"
                 >
                   {ref.referred?.avatar_url ? (
                     <img src={ref.referred.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
@@ -191,10 +191,10 @@ export function ReferralManagement() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">
+                    <p className="text-foreground text-sm font-medium truncate">
                       {ref.referred?.full_name || 'Usuario'}
                     </p>
-                    <p className="text-white/40 text-[10px]">
+                    <p className="text-muted-foreground text-[10px]">
                       {ref.created_at ? format(new Date(ref.created_at), "dd MMM yyyy", { locale: es }) : ''}
                     </p>
                   </div>
@@ -203,7 +203,7 @@ export function ReferralManagement() {
                       'px-2 py-0.5 rounded-full text-[10px] font-medium',
                       ref.status === 'active'
                         ? 'bg-green-500/20 text-green-400'
-                        : 'bg-white/10 text-white/50'
+                        : 'bg-muted text-muted-foreground'
                     )}>
                       {ref.status === 'active' ? 'Activo' : ref.status}
                     </span>
@@ -229,15 +229,15 @@ export function ReferralManagement() {
           <CardContent>
             <div className="space-y-2">
               {earningsList.slice(0, 20).map((e: any) => (
-                <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-sm bg-white/5">
+                <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-sm bg-muted/50">
                   <div>
-                    <p className="text-white text-sm">
+                    <p className="text-foreground text-sm">
                       {e.source_type === 'subscription' ? 'Suscripcion' : 'Transaccion'}
                       {e.relationship?.referred?.full_name && (
-                        <span className="text-white/40"> — {e.relationship.referred.full_name}</span>
+                        <span className="text-muted-foreground"> — {e.relationship.referred.full_name}</span>
                       )}
                     </p>
-                    <p className="text-white/40 text-[10px]">
+                    <p className="text-muted-foreground text-[10px]">
                       {e.created_at ? format(new Date(e.created_at), "dd MMM yyyy", { locale: es }) : ''}
                     </p>
                   </div>
@@ -263,9 +263,9 @@ export function ReferralManagement() {
 
       {/* 8. Info card (updated with bilateral + tier info) */}
       <Card className="p-6">
-        <h3 className="text-white font-semibold text-sm mb-3">Como funciona el programa</h3>
+        <h3 className="text-foreground font-semibold text-sm mb-3">Como funciona el programa</h3>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-2.5 text-xs text-white/50">
+          <div className="space-y-2.5 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <Key className="w-4 h-4 text-purple-400 shrink-0" />
               <span>3 referidos calificados desbloquean la plataforma</span>
@@ -283,17 +283,17 @@ export function ReferralManagement() {
               <span>Sube de nivel: Starter → Ambassador → Champion → Elite → Legend</span>
             </div>
           </div>
-          <div className="space-y-2.5 text-xs text-white/50">
+          <div className="space-y-2.5 text-xs text-muted-foreground">
             <p>
-              <strong className="text-white/70">Beneficio bilateral:</strong> Quien se registra con tu link recibe{' '}
+              <strong className="text-muted-foreground">Beneficio bilateral:</strong> Quien se registra con tu link recibe{' '}
               {REFERRAL_BILATERAL.referred_discount_percent}% OFF + {REFERRAL_BILATERAL.referred_welcome_coins} Tokens IA.
               Tu recibes {REFERRAL_BILATERAL.referrer_qualification_coins} Tokens IA cuando califican.
             </p>
             <p>
-              <strong className="text-white/70">Referido calificado:</strong> perfil activo en marketplace + foto de perfil + al menos 1 pieza en portafolio
+              <strong className="text-muted-foreground">Referido calificado:</strong> perfil activo en marketplace + foto de perfil + al menos 1 pieza en portafolio
             </p>
             <p>
-              <strong className="text-white/70">Duracion:</strong> perpetuo mientras ambas cuentas esten activas
+              <strong className="text-muted-foreground">Duracion:</strong> perpetuo mientras ambas cuentas esten activas
             </p>
           </div>
         </div>
@@ -329,9 +329,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/60 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>

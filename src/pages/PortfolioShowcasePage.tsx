@@ -204,14 +204,14 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
               <img
                 src={content.creator_avatar}
                 alt={content.creator_name}
-                className="h-6 w-6 rounded-full object-cover border border-white/20"
+                className="h-6 w-6 rounded-full object-cover border border-border"
               />
             ) : (
               <div className="h-6 w-6 rounded-full bg-kreoon-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
                 {content.creator_name[0]}
               </div>
             )}
-            <span className="text-xs font-medium text-white truncate">
+            <span className="text-xs font-medium text-foreground truncate">
               {content.creator_name}
             </span>
           </div>
@@ -350,7 +350,7 @@ export default function PortfolioShowcasePage() {
                 <span className="h-px w-8 bg-gradient-to-l from-transparent to-kreoon-purple-500/60" />
               </div>
 
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6">
                 Portafolio de{" "}
                 <span className="bg-gradient-to-r from-kreoon-purple-400 to-kreoon-purple-600 bg-clip-text text-transparent">
                   Contenido Aprobado
@@ -403,9 +403,9 @@ export default function PortfolioShowcasePage() {
             </div>
           </section>
 
-          <section className="relative py-20 border-t border-white/5">
+          <section className="relative py-20 border-t border-border">
             <div className="container mx-auto px-4 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
                 ¿Quieres que tu contenido aparezca aquí?
               </h2>
               <p className="text-kreoon-text-secondary mb-8 max-w-xl mx-auto">
@@ -414,7 +414,7 @@ export default function PortfolioShowcasePage() {
               </p>
               <button
                 onClick={() => handleOpenAuth("register")}
-                className="px-8 py-4 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-white font-medium transition-colors shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
+                className="px-8 py-4 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-foreground font-medium transition-colors shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
               >
                 Comenzar como Creador
               </button>

@@ -193,7 +193,7 @@ export function CreateContactModal({
       <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-lg max-h-[90dvh] sm:max-h-[90vh] p-0 overflow-hidden">
         <div className="p-6 space-y-5">
           <DialogHeader>
-            <DialogTitle className="text-white text-lg">Nuevo Contacto</DialogTitle>
+            <DialogTitle className="text-foreground text-lg">Nuevo Contacto</DialogTitle>
           </DialogHeader>
 
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
@@ -201,23 +201,23 @@ export function CreateContactModal({
             {/* ---- Basic Info ---- */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Nombre completo *</Label>
+                <Label className="text-muted-foreground text-xs">Nombre completo *</Label>
                 <Input
                   {...form.register('full_name')}
                   placeholder="María López"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                 />
                 {form.formState.errors.full_name && (
                   <p className="text-xs text-red-400">{form.formState.errors.full_name.message}</p>
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Email</Label>
+                <Label className="text-muted-foreground text-xs">Email</Label>
                 <Input
                   {...form.register('email')}
                   type="email"
                   placeholder="maria@empresa.com"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                 />
                 {form.formState.errors.email && (
                   <p className="text-xs text-red-400">{form.formState.errors.email.message}</p>
@@ -227,27 +227,27 @@ export function CreateContactModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Teléfono</Label>
+                <Label className="text-muted-foreground text-xs">Teléfono</Label>
                 <Input
                   {...form.register('phone')}
                   placeholder="+57 300..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Empresa</Label>
+                <Label className="text-muted-foreground text-xs">Empresa</Label>
                 <Input
                   {...form.register('company')}
                   placeholder="Acme Corp"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Cargo</Label>
+                <Label className="text-muted-foreground text-xs">Cargo</Label>
                 <Input
                   {...form.register('position')}
                   placeholder="CEO"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                 />
               </div>
             </div>
@@ -255,17 +255,17 @@ export function CreateContactModal({
             {/* ---- Classification ---- */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Tipo de contacto</Label>
+                <Label className="text-muted-foreground text-xs">Tipo de contacto</Label>
                 <Select
                   value={contactType}
                   onValueChange={(v) => form.setValue('contact_type', v)}
                 >
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-muted/40 border-border text-foreground">
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-[#8b5cf6]/30">
                     {CONTACT_TYPES.map((t) => (
-                      <SelectItem key={t} value={t} className="text-white focus:bg-white/10">
+                      <SelectItem key={t} value={t} className="text-foreground focus:bg-muted">
                         {CONTACT_TYPE_LABELS[t]}
                       </SelectItem>
                     ))}
@@ -274,7 +274,7 @@ export function CreateContactModal({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-xs">Temperatura</Label>
+                <Label className="text-muted-foreground text-xs">Temperatura</Label>
                 <div className="flex gap-2">
                   {STRENGTH_OPTIONS.map((opt) => {
                     const Icon = opt.icon;
@@ -288,11 +288,11 @@ export function CreateContactModal({
                           'flex-1 flex flex-col items-center gap-1 py-2 rounded-sm border transition-all',
                           isActive
                             ? opt.activeColor
-                            : 'border-white/10 bg-white/5 hover:bg-white/8 hover:border-white/20',
+                            : 'border-border bg-muted/40 hover:bg-muted hover:border-border',
                         )}
                       >
                         <Icon className={cn('h-4 w-4', isActive ? '' : opt.color)} />
-                        <span className={cn('text-[10px] font-medium', isActive ? '' : 'text-white/40')}>
+                        <span className={cn('text-[10px] font-medium', isActive ? '' : 'text-muted-foreground/70')}>
                           {RELATIONSHIP_STRENGTH_LABELS[opt.value]}
                         </span>
                       </button>
@@ -308,22 +308,22 @@ export function CreateContactModal({
                 className="p-3 rounded-sm space-y-3"
                 style={{ background: 'rgba(139, 92, 246, 0.06)', border: '1px solid rgba(139, 92, 246, 0.15)' }}
               >
-                <p className="text-[10px] uppercase tracking-wider text-white/40 font-semibold">Pipeline</p>
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">Pipeline</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-white/70 text-xs">Etapa</Label>
+                    <Label className="text-muted-foreground text-xs">Etapa</Label>
                     <Select
                       value={form.watch('pipeline_stage')}
                       onValueChange={(v) => form.setValue('pipeline_stage', v)}
                     >
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                      <SelectTrigger className="bg-muted/40 border-border text-foreground">
                         <SelectValue placeholder="Etapa" />
                       </SelectTrigger>
                       <SelectContent className="bg-popover border-[#8b5cf6]/30">
                         {pipelineStages
                           .sort((a, b) => a.order - b.order)
                           .map((s) => (
-                            <SelectItem key={s.name} value={s.name} className="text-white focus:bg-white/10">
+                            <SelectItem key={s.name} value={s.name} className="text-foreground focus:bg-muted">
                               {s.name}
                             </SelectItem>
                           ))}
@@ -331,25 +331,25 @@ export function CreateContactModal({
                     </Select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-white/70 text-xs">Valor del deal</Label>
+                    <Label className="text-muted-foreground text-xs">Valor del deal</Label>
                     <div className="relative">
-                      <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+                      <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
                       <Input
                         {...form.register('deal_value')}
                         type="number"
                         min="0"
                         step="0.01"
                         placeholder="0.00"
-                        className="pl-8 bg-white/5 border-white/10 text-white placeholder:text-white/30"
+                        className="pl-8 bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
                       />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-white/70 text-xs">Cierre esperado</Label>
+                    <Label className="text-muted-foreground text-xs">Cierre esperado</Label>
                     <Input
                       {...form.register('expected_close_date')}
                       type="date"
-                      className="bg-white/5 border-white/10 text-white [color-scheme:dark]"
+                      className="bg-muted/40 border-border text-foreground [color-scheme:dark]"
                     />
                   </div>
                 </div>
@@ -358,7 +358,7 @@ export function CreateContactModal({
 
             {/* ---- Tags ---- */}
             <div className="space-y-1.5">
-              <Label className="text-white/70 text-xs">Etiquetas</Label>
+              <Label className="text-muted-foreground text-xs">Etiquetas</Label>
               <div className="flex items-center gap-2">
                 <Input
                   value={tagInput}
@@ -370,14 +370,14 @@ export function CreateContactModal({
                     }
                   }}
                   placeholder="Agregar etiqueta..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 flex-1"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 flex-1"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={addTag}
-                  className="h-9 w-9 bg-white/5 hover:bg-white/10 text-white/50"
+                  className="h-9 w-9 bg-muted/40 hover:bg-muted text-muted-foreground/70"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -390,7 +390,7 @@ export function CreateContactModal({
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-[#8b5cf6]/20 text-[#c084fc] border border-[#8b5cf6]/30"
                     >
                       {tag}
-                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-white transition-colors">
+                      <button type="button" onClick={() => removeTag(tag)} className="hover:text-foreground transition-colors">
                         <X className="h-3 w-3" />
                       </button>
                     </span>
@@ -401,12 +401,12 @@ export function CreateContactModal({
 
             {/* ---- Notes ---- */}
             <div className="space-y-1.5">
-              <Label className="text-white/70 text-xs">Notas</Label>
+              <Label className="text-muted-foreground text-xs">Notas</Label>
               <Textarea
                 {...form.register('notes')}
                 placeholder="Notas sobre este contacto..."
                 rows={2}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
               />
             </div>
 
@@ -415,7 +415,7 @@ export function CreateContactModal({
               <button
                 type="button"
                 onClick={() => setShowSocial(!showSocial)}
-                className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground/70 hover:text-muted-foreground transition-colors"
               >
                 <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showSocial && 'rotate-180')} />
                 Redes sociales
@@ -423,27 +423,27 @@ export function CreateContactModal({
               {showSocial && (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
                   <div className="space-y-1">
-                    <Label className="text-white/50 text-[10px]">Instagram</Label>
+                    <Label className="text-muted-foreground/70 text-[10px]">Instagram</Label>
                     <Input
                       {...form.register('instagram')}
                       placeholder="@usuario"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8"
+                      className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-xs h-8"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-white/50 text-[10px]">LinkedIn</Label>
+                    <Label className="text-muted-foreground/70 text-[10px]">LinkedIn</Label>
                     <Input
                       {...form.register('linkedin')}
                       placeholder="linkedin.com/in/..."
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8"
+                      className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-xs h-8"
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-white/50 text-[10px]">TikTok</Label>
+                    <Label className="text-muted-foreground/70 text-[10px]">TikTok</Label>
                     <Input
                       {...form.register('tiktok')}
                       placeholder="@usuario"
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8"
+                      className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-xs h-8"
                     />
                   </div>
                 </div>
@@ -451,12 +451,12 @@ export function CreateContactModal({
             </div>
 
             {/* ---- Actions ---- */}
-            <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => handleClose(false)}
-                className="text-white/50 hover:text-white hover:bg-white/10"
+                className="text-muted-foreground/70 hover:text-foreground hover:bg-muted"
               >
                 Cancelar
               </Button>
@@ -466,7 +466,7 @@ export function CreateContactModal({
                 className="bg-gradient-to-r from-[#7c3aed] to-[#ec4899] hover:opacity-90 text-white"
               >
                 {createContact.isPending && (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                  <div className="w-4 h-4 border-2 border-border border-t-white rounded-full animate-spin mr-2" />
                 )}
                 Crear Contacto
               </Button>

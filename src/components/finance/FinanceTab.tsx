@@ -182,30 +182,30 @@ export function FinanceTab({ orgId }: Props) {
 
       {/* ─── Marketplace sub-KPIs (solo si hay actividad) ─────────── */}
       {overview && overview.mp_projects_count > 0 && (
-        <div className="bg-white/[0.02] border border-white/5 rounded-md p-4">
+        <div className="bg-muted/30 border border-border rounded-md p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               🛍️ Marketplace
-              <span className="text-xs font-normal text-white/40">
+              <span className="text-xs font-normal text-muted-foreground">
                 {overview.mp_projects_count} proyecto{overview.mp_projects_count !== 1 ? 's' : ''} completado{overview.mp_projects_count !== 1 ? 's' : ''}
               </span>
             </h3>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div>
-              <p className="text-white/40 text-xs">Ingresos MP</p>
+              <p className="text-muted-foreground text-xs">Ingresos MP</p>
               <p className="font-semibold text-green-400">{formatCurrency(overview.mp_revenue, currency)}</p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">Pagado a creators</p>
+              <p className="text-muted-foreground text-xs">Pagado a creators</p>
               <p className="font-semibold text-orange-400">−{formatCurrency(overview.mp_creator_cost, currency)}</p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">Pagado a editors</p>
+              <p className="text-muted-foreground text-xs">Pagado a editors</p>
               <p className="font-semibold text-orange-300">−{formatCurrency(overview.mp_editor_cost, currency)}</p>
             </div>
             <div>
-              <p className="text-white/40 text-xs">Comisión KREOON</p>
+              <p className="text-muted-foreground text-xs">Comisión KREOON</p>
               <p className="font-semibold text-purple-400">−{formatCurrency(overview.mp_platform_fee, currency)}</p>
             </div>
           </div>
@@ -246,11 +246,11 @@ export function FinanceTab({ orgId }: Props) {
       )}
 
       {/* ─── Cobros pendientes ─────────────────────────────────────── */}
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/50 border-border">
         <div className="p-5 pb-3 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="text-base font-semibold text-white">Cobros pendientes</h3>
-            <p className="text-white/40 text-xs">{pendingPackages.length} paquete{pendingPackages.length !== 1 ? 's' : ''} en {currency}</p>
+            <h3 className="text-base font-semibold text-foreground">Cobros pendientes</h3>
+            <p className="text-muted-foreground text-xs">{pendingPackages.length} paquete{pendingPackages.length !== 1 ? 's' : ''} en {currency}</p>
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -260,19 +260,19 @@ export function FinanceTab({ orgId }: Props) {
             <FilterChip active={pendingFilter === 'vencidos'} onClick={() => setPendingFilter('vencidos')} variant="red">Vencidos</FilterChip>
 
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
               <Input
                 placeholder="Buscar cliente / campaña"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="bg-white/5 border-white/10 text-white text-xs h-7 pl-7 w-48"
+                className="bg-muted/50 border-border text-foreground text-xs h-7 pl-7 w-48"
               />
             </div>
           </div>
         </div>
 
         {loadingPackages ? (
-          <div className="px-5 pb-5 text-white/40 text-sm">Cargando paquetes...</div>
+          <div className="px-5 pb-5 text-muted-foreground text-sm">Cargando paquetes...</div>
         ) : pendingPackages.length === 0 ? (
           <div className="px-5 pb-5 flex items-center gap-2 bg-green-500/10 border border-green-500/20 rounded-md mx-5 mb-5 px-4 py-3">
             <DollarSign className="w-4 h-4 text-green-400" />
@@ -285,21 +285,21 @@ export function FinanceTab({ orgId }: Props) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead className="text-white/60 text-xs">Paquete</TableHead>
-                <TableHead className="text-white/60 text-xs">Cliente</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Valor</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Cobrado</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Pendiente</TableHead>
-                <TableHead className="text-white/60 text-xs">Estado</TableHead>
-                <TableHead className="text-white/60 text-xs">Fecha límite</TableHead>
-                <TableHead className="text-white/60 text-xs"></TableHead>
+              <TableRow className="border-border">
+                <TableHead className="text-muted-foreground text-xs">Paquete</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Cliente</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Valor</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Cobrado</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Pendiente</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Estado</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Fecha límite</TableHead>
+                <TableHead className="text-muted-foreground text-xs"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pendingPackages.map(pkg => (
-                <TableRow key={pkg.id} className="border-white/10 hover:bg-white/5">
-                  <TableCell className="text-white text-sm">
+                <TableRow key={pkg.id} className="border-border hover:bg-muted/50">
+                  <TableCell className="text-foreground text-sm">
                     <span className="flex items-center gap-2">
                       <span className="font-medium opacity-50 shrink-0">
                         #{String(pkg.campaign_number).padStart(4, '0')}
@@ -307,8 +307,8 @@ export function FinanceTab({ orgId }: Props) {
                       {pkg.name}
                     </span>
                   </TableCell>
-                  <TableCell className="text-white/70 text-sm">{pkg.client_name}</TableCell>
-                  <TableCell className="text-white text-right text-sm">
+                  <TableCell className="text-muted-foreground text-sm">{pkg.client_name}</TableCell>
+                  <TableCell className="text-foreground text-right text-sm">
                     {formatCurrency(pkg.total_value, pkg.currency)}
                   </TableCell>
                   <TableCell className="text-green-400 text-right text-sm">
@@ -318,7 +318,7 @@ export function FinanceTab({ orgId }: Props) {
                     {formatCurrency(pkg.total_value - pkg.paid_amount, pkg.currency)}
                   </TableCell>
                   <TableCell>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] ${PAYMENT_STATUS_STYLES[pkg.payment_status] || 'bg-white/10 text-white/50'}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[11px] ${PAYMENT_STATUS_STYLES[pkg.payment_status] || 'bg-muted text-muted-foreground'}`}>
                       {PAYMENT_STATUS_LABELS[pkg.payment_status] || pkg.payment_status}
                     </span>
                   </TableCell>
@@ -365,23 +365,23 @@ export function FinanceTab({ orgId }: Props) {
       </Card>
 
       {/* ─── Ingresos por cliente ──────────────────────────────────── */}
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/50 border-border">
         <div className="p-5 pb-3">
-          <h3 className="text-base font-semibold text-white">Ingresos por cliente</h3>
-          <p className="text-white/40 text-xs">Ordenado por mayor venta en {currency}</p>
+          <h3 className="text-base font-semibold text-foreground">Ingresos por cliente</h3>
+          <p className="text-muted-foreground text-xs">Ordenado por mayor venta en {currency}</p>
         </div>
 
         {filteredRevenue.length === 0 ? (
-          <div className="px-5 pb-5 text-white/30 text-sm">Sin clientes con ingresos en {currency}</div>
+          <div className="px-5 pb-5 text-muted-foreground/60 text-sm">Sin clientes con ingresos en {currency}</div>
         ) : (
           <Table>
               <TableHeader>
-                <TableRow className="border-white/10">
-                  <TableHead className="text-white/60 text-xs">Cliente</TableHead>
-                  <TableHead className="text-white/60 text-xs text-center">Paquetes</TableHead>
-                  <TableHead className="text-white/60 text-xs text-right">Vendido</TableHead>
-                  <TableHead className="text-white/60 text-xs text-right">Cobrado</TableHead>
-                  <TableHead className="text-white/60 text-xs text-right">% Cobrado</TableHead>
+                <TableRow className="border-border">
+                  <TableHead className="text-muted-foreground text-xs">Cliente</TableHead>
+                  <TableHead className="text-muted-foreground text-xs text-center">Paquetes</TableHead>
+                  <TableHead className="text-muted-foreground text-xs text-right">Vendido</TableHead>
+                  <TableHead className="text-muted-foreground text-xs text-right">Cobrado</TableHead>
+                  <TableHead className="text-muted-foreground text-xs text-right">% Cobrado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -391,10 +391,10 @@ export function FinanceTab({ orgId }: Props) {
                     : 0;
                   const isZero = c.total_sold === 0;
                   return (
-                    <TableRow key={`${c.client_id}-${idx}`} className={`border-white/10 hover:bg-white/5 ${isZero ? 'opacity-40' : ''}`}>
-                      <TableCell className="text-white font-medium text-sm">{c.client_name}</TableCell>
-                      <TableCell className="text-white/70 text-center text-sm">{c.packages_count}</TableCell>
-                      <TableCell className="text-white text-right text-sm">
+                    <TableRow key={`${c.client_id}-${idx}`} className={`border-border hover:bg-muted/50 ${isZero ? 'opacity-40' : ''}`}>
+                      <TableCell className="text-foreground font-medium text-sm">{c.client_name}</TableCell>
+                      <TableCell className="text-muted-foreground text-center text-sm">{c.packages_count}</TableCell>
+                      <TableCell className="text-foreground text-right text-sm">
                         {isZero ? '—' : formatCurrency(c.total_sold, c.currency)}
                       </TableCell>
                       <TableCell className="text-green-400 text-right text-sm">
@@ -402,9 +402,9 @@ export function FinanceTab({ orgId }: Props) {
                       </TableCell>
                       <TableCell className="text-right">
                         {isZero ? (
-                          <span className="text-white/30 text-xs">—</span>
+                          <span className="text-muted-foreground/60 text-xs">—</span>
                         ) : (
-                          <span className="text-white/70 text-xs font-medium">{pct}%</span>
+                          <span className="text-muted-foreground text-xs font-medium">{pct}%</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -424,7 +424,7 @@ export function FinanceTab({ orgId }: Props) {
           <div className="flex items-center gap-3">
             <Gift className="w-5 h-5 text-purple-400 shrink-0" />
             <div className="text-left">
-              <h3 className="text-base font-semibold text-white">
+              <h3 className="text-base font-semibold text-foreground">
                 Canjes
                 <span className="ml-2 text-xs font-normal text-purple-300/70 bg-purple-500/10 px-2 py-0.5 rounded-full">
                   {barterPackages.length} paquete{barterPackages.length !== 1 ? 's' : ''}
@@ -433,12 +433,12 @@ export function FinanceTab({ orgId }: Props) {
               <p className="text-purple-300/60 text-xs">No generan ingreso monetario · excluidos de KPIs</p>
             </div>
           </div>
-          {showBarters ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
+          {showBarters ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
         </button>
 
         {showBarters && (
           loadingBarter ? (
-            <div className="px-5 pb-5 text-white/40 text-sm">Cargando canjes...</div>
+            <div className="px-5 pb-5 text-muted-foreground text-sm">Cargando canjes...</div>
           ) : barterPackages.length === 0 ? (
             <div className="px-5 pb-5 text-purple-300/30 text-sm">No hay paquetes de canje registrados</div>
           ) : (
@@ -455,7 +455,7 @@ export function FinanceTab({ orgId }: Props) {
               <TableBody>
                 {barterPackages.map(pkg => (
                   <TableRow key={pkg.id} className="border-purple-500/10 hover:bg-purple-500/5">
-                    <TableCell className="text-white/80 font-medium text-sm">
+                    <TableCell className="text-foreground font-medium text-sm">
                       <span className="flex items-center gap-2">
                         <span className="font-medium opacity-50 shrink-0">
                           #{String(pkg.campaign_number).padStart(4, '0')}
@@ -463,16 +463,16 @@ export function FinanceTab({ orgId }: Props) {
                         {pkg.name}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/60 text-sm">{pkg.client_name}</TableCell>
-                    <TableCell className="text-white/60 text-center text-sm">{pkg.content_quantity}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{pkg.client_name}</TableCell>
+                    <TableCell className="text-muted-foreground text-center text-sm">{pkg.content_quantity}</TableCell>
                     <TableCell>
                       <span className={`px-2 py-0.5 rounded-full text-[11px] ${
-                        pkg.is_active ? 'bg-purple-500/20 text-purple-300' : 'bg-white/10 text-white/30'
+                        pkg.is_active ? 'bg-purple-500/20 text-purple-300' : 'bg-muted text-muted-foreground/60'
                       }`}>
                         {pkg.is_active ? 'Activo' : 'Cerrado'}
                       </span>
                     </TableCell>
-                    <TableCell className="text-white/40 text-xs">
+                    <TableCell className="text-muted-foreground text-xs">
                       {format(new Date(pkg.created_at), 'dd MMM yyyy', { locale: es })}
                     </TableCell>
                   </TableRow>
@@ -553,13 +553,13 @@ function KpiCard({
         <div className={`shrink-0 p-2 rounded ${accent === 'green' ? 'bg-green-500/20' : accent === 'blue' ? 'bg-blue-500/20' : accent === 'orange' ? 'bg-orange-500/20' : accent === 'purple' ? 'bg-purple-500/20' : 'bg-red-500/20'}`}>
           {icon}
         </div>
-        <span className="text-white/60 text-[11px] sm:text-xs uppercase tracking-wide truncate min-w-0">{label}</span>
+        <span className="text-muted-foreground text-[11px] sm:text-xs uppercase tracking-wide truncate min-w-0">{label}</span>
         {help && <HelpTip text={help} />}
       </div>
       {loading ? (
-        <div className="h-7 w-24 bg-white/5 rounded animate-pulse" />
+        <div className="h-7 w-24 bg-muted/50 rounded animate-pulse" />
       ) : (
-        <p className="text-lg sm:text-2xl font-bold text-white whitespace-nowrap tabular-nums truncate">{value}</p>
+        <p className="text-lg sm:text-2xl font-bold text-foreground whitespace-nowrap tabular-nums truncate">{value}</p>
       )}
       <div className="flex items-center justify-between gap-2 mt-1 min-w-0">
         {subtitle && (
@@ -584,8 +584,8 @@ function FilterChip({
       ? 'bg-red-500/20 text-red-300 border-red-500/30'
       : 'text-red-400/60 hover:bg-red-500/10 border-transparent'
     : active
-      ? 'bg-white/15 text-white border-white/20'
-      : 'text-white/50 hover:bg-white/5 border-transparent';
+      ? 'bg-muted text-foreground border-border'
+      : 'text-muted-foreground hover:bg-muted/50 border-transparent';
   return (
     <button
       onClick={onClick}

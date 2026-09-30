@@ -94,18 +94,18 @@ export function JoinSpaceModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl border-2 border-white/10 bg-kreoon-bg-card">
+      <DialogContent className="max-w-md rounded-3xl border-2 border-border bg-kreoon-bg-card">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-3">
             {spaceLogoUrl ? (
               <img
                 src={spaceLogoUrl}
                 alt={spaceName}
-                className="h-20 w-20 rounded-2xl object-cover border-2 border-white/10 shadow-xl"
+                className="h-20 w-20 rounded-2xl object-cover border-2 border-border shadow-xl"
               />
             ) : (
               <div
-                className="h-20 w-20 rounded-2xl flex items-center justify-center text-4xl border-2 border-white/10 shadow-xl"
+                className="h-20 w-20 rounded-2xl flex items-center justify-center text-4xl border-2 border-border shadow-xl"
                 style={{
                   background: `linear-gradient(135deg, ${KREOON_PURPLE}40, ${KREOON_PURPLE}10)`,
                 }}
@@ -115,11 +115,11 @@ export function JoinSpaceModal({
               </div>
             )}
             <div>
-              <DialogTitle className="text-2xl font-extrabold text-white">
+              <DialogTitle className="text-2xl font-extrabold text-foreground">
                 Únete a {spaceName}
               </DialogTitle>
               {spaceDescription && (
-                <DialogDescription className="text-sm text-zinc-400 mt-2 leading-relaxed">
+                <DialogDescription className="text-sm text-muted-foreground mt-2 leading-relaxed">
                   {spaceDescription}
                 </DialogDescription>
               )}
@@ -136,7 +136,7 @@ export function JoinSpaceModal({
               { emoji: '🎥', text: 'Asiste a los lives semanales' },
               { emoji: '🏆', text: 'Sube de nivel y gana insignias' },
             ].map(({ emoji, text }) => (
-              <li key={text} className="flex items-center gap-3 text-zinc-200">
+              <li key={text} className="flex items-center gap-3 text-foreground">
                 <span className="text-xl" aria-hidden="true">
                   {emoji}
                 </span>
@@ -146,14 +146,14 @@ export function JoinSpaceModal({
           </ul>
 
           {user && (
-            <label className="flex items-start gap-2.5 cursor-pointer p-3 rounded-2xl bg-white/[0.03] border border-white/5">
+            <label className="flex items-start gap-2.5 cursor-pointer p-3 rounded-2xl bg-muted/30 border border-border">
               <input
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
                 className="mt-0.5 h-4 w-4 rounded accent-purple-600"
               />
-              <span className="text-xs text-zinc-300 leading-relaxed">
+              <span className="text-xs text-muted-foreground leading-relaxed">
                 Quiero recibir novedades por email de esta academia. Puedo desuscribirme en cualquier momento.
               </span>
             </label>
@@ -183,7 +183,7 @@ export function JoinSpaceModal({
             )}
           </Button>
 
-          <p className="text-[10px] text-zinc-500 text-center">
+          <p className="text-[10px] text-muted-foreground text-center">
             Al unirte aceptas los términos de uso de KREOON
           </p>
         </div>

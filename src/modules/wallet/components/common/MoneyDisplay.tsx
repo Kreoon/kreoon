@@ -31,7 +31,7 @@ export function MoneyDisplay({
   const prevAmount = useRef(amount);
 
   // Determine color based on amount
-  const colorClass = amount > 0 ? 'text-emerald-400' : amount < 0 ? 'text-red-400' : 'text-white';
+  const colorClass = amount > 0 ? 'text-emerald-400' : amount < 0 ? 'text-red-400' : 'text-foreground';
 
   // Animated version using spring
   const springValue = useSpring(amount, {

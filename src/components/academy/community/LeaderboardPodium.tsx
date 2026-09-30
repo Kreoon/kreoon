@@ -84,7 +84,7 @@ export function LeaderboardPodium({ top3, period, accentColor = '#8B5CF6' }: Lea
         )}
       </div>
 
-      <div className="mt-4 text-center text-xs text-zinc-300">
+      <div className="mt-4 text-center text-xs text-muted-foreground">
         Top 3 · {periodLabel}
       </div>
     </div>
@@ -155,7 +155,7 @@ function PodiumColumn({
         >
           {points.toLocaleString()}
         </div>
-        <div className="text-[10px] uppercase tracking-wide text-zinc-300">pts</div>
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">pts</div>
 
         <div
           className="absolute -top-3 left-1/2 -translate-x-1/2 h-7 w-7 rounded-full flex items-center justify-center font-bold text-sm border-2"
@@ -179,14 +179,14 @@ function Avatar({ profile, accentColor, size }: { profile: any; accentColor: str
       <img
         src={profile.avatar_url}
         alt=""
-        className="rounded-full object-cover border-2 border-white/20"
+        className="rounded-full object-cover border-2 border-border"
         style={{ height: size, width: size }}
       />
     );
   }
   return (
     <div
-      className="rounded-full flex items-center justify-center font-semibold text-white border-2 border-white/20"
+      className="rounded-full flex items-center justify-center font-semibold text-white border-2 border-border"
       style={{
         height: size,
         width: size,

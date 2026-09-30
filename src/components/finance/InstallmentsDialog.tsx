@@ -37,7 +37,7 @@ const STATUS_STYLES: Record<string, string> = {
   invoiced:  'bg-purple-500/15 text-purple-300 border-purple-500/30',
   paid:      'bg-green-500/15 text-green-300 border-green-500/30',
   overdue:   'bg-red-500/15 text-red-300 border-red-500/30',
-  cancelled: 'bg-white/10 text-white/40 border-white/15',
+  cancelled: 'bg-muted text-muted-foreground border-border',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -167,14 +167,14 @@ export function InstallmentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-background border-white/10 text-white max-w-xl">
+      <DialogContent className="bg-background border-border text-foreground max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-400" />
             Plan de pagos del paquete
           </DialogTitle>
-          <div className="text-xs text-white/50 mt-1">
-            <p className="text-white font-medium">{packageName}</p>
+          <div className="text-xs text-muted-foreground mt-1">
+            <p className="text-foreground font-medium">{packageName}</p>
             <p>
               Total {formatCurrency(totalValue, currency)} ·
               Cobrado {formatCurrency(paidAmount, currency)} ·
@@ -185,7 +185,7 @@ export function InstallmentsDialog({
 
         {/* Generadores rápidos */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-white/50">Plantilla rápida:</span>
+          <span className="text-xs text-muted-foreground">Plantilla rápida:</span>
           <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => generateInstallments(2)} disabled={generating}>
             2 cuotas mensuales
           </Button>
@@ -204,21 +204,21 @@ export function InstallmentsDialog({
         <div className="space-y-2 max-h-[40vh] overflow-y-auto">
           {isLoading ? (
             <div className="flex justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-white/40" />
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
             </div>
           ) : (
             drafts.map((d, i) => {
               const existingInst = existing[i];
               const isPaid = existingInst?.status === 'paid';
               return (
-                <div key={i} className={`flex items-center gap-2 p-2 rounded border ${isPaid ? 'bg-green-500/5 border-green-500/20' : 'bg-white/5 border-white/10'}`}>
-                  <span className="text-white/40 text-xs w-6 shrink-0">#{i + 1}</span>
+                <div key={i} className={`flex items-center gap-2 p-2 rounded border ${isPaid ? 'bg-green-500/5 border-green-500/20' : 'bg-muted/50 border-border'}`}>
+                  <span className="text-muted-foreground text-xs w-6 shrink-0">#{i + 1}</span>
                   <Input
                     type="date"
                     value={d.due_date}
                     onChange={e => updateDraft(i, 'due_date', e.target.value)}
                     disabled={isPaid}
-                    className="bg-white/5 border-white/10 text-xs h-8 flex-1"
+                    className="bg-muted/50 border-border text-xs h-8 flex-1"
                   />
                   <Input
                     type="number"
@@ -227,7 +227,7 @@ export function InstallmentsDialog({
                     onChange={e => updateDraft(i, 'expected_amount', e.target.value)}
                     disabled={isPaid}
                     placeholder="0"
-                    className="bg-white/5 border-white/10 text-xs h-8 w-32"
+                    className="bg-muted/50 border-border text-xs h-8 w-32"
                   />
                   {existingInst && (
                     <Badge className={`text-[10px] ${STATUS_STYLES[existingInst.status]}`}>

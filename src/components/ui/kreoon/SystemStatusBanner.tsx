@@ -126,7 +126,7 @@ export function SystemStatusBanner({
                   onClick={handleDismiss}
                   aria-label="Cerrar banner"
                   className={cn(
-                    "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors hover:bg-white/10",
+                    "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded transition-colors hover:bg-muted",
                     config.text
                   )}
                 >

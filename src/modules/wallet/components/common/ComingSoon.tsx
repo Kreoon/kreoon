@@ -93,10 +93,10 @@ export function ComingSoonBanner({
             <Construction className="h-4 w-4 text-amber-400" />
           </div>
           <div>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-foreground">
               {config.title}:{' '}
             </span>
-            <span className="text-sm text-[hsl(270,30%,70%)]">
+            <span className="text-sm text-muted-foreground">
               {config.description.slice(0, 80)}...
             </span>
           </div>
@@ -160,7 +160,7 @@ export function ComingSoonBanner({
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-xl font-bold text-white">{config.title}</h3>
+                <h3 className="text-xl font-bold text-foreground">{config.title}</h3>
                 <Badge
                   variant="outline"
                   className="border-amber-500/30 text-amber-400"
@@ -193,7 +193,7 @@ export function ComingSoonBanner({
                   className="flex items-center gap-2"
                 >
                   <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span className="text-sm text-[hsl(270,30%,70%)]">{feature}</span>
+                  <span className="text-sm text-muted-foreground">{feature}</span>
                 </motion.div>
               ))}
             </div>

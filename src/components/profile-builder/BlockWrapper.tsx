@@ -73,10 +73,10 @@ export function BlockWrapper({
       transition={animationVariants.transition}
       className={cn(
         'group relative rounded-lg border transition-colors duration-150',
-        !hasCustomBackground && 'bg-[#14141f]', // Solo usar fondo default si no hay custom
+        !hasCustomBackground && 'bg-card', // Solo usar fondo default si no hay custom
         isSelected
           ? 'border-purple-500 ring-2 ring-purple-500/20'
-          : 'border-zinc-800 hover:border-zinc-600',
+          : 'border-border hover:border-zinc-600',
         !block.isVisible && 'opacity-40',
         isDragging && 'cursor-grabbing shadow-2xl shadow-black/40',
         blockClasses, // Clases adicionales (responsive, etc.)
@@ -123,8 +123,8 @@ export function BlockWrapper({
           <button
             className={cn(
               'flex items-center justify-center h-6 w-6 rounded',
-              'text-zinc-400 hover:text-zinc-200',
-              'hover:bg-white/10',
+              'text-muted-foreground hover:text-foreground',
+              'hover:bg-muted',
               'cursor-grab active:cursor-grabbing',
               'transition-colors duration-150',
               'focus:outline-none focus:ring-1 focus:ring-purple-500',
@@ -136,7 +136,7 @@ export function BlockWrapper({
             <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
 
-          <span className="text-[10px] font-medium text-zinc-400 select-none">
+          <span className="text-[10px] font-medium text-muted-foreground select-none">
             {definition.label}
           </span>
         </div>
@@ -147,7 +147,7 @@ export function BlockWrapper({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={onMoveUp}
               aria-label="Mover bloque arriba"
               tabIndex={-1}
@@ -160,7 +160,7 @@ export function BlockWrapper({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted"
               onClick={onMoveDown}
               aria-label="Mover bloque abajo"
               tabIndex={-1}
@@ -172,7 +172,7 @@ export function BlockWrapper({
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-zinc-400 hover:text-zinc-200 hover:bg-white/10"
+            className="h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-muted"
             onClick={onToggleVisibility}
             aria-label={block.isVisible ? 'Ocultar bloque' : 'Mostrar bloque'}
             tabIndex={-1}
@@ -180,7 +180,7 @@ export function BlockWrapper({
             {block.isVisible ? (
               <Eye className="h-3.5 w-3.5" aria-hidden="true" />
             ) : (
-              <EyeOff className="h-3.5 w-3.5 text-zinc-600" aria-hidden="true" />
+              <EyeOff className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             )}
           </Button>
 
@@ -188,7 +188,7 @@ export function BlockWrapper({
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6 text-zinc-400 hover:text-red-400 hover:bg-red-500/10"
+              className="h-6 w-6 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
               onClick={onDelete}
               aria-label={`Eliminar bloque ${definition.label}`}
               tabIndex={-1}
@@ -217,9 +217,9 @@ export function BlockWrapper({
           className="absolute inset-0 flex items-center justify-center rounded-lg"
           aria-hidden="true"
         >
-          <div className="flex items-center gap-2 rounded-full bg-zinc-800/80 px-3 py-1.5">
-            <EyeOff className="h-3.5 w-3.5 text-zinc-500" />
-            <span className="text-xs text-zinc-500">Oculto</span>
+          <div className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
+            <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Oculto</span>
           </div>
         </div>
       )}

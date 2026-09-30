@@ -123,7 +123,7 @@ export function WithdrawalFormDrawer({
             {/* Available balance */}
             <div className="text-center p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
               <p className="text-sm text-muted-foreground mb-1">Disponible para retiro</p>
-              <p className="text-2xl font-bold text-white">{wallet.formattedAvailable}</p>
+              <p className="text-2xl font-bold text-foreground">{wallet.formattedAvailable}</p>
             </div>
 
             {/* Pending warning */}
@@ -322,12 +322,12 @@ export function WithdrawalFormDrawer({
               <CheckCircle2 className="h-10 w-10 text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 ¡Solicitud Enviada!
               </h3>
               <p className="text-muted-foreground">
                 Tu solicitud de retiro por{' '}
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   {formatCurrency(netAmount, wallet.currency)}
                 </span>{' '}
                 ha sido recibida.
@@ -336,7 +336,7 @@ export function WithdrawalFormDrawer({
 
             <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-left space-y-2">
               <p className="text-sm text-muted-foreground">
-                <span className="text-white">¿Qué sigue?</span>
+                <span className="text-foreground">¿Qué sigue?</span>
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Nuestro equipo revisará tu solicitud</li>

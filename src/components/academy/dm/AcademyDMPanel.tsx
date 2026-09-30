@@ -56,24 +56,24 @@ export function AcademyDMPanel({ spaceId }: Props) {
     <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-4 h-[70vh]">
       {/* Sidebar threads */}
       <Card className={cn(
-        'bg-white/5 border-white/10 overflow-hidden flex flex-col',
+        'bg-muted/50 border-border overflow-hidden flex flex-col',
         activeThreadId && 'hidden md:flex'
       )}>
-        <div className="border-b border-white/10 px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <h3 className="font-semibold text-sm flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-violet-400" />
+            <MessageSquare className="h-4 w-4 text-primary" />
             Mensajes
           </h3>
         </div>
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="p-6 text-center text-zinc-500 text-xs">Cargando...</div>
+            <div className="p-6 text-center text-muted-foreground text-xs">Cargando...</div>
           ) : threads.length === 0 ? (
-            <div className="p-6 text-center text-zinc-500 text-xs">
+            <div className="p-6 text-center text-muted-foreground text-xs">
               No tenés conversaciones aún. Iniciá una desde el perfil de un miembro.
             </div>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y divide-border">
               {threads.map((t) => (
                 <li key={t.thread_id}>
                   <button
@@ -82,23 +82,23 @@ export function AcademyDMPanel({ spaceId }: Props) {
                       setActiveOtherUser({ id: t.other_user_id, name: t.other_user_name });
                     }}
                     className={cn(
-                      'w-full text-left px-3 py-2.5 hover:bg-white/5 transition-colors flex gap-2',
-                      activeThreadId === t.thread_id && 'bg-violet-500/10'
+                      'w-full text-left px-3 py-2.5 hover:bg-muted/50 transition-colors flex gap-2',
+                      activeThreadId === t.thread_id && 'bg-primary/10'
                     )}
                   >
                     <Avatar url={t.other_user_avatar} name={t.other_user_name} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-zinc-100 truncate">
+                        <span className="text-sm font-medium text-foreground truncate">
                           {t.other_user_name}
                         </span>
                         {t.unread_count > 0 && (
-                          <span className="text-[10px] bg-violet-500 text-white px-1.5 py-0.5 rounded-full">
+                          <span className="text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-full">
                             {t.unread_count}
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-zinc-500 truncate">
+                      <div className="text-xs text-muted-foreground truncate">
                         {t.last_message_preview ?? '...'}
                       </div>
                     </div>
@@ -112,23 +112,23 @@ export function AcademyDMPanel({ spaceId }: Props) {
 
       {/* Conversation */}
       <Card className={cn(
-        'bg-white/5 border-white/10 overflow-hidden flex flex-col',
+        'bg-muted/50 border-border overflow-hidden flex flex-col',
         !activeThreadId && 'hidden md:flex'
       )}>
         {!activeThreadId ? (
-          <div className="flex-1 flex items-center justify-center text-zinc-500 text-sm text-center px-6">
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm text-center px-6">
             Elegí una conversación de la izquierda.
           </div>
         ) : (
           <>
-            <div className="border-b border-white/10 px-4 py-3 flex items-center gap-2">
+            <div className="border-b border-border px-4 py-3 flex items-center gap-2">
               <button
-                className="md:hidden text-zinc-400 hover:text-zinc-100"
+                className="md:hidden text-muted-foreground hover:text-foreground"
                 onClick={() => setActiveThreadId(null)}
               >
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              <span className="font-semibold text-sm text-zinc-100">
+              <span className="font-semibold text-sm text-foreground">
                 {activeOtherUser?.name}
               </span>
             </div>
@@ -140,13 +140,13 @@ export function AcademyDMPanel({ spaceId }: Props) {
                     <div className={cn(
                       'max-w-[75%] px-3 py-2 rounded-2xl text-sm',
                       mine
-                        ? 'bg-violet-500 text-white rounded-br-sm'
-                        : 'bg-white/10 text-zinc-100 rounded-bl-sm'
+                        ? 'bg-primary text-white rounded-br-sm'
+                        : 'bg-muted text-foreground rounded-bl-sm'
                     )}>
                       {m.body}
                       <div className={cn(
                         'text-[10px] mt-1 opacity-60',
-                        mine ? 'text-violet-100' : 'text-zinc-400'
+                        mine ? 'text-violet-100' : 'text-muted-foreground'
                       )}>
                         {new Date(m.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
                       </div>
@@ -156,19 +156,19 @@ export function AcademyDMPanel({ spaceId }: Props) {
               })}
               <div ref={endRef} />
             </div>
-            <div className="border-t border-white/10 p-3 flex gap-2">
+            <div className="border-t border-border p-3 flex gap-2">
               <Input
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); } }}
                 placeholder="Escribí un mensaje..."
-                className="bg-black/30 border-white/10"
+                className="bg-muted border-border"
                 maxLength={4000}
               />
               <Button
                 onClick={() => void send()}
                 disabled={!draft.trim() || sendMutation.isPending}
-                className="bg-violet-500 hover:bg-violet-600 text-white"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 {sendMutation.isPending
                   ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,7 +185,7 @@ export function AcademyDMPanel({ spaceId }: Props) {
 function Avatar({ url, name }: { url: string | null; name: string }) {
   if (url) return <img src={url} alt="" className="h-9 w-9 rounded-full object-cover" />;
   return (
-    <div className="h-9 w-9 rounded-full flex items-center justify-center bg-violet-500/20 text-violet-200 text-sm font-semibold">
+    <div className="h-9 w-9 rounded-full flex items-center justify-center bg-primary/20 text-primary text-sm font-semibold">
       {name.charAt(0).toUpperCase()}
     </div>
   );
@@ -243,13 +243,13 @@ export function StartDmButton({
         placeholder={`Mensaje a ${targetName}...`}
         autoFocus
         maxLength={4000}
-        className="bg-black/30 border-white/10"
+        className="bg-muted border-border"
       />
       <Button
         onClick={() => void send()}
         disabled={!body.trim() || sendMutation.isPending}
         size="sm"
-        className="bg-violet-500 hover:bg-violet-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
       </Button>

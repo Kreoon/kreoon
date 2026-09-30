@@ -60,8 +60,8 @@ function PieTooltip({ active, payload }: any) {
     <div className="rounded-sm px-3 py-2 text-xs bg-background/95 border border-purple-500/30">
       <div className="flex items-center gap-2">
         <span className="w-2 h-2 rounded-full" style={{ background: data.payload.fill }} />
-        <span className="text-white/70">{data.name}:</span>
-        <span className="text-white font-semibold">{data.value}</span>
+        <span className="text-muted-foreground">{data.name}:</span>
+        <span className="text-foreground font-semibold">{data.value}</span>
       </div>
     </div>
   );
@@ -96,10 +96,10 @@ function TierCard({ tier, count, total }: TierCardProps) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-white font-medium">{label}</span>
-          <span className="text-sm text-white/70">{count}</span>
+          <span className="text-sm text-foreground font-medium">{label}</span>
+          <span className="text-sm text-muted-foreground">{count}</span>
         </div>
-        <span className="text-xs text-white/40">{percentage}% del total</span>
+        <span className="text-xs text-muted-foreground/70">{percentage}% del total</span>
       </div>
     </div>
   );
@@ -113,14 +113,14 @@ function OrgsSectionSkeleton() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
       <Card className="p-4 md:p-6 animate-pulse">
-        <div className="h-5 w-40 bg-white/10 rounded mb-4" />
-        <div className="h-[200px] bg-white/5 rounded-full mx-auto w-[200px]" />
+        <div className="h-5 w-40 bg-muted rounded mb-4" />
+        <div className="h-[200px] bg-muted/40 rounded-full mx-auto w-[200px]" />
       </Card>
       <Card className="p-4 md:p-6 animate-pulse">
-        <div className="h-5 w-32 bg-white/10 rounded mb-4" />
+        <div className="h-5 w-32 bg-muted rounded mb-4" />
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-14 bg-white/5 rounded-sm" />
+            <div key={i} className="h-14 bg-muted/40 rounded-sm" />
           ))}
         </div>
       </Card>
@@ -164,7 +164,7 @@ export function AdminOrgsSection({ stats, isLoading }: AdminOrgsSectionProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
       {/* Grafico de Distribucion */}
       <Card className="p-4 md:p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Building2 className="h-5 w-5 text-blue-400" />
           Distribucion por Plan
         </h3>
@@ -192,19 +192,19 @@ export function AdminOrgsSection({ stats, isLoading }: AdminOrgsSectionProps) {
             </ResponsiveContainer>
           </LazyChartContainer>
         ) : (
-          <div className="h-[220px] flex items-center justify-center text-white/40">
+          <div className="h-[220px] flex items-center justify-center text-muted-foreground/70">
             No hay organizaciones registradas
           </div>
         )}
         <div className="mt-2 text-center">
-          <span className="text-2xl font-bold text-white">{total}</span>
-          <span className="text-sm text-white/50 ml-2">organizaciones totales</span>
+          <span className="text-2xl font-bold text-foreground">{total}</span>
+          <span className="text-sm text-muted-foreground/70 ml-2">organizaciones totales</span>
         </div>
       </Card>
 
       {/* Lista por Tier */}
       <Card className="p-4 md:p-6">
-        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
           <Crown className="h-5 w-5 text-yellow-400" />
           Planes Activos
         </h3>
@@ -214,14 +214,14 @@ export function AdminOrgsSection({ stats, isLoading }: AdminOrgsSectionProps) {
               <TierCard key={tier} tier={tier} count={count} total={total} />
             ))
           ) : (
-            <div className="text-center text-white/40 py-8">
+            <div className="text-center text-muted-foreground/70 py-8">
               No hay datos de planes
             </div>
           )}
         </div>
-        <div className="mt-4 pt-4 border-t border-white/10">
+        <div className="mt-4 pt-4 border-t border-border">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-white/50">Nuevas este periodo</span>
+            <span className="text-muted-foreground/70">Nuevas este periodo</span>
             <span className="text-green-400 font-semibold">+{stats.organizations.new_period}</span>
           </div>
         </div>

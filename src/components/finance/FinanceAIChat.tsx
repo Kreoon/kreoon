@@ -108,19 +108,19 @@ export function FinanceAIChat({ orgId }: Props) {
 
   return (
     <div className="fixed bottom-6 right-6 z-40 w-[90vw] max-w-md h-[600px] max-h-[80vh]">
-      <Card className="bg-background border-white/10 h-full flex flex-col overflow-hidden">
+      <Card className="bg-background border-border h-full flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-blue-600/20">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-purple-600/20 to-blue-600/20">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-purple-300" />
-            <h3 className="text-sm font-semibold text-white">Jarvis Finanzas</h3>
+            <h3 className="text-sm font-semibold text-foreground">Jarvis Finanzas</h3>
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-200 border border-purple-500/30">
               IA
             </span>
           </div>
           <button
             onClick={() => setOpen(false)}
-            className="text-white/40 hover:text-white"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="w-4 h-4" />
           </button>
@@ -134,23 +134,23 @@ export function FinanceAIChat({ orgId }: Props) {
                 <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
                   <Sparkles className="w-3.5 h-3.5 text-purple-300" />
                 </div>
-                <div className="flex-1 bg-white/5 rounded-lg p-3 text-sm text-white/80">
+                <div className="flex-1 bg-muted/50 rounded-lg p-3 text-sm text-foreground">
                   ¡Hola! Soy tu analista financiero con IA. Puedo responder preguntas sobre tus
                   ingresos, costos, clientes y darte recomendaciones para mejorar la utilidad.
                   <br /><br />
-                  <span className="text-white/50 text-xs">
+                  <span className="text-muted-foreground text-xs">
                     Período actual: {startDate} a {endDate} · {currency}
                   </span>
                 </div>
               </div>
 
               <div className="space-y-1.5 mt-3">
-                <p className="text-xs text-white/40 uppercase tracking-wide">Preguntas sugeridas:</p>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide">Preguntas sugeridas:</p>
                 {SUGGESTED_QUESTIONS.map(q => (
                   <button
                     key={q}
                     onClick={() => ask(q)}
-                    className="w-full text-left text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-md px-3 py-2 text-white/80 hover:text-white transition-colors flex items-center gap-2"
+                    className="w-full text-left text-xs bg-muted/50 hover:bg-muted border border-border rounded-md px-3 py-2 text-foreground hover:text-foreground transition-colors flex items-center gap-2"
                   >
                     <MessageCircle className="w-3 h-3 text-purple-400 shrink-0" />
                     {q}
@@ -168,17 +168,17 @@ export function FinanceAIChat({ orgId }: Props) {
                 )}
                 <div className={`max-w-[85%] rounded-lg p-3 text-sm ${
                   msg.role === 'user'
-                    ? 'bg-blue-500/20 text-white border border-blue-500/30'
-                    : 'bg-white/5 text-white/90 border border-white/10'
+                    ? 'bg-blue-500/20 text-foreground border border-blue-500/30'
+                    : 'bg-muted/50 text-foreground border border-border'
                 }`}>
                   <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
 
                   {/* KPIs relacionados */}
                   {msg.related_kpis && Object.keys(msg.related_kpis).length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-white/10 grid grid-cols-2 gap-1.5">
+                    <div className="mt-2 pt-2 border-t border-border grid grid-cols-2 gap-1.5">
                       {Object.entries(msg.related_kpis).map(([k, v]) => (
                         <div key={k} className="text-xs">
-                          <p className="text-white/40">{k}</p>
+                          <p className="text-muted-foreground">{k}</p>
                           <p className="font-medium">
                             {typeof v === 'number' ? formatCurrency(v, currency) : v}
                           </p>
@@ -189,16 +189,16 @@ export function FinanceAIChat({ orgId }: Props) {
 
                   {/* Recomendaciones */}
                   {msg.recommendations && msg.recommendations.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-white/10 space-y-1.5">
-                      <p className="text-[10px] text-white/40 uppercase tracking-wide">Recomendaciones:</p>
+                    <div className="mt-3 pt-3 border-t border-border space-y-1.5">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Recomendaciones:</p>
                       {msg.recommendations.map((rec, ri) => (
                         <div key={ri} className="text-xs flex items-start gap-1.5">
                           <span className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium border ${PRIORITY_STYLES[rec.priority]}`}>
                             {PRIORITY_EMOJI[rec.priority]}
                           </span>
                           <div className="flex-1">
-                            <p className="text-white/85 font-medium">{rec.action}</p>
-                            <p className="text-white/40 text-[10px] mt-0.5">{rec.reason}</p>
+                            <p className="text-foreground font-medium">{rec.action}</p>
+                            <p className="text-muted-foreground text-[10px] mt-0.5">{rec.reason}</p>
                           </div>
                         </div>
                       ))}
@@ -214,7 +214,7 @@ export function FinanceAIChat({ orgId }: Props) {
               <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0">
                 <Loader2 className="w-3.5 h-3.5 text-purple-300 animate-spin" />
               </div>
-              <div className="bg-white/5 rounded-lg p-3 text-sm text-white/50 italic">
+              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground italic">
                 Analizando tu pregunta...
               </div>
             </div>
@@ -222,7 +222,7 @@ export function FinanceAIChat({ orgId }: Props) {
         </div>
 
         {/* Input */}
-        <div className="p-3 border-t border-white/10 flex items-center gap-2">
+        <div className="p-3 border-t border-border flex items-center gap-2">
           <Input
             placeholder="Pregunta sobre tus finanzas..."
             value={input}
@@ -234,7 +234,7 @@ export function FinanceAIChat({ orgId }: Props) {
               }
             }}
             disabled={loading}
-            className="bg-white/5 border-white/10 text-white text-sm flex-1"
+            className="bg-muted/50 border-border text-foreground text-sm flex-1"
           />
           <Button
             size="icon"

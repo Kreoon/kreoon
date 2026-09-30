@@ -145,7 +145,7 @@ export function BanUserButton({
         size="sm"
         disabled
         className={cn(
-          "w-full justify-start gap-2 h-8 text-xs text-white/40",
+          "w-full justify-start gap-2 h-8 text-xs text-muted-foreground/70",
           className,
         )}
       >

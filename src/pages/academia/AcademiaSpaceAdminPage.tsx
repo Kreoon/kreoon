@@ -124,7 +124,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
         Academia no encontrada
       </div>
     );
@@ -132,7 +132,7 @@ export default function AcademiaSpaceAdminPage() {
 
   if (!user || space.owner_id !== user.id) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Solo el owner puede acceder al admin del space.</p>
       </div>
@@ -143,19 +143,19 @@ export default function AcademiaSpaceAdminPage() {
   const isPro = space.plan_slug === 'pro';
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">{space.name}</h1>
-            <p className="text-xs text-zinc-500 mt-0.5">Panel de administración</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Panel de administración</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
           {/* Sidebar */}
-          <aside className="lg:border-r lg:border-white/5 lg:pr-4">
+          <aside className="lg:border-r lg:border-border lg:pr-4">
             <div className="flex flex-row lg:flex-col gap-1 overflow-x-auto scrollbar-hide">
               {TABS.map((t) => (
                 <button
@@ -163,7 +163,7 @@ export default function AcademiaSpaceAdminPage() {
                   onClick={() => setTab(t.id)}
                   className={cn(
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors',
-                    tab === t.id ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'
+                    tab === t.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
                   )}
                   style={tab === t.id ? { color: accent } : undefined}
                 >
@@ -225,10 +225,10 @@ export default function AcademiaSpaceAdminPage() {
 
 function ComunidadTab() {
   return (
-    <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
-      <MessagesSquare className="h-10 w-10 mx-auto mb-3 text-purple-400" />
+    <Card className="p-8 text-center bg-muted/50 border-border text-muted-foreground">
+      <MessagesSquare className="h-10 w-10 mx-auto mb-3 text-primary" />
       <p>Configura categorías, reglas y pestañas visibles de tu comunidad.</p>
-      <p className="text-xs text-zinc-500 mt-2">
+      <p className="text-xs text-muted-foreground mt-2">
         Por ahora puedes crear posts desde el feed. La configuración avanzada llegará pronto.
       </p>
     </Card>
@@ -241,30 +241,30 @@ function MiembrosTab({ spaceId }: { spaceId: string }) {
 
 function PayoutsTab() {
   return (
-    <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
-      <Wallet className="h-10 w-10 mx-auto mb-3 text-purple-400" />
+    <Card className="p-8 text-center bg-muted/50 border-border text-muted-foreground">
+      <Wallet className="h-10 w-10 mx-auto mb-3 text-primary" />
       <p>Resumen de earnings + próximo pago + historial.</p>
-      <p className="text-xs text-zinc-500 mt-2">Integración con módulo de wallet en próxima iteración.</p>
+      <p className="text-xs text-muted-foreground mt-2">Integración con módulo de wallet en próxima iteración.</p>
     </Card>
   );
 }
 
 function AfiliadosTab() {
   return (
-    <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
-      <Handshake className="h-10 w-10 mx-auto mb-3 text-purple-400" />
+    <Card className="p-8 text-center bg-muted/50 border-border text-muted-foreground">
+      <Handshake className="h-10 w-10 mx-auto mb-3 text-primary" />
       <p>Configuración de comisión + lista de afiliados + earnings generados.</p>
-      <p className="text-xs text-zinc-500 mt-2">Próximamente.</p>
+      <p className="text-xs text-muted-foreground mt-2">Próximamente.</p>
     </Card>
   );
 }
 
 function FacturacionTab({ isPro }: { isPro: boolean }) {
   return (
-    <Card className="p-8 text-center bg-white/5 border-white/10 text-zinc-400">
-      <CreditCard className="h-10 w-10 mx-auto mb-3 text-purple-400" />
-      <p>Plan actual: <strong className="text-zinc-200">{isPro ? 'Academia Pro' : 'Academia Hobby'}</strong></p>
-      <p className="text-xs text-zinc-500 mt-2">
+    <Card className="p-8 text-center bg-muted/50 border-border text-muted-foreground">
+      <CreditCard className="h-10 w-10 mx-auto mb-3 text-primary" />
+      <p>Plan actual: <strong className="text-foreground">{isPro ? 'Academia Pro' : 'Academia Hobby'}</strong></p>
+      <p className="text-xs text-muted-foreground mt-2">
         {isPro
           ? 'Disfrutas de todas las features y comisión reducida del 2.9%'
           : 'Upgradeate a Pro para acceder a webhooks, integraciones y comisión 2.9%'}

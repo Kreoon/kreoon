@@ -31,7 +31,7 @@ export function KPIDetailTable<T>({
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+      <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
         {emptyMessage}
       </div>
     );
@@ -42,12 +42,12 @@ export function KPIDetailTable<T>({
       <div className="flex-1 overflow-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-white/10">
+            <tr className="border-b border-border">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    "text-left py-2 px-3 text-xs font-medium text-white/40 uppercase tracking-wide sticky top-0 bg-[#1a1a2e]",
+                    "text-left py-2 px-3 text-xs font-medium text-muted-foreground/70 uppercase tracking-wide sticky top-0 bg-[#1a1a2e]",
                     col.className
                   )}
                 >
@@ -60,10 +60,10 @@ export function KPIDetailTable<T>({
             {pageData.map((item, idx) => (
               <tr
                 key={getRowKey(item, page * pageSize + idx)}
-                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                className="border-b border-border hover:bg-white/[0.03] transition-colors"
               >
                 {columns.map((col) => (
-                  <td key={col.key} className={cn("py-2.5 px-3 text-white/80", col.className)}>
+                  <td key={col.key} className={cn("py-2.5 px-3 text-muted-foreground", col.className)}>
                     {col.render(item)}
                   </td>
                 ))}
@@ -72,8 +72,8 @@ export function KPIDetailTable<T>({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-auto">
-        <span className="text-xs text-white/40">
+      <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
+        <span className="text-xs text-muted-foreground/70">
           {data.length} {data.length === 1 ? "item" : "items"}
         </span>
         <div className="flex items-center gap-2">
@@ -82,11 +82,11 @@ export function KPIDetailTable<T>({
             size="sm"
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            className="h-7 w-7 p-0 text-white/50 hover:text-white"
+            className="h-7 w-7 p-0 text-muted-foreground/70 hover:text-foreground"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs text-white/50">
+          <span className="text-xs text-muted-foreground/70">
             {page + 1} de {totalPages}
           </span>
           <Button
@@ -94,7 +94,7 @@ export function KPIDetailTable<T>({
             size="sm"
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            className="h-7 w-7 p-0 text-white/50 hover:text-white"
+            className="h-7 w-7 p-0 text-muted-foreground/70 hover:text-foreground"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

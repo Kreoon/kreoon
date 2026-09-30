@@ -450,9 +450,9 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
           <TabsContent value="perfil" className="flex-1 overflow-y-auto px-6 py-4 mt-0">
             {isLoadingProfile && (
               <div className="space-y-3 mb-4">
-                <Skeleton className="h-16 bg-white/5" />
-                <Skeleton className="h-12 bg-white/5" />
-                <Skeleton className="h-20 bg-white/5" />
+                <Skeleton className="h-16 bg-muted/50" />
+                <Skeleton className="h-12 bg-muted/50" />
+                <Skeleton className="h-20 bg-muted/50" />
               </div>
             )}
 
@@ -537,23 +537,23 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 {fullUser?.created_at && (
                   <DetailSection title="Cuenta">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                      <span className="text-white/40">Miembro desde</span>
-                      <span className="text-white/70">{format(new Date(fullUser.created_at), 'd MMM yyyy', { locale: es })}</span>
+                      <span className="text-muted-foreground">Miembro desde</span>
+                      <span className="text-muted-foreground">{format(new Date(fullUser.created_at), 'd MMM yyyy', { locale: es })}</span>
                       {fullUser.last_login_at && (
                         <>
-                          <span className="text-white/40">Último acceso</span>
-                          <span className="text-white/70">{formatDistanceToNow(new Date(fullUser.last_login_at), { addSuffix: true, locale: es })}</span>
+                          <span className="text-muted-foreground">Último acceso</span>
+                          <span className="text-muted-foreground">{formatDistanceToNow(new Date(fullUser.last_login_at), { addSuffix: true, locale: es })}</span>
                         </>
                       )}
                       {fullUser.ambassador_level && (
                         <>
-                          <span className="text-white/40">Embajador</span>
+                          <span className="text-muted-foreground">Embajador</span>
                           <span className="text-amber-400 capitalize font-medium">{fullUser.ambassador_level}</span>
                         </>
                       )}
                       {fullUser.health_score > 0 && (
                         <>
-                          <span className="text-white/40">Health score</span>
+                          <span className="text-muted-foreground">Health score</span>
                           <span className={cn('font-semibold', fullUser.health_score >= 70 ? 'text-success' : fullUser.health_score >= 40 ? 'text-warning' : 'text-destructive')}>
                             {fullUser.health_score}/100
                           </span>
@@ -586,34 +586,34 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
             {hasInternal && (
               <DetailSection title="KPIs internos">
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <span className="text-white/40">Contenido creado</span>
-                  <span className="text-white/70 font-medium flex items-center gap-1">
+                  <span className="text-muted-foreground">Contenido creado</span>
+                  <span className="text-muted-foreground font-medium flex items-center gap-1">
                     <Video className="h-3 w-3 text-blue-400" />{member.content_count}
                   </span>
-                  <span className="text-white/40">Tareas activas</span>
-                  <span className="text-white/70 font-medium flex items-center gap-1">
+                  <span className="text-muted-foreground">Tareas activas</span>
+                  <span className="text-muted-foreground font-medium flex items-center gap-1">
                     <TrendingUp className="h-3 w-3 text-info" />{member.active_tasks}
                   </span>
                   {member.up_points > 0 && (
                     <>
-                      <span className="text-white/40">UP Points</span>
-                      <span className="text-white/70 font-medium flex items-center gap-1">
+                      <span className="text-muted-foreground">UP Points</span>
+                      <span className="text-muted-foreground font-medium flex items-center gap-1">
                         <Zap className="h-3 w-3 text-primary" />{member.up_points} {member.up_level && `(${member.up_level})`}
                       </span>
                     </>
                   )}
                   {member.avg_star_rating != null && member.avg_star_rating > 0 && (
                     <>
-                      <span className="text-white/40">Rating promedio</span>
-                      <span className="text-white/70 font-medium flex items-center gap-1">
+                      <span className="text-muted-foreground">Rating promedio</span>
+                      <span className="text-muted-foreground font-medium flex items-center gap-1">
                         <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />{member.avg_star_rating.toFixed(1)} ({member.rated_content_count} calificados)
                       </span>
                     </>
                   )}
                   {member.ai_recommended_level && (
                     <>
-                      <span className="text-white/40">Nivel IA</span>
-                      <span className="text-white/70 font-medium flex items-center gap-1">
+                      <span className="text-muted-foreground">Nivel IA</span>
+                      <span className="text-muted-foreground font-medium flex items-center gap-1">
                         <Brain className="h-3 w-3 text-amber-400" />{member.ai_recommended_level}
                       </span>
                     </>
@@ -639,7 +639,7 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                       </span>
                     ))}
                   </div>
-                ) : <p className="text-xs text-white/30 mb-2">Sin roles asignados</p>}
+                ) : <p className="text-xs text-muted-foreground/60 mb-2">Sin roles asignados</p>}
 
                 {rolePickerOpen ? (
                   <div className="space-y-2">
@@ -648,11 +648,11 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                       <Button size="sm" onClick={handleAddRole} disabled={loadingRoles} className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white">
                         {loadingRoles ? 'Guardando...' : 'Agregar rol'}
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => setRolePickerOpen(false)} className="h-7 text-xs text-white/50">Cancelar</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setRolePickerOpen(false)} className="h-7 text-xs text-muted-foreground">Cancelar</Button>
                     </div>
                   </div>
                 ) : (
-                  <Button size="sm" variant="ghost" onClick={() => setRolePickerOpen(true)} className="h-7 text-xs bg-white/5 hover:bg-white/10 text-white/60">
+                  <Button size="sm" variant="ghost" onClick={() => setRolePickerOpen(true)} className="h-7 text-xs bg-muted/50 hover:bg-muted text-muted-foreground">
                     <Shield className="h-3 w-3 mr-1.5" />Agregar rol
                   </Button>
                 )}
@@ -712,9 +712,9 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
             {hasInternal && (
               <DetailSection title={`Contenido (${assignedContent.length})`}>
                 {loadingContent ? (
-                  <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-8 bg-white/5 rounded" />)}</div>
+                  <div className="space-y-2">{[1, 2, 3].map(i => <Skeleton key={i} className="h-8 bg-muted/50 rounded" />)}</div>
                 ) : assignedContent.length === 0 ? (
-                  <p className="text-xs text-white/30">Sin contenido asignado</p>
+                  <p className="text-xs text-muted-foreground/60">Sin contenido asignado</p>
                 ) : (
                   <>
                     <div className="flex gap-1 mb-2">
@@ -725,17 +725,17 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                       ] as const).map(tab => (
                         <button key={tab.key} onClick={() => setContentFilter(tab.key)}
                           className={cn('px-2 py-0.5 rounded text-[10px] font-medium transition-all',
-                            contentFilter === tab.key ? 'bg-primary text-white' : 'bg-white/5 text-white/40 hover:bg-white/10')}>
+                            contentFilter === tab.key ? 'bg-primary text-white' : 'bg-muted/50 text-muted-foreground hover:bg-muted')}>
                           {tab.label}
                         </button>
                       ))}
                     </div>
                     <div className="space-y-1.5 max-h-[240px] overflow-y-auto pr-1">
                       {(contentFilter === 'active' ? activeContent : contentFilter === 'completed' ? completedContent : assignedContent).slice(0, 20).map(c => (
-                        <div key={c.id} className="flex items-start justify-between text-xs p-1.5 rounded bg-white/5 gap-2 group">
+                        <div key={c.id} className="flex items-start justify-between text-xs p-1.5 rounded bg-muted/50 gap-2 group">
                           <div className="min-w-0 flex-1">
-                            <p className="text-white/70 truncate">{c.title || 'Sin título'}</p>
-                            <p className="text-[10px] text-white/30">{(c as any).client?.name}</p>
+                            <p className="text-muted-foreground truncate">{c.title || 'Sin título'}</p>
+                            <p className="text-[10px] text-muted-foreground/60">{(c as any).client?.name}</p>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
                             <Badge variant="outline" className={cn('text-[9px] h-4',
@@ -744,7 +744,7 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                             </Badge>
                             {isAdmin && (
                               <button onClick={() => handleUnassign(c)} disabled={unassigningId === c.id}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 flex items-center justify-center rounded hover:bg-red-500/20 text-white/30 hover:text-red-400">
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-4 w-4 flex items-center justify-center rounded hover:bg-red-500/20 text-muted-foreground/60 hover:text-red-400">
                                 {unassigningId === c.id
                                   ? <span className="h-2.5 w-2.5 border border-current border-t-transparent rounded-full animate-spin block" />
                                   : <UserX className="h-2.5 w-2.5" />}
@@ -774,32 +774,32 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 <div className="flex items-center gap-2 mb-3">
                   <Button type="button" variant="ghost" size="sm" onClick={handleToggleFavorite} disabled={toggleFavorite.isPending}
                     className={cn('h-8 px-3 text-xs border transition-all',
-                      isFavorite ? 'bg-pink-500/20 border-pink-500/30 text-pink-400' : 'bg-white/5 border-white/10 text-white/50 hover:text-pink-400')}>
+                      isFavorite ? 'bg-pink-500/20 border-pink-500/30 text-pink-400' : 'bg-muted/50 border-border text-muted-foreground hover:text-pink-400')}>
                     <Heart className={cn('h-3.5 w-3.5 mr-1.5', isFavorite && 'fill-current')} />
                     {isFavorite ? 'Favorito' : 'Agregar favorito'}
                   </Button>
                   <Button type="button" variant="ghost" size="sm" onClick={handleBlock} disabled={blockCreator.isPending || isBlocked}
                     className={cn('h-8 px-3 text-xs border transition-all',
-                      isBlocked ? 'bg-red-500/20 border-red-500/30 text-red-400' : 'bg-white/5 border-white/10 text-white/50 hover:text-red-400')}>
+                      isBlocked ? 'bg-red-500/20 border-red-500/30 text-red-400' : 'bg-muted/50 border-border text-muted-foreground hover:text-red-400')}>
                     <Ban className="h-3.5 w-3.5 mr-1.5" />
                     {isBlocked ? 'Bloqueado' : 'Bloquear'}
                   </Button>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-                  <span className="text-white/40">Colaboraciones</span>
-                  <span className="text-white/70 font-medium flex items-center gap-1"><Briefcase className="h-3 w-3 text-blue-400" />{member.times_worked_together}</span>
-                  <span className="text-white/40">Total pagado</span>
-                  <span className="text-white/70 font-medium flex items-center gap-1"><DollarSign className="h-3 w-3 text-green-400" />{formatCurrency(totalPaid)}</span>
+                  <span className="text-muted-foreground">Colaboraciones</span>
+                  <span className="text-muted-foreground font-medium flex items-center gap-1"><Briefcase className="h-3 w-3 text-blue-400" />{member.times_worked_together}</span>
+                  <span className="text-muted-foreground">Total pagado</span>
+                  <span className="text-muted-foreground font-medium flex items-center gap-1"><DollarSign className="h-3 w-3 text-green-400" />{formatCurrency(totalPaid)}</span>
                   {member.average_rating_given != null && (
                     <>
-                      <span className="text-white/40">Rating dado</span>
-                      <span className="text-white/70 font-medium flex items-center gap-1"><Star className="h-3 w-3 text-amber-400" />{member.average_rating_given.toFixed(1)}</span>
+                      <span className="text-muted-foreground">Rating dado</span>
+                      <span className="text-muted-foreground font-medium flex items-center gap-1"><Star className="h-3 w-3 text-amber-400" />{member.average_rating_given.toFixed(1)}</span>
                     </>
                   )}
                   {member.last_collaboration_at && (
                     <>
-                      <span className="text-white/40">Última colab.</span>
-                      <span className="text-white/70 flex items-center gap-1"><Calendar className="h-3 w-3 text-white/30" />{formatDistanceToNow(new Date(member.last_collaboration_at), { addSuffix: true, locale: es })}</span>
+                      <span className="text-muted-foreground">Última colab.</span>
+                      <span className="text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3 text-muted-foreground/60" />{formatDistanceToNow(new Date(member.last_collaboration_at), { addSuffix: true, locale: es })}</span>
                     </>
                   )}
                 </div>
@@ -809,8 +809,8 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 <div className="flex items-center gap-2">
                   <Input value={tagInput} onChange={e => setTagInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
-                    placeholder="Agregar etiqueta..." className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8 flex-1" />
-                  <Button type="button" variant="ghost" size="icon" onClick={addTag} className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white/50">
+                    placeholder="Agregar etiqueta..." className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 text-xs h-8 flex-1" />
+                  <Button type="button" variant="ghost" size="icon" onClick={addTag} className="h-8 w-8 bg-muted/50 hover:bg-muted text-muted-foreground">
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -829,8 +829,8 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
               <DetailSection title="Notas internas">
                 <Textarea value={notes} onChange={e => { setNotes(e.target.value); saveNotes(e.target.value); }}
                   placeholder="Notas sobre este talento..." rows={3}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none text-xs" />
-                {updateRelationship.isPending && <p className="text-[10px] text-white/30">Guardando...</p>}
+                  className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 resize-none text-xs" />
+                {updateRelationship.isPending && <p className="text-[10px] text-muted-foreground/60">Guardando...</p>}
               </DetailSection>
 
               <CustomFieldsSection
@@ -838,8 +838,8 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 fieldDefs={fieldDefs.filter(d => d.is_active)}
                 onChange={handleCustomFieldChange}
                 configAction={
-                  <button onClick={() => setShowFieldsConfig(true)} className="p-1 rounded hover:bg-white/10 transition-colors">
-                    <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                  <button onClick={() => setShowFieldsConfig(true)} className="p-1 rounded hover:bg-muted transition-colors">
+                    <Settings className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground" />
                   </button>
                 }
               />
@@ -860,9 +860,9 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
             <DetailSection title="Origen y comunidad">
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-white/60">Fuente de captación</Label>
+                  <Label className="text-xs text-muted-foreground">Fuente de captación</Label>
                   <Select value={leadSource || 'none'} onValueChange={v => setLeadSource(v === 'none' ? '' : v)}>
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white text-xs h-9">
+                    <SelectTrigger className="bg-muted/50 border-border text-foreground text-xs h-9">
                       <SelectValue placeholder="¿Cómo llegó a la plataforma?" />
                     </SelectTrigger>
                     <SelectContent>
@@ -875,22 +875,22 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-white/60">Comunidad de origen</Label>
+                  <Label className="text-xs text-muted-foreground">Comunidad de origen</Label>
                   <Input
                     value={communityName}
                     onChange={e => setCommunityName(e.target.value)}
                     placeholder="Ej: Los Reyes del Contenido"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-9"
+                    className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 text-xs h-9"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-white/60">Referido por</Label>
+                  <Label className="text-xs text-muted-foreground">Referido por</Label>
                   <Input
                     value={referredBy}
                     onChange={e => setReferredBy(e.target.value)}
                     placeholder="Nombre del referidor"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-9"
+                    className="bg-muted/50 border-border text-foreground placeholder:text-muted-foreground/60 text-xs h-9"
                   />
                 </div>
 
@@ -904,7 +904,7 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
             {/* Info de perfil: ciudad/país (solo lectura, se edita desde tab Perfil) */}
             {(full?.city || full?.country || full?.location_city || full?.location_country) && (
               <DetailSection title="Ubicación">
-                <div className="flex items-center gap-2 text-xs text-white/60">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>{[full?.city || full?.location_city, full?.country || full?.location_country].filter(Boolean).join(', ')}</span>
                 </div>
@@ -917,20 +917,20 @@ export function TalentProfileModal({ member, organizationId, open, onClose, onUp
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                   {member.lead_source && (
                     <>
-                      <span className="text-white/40">Fuente</span>
-                      <span className="text-white/70">{LEAD_SOURCE_LABELS[member.lead_source] || member.lead_source}</span>
+                      <span className="text-muted-foreground">Fuente</span>
+                      <span className="text-muted-foreground">{LEAD_SOURCE_LABELS[member.lead_source] || member.lead_source}</span>
                     </>
                   )}
                   {member.community_name && (
                     <>
-                      <span className="text-white/40">Comunidad</span>
-                      <span className="text-white/70">{member.community_name}</span>
+                      <span className="text-muted-foreground">Comunidad</span>
+                      <span className="text-muted-foreground">{member.community_name}</span>
                     </>
                   )}
                   {member.referred_by && (
                     <>
-                      <span className="text-white/40">Referido por</span>
-                      <span className="text-white/70">{member.referred_by}</span>
+                      <span className="text-muted-foreground">Referido por</span>
+                      <span className="text-muted-foreground">{member.referred_by}</span>
                     </>
                   )}
                 </div>

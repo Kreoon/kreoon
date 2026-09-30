@@ -87,7 +87,7 @@ export function EscrowStatusCard({
         <div>
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="text-muted-foreground">Progreso</span>
-            <span className="text-white">{escrow.progress}%</span>
+            <span className="text-foreground">{escrow.progress}%</span>
           </div>
           <Progress value={escrow.progress} className="h-2" />
         </div>
@@ -96,7 +96,7 @@ export function EscrowStatusCard({
         <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Total en Escrow</span>
-            <span className="text-lg font-bold text-white">{escrow.formattedTotal}</span>
+            <span className="text-lg font-bold text-foreground">{escrow.formattedTotal}</span>
           </div>
           <Separator className="bg-[hsl(270,100%,60%,0.1)]" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
@@ -117,7 +117,7 @@ export function EscrowStatusCard({
 
         {/* Timeline */}
         <div>
-          <h4 className="text-sm font-medium text-white mb-4">Timeline</h4>
+          <h4 className="text-sm font-medium text-foreground mb-4">Timeline</h4>
           <EscrowTimeline steps={escrow.timelineSteps} />
         </div>
 
@@ -162,7 +162,7 @@ export function EscrowStatusCard({
         {escrow.notes && (
           <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
             <p className="text-xs text-muted-foreground mb-1">Notas:</p>
-            <p className="text-sm text-[hsl(270,30%,70%)]">{escrow.notes}</p>
+            <p className="text-sm text-muted-foreground">{escrow.notes}</p>
           </div>
         )}
       </CardContent>
@@ -198,7 +198,7 @@ export function EscrowListItem({ escrow, onClick, className }: EscrowListItemPro
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="font-medium text-white truncate">
+            <p className="font-medium text-foreground truncate">
               {escrow.formattedTotal}
             </p>
             <Badge variant="outline" className={cn('text-[10px]', escrow.statusColor)}>

@@ -321,19 +321,19 @@ export function ContentAnalyticsDashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="h-6 w-6 text-purple-400" />
             Analytics de Contenido
           </h2>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Metricas de rendimiento y engagement de tu contenido
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
-            <SelectTrigger className="w-44 bg-gray-800/50 border-gray-700">
-              <Calendar className="h-4 w-4 mr-2 text-gray-400" />
+            <SelectTrigger className="w-44 bg-muted/50 border-border">
+              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -349,7 +349,7 @@ export function ContentAnalyticsDashboard() {
             variant="outline"
             size="icon"
             onClick={() => refetch()}
-            className="bg-gray-800/50 border-gray-700"
+            className="bg-muted/50 border-border"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>
@@ -388,7 +388,7 @@ export function ContentAnalyticsDashboard() {
 
       {/* Tabs */}
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-        <TabsList className="bg-gray-800/50 border border-gray-700">
+        <TabsList className="bg-muted/50 border border-border">
           <TabsTrigger value="overview">Vista General</TabsTrigger>
           <TabsTrigger value="trends">Tendencias</TabsTrigger>
           <TabsTrigger value="top">Top Content</TabsTrigger>
@@ -399,9 +399,9 @@ export function ContentAnalyticsDashboard() {
         <TabsContent value="overview" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Views Trend Chart */}
-            <Card className="bg-card/50 border-gray-800">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-white text-lg">Views por Dia</CardTitle>
+                <CardTitle className="text-foreground text-lg">Views por Dia</CardTitle>
                 <CardDescription>Tendencia de visualizaciones</CardDescription>
               </CardHeader>
               <CardContent>
@@ -450,9 +450,9 @@ export function ContentAnalyticsDashboard() {
             </Card>
 
             {/* Content Type Distribution */}
-            <Card className="bg-card/50 border-gray-800">
+            <Card className="bg-card/50 border-border">
               <CardHeader>
-                <CardTitle className="text-white text-lg">Distribucion por Tipo</CardTitle>
+                <CardTitle className="text-foreground text-lg">Distribucion por Tipo</CardTitle>
                 <CardDescription>Contenido por categoria</CardDescription>
               </CardHeader>
               <CardContent>
@@ -496,9 +496,9 @@ export function ContentAnalyticsDashboard() {
 
         {/* Trends Tab */}
         <TabsContent value="trends" className="mt-6">
-          <Card className="bg-card/50 border-gray-800">
+          <Card className="bg-card/50 border-border">
             <CardHeader>
-              <CardTitle className="text-white text-lg">Tendencias de Engagement</CardTitle>
+              <CardTitle className="text-foreground text-lg">Tendencias de Engagement</CardTitle>
               <CardDescription>Views vs Likes a lo largo del tiempo</CardDescription>
             </CardHeader>
             <CardContent>
@@ -563,9 +563,9 @@ export function ContentAnalyticsDashboard() {
 
         {/* Top Content Tab */}
         <TabsContent value="top" className="mt-6">
-          <Card className="bg-card/50 border-gray-800">
+          <Card className="bg-card/50 border-border">
             <CardHeader>
-              <CardTitle className="text-white text-lg">Top Performing Content</CardTitle>
+              <CardTitle className="text-foreground text-lg">Top Performing Content</CardTitle>
               <CardDescription>Contenido con mejor rendimiento</CardDescription>
             </CardHeader>
             <CardContent>
@@ -574,7 +574,7 @@ export function ContentAnalyticsDashboard() {
                   {metrics.topPerformers.map((content, index) => (
                     <div
                       key={content.id}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-gray-800/30 border border-gray-700/50 hover:border-gray-600 transition-colors"
+                      className="flex items-center gap-4 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-border transition-colors"
                     >
                       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 font-bold text-sm">
                         {index + 1}
@@ -587,14 +587,14 @@ export function ContentAnalyticsDashboard() {
                           className="w-16 h-16 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-16 h-16 rounded-lg bg-gray-700 flex items-center justify-center">
-                          <Video className="h-6 w-6 text-gray-500" />
+                        <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                          <Video className="h-6 w-6 text-muted-foreground" />
                         </div>
                       )}
 
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-medium truncate">{content.title}</h4>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
+                        <h4 className="text-foreground font-medium truncate">{content.title}</h4>
+                        <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1">
                             <Eye className="h-3.5 w-3.5" />
                             {content.views.toLocaleString()}
@@ -613,7 +613,7 @@ export function ContentAnalyticsDashboard() {
                             ? 'border-green-500/50 text-green-400'
                             : content.engagement_rate > 2
                               ? 'border-amber-500/50 text-amber-400'
-                              : 'border-gray-500/50 text-gray-400'
+                              : 'border-border text-muted-foreground'
                         }`}
                       >
                         {content.engagement_rate.toFixed(1)}% engagement
@@ -630,9 +630,9 @@ export function ContentAnalyticsDashboard() {
 
         {/* Types Tab */}
         <TabsContent value="types" className="mt-6">
-          <Card className="bg-card/50 border-gray-800">
+          <Card className="bg-card/50 border-border">
             <CardHeader>
-              <CardTitle className="text-white text-lg">Rendimiento por Tipo</CardTitle>
+              <CardTitle className="text-foreground text-lg">Rendimiento por Tipo</CardTitle>
               <CardDescription>Comparativa de engagement por tipo de contenido</CardDescription>
             </CardHeader>
             <CardContent>
@@ -693,12 +693,12 @@ function KPICard({ title, value, icon: Icon, color, change }: KPICardProps) {
   };
 
   return (
-    <Card className="bg-card/50 border-gray-800">
+    <Card className="bg-card/50 border-border">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-gray-400">{title}</p>
-            <p className="text-2xl font-bold text-white mt-1">{value}</p>
+            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
             {change !== undefined && (
               <div
                 className={`flex items-center gap-1 mt-2 text-xs ${
@@ -725,7 +725,7 @@ function KPICard({ title, value, icon: Icon, color, change }: KPICardProps) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+    <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
       <BarChart3 className="h-12 w-12 mb-4 opacity-50" />
       <p className="text-sm">{message}</p>
     </div>

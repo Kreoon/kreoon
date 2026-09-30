@@ -154,7 +154,7 @@ export function AdnRecargadoBanner({
                 style={{ width: `${(completedTabs / totalTabs) * 100}%` }}
               />
             </div>
-            <p className="text-xs text-white/80 font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               KIRO está generando: paso {completedTabs} de {totalTabs}
             </p>
           </div>
@@ -198,7 +198,7 @@ function Chip({
 }) {
   const className = highlight
     ? "bg-gradient-to-r from-violet-500/40 to-pink-500/40 text-white border-violet-300/60 font-semibold"
-    : "bg-white/10 text-white/95 border-white/20 font-medium";
+    : "bg-muted text-foreground border-border font-medium";
 
   return (
     <span className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border backdrop-blur-md shadow-md ${className}`}>

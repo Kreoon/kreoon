@@ -29,7 +29,7 @@ export function RequireAcademyAccess({ children }: Props) {
 
   if (authLoading || spaceLoading || memLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-muted-foreground">
         Cargando...
       </div>
     );
@@ -37,10 +37,10 @@ export function RequireAcademyAccess({ children }: Props) {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Volver a Academia
         </Link>
       </div>

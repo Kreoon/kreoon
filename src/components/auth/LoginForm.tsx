@@ -240,7 +240,7 @@ export function LoginForm({
           size="lg"
           loading={googleLoading}
           disabled={loading || googleLoading}
-          className="w-full gap-2 bg-white/[0.04] hover:bg-white/[0.08]"
+          className="w-full gap-2 bg-muted/40 hover:bg-muted/40"
           onClick={handleGoogleSignIn}
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>

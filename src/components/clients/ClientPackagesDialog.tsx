@@ -76,7 +76,7 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded border border-white/10 overflow-hidden">
+    <div className="rounded border border-border overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left"
@@ -87,7 +87,7 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
           <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-200', open && 'rotate-180')} />
         </div>
       </button>
-      {open && <div className="divide-y divide-white/5">{children}</div>}
+      {open && <div className="divide-y divide-border">{children}</div>}
     </div>
   );
 }
@@ -593,7 +593,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
                 </div>
 
                 {loadingBilling ? (
-                  <div className="h-12 rounded border border-white/10 animate-pulse bg-white/[0.03]" />
+                  <div className="h-12 rounded border border-border animate-pulse bg-white/[0.03]" />
                 ) : (
                   <div className="space-y-2">
                     {fillmakersByMonth.map(([month, items], idx) => (
@@ -635,7 +635,7 @@ export function ClientPackagesDialog({ clientId, clientName, orgId, open, onOpen
                 </h3>
 
                 {loadingBilling ? (
-                  <div className="h-12 rounded border border-white/10 animate-pulse bg-white/[0.03]" />
+                  <div className="h-12 rounded border border-border animate-pulse bg-white/[0.03]" />
                 ) : (
                   <div className="space-y-2">
                     {projectsByMonth.map(([month, items], idx) => (

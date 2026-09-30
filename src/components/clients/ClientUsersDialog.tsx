@@ -67,7 +67,7 @@ interface Props {
 const ROLE_CONFIG: Record<string, { label: string; icon: any; color: string; bg: string }> = {
   owner:  { label: 'Propietario', icon: Crown,  color: 'text-amber-400',  bg: 'bg-amber-500/10 border-amber-500/20' },
   admin:  { label: 'Admin',       icon: Shield, color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/20'  },
-  viewer: { label: 'Visor',       icon: Eye,    color: 'text-slate-400',  bg: 'bg-slate-500/10 border-slate-500/20' },
+  viewer: { label: 'Visor',       icon: Eye,    color: 'text-muted-foreground',  bg: 'bg-slate-500/10 border-slate-500/20' },
 };
 
 const AVATAR_COLORS = [
@@ -345,7 +345,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
                 <SelectContent>
                   <SelectItem value="owner"><div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" />Propietario</div></SelectItem>
                   <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-blue-400" />Administrador</div></SelectItem>
-                  <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-slate-400" />Visor (solo lectura)</div></SelectItem>
+                  <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-muted-foreground" />Visor (solo lectura)</div></SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
@@ -371,7 +371,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
                       <div className="flex items-center gap-2">
                         <Avatar className="h-5 w-5">
                           <AvatarImage src={u.avatar_url || undefined} />
-                          <AvatarFallback className={cn('text-[9px] text-white', avatarColor(u.full_name))}>
+                          <AvatarFallback className={cn('text-[9px] text-foreground', avatarColor(u.full_name))}>
                             {u.full_name?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -390,7 +390,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
                 <SelectContent>
                   <SelectItem value="owner"><div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" />Propietario</div></SelectItem>
                   <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-blue-400" />Administrador</div></SelectItem>
-                  <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-slate-400" />Visor (solo lectura)</div></SelectItem>
+                  <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-muted-foreground" />Visor (solo lectura)</div></SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
@@ -434,7 +434,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
                       <div className="flex items-center gap-3 px-4 py-3">
                         <Avatar className="h-11 w-11 ring-2 ring-border">
                           <AvatarImage src={user.profile.avatar_url || undefined} />
-                          <AvatarFallback className={cn('text-sm font-bold text-white', avatarColor(user.profile.full_name))}>
+                          <AvatarFallback className={cn('text-sm font-bold text-foreground', avatarColor(user.profile.full_name))}>
                             {initials}
                           </AvatarFallback>
                         </Avatar>
@@ -452,7 +452,7 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
                             <SelectContent>
                               <SelectItem value="owner"><div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" />Propietario</div></SelectItem>
                               <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-blue-400" />Admin</div></SelectItem>
-                              <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-slate-400" />Visor</div></SelectItem>
+                              <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-muted-foreground" />Visor</div></SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (

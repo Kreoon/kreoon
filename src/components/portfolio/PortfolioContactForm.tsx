@@ -240,7 +240,7 @@ export function PortfolioContactForm({
           <Button
             type="submit"
             disabled={submitting || !form.name.trim() || !form.email.trim() || !form.message.trim()}
-            className="w-full text-white"
+            className="w-full text-foreground"
             style={{ backgroundColor: accentColor }}
           >
             {submitting ? (

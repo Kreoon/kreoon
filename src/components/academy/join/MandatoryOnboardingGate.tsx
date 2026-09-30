@@ -58,17 +58,17 @@ export function MandatoryOnboardingGate({ spaceId, spaceName }: Props) {
 
   return (
     <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center p-4">
-      <Card className="w-full max-w-lg p-6 md:p-8 bg-white/5 border-white/10">
+      <Card className="w-full max-w-lg p-6 md:p-8 bg-muted/50 border-border">
         <div className="flex items-center gap-3 mb-1">
-          <Sparkles className="h-5 w-5 text-violet-400" />
-          <span className="text-xs text-zinc-400 uppercase tracking-wider">
+          <Sparkles className="h-5 w-5 text-primary" />
+          <span className="text-xs text-muted-foreground uppercase tracking-wider">
             Paso {step} de 2
           </span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-zinc-100 mt-3">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-3">
           {step === 1 ? '¿Desde dónde te unís?' : '¿Qué buscás lograr?'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-2 mb-6">
+        <p className="text-sm text-muted-foreground mt-2 mb-6">
           {step === 1
             ? 'Esto nos ayuda a personalizar contenido y conectarte con creadores cercanos.'
             : 'Tu objetivo guía las recomendaciones y a quién te conectamos primero.'}
@@ -78,7 +78,7 @@ export function MandatoryOnboardingGate({ spaceId, spaceName }: Props) {
           <div className="space-y-4">
             <div>
               <Label className="text-sm flex items-center gap-2">
-                <Globe className="h-4 w-4 text-violet-400" /> País
+                <Globe className="h-4 w-4 text-primary" /> País
               </Label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
                 {COUNTRY_OPTIONS.map((c) => (
@@ -88,8 +88,8 @@ export function MandatoryOnboardingGate({ spaceId, spaceName }: Props) {
                     onClick={() => setCountry(c)}
                     className={`text-xs py-2 px-2 rounded-md border transition-colors ${
                       country === c
-                        ? 'bg-violet-500/20 border-violet-500/50 text-violet-100'
-                        : 'bg-black/20 border-white/10 text-zinc-300 hover:border-white/30'
+                        ? 'bg-primary/20 border-primary/50 text-primary'
+                        : 'bg-muted/60 border-border text-muted-foreground hover:border-border'
                     }`}
                   >
                     {c}
@@ -103,26 +103,26 @@ export function MandatoryOnboardingGate({ spaceId, spaceName }: Props) {
         {step === 2 && (
           <div className="space-y-3">
             <Label className="text-sm flex items-center gap-2">
-              <Target className="h-4 w-4 text-violet-400" /> Tu objetivo
+              <Target className="h-4 w-4 text-primary" /> Tu objetivo
             </Label>
             <textarea
               value={objective}
               onChange={(e) => setObjective(e.target.value.slice(0, 280))}
               placeholder="Ej: Quiero aprender a vivir de creación de contenido y conseguir mis primeras 10k seguidores en TikTok."
-              className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-violet-500/50 h-28 resize-none"
+              className="w-full bg-muted border border-border rounded-md p-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50 h-28 resize-none"
             />
-            <div className="text-[10px] text-zinc-500 text-right">
+            <div className="text-[10px] text-muted-foreground text-right">
               {objective.length}/280 caracteres
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
           {step === 2 ? (
             <Button
               variant="ghost"
               onClick={() => setStep(1)}
-              className="text-zinc-400 hover:text-zinc-100"
+              className="text-muted-foreground hover:text-foreground"
             >
               ← Atrás
             </Button>
@@ -135,7 +135,7 @@ export function MandatoryOnboardingGate({ spaceId, spaceName }: Props) {
               else saveMutation.mutate();
             }}
             disabled={!canContinue || saveMutation.isPending}
-            className="bg-violet-500 hover:bg-violet-600 text-white"
+            className="bg-primary hover:bg-primary/90 text-white"
           >
             {saveMutation.isPending ? (
               <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Guardando...</>

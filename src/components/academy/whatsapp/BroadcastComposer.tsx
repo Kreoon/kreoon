@@ -85,20 +85,20 @@ export function BroadcastComposer({ spaceId, accentColor = '#8B5CF6' }: Props) {
 
   return (
     <div className="space-y-4">
-      <Card className="bg-white/5 border-white/10 p-5 space-y-4">
+      <Card className="bg-muted/50 border-border p-5 space-y-4">
         <div>
-          <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
             <Send className="h-4 w-4" style={{ color: accentColor }} />
             Broadcast WhatsApp
           </h3>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Envía un mensaje a los miembros de tu space que tienen WhatsApp activado.
           </p>
         </div>
 
         {/* Audience selector */}
         <div className="space-y-2">
-          <Label className="text-xs text-zinc-400">Audiencia</Label>
+          <Label className="text-xs text-muted-foreground">Audiencia</Label>
           <div className="flex flex-wrap gap-2">
             {[
               { id: 'all', label: 'Todos' },
@@ -111,8 +111,8 @@ export function BroadcastComposer({ spaceId, accentColor = '#8B5CF6' }: Props) {
                 onClick={() => setAudience(a.id as Audience)}
                 className={`px-3 py-1.5 rounded-md text-xs transition-colors ${
                   audience === a.id
-                    ? 'bg-white/10 text-zinc-100 border border-white/20'
-                    : 'text-zinc-400 hover:bg-white/5 border border-transparent'
+                    ? 'bg-muted text-foreground border border-border'
+                    : 'text-muted-foreground hover:bg-muted/50 border border-transparent'
                 }`}
                 style={audience === a.id ? { borderColor: accentColor } : undefined}
               >
@@ -124,53 +124,53 @@ export function BroadcastComposer({ spaceId, accentColor = '#8B5CF6' }: Props) {
 
         {audience === 'tier' && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Tier slug (ej: pro, vip)</Label>
+            <Label className="text-xs text-muted-foreground">Tier slug (ej: pro, vip)</Label>
             <Input
               value={tierSlug}
               onChange={(e) => setTierSlug(e.target.value)}
               placeholder="pro"
-              className="bg-white/5 border-white/10"
+              className="bg-muted/50 border-border"
             />
           </div>
         )}
 
         {audience === 'level' && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Nivel mínimo</Label>
+            <Label className="text-xs text-muted-foreground">Nivel mínimo</Label>
             <Input
               type="number"
               value={minLevel}
               onChange={(e) => setMinLevel(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="3"
-              className="bg-white/5 border-white/10"
+              className="bg-muted/50 border-border"
             />
           </div>
         )}
 
         {audience === 'inactive' && (
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Días sin actividad ≥</Label>
+            <Label className="text-xs text-muted-foreground">Días sin actividad ≥</Label>
             <Input
               type="number"
               value={maxInactiveDays}
               onChange={(e) => setMaxInactiveDays(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="14"
-              className="bg-white/5 border-white/10"
+              className="bg-muted/50 border-border"
             />
           </div>
         )}
 
         {/* Message */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-zinc-400">Mensaje (template academy_broadcast)</Label>
+          <Label className="text-xs text-muted-foreground">Mensaje (template academy_broadcast)</Label>
           <Textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Escribe el mensaje a enviar. Se enviará el template academy_broadcast con {{1}}=nombre miembro, {{2}}=este texto."
             rows={4}
-            className="bg-white/5 border-white/10 text-sm"
+            className="bg-muted/50 border-border text-sm"
           />
-          <p className="text-[10px] text-zinc-500">
+          <p className="text-[10px] text-muted-foreground">
             ⚠️ Template MARKETING — solo se envía a miembros con whatsapp_enabled (opt-in).
           </p>
         </div>
@@ -195,26 +195,26 @@ export function BroadcastComposer({ spaceId, accentColor = '#8B5CF6' }: Props) {
 
       {/* History */}
       {!!history?.length && (
-        <Card className="bg-white/5 border-white/10 p-5 space-y-3">
-          <h4 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-            <History className="h-4 w-4 text-zinc-400" /> Últimos broadcasts
+        <Card className="bg-muted/50 border-border p-5 space-y-3">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <History className="h-4 w-4 text-muted-foreground" /> Últimos broadcasts
           </h4>
           {history.map((b: any) => (
             <div
               key={b.id}
-              className="flex items-start justify-between gap-3 border-t border-white/5 pt-3 first:border-t-0 first:pt-0"
+              className="flex items-start justify-between gap-3 border-t border-border pt-3 first:border-t-0 first:pt-0"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-zinc-300 truncate">{b.message_text}</p>
-                <p className="text-[10px] text-zinc-500 mt-0.5">
+                <p className="text-xs text-muted-foreground truncate">{b.message_text}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
                   {new Date(b.created_at).toLocaleString('es-CO')}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <Badge variant="outline" className="border-white/10 text-zinc-400 text-[10px]">
+                <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">
                   {b.status}
                 </Badge>
-                <span className="text-[10px] text-zinc-500">
+                <span className="text-[10px] text-muted-foreground">
                   {b.sent_count} ok · {b.failed_count} ✗
                 </span>
               </div>

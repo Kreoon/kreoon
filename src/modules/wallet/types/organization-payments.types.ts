@@ -203,7 +203,7 @@ export const PAYMENT_STATUS_COLORS: Record<string, string> = {
   completed: 'bg-emerald-500/10 text-emerald-500',
   failed: 'bg-red-500/10 text-red-500',
   refunded: 'bg-purple-500/10 text-purple-500',
-  cancelled: 'bg-gray-500/10 text-gray-500',
+  cancelled: 'bg-gray-500/10 text-muted-foreground',
 };
 
 export const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {

@@ -46,7 +46,7 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
 
   if (isLoading) {
     return (
-      <Card className="p-8 bg-white/5 border-white/10 text-center text-zinc-400">
+      <Card className="p-8 bg-muted/50 border-border text-center text-muted-foreground">
         <Loader2 className="h-6 w-6 mx-auto animate-spin" />
         <p className="text-sm mt-2">Consultando tu cuenta de Stripe…</p>
       </Card>
@@ -60,12 +60,12 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
   return (
     <div className="space-y-4">
       {/* Cabecera */}
-      <Card className="p-5 bg-white/5 border-white/10 space-y-2">
+      <Card className="p-5 bg-muted/50 border-border space-y-2">
         <div className="flex items-center gap-2">
           <CreditCard className="h-5 w-5" style={{ color: accentColor }} />
           <h3 className="font-semibold">Cobros y Stripe Connect</h3>
         </div>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           Conecta tu cuenta de Stripe para recibir los pagos de tu academia directo
           en tu cuenta bancaria. KREOON descuenta su comisión ({feeLabel}) en cada
           cobro automáticamente — no tienes que transferir nada manual.
@@ -75,18 +75,18 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
       {/* Estado */}
       {ready ? (
         <Card className="p-5 bg-emerald-500/5 border-emerald-500/20 space-y-3">
-          <div className="flex items-center gap-2 text-emerald-400">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-5 w-5" />
             <h4 className="font-semibold">Cuenta activa</h4>
           </div>
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-muted-foreground">
             Tu academia ya puede recibir pagos. Los cobros entrarán a tu cuenta
             Stripe y se transferirán a tu banco según la programación de Stripe.
           </p>
           <div className="flex flex-wrap gap-2 pt-1">
             {status?.dashboard_link && (
               <a href={status.dashboard_link} target="_blank" rel="noreferrer">
-                <Button variant="outline" size="sm" className="border-white/15">
+                <Button variant="outline" size="sm" className="border-border">
                   <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
                   Abrir mi dashboard de Stripe
                 </Button>
@@ -96,7 +96,7 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
               variant="ghost"
               size="sm"
               onClick={() => refetch()}
-              className="text-zinc-400"
+              className="text-muted-foreground"
             >
               Actualizar estado
             </Button>
@@ -104,20 +104,20 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
         </Card>
       ) : hasAccount ? (
         <Card className="p-5 bg-amber-500/5 border-amber-500/20 space-y-3">
-          <div className="flex items-center gap-2 text-amber-400">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
             <AlertTriangle className="h-5 w-5" />
             <h4 className="font-semibold">Onboarding pendiente</h4>
           </div>
-          <p className="text-sm text-zinc-300">
+          <p className="text-sm text-muted-foreground">
             Ya creamos tu cuenta de Stripe pero falta completar el KYC y conectar
             tu banco. Hasta que termines, tus cobros estarán bloqueados con el
             mensaje "Esta academia está verificando su cuenta de pagos".
           </p>
 
           {dueRequirements.length > 0 && (
-            <div className="rounded-md bg-black/30 border border-white/5 p-3 space-y-1.5">
-              <p className="text-xs text-zinc-400">Stripe está esperando:</p>
-              <ul className="text-xs text-zinc-300 space-y-1 pl-4 list-disc">
+            <div className="rounded-md bg-muted border border-border p-3 space-y-1.5">
+              <p className="text-xs text-muted-foreground">Stripe está esperando:</p>
+              <ul className="text-xs text-muted-foreground space-y-1 pl-4 list-disc">
                 {dueRequirements.map((r) => (
                   <li key={r}>{r.replace(/_/g, ' ').replace(/\./g, ' › ')}</li>
                 ))}
@@ -143,10 +143,10 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
           </Button>
         </Card>
       ) : (
-        <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+        <Card className="p-5 bg-muted/50 border-border space-y-4">
           <div className="space-y-2">
             <h4 className="font-semibold">Conecta tu cuenta de Stripe</h4>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Te abriremos el onboarding hosteado por Stripe. Necesitarás un
               documento de identidad y los datos de tu cuenta bancaria. Toma
               unos 5 minutos.
@@ -172,7 +172,7 @@ export function ConnectOnboardingTab({ accentColor, planSlug }: Props) {
             )}
           </Button>
 
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             Mientras no completes este paso, los visitantes que quieran
             suscribirse a tu academia verán el mensaje "Esta academia está
             verificando su cuenta de pagos".

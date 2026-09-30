@@ -119,7 +119,7 @@ export function ClientDNAPage({ clientId, soloResultado = false }: ClientDNAPage
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-          <p className="text-zinc-600 dark:text-zinc-400">Cargando ADN del cliente...</p>
+          <p className="text-muted-foreground dark:text-muted-foreground">Cargando ADN del cliente...</p>
         </div>
       </div>
     );

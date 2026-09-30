@@ -87,8 +87,8 @@ export function LeadsDetailSheet({ stats }: LeadsDetailSheetProps) {
       header: "Lead",
       render: (l) => (
         <div>
-          <p className="font-medium text-white">{l.full_name}</p>
-          <p className="text-xs text-white/40">{l.email}</p>
+          <p className="font-medium text-foreground">{l.full_name}</p>
+          <p className="text-xs text-muted-foreground/70">{l.email}</p>
         </div>
       ),
     },
@@ -107,7 +107,7 @@ export function LeadsDetailSheet({ stats }: LeadsDetailSheetProps) {
     {
       key: "source",
       header: "Fuente",
-      render: (l) => <span className="text-white/60 text-xs">{l.source || "-"}</span>,
+      render: (l) => <span className="text-muted-foreground text-xs">{l.source || "-"}</span>,
     },
     {
       key: "score",
@@ -118,14 +118,14 @@ export function LeadsDetailSheet({ stats }: LeadsDetailSheetProps) {
             {l.score}
           </span>
         ) : (
-          <span className="text-white/30">-</span>
+          <span className="text-muted-foreground/70">-</span>
         ),
     },
     {
       key: "created",
       header: "Fecha",
       render: (l) => (
-        <span className="text-white/50 text-xs">
+        <span className="text-muted-foreground/70 text-xs">
           {new Date(l.created_at).toLocaleDateString("es-CO")}
         </span>
       ),
@@ -151,7 +151,7 @@ export function LeadsDetailSheet({ stats }: LeadsDetailSheetProps) {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start flex-wrap">
+        <TabsList className="bg-muted/40 w-full justify-start flex-wrap">
           <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
           <TabsTrigger value="new" className="text-xs">Nuevos</TabsTrigger>
           <TabsTrigger value="qualified" className="text-xs">Calificados</TabsTrigger>
@@ -166,7 +166,7 @@ export function LeadsDetailSheet({ stats }: LeadsDetailSheetProps) {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+        <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
           Cargando leads...
         </div>
       ) : (

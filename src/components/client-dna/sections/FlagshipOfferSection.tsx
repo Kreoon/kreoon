@@ -17,12 +17,12 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
     <div className="space-y-6">
       {/* Product Name & Price */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Producto/Servicio</p>
+        <div className="md:col-span-2 p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Producto/Servicio</p>
           {isEditing ? (
             <EditableText value={data.name} onChange={change('name') as (v: string) => void} placeholder="Nombre del producto..." />
           ) : (
-            <p className="text-base font-bold text-zinc-900 dark:text-zinc-100">{data.name}</p>
+            <p className="text-base font-bold text-foreground dark:text-foreground">{data.name}</p>
           )}
         </div>
         {(price || isEditing) && (
@@ -39,24 +39,24 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Description */}
       {(data.description || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Descripción</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Descripción</p>
           {isEditing ? (
             <EditableText value={data.description} onChange={change('description') as (v: string) => void} multiline placeholder="Descripción..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">{data.description}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground">{data.description}</p>
           )}
         </div>
       )}
 
       {/* Main Benefit */}
       {(data.main_benefit || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Beneficio Principal</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Beneficio Principal</p>
           {isEditing ? (
             <EditableText value={data.main_benefit} onChange={change('main_benefit') as (v: string) => void} placeholder="Beneficio principal..." />
           ) : (
-            <p className="text-sm text-zinc-900 dark:text-zinc-100 font-medium">{data.main_benefit}</p>
+            <p className="text-sm text-foreground dark:text-foreground font-medium">{data.main_benefit}</p>
           )}
         </div>
       )}
@@ -71,15 +71,15 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
           {isEditing ? (
             <EditableText value={data.price_justification} onChange={change('price_justification') as (v: string) => void} multiline placeholder="Justificación..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">{data.price_justification}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground">{data.price_justification}</p>
           )}
         </div>
       )}
 
       {/* Included Features */}
       {(data.included_features?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">¿Qué Incluye?</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-4">¿Qué Incluye?</p>
           {isEditing ? (
             <EditableTags items={data.included_features || []} onChange={change('included_features') as (v: string[]) => void} color="green" placeholder="Agregar feature..." />
           ) : (
@@ -87,7 +87,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               {data.included_features?.map((feature, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-zinc-700 dark:text-zinc-300">{feature}</span>
+                  <span className="text-sm text-foreground dark:text-muted-foreground">{feature}</span>
                 </div>
               ))}
             </div>
@@ -109,7 +109,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.guarantees?.map((g, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground dark:text-muted-foreground">
                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600 dark:bg-blue-400 mt-1.5" />
                       {g}
                     </li>
@@ -130,7 +130,7 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
               ) : (
                 <ul className="space-y-2">
                   {data.urgency_elements?.map((u, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                    <li key={i} className="flex items-start gap-2 text-sm text-foreground dark:text-muted-foreground">
                       <div className="w-1.5 h-1.5 rounded-full bg-red-600 dark:bg-red-400 mt-1.5" />
                       {u}
                     </li>
@@ -144,12 +144,12 @@ export function FlagshipOfferSection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Funnel Role */}
       {(data.funnel_role || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Rol en Embudo</p>
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Rol en Embudo</p>
           {isEditing ? (
             <EditableText value={data.funnel_role} onChange={change('funnel_role') as (v: string) => void} placeholder="Rol en embudo..." />
           ) : (
-            <p className="text-sm text-zinc-700 dark:text-zinc-300">{data.funnel_role}</p>
+            <p className="text-sm text-foreground dark:text-muted-foreground">{data.funnel_role}</p>
           )}
         </div>
       )}

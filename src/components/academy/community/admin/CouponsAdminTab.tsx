@@ -61,14 +61,14 @@ export function CouponsAdminTab({ spaceId, spaceSlug, accentColor = '#8B5CF6' }:
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h3 className="font-semibold flex items-center gap-2">
               <Tag className="h-4 w-4" style={{ color: accentColor }} />
               Cupones de descuento
             </h3>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Crea códigos que los visitantes pueden aplicar al suscribirse a tu academia.
             </p>
           </div>
@@ -83,13 +83,13 @@ export function CouponsAdminTab({ spaceId, spaceSlug, accentColor = '#8B5CF6' }:
       </Card>
 
       {isLoading ? (
-        <Card className="p-12 text-center text-zinc-500">
+        <Card className="p-12 text-center text-muted-foreground">
           <Loader2 className="h-6 w-6 mx-auto animate-spin" />
         </Card>
       ) : coupons.length === 0 ? (
-        <Card className="p-12 text-center text-zinc-500">
+        <Card className="p-12 text-center text-muted-foreground">
           <Tag className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium text-zinc-300">Aún no tienes cupones</p>
+          <p className="text-sm font-medium text-muted-foreground">Aún no tienes cupones</p>
           <p className="text-xs mt-1">Crea el primero para empezar a hacer promociones.</p>
         </Card>
       ) : (
@@ -155,7 +155,7 @@ function CouponCard({
     : 'Solo mensual';
 
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="flex items-start gap-4">
         <div
           className="h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0"
@@ -175,7 +175,7 @@ function CouponCard({
             <Badge variant="outline" className="text-xs">{planText}</Badge>
             {!coupon.is_active && <Badge variant="secondary" className="text-xs">Inactivo</Badge>}
           </div>
-          <div className="text-xs text-zinc-500 mt-2 flex gap-3 flex-wrap">
+          <div className="text-xs text-muted-foreground mt-2 flex gap-3 flex-wrap">
             <span className="flex items-center gap-1">
               <Hash className="h-3 w-3" />
               {coupon.redemptions_count}
@@ -206,12 +206,12 @@ function CouponCard({
               aria-label="Copiar link de auto-aplicación"
               title="Copiar link con cupón pre-aplicado"
             >
-              <Copy className="h-4 w-4 text-zinc-400 hover:text-zinc-100" />
+              <Copy className="h-4 w-4 text-muted-foreground hover:text-foreground" />
             </Button>
           )}
           <Switch checked={coupon.is_active} onCheckedChange={onToggle} />
           <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Eliminar">
-            <Trash2 className="h-4 w-4 text-rose-400" />
+            <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
           </Button>
         </div>
       </div>
@@ -351,7 +351,7 @@ function CreateCouponDialog({
                 step={discountType === 'percentage' ? 1 : 0.01}
                 max={discountType === 'percentage' ? 100 : undefined}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                 {discountType === 'percentage' ? '%' : 'USD'}
               </span>
             </div>
@@ -419,7 +419,7 @@ function CreateCouponDialog({
                 placeholder="Sin límite"
                 min={1}
               />
-              <p className="text-[10px] text-zinc-500">usos en total del cupón</p>
+              <p className="text-[10px] text-muted-foreground">usos en total del cupón</p>
             </div>
             <div className="space-y-2">
               <Label>Por usuario</Label>
@@ -430,7 +430,7 @@ function CreateCouponDialog({
                 placeholder="Ilimitado"
                 min={1}
               />
-              <p className="text-[10px] text-zinc-500">cuántas veces lo puede usar 1 persona</p>
+              <p className="text-[10px] text-muted-foreground">cuántas veces lo puede usar 1 persona</p>
             </div>
           </div>
 

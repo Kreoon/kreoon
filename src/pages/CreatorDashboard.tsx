@@ -199,7 +199,7 @@ export default function CreatorDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -209,10 +209,10 @@ export default function CreatorDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-foreground">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Creador'}
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
             {VOCABULARIO_ROL.creator.dashboard}
           </p>
         </div>
@@ -232,8 +232,8 @@ export default function CreatorDashboard() {
             className={cn(
               'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
               dashboardTab === id
-                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300',
+                ? 'bg-white dark:bg-muted text-zinc-900 dark:text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-zinc-700 dark:hover:text-muted-foreground',
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -245,7 +245,7 @@ export default function CreatorDashboard() {
       {/* Wallet tab */}
       {dashboardTab === 'wallet' && (
         profile?.current_organization_id && user?.id ? (
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background p-4 md:p-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-background p-4 md:p-6">
             <TalentWalletView
               userId={targetUserId ?? user.id}
               organizationId={profile.current_organization_id}
@@ -279,7 +279,7 @@ export default function CreatorDashboard() {
             const roleLabel = hasEditorRole ? 'Creador & Editor' : 'Creador';
             const actionLabel = hasEditorRole ? 'graba, edita y entrega' : 'graba y entrega';
             return (
-              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 via-card/60 to-card/40 p-4">
+              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-primary/10 via-card/60 to-card/40 p-4">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none" />
                 <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -292,14 +292,14 @@ export default function CreatorDashboard() {
                           {roleLabel}
                         </span>
                         {totalInProgress > 0 && (
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-foreground">
                             {totalInProgress} {totalInProgress === 1 ? 'proyecto' : 'proyectos'} en proceso
                           </p>
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                         {totalInProgress > 0 && (
-                          <p className="text-xs text-zinc-400">Es hora de {actionLabel}</p>
+                          <p className="text-xs text-muted-foreground">Es hora de {actionLabel}</p>
                         )}
                         {totalPendingCOP > 0 && (
                           <p className="text-xs font-semibold text-green-400">
@@ -423,14 +423,14 @@ export default function CreatorDashboard() {
 
           {/* Videos aprobados */}
           {approvedVideos.length > 0 && (
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background p-4">
+            <div className="rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-background p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
                     Últimos Aprobados
                   </h3>
-                  <span className="text-xs text-zinc-500">({approvedVideos.length})</span>
+                  <span className="text-xs text-muted-foreground">({approvedVideos.length})</span>
                 </div>
                 <button
                   onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}

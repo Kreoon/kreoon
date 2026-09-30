@@ -90,46 +90,46 @@ Cada body máximo 280 caracteres. Tono profesional pero cercano. Sin emojis exce
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
       <div
-        className="bg-background border border-white/10 rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+        className="bg-background border border-border rounded-2xl max-w-xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-purple-500/20 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-purple-300" />
+            <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold text-zinc-100">KIRO</h2>
-              <p className="text-xs text-zinc-500">Asistente para tu post</p>
+              <h2 className="font-semibold text-foreground">KIRO</h2>
+              <p className="text-xs text-muted-foreground">Asistente para tu post</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {!suggestion && !loading && (
           <div className="text-center py-6">
-            <p className="text-sm text-zinc-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               {context
                 ? 'Voy a sugerirte cómo mejorar este borrador.'
                 : 'Voy a inspirarte con ideas para tu post.'}
             </p>
-            <Button onClick={generate} className="bg-purple-500 hover:bg-purple-600 text-white">
+            <Button onClick={generate} className="bg-primary hover:bg-primary/90 text-white">
               <Wand2 className="h-4 w-4 mr-2" /> Generar sugerencias
             </Button>
           </div>
         )}
 
         {loading && (
-          <div className="flex flex-col items-center py-6 gap-3 text-zinc-400">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+          <div className="flex flex-col items-center py-6 gap-3 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
             <span className="text-sm">Pensando...</span>
           </div>
         )}
 
         {error && (
-          <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-sm text-rose-300">
+          <div className="rounded-lg bg-rose-500/10 border border-rose-500/30 p-3 text-sm text-rose-700 dark:text-rose-300">
             {error}
           </div>
         )}
@@ -137,32 +137,32 @@ Cada body máximo 280 caracteres. Tono profesional pero cercano. Sin emojis exce
         {suggestion && (
           <div className="space-y-4">
             <div>
-              <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1">Título sugerido</div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Título sugerido</div>
               <div className="font-semibold">{suggestion.title}</div>
             </div>
 
             <div className="space-y-2">
-              <div className="text-xs uppercase tracking-wide text-zinc-500">Variantes del cuerpo</div>
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Variantes del cuerpo</div>
               {suggestion.body_variants?.map((v, i) => (
                 <button
                   key={i}
                   onClick={() => onApply({ title: suggestion.title, body: v.body })}
-                  className="w-full text-left p-3 rounded-lg bg-white/5 border border-white/10 hover:border-purple-500/40 transition-colors"
+                  className="w-full text-left p-3 rounded-lg bg-muted/50 border border-border hover:border-primary/40 transition-colors"
                 >
-                  <div className="text-[10px] uppercase tracking-wide text-purple-300 mb-1">{v.tone}</div>
-                  <div className="text-sm text-zinc-200">{v.body}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-primary mb-1">{v.tone}</div>
+                  <div className="text-sm text-foreground">{v.body}</div>
                 </button>
               ))}
             </div>
 
             {suggestion.hashtags?.length > 0 && (
               <div>
-                <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1">Hashtags</div>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Hashtags</div>
                 <div className="flex flex-wrap gap-1.5">
                   {suggestion.hashtags.map((h) => (
                     <span
                       key={h}
-                      className="text-xs px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                      className="text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20"
                     >
                       #{h}
                     </span>

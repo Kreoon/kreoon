@@ -132,7 +132,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
+      <DialogContent className="sm:max-w-md bg-background border-border text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5 text-violet-400" />
@@ -146,7 +146,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Cliente *</Label>
               <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger className="bg-white/5 border-white/10">
+                <SelectTrigger className="bg-muted/40 border-border">
                   <SelectValue placeholder="Seleccionar cliente..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -164,7 +164,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
               value={form.title}
               onChange={e => f('title', e.target.value)}
               placeholder="Ej. Grabación campaña producto X"
-              className="bg-white/5 border-white/10"
+              className="bg-muted/40 border-border"
             />
           </div>
 
@@ -175,7 +175,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
               onChange={e => f('description', e.target.value)}
               placeholder="Detalles del servicio..."
               rows={2}
-              className="bg-white/5 border-white/10 resize-none"
+              className="bg-muted/40 border-border resize-none"
             />
           </div>
 
@@ -185,7 +185,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
               type="date"
               value={form.service_date}
               onChange={e => f('service_date', e.target.value)}
-              className="bg-white/5 border-white/10"
+              className="bg-muted/40 border-border"
             />
           </div>
 
@@ -193,7 +193,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
             <div className="col-span-1">
               <Label className="text-xs text-muted-foreground mb-1 block">Moneda</Label>
               <Select value={form.currency} onValueChange={v => f('currency', v)}>
-                <SelectTrigger className="bg-white/5 border-white/10 h-9">
+                <SelectTrigger className="bg-muted/40 border-border h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -212,7 +212,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
                 value={form.price_client}
                 onChange={e => f('price_client', e.target.value)}
                 placeholder="0"
-                className="bg-white/5 border-white/10"
+                className="bg-muted/40 border-border"
               />
             </div>
             <div>
@@ -223,7 +223,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
                 value={form.cost_own}
                 onChange={e => f('cost_own', e.target.value)}
                 placeholder="0"
-                className="bg-white/5 border-white/10"
+                className="bg-muted/40 border-border"
               />
             </div>
           </div>
@@ -231,7 +231,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
           <div>
             <Label className="text-xs text-muted-foreground mb-1 block">Editor asignado</Label>
             <Select value={form.editor_id} onValueChange={v => f('editor_id', v)}>
-              <SelectTrigger className="bg-white/5 border-white/10">
+              <SelectTrigger className="bg-muted/40 border-border">
                 <SelectValue placeholder="Seleccionar editor..." />
               </SelectTrigger>
               <SelectContent>
@@ -250,7 +250,7 @@ export function FillmakerDialog({ open, onOpenChange, orgId, clientId, clients =
               value={form.notes}
               onChange={e => f('notes', e.target.value)}
               placeholder="Observaciones..."
-              className="bg-white/5 border-white/10"
+              className="bg-muted/40 border-border"
             />
           </div>
         </div>

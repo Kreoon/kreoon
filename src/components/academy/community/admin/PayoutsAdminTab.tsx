@@ -21,7 +21,7 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
   const { data: health, isLoading } = useAcademyFinancialHealth(spaceId);
 
   if (isLoading || !health) {
-    return <div className="text-zinc-400 text-sm py-8 text-center">Calculando métricas en vivo...</div>;
+    return <div className="text-muted-foreground text-sm py-8 text-center">Calculando métricas en vivo...</div>;
   }
 
   const dashboardLink = connectStatus?.dashboard_link;
@@ -64,13 +64,13 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
       </div>
 
       {/* Salud financiera ampliada */}
-      <Card className="p-5 bg-kreoon-bg-card border-white/10 space-y-3">
+      <Card className="p-5 bg-kreoon-bg-card border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-violet-400" />
+            <Sparkles className="h-4 w-4 text-primary" />
             Salud financiera (últimos 30 días)
           </h3>
-          <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+          <span className="text-[10px] text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
             <span className="relative flex h-1.5 w-1.5">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -84,14 +84,14 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
           <Mini
             label="Nuevos miembros"
             value={`+${health.new_members_30d}`}
-            iconRight={<ArrowUpRight className="h-3 w-3 text-emerald-400" />}
+            iconRight={<ArrowUpRight className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />}
           />
           <Mini
             label="Cancelaciones"
             value={`${health.churned_30d}`}
             iconRight={
               health.churned_30d > 0 ? (
-                <ArrowDownRight className="h-3 w-3 text-rose-400" />
+                <ArrowDownRight className="h-3 w-3 text-rose-600 dark:text-rose-400" />
               ) : undefined
             }
           />
@@ -122,12 +122,12 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
       {health.dilution_percent >= 50 && health.mrr_gross > 0 && (
         <Card className="p-4 bg-amber-500/5 border-amber-500/20">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-4 w-4 text-amber-400 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-amber-200">
+              <p className="font-medium text-amber-800 dark:text-amber-200">
                 Estás sacrificando {health.dilution_percent}% del MRR en cupones
               </p>
-              <p className="text-xs text-zinc-300 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Si los descuentos son por lanzamiento, revisá que tengan fecha de expiración
                 (no "forever"). Sino, considerá bajar el precio de lista para que el MRR
                 bruto refleje lo que realmente cobrás.
@@ -139,11 +139,11 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
 
       {/* Link al Stripe Dashboard del owner */}
       {dashboardLink && (
-        <Card className="p-4 bg-kreoon-bg-card border-white/10">
+        <Card className="p-4 bg-kreoon-bg-card border-border">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <p className="font-semibold text-sm">Ver detalle en Stripe</p>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 Cobros, próximos pagos, descuentos aplicados, balance.
               </p>
             </div>
@@ -158,15 +158,15 @@ export function PayoutsAdminTab({ spaceId, accentColor = '#8B5CF6' }: PayoutsAdm
       )}
 
       {/* Estado de miembros */}
-      <Card className="p-5 bg-kreoon-bg-card border-white/10">
+      <Card className="p-5 bg-kreoon-bg-card border-border">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-semibold flex items-center gap-2">
             <Users className="h-4 w-4" style={{ color: accentColor }} />
             Miembros activos
           </h3>
-          <span className="text-xs text-zinc-400">{health.active_members} en total</span>
+          <span className="text-xs text-muted-foreground">{health.active_members} en total</span>
         </div>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           {health.active_members === 0
             ? 'Aún no hay miembros activos en la academia.'
             : `Tenés ${health.active_members} ${
@@ -208,7 +208,7 @@ function BigStat({
           <Icon className="h-4 w-4" style={{ color }} />
         </div>
         {primary && (
-          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5">
+          <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted/50">
             real
           </span>
         )}
@@ -216,8 +216,8 @@ function BigStat({
       <div className="text-3xl font-bold" style={{ color: primary ? color : undefined }}>
         {value}
       </div>
-      <div className="text-[10px] text-zinc-300 uppercase tracking-wide mt-1">{label}</div>
-      <div className="text-[11px] text-zinc-400 mt-0.5">{subtext}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wide mt-1">{label}</div>
+      <div className="text-[11px] text-muted-foreground mt-0.5">{subtext}</div>
     </Card>
   );
 }
@@ -234,13 +234,13 @@ function Mini({
   iconRight?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg bg-black/30 border border-white/5 p-3">
+    <div className="rounded-lg bg-muted border border-border p-3">
       <div className="flex items-baseline justify-between gap-1">
-        <span className="text-lg font-bold text-zinc-100">{value}</span>
+        <span className="text-lg font-bold text-foreground">{value}</span>
         {iconRight}
       </div>
-      <div className="text-[10px] text-zinc-400 mt-1">{label}</div>
-      {subtext && <div className="text-[10px] text-zinc-500">{subtext}</div>}
+      <div className="text-[10px] text-muted-foreground mt-1">{label}</div>
+      {subtext && <div className="text-[10px] text-muted-foreground">{subtext}</div>}
     </div>
   );
 }

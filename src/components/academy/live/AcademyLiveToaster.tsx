@@ -16,12 +16,12 @@ import { useAuth } from '@/hooks/useAuth';
 
 function iconForType(type: string) {
   switch (type) {
-    case 'new_member':       return <UserPlus className="h-4 w-4 text-emerald-400" />;
-    case 'new_post':         return <MessageSquare className="h-4 w-4 text-violet-400" />;
-    case 'new_comment':      return <MessageSquare className="h-4 w-4 text-sky-400" />;
-    case 'level_up':         return <Sparkles className="h-4 w-4 text-amber-400" />;
-    case 'payment_received': return <DollarSign className="h-4 w-4 text-emerald-400" />;
-    default:                 return <Bell className="h-4 w-4 text-zinc-400" />;
+    case 'new_member':       return <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+    case 'new_post':         return <MessageSquare className="h-4 w-4 text-primary" />;
+    case 'new_comment':      return <MessageSquare className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
+    case 'level_up':         return <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
+    case 'payment_received': return <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+    default:                 return <Bell className="h-4 w-4 text-muted-foreground" />;
   }
 }
 

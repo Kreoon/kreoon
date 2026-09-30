@@ -111,8 +111,8 @@ function StatCard({
     <Card className="p-5">
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-white/50 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-white">{value}</p>
+          <p className="text-sm text-muted-foreground/70 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-foreground">{value}</p>
           {trend && trend.value > 0 && (
             <p
               className={cn(
@@ -123,7 +123,7 @@ function StatCard({
               {trend.isPositive ? "+" : "-"}{trend.value} este mes
             </p>
           )}
-          {subtitle && <p className="text-xs text-white/30 mt-1">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-muted-foreground/70 mt-1">{subtitle}</p>}
         </div>
         <div className={cn("w-12 h-12 rounded-sm flex items-center justify-center shrink-0", c.bg)}>
           <Icon className={cn("h-6 w-6", c.icon)} />
@@ -144,11 +144,11 @@ function BarTooltipContent({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-sm px-3 py-2 text-xs bg-background/95 border border-purple-500/30">
-      <p className="text-white/60 mb-1">{label}</p>
+      <p className="text-muted-foreground mb-1">{label}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ background: p.fill || p.color }} />
-          <span className="text-white/80">{p.name}: {p.value}</span>
+          <span className="text-muted-foreground">{p.name}: {p.value}</span>
         </div>
       ))}
     </div>
@@ -160,7 +160,7 @@ function PieTooltipContent({ active, payload }: any) {
   const item = payload[0];
   return (
     <div className="rounded-sm px-3 py-2 text-xs bg-background/95 border border-purple-500/30">
-      <span className="text-white/80">{item.name}: {item.value}</span>
+      <span className="text-muted-foreground">{item.name}: {item.value}</span>
     </div>
   );
 }
@@ -192,8 +192,8 @@ const PlatformCRMDashboard = () => {
       <div className="p-4 md:p-6 space-y-6">
         {/* ========== HEADER ========== */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Dashboard CRM</h1>
-          <p className="text-white/60">Overview del ecosistema Kreoon</p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard CRM</h1>
+          <p className="text-muted-foreground">Overview del ecosistema Kreoon</p>
         </div>
 
         {/* ========== SECTION 1: KPI CARDS ========== */}
@@ -265,7 +265,7 @@ const PlatformCRMDashboard = () => {
           <div className="lg:col-span-3 space-y-6">
             {/* Leads por Mes */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Leads por Mes</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Leads por Mes</h3>
               {monthlyData.length > 0 ? (
                 <LazyChartContainer height={250}>
                   <ResponsiveContainer width="100%" height={250}>
@@ -303,19 +303,19 @@ const PlatformCRMDashboard = () => {
                 </LazyChartContainer>
               ) : (
                 <div className="h-[250px] flex items-center justify-center">
-                  <p className="text-sm text-white/30">Sin datos de leads aun</p>
+                  <p className="text-sm text-muted-foreground/70">Sin datos de leads aun</p>
                 </div>
               )}
             </Card>
 
             {/* Activity Table */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Actividad Reciente</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Actividad Reciente</h3>
               {recentInteractions.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="text-xs uppercase tracking-wider text-white/30 border-b border-white/5">
+                      <tr className="text-xs uppercase tracking-wider text-muted-foreground/70 border-b border-border">
                         <th className="pb-3 pr-4 font-medium">Tipo</th>
                         <th className="pb-3 pr-4 font-medium">Lead</th>
                         <th className="pb-3 pr-4 font-medium hidden md:table-cell">Asunto</th>
@@ -334,29 +334,29 @@ const PlatformCRMDashboard = () => {
                             <td className="py-3 pr-4">
                               <div className="flex items-center gap-2">
                                 <IconComp className="h-4 w-4 text-purple-400/60" />
-                                <span className="text-sm text-white/50 capitalize">
+                                <span className="text-sm text-muted-foreground/70 capitalize">
                                   {interaction.interaction_type.replace(/_/g, " ")}
                                 </span>
                               </div>
                             </td>
                             <td className="py-3 pr-4">
                               <div>
-                                <p className="text-sm text-white/80">{interaction.lead_name}</p>
-                                <p className="text-xs text-white/30">{interaction.lead_email}</p>
+                                <p className="text-sm text-muted-foreground">{interaction.lead_name}</p>
+                                <p className="text-xs text-muted-foreground/70">{interaction.lead_email}</p>
                               </div>
                             </td>
                             <td className="py-3 pr-4 hidden md:table-cell">
-                              <p className="text-sm text-white/50 truncate max-w-[200px]">
+                              <p className="text-sm text-muted-foreground/70 truncate max-w-[200px]">
                                 {interaction.subject || "—"}
                               </p>
                             </td>
                             <td className="py-3 pr-4 hidden lg:table-cell">
-                              <span className="text-sm text-white/40">
+                              <span className="text-sm text-muted-foreground/70">
                                 {interaction.performed_by_name || "Sistema"}
                               </span>
                             </td>
                             <td className="py-3 text-right">
-                              <span className="text-xs text-white/30">
+                              <span className="text-xs text-muted-foreground/70">
                                 {formatDistanceToNow(new Date(interaction.created_at), {
                                   addSuffix: true,
                                   locale: es,
@@ -371,8 +371,8 @@ const PlatformCRMDashboard = () => {
                 </div>
               ) : (
                 <div className="py-8 text-center">
-                  <MessageSquare className="h-8 w-8 text-white/10 mx-auto mb-3" />
-                  <p className="text-sm text-white/30">Sin interacciones registradas</p>
+                  <MessageSquare className="h-8 w-8 text-muted-foreground/70 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground/70">Sin interacciones registradas</p>
                 </div>
               )}
             </Card>
@@ -382,7 +382,7 @@ const PlatformCRMDashboard = () => {
           <div className="lg:col-span-2 space-y-6">
             {/* Category Distribution Donut */}
             <Card className="p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Por Categoría</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-4">Por Categoría</h3>
               {categoryDistribution.length > 0 ? (
                 <>
                   <LazyChartContainer height={200}>
@@ -416,15 +416,15 @@ const PlatformCRMDashboard = () => {
                           className="w-3 h-3 rounded-full shrink-0"
                           style={{ backgroundColor: CATEGORY_CHART_COLORS[cat.category] || "#6366f1" }}
                         />
-                        <span className="text-white/70 truncate">{cat.name}</span>
-                        <span className="text-white ml-auto shrink-0">{cat.count}</span>
+                        <span className="text-muted-foreground truncate">{cat.name}</span>
+                        <span className="text-foreground ml-auto shrink-0">{cat.count}</span>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
                 <div className="h-[200px] flex items-center justify-center">
-                  <p className="text-sm text-white/30">Sin datos de categorías</p>
+                  <p className="text-sm text-muted-foreground/70">Sin datos de categorías</p>
                 </div>
               )}
             </Card>
@@ -432,7 +432,7 @@ const PlatformCRMDashboard = () => {
             {/* Users Needing Attention */}
             <Card className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Necesitan Atención</h3>
+                <h3 className="text-lg font-semibold text-foreground">Necesitan Atención</h3>
                 <Link to="/crm/usuarios" className="text-purple-400 text-sm hover:underline">
                   Ver todos
                 </Link>
@@ -442,13 +442,13 @@ const PlatformCRMDashboard = () => {
                   usersNeedingAttention.slice(0, 5).map((user) => (
                     <div
                       key={user.user_id}
-                      className="flex items-center justify-between p-2 bg-white/5 rounded-sm"
+                      className="flex items-center justify-between p-2 bg-muted/40 rounded-sm"
                     >
                       <div className="min-w-0">
-                        <p className="text-white text-sm truncate">
+                        <p className="text-foreground text-sm truncate">
                           {user.full_name || user.email}
                         </p>
-                        <p className="text-white/40 text-xs">
+                        <p className="text-muted-foreground/70 text-xs">
                           {user.days_since_last_activity != null
                             ? `${user.days_since_last_activity} días inactivo`
                             : "Sin actividad"}
@@ -469,7 +469,7 @@ const PlatformCRMDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-white/30 text-sm py-6 text-center">
+                  <p className="text-muted-foreground/70 text-sm py-6 text-center">
                     Todos los usuarios están activos
                   </p>
                 )}
@@ -481,7 +481,7 @@ const PlatformCRMDashboard = () => {
 
         {/* ========== SECCIÓN: PANCAKE CRM SYNC ========== */}
         <div className="mt-2">
-          <h2 className="text-sm font-medium text-white/40 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-medium text-muted-foreground/70 uppercase tracking-wider mb-3">
             Integración Pancake CRM
           </h2>
           <PancakeSyncPanel

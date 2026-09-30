@@ -107,28 +107,28 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
     <div className="flex gap-3 py-3">
       <Avatar className="h-10 w-10 flex-shrink-0 ring-1 ring-white/10">
         <AvatarImage src={comment.user?.avatar_url || undefined} />
-        <AvatarFallback className="bg-zinc-700 text-white text-sm">
+        <AvatarFallback className="bg-muted text-foreground text-sm">
           {comment.user?.full_name?.charAt(0) || '?'}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium text-white/90 text-sm">
+          <span className="font-medium text-foreground text-sm">
             {comment.user?.full_name || 'Usuario'}
           </span>
-          <span className="text-xs text-white/40">
+          <span className="text-xs text-muted-foreground/70">
             {formatDistanceToNow(new Date(comment.created_at), {
               addSuffix: false,
               locale: es
             })}
           </span>
         </div>
-        <p className="text-white/80 text-sm mt-1 leading-relaxed">{comment.comment}</p>
+        <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{comment.comment}</p>
         <div className="flex items-center gap-4 mt-2">
-          <button className="flex items-center gap-1 text-white/40 hover:text-white/60 transition-colors">
+          <button className="flex items-center gap-1 text-muted-foreground/70 hover:text-muted-foreground transition-colors">
             <Heart className="h-4 w-4" />
           </button>
-          <button className="text-white/40 hover:text-white/60 text-xs transition-colors">
+          <button className="text-muted-foreground/70 hover:text-muted-foreground text-xs transition-colors">
             Responder
           </button>
         </div>
@@ -140,15 +140,15 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
   return (
     <div className="flex flex-col h-full bg-card rounded-t-3xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-center py-3 relative border-b border-white/10">
-        <div className="w-10 h-1 bg-white/20 rounded-full absolute top-2" />
-        <h3 className="text-white font-semibold text-base mt-2">
+      <div className="flex items-center justify-center py-3 relative border-b border-border">
+        <div className="w-10 h-1 bg-muted rounded-full absolute top-2" />
+        <h3 className="text-foreground font-semibold text-base mt-2">
           {comments.length} comentarios
         </h3>
         {onClose && (
           <button 
             onClick={onClose}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
@@ -159,10 +159,10 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
       <div className="flex-1 overflow-y-auto px-4 overscroll-contain">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground/70" />
           </div>
         ) : comments.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-white/40">
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/70">
             <p className="text-sm">Sé el primero en comentar</p>
           </div>
         ) : (
@@ -175,11 +175,11 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
       </div>
 
       {/* Input area */}
-      <div className="border-t border-white/10 p-3 pb-safe">
+      <div className="border-t border-border p-3 pb-safe">
         {user ? (
           <form onSubmit={handleSubmit} className="flex items-center gap-3">
             <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarFallback className="bg-zinc-700 text-white text-xs">
+              <AvatarFallback className="bg-muted text-foreground text-xs">
                 {user.email?.charAt(0).toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
@@ -189,7 +189,7 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
                 placeholder="Añade un comentario..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="w-full bg-zinc-800 text-white placeholder-white/40 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-white/20"
+                className="w-full bg-muted text-foreground placeholder:text-muted-foreground rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
               />
             </div>
             <button
@@ -206,7 +206,7 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
           </form>
         ) : (
           <div className="text-center py-2">
-            <p className="text-white/40 text-sm">Inicia sesión para comentar</p>
+            <p className="text-muted-foreground/70 text-sm">Inicia sesión para comentar</p>
           </div>
         )}
       </div>

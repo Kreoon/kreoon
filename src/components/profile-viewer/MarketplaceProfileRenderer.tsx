@@ -71,7 +71,7 @@ function ProfileError({ message }: { message: string }) {
 
 function KreoonBranding() {
   return (
-    <footer className="py-6 text-center border-t border-white/5" aria-label="Powered by Kreoon">
+    <footer className="py-6 text-center border-t border-border/50" aria-label="Powered by Kreoon">
       <a
         href="https://kreoon.com"
         target="_blank"
@@ -192,7 +192,7 @@ export function MarketplaceProfileRenderer({
         {/* Creadores similares */}
         {showSimilarCreators && creatorData.profile.categories?.length > 0 && (
           <Suspense fallback={null}>
-            <section className="py-8 px-4 border-t border-white/5">
+            <section className="py-8 px-4 border-t border-border/50">
               <div className="max-w-5xl mx-auto">
                 <SimilarCreators
                   creatorIds={[]}

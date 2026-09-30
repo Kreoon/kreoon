@@ -38,7 +38,7 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
   const isOwner = useMemo(() => !!user && space?.owner_id === user.id, [user, space]);
 
   return (
-    <div className="border-b border-white/5 bg-kreoon-bg-secondary/95 backdrop-blur-md sticky top-0 z-20">
+    <div className="border-b border-border bg-kreoon-bg-secondary/95 backdrop-blur-md sticky top-0 z-20">
       <div className="max-w-7xl mx-auto px-3 md:px-8 flex items-center gap-3">
         <nav className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-2.5">
           {TABS.filter((t) => !t.hidden).map((t) => (
@@ -51,7 +51,7 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
                   'flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-2xl whitespace-nowrap transition-all',
                   isActive
                     ? 'text-white shadow-lg'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )
               }
               style={({ isActive }) =>
@@ -74,7 +74,7 @@ export function SpaceNavbar({ spaceSlug }: SpaceNavbarProps) {
                   'flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold rounded-2xl whitespace-nowrap transition-all ml-auto',
                   isActive
                     ? 'text-white shadow-lg'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04]'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
                 )
               }
               style={({ isActive }) =>

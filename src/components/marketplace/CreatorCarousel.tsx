@@ -61,10 +61,10 @@ export function CreatorCarousel({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-white">
+          <h2 className="text-xl font-semibold text-foreground">
             {title}{emoji && <span aria-hidden="true"> {emoji}</span>}
           </h2>
-          {subtitle && <p className="text-gray-400 text-sm mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-muted-foreground text-sm mt-0.5">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2">
           {onSeeAll && (
@@ -81,10 +81,10 @@ export function CreatorCarousel({
               disabled={!canScrollLeft}
               aria-label="Desplazar carrusel a la izquierda"
               className={cn(
-                'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
+                'w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center transition-all',
                 canScrollLeft
-                  ? 'hover:bg-white/20 text-white'
-                  : 'opacity-30 cursor-not-allowed text-gray-500',
+                  ? 'hover:bg-muted text-foreground'
+                  : 'opacity-30 cursor-not-allowed text-muted-foreground',
               )}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -94,10 +94,10 @@ export function CreatorCarousel({
               disabled={!canScrollRight}
               aria-label="Desplazar carrusel a la derecha"
               className={cn(
-                'w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all',
+                'w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center transition-all',
                 canScrollRight
-                  ? 'hover:bg-white/20 text-white'
-                  : 'opacity-30 cursor-not-allowed text-gray-500',
+                  ? 'hover:bg-muted text-foreground'
+                  : 'opacity-30 cursor-not-allowed text-muted-foreground',
               )}
             >
               <ChevronRight className="h-4 w-4" />

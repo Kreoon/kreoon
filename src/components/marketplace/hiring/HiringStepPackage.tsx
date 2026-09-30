@@ -39,7 +39,7 @@ export function HiringStepPackage({
                 'text-left border rounded-sm p-4 transition-all',
                 paymentMethod === 'payment'
                   ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 hover:border-purple-500/50',
+                  : 'border-border hover:border-purple-500/50',
               )}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -53,9 +53,9 @@ export function HiringStepPackage({
                     <div className="w-2 h-2 rounded-full bg-purple-500" />
                   )}
                 </div>
-                <span className="text-white text-sm font-semibold">Pago con Escrow</span>
+                <span className="text-foreground text-sm font-semibold">Pago con Escrow</span>
               </div>
-              <p className="text-gray-500 text-xs pl-6">
+              <p className="text-muted-foreground text-xs pl-6">
                 Tu dinero se libera solo cuando apruebes el contenido
               </p>
             </button>
@@ -70,8 +70,8 @@ export function HiringStepPackage({
                 paymentMethod === 'exchange'
                   ? 'border-green-500/50 bg-green-500/10'
                   : hasPaidPlan
-                    ? 'border-white/10 hover:border-green-500/30'
-                    : 'border-white/10 opacity-50 cursor-not-allowed',
+                    ? 'border-border hover:border-green-500/30'
+                    : 'border-border opacity-50 cursor-not-allowed',
               )}
             >
               <div className="flex items-center gap-2 mb-1">
@@ -85,17 +85,17 @@ export function HiringStepPackage({
                     <div className="w-2 h-2 rounded-full bg-green-500" />
                   )}
                 </div>
-                <Gift className={cn('h-4 w-4', hasPaidPlan ? 'text-green-400' : 'text-gray-500')} />
-                <span className={cn('text-sm font-semibold', hasPaidPlan ? 'text-green-400' : 'text-gray-400')}>
+                <Gift className={cn('h-4 w-4', hasPaidPlan ? 'text-green-400' : 'text-muted-foreground')} />
+                <span className={cn('text-sm font-semibold', hasPaidPlan ? 'text-green-400' : 'text-muted-foreground')}>
                   Canje de producto
                 </span>
-                {!hasPaidPlan && <Lock className="h-3.5 w-3.5 text-gray-500" />}
+                {!hasPaidPlan && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
               </div>
-              <p className="text-gray-500 text-xs pl-6">
+              <p className="text-muted-foreground text-xs pl-6">
                 {exchangeConditions || 'Envia tu producto a cambio de contenido'}
               </p>
               {!hasPaidPlan && (
-                <p className="text-gray-600 text-xs mt-2 text-center">
+                <p className="text-muted-foreground text-xs mt-2 text-center">
                   Disponible con plan pagado
                 </p>
               )}
@@ -116,7 +116,7 @@ export function HiringStepPackage({
               'w-full text-left border rounded-sm p-4 transition-all',
               selectedPackageId === pkg.id
                 ? 'border-purple-500 bg-purple-500/10'
-                : 'border-white/10 hover:border-purple-500/50',
+                : 'border-border hover:border-purple-500/50',
             )}
           >
             <div className="flex items-start gap-3">
@@ -132,23 +132,23 @@ export function HiringStepPackage({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-white text-sm font-semibold">{pkg.name}</span>
+                  <span className="text-foreground text-sm font-semibold">{pkg.name}</span>
                   {pkg.is_popular && (
                     <span className="bg-purple-500/20 text-purple-300 text-xs px-2 py-0.5 rounded-full">
                       Popular
                     </span>
                   )}
                 </div>
-                <p className="text-gray-500 text-xs mt-0.5">{pkg.description}</p>
+                <p className="text-muted-foreground text-xs mt-0.5">{pkg.description}</p>
                 <div className="flex items-baseline gap-2 mt-1.5">
-                  <span className="text-white font-bold">
+                  <span className="text-foreground font-bold">
                     ${pkg.price.toLocaleString()} {pkg.currency}
                   </span>
                   {pkg.discount_pct && (
                     <span className="text-green-400 text-xs">(ahorra {pkg.discount_pct}%)</span>
                   )}
                 </div>
-                <span className="text-gray-500 text-xs">Entrega: {pkg.delivery_days}</span>
+                <span className="text-muted-foreground text-xs">Entrega: {pkg.delivery_days}</span>
               </div>
             </div>
           </button>
@@ -157,8 +157,8 @@ export function HiringStepPackage({
 
       {/* Selected package details */}
       {selected && (
-        <div className="bg-white/5 rounded-sm p-4 space-y-2">
-          <p className="text-gray-400 text-xs font-medium">Incluye:</p>
+        <div className="bg-muted/50 rounded-sm p-4 space-y-2">
+          <p className="text-muted-foreground text-xs font-medium">Incluye:</p>
           {selected.includes.map((item, i) => (
             <div key={i} className="flex items-start gap-2 text-foreground/80 text-xs">
               <CheckCircle className="h-3.5 w-3.5 text-green-400 mt-0.5 flex-shrink-0" />

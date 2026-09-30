@@ -115,7 +115,7 @@ export const KreoonEmptyState = React.forwardRef<
       {/* Título */}
       <h3
         className={cn(
-          "font-medium text-white",
+          "font-medium text-foreground",
           config.title,
           description ? "mb-1" : action || secondaryAction ? "mb-4" : "mb-0"
         )}

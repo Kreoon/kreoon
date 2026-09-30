@@ -118,7 +118,7 @@ export function ProcessWithdrawalDialog({
               </AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="font-medium text-white text-lg">{profile?.full_name || 'Usuario'}</p>
+              <p className="font-medium text-foreground text-lg">{profile?.full_name || 'Usuario'}</p>
               <p className="text-sm text-muted-foreground">{profile?.email}</p>
             </div>
             <div className="text-right">
@@ -144,7 +144,7 @@ export function ProcessWithdrawalDialog({
                   {key.replace(/_/g, ' ')}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-white font-mono">
+                  <span className="text-sm text-foreground font-mono">
                     {typeof value === 'string' ? value : JSON.stringify(value)}
                   </span>
                   <Button

@@ -80,7 +80,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
       className={cn(
         'sticky top-0 z-50',
         'flex h-14 items-center justify-between',
-        'border-b border-white/5',
+        'border-b border-border/50',
         'bg-background/95 backdrop-blur-sm',
         'px-4 md:px-6'
       )}
@@ -91,7 +91,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
           variant="ghost"
           size="icon"
           onClick={handleBack}
-          className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/10"
+          className="h-9 w-9 text-zinc-400 hover:text-foreground hover:bg-muted"
           aria-label="Volver"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -106,7 +106,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
             <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
               <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
             </div>
-            <span className="text-sm font-bold text-white hidden sm:inline">{platformName}</span>
+            <span className="text-sm font-bold text-foreground hidden sm:inline">{platformName}</span>
           </button>
         )}
       </div>
@@ -122,7 +122,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               onClick={handleSave}
               disabled={isSaving}
               className={cn(
-                'text-zinc-400 hover:text-white hover:bg-white/10',
+                'text-zinc-400 hover:text-foreground hover:bg-muted',
                 isSaved && 'text-purple-400 hover:text-purple-300'
               )}
             >
@@ -134,7 +134,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-zinc-400 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
@@ -156,7 +156,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-zinc-400 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
@@ -166,7 +166,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={() => navigate('/auth')}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-zinc-400 hover:text-foreground hover:bg-muted"
             >
               <LogIn className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Iniciar sesion</span>

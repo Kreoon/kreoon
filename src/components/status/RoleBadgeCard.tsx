@@ -177,7 +177,7 @@ export function RoleBadgeCard({
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div
               className={cn(
-                "flex shrink-0 items-center justify-center rounded-full text-white shadow-lg",
+                "flex shrink-0 items-center justify-center rounded-full text-foreground shadow-lg",
                 gradientClass,
                 sizeClasses.iconWrapper,
               )}
@@ -187,7 +187,7 @@ export function RoleBadgeCard({
             <div className="min-w-0">
               <span
                 className={cn(
-                  "inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-semibold text-white",
+                  "inline-flex items-center rounded-sm px-2.5 py-1 text-xs font-semibold text-foreground",
                   gradientClass,
                 )}
               >

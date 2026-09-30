@@ -25,7 +25,7 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
   const { data: health } = useAcademyFinancialHealth(spaceId);
 
   if (isLoading || !data) {
-    return <div className="text-zinc-500 p-8 text-center">Cargando analytics...</div>;
+    return <div className="text-muted-foreground p-8 text-center">Cargando analytics...</div>;
   }
 
   // MRR efectivo (real cobrado) si está disponible, sino caer al bruto legacy.
@@ -66,7 +66,7 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       </div>
 
       {/* Growth panel */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-4">Últimos 30 días</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <MiniMetric label="Visitantes" value={data.visitors_30d.toLocaleString()} />
@@ -78,7 +78,7 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
           />
         </div>
         {dilution >= 50 && mrrGross > 0 && (
-          <div className="mt-4 flex items-start gap-2 text-xs text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-md p-3">
+          <div className="mt-4 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-500/5 border border-amber-500/20 rounded-md p-3">
             <Tag className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
             <span>
               Estás sacrificando <strong>{dilution}%</strong> del MRR en cupones
@@ -89,10 +89,10 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       </Card>
 
       {/* Chart visitantes */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-4">Visitantes en el tiempo</h3>
         {data.daily_data.length === 0 ? (
-          <div className="text-zinc-500 text-sm py-8 text-center">
+          <div className="text-muted-foreground text-sm py-8 text-center">
             Aún no hay datos. Las métricas aparecerán cuando empieces a recibir tráfico.
           </div>
         ) : (
@@ -129,23 +129,23 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       </Card>
 
       {/* Traffic sources */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-4">Fuentes de tráfico</h3>
         {data.top_sources.length === 0 ? (
-          <div className="text-zinc-500 text-sm">Sin datos.</div>
+          <div className="text-muted-foreground text-sm">Sin datos.</div>
         ) : (
           <div className="space-y-2">
             {data.top_sources.map((s) => (
               <div key={s.source} className="flex items-center gap-3">
-                <span className="text-sm w-32 truncate text-zinc-300">{s.source}</span>
-                <div className="flex-1 h-2 rounded-full bg-white/5 overflow-hidden">
+                <span className="text-sm w-32 truncate text-muted-foreground">{s.source}</span>
+                <div className="flex-1 h-2 rounded-full bg-muted/50 overflow-hidden">
                   <div
                     className="h-full"
                     style={{ width: `${s.pct}%`, backgroundColor: accentColor }}
                   />
                 </div>
-                <span className="text-xs text-zinc-500 w-16 text-right">{s.count}</span>
-                <span className="text-xs text-zinc-400 w-12 text-right">{s.pct}%</span>
+                <span className="text-xs text-muted-foreground w-16 text-right">{s.count}</span>
+                <span className="text-xs text-muted-foreground w-12 text-right">{s.pct}%</span>
               </div>
             ))}
           </div>
@@ -153,15 +153,15 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       </Card>
 
       {/* Funnel (Fase 8) */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <ArrowUpRight className="h-4 w-4" /> Funnel de conversión
         </h3>
         <div className="space-y-3">
           {data.funnel.map((f, i) => (
             <div key={f.stage} className="flex items-center gap-3">
-              <span className="text-xs text-zinc-500 w-32">{f.stage}</span>
-              <div className="flex-1 h-7 rounded-md bg-white/5 overflow-hidden relative">
+              <span className="text-xs text-muted-foreground w-32">{f.stage}</span>
+              <div className="flex-1 h-7 rounded-md bg-muted/50 overflow-hidden relative">
                 <div
                   className="h-full transition-all"
                   style={{
@@ -180,7 +180,7 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       </Card>
 
       {/* Heatmap (Fase 8) */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Activity className="h-4 w-4" /> Heatmap de actividad
         </h3>
@@ -190,7 +190,7 @@ export function SpaceDashboard({ spaceId, accentColor = '#8B5CF6' }: SpaceDashbo
       {/* Métricas avanzadas tipo Baremetrics */}
       <div>
         <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-violet-400" />
+          <Sparkles className="h-4 w-4 text-primary" />
           Métricas de negocio
         </h2>
         <AdvancedMetricsPanel spaceId={spaceId} />
@@ -203,7 +203,7 @@ function Stat({
   icon: Icon, label, value, accent, subtext,
 }: { icon: any; label: string; value: string; accent: string; subtext?: string }) {
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div
         className="h-9 w-9 rounded-lg flex items-center justify-center mb-2"
         style={{ backgroundColor: `${accent}26` }}
@@ -211,8 +211,8 @@ function Stat({
         <Icon className="h-4 w-4" style={{ color: accent }} />
       </div>
       <div className="text-2xl font-bold" style={{ color: accent }}>{value}</div>
-      <div className="text-xs text-zinc-500 uppercase tracking-wide mt-0.5">{label}</div>
-      {subtext && <div className="text-[10px] text-zinc-500 mt-0.5">{subtext}</div>}
+      <div className="text-xs text-muted-foreground uppercase tracking-wide mt-0.5">{label}</div>
+      {subtext && <div className="text-[10px] text-muted-foreground mt-0.5">{subtext}</div>}
     </Card>
   );
 }
@@ -221,7 +221,7 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-2xl font-bold">{value}</div>
-      <div className="text-xs text-zinc-500 uppercase tracking-wide mt-0.5">{label}</div>
+      <div className="text-xs text-muted-foreground uppercase tracking-wide mt-0.5">{label}</div>
     </div>
   );
 }
@@ -247,13 +247,13 @@ function Heatmap({
       <div className="inline-grid gap-1" style={{ gridTemplateColumns: `auto repeat(${hours.length}, 1fr)` }}>
         <div />
         {hours.map((h) => (
-          <div key={h} className="text-[10px] text-zinc-500 text-center">
+          <div key={h} className="text-[10px] text-muted-foreground text-center">
             {h.toString().padStart(2, '0')}h
           </div>
         ))}
         {days.map((d, dayIdx) => (
           <React.Fragment key={`row-${dayIdx}`}>
-            <div className="text-[10px] text-zinc-500 pr-2 self-center">
+            <div className="text-[10px] text-muted-foreground pr-2 self-center">
               {d}
             </div>
             {hours.map((h) => (

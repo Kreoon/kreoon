@@ -118,15 +118,15 @@ export function OnboardingWizard({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg rounded-3xl border-2 border-white/10 bg-kreoon-bg-card p-0 overflow-hidden">
+      <DialogContent className="max-w-lg rounded-3xl border-2 border-border bg-kreoon-bg-card p-0 overflow-hidden">
         {/* Header con progress */}
         <div
-          className="p-5 md:p-6 border-b border-white/5"
+          className="p-5 md:p-6 border-b border-border"
           style={{ background: `linear-gradient(135deg, ${KREOON_PURPLE}20, transparent)` }}
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center text-zinc-500 hover:text-zinc-300 hover:bg-white/5"
+            className="absolute top-4 right-4 h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50"
             aria-label="Cerrar"
           >
             <X className="h-4 w-4" />
@@ -135,10 +135,10 @@ export function OnboardingWizard({
           <div className="flex items-center gap-3 mb-3">
             <div className="text-4xl" aria-hidden="true">🎉</div>
             <div>
-              <DialogTitle className="text-xl md:text-2xl font-extrabold text-white">
+              <DialogTitle className="text-xl md:text-2xl font-extrabold text-foreground">
                 ¡Bienvenido a {spaceName}!
               </DialogTitle>
-              <DialogDescription className="text-sm text-zinc-400 mt-1">
+              <DialogDescription className="text-sm text-muted-foreground mt-1">
                 Completa estos 4 pasos para empezar con buen pie
               </DialogDescription>
             </div>
@@ -147,10 +147,10 @@ export function OnboardingWizard({
           {/* Progress */}
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs font-semibold mb-1.5">
-              <span className="text-zinc-300">{totalDone} de {steps.length} pasos</span>
+              <span className="text-muted-foreground">{totalDone} de {steps.length} pasos</span>
               <span style={{ color: KREOON_PURPLE }}>{progressPct}%</span>
             </div>
-            <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
@@ -173,25 +173,25 @@ export function OnboardingWizard({
                   'rounded-2xl border-2 p-4 transition-all',
                   isDone
                     ? 'border-emerald-500/40 bg-emerald-500/5'
-                    : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                    : 'border-border bg-muted/30 hover:border-border'
                 )}
               >
                 <div className="flex items-start gap-3">
                   <div
                     className={cn(
                       'h-12 w-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 border-2',
-                      isDone ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-white/10 bg-white/5'
+                      isDone ? 'border-emerald-500/40 bg-emerald-500/10' : 'border-border bg-muted/50'
                     )}
                     aria-hidden="true"
                   >
-                    {isDone ? <Check className="h-6 w-6 text-emerald-400" /> : step.emoji}
+                    {isDone ? <Check className="h-6 w-6 text-emerald-600 dark:text-emerald-400" /> : step.emoji}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3
                         className={cn(
                           'font-bold text-base',
-                          isDone ? 'text-emerald-300' : 'text-white'
+                          isDone ? 'text-emerald-700 dark:text-emerald-300' : 'text-foreground'
                         )}
                       >
                         {i + 1}. {step.title}
@@ -206,7 +206,7 @@ export function OnboardingWizard({
                         {step.reward}
                       </span>
                     </div>
-                    <p className="text-xs text-zinc-400 leading-relaxed mb-3">
+                    <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                       {step.description}
                     </p>
                     {!isDone && (
@@ -222,7 +222,7 @@ export function OnboardingWizard({
                         </Link>
                         <button
                           onClick={() => markDone(step.key)}
-                          className="text-[11px] text-zinc-500 hover:text-zinc-300 underline"
+                          className="text-[11px] text-muted-foreground hover:text-foreground underline"
                         >
                           Marcar como hecho
                         </button>
@@ -236,7 +236,7 @@ export function OnboardingWizard({
         </div>
 
         {/* Footer */}
-        <div className="p-4 md:p-5 border-t border-white/5 bg-black/20">
+        <div className="p-4 md:p-5 border-t border-border bg-muted/60">
           {allDone ? (
             <Button
               onClick={handleFinish}
@@ -252,7 +252,7 @@ export function OnboardingWizard({
           ) : (
             <button
               onClick={onClose}
-              className="text-xs text-zinc-500 hover:text-zinc-300 underline mx-auto block"
+              className="text-xs text-muted-foreground hover:text-foreground underline mx-auto block"
             >
               Continuar después
             </button>

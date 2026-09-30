@@ -64,12 +64,12 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
       <Card
-        className="max-w-lg w-full p-6 space-y-4 bg-background border-white/10 max-h-[90vh] overflow-y-auto"
+        className="max-w-lg w-full p-6 space-y-4 bg-background border-border max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-lg">Nuevo evento</h2>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -80,7 +80,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Ej: Q&A semanal con la comunidad"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
         </div>
         <div>
@@ -88,7 +88,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-md bg-black/30 border border-white/10 p-2 text-sm h-20 focus:outline-none focus:border-purple-500/50"
+            className="w-full rounded-md bg-muted border border-border p-2 text-sm h-20 focus:outline-none focus:border-primary/50"
           />
         </div>
         <div className="grid grid-cols-2 gap-3">
@@ -98,7 +98,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
               type="datetime-local"
               value={startsAt}
               onChange={(e) => setStartsAt(e.target.value)}
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
           </div>
           <div>
@@ -107,7 +107,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
               type="datetime-local"
               value={endsAt}
               onChange={(e) => setEndsAt(e.target.value)}
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
           </div>
         </div>
@@ -117,7 +117,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
             <select
               value={type}
               onChange={(e) => setType(e.target.value as EventType)}
-              className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
+              className="w-full bg-muted border border-border rounded p-2 text-sm"
             >
               <option value="live_call">Live call</option>
               <option value="workshop">Workshop</option>
@@ -132,10 +132,10 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
               value={meetingUrl}
               onChange={(e) => setMeetingUrl(e.target.value)}
               placeholder="https://meet.google.com/..."
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
             {gcalConnection?.is_active && !meetingUrl && (
-              <p className="text-[10px] text-zinc-500 mt-1">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 Se generará automáticamente un link de Google Meet
               </p>
             )}
@@ -162,12 +162,12 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
           />
           Sincronizar con Google Calendar
           {!gcalConnection?.is_active && (
-            <span className="text-xs text-zinc-500">(conecta primero)</span>
+            <span className="text-xs text-muted-foreground">(conecta primero)</span>
           )}
         </label>
 
         {error && (
-          <div className="rounded bg-rose-500/10 border border-rose-500/30 p-2 text-xs text-rose-300">
+          <div className="rounded bg-rose-500/10 border border-rose-500/30 p-2 text-xs text-rose-700 dark:text-rose-300">
             {error}
           </div>
         )}

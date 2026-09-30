@@ -185,7 +185,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                           withdrawal.status === 'processing' && 'text-blue-400 animate-spin',
                           withdrawal.status === 'completed' && 'text-emerald-400',
                           withdrawal.status === 'rejected' && 'text-red-400',
-                          withdrawal.status === 'cancelled' && 'text-gray-400'
+                          withdrawal.status === 'cancelled' && 'text-muted-foreground'
                         )}
                       />
                     </div>
@@ -193,7 +193,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <p className="font-semibold text-white">
+                        <p className="font-semibold text-foreground">
                           {withdrawal.formattedNetAmount}
                         </p>
                         <Badge
@@ -204,7 +204,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
                             withdrawal.status === 'processing' && 'border-blue-500/30 text-blue-400',
                             withdrawal.status === 'completed' && 'border-emerald-500/30 text-emerald-400',
                             withdrawal.status === 'rejected' && 'border-red-500/30 text-red-400',
-                            withdrawal.status === 'cancelled' && 'border-gray-500/30 text-gray-400'
+                            withdrawal.status === 'cancelled' && 'border-gray-500/30 text-muted-foreground'
                           )}
                         >
                           {withdrawal.statusLabel}
@@ -263,7 +263,7 @@ export function WithdrawalHistory({ walletId, className }: WithdrawalHistoryProp
 
               {/* Timeline */}
               <div>
-                <p className="text-sm font-medium text-white mb-4">Seguimiento</p>
+                <p className="text-sm font-medium text-foreground mb-4">Seguimiento</p>
                 <WithdrawalStatusTimeline withdrawal={selectedWithdrawal} />
               </div>
             </div>

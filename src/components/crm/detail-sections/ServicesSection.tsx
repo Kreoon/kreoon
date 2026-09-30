@@ -33,10 +33,10 @@ export function ServicesSection({ services }: ServicesSectionProps) {
         {services.map((service) => (
           <div
             key={service.id}
-            className="rounded-sm bg-white/[0.03] border border-white/5 p-2.5"
+            className="rounded-sm bg-white/[0.03] border border-border p-2.5"
           >
             <div className="flex items-start justify-between gap-2">
-              <p className="text-xs text-white/70 font-medium truncate flex-1">
+              <p className="text-xs text-muted-foreground font-medium truncate flex-1">
                 {service.title}
               </p>
               {service.is_featured && (
@@ -53,14 +53,14 @@ export function ServicesSection({ services }: ServicesSectionProps) {
               </span>
 
               {service.price_amount != null && (
-                <span className="text-xs text-white/60">
+                <span className="text-xs text-muted-foreground">
                   {formatPrice(service.price_amount, service.price_currency)}
                   {service.price_type === 'hourly' && '/hr'}
                 </span>
               )}
 
               {service.delivery_days != null && (
-                <span className="flex items-center gap-0.5 text-[10px] text-white/40">
+                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground/70">
                   <Clock className="h-2.5 w-2.5" />
                   {service.delivery_days}d
                 </span>

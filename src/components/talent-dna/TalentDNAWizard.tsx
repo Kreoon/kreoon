@@ -237,8 +237,8 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-bold text-white">Crea tu ADN de Talento</h2>
-          <p className="text-sm text-gray-400">Responde las preguntas en un solo audio</p>
+          <h2 className="text-xl font-bold text-foreground">Crea tu ADN de Talento</h2>
+          <p className="text-sm text-muted-foreground">Responde las preguntas en un solo audio</p>
         </div>
       </div>
 
@@ -246,23 +246,23 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Panel Izquierdo: Preguntas */}
-        <div className="relative overflow-hidden rounded-sm border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-border">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 via-emerald-500/10 to-cyan-500/20" />
           <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center">
                 <span className="text-lg">💬</span>
               </div>
-              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">7 Preguntas</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">7 Preguntas</h3>
             </div>
 
             <div className="space-y-3">
               {TALENT_DNA_QUESTIONS.map((q) => (
                 <div key={q.id} className="flex gap-2.5 group">
                   <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-emerald-500/30 to-cyan-500/30
-                                   border border-white/10 flex items-center justify-center text-[10px] font-bold text-emerald-300">
+                                   border border-border flex items-center justify-center text-[10px] font-bold text-emerald-300">
                     {q.id}
                   </span>
                   <div className="flex-1">
@@ -280,20 +280,20 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
         </div>
 
         {/* Panel Derecho: Audio */}
-        <div className="relative overflow-hidden rounded-sm border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-border">
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-600/20 via-cyan-500/10 to-emerald-500/20" />
           <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center">
                 <span className="text-lg">🎤</span>
               </div>
-              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Graba tu audio</h3>
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center">
-              <p className="text-sm text-gray-400 text-center max-w-xs mb-10">
+              <p className="text-sm text-muted-foreground text-center max-w-xs mb-10">
                 Responde todas las preguntas en un solo audio. Entre más detalles, mejor será tu perfil.
               </p>
 
@@ -304,7 +304,7 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
                 />
               </div>
 
-              <p className="text-[11px] text-gray-500 text-center mt-6">
+              <p className="text-[11px] text-muted-foreground text-center mt-6">
                 Intenta resumir tus respuestas en 3-5 minutos de audio.
               </p>
             </div>
@@ -351,16 +351,16 @@ export function TalentDNAWizard({ onComplete }: TalentDNAWizardProps) {
           {buttonTranscribing ? (
             <>
               <Loader2 className="w-5 h-5 text-white animate-spin" />
-              <span className="font-semibold text-white">Transcribiendo audio...</span>
+              <span className="font-semibold text-foreground">Transcribiendo audio...</span>
             </>
           ) : (
             <>
-              <Sparkles className={`w-5 h-5 ${canSubmit ? 'text-white' : 'text-gray-500'}`} />
-              <span className={`font-semibold ${canSubmit ? 'text-white' : 'text-gray-500'}`}>
+              <Sparkles className={`w-5 h-5 ${canSubmit ? 'text-white' : 'text-muted-foreground'}`} />
+              <span className={`font-semibold ${canSubmit ? 'text-white' : 'text-muted-foreground'}`}>
                 Generar mi ADN de Talento
               </span>
               <ChevronRight className={`w-5 h-5 transition-transform group-hover:translate-x-1 ${
-                canSubmit ? 'text-white' : 'text-gray-500'
+                canSubmit ? 'text-white' : 'text-muted-foreground'
               }`} />
             </>
           )}
@@ -385,13 +385,13 @@ function ProcessingStepItem({ label, status }: { label: string; status: 'pending
       )}
       {status === 'pending' && (
         <div className="w-6 h-6 rounded-full bg-gray-700/50 flex items-center justify-center">
-          <Circle className="w-4 h-4 text-gray-600" />
+          <Circle className="w-4 h-4 text-muted-foreground" />
         </div>
       )}
       <span className={`text-sm font-medium ${
         status === 'done' ? 'text-green-400' :
         status === 'active' ? 'text-white' :
-        'text-gray-500'
+        'text-muted-foreground'
       }`}>
         {label}
       </span>

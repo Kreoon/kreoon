@@ -11,7 +11,7 @@ export function OnlineIndicator({ spaceId, showLabel = true, className = '' }: O
   const count = presence.length;
 
   return (
-    <div className={`inline-flex items-center gap-1.5 text-xs text-zinc-400 ${className}`}>
+    <div className={`inline-flex items-center gap-1.5 text-xs text-muted-foreground ${className}`}>
       <span className="relative inline-flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>

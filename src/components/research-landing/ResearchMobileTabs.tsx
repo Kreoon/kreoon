@@ -40,7 +40,7 @@ export function ResearchMobileTabs({ activeSectionId, onSectionClick }: Research
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] whitespace-nowrap transition-all shrink-0',
                 isActive
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-                  : 'text-white/40 hover:text-white/70 border border-transparent'
+                  : 'text-muted-foreground/70 hover:text-muted-foreground border border-transparent'
               )}
             >
               <Icon className="h-3 w-3" />

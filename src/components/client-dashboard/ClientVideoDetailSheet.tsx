@@ -154,17 +154,17 @@ export function ClientVideoDetailSheet({
                 <button
                   onClick={() => setVariantIndex(i => Math.max(0, i - 1))}
                   disabled={variantIndex === 0}
-                  className="text-white disabled:opacity-30 hover:bg-white/20 rounded p-0.5"
+                  className="text-foreground disabled:opacity-30 hover:bg-muted rounded p-0.5"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-white text-xs font-medium min-w-[50px] text-center">
+                <span className="text-foreground text-xs font-medium min-w-[50px] text-center">
                   {variantIndex + 1} / {videoUrls.length}
                 </span>
                 <button
                   onClick={() => setVariantIndex(i => Math.min(videoUrls.length - 1, i + 1))}
                   disabled={variantIndex === videoUrls.length - 1}
-                  className="text-white disabled:opacity-30 hover:bg-white/20 rounded p-0.5"
+                  className="text-foreground disabled:opacity-30 hover:bg-muted rounded p-0.5"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>

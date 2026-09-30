@@ -533,7 +533,7 @@ export function MainLayout({
                     {pendingReviews.videoCount > 0 && (
                       <span>{pendingReviews.videoCount} video{pendingReviews.videoCount > 1 ? 's' : ''}</span>
                     )}
-                    <span className="hidden sm:inline text-white/80 ml-1">
+                    <span className="hidden sm:inline text-muted-foreground ml-1">
                       por revisar
                     </span>
                   </p>

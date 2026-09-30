@@ -148,7 +148,7 @@ ${details}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-white text-lg truncate">
+                <p className="font-medium text-foreground text-lg truncate">
                   {profile?.full_name || 'Usuario'}
                 </p>
                 <p className="text-sm text-muted-foreground truncate">{profile?.email}</p>
@@ -177,7 +177,7 @@ ${details}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium text-white">Destino del pago</span>
+                  <span className="text-sm font-medium text-foreground">Destino del pago</span>
                 </div>
                 <Button variant="ghost" size="sm" onClick={copyAllDetails}>
                   <Copy className="h-4 w-4 mr-2" />
@@ -198,7 +198,7 @@ ${details}
                       {key.replace(/_/g, ' ')}
                     </span>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-white font-mono">
+                      <span className="text-sm text-foreground font-mono">
                         {typeof value === 'string' ? value : JSON.stringify(value)}
                       </span>
                       <Button
@@ -258,7 +258,7 @@ ${details}
               {withdrawal.net_amount > 1000 && (
                 <div className="flex items-start gap-3 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
                   <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-[hsl(270,30%,70%)]">
+                  <div className="text-sm text-muted-foreground">
                     <p className="font-medium text-amber-400">Monto considerable</p>
                     <p className="text-xs mt-1">
                       Verifica cuidadosamente los datos antes de procesar este pago.

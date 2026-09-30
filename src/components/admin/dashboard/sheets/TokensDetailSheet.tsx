@@ -55,17 +55,17 @@ export function TokensDetailSheet({ aiStats }: TokensDetailSheetProps) {
     {
       key: "module",
       header: "Modulo",
-      render: (m) => <span className="font-medium text-white capitalize">{m.module.replace(/-/g, " ")}</span>,
+      render: (m) => <span className="font-medium text-foreground capitalize">{m.module.replace(/-/g, " ")}</span>,
     },
     {
       key: "calls",
       header: "Llamadas",
-      render: (m) => <span className="text-white/60">{formatLargeNumber(m.calls)}</span>,
+      render: (m) => <span className="text-muted-foreground">{formatLargeNumber(m.calls)}</span>,
     },
     {
       key: "tokens",
       header: "Tokens",
-      render: (m) => <span className="text-white/60">{formatLargeNumber(m.tokens)}</span>,
+      render: (m) => <span className="text-muted-foreground">{formatLargeNumber(m.tokens)}</span>,
     },
     {
       key: "cost",
@@ -78,17 +78,17 @@ export function TokensDetailSheet({ aiStats }: TokensDetailSheetProps) {
     {
       key: "provider",
       header: "Proveedor",
-      render: (p) => <span className="font-medium text-white capitalize">{p.provider}</span>,
+      render: (p) => <span className="font-medium text-foreground capitalize">{p.provider}</span>,
     },
     {
       key: "model",
       header: "Modelo",
-      render: (p) => <span className="text-white/60 text-xs">{p.model}</span>,
+      render: (p) => <span className="text-muted-foreground text-xs">{p.model}</span>,
     },
     {
       key: "calls",
       header: "Llamadas",
-      render: (p) => <span className="text-white/60">{formatLargeNumber(p.calls)}</span>,
+      render: (p) => <span className="text-muted-foreground">{formatLargeNumber(p.calls)}</span>,
     },
     {
       key: "cost",
@@ -117,7 +117,7 @@ export function TokensDetailSheet({ aiStats }: TokensDetailSheetProps) {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start">
+        <TabsList className="bg-muted/40 w-full justify-start">
           <TabsTrigger value="module" className="text-xs">Por Modulo</TabsTrigger>
           <TabsTrigger value="provider" className="text-xs">Por Proveedor</TabsTrigger>
         </TabsList>

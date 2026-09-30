@@ -192,7 +192,7 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
   return (
     <div className="space-y-6">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
+      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-border shadow-sm dark:shadow-none overflow-hidden">
         <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
@@ -205,14 +205,14 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-white">ADN del Negocio</h2>
+                  <h2 className="text-base sm:text-lg font-bold text-foreground dark:text-foreground">ADN del Negocio</h2>
                   {editMode && (
                     <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 border border-amber-200 dark:border-amber-500/30 text-xs font-medium text-amber-600 dark:text-amber-400">
                       Editando
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                <div className="flex items-center gap-2 mt-1 text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
                   <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                   <span className="truncate">Generado el {formatDate(dna.created_at)}</span>
                 </div>
@@ -296,7 +296,7 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
               <div className="flex gap-2 shrink-0">
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-foreground bg-zinc-100 dark:bg-card border border-zinc-200 dark:border-border transition-colors"
                 >
                   Cancelar
                 </button>
@@ -353,7 +353,7 @@ export function ClientDNADisplay({ dna, onDelete, onRegenerate, onUpdate }: Clie
       {!editMode && dna.audience_locations && Array.isArray(dna.audience_locations) && dna.audience_locations.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap">
           <MapPin className="w-4 h-4 text-purple-500 shrink-0" />
-          <span className="text-xs text-zinc-500">Audiencia:</span>
+          <span className="text-xs text-muted-foreground">Audiencia:</span>
           {(dna.audience_locations as Array<{ name: string; code: string; flag?: string }>).map((loc, i) => (
             <span
               key={loc.code || loc.name || i}
@@ -396,14 +396,14 @@ function QuickStat({
   gradient: string;
 }) {
   return (
-    <div className="rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50 p-2.5 sm:p-4">
+    <div className="rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border p-2.5 sm:p-4">
       <div className="flex items-center gap-2 sm:gap-3">
         <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shrink-0`}>
           <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider truncate">{label}</p>
-          <p className="text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white capitalize truncate">{value}</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider truncate">{label}</p>
+          <p className="text-xs sm:text-sm font-semibold text-foreground dark:text-foreground capitalize truncate">{value}</p>
         </div>
       </div>
     </div>

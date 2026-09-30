@@ -42,17 +42,17 @@ export function KPIDetailFilters({
   return (
     <div className="flex flex-col sm:flex-row gap-2 py-3">
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/30" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
         <Input
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}
-          className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 h-9 text-sm"
+          className="pl-9 bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 h-9 text-sm"
         />
       </div>
       {filters?.map((filter, i) => (
         <Select key={i} value={filter.value} onValueChange={filter.onChange}>
-          <SelectTrigger className="w-full sm:w-[150px] bg-white/5 border-white/10 text-white h-9 text-sm">
+          <SelectTrigger className="w-full sm:w-[150px] bg-muted/40 border-border text-foreground h-9 text-sm">
             <SelectValue placeholder={filter.placeholder} />
           </SelectTrigger>
           <SelectContent>
@@ -64,7 +64,7 @@ export function KPIDetailFilters({
       ))}
       {sortOptions && onSortChange && (
         <Select value={sortValue} onValueChange={onSortChange}>
-          <SelectTrigger className="w-full sm:w-[150px] bg-white/5 border-white/10 text-white h-9 text-sm">
+          <SelectTrigger className="w-full sm:w-[150px] bg-muted/40 border-border text-foreground h-9 text-sm">
             <SelectValue placeholder="Ordenar" />
           </SelectTrigger>
           <SelectContent>

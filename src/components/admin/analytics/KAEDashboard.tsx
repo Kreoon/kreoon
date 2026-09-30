@@ -29,7 +29,7 @@ export function KAEDashboard() {
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500" />
-          <p className="text-sm text-gray-500">Cargando analytics...</p>
+          <p className="text-sm text-muted-foreground">Cargando analytics...</p>
         </div>
       </div>
     );
@@ -62,8 +62,8 @@ export function KAEDashboard() {
             <BarChart3 className="h-6 w-6 text-purple-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Analytics Dashboard</h1>
-            <p className="text-gray-400 text-sm">Kreoon Analytics Engine (KAE)</p>
+            <h1 className="text-2xl font-bold text-foreground">Analytics Dashboard</h1>
+            <p className="text-muted-foreground text-sm">Kreoon Analytics Engine (KAE)</p>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export function KAEDashboard() {
           <button
             onClick={refresh}
             disabled={loading}
-            className="p-2 rounded-sm bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors disabled:opacity-50"
+            className="p-2 rounded-sm bg-card/50 border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
             title="Refrescar datos"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

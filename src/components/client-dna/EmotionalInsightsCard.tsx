@@ -20,25 +20,25 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
   const moodConfig = MOOD_CONFIG[analysis.overall_mood as keyof typeof MOOD_CONFIG] || MOOD_CONFIG.calm;
 
   return (
-    <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+    <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-border shadow-sm dark:shadow-none p-4 sm:p-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4 sm:mb-6">
         <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shrink-0">
           <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
         </div>
         <div className="min-w-0">
-          <h3 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white">Análisis Emocional</h3>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Insights de KIRO basados en tu audio</p>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground dark:text-foreground">Análisis Emocional</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">Insights de KIRO basados en tu audio</p>
         </div>
       </div>
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
         {/* Overall Mood */}
-        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2 mb-2">
-            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-            <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider">Estado General</span>
+            <Heart className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+            <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Estado General</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xl sm:text-2xl">{moodConfig.emoji}</span>
@@ -48,14 +48,14 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
 
         {/* Confidence Level */}
         {analysis.confidence_level != null && (
-          <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-              <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider">Confianza</span>
+              <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Confianza</span>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <span className="text-xl sm:text-2xl font-bold text-zinc-900 dark:text-white shrink-0">{analysis.confidence_level}%</span>
-              <div className="flex-1 h-2 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+              <span className="text-xl sm:text-2xl font-bold text-foreground dark:text-foreground shrink-0">{analysis.confidence_level}%</span>
+              <div className="flex-1 h-2 rounded-full bg-zinc-200 dark:bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-500"
                   style={{ width: `${analysis.confidence_level}%` }}
@@ -67,10 +67,10 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
 
         {/* Communication Style */}
         {analysis.communication_style && (
-          <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+          <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
             <div className="flex items-center gap-2 mb-2">
-              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-              <span className="text-[10px] sm:text-xs text-zinc-500 uppercase tracking-wider">Comunicación</span>
+              <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+              <span className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Comunicación</span>
             </div>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <StyleBadge label={analysis.communication_style.pace} type="pace" />
@@ -139,14 +139,14 @@ export function EmotionalInsightsCard({ analysis }: EmotionalInsightsCardProps) 
             <span className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">Recomendaciones de KIRO</span>
           </div>
           {analysis.content_recommendations.suggested_tone && (
-            <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 mb-2 sm:mb-3">
+            <p className="text-xs sm:text-sm text-foreground dark:text-muted-foreground mb-2 sm:mb-3">
               <span className="text-purple-600 dark:text-purple-400 font-medium">Tono sugerido:</span>{' '}
               {analysis.content_recommendations.suggested_tone}
             </p>
           )}
           {(analysis.content_recommendations.emphasize_topics?.length || 0) > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-[10px] sm:text-xs text-zinc-500">Enfatizar:</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">Enfatizar:</span>
               {(analysis.content_recommendations.emphasize_topics || []).map((topic, i) => (
                 <span
                   key={i}
@@ -171,14 +171,14 @@ function StyleBadge({ label, type }: { label: string; type: 'pace' | 'energy' })
       fast: { color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-100 dark:bg-orange-500/20', label: 'Rápido' },
     },
     energy: {
-      low: { color: 'text-zinc-600 dark:text-zinc-400', bg: 'bg-zinc-100 dark:bg-zinc-500/20', label: 'Baja energía' },
+      low: { color: 'text-muted-foreground dark:text-muted-foreground', bg: 'bg-zinc-100 dark:bg-zinc-500/20', label: 'Baja energía' },
       medium: { color: 'text-yellow-600 dark:text-yellow-400', bg: 'bg-yellow-100 dark:bg-yellow-500/20', label: 'Media energía' },
       high: { color: 'text-pink-600 dark:text-pink-400', bg: 'bg-pink-100 dark:bg-pink-500/20', label: 'Alta energía' },
     }
   };
 
   const config = configs[type][label as keyof typeof configs[typeof type]] || {
-    color: 'text-zinc-600 dark:text-zinc-400',
+    color: 'text-muted-foreground dark:text-muted-foreground',
     bg: 'bg-zinc-100 dark:bg-zinc-500/20',
     label
   };

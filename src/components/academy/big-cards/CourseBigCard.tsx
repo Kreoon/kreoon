@@ -94,7 +94,7 @@ export function CourseBigCard({
   return (
     <Link
       to={`/academia/${spaceSlug}/${course.slug}`}
-      className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded-3xl"
+      className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded-3xl"
       aria-label={`Curso ${course.title}`}
     >
       <BigCard accentColor={accent} glow className="h-full flex flex-col">
@@ -143,7 +143,7 @@ export function CourseBigCard({
 
           {/* Badge precio esquina superior derecha */}
           <div
-            className="absolute top-4 right-4 px-3.5 py-1.5 rounded-full text-sm font-extrabold shadow-xl backdrop-blur-md border border-white/20"
+            className="absolute top-4 right-4 px-3.5 py-1.5 rounded-full text-sm font-extrabold shadow-xl backdrop-blur-md border border-border"
             style={{
               backgroundColor: course.is_free ? 'rgba(16,185,129,0.95)' : `${accent}f0`,
               color: 'white',
@@ -162,7 +162,7 @@ export function CourseBigCard({
           {/* Play button overlay al hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 motion-safe:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             <div
-              className="h-20 w-20 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/30 backdrop-blur-md"
+              className="h-20 w-20 rounded-full flex items-center justify-center shadow-2xl border-4 border-border backdrop-blur-md"
               style={{ backgroundColor: `${accent}f0` }}
             >
               <Play className="h-9 w-9 text-white fill-white ml-1.5" />
@@ -180,7 +180,7 @@ export function CourseBigCard({
         {/* Body */}
         <div className="p-5 md:p-6 flex-1 flex flex-col gap-3">
           {course.description && (
-            <p className="text-sm text-zinc-400 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {stripHtml(course.description)}
             </p>
           )}
@@ -189,10 +189,10 @@ export function CourseBigCard({
           {hasProgress && (
             <div className="mt-1">
               <div className="flex items-center justify-between text-xs font-bold mb-1.5">
-                <span className="text-zinc-200">📚 Tu progreso</span>
+                <span className="text-foreground">📚 Tu progreso</span>
                 <span style={{ color: accent }}>{Math.round(progress!)}%</span>
               </div>
-              <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-700"
                   style={{
@@ -206,7 +206,7 @@ export function CourseBigCard({
           )}
 
           {/* Footer meta */}
-          <div className="mt-auto flex items-center gap-3 text-xs text-zinc-400 pt-1 flex-wrap">
+          <div className="mt-auto flex items-center gap-3 text-xs text-muted-foreground pt-1 flex-wrap">
             <span className="flex items-center gap-1.5">
               <Users className="h-3.5 w-3.5" aria-hidden="true" />
               {course.enrolled_count ?? 0}
@@ -219,7 +219,7 @@ export function CourseBigCard({
             )}
             {course.avg_rating && course.avg_rating > 0 && (
               <span className="flex items-center gap-1.5">
-                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+                <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-600 dark:text-amber-400" aria-hidden="true" />
                 {course.avg_rating.toFixed(1)}
               </span>
             )}

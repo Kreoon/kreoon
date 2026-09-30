@@ -59,10 +59,10 @@ export default function AcademiaSpaceClassroomPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Volver a Academia
         </Link>
       </div>
@@ -97,13 +97,13 @@ export default function AcademiaSpaceClassroomPage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-kreoon-bg-primary text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       {/* Owner action bar */}
       {isOwner && (
         <div
-          className="border-b border-white/5 sticky top-[57px] z-10 backdrop-blur-md"
+          className="border-b border-border sticky top-[57px] z-10 backdrop-blur-md"
           style={{ backgroundColor: `${KREOON_PURPLE}12` }}
         >
           <div className="max-w-7xl mx-auto px-4 md:px-8 h-12 flex items-center justify-between gap-3">
@@ -118,8 +118,8 @@ export default function AcademiaSpaceClassroomPage() {
                 className={cn(
                   'h-8 px-3 text-xs rounded-xl font-semibold transition-all flex items-center gap-1.5',
                   showDrafts
-                    ? 'bg-white/10 text-zinc-100'
-                    : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
+                    ? 'bg-muted text-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 )}
               >
                 {showDrafts ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
@@ -128,7 +128,7 @@ export default function AcademiaSpaceClassroomPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-8 text-xs gap-1 text-zinc-300 rounded-xl"
+                className="h-8 text-xs gap-1 text-muted-foreground rounded-xl"
                 onClick={() => navigate(`/academia/${spaceSlug}/gestionar`)}
               >
                 <Settings className="h-3.5 w-3.5" /> Editor avanzado
@@ -153,10 +153,10 @@ export default function AcademiaSpaceClassroomPage() {
         {/* Header */}
         <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-white">
+            <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-foreground">
               <span aria-hidden="true">🎬</span> Cursos
             </h1>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {isOwner
                 ? `${published.length} publicados · ${drafts.length} borradores · ${totalEnrolled} alumnos en total`
                 : `${published.length} curso${published.length !== 1 ? 's' : ''} disponible${published.length !== 1 ? 's' : ''} en ${space.name}`}
@@ -168,10 +168,10 @@ export default function AcademiaSpaceClassroomPage() {
         {visibleCourses.length === 0 ? (
           <BigCard className="p-12 text-center border-dashed">
             <div className="text-7xl mb-4" aria-hidden="true">🎬</div>
-            <h3 className="text-xl font-bold text-zinc-100 mb-2">
+            <h3 className="text-xl font-bold text-foreground mb-2">
               {isOwner ? 'Aún no tienes cursos' : 'Aún no hay cursos publicados'}
             </h3>
-            <p className="text-sm text-zinc-400 mb-5 max-w-md mx-auto">
+            <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
               {isOwner
                 ? 'Crea tu primer curso para empezar a enseñar y monetizar tu conocimiento'
                 : 'Vuelve pronto, el equipo está preparando contenido nuevo'}
@@ -205,7 +205,7 @@ export default function AcademiaSpaceClassroomPage() {
 
                 {/* Candado de desbloqueo condicional (no-owner) */}
                 {courseLocked && (
-                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm bg-card/80 text-amber-200 border-amber-500/40">
+                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm bg-card/80 text-amber-800 dark:text-amber-200 border-amber-500/40">
                     <Lock className="h-3 w-3" /> Bloqueado
                   </span>
                 )}
@@ -215,8 +215,8 @@ export default function AcademiaSpaceClassroomPage() {
                   <span
                     className={cn(
                       'absolute top-3 left-3 z-10 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm',
-                      course.status === 'draft' && 'bg-amber-500/30 text-amber-200 border-amber-500/50',
-                      course.status === 'archived' && 'bg-red-500/30 text-red-200 border-red-500/50'
+                      course.status === 'draft' && 'bg-amber-500/30 text-amber-800 dark:text-amber-200 border-amber-500/50',
+                      course.status === 'archived' && 'bg-red-500/30 text-red-800 dark:text-red-200 border-red-500/50'
                     )}
                   >
                     {course.status === 'draft' ? '📝 Borrador' : '📦 Archivado'}
@@ -247,7 +247,7 @@ export default function AcademiaSpaceClassroomPage() {
                       title={course.status === 'published' ? 'Ocultar' : 'Publicar'}
                       className={cn(
                         'h-8 w-8 rounded-xl bg-black/70 backdrop-blur-md hover:bg-black/90 flex items-center justify-center shadow-lg border border-white/10',
-                        course.status === 'published' ? 'text-emerald-300' : 'text-zinc-300'
+                        course.status === 'published' ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
                       )}
                     >
                       {course.status === 'published' ? (
@@ -291,8 +291,8 @@ export default function AcademiaSpaceClassroomPage() {
                 <div key={label} className="flex items-center gap-3">
                   <div className="text-3xl flex-shrink-0" aria-hidden="true">{emoji}</div>
                   <div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{label}</div>
-                    <div className="text-xl font-extrabold text-white tabular-nums leading-tight">{value}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+                    <div className="text-xl font-extrabold text-foreground tabular-nums leading-tight">{value}</div>
                   </div>
                 </div>
               ))}

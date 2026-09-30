@@ -65,7 +65,7 @@ export function CreatorRelationshipBadge({
           <img
             src={relationship.creator_avatar}
             alt={relationship.creator_name}
-            className="w-10 h-10 rounded-full object-cover ring-2 ring-white/10"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-border"
           />
         ) : (
           <div
@@ -84,14 +84,14 @@ export function CreatorRelationshipBadge({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-medium text-white truncate">{relationship.creator_name}</p>
+            <p className="text-sm font-medium text-foreground truncate">{relationship.creator_name}</p>
             <span className={cn('inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium', config.bg, config.color)}>
               <Icon className="h-3 w-3" />
               {type && CREATOR_RELATIONSHIP_TYPE_LABELS[type]}
             </span>
           </div>
           {relationship.list_name && (
-            <p className="text-[10px] text-white/40 mt-0.5">{relationship.list_name}</p>
+            <p className="text-[10px] text-muted-foreground/70 mt-0.5">{relationship.list_name}</p>
           )}
         </div>
 
@@ -99,14 +99,14 @@ export function CreatorRelationshipBadge({
         <div className="flex items-center gap-3 flex-shrink-0">
           {relationship.times_worked_together > 0 && (
             <div className="text-center">
-              <p className="text-sm font-bold text-white/80">{relationship.times_worked_together}</p>
-              <p className="text-[9px] text-white/30 uppercase">Colabs</p>
+              <p className="text-sm font-bold text-muted-foreground">{relationship.times_worked_together}</p>
+              <p className="text-[9px] text-muted-foreground/70 uppercase">Colabs</p>
             </div>
           )}
           {relationship.average_rating_given != null && (
             <div className="flex items-center gap-0.5">
               <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
-              <span className="text-xs font-medium text-white/70">
+              <span className="text-xs font-medium text-muted-foreground">
                 {relationship.average_rating_given.toFixed(1)}
               </span>
             </div>
@@ -116,7 +116,7 @@ export function CreatorRelationshipBadge({
               <p className="text-xs font-semibold text-green-400">
                 ${Math.round(relationship.total_paid / 1000)}k
               </p>
-              <p className="text-[9px] text-white/30 uppercase">Pagado</p>
+              <p className="text-[9px] text-muted-foreground/70 uppercase">Pagado</p>
             </div>
           )}
         </div>

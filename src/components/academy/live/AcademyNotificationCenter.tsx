@@ -14,12 +14,12 @@ import { cn } from '@/lib/utils';
 
 function iconForType(type: string) {
   switch (type) {
-    case 'new_member':       return <UserPlus className="h-4 w-4 text-emerald-400" />;
-    case 'new_post':         return <MessageSquare className="h-4 w-4 text-violet-400" />;
-    case 'new_comment':      return <MessageSquare className="h-4 w-4 text-sky-400" />;
-    case 'level_up':         return <Sparkles className="h-4 w-4 text-amber-400" />;
-    case 'payment_received': return <DollarSign className="h-4 w-4 text-emerald-400" />;
-    default:                 return <Bell className="h-4 w-4 text-zinc-400" />;
+    case 'new_member':       return <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+    case 'new_post':         return <MessageSquare className="h-4 w-4 text-primary" />;
+    case 'new_comment':      return <MessageSquare className="h-4 w-4 text-sky-600 dark:text-sky-400" />;
+    case 'level_up':         return <Sparkles className="h-4 w-4 text-amber-600 dark:text-amber-400" />;
+    case 'payment_received': return <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />;
+    default:                 return <Bell className="h-4 w-4 text-muted-foreground" />;
   }
 }
 
@@ -74,10 +74,10 @@ export function AcademyNotificationCenter() {
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative p-2 rounded-full hover:bg-white/5 transition-colors"
+        className="relative p-2 rounded-full hover:bg-muted/50 transition-colors"
         aria-label="Notificaciones"
       >
-        <Bell className="h-5 w-5 text-zinc-300" />
+        <Bell className="h-5 w-5 text-muted-foreground" />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
@@ -88,28 +88,28 @@ export function AcademyNotificationCenter() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-50 w-80 max-h-[70vh] overflow-hidden rounded-xl border border-white/10 bg-background shadow-2xl">
-            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
-              <span className="font-semibold text-sm text-zinc-100">Notificaciones</span>
+          <div className="absolute right-0 top-12 z-50 w-80 max-h-[70vh] overflow-hidden rounded-xl border border-border bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2">
+              <span className="font-semibold text-sm text-foreground">Notificaciones</span>
               <div className="flex items-center gap-1">
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-100"
+                    className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
                   >
                     <CheckCheck className="h-3 w-3" /> Marcar leídas
                   </button>
                 )}
-                <button onClick={() => setOpen(false)} className="p-1 text-zinc-400 hover:text-zinc-100">
+                <button onClick={() => setOpen(false)} className="p-1 text-muted-foreground hover:text-foreground">
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
             <div className="overflow-y-auto max-h-[60vh]">
               {notifications.length === 0 ? (
-                <div className="p-6 text-center text-zinc-500 text-xs">Sin notificaciones aún</div>
+                <div className="p-6 text-center text-muted-foreground text-xs">Sin notificaciones aún</div>
               ) : (
-                <ul className="divide-y divide-white/5">
+                <ul className="divide-y divide-border">
                   {notifications.map((n) => (
                     <NotifRow key={n.id} n={n} onClick={() => markAsRead(n.id)} />
                   ))}
@@ -127,18 +127,18 @@ function NotifRow({ n, onClick }: { n: AcademyNotification; onClick: () => void 
   const body = (
     <div
       className={cn(
-        'flex gap-2 px-3 py-2 hover:bg-white/5 transition-colors cursor-pointer',
-        !n.is_read && 'bg-violet-500/5'
+        'flex gap-2 px-3 py-2 hover:bg-muted/50 transition-colors cursor-pointer',
+        !n.is_read && 'bg-primary/5'
       )}
       onClick={onClick}
     >
       <div className="mt-0.5">{iconForType(n.type)}</div>
       <div className="flex-1 min-w-0">
-        <div className="text-xs font-medium text-zinc-100 line-clamp-2">{n.title}</div>
-        {n.body && <div className="text-[11px] text-zinc-500 line-clamp-1">{n.body}</div>}
-        <div className="text-[10px] text-zinc-600 mt-0.5">{relTime(n.created_at)}</div>
+        <div className="text-xs font-medium text-foreground line-clamp-2">{n.title}</div>
+        {n.body && <div className="text-[11px] text-muted-foreground line-clamp-1">{n.body}</div>}
+        <div className="text-[10px] text-muted-foreground mt-0.5">{relTime(n.created_at)}</div>
       </div>
-      {!n.is_read && <span className="mt-1 h-1.5 w-1.5 rounded-full bg-violet-400 shrink-0" />}
+      {!n.is_read && <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />}
     </div>
   );
   return n.link ? <Link to={n.link}>{body}</Link> : body;

@@ -64,7 +64,7 @@ function Lightbox({ images, initialIndex, onClose }: LightboxProps) {
     >
       <button
         onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10"
+        className="absolute top-4 right-4 p-2 rounded-full bg-muted text-foreground hover:bg-muted transition-colors z-10"
         aria-label="Cerrar galeria"
       >
         <X className="h-6 w-6" />
@@ -74,14 +74,14 @@ function Lightbox({ images, initialIndex, onClose }: LightboxProps) {
         <>
           <button
             onClick={(e) => { e.stopPropagation(); goPrev(); }}
-            className="absolute left-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10"
+            className="absolute left-4 p-2 rounded-full bg-muted text-foreground hover:bg-muted transition-colors z-10"
             aria-label="Imagen anterior"
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); goNext(); }}
-            className="absolute right-4 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors z-10"
+            className="absolute right-4 p-2 rounded-full bg-muted text-foreground hover:bg-muted transition-colors z-10"
             aria-label="Imagen siguiente"
           >
             <ChevronRight className="h-6 w-6" />
@@ -105,10 +105,10 @@ function Lightbox({ images, initialIndex, onClose }: LightboxProps) {
           </div>
         )}
         {current.alt && (
-          <p className="text-white/70 text-sm text-center">{current.alt}</p>
+          <p className="text-muted-foreground text-sm text-center">{current.alt}</p>
         )}
         {images.length > 1 && (
-          <p className="text-white/50 text-xs">
+          <p className="text-muted-foreground text-xs">
             {index + 1} / {images.length}
           </p>
         )}

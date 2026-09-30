@@ -214,7 +214,7 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarke
         {hasExternal && (member.times_worked_together > 0 || member.total_paid > 0) && (
           <div className="flex items-center gap-3 mb-3 text-[10px]">
             {member.times_worked_together > 0 && (
-              <div className="flex items-center gap-1 text-white/60">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <Handshake className="h-3 w-3" />
                 <span>{member.times_worked_together} colabs</span>
               </div>
@@ -311,7 +311,7 @@ export function UnifiedTalentCard({ member, onClick, onAmbassadorToggle, onMarke
             )}
             {/* Marketplace categories */}
             {member.categories && member.categories.length > 0 && (
-              <span className="text-[10px] text-white/40 truncate max-w-[120px]">
+              <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
                 {member.categories.slice(0, 2).join(', ')}
               </span>
             )}
