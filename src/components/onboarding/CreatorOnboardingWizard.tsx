@@ -146,7 +146,7 @@ export function CreatorOnboardingWizard() {
 
   if (!step || stateQ.isLoading || docsQ.isLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-background" role="status" aria-live="polite">
+      <div className="brand-surface flex min-h-[100dvh] items-center justify-center bg-background" role="status" aria-live="polite">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden />
         <span className="sr-only">Cargando tu perfil…</span>
       </div>
@@ -156,7 +156,7 @@ export function CreatorOnboardingWizard() {
   const needsConsent = pendingDocs.length > 0;
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="brand-surface min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:max-w-lg">
         <header className="space-y-3 py-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground">

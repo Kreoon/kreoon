@@ -21,7 +21,7 @@ export function RegistrationShell({ children, orgName, orgLogoUrl, className }: 
   const platformLogo = branding.logo_url || "/favicon.png";
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground">
+    <div className="brand-surface min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:max-w-lg">
         <header className="flex items-center gap-3 py-4">
           {orgLogoUrl ? (

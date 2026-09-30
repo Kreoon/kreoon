@@ -16,16 +16,16 @@
   /* =========================================================================
      ACENTOS - Sistema Dual Púrpura/Cyan
      ========================================================================= */
-  --nova-accent-primary: #8b5cf6;
-  --nova-accent-primary-hover: #a78bfa;
-  --nova-accent-secondary: #06b6d4;
-  --nova-accent-secondary-hover: #22d3ee;
-  --nova-accent-glow: #c084fc;
+  --nova-accent-primary: #9A82FF;
+  --nova-accent-primary-hover: #B3A1FF;
+  --nova-accent-secondary: #6FD6A8;
+  --nova-accent-secondary-hover: #9BE5C3;
+  --nova-accent-glow: #C6B8FF;
 
   /* Aurora Gradients */
-  --nova-aurora-1: #7c3aed;
-  --nova-aurora-2: #db2777;
-  --nova-aurora-3: #06b6d4;
+  --nova-aurora-1: #6D4AFF;
+  --nova-aurora-2: #FF8F7A;
+  --nova-aurora-3: #6FD6A8;
 
   /* =========================================================================
      TEXTO - Jerarquía Clara
@@ -39,10 +39,10 @@
   /* =========================================================================
      BORDES - Ultra Sutiles
      ========================================================================= */
-  --nova-border-subtle: rgba(139, 92, 246, 0.08);
-  --nova-border-default: rgba(139, 92, 246, 0.15);
-  --nova-border-accent: rgba(139, 92, 246, 0.3);
-  --nova-border-focus: rgba(139, 92, 246, 0.5);
+  --nova-border-subtle: rgba(154, 130, 255, 0.08);
+  --nova-border-default: rgba(154, 130, 255, 0.15);
+  --nova-border-accent: rgba(154, 130, 255, 0.3);
+  --nova-border-focus: rgba(154, 130, 255, 0.5);
 
   /* =========================================================================
      ESTADOS
@@ -62,19 +62,19 @@
   --nova-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --nova-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
   --nova-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-  --nova-shadow-glow: 0 0 40px rgba(139, 92, 246, 0.25);
+  --nova-shadow-glow: 0 0 40px rgba(154, 130, 255, 0.25);
   --nova-shadow-glow-intense:
-    0 0 20px rgba(139, 92, 246, 0.3),
-    0 0 40px rgba(139, 92, 246, 0.2),
-    0 0 60px rgba(139, 92, 246, 0.1);
-  --nova-shadow-glow-cyan: 0 0 40px rgba(6, 182, 212, 0.25);
+    0 0 20px rgba(154, 130, 255, 0.3),
+    0 0 40px rgba(154, 130, 255, 0.2),
+    0 0 60px rgba(154, 130, 255, 0.1);
+  --nova-shadow-glow-cyan: 0 0 40px rgba(111, 214, 168, 0.25);
 
   /* =========================================================================
      GLASSMORPHISM
      ========================================================================= */
   --nova-glass-bg: rgba(10, 10, 24, 0.7);
   --nova-glass-bg-light: rgba(10, 10, 24, 0.5);
-  --nova-glass-border: rgba(139, 92, 246, 0.1);
+  --nova-glass-border: rgba(154, 130, 255, 0.1);
   --nova-glass-blur: 24px;
   --nova-glass-shadow:
     0 4px 30px rgba(0, 0, 0, 0.3),
@@ -83,10 +83,10 @@
   /* =========================================================================
      GRADIENTES
      ========================================================================= */
-  --nova-gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-  --nova-gradient-aurora: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #06b6d4 100%);
+  --nova-gradient-primary: linear-gradient(135deg, #9A82FF 0%, #6FD6A8 100%);
+  --nova-gradient-aurora: linear-gradient(135deg, #6D4AFF 0%, #FF8F7A 50%, #6FD6A8 100%);
   --nova-gradient-surface: linear-gradient(145deg, #0a0a18 0%, #050510 100%);
-  --nova-gradient-border: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.1));
+  --nova-gradient-border: linear-gradient(135deg, rgba(154, 130, 255, 0.3), rgba(111, 214, 168, 0.1));
 
   /* =========================================================================
      ESPACIADO Y RADIOS (sutiles, no muy redondeados)

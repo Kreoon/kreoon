@@ -225,10 +225,21 @@ function KiroLoader({ size = 140 }: { size?: number }) {
 
 export function PageLoader() {
   const location = useLocation();
-  const [visible, setVisible] = useState(true);
+  const startsOnCreatorJourney =
+    typeof window !== "undefined" &&
+    (window.location.pathname.startsWith("/registro") || window.location.pathname.startsWith("/bienvenida"));
+  const [visible, setVisible] = useState(!startsOnCreatorJourney);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
+    // El splash de 2 s no aplica al viaje del nuevo creador (registro → continuar → bienvenida):
+    // retrasa la acción principal y choca con la marca en claro.
+    if (location.pathname.startsWith("/registro") || location.pathname.startsWith("/bienvenida")) {
+      setVisible(false);
+      setIsFirstLoad(false);
+      return;
+    }
+
     const isProtectedRoute = location.pathname.startsWith("/dashboard") ||
                              location.pathname.startsWith("/admin") ||
                              location.pathname.startsWith("/settings");

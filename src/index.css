@@ -32,55 +32,66 @@
 }
 
 @layer base {
-  /* ===== LIGHT THEME (Editorial Studio) ===== */
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+  /* ===== LIGHT THEME — marca Kreoon (paleta aprobada) =====
+     Contrastes validados por scripts/check-contrast.mjs (WCAG AA). También se aplica como ámbito
+     .brand-surface para garantizar el claro de marca en el viaje del nuevo creador, aunque el
+     usuario tenga el tema oscuro activo. */
+  :root,
+  .brand-surface {
+    --background: 36 33% 97%;            /* #FAF8F5 */
+    --foreground: 249 23% 17%;            /* #242135 */
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 100%;                /* #FFFFFF */
+    --card-foreground: 249 23% 17%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 249 23% 17%;
 
-    --primary: 270 100% 60%;
+    --primary: 252 100% 65%;           /* #6D4AFF */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 267 33% 95%;
+    --secondary-foreground: 249 23% 17%;
 
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
+    --muted: 267 33% 95%;
+    --muted-foreground: 249 12% 42%;  /* #625E78 */
 
-    --accent: 270 100% 95%;
-    --accent-foreground: 270 100% 40%;
+    --accent: 256 100% 95%;                /* lavanda #EEE8FF */
+    --accent-foreground: 250 63% 50%;   /* #4A2FD0 (6.7:1 sobre lavanda) */
 
-    --destructive: 350 80% 50%;
+    --destructive: 352 69% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 150 80% 35%;
+    --success: 156 79% 27%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 100% 50%;
-    --warning-foreground: 0 0% 10%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 249 23% 17%;
 
-    --info: 210 100% 50%;
+    --info: 222 69% 52%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 15%; /* Hard dark border for brutalist print look */
-    --input: 0 0% 85%;
-    --ring: 270 100% 60%;
+    /* Tokens de marca adicionales */
+    --brand-coral: 9 100% 74%;         /* #FF8F7A */
+    --brand-coral-foreground: 249 23% 17%;
+    --brand-mint: 149 57% 90%;           /* #D7F4E5 */
+    --brand-mint-foreground: 249 23% 17%;
+    --brand-lavender: 256 100% 95%;
 
-    --radius: 0.125rem;
+    --border: 265 23% 90%;
+    --input: 251 14% 60%;               /* borde de campos >= 3:1 (WCAG 1.4.11) */
+    --ring: 252 100% 65%;
 
-    --sidebar-background: 250 20% 97%;
-    --sidebar-foreground: 250 15% 30%;
-    --sidebar-primary: 270 90% 50%;
+    --radius: 1rem;                      /* 16px; tarjetas 24px con rounded-3xl */
+
+    --sidebar-background: 264 50% 96%;
+    --sidebar-foreground: 249 20% 27%;
+    --sidebar-primary: 252 100% 65%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 20% 93%;
-    --sidebar-accent-foreground: 270 30% 30%;
-    --sidebar-border: 250 12% 88%;
-    --sidebar-ring: 270 90% 50%;
+    --sidebar-accent: 256 100% 95%;
+    --sidebar-accent-foreground: 250 63% 50%;
+    --sidebar-border: 265 23% 90%;
+    --sidebar-ring: 252 100% 65%;
 
     --violet-50: 270 100% 97%;
     --violet-100: 270 100% 92%;
@@ -133,42 +144,42 @@
 
   /* ===== DARK THEME ===== */
   .dark {
-    --background: 240 10% 2%;
-    --foreground: 0 0% 98%;
+    --background: 249 25% 11%;
+    --foreground: 253 47% 96%;
 
-    --card: 240 10% 4%;
+    --card: 249 26% 15%;
     --card-foreground: 0 0% 95%;
 
-    --popover: 240 10% 5%;
+    --popover: 249 26% 15%;
     --popover-foreground: 0 0% 95%;
 
-    --primary: 270 100% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 252 100% 75%;   /* #9A82FF */
+    --primary-foreground: 249 25% 11%;   /* #171523: 6.0:1 */
 
     --secondary: 270 40% 8%;
     --secondary-foreground: 270 20% 80%;
 
-    --muted: 250 15% 8%;
-    --muted-foreground: 250 10% 50%;
+    --muted: 249 25% 20%;
+    --muted-foreground: 250 15% 67%;
 
-    --accent: 270 60% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 251 31% 21%;
+    --accent-foreground: 251 100% 91%;
 
     --destructive: 350 80% 50%;
     --destructive-foreground: 0 0% 100%;
 
     --success: 160 84% 39%;
-    --success-foreground: 0 0% 100%;
+    --success-foreground: 249 25% 11%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 10%;
 
     --info: 217 91% 60%;
-    --info-foreground: 0 0% 100%;
+    --info-foreground: 249 25% 11%;
 
-    --border: 240 10% 12%;
-    --input: 240 10% 10%;
-    --ring: 270 100% 60%;
+    --border: 249 24% 27%;
+    --input: 249 14% 53%;
+    --ring: 252 100% 75%;
 
     /* Sidebar Nova - usando colores del tema Nova */
     --sidebar-background: 240 67% 3%; /* #050510 nova-bg-deep */
@@ -176,7 +187,7 @@
     --sidebar-primary: 263 70% 66%; /* #8b5cf6 nova-accent-primary */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 263 70% 66%; /* nova-accent-primary */
-    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-accent-foreground: 249 23% 11%;
     --sidebar-border: 263 70% 66% / 0.1; /* nova-border-subtle */
     --sidebar-ring: 263 70% 66%;
 

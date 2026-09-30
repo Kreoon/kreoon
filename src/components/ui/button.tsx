@@ -5,19 +5,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius)] text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(270,100%,60%,0.5)] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius)] text-sm font-semibold ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: cn(
-          "bg-primary text-primary-foreground font-mono uppercase tracking-widest text-xs",
-          "hover:bg-primary/90 hover:shadow-[0_0_15px_var(--shadow-neon)]",
-          "active:scale-[0.98]",
-          "border border-primary-foreground/20"
+          "bg-primary text-primary-foreground",
+          "hover:bg-primary/90 hover:shadow-md",
+          "active:scale-[0.98]"
         ),
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline: cn(
-          "border border-border bg-transparent font-mono uppercase tracking-widest text-xs",
+          "border border-border bg-transparent",
           "text-foreground",
           "hover:bg-accent hover:text-accent-foreground",
           "active:scale-[0.98]"
@@ -29,21 +28,20 @@ const buttonVariants = cva(
           "hover:bg-secondary/80 active:scale-[0.98]"
         ),
         ghost: cn(
-          "text-muted-foreground font-mono uppercase tracking-widest text-xs",
+          "text-muted-foreground",
           "hover:bg-accent hover:text-foreground",
           "active:scale-[0.98]"
         ),
         link: "text-primary underline-offset-4 hover:underline",
         glow: cn(
-          "bg-primary text-primary-foreground font-mono uppercase tracking-widest text-xs",
-          "shadow-[0_0_20px_hsl(270,100%,60%,0.4)]",
-          "hover:bg-primary/90 hover:shadow-[0_0_40px_hsl(270,100%,60%,0.6)]",
-          "active:scale-[0.98]",
-          "border border-primary/40"
+          "bg-primary text-primary-foreground",
+          "shadow-md",
+          "hover:bg-primary/90 hover:shadow-lg",
+          "active:scale-[0.98]"
         ),
         success: "bg-success text-success-foreground hover:bg-success/90",
         tech: cn(
-          "bg-card font-mono text-xs uppercase tracking-widest",
+          "bg-card",
           "text-foreground",
           "border border-border",
           "hover:bg-accent hover:border-primary/40",
