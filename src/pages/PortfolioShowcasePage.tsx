@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,7 @@ async function fetchPortfolioContent(): Promise<PortfolioContent[]> {
 const EAGER_LOAD_COUNT = 12;
 
 function VideoCard({ content, index, eager = false }: { content: PortfolioContent; index: number; eager?: boolean }) {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isVisible, setIsVisible] = useState(eager);
@@ -315,7 +317,12 @@ export default function PortfolioShowcasePage() {
   const headerY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
+  // El alta pública es solo de creadores y vive en /registro; el modal solo sirve para login.
   const handleOpenAuth = (tab: "login" | "register") => {
+    if (tab === "register") {
+      navigate("/registro");
+      return;
+    }
     setAuthModal({ open: true, tab });
   };
 

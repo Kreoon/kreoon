@@ -4,7 +4,7 @@ El sistema operativo creativo. Gestiona creadores, contenido, proyectos y result
 
 ## Project Info
 
-**Production URL**: https://kreoon.app
+**Production URL**: https://kreoon.com
 
 ## How to Edit This Code
 

@@ -21,6 +21,7 @@ export function PublicLayout({
     tab: "login" | "register";
   }>({ open: false, tab: "login" });
 
+  // "register" lo resuelve AuthModal/PublicHeader navegando a /registro.
   const handleOpenAuth = (tab: "login" | "register") => {
     setAuthModal({ open: true, tab });
   };
@@ -35,9 +36,8 @@ export function PublicLayout({
 
       <AuthModal
         open={authModal.open}
-        tab={authModal.tab}
-        onOpenChange={(open) => setAuthModal((prev) => ({ ...prev, open }))}
-        onTabChange={(tab) => setAuthModal((prev) => ({ ...prev, tab }))}
+        initialTab={authModal.tab}
+        onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
       />
     </div>
   );

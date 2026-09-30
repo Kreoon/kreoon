@@ -3,11 +3,16 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingGate } from '@/hooks/useOnboardingGate';
 import { NovaOnboardingWizard } from '@/components/onboarding/NovaOnboardingWizard';
+import { CreatorOnboardingWizard } from '@/components/onboarding/CreatorOnboardingWizard';
+import { RegistrationEntryRedirect } from '@/pages/registro/OrganizationRegistrationPage';
+import { getOnboardingTrack } from '@/lib/onboarding/track';
+import { registrationContinuePath } from '@/lib/registration/paths';
 
 // Rutas que NO requieren onboarding completado
 const EXEMPT_ROUTES = [
   '/legal/',       // Páginas legales
   '/auth',         // Auth callback y logout
+  '/registro',     // Registro de creadores: el paso /continuar necesita sesión y corre ANTES del onboarding
   '/terms',        // Términos legacy
   '/privacy',      // Privacy legacy
   '/data-deletion',
@@ -48,7 +53,7 @@ interface OnboardingGateProviderProps {
  */
 export function OnboardingGateProvider({ children }: OnboardingGateProviderProps) {
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, roles, rolesLoaded, profile } = useAuth();
   const { isComplete, isLoading: gateLoading, currentStep } = useOnboardingGate();
 
   // Verificar si la ruta está exenta
@@ -101,9 +106,26 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
     return <OnboardingLoadingScreen />;
   }
 
-  // Si el onboarding no está completo, mostrar el wizard
+  // Si el onboarding no está completo, mostrar el asistente que corresponde.
   // BLOQUEA toda la app hasta completar
   if (!isComplete && currentStep !== 'complete') {
+    if (!rolesLoaded) return <OnboardingLoadingScreen />;
+
+    const track = getOnboardingTrack({
+      roles: roles ?? [],
+      userType: (profile as { user_type?: string | null } | null)?.user_type,
+    });
+
+    // Creadores: asistente corto (nombre público, foto, tipo de contenido), reanudable y omitible.
+    if (track === 'creator') return <CreatorOnboardingWizard />;
+
+    // Sesión sin ninguna membresía: no se ofrece elegir marca/organización. Se lleva al registro de
+    // creadores de la organización del host, donde la persona confirma de forma explícita.
+    if (track === 'needs_membership') {
+      return <RegistrationEntryRedirect buildTarget={(slug) => registrationContinuePath(slug)} />;
+    }
+
+    // Clientes/marcas existentes y demás roles conservan su flujo actual.
     return <NovaOnboardingWizard />;
   }
 

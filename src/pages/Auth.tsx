@@ -1,17 +1,18 @@
 import { useEffect, useCallback, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthTabs } from "@/components/auth/AuthTabs";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { useBranding } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeReturnTo } from "@/lib/registration/returnTo";
+import { REGISTRATION_BASE } from "@/lib/registration/paths";
 
-export type AuthView = "login" | "register" | "forgot-password";
+export type AuthView = "login" | "forgot-password";
 
 const viewTransition = {
   initial: (dir: number) => ({ opacity: 0, x: dir > 0 ? 12 : -12 }),
@@ -21,34 +22,22 @@ const viewTransition = {
 };
 
 function getInitialView(tab: string | null): AuthView {
-  if (tab === "register") return "register";
   if (tab === "forgot-password") return "forgot-password";
   return "login";
 }
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading, rolesLoaded, roles, profile } = useAuth();
 
   const tabParam = searchParams.get("tab");
-  const roleParam = searchParams.get("role");
-  const intentParam = searchParams.get("intent");
-  const nextParam = searchParams.get("next"); // Para redirecciones específicas (ej: /welcome/ugc-colombia)
+  // Destino de retorno: solo rutas internas validadas (evita open redirect)
+  const nextParam = sanitizeReturnTo(searchParams.get("next"));
 
   const [view, setView] = useState<AuthView>(() => getInitialView(tabParam));
   const [direction, setDirection] = useState(0);
-  const initialRole =
-    roleParam && ["creator", "editor", "client"].includes(roleParam)
-      ? roleParam
-      : null;
-
-  // Map intent param to RegistrationIntent
-  const initialIntent =
-    intentParam && ["talent", "brand", "organization", "join"].includes(intentParam)
-      ? (intentParam as "talent" | "brand" | "organization" | "join")
-      : null;
-
   useEffect(() => {
     setView(getInitialView(tabParam));
   }, [tabParam]);
@@ -119,7 +108,6 @@ export default function Auth() {
           const hasCompletedProfile = creatorProfile.bio && creatorProfile.avatar_url;
           if (hasCompletedProfile) {
             // Profile completed - go to marketplace
-            // ProtectedRoute will redirect to /unlock-access if gate is enabled and not unlocked
             navigate("/marketplace", { replace: true });
           } else {
             // Profile not completed - go to welcome/wizard
@@ -155,9 +143,7 @@ export default function Auth() {
 
   const setViewAndSyncUrl = useCallback(
     (nextView: AuthView) => {
-      setDirection(
-        nextView === "register" || nextView === "forgot-password" ? 1 : -1,
-      );
+      setDirection(nextView === "forgot-password" ? 1 : -1);
       setView(nextView);
       const next = new URLSearchParams(searchParams);
       next.set("tab", nextView);
@@ -165,6 +151,15 @@ export default function Auth() {
     },
     [searchParams, setSearchParams],
   );
+
+  const goToRegistration = useCallback(() => {
+    navigate(REGISTRATION_BASE, { replace: false });
+  }, [navigate]);
+
+  // El alta ya no vive en /auth: el redirect genérico de /registro filtra la query (UTM/ref/next).
+  if (tabParam === "register") {
+    return <Navigate to={`${REGISTRATION_BASE}${location.search}`} replace />;
+  }
 
   if (authLoading || (user && !rolesLoaded)) {
     return (
@@ -199,34 +194,14 @@ export default function Auth() {
             >
               <AuthTabs
                 activeTab="login"
-                onTabChange={(tab) => setViewAndSyncUrl(tab)}
+                onTabChange={(tab) => {
+                  if (tab === "register") goToRegistration();
+                  else setViewAndSyncUrl(tab);
+                }}
               />
               <LoginForm
                 onForgotPassword={() => setViewAndSyncUrl("forgot-password")}
-                onSwitchToRegister={() => setViewAndSyncUrl("register")}
-              />
-            </motion.div>
-          )}
-
-          {view === "register" && (
-            <motion.div
-              key="register"
-              custom={direction}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={viewTransition}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              <AuthTabs
-                activeTab="register"
-                onTabChange={(tab) => setViewAndSyncUrl(tab)}
-              />
-              <RegisterForm
-                onSwitchToLogin={() => setViewAndSyncUrl("login")}
-                preselectedRole={initialRole ?? undefined}
-                initialIntent={initialIntent}
+                onSwitchToRegister={goToRegistration}
               />
             </motion.div>
           )}

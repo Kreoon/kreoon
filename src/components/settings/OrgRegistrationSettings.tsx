@@ -36,6 +36,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { registrationPath } from '@/lib/registration/paths';
 import { es } from 'date-fns/locale';
 
 interface RegistrationPageConfig {
@@ -290,7 +291,7 @@ export function OrgRegistrationSettings() {
 
   const copyLink = () => {
     if (config?.slug) {
-      const link = `${BASE_URL}/auth/org/${config.slug}`;
+      const link = `${BASE_URL}${registrationPath(config.slug)}`;
       navigator.clipboard.writeText(link);
       toast.success('Link copiado');
     }
@@ -334,7 +335,7 @@ export function OrgRegistrationSettings() {
     );
   }
 
-  const registrationUrl = `${BASE_URL}/auth/org/${config.slug}`;
+  const registrationUrl = `${BASE_URL}${registrationPath(config.slug)}`;
 
   return (
     <div className="space-y-6">

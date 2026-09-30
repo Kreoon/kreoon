@@ -253,3 +253,20 @@ export async function completeCreatorSignup(input: {
   if (error) throw mapRpcError(error.message);
   return data as CompleteSignupResult;
 }
+
+// ─── Estado de la identidad (solo lectura) ───────────────────────────────────
+
+export interface MySignupState {
+  status: RegistrationOrgStatus;
+  organization?: Pick<RegistrationOrg, "id" | "slug" | "name" | "logo_url">;
+  is_member?: boolean;
+  has_other_memberships?: boolean;
+  missing_documents?: SignupDocument[];
+}
+
+/** No escribe nada: visitar la URL no concede membresía. */
+export async function getMyCreatorSignupState(slug: string): Promise<MySignupState> {
+  const { data, error } = await rpc("get_my_creator_signup_state", { p_slug: slug });
+  if (error) throw mapRpcError(error.message);
+  return data as MySignupState;
+}

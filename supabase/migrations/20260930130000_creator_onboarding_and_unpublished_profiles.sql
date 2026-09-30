@@ -214,7 +214,7 @@ BEGIN
     SELECT COALESCE(array_agg(DISTINCT t), '{}') INTO v_types
     FROM (
       SELECT btrim(x) AS t FROM unnest(p_content_types) x
-      WHERE length(btrim(x)) BETWEEN 1 AND 40 AND x ~ '^[[:alnum:] _.&+/-]+$'
+      WHERE length(btrim(x)) BETWEEN 1 AND 40 AND x !~ '[<>{}"''`\\[:cntrl:]]'
       LIMIT 12
     ) s;
     UPDATE creator_profiles SET content_types = v_types WHERE user_id = v_uid;
@@ -263,5 +263,70 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.finish_creator_onboarding() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.finish_creator_onboarding() TO authenticated, service_role;
+
+-- Documentos de registro pendientes de la persona (creadores existentes que nunca los aceptaron).
+CREATE OR REPLACE FUNCTION public.get_my_pending_registration_documents()
+RETURNS TABLE (document_id uuid, document_type text, title text, version text, summary text)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
+  RETURN QUERY
+  SELECT d.document_id, d.document_type, d.title, d.version, d.summary
+  FROM public.list_registration_documents('talent') d
+  WHERE NOT EXISTS (
+    SELECT 1 FROM user_legal_consents c
+    WHERE c.user_id = auth.uid() AND c.document_id = d.document_id AND c.accepted = true
+  )
+  ORDER BY d.document_type;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.get_my_pending_registration_documents() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_my_pending_registration_documents() TO authenticated, service_role;
+
+-- Acepta documentos de registro vigentes. Solo documentos que el servidor exige para creadores; la
+-- version, el hash, la fecha y la IP las fija el servidor (el cliente solo dice QUE acepta).
+CREATE OR REPLACE FUNCTION public.accept_registration_documents(p_document_ids uuid[])
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+  v_ip inet := NULL;
+  v_ua text := NULL;
+  v_headers json;
+  v_count integer;
+BEGIN
+  IF v_uid IS NULL THEN RAISE EXCEPTION 'unauthorized'; END IF;
+  IF NOT public._is_creator_member(v_uid) THEN RAISE EXCEPTION 'forbidden: not a creator member'; END IF;
+
+  BEGIN
+    v_headers := current_setting('request.headers', true)::json;
+    v_ua := left(v_headers->>'user-agent', 500);
+    v_ip := NULLIF(btrim(split_part(COALESCE(v_headers->>'x-forwarded-for', ''), ',', 1)), '')::inet;
+  EXCEPTION WHEN OTHERS THEN
+    v_ip := NULL;
+  END;
+
+  INSERT INTO user_legal_consents (
+    user_id, document_id, document_type, document_version,
+    accepted, accepted_at, ip_address, user_agent, consent_method, is_current
+  )
+  SELECT v_uid, d.document_id, d.document_type, d.version, true, now(), v_ip, v_ua, 'onboarding', true
+  FROM public.list_registration_documents('talent') d
+  WHERE d.document_id = ANY (COALESCE(p_document_ids, '{}'))
+  ON CONFLICT (user_id, document_id) DO NOTHING;
+
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+  RETURN v_count;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.accept_registration_documents(uuid[]) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.accept_registration_documents(uuid[]) TO authenticated, service_role;
 
 NOTIFY pgrst, 'reload schema';

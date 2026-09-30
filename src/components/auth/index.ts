@@ -1,6 +1,5 @@
 export { PasswordStrengthIndicator, usePasswordStrength } from './PasswordStrengthIndicator';
 export type { PasswordRequirement, PasswordStrengthIndicatorProps } from './PasswordStrengthIndicator';
-export { RegisterForm } from './RegisterForm';
 export { LoginForm } from './LoginForm';
 export { AuthTabs } from './AuthTabs';
 export { AuthModal } from './AuthModal';

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { LandingLayout } from "@/components/landing/LandingLayout";
 import { HeroOrbCanvas } from "@/components/landing/sections/HeroOrbCanvas";
@@ -6,12 +7,18 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { FileText, Clock, ArrowRight } from "lucide-react";
 
 export default function BlogPage() {
+  const navigate = useNavigate();
   const [authModal, setAuthModal] = useState<{
     open: boolean;
     tab: "login" | "register";
   }>({ open: false, tab: "login" });
 
+  // El alta pública es solo de creadores y vive en /registro; el modal solo sirve para login.
   const handleOpenAuth = (tab: "login" | "register") => {
+    if (tab === "register") {
+      navigate("/registro");
+      return;
+    }
     setAuthModal({ open: true, tab });
   };
 

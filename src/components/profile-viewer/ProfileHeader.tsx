@@ -2,11 +2,11 @@
  * Header para la vista de perfil del creador en el marketplace.
  *
  * - Usuario autenticado: Volver, Logo, Guardar, Compartir, Contactar, Avatar
- * - No autenticado: Volver, Logo, Iniciar sesión, Soy Talento, Busco Talento
+ * - No autenticado: Volver, Logo, Iniciar sesión, Crear cuenta de creador, Busco Talento
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bookmark, Share2, MessageCircle, LogIn, Sparkles, UserPlus } from 'lucide-react';
+import { ArrowLeft, Bookmark, Share2, MessageCircle, LogIn, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -174,21 +174,11 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
 
             <Button
               size="sm"
-              onClick={() => navigate('/register?intent=talent')}
+              onClick={() => navigate('/registro')}
               className="bg-purple-600 hover:bg-purple-700 text-white"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Soy Talento</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate('/register?intent=brand')}
-              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hidden md:flex"
-            >
-              <UserPlus className="h-4 w-4 mr-1.5" />
-              Busco Talento
+              <span className="hidden sm:inline">Crear cuenta de creador</span>
             </Button>
           </>
         )}

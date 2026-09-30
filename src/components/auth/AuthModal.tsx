@@ -7,16 +7,19 @@ import {
 } from "@/components/ui/dialog";
 import { AuthTabs } from "@/components/auth/AuthTabs";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
+import { REGISTRATION_BASE } from "@/lib/registration/paths";
 
-export type AuthModalView = "login" | "register" | "forgot-password";
+export type AuthModalView = "login" | "forgot-password";
 
 export interface AuthModalProps {
   open: boolean;
   onClose: () => void;
+  /** "register" ya no abre un formulario: cierra el modal y navega a /registro. */
   initialTab?: "login" | "register";
+  /** @deprecated Ignorado: el registro público es solo de creadores. */
   preselectedRole?: string;
 }
 
@@ -31,31 +34,39 @@ export function AuthModal({
   open,
   onClose,
   initialTab = "login",
-  preselectedRole,
 }: AuthModalProps) {
-  const [currentTab, setCurrentTab] = React.useState<AuthModalView>(initialTab);
+  const navigate = useNavigate();
+  const [currentTab, setCurrentTab] = React.useState<AuthModalView>("login");
   const [showForgotPassword, setShowForgotPassword] = React.useState(false);
   const [direction, setDirection] = React.useState(0);
 
+  const goToRegistration = React.useCallback(() => {
+    onClose();
+    navigate(REGISTRATION_BASE);
+  }, [onClose, navigate]);
+
   React.useEffect(() => {
-    if (open) {
-      setCurrentTab(initialTab === "register" ? "register" : "login");
-      setShowForgotPassword(false);
+    if (!open) return;
+    if (initialTab === "register") {
+      goToRegistration();
+      return;
     }
+    setCurrentTab("login");
+    setShowForgotPassword(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialTab]);
 
   const setViewWithDirection = React.useCallback((nextView: AuthModalView) => {
-    setDirection(
-      nextView === "register" || nextView === "forgot-password" ? 1 : -1
-    );
+    setDirection(nextView === "forgot-password" ? 1 : -1);
     setCurrentTab(nextView);
   }, []);
 
   const handleTabChange = React.useCallback(
     (tab: "login" | "register") => {
-      setViewWithDirection(tab);
+      if (tab === "register") goToRegistration();
+      else setViewWithDirection(tab);
     },
-    [setViewWithDirection]
+    [goToRegistration, setViewWithDirection]
   );
 
   const handleSuccess = React.useCallback(() => {
@@ -76,14 +87,10 @@ export function AuthModal({
       >
         <DialogTitle className="sr-only">
           {view === "login" && "Iniciar sesión"}
-          {view === "register" && "Crear cuenta"}
           {view === "forgot-password" && "Recuperar contraseña"}
         </DialogTitle>
 
-        <div className={cn(
-          "flex flex-col",
-          view === "register" ? "p-4 sm:p-6" : "p-6 sm:p-8"
-        )}>
+        <div className="flex flex-col p-6 sm:p-8">
           <AnimatePresence mode="wait" custom={direction}>
             {view === "login" && (
               <motion.div
@@ -103,26 +110,7 @@ export function AuthModal({
                 <LoginForm
                   onSuccess={handleSuccess}
                   onForgotPassword={() => setViewWithDirection("forgot-password")}
-                  onSwitchToRegister={() => setViewWithDirection("register")}
-                />
-              </motion.div>
-            )}
-
-            {view === "register" && (
-              <motion.div
-                key="register"
-                custom={direction}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={viewTransition}
-                transition={{ duration: 0.2 }}
-              >
-                {/* WizardContainer has its own design - no AuthTabs needed */}
-                <RegisterForm
-                  onSuccess={handleSuccess}
-                  onSwitchToLogin={() => setCurrentTab("login")}
-                  preselectedRole={preselectedRole}
+                  onSwitchToRegister={goToRegistration}
                 />
               </motion.div>
             )}

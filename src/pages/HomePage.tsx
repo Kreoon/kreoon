@@ -37,7 +37,6 @@ export default function HomePage() {
   const [authModal, setAuthModal] = useState<{
     open: boolean;
     tab: "login" | "register";
-    preselectedRole?: string;
   }>({ open: false, tab: "login" });
 
   useEffect(() => {
@@ -48,8 +47,13 @@ export default function HomePage() {
     }
   }, [user, roles, rolesLoaded, loading, activeRole, navigate]);
 
-  const handleOpenAuth = (tab: "login" | "register", role?: string) => {
-    setAuthModal({ open: true, tab, preselectedRole: role });
+  // El alta pública es solo de creadores y vive en /registro; el modal solo sirve para login.
+  const handleOpenAuth = (tab: "login" | "register") => {
+    if (tab === "register") {
+      navigate("/registro");
+      return;
+    }
+    setAuthModal({ open: true, tab });
   };
 
   const handleSelectPlan = (planId: string) => {
@@ -165,7 +169,6 @@ export default function HomePage() {
         open={authModal.open}
         onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
         initialTab={authModal.tab}
-        preselectedRole={authModal.preselectedRole}
       />
     </>
   );

@@ -3,9 +3,7 @@ import { Instagram, Linkedin, Youtube, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FOOTER_PRODUCT = [
-  { label: "Para Marcas", to: "/unete/marcas" },
-  { label: "Para Creadores", to: "/unete/talento" },
-  { label: "Para Agencias", to: "/unete/organizaciones" },
+  { label: "Para Creadores", to: "/registro" },
   { label: "Marketplace", to: "/marketplace" },
   { label: "Precios", to: "/#pricing" },
 ];

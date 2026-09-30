@@ -7,20 +7,16 @@ import { SHARE_MESSAGES, REFERRAL_BILATERAL } from '@/lib/finance/constants';
 import { PromoBanner } from '@/components/referrals/PromoBanner';
 import type { PromotionalCampaign } from '@/types/unified-finance.types';
 
-type TargetPage = 'default' | 'talento' | 'marcas' | 'organizaciones';
+type TargetPage = 'default' | 'talento';
 
 const TARGET_PAGE_PATHS: Record<TargetPage, string> = {
   default: '/r',
-  talento: '/unete/talento',
-  marcas: '/unete/marcas',
-  organizaciones: '/unete/organizaciones',
+  talento: '/registro',
 };
 
 const TARGET_PAGE_LABELS: Record<TargetPage, string> = {
   default: 'Link general',
-  talento: 'Para talento',
-  marcas: 'Para marcas',
-  organizaciones: 'Para organizaciones',
+  talento: 'Registro de creadores',
 };
 
 interface ReferralShareCardProps {

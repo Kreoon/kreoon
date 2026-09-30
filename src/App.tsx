@@ -132,14 +132,20 @@ const WelcomeNewMember = lazyWithRetry(
 const MCPDocumentation = lazyWithRetry(
   () => import("./pages/MCPDocumentation"),
 );
-// OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const PortfolioShowcasePage = lazyWithRetry(
   () => import("./pages/PortfolioShowcasePage"),
 );
 const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
-const Register = lazyWithRetry(() => import("./pages/Register"));
-const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
+const OrganizationRegistrationPage = lazyWithRetry(
+  () => import("./pages/registro/OrganizationRegistrationPage"),
+);
+const CreatorWelcomeRoute = lazyWithRetry(
+  () => import("./pages/registro/CreatorWelcomeRoute"),
+);
+const SignupClosedPage = lazyWithRetry(
+  () => import("./pages/registro/SignupClosedPage"),
+);
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazyWithRetry(
@@ -184,12 +190,10 @@ const FavoritosPage = lazyWithRetry(
 const CreatorProfileSetup = lazyWithRetry(
   () => import("./pages/CreatorProfileSetup"),
 );
-const Unete = lazyWithRetry(() => import("./pages/Unete"));
-const UneteTalento = lazyWithRetry(() => import("./pages/unete/talento"));
-const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
-const UneteOrganizaciones = lazyWithRetry(
-  () => import("./pages/unete/organizaciones"),
-);
+import {
+  GenericRegistrationRedirect,
+  LegacySlugRegistrationRedirect,
+} from "./pages/registro/LegacyRedirects";
 // CRM Platform
 const PlatformAdminDashboard = lazyWithRetry(
   () => import("./pages/crm/platform/PlatformAdminDashboard"),
@@ -245,7 +249,6 @@ const AllPagesQAPage = lazyWithRetry(
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
-const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
 const WelcomeTalent = lazyWithRetry(() => import("./pages/WelcomeTalent"));
 const WelcomeUGCColombia = lazyWithRetry(
   () => import("./pages/welcome/WelcomeUGCColombia"),
@@ -477,49 +480,6 @@ function ProfileRedirect() {
   return <Navigate to="/settings?section=profile" replace />;
 }
 
-// Brand referral handler: capture ref param and redirect to register
-function BrandReferralRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const ref = params.get("ref") || "";
-  if (ref) {
-    try {
-      localStorage.setItem("kreoon_brand_referral", ref);
-    } catch {
-      /* localStorage unavailable in incognito */
-    }
-  }
-  return (
-    <Navigate
-      to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`}
-      replace
-    />
-  );
-}
-
-// Talent referral redirect: /unete-talento?ref=XXX -> /unete/talento?ref=XXX
-function TalentReferralRedirect() {
-  const search = window.location.search;
-  // Save referral code to localStorage so it persists through redirects
-  const params = new URLSearchParams(search);
-  const ref = params.get("ref");
-  if (ref) {
-    try {
-      localStorage.setItem("kreoon_referral_code", ref);
-    } catch {
-      /* localStorage unavailable in incognito */
-    }
-  }
-  return <Navigate to={`/unete/talento${search}`} replace />;
-}
-
-// OrgAuth redirect: /org/:slug and /register/:slug -> /auth/org/:slug
-// OrgAuth.tsx was removed as it was a duplicate of OrgRegister.tsx
-function OrgAuthRedirect() {
-  const slug = window.location.pathname.split("/").filter(Boolean).pop() || "";
-  const search = window.location.search;
-  return <Navigate to={`/auth/org/${slug}${search}`} replace />;
-}
-
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -534,7 +494,7 @@ function AppRoutes() {
         <Route path="/pricing/creators" element={<CreatorPricingPage />} />
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
         <Route path="/portafolio" element={<PortfolioShowcasePage />} />
-        <Route path="/marca-referida" element={<BrandReferralRedirect />} />
+        <Route path="/marca-referida" element={<SignupClosedPage audience="brand" />} />
         {/* Legal pages (public, required for Meta app review) */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
@@ -699,7 +659,7 @@ function AppRoutes() {
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
-        <Route path="/unlock-access" element={<UnlockAccess />} />
+        <Route path="/unlock-access" element={<Navigate to="/" replace />} />
         <Route path="/welcome-talent" element={<WelcomeTalent />} />
         <Route path="/welcome/ugc-colombia" element={<WelcomeUGCColombia />} />
         <Route path="/onboarding/profile" element={<OnboardingProfile />} />
@@ -712,21 +672,32 @@ function AppRoutes() {
         <Route path="/mcp-docs" element={<MCPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
-        {/* /org/:slug redirige a /auth/org/:slug (OrgAuth eliminado) */}
-        <Route path="/org/:slug" element={<OrgAuthRedirect />} />
-        <Route path="/auth/org/:slug" element={<OrgRegister />} />
+        <Route path="/org/:slug" element={<LegacySlugRegistrationRedirect />} />
+        {/* Registro público ÚNICO de creadores, parametrizado por organización */}
+        <Route path="/registro" element={<GenericRegistrationRedirect />} />
+        <Route
+          path="/registro/:organizationSlug"
+          element={<OrganizationRegistrationPage mode="register" />}
+        />
+        <Route
+          path="/registro/:organizationSlug/continuar"
+          element={<OrganizationRegistrationPage mode="continue" />}
+        />
+        <Route path="/bienvenida" element={<CreatorWelcomeRoute />} />
+        {/* Entradas de alta heredadas → registro canónico (conservan UTM/ref y destino seguro) */}
+        <Route path="/auth/org/:slug" element={<LegacySlugRegistrationRedirect />} />
         <Route path="/r/:code" element={<ReferralLanding />} />
-        <Route path="/register" element={<Register />} />
-        {/* /register/:slug redirige a /auth/org/:slug */}
-        <Route path="/register/:slug" element={<OrgAuthRedirect />} />
+        <Route path="/register" element={<GenericRegistrationRedirect />} />
+        <Route path="/register/:slug" element={<LegacySlugRegistrationRedirect />} />
         <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/unete" element={<Unete />} />
-        <Route path="/unete/talento" element={<UneteTalento />} />
-        <Route path="/unete-talento" element={<TalentReferralRedirect />} />
-        <Route path="/unete/marcas" element={<UneteMarcas />} />
-        <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
+        {/* Altas públicas: solo creadores. Marcas y organizaciones: estado informativo, sin formulario */}
+        <Route path="/unete" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete/talento" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete-talento" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete/marcas" element={<SignupClosedPage audience="brand" />} />
+        <Route path="/unete/organizaciones" element={<SignupClosedPage audience="organization" />} />
         {/* Partner Communities */}
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />

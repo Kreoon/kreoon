@@ -53,9 +53,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AITokensPanelTrigger } from "@/components/ai/AITokensPanel";
 import { Badge } from "@/components/ui/badge";
 import { useWhiteLabel } from "@/hooks/useWhiteLabel";
-import { useReferralGate } from "@/hooks/useReferralGate";
 import { useUserPlanContext } from "@/hooks/useUserPlanContext";
-import { Key } from "lucide-react";
 
 interface NavItem {
   name: string;
@@ -246,22 +244,6 @@ const freelanceSections: NavSection[] = [
   },
 ];
 
-// Locked users (haven't completed referral gate) - only unlock access + profile
-const lockedUserSections: NavSection[] = [
-  {
-    label: "BIENVENIDA",
-    items: [
-      { name: "Obtener Llaves", href: "/unlock-access", icon: Key, tourId: "sidebar-unlock" },
-    ]
-  },
-  {
-    label: "CONFIG",
-    items: [
-      { name: "Mi Perfil", href: "/settings?section=profile", icon: UserCircle, tourId: "sidebar-profile" },
-    ]
-  }
-];
-
 /**
  * Combina secciones de navegación de múltiples roles eliminando duplicados.
  * Útil para usuarios con múltiples roles (ej: creator + editor)
@@ -358,7 +340,6 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
   const { isPlatformRoot, currentOrgName } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
   const { effectivePlatformName, effectiveLogoUrl, isWhiteLabelActive } = useWhiteLabel();
-  const { isUnlocked, isGateLoading } = useReferralGate();
   const { shouldUseReducedMenu, usePersonalCoins } = useUserPlanContext();
   const [showClientSelector, setShowClientSelector] = useState(false);
   const [currentClientName, setCurrentClientName] = useState<string | null>(null);

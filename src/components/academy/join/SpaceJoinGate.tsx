@@ -8,6 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useJoinSpace } from '@/hooks/academy/useAcademyJoinSpace';
 import { supabase } from '@/integrations/supabase/client';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
+import { sanitizeReturnTo } from '@/lib/registration/returnTo';
+import { REGISTRATION_BASE } from '@/lib/registration/paths';
+import { attributionToSearchParams, pickAttribution } from '@/lib/registration/attribution';
 import { validateCouponCode, type CouponPlan } from '@/hooks/academy/useAcademyCoupons';
 
 const KREOON_PURPLE = '#7c3aed';
@@ -122,8 +125,11 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   const source = searchParams.get('utm_source') || searchParams.get('source') || null;
 
   const handleAnonRegister = () => {
-    const redirectTo = `/academia/${spaceSlug}`;
-    navigate(`/register?role=student&redirect=${encodeURIComponent(redirectTo)}`);
+    // Sin sesión: alta pública canónica (solo creadores); se vuelve al recurso tras registrarse.
+    const next = sanitizeReturnTo(`/academia/${spaceSlug}`);
+    const qs = attributionToSearchParams(pickAttribution(searchParams));
+    if (next) qs.set('next', next);
+    navigate(`${REGISTRATION_BASE}${qs.toString() ? `?${qs.toString()}` : ''}`);
   };
 
   const handleFreeJoin = async () => {

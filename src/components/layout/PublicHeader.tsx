@@ -1,21 +1,17 @@
 import * as React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ChevronDown, Users, Building2, Briefcase } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KreoonButton } from "@/components/ui/kreoon";
+import { REGISTRATION_BASE } from "@/lib/registration/paths";
 
 const NAV_LINKS = [
   { label: "Inicio", to: "/" },
+  { label: "Para Creadores", to: REGISTRATION_BASE },
   { label: "Portafolio", to: "/portafolio" },
   { label: "Blog", to: "/blog" },
   { label: "Marketplace", to: "/marketplace" },
-];
-
-const SOLUTIONS_DROPDOWN = [
-  { label: "Para Talento", to: "/unete/talento", icon: Users, desc: "Creadores y editores" },
-  { label: "Para Marcas", to: "/unete/marcas", icon: Building2, desc: "Empresas y startups" },
-  { label: "Para Agencias", to: "/unete/organizaciones", icon: Briefcase, desc: "Agencias y equipos" },
 ];
 
 interface PublicHeaderProps {
@@ -39,63 +35,6 @@ function Logo({ className }: { className?: string }) {
   );
 }
 
-function SolutionsDropdown() {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
-  };
-
-  return (
-    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <button
-        type="button"
-        className="flex items-center gap-1 text-sm text-kreoon-text-secondary transition-colors hover:text-white"
-      >
-        Soluciones
-        <ChevronDown className={cn("h-4 w-4 transition-transform", isOpen && "rotate-180")} />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15 }}
-            className="absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2"
-          >
-            <div className="w-64 rounded-lg border border-white/10 bg-kreoon-bg-secondary/95 p-2 shadow-xl backdrop-blur-xl">
-              {SOLUTIONS_DROPDOWN.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 rounded-md px-3 py-2.5 transition-colors hover:bg-kreoon-purple-500/10"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-kreoon-purple-500/10 text-kreoon-purple-400">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">{item.label}</p>
-                    <p className="text-xs text-kreoon-text-muted">{item.desc}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderProps) {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -113,10 +52,13 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
   }, [location.pathname]);
 
   const handleAuth = (tab: "login" | "register") => {
-    if (onOpenAuth) {
+    // El alta pública es solo de creadores y vive en la ruta canónica /registro.
+    if (tab === "register") {
+      navigate(REGISTRATION_BASE);
+    } else if (onOpenAuth) {
       onOpenAuth(tab);
     } else {
-      navigate(tab === "login" ? "/auth" : "/register");
+      navigate("/auth");
     }
   };
 
@@ -151,7 +93,6 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
             >
               Inicio
             </Link>
-            <SolutionsDropdown />
             {NAV_LINKS.slice(1).map((item) => (
               <Link
                 key={item.label}
@@ -171,7 +112,7 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
               Iniciar sesión
             </KreoonButton>
             <KreoonButton variant="primary" size="md" onClick={() => handleAuth("register")}>
-              Comenzar gratis
+              Crear cuenta de creador
             </KreoonButton>
           </div>
 
@@ -226,26 +167,6 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
                 </Link>
 
                 <div className="border-t border-kreoon-border/50 pt-2 mt-2">
-                  <p className="px-4 py-2 text-xs uppercase tracking-wider text-kreoon-text-muted">
-                    Soluciones
-                  </p>
-                  {SOLUTIONS_DROPDOWN.map((item) => (
-                    <Link
-                      key={item.to}
-                      to={item.to}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center gap-3 rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
-                    >
-                      <item.icon className="h-5 w-5 text-kreoon-purple-400" />
-                      <div>
-                        <p className="text-sm">{item.label}</p>
-                        <p className="text-xs text-kreoon-text-muted">{item.desc}</p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-
-                <div className="border-t border-kreoon-border/50 pt-2 mt-2">
                   {NAV_LINKS.slice(1).map((item) => (
                     <Link
                       key={item.label}
@@ -277,7 +198,7 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
                       setMobileOpen(false);
                     }}
                   >
-                    Comenzar gratis
+                    Crear cuenta de creador
                   </KreoonButton>
                 </div>
               </nav>

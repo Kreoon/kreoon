@@ -235,7 +235,7 @@ export default function CreatorPricingPage() {
                 Iniciar sesión
               </Button>
             </Link>
-            <Link to="/register">
+            <Link to="/registro">
               <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold text-sm">
                 Empezar gratis
               </Button>
@@ -308,7 +308,7 @@ export default function CreatorPricingPage() {
               <FeatureItem included={false} label="Redes sociales visibles" />
             </div>
 
-            <Link to="/register" className="w-full">
+            <Link to="/registro" className="w-full">
               <Button
                 variant="outline"
                 className="w-full border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
@@ -353,7 +353,7 @@ export default function CreatorPricingPage() {
               <FeatureItem included={false} label="Badge Premium" />
             </div>
 
-            <Link to="/register?plan=creator_pro" className="w-full">
+            <Link to="/registro" className="w-full">
               <Button
                 className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold"
                 aria-label="Hacer upgrade al plan Creator Pro"
@@ -408,7 +408,7 @@ export default function CreatorPricingPage() {
                 <FeatureItem included="Soporte prioritario" />
               </div>
 
-              <Link to="/register?plan=creator_premium" className="w-full">
+              <Link to="/registro" className="w-full">
                 <Button
                   className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-bold shadow-lg shadow-amber-500/20 transition-all hover:shadow-amber-500/40"
                   aria-label="Hacer upgrade al plan Creator Premium"
@@ -531,7 +531,7 @@ export default function CreatorPricingPage() {
             No necesitas tarjeta de credito. Crea tu perfil en minutos y haz upgrade cuando tu carrera lo pida.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/register">
+            <Link to="/registro">
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-bold px-8 shadow-lg shadow-amber-500/20"
