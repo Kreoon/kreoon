@@ -31,7 +31,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: CXXXXXXXXXXXXXXXXX"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           El Pixel Code de TikTok. Lo encuentras en TikTok Ads Manager → Events → Web Events.
@@ -48,7 +48,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Token de Events API'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           Genera el token en TikTok Ads Manager → Events → Settings → Generate Access Token.
@@ -76,7 +76,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Ej: TEST_KAE"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-gray-700"
           />
         </div>
       )}

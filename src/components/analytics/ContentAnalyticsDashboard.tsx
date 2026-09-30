@@ -399,7 +399,7 @@ export function ContentAnalyticsDashboard() {
         <TabsContent value="overview" className="space-y-6 mt-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Views Trend Chart */}
-            <Card className="bg-gray-900/50 border-gray-800">
+            <Card className="bg-card/50 border-gray-800">
               <CardHeader>
                 <CardTitle className="text-white text-lg">Views por Dia</CardTitle>
                 <CardDescription>Tendencia de visualizaciones</CardDescription>
@@ -450,7 +450,7 @@ export function ContentAnalyticsDashboard() {
             </Card>
 
             {/* Content Type Distribution */}
-            <Card className="bg-gray-900/50 border-gray-800">
+            <Card className="bg-card/50 border-gray-800">
               <CardHeader>
                 <CardTitle className="text-white text-lg">Distribucion por Tipo</CardTitle>
                 <CardDescription>Contenido por categoria</CardDescription>
@@ -496,7 +496,7 @@ export function ContentAnalyticsDashboard() {
 
         {/* Trends Tab */}
         <TabsContent value="trends" className="mt-6">
-          <Card className="bg-gray-900/50 border-gray-800">
+          <Card className="bg-card/50 border-gray-800">
             <CardHeader>
               <CardTitle className="text-white text-lg">Tendencias de Engagement</CardTitle>
               <CardDescription>Views vs Likes a lo largo del tiempo</CardDescription>
@@ -563,7 +563,7 @@ export function ContentAnalyticsDashboard() {
 
         {/* Top Content Tab */}
         <TabsContent value="top" className="mt-6">
-          <Card className="bg-gray-900/50 border-gray-800">
+          <Card className="bg-card/50 border-gray-800">
             <CardHeader>
               <CardTitle className="text-white text-lg">Top Performing Content</CardTitle>
               <CardDescription>Contenido con mejor rendimiento</CardDescription>
@@ -630,7 +630,7 @@ export function ContentAnalyticsDashboard() {
 
         {/* Types Tab */}
         <TabsContent value="types" className="mt-6">
-          <Card className="bg-gray-900/50 border-gray-800">
+          <Card className="bg-card/50 border-gray-800">
             <CardHeader>
               <CardTitle className="text-white text-lg">Rendimiento por Tipo</CardTitle>
               <CardDescription>Comparativa de engagement por tipo de contenido</CardDescription>
@@ -693,7 +693,7 @@ function KPICard({ title, value, icon: Icon, color, change }: KPICardProps) {
   };
 
   return (
-    <Card className="bg-gray-900/50 border-gray-800">
+    <Card className="bg-card/50 border-gray-800">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>

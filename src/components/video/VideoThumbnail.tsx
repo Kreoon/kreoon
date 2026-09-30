@@ -67,7 +67,7 @@ export const VideoThumbnail = memo(function VideoThumbnail({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       className={cn(
-        "relative bg-zinc-900 cursor-pointer overflow-hidden",
+        "relative bg-card cursor-pointer overflow-hidden",
         "group transition-transform active:scale-[0.98]",
         aspectClass
       )}

@@ -136,7 +136,7 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
 
 function OnboardingLoadingScreen() {
   return (
-    <div className="min-h-screen bg-zinc-200 dark:bg-[#030308] flex items-center justify-center">
+    <div className="min-h-screen bg-zinc-200 dark:bg-background flex items-center justify-center">
       <div className="animate-spin h-8 w-8 border-2 border-purple-600 border-t-transparent rounded-full" />
     </div>
   );

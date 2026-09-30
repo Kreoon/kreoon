@@ -13,7 +13,7 @@ export default function AcademiaSpacePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
         Cargando academia...
       </div>
     );
@@ -21,7 +21,7 @@ export default function AcademiaSpacePage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-zinc-400 gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-purple-400 hover:text-purple-300">
@@ -36,7 +36,7 @@ export default function AcademiaSpacePage() {
   const publishedCourses = courses.filter((c: any) => c.status === 'published');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       {/* Hero */}
       <div
         className="relative h-64 md:h-80"
@@ -46,7 +46,7 @@ export default function AcademiaSpacePage() {
             : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/40 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-20 relative">

@@ -626,7 +626,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         "fixed left-4 top-4 bottom-4 z-50 flex flex-col",
         "rounded-2xl border border-white/10",
         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "bg-white dark:bg-[#0c0c16] shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]",
+        "bg-white dark:bg-background shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
@@ -783,7 +783,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
 
         {/* User & Actions - fixed at bottom */}
-        <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 py-2 px-3 bg-white dark:bg-[#0f0f14] space-y-1">
+        <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 py-2 px-3 bg-white dark:bg-background space-y-1">
           {/* Email */}
           {!collapsed && profile && (
             <div className="px-3 py-1 text-xs text-muted-foreground truncate font-mono">

@@ -9,7 +9,7 @@ export default function ResearchLanding() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto mb-3" />
           <p className="text-white/40 text-sm">Cargando investigacion...</p>
@@ -20,7 +20,7 @@ export default function ResearchLanding() {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center max-w-md px-6">
           <p className="text-white/60 text-lg font-semibold mb-2">Investigacion no encontrada</p>
           <p className="text-white/30 text-sm mb-4">

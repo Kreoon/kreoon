@@ -245,7 +245,7 @@ export default function CreatorDashboard() {
       {/* Wallet tab */}
       {dashboardTab === 'wallet' && (
         profile?.current_organization_id && user?.id ? (
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4 md:p-6">
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background p-4 md:p-6">
             <TalentWalletView
               userId={targetUserId ?? user.id}
               organizationId={profile.current_organization_id}
@@ -279,7 +279,7 @@ export default function CreatorDashboard() {
             const roleLabel = hasEditorRole ? 'Creador & Editor' : 'Creador';
             const actionLabel = hasEditorRole ? 'graba, edita y entrega' : 'graba y entrega';
             return (
-              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 via-zinc-900/60 to-zinc-900/40 p-4">
+              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 via-card/60 to-card/40 p-4">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none" />
                 <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -423,7 +423,7 @@ export default function CreatorDashboard() {
 
           {/* Videos aprobados */}
           {approvedVideos.length > 0 && (
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />

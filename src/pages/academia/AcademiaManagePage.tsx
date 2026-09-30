@@ -39,7 +39,7 @@ export default function AcademiaManagePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
         <Loader2 className="h-6 w-6 animate-spin mr-2" /> Cargando...
       </div>
     );
@@ -47,7 +47,7 @@ export default function AcademiaManagePage() {
 
   if (!space || !isOwner) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-zinc-400 gap-3">
         <GraduationCap className="h-10 w-10" />
         <p>No tienes acceso a gestionar esta academia.</p>
         <Link to="/academia/dashboard" className="text-purple-400 hover:text-purple-300">
@@ -58,7 +58,7 @@ export default function AcademiaManagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       {/* Header */}
       <div className="border-b border-white/10 bg-black/30 sticky top-0 z-10 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 md:px-8 h-14 flex items-center gap-4">
@@ -265,7 +265,7 @@ function CoursesTab({
                 </button>
                 {openMenu === course.id && (
                   <div
-                    className="absolute right-0 top-8 z-20 w-44 rounded-xl bg-zinc-900 border border-white/10 shadow-xl py-1"
+                    className="absolute right-0 top-8 z-20 w-44 rounded-xl bg-card border border-white/10 shadow-xl py-1"
                     onMouseLeave={() => setOpenMenu(null)}
                   >
                     <button

@@ -108,9 +108,9 @@ export function BoardCalendarView({
       </div>
 
       {/* Calendar Grid - Nova v2 */}
-      <div className="border border-zinc-200/80 dark:border-purple-500/15 rounded-lg overflow-hidden bg-white dark:bg-[#0f0f22]">
+      <div className="border border-zinc-200/80 dark:border-purple-500/15 rounded-lg overflow-hidden bg-white dark:bg-background">
         {/* Day headers */}
-        <div className="grid grid-cols-7 bg-zinc-100 dark:bg-[#0a0a18]/60">
+        <div className="grid grid-cols-7 bg-zinc-100 dark:bg-background/60">
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
             <div key={day} className="p-2 text-center text-sm font-medium text-muted-foreground">
               {day}
@@ -122,7 +122,7 @@ export function BoardCalendarView({
         <div className="grid grid-cols-7">
           {/* Empty cells for offset */}
           {Array.from({ length: firstDayOffset }).map((_, i) => (
-            <div key={`empty-${i}`} className="min-h-24 border-t border-r border-zinc-200/80 dark:border-purple-500/10 bg-zinc-50 dark:bg-[#050510]/40" />
+            <div key={`empty-${i}`} className="min-h-24 border-t border-r border-zinc-200/80 dark:border-purple-500/10 bg-zinc-50 dark:bg-background/40" />
           ))}
 
           {days.map(day => {
@@ -139,7 +139,7 @@ export function BoardCalendarView({
                   "min-h-24 border-t border-r p-1 transition-all duration-200",
                   "border-zinc-200/80 dark:border-purple-500/10",
                   // Inactive month
-                  !isCurrentMonth && "bg-zinc-50 dark:bg-[#050510]/40 text-zinc-400 dark:text-[#52525b]",
+                  !isCurrentMonth && "bg-zinc-50 dark:bg-background/40 text-zinc-400 dark:text-[#52525b]",
                   // Today highlight - Nova glow
                   isTodayDate && "bg-purple-50 dark:bg-purple-500/8 dark:shadow-[inset_0_0_20px_rgba(139,92,246,0.1)]"
                 )}

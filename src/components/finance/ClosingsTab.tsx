@@ -708,7 +708,7 @@ export function ClosingsTab({ orgId }: Props) {
 
       {/* Dialog nuevo cierre */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0e0e0e] border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Nuevo cierre financiero</DialogTitle>
           </DialogHeader>

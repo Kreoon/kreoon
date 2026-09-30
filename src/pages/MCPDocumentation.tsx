@@ -385,7 +385,7 @@ function CopyableBlock({ content }: { content: string }) {
 
   return (
     <div className="relative group">
-      <pre className="bg-[#0d0d18] border border-[#2a2a3a] text-[#c9d1d9] text-xs leading-relaxed p-5 rounded-xl overflow-x-auto max-h-80 font-mono whitespace-pre-wrap">
+      <pre className="bg-background border border-[#2a2a3a] text-[#c9d1d9] text-xs leading-relaxed p-5 rounded-xl overflow-x-auto max-h-80 font-mono whitespace-pre-wrap">
         {content}
       </pre>
       <button
@@ -533,10 +533,10 @@ export default function MCPDocumentation() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-gray-200 font-sans">
+    <div className="min-h-screen bg-background text-gray-200 font-sans">
 
       {/* Header sticky */}
-      <div className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur border-b border-[#1e1e2e] px-4 py-3 flex items-center justify-between">
+      <div className="sticky top-0 z-50 bg-background/90 backdrop-blur border-b border-[#1e1e2e] px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-gray-400 hover:text-white text-sm transition-colors"
@@ -610,7 +610,7 @@ export default function MCPDocumentation() {
                   { say: '"Asígnale un creador / editor"', tools: 'assign_content_team' },
                   { say: '"Aprueba el guion / Pide cambios"', tools: 'approve_content_script' },
                 ].map((row, i) => (
-                  <tr key={i} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-[#13131a]" : "bg-[#0f0f1a]"}`}>
+                  <tr key={i} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}>
                     <td className="px-4 py-3 text-gray-300 text-xs">{row.say}</td>
                     <td className="px-4 py-3 font-mono text-purple-300 text-xs">{row.tools}</td>
                   </tr>
@@ -653,7 +653,7 @@ export default function MCPDocumentation() {
               { icon: <Shield className="w-4 h-4" />, title: "Multi-tenant seguro", desc: "Cada API key está vinculada a una organización. RLS en toda la base de datos." },
               { icon: <Code2 className="w-4 h-4" />, title: "Estándar abierto", desc: "Compatible con Claude, ChatGPT, Gemini y cualquier agente que soporte MCP o REST." },
             ].map((item) => (
-              <div key={item.title} className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-4 space-y-2">
+              <div key={item.title} className="bg-background border border-[#1e1e2e] rounded-xl p-4 space-y-2">
                 <div className="text-purple-400">{item.icon}</div>
                 <p className="text-white text-sm font-semibold">{item.title}</p>
                 <p className="text-gray-400 text-xs leading-relaxed">{item.desc}</p>
@@ -670,7 +670,7 @@ export default function MCPDocumentation() {
           </h2>
 
           {/* Claude Desktop */}
-          <div className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-5 space-y-3">
+          <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
               <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">01</span>
               <h3 className="text-white font-semibold">Claude Desktop</h3>
@@ -691,7 +691,7 @@ export default function MCPDocumentation() {
           </div>
 
           {/* Claude.ai web */}
-          <div className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-5 space-y-3">
+          <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
               <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">02</span>
               <h3 className="text-white font-semibold">Claude.ai Web (OAuth)</h3>
@@ -702,7 +702,7 @@ export default function MCPDocumentation() {
           </div>
 
           {/* REST API */}
-          <div className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-5 space-y-3">
+          <div className="bg-background border border-[#1e1e2e] rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
               <span className="bg-purple-500/20 text-purple-300 text-xs font-mono px-2 py-0.5 rounded">03</span>
               <h3 className="text-white font-semibold">REST API directo</h3>
@@ -741,7 +741,7 @@ curl -X POST \\
                     {group.tools.map((tool, i) => (
                       <tr
                         key={tool.name}
-                        className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-[#13131a]" : "bg-[#0f0f1a]"}`}
+                        className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}
                       >
                         <td className="px-4 py-3 font-mono text-purple-300 text-xs whitespace-nowrap">{tool.name}</td>
                         <td className="px-4 py-3 text-gray-400 text-xs">{tool.desc}</td>
@@ -774,7 +774,7 @@ curl -X POST \\
               </thead>
               <tbody>
                 {SCOPES.map((s, i) => (
-                  <tr key={s.scope} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-[#13131a]" : "bg-[#0f0f1a]"}`}>
+                  <tr key={s.scope} className={`border-b border-[#1e1e2e] ${i % 2 === 0 ? "bg-background" : "bg-background"}`}>
                     <td className="px-4 py-3 font-mono text-purple-300 text-xs whitespace-nowrap">{s.scope}</td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{s.desc}</td>
                   </tr>
@@ -798,7 +798,7 @@ curl -X POST \\
               { step: "4", title: "Redirección", desc: "Servidor genera un code opaco de un solo uso y redirige SOLO al redirect_uri registrado" },
               { step: "5", title: "Token", desc: "POST /oauth/token con code + code_verifier → access_token = tu API key" },
             ].map((item) => (
-              <div key={item.step} className="bg-[#13131a] border border-[#1e1e2e] rounded-xl p-4 space-y-2">
+              <div key={item.step} className="bg-background border border-[#1e1e2e] rounded-xl p-4 space-y-2">
                 <span className="text-purple-400 font-mono text-xs font-bold">Paso {item.step}</span>
                 <p className="text-white text-sm font-semibold">{item.title}</p>
                 <p className="text-gray-500 text-xs leading-relaxed">{item.desc}</p>

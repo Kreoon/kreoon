@@ -67,7 +67,7 @@ function StatsHeader({
   const total = studioContent.length + marketplaceProjects.length;
 
   return (
-    <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 mb-4 rounded-sm bg-zinc-900/60 dark:bg-zinc-900/80 border border-zinc-700/40">
+    <div className="flex flex-wrap items-center gap-3 px-3 py-2.5 mb-4 rounded-sm bg-card/60 dark:bg-card/80 border border-zinc-700/40">
       <div className="flex items-center gap-3 divide-x divide-zinc-700/40">
         <div className="text-center pr-3">
           <p className="text-base font-bold text-white">{total}</p>
@@ -186,7 +186,7 @@ export function UnifiedKpiDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] bg-[#0f0f1a] border-zinc-800 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-2xl max-h-[90dvh] bg-background border-zinc-800 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <span className="text-base font-bold text-white">{title}</span>

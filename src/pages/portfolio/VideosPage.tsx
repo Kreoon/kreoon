@@ -111,7 +111,7 @@ function BunnyIframeSlide({ url, isVisible }: { url: string; isVisible: boolean 
           />
         </div>
       ) : (
-        <div className="w-full h-full max-w-md mx-auto bg-zinc-900 flex items-center justify-center">
+        <div className="w-full h-full max-w-md mx-auto bg-card flex items-center justify-center">
           <div className="w-12 h-12 rounded-full border-2 border-white/30 border-t-white animate-spin" />
         </div>
       )}
@@ -203,7 +203,7 @@ const VideoSlide = memo(function VideoSlide({
           {posterSrc ? (
             <img src={posterSrc} alt="" className="max-h-full max-w-full object-contain" />
           ) : (
-            <div className="w-full h-full max-w-md mx-auto bg-zinc-900" />
+            <div className="w-full h-full max-w-md mx-auto bg-card" />
           )}
         </div>
       )}

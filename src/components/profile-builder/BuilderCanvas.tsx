@@ -189,7 +189,7 @@ export function BuilderCanvas({
           'flex flex-col gap-0 mx-auto transition-all duration-200 rounded-lg',
           DEVICE_WIDTH[previewDevice],
           // Aplicar tema directamente
-          builderConfig.theme === 'dark' ? 'bg-[#0a0a0f] text-zinc-100' : 'bg-white text-zinc-900',
+          builderConfig.theme === 'dark' ? 'bg-background text-zinc-100' : 'bg-white text-zinc-900',
         )}
         style={{
           // Aplicar todas las variables CSS del tema
@@ -219,7 +219,7 @@ export function BuilderCanvas({
             className={cn(
               'flex flex-col items-center justify-center gap-5',
               'min-h-[400px] rounded-xl border-2 border-dashed',
-              'border-zinc-700 bg-gradient-to-b from-zinc-900/80 to-zinc-950/50',
+              'border-zinc-700 bg-gradient-to-b from-card/80 to-background/50',
               'p-8',
             )}
             aria-label="Canvas vacío"

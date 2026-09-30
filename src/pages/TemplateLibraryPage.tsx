@@ -64,7 +64,7 @@ export default function TemplateLibraryPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-950/50">
+      <div className="border-b border-gray-800 bg-background/50">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>

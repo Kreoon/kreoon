@@ -108,7 +108,7 @@ export function FinanceAIChat({ orgId }: Props) {
 
   return (
     <div className="fixed bottom-6 right-6 z-40 w-[90vw] max-w-md h-[600px] max-h-[80vh]">
-      <Card className="bg-[#0a0a0a] border-white/10 h-full flex flex-col overflow-hidden">
+      <Card className="bg-background border-white/10 h-full flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-gradient-to-r from-purple-600/20 to-blue-600/20">
           <div className="flex items-center gap-2">

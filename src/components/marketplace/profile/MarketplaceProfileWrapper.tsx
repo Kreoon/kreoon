@@ -32,7 +32,7 @@ export function MarketplaceProfileWrapper({
   };
 
   return (
-    <div className={cn('min-h-screen bg-zinc-950', className)}>
+    <div className={cn('min-h-screen bg-background', className)}>
       {/* Botón flotante de volver */}
       {showBackButton && (
         <div className="fixed top-4 left-4 z-50">

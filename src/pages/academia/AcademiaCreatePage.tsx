@@ -160,7 +160,7 @@ export default function AcademiaCreatePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 py-8 px-4">
+    <div className="min-h-screen bg-background text-zinc-100 py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Stepper */}
         <div className="flex items-center gap-2 mb-8">

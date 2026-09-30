@@ -32,7 +32,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: 1234567"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           Partner ID de LinkedIn. Lo encuentras en Campaign Manager → Account Assets → Insight Tag.
@@ -49,7 +49,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'OAuth2 Access Token'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           Token OAuth2 con scope r_conversions y rw_conversions. Requiere app en LinkedIn Developer Portal.
@@ -90,7 +90,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Opcional"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-gray-700"
           />
         </div>
       )}

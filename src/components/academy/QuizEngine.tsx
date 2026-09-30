@@ -160,14 +160,14 @@ export function QuizEngine({
 
   // ─────────────── RENDER ───────────────
   const containerClass = cn(
-    'rounded-2xl border border-white/10 bg-[#0c0c16] text-zinc-100 shadow-xl',
+    'rounded-2xl border border-white/10 bg-background text-zinc-100 shadow-xl',
     mode === 'overlay' && 'fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4',
     mode === 'page' && 'mx-auto max-w-3xl p-6 md:p-10',
     mode === 'inline' && 'p-6'
   );
 
   const inner = (
-    <div className={mode === 'overlay' ? 'w-full max-w-3xl rounded-2xl bg-[#0c0c16] p-6 md:p-10 shadow-2xl' : ''}>
+    <div className={mode === 'overlay' ? 'w-full max-w-3xl rounded-2xl bg-background p-6 md:p-10 shadow-2xl' : ''}>
       {phase === 'intro' && (
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold">{quiz.title}</h2>

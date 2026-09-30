@@ -111,7 +111,7 @@ export function SaveAsTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-gray-950 border-gray-800">
+      <DialogContent className="sm:max-w-lg bg-background border-gray-800">
         <DialogHeader>
           <DialogTitle className="text-white">Guardar como plantilla</DialogTitle>
         </DialogHeader>
@@ -128,7 +128,7 @@ export function SaveAsTemplateDialog({
               placeholder="Ej: Mi perfil UGC minimalista"
               value={form.name}
               onChange={(e) => update({ name: e.target.value })}
-              className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+              className="bg-card border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
             />
           </div>
 
@@ -141,7 +141,7 @@ export function SaveAsTemplateDialog({
               placeholder="Describe brevemente esta plantilla..."
               value={form.description}
               onChange={(e) => update({ description: e.target.value })}
-              className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 resize-none"
+              className="bg-card border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 resize-none"
             />
           </div>
 
@@ -149,10 +149,10 @@ export function SaveAsTemplateDialog({
           <div className="space-y-1.5">
             <Label className="text-gray-300">Categoria</Label>
             <Select value={form.category} onValueChange={(v) => update({ category: v })}>
-              <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-purple-500">
+              <SelectTrigger className="bg-card border-gray-700 text-white focus:border-purple-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectContent className="bg-card border-gray-700">
                 {CATEGORIES.map((cat) => (
                   <SelectItem
                     key={cat.value}
@@ -176,7 +176,7 @@ export function SaveAsTemplateDialog({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
-                className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+                className="bg-card border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
               />
               <Button
                 type="button"

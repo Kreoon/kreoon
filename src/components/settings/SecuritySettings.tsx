@@ -543,7 +543,7 @@ export function SecuritySettings() {
               </div>
               
               {qrCode && (
-                <div className="flex justify-center p-4 bg-white dark:bg-zinc-900 rounded-lg">
+                <div className="flex justify-center p-4 bg-white dark:bg-card rounded-lg">
                   <img src={qrCode} alt="QR Code for 2FA" className="w-48 h-48" />
                 </div>
               )}

@@ -82,7 +82,7 @@ export function FinanceFiltersBar({
             {format(parseISO(endDate), 'd MMM yyyy', { locale: es })}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="bg-[#0e0e0e] border-white/10 text-white w-72 p-3">
+        <PopoverContent className="bg-background border-white/10 text-white w-72 p-3">
           <div className="space-y-3">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Desde</label>

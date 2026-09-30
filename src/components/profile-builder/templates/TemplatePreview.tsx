@@ -64,7 +64,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
     <div
       className={cn(
         'w-full overflow-hidden rounded-lg',
-        config.theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-white text-zinc-900',
+        config.theme === 'dark' ? 'bg-background text-white' : 'bg-white text-zinc-900',
         className
       )}
       style={{ fontSize: '10px' }}
@@ -175,7 +175,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
                 key={i}
                 className={cn(
                   'flex items-center justify-between p-2 rounded-md',
-                  config.theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'
+                  config.theme === 'dark' ? 'bg-card' : 'bg-zinc-100'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -218,7 +218,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
                 className={cn(
                   'p-2 rounded-md text-center',
                   i === 1 ? 'ring-1' : '',
-                  config.theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'
+                  config.theme === 'dark' ? 'bg-card' : 'bg-zinc-100'
                 )}
                 style={i === 1 ? { ringColor: accentColor } : undefined}
               >

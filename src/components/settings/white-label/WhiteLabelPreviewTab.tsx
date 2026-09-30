@@ -188,7 +188,7 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Así verán tus miembros la pantalla de inicio de sesión</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-sm border bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] overflow-hidden max-w-sm mx-auto">
+              <div className="rounded-sm border bg-gradient-to-b from-background to-[#1a1a2e] overflow-hidden max-w-sm mx-auto">
                 {/* Auth header */}
                 <div className="p-8 flex flex-col items-center gap-3">
                   <div className="h-14 w-14 rounded-sm overflow-hidden">

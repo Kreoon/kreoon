@@ -50,11 +50,11 @@ const TIER_BADGE: Record<string, { label: string; className: string; icon: typeo
 };
 
 const THUMBNAIL_GRADIENTS = [
-  'from-purple-900 to-slate-900',
-  'from-blue-900 to-slate-900',
-  'from-emerald-900 to-slate-900',
-  'from-pink-900 to-slate-900',
-  'from-amber-900 to-slate-900',
+  'from-purple-900 to-card',
+  'from-blue-900 to-card',
+  'from-emerald-900 to-card',
+  'from-pink-900 to-card',
+  'from-amber-900 to-card',
 ];
 
 function getThumbnailGradient(id: string): string {
@@ -76,7 +76,7 @@ export function TemplateCard({ template, onSelect, onLike, onSave }: TemplateCar
 
   return (
     <article
-      className="group relative rounded-xl overflow-hidden bg-gray-900 border border-gray-800 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 cursor-pointer"
+      className="group relative rounded-xl overflow-hidden bg-card border border-gray-800 hover:border-purple-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-purple-500/10 hover:-translate-y-0.5 cursor-pointer"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

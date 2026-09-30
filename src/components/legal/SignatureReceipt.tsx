@@ -43,7 +43,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
+        className="bg-gradient-to-b from-card to-background border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-green-500/10 sticky top-0 z-10">

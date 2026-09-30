@@ -34,7 +34,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: AW-123456789"
-          className={`bg-gray-900/50 border-gray-700 ${!isValidFormat ? 'border-red-500/50' : ''}`}
+          className={`bg-card/50 border-gray-700 ${!isValidFormat ? 'border-red-500/50' : ''}`}
         />
         {!isValidFormat && (
           <div className="flex items-center gap-1.5 text-xs text-amber-400">
@@ -57,7 +57,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Conversion label o API secret'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           El Conversion Label de la acción de conversión. Necesario para Enhanced Conversions.
@@ -98,7 +98,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Opcional"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-gray-700"
           />
         </div>
       )}

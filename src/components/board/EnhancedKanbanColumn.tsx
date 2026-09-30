@@ -32,7 +32,7 @@ export function EnhancedKanbanColumn({
       className={cn(
         "flex flex-col shrink-0 w-[280px] sm:w-[320px] h-full snap-start",
         "rounded-xl border transition-all duration-200",
-        "bg-zinc-100/70 dark:bg-[#0c0c1e]/70",
+        "bg-zinc-100/70 dark:bg-background/70",
         "border-zinc-200/60 dark:border-white/[0.06]",
         "shadow-sm dark:shadow-none",
         isDropTarget && canDrop && [
@@ -58,7 +58,7 @@ export function EnhancedKanbanColumn({
       {/* Column Header */}
       <div className={cn(
         "flex items-center justify-between shrink-0 px-4 py-3",
-        "bg-white/80 dark:bg-[#0f0f22]/80",
+        "bg-white/80 dark:bg-background/80",
         "border-b border-zinc-200/40 dark:border-white/[0.05]"
       )}>
         <div className="flex items-center gap-2.5">

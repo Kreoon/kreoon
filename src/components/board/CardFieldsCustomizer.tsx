@@ -152,7 +152,7 @@ export function CardFieldsCustomizer({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-72 p-3 bg-zinc-900 border-purple-500/30"
+        className="w-72 p-3 bg-card border-purple-500/30"
         align="end"
         onClick={(e) => e.stopPropagation()}
       >

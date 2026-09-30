@@ -28,7 +28,7 @@ export function AdnRecargadoBanner({
   isGenerating = false,
 }: AdnRecargadoBannerProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-violet-500/40 bg-gradient-to-br from-[#03000a] via-[#0d0418] to-[#03000a] shadow-2xl shadow-violet-500/30">
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/40 bg-gradient-to-br from-background via-background to-background shadow-2xl shadow-violet-500/30">
       {/* Glow ambient layers (atenuados para no aclarar el fondo) */}
       <div aria-hidden className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-32 left-1/4 w-96 h-96 bg-violet-600/25 rounded-full blur-3xl animate-pulse-slow" />
@@ -107,7 +107,7 @@ export function AdnRecargadoBanner({
         <div className="flex items-center gap-4 mb-3">
           <div className="relative">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-pink-500 p-[3px] shadow-2xl shadow-violet-500/50">
-              <div className="w-full h-full rounded-full bg-[#03000a] flex items-center justify-center">
+              <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
                 <Dna className="w-6 h-6 text-white animate-pulse" />
               </div>
             </div>

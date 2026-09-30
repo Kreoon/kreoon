@@ -18,7 +18,7 @@ const ARCHETYPE_CONFIG: Record<string, { emoji: string; color: string }> = {
   'The Hero':       { emoji: '⚔️', color: 'from-amber-50 dark:from-amber-950/30 to-yellow-50 dark:to-yellow-950/30 border-amber-200 dark:border-amber-800' },
   'The Lover':      { emoji: '❤️', color: 'from-rose-50 dark:from-rose-950/30 to-pink-50 dark:to-pink-950/30 border-rose-200 dark:border-rose-800' },
   'The Jester':     { emoji: '🃏', color: 'from-yellow-50 dark:from-yellow-950/30 to-lime-50 dark:to-lime-950/30 border-yellow-200 dark:border-yellow-800' },
-  'The Everyman':   { emoji: '🤝', color: 'from-stone-50 dark:from-stone-950/30 to-gray-50 dark:to-gray-950/30 border-stone-200 dark:border-stone-800' },
+  'The Everyman':   { emoji: '🤝', color: 'from-stone-50 dark:from-stone-950/30 to-gray-50 dark:to-background/30 border-stone-200 dark:border-stone-800' },
   'The Caregiver':  { emoji: '💚', color: 'from-green-50 dark:from-green-950/30 to-emerald-50 dark:to-emerald-950/30 border-green-200 dark:border-green-800' },
   'The Ruler':      { emoji: '👑', color: 'from-amber-50 dark:from-amber-950/30 to-orange-50 dark:to-orange-950/30 border-amber-200 dark:border-amber-800' },
   'The Creator':    { emoji: '🎨', color: 'from-pink-50 dark:from-pink-950/30 to-violet-50 dark:to-violet-950/30 border-pink-200 dark:border-pink-800' },
@@ -75,7 +75,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Personality Traits */}
       {(data.personality_traits?.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Rasgos de Personalidad</p>
           {isEditing ? (
             <EditableTags items={data.personality_traits || []} onChange={change('personality_traits') as (v: string[]) => void} color="purple" placeholder="Agregar rasgo..." />
@@ -181,7 +181,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Key Messages */}
       {(keyMessages.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Mensajes Clave</p>
           {isEditing ? (
             <EditableTags items={data.key_messages || data.messaging?.key_messages || []} onChange={change('key_messages') as (v: string[]) => void} color="purple" placeholder="Agregar mensaje..." />
@@ -200,7 +200,7 @@ export function BrandIdentitySection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Elevator Pitch */}
       {(data.messaging?.elevator_pitch || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-2">Elevator Pitch</p>
           {isEditing ? (
             <EditableText value={data.messaging?.elevator_pitch} onChange={change('messaging.elevator_pitch') as (v: string) => void} multiline placeholder="Elevator pitch..." />

@@ -58,7 +58,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(primaryColors.length > 0 || secondaryColors.length > 0 || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(primaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                 <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Colores Primarios</p>
@@ -76,7 +76,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           )}
 
           {(secondaryColors.length > 0 || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-4">
                 <Palette className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                 <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Colores Secundarios</p>
@@ -114,7 +114,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
       {(typographyStyle || imageryStyle || isEditing) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(typographyStyle || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-3">
                 <Type className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Estilo Tipográfico</p>
@@ -128,7 +128,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
           )}
 
           {(imageryStyle || isEditing) && (
-            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+            <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
               <div className="flex items-center gap-2 mb-3">
                 <Image className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Estilo de Imágenes</p>
@@ -145,7 +145,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Mood Keywords */}
       {(moodKeywords.length > 0 || isEditing) && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Palabras Clave del Mood</p>
           {isEditing ? (
             <EditableTags items={data.mood_keywords || []} onChange={change('mood_keywords') as (v: string[]) => void} color="emerald" placeholder="Agregar keyword..." />
@@ -166,7 +166,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
 
       {/* Visual Preview Mockup (display only) */}
       {!isEditing && primaryColors.length > 0 && (
-        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-4 rounded-lg bg-zinc-50 dark:bg-background border border-zinc-200 dark:border-zinc-700/50">
           <p className="text-xs text-zinc-500 uppercase tracking-wider mb-4">Vista Previa de Paleta</p>
           <div className="relative h-32 rounded-lg overflow-hidden">
             <div
@@ -175,7 +175,7 @@ export function VisualIdentitySection({ data, isEditing, onFieldChange }: Props)
                 background: `linear-gradient(135deg, ${primaryColors[0] || '#8B5CF6'} 0%, ${primaryColors[1] || '#EC4899'} 50%, ${secondaryColors[0] || '#06B6D4'} 100%)`
               }}
             />
-            <div className="absolute inset-0 bg-zinc-900/20" />
+            <div className="absolute inset-0 bg-card/20" />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-white/80 text-sm font-medium mb-1">Tu Marca</p>

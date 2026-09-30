@@ -41,7 +41,7 @@ interface TemplateProfileRendererProps {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 animate-pulse" aria-busy="true">
+    <div className="min-h-screen w-full bg-background animate-pulse" aria-busy="true">
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
@@ -58,7 +58,7 @@ function ProfileSkeleton() {
 
 function ProfileError({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md space-y-4">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
         <h2 className="text-xl font-semibold text-zinc-100">Perfil no disponible</h2>
@@ -204,7 +204,7 @@ export function TemplateProfileRenderer({
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorProfileId}
@@ -219,7 +219,7 @@ export function TemplateProfileRenderer({
   // Error state
   if (error || !creatorData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorProfileId}
@@ -239,7 +239,7 @@ export function TemplateProfileRenderer({
   const hasMinimumRequirements = hasPublishedProfile || creatorData.portfolioItems.length > 0;
   if (!hasMinimumRequirements) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorData.profile.id}
@@ -257,7 +257,7 @@ export function TemplateProfileRenderer({
   const showBranding = builderConfig.showKreoonBranding !== false;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {shouldShowHeader && (
         <ProfileHeader
           creatorId={creatorData.profile.id}
@@ -281,7 +281,7 @@ export function TemplateProfileRenderer({
                 </div>
               </div>
             ) : (
-              <Suspense fallback={<div className="min-h-screen animate-pulse bg-zinc-900/50" />}>
+              <Suspense fallback={<div className="min-h-screen animate-pulse bg-card/50" />}>
                 <div className="py-8 space-y-8">
                   {visibleBlocks.map((block) => (
                     <PublicBlockRenderer

@@ -12,7 +12,7 @@ export default function AcademiaHomePage() {
   const { data: enrollments = [] } = useMyEnrollments();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
         {/* Hero */}
         <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10 p-8 md:p-12 mb-10">

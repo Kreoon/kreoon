@@ -370,7 +370,7 @@ export function EnhancedContentCard({
                 data-no-click
                 variant="ghost"
                 size="icon"
-                className="absolute top-2 left-2 h-7 w-7 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 rounded-lg bg-zinc-900/30 dark:bg-black/30 hover:bg-zinc-900/50 dark:hover:bg-black/50 text-white"
+                className="absolute top-2 left-2 h-7 w-7 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-150 rounded-lg bg-card/30 dark:bg-black/30 hover:bg-card/50 dark:hover:bg-black/50 text-white"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
               </Button>

@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export function TemplateCardSkeleton() {
   return (
-    <article className="rounded-xl overflow-hidden bg-gray-900 border border-gray-800">
+    <article className="rounded-xl overflow-hidden bg-card border border-gray-800">
       {/* Thumbnail */}
       <Skeleton className="w-full aspect-[4/3] rounded-none bg-gray-800" />
 

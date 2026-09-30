@@ -32,7 +32,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: 123456789012345"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           El ID numérico de tu Pixel de Facebook. Lo encuentras en Events Manager.
@@ -49,7 +49,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Token de acceso del sistema'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           System User Token con permisos de Conversions API. Genéralo en Business Settings → System Users.
@@ -63,7 +63,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.dataset_id}
           onChange={(e) => update('dataset_id', e.target.value)}
           placeholder="Opcional para CAPI Gateway"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-gray-700"
         />
         <p className="text-xs text-gray-500">
           Solo necesario si usas Conversions API Gateway. Déjalo vacío para CAPI estándar.
@@ -91,7 +91,7 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Ej: TEST12345"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-gray-700"
           />
           <p className="text-xs text-gray-500">
             Código de Events Manager → Test Events. Los eventos con este código no afectan campañas.

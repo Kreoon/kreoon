@@ -88,7 +88,7 @@ export function AcademyNotificationCenter() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-50 w-80 max-h-[70vh] overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl">
+          <div className="absolute right-0 top-12 z-50 w-80 max-h-[70vh] overflow-hidden rounded-xl border border-white/10 bg-background shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-3 py-2">
               <span className="font-semibold text-sm text-zinc-100">Notificaciones</span>
               <div className="flex items-center gap-1">

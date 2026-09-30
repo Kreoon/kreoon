@@ -68,14 +68,14 @@ export function CloneTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-gray-950 border-gray-800">
+      <DialogContent className="sm:max-w-md bg-background border-gray-800">
         <DialogHeader>
           <DialogTitle className="text-white">Aplicar plantilla</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 mt-1">
           {/* Preview compacto del template */}
-          <div className="flex gap-3 p-3 rounded-xl bg-gray-900 border border-gray-800">
+          <div className="flex gap-3 p-3 rounded-xl bg-card border border-gray-800">
             {template.thumbnail_url ? (
               <img
                 src={template.thumbnail_url}
@@ -83,7 +83,7 @@ export function CloneTemplateDialog({
                 className="w-16 h-12 rounded-lg object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-purple-900 to-slate-900 flex-shrink-0 flex items-center justify-center">
+              <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-purple-900 to-card flex-shrink-0 flex items-center justify-center">
                 <span className="text-white/30 text-xl font-bold">
                   {template.name.charAt(0).toUpperCase()}
                 </span>

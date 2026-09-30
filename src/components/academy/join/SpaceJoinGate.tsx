@@ -187,12 +187,12 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
             : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, #0a0a0f)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
       </div>
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 -mt-24 relative pb-16">
         {/* Card central */}
-        <div className="rounded-3xl border border-white/10 bg-[#0a0a0f]/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl text-center space-y-6">
+        <div className="rounded-3xl border border-white/10 bg-background/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl text-center space-y-6">
           {/* Logo */}
           <div className="flex justify-center">
             {logoUrl ? (

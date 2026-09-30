@@ -99,15 +99,15 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
                 </span>
               </div>
               {/* Preview imitando el hero real (degradados arriba/abajo) */}
-              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden bg-[#0a0a0f] border border-white/10">
+              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden bg-background border border-white/10">
                 <img
                   src={draft.cover_image_url}
                   alt="Preview del banner"
                   className="w-full h-full object-cover"
                   style={{ objectPosition: `center ${draft.cover_position ?? 50}%` }}
                 />
-                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-background to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none" />
               </div>
               <Slider
                 value={[draft.cover_position ?? 50]}

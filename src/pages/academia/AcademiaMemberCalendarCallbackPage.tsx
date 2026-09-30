@@ -35,7 +35,7 @@ export default function AcademiaMemberCalendarCallbackPage() {
   }, [params, exchange]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-zinc-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-4">
         {status === 'loading' && (
           <>

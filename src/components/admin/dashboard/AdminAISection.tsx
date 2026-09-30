@@ -151,7 +151,7 @@ function ModuleBar({ module, calls, tokens, cost, maxCalls }: ModuleBarProps) {
 function BarTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30">
+    <div className="rounded-sm px-3 py-2 text-xs bg-background/95 border border-purple-500/30">
       <p className="text-white/60 mb-1 capitalize">{label?.replace(/-/g, ' ')}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center gap-2">

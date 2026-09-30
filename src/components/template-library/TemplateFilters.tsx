@@ -50,7 +50,7 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
           placeholder="Buscar plantillas..."
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
-          className="pl-9 bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+          className="pl-9 bg-card border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
           aria-label="Buscar plantillas"
         />
       </div>
@@ -61,12 +61,12 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
         onValueChange={(value) => update({ category: value })}
       >
         <SelectTrigger
-          className="w-full sm:w-44 bg-gray-900 border-gray-700 text-white focus:border-purple-500"
+          className="w-full sm:w-44 bg-card border-gray-700 text-white focus:border-purple-500"
           aria-label="Filtrar por categoria"
         >
           <SelectValue placeholder="Categoria" />
         </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
+        <SelectContent className="bg-card border-gray-700">
           {CATEGORIES.map((cat) => (
             <SelectItem
               key={cat.value}
@@ -87,12 +87,12 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
         }
       >
         <SelectTrigger
-          className="w-full sm:w-44 bg-gray-900 border-gray-700 text-white focus:border-purple-500"
+          className="w-full sm:w-44 bg-card border-gray-700 text-white focus:border-purple-500"
           aria-label="Ordenar plantillas"
         >
           <SelectValue placeholder="Ordenar por" />
         </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
+        <SelectContent className="bg-card border-gray-700">
           {SORT_OPTIONS.map((opt) => (
             <SelectItem
               key={opt.value}

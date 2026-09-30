@@ -33,7 +33,7 @@ export function ResearchLandingLayout({ product }: ResearchLandingLayoutProps) {
   const jtbdData = marketResearch?.jtbd || null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-background text-white">
       <ResearchHeader
         productName={product.name}
         generatedAt={product.research_generated_at}

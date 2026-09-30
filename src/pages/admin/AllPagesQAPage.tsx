@@ -15,7 +15,7 @@ export default function AllPagesQAPage() {
   const total = countAllAppPages();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] p-6 md:p-8">
+    <div className="min-h-screen bg-background p-6 md:p-8">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="p-2 rounded-lg bg-purple-500/10">
@@ -47,7 +47,7 @@ export default function AllPagesQAPage() {
                   <Link
                     key={page.path}
                     to={page.path}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#14141f] border border-zinc-800 hover:border-purple-500/40 hover:bg-[#191927] transition-colors duration-150 group"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-background border border-zinc-800 hover:border-purple-500/40 hover:bg-background transition-colors duration-150 group"
                   >
                     <Icon className="w-4 h-4 text-zinc-500 group-hover:text-purple-400 shrink-0" />
                     <span className="text-sm text-zinc-300 group-hover:text-zinc-100 truncate flex-1">

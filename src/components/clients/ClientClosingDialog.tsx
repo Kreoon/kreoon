@@ -167,7 +167,7 @@ export function ClientClosingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#0e0e0e] border-white/10 text-white">
+      <DialogContent className="sm:max-w-lg bg-background border-white/10 text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-violet-400" />

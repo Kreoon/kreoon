@@ -64,7 +64,7 @@ export function EventFormDialog({ spaceId, defaultDate, onClose, accentColor = '
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={onClose}>
       <Card
-        className="max-w-lg w-full p-6 space-y-4 bg-[#0c0c16] border-white/10 max-h-[90vh] overflow-y-auto"
+        className="max-w-lg w-full p-6 space-y-4 bg-background border-white/10 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">

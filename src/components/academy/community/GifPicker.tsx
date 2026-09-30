@@ -68,7 +68,7 @@ export function GifPicker({ onSelect, onClose }: Props) {
 
   if (!GIPHY_KEY) {
     return (
-      <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-zinc-950 p-4 shadow-2xl">
+      <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-background p-4 shadow-2xl">
         <div className="flex items-start gap-2 text-amber-300">
           <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
           <div className="text-xs">
@@ -98,7 +98,7 @@ export function GifPicker({ onSelect, onClose }: Props) {
   }
 
   return (
-    <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-zinc-950 shadow-2xl overflow-hidden">
+    <div className="absolute z-50 mt-2 w-80 rounded-xl border border-white/10 bg-background shadow-2xl overflow-hidden">
       <div className="p-3 border-b border-white/5">
         <div className="relative">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-zinc-500" />

@@ -1394,12 +1394,12 @@ function KiroResearchButton({
           : '';
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-purple-500/20 bg-purple-50 dark:bg-[#14141f] p-6">
+    <div className="relative overflow-hidden rounded-lg border border-purple-500/20 bg-purple-50 dark:bg-background p-6">
       <div className="relative flex items-center gap-5">
         {/* KIRO eye icon */}
         <div className="relative flex-shrink-0">
           <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-[2px]">
-            <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-[#0a0a0f] flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
+            <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-background flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.5)]">
                 <Dna className="w-4 h-4 text-zinc-100" />
               </div>
@@ -1474,7 +1474,7 @@ function KiroResearchButton({
                 </div>
               </TooltipTrigger>
               {disabled && tooltipMessage && (
-                <TooltipContent side="top" className="bg-zinc-900 text-zinc-200 border-zinc-700">
+                <TooltipContent side="top" className="bg-card text-zinc-200 border-zinc-700">
                   <p>{tooltipMessage}</p>
                 </TooltipContent>
               )}
@@ -1529,14 +1529,14 @@ function KiroResearchProgress({
   const seconds = (elapsed % 60).toString().padStart(2, '0');
 
   return (
-    <div className="relative overflow-hidden rounded-lg border border-purple-500/30 bg-purple-50 dark:bg-[#14141f]">
+    <div className="relative overflow-hidden rounded-lg border border-purple-500/30 bg-purple-50 dark:bg-background">
       <div className="relative p-6 space-y-5">
         {/* Header: KIRO eye + status */}
         <div className="flex items-center gap-4">
           {/* KIRO eye */}
           <div className="relative flex-shrink-0">
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 p-[2px]">
-              <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-[#0a0a0f] flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
+              <div className="w-full h-full rounded-full bg-zinc-100 dark:bg-background flex items-center justify-center border border-zinc-200 dark:border-zinc-700/50">
                 <div className="relative">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.6)]">
                     <Mic className="w-3.5 h-3.5 text-zinc-100" />

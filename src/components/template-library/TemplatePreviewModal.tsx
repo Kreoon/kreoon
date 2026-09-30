@@ -81,7 +81,7 @@ export function TemplatePreviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-gray-950 border-gray-800">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-background border-gray-800">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -134,7 +134,7 @@ export function TemplatePreviewModal({
             {/* Device Toggle */}
             <div className="flex items-center justify-between mb-3">
               <Tabs value={previewDevice} onValueChange={(v) => setPreviewDevice(v as 'desktop' | 'mobile')}>
-                <TabsList className="bg-gray-900">
+                <TabsList className="bg-card">
                   <TabsTrigger value="desktop" className="text-xs">
                     <Monitor className="h-3.5 w-3.5 mr-1" />
                     Desktop
@@ -162,7 +162,7 @@ export function TemplatePreviewModal({
             {/* Preview Frame */}
             <div
               className={`flex-1 overflow-y-auto rounded-lg border border-gray-800 ${
-                theme === 'dark' ? 'bg-gray-950' : 'bg-white'
+                theme === 'dark' ? 'bg-background' : 'bg-white'
               }`}
               style={{
                 maxWidth: previewDevice === 'mobile' ? '375px' : '100%',

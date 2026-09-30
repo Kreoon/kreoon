@@ -91,7 +91,7 @@ export function MarketplaceReadinessPopup() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-md bg-gradient-to-br from-gray-900 via-gray-900 to-purple-950 border-purple-500/30">
+      <DialogContent className="sm:max-w-md bg-gradient-to-br from-card via-card to-purple-950 border-purple-500/30">
         <button
           onClick={handleDismiss}
           className="absolute right-4 top-4 text-white/50 hover:text-white transition-colors"

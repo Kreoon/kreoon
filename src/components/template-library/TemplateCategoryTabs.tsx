@@ -78,7 +78,7 @@ export function TemplateCategoryTabs({
       {showLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 z-10 w-7 h-7 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
+          className="absolute left-0 z-10 w-7 h-7 rounded-md bg-card border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
           aria-label="Desplazar categorias a la izquierda"
         >
           <ChevronLeft className="h-4 w-4 text-gray-400" />
@@ -135,7 +135,7 @@ export function TemplateCategoryTabs({
       {showRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 z-10 w-7 h-7 rounded-md bg-gray-900 border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
+          className="absolute right-0 z-10 w-7 h-7 rounded-md bg-card border border-gray-700 flex items-center justify-center hover:bg-gray-800 transition-colors"
           aria-label="Desplazar categorias a la derecha"
         >
           <ChevronRight className="h-4 w-4 text-gray-400" />

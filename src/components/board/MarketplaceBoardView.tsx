@@ -79,7 +79,7 @@ function MarketplaceProjectCard({
       draggable
       onDragStart={(e) => onDragStart(e, project)}
       className={`
-        bg-[#0f0f22] border border-purple-500/15 rounded-md p-4
+        bg-background border border-purple-500/15 rounded-md p-4
         cursor-grab active:cursor-grabbing
         transition-all duration-200
         hover:border-purple-500/30 hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]
@@ -307,7 +307,7 @@ export function MarketplaceBoardView() {
               className={`flex-shrink-0 w-72 rounded-lg border transition-all duration-200 ${
                 isOver && canDrop
                   ? 'border-purple-500/40 bg-purple-500/8 shadow-[0_0_20px_rgba(139,92,246,0.15)]'
-                  : 'border-purple-500/10 bg-[#0f0f22]/60'
+                  : 'border-purple-500/10 bg-background/60'
               }`}
               onDragOver={(e) => {
                 handleDragOver(e);
@@ -317,7 +317,7 @@ export function MarketplaceBoardView() {
               onDrop={(e) => handleDrop(e, col.id)}
             >
               {/* Column header - Nova v2 */}
-              <div className="p-3 border-b border-purple-500/10 flex items-center gap-2 bg-[#0f0f22] rounded-t-lg">
+              <div className="p-3 border-b border-purple-500/10 flex items-center gap-2 bg-background rounded-t-lg">
                 <div
                   className="w-2.5 h-2.5 rounded-full shadow-sm"
                   style={{ backgroundColor: col.color }}

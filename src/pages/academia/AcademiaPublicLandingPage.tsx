@@ -83,7 +83,7 @@ export default function AcademiaPublicLandingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
         Cargando...
       </div>
     );
@@ -91,7 +91,7 @@ export default function AcademiaPublicLandingPage() {
 
   if (!landing || landing.error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3 px-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-zinc-400 gap-3 px-6">
         <h1 className="text-2xl font-bold">Academia no disponible</h1>
         <p>Esta academia no existe o no es pública.</p>
         <Link to="/academia" className="text-purple-400 hover:text-purple-300">
@@ -116,7 +116,7 @@ export default function AcademiaPublicLandingPage() {
   const safeVideoUrl = safeUrl(landing.landing_video_url);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       {/* HERO */}
       <section
         className="relative px-4 md:px-8 py-16 md:py-24 overflow-hidden"
@@ -126,7 +126,7 @@ export default function AcademiaPublicLandingPage() {
             : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             {safeLogoUrl && (

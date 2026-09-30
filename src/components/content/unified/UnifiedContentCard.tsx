@@ -401,7 +401,7 @@ export const UnifiedContentCard = memo(function UnifiedContentCard({
                 loading="lazy"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-b from-gray-800 to-gray-900 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-b from-gray-800 to-card flex items-center justify-center">
                 <Video className="h-16 w-16 text-gray-600" />
               </div>
             )}

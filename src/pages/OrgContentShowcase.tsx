@@ -134,7 +134,7 @@ const VideoCard = memo(function VideoCard({
       className="group relative rounded-sm overflow-hidden bg-card border border-white/[0.06] cursor-pointer hover:border-white/[0.12] transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
       onClick={onClick}
     >
-      <div className="relative aspect-[9/16] bg-neutral-900">
+      <div className="relative aspect-[9/16] bg-card">
         {thumb ? (
           <img
             src={thumb}
@@ -225,7 +225,7 @@ export default function OrgContentShowcase() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-white/40" />
       </div>
     );
@@ -233,7 +233,7 @@ export default function OrgContentShowcase() {
 
   if (notFound || !org) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4 px-6">
           <Building2 className="h-16 w-16 mx-auto text-white/20" />
           <h1 className="text-xl font-semibold text-white">Portafolio no disponible</h1>
@@ -258,9 +258,9 @@ export default function OrgContentShowcase() {
   const location = [org.city, org.country].filter(Boolean).join(', ');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white">
+    <div className="min-h-screen bg-background text-white">
       {/* ═══ NAVBAR ═══ */}
-      <nav className="sticky top-0 z-40 bg-[#0a0a0b]/80 border-b border-white/[0.06]">
+      <nav className="sticky top-0 z-40 bg-background/80 border-b border-white/[0.06]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           {org.logo_url ? (
             <img src={org.logo_url} alt={displayName} className="h-8 w-8 rounded-sm object-cover" />
@@ -304,8 +304,8 @@ export default function OrgContentShowcase() {
           {coverUrl ? (
             <>
               <img src={coverUrl} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0b]/60 via-transparent to-[#0a0a0b]" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b]/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
             </>
           ) : (
             <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}15 0%, #0a0a0b 60%)` }} />

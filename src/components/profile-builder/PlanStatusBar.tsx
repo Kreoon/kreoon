@@ -53,7 +53,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
 
   return (
     <TooltipProvider>
-      <div className="h-10 bg-gradient-to-r from-zinc-900/95 via-zinc-900/90 to-zinc-900/95 border-b border-border/50 flex items-center justify-between px-4 gap-4 flex-shrink-0">
+      <div className="h-10 bg-gradient-to-r from-card/95 via-card/90 to-card/95 border-b border-border/50 flex items-center justify-between px-4 gap-4 flex-shrink-0">
         {/* Izquierda: Plan actual */}
         <div className="flex items-center gap-3">
           <Badge

@@ -109,7 +109,7 @@ export function ProfileShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-gray-950 border-gray-800">
+      <DialogContent className="sm:max-w-md bg-background border-gray-800">
         <DialogHeader>
           <DialogTitle className="text-white">Compartir perfil</DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -144,7 +144,7 @@ export function ProfileShareDialog({
                 <Input
                   readOnly
                   value={shareUrl}
-                  className="pl-9 bg-gray-900 border-gray-700 text-gray-300 text-sm"
+                  className="pl-9 bg-card border-gray-700 text-gray-300 text-sm"
                 />
               </div>
               <Button

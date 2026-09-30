@@ -108,7 +108,7 @@ export function ModuleTree({
   }
 
   return (
-    <aside className="w-72 shrink-0 border-r border-white/10 bg-[#0c0c16] flex flex-col overflow-hidden">
+    <aside className="w-72 shrink-0 border-r border-white/10 bg-background flex flex-col overflow-hidden">
       <div className="p-3 border-b border-white/5">
         {/* Course meta link */}
         <button

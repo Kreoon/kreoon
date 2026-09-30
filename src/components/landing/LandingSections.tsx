@@ -650,7 +650,7 @@ export function PricingSection({ onRegister }: SectionProps) {
   ];
 
   return (
-    <section id="precios" className="py-24 px-4 bg-[#0B0B0F]">
+    <section id="precios" className="py-24 px-4 bg-background">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
@@ -672,7 +672,7 @@ export function PricingSection({ onRegister }: SectionProps) {
               key={i} 
               className={cn(
                 "relative rounded-sm p-6 transition-all duration-300 group",
-                "bg-[#12121A] border border-border/30",
+                "bg-background border border-border/30",
                 "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
                 plan.featured && "border-primary/50 shadow-[0_0_40px_hsl(252_100%_68%/0.2)]"
               )}
@@ -781,7 +781,7 @@ export function IndividualPlansSection({ onRegister }: SectionProps) {
   ];
 
   return (
-    <section className="py-24 px-4 bg-gradient-to-b from-[#0B0B0F] to-muted/10">
+    <section className="py-24 px-4 bg-gradient-to-b from-background to-muted/10">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
@@ -799,7 +799,7 @@ export function IndividualPlansSection({ onRegister }: SectionProps) {
               key={i} 
               className={cn(
                 "relative rounded-sm p-8 transition-all duration-300 group",
-                "bg-[#12121A] border border-border/30",
+                "bg-background border border-border/30",
                 "hover:shadow-[0_0_30px_hsl(252_100%_68%/0.15)] hover:border-primary/40",
                 plan.featured && "border-primary/50"
               )}
@@ -876,7 +876,7 @@ export function TalentAccessSection() {
   ];
 
   return (
-    <section className="py-24 px-4 bg-[#0B0B0F]">
+    <section className="py-24 px-4 bg-background">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-16">
           <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
@@ -892,7 +892,7 @@ export function TalentAccessSection() {
           {rules.map((rule, i) => (
             <div 
               key={i} 
-              className="rounded-sm p-6 bg-[#12121A] border border-border/30 hover:border-primary/40 transition-all duration-300 group"
+              className="rounded-sm p-6 bg-background border border-border/30 hover:border-primary/40 transition-all duration-300 group"
             >
               <div className="h-12 w-12 rounded-sm bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                 <rule.icon className="h-6 w-6 text-primary" />
@@ -917,7 +917,7 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
   ];
 
   return (
-    <section className="py-24 px-4 bg-gradient-to-b from-muted/10 to-[#0B0B0F]">
+    <section className="py-24 px-4 bg-gradient-to-b from-muted/10 to-background">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
@@ -941,7 +941,7 @@ export function TokenSystemSection({ onRegister }: SectionProps) {
           {tokenPackages.map((pkg, i) => (
             <div 
               key={i} 
-              className="rounded-sm p-6 bg-[#12121A] border border-amber-500/20 hover:border-amber-500/40 transition-all text-center"
+              className="rounded-sm p-6 bg-background border border-amber-500/20 hover:border-amber-500/40 transition-all text-center"
             >
               <Badge variant="outline" className="mb-4 border-amber-500/30 text-amber-500">
                 {pkg.name}
@@ -978,7 +978,7 @@ export function WhyThisModelSection() {
   ];
 
   return (
-    <section className="py-24 px-4 bg-[#0B0B0F]">
+    <section className="py-24 px-4 bg-background">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-12">
           <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
@@ -992,7 +992,7 @@ export function WhyThisModelSection() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {reasons.map((reason, i) => (
-            <div key={i} className="rounded-sm p-5 bg-[#12121A] border border-border/30 text-center hover:border-primary/40 transition-all">
+            <div key={i} className="rounded-sm p-5 bg-background border border-border/30 text-center hover:border-primary/40 transition-all">
               <div className="h-10 w-10 rounded-sm bg-primary/10 flex items-center justify-center mx-auto mb-3">
                 <reason.icon className="h-5 w-5 text-primary" />
               </div>

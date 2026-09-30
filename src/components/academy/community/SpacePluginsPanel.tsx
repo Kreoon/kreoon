@@ -242,7 +242,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
         />
       </PluginSection>
 
-      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-[#0a0a0f]/95 backdrop-blur border-t border-white/10">
+      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-background/95 backdrop-blur border-t border-white/10">
         <Button
           onClick={save}
           disabled={update.isPending}

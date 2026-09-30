@@ -155,7 +155,7 @@ function FAQAccordionItem({ item }: { item: FAQItem }) {
     <div className="border border-zinc-800 rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-zinc-900/50 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-card/50 transition-colors"
         aria-expanded={open}
       >
         <span className="text-sm font-medium text-zinc-100">{item.question}</span>
@@ -176,7 +176,7 @@ function FAQAccordionItem({ item }: { item: FAQItem }) {
 
 function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-4">
+    <div className="bg-card border border-zinc-800 rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex items-start gap-3">
         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
           {testimonial.avatar}
@@ -222,9 +222,9 @@ export default function CreatorPricingPage() {
   const categoriesInOrder = ['Inteligencia Artificial', 'Perfil', 'Visibilidad', 'Analytics', 'Extras'];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       {/* Nav minimal */}
-      <nav className="border-b border-zinc-800/50 sticky top-0 z-50 bg-zinc-950/90 backdrop-blur-md">
+      <nav className="border-b border-zinc-800/50 sticky top-0 z-50 bg-background/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link to="/" className="text-lg font-bold tracking-tight text-white">
             KREOON
@@ -284,7 +284,7 @@ export default function CreatorPricingPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-20" aria-label="Planes disponibles">
 
           {/* Card: Free */}
-          <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col hover:border-zinc-700 transition-colors">
+          <div className="relative bg-card border border-zinc-800 rounded-2xl p-6 flex flex-col hover:border-zinc-700 transition-colors">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
                 <Shield className="h-4 w-4 text-zinc-400" />
@@ -321,7 +321,7 @@ export default function CreatorPricingPage() {
           </div>
 
           {/* Card: Pro */}
-          <div className="relative bg-zinc-900 border border-violet-500/40 rounded-2xl p-6 flex flex-col hover:border-violet-500/70 transition-colors">
+          <div className="relative bg-card border border-violet-500/40 rounded-2xl p-6 flex flex-col hover:border-violet-500/70 transition-colors">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
                 <Zap className="h-4 w-4 text-violet-400" />
@@ -366,7 +366,7 @@ export default function CreatorPricingPage() {
 
           {/* Card: Premium (destacado) */}
           <div className="relative rounded-2xl p-px bg-gradient-to-b from-amber-400 via-orange-500 to-transparent flex flex-col">
-            <div className="relative bg-zinc-900 rounded-[calc(1rem-1px)] p-6 flex flex-col h-full">
+            <div className="relative bg-card rounded-[calc(1rem-1px)] p-6 flex flex-col h-full">
 
               {/* Badge Más popular */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
@@ -462,7 +462,7 @@ export default function CreatorPricingPage() {
                   return (
                     <>
                       <tr key={`cat-${category}`} className="border-t border-zinc-800/70">
-                        <td colSpan={4} className="px-5 py-2.5 bg-zinc-900/60">
+                        <td colSpan={4} className="px-5 py-2.5 bg-card/60">
                           <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-zinc-500">
                             {categoryIcons[category]}
                             {category}
@@ -472,7 +472,7 @@ export default function CreatorPricingPage() {
                       {rows.map((row) => (
                         <tr
                           key={row.label}
-                          className="border-t border-zinc-800/40 hover:bg-zinc-900/30 transition-colors"
+                          className="border-t border-zinc-800/40 hover:bg-card/30 transition-colors"
                         >
                           <td className="px-5 py-3 text-sm text-zinc-300">{row.label}</td>
                           <td className="px-4 py-3">
@@ -523,7 +523,7 @@ export default function CreatorPricingPage() {
         </section>
 
         {/* ── CTA Final ── */}
-        <section className="text-center py-16 border border-zinc-800 rounded-3xl bg-gradient-to-b from-zinc-900 to-zinc-950">
+        <section className="text-center py-16 border border-zinc-800 rounded-3xl bg-gradient-to-b from-card to-background">
           <h2 className="text-3xl font-extrabold text-white mb-3">
             Empieza hoy, gratis
           </h2>

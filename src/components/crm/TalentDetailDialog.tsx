@@ -212,7 +212,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-background border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
           <div className="flex items-start gap-4">

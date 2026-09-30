@@ -128,7 +128,7 @@ export const SettingsSidebar = memo(({
                         "w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150",
                         canAccess
                           ? "hover:bg-zinc-100 dark:hover:bg-kreoon-bg-card active:bg-zinc-200 dark:active:bg-zinc-800"
-                          : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900/20"
+                          : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-card/20"
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -203,7 +203,7 @@ export const SettingsSidebar = memo(({
                         isActive && canAccess
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : canAccess
-                            ? 'text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-[#14141f] hover:text-zinc-900 dark:hover:text-zinc-100 hover:shadow-sm'
+                            ? 'text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-background hover:text-zinc-900 dark:hover:text-zinc-100 hover:shadow-sm'
                             : 'text-zinc-400/40 dark:text-zinc-500/40 cursor-not-allowed'
                       )}
                     >

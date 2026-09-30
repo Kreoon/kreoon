@@ -101,7 +101,7 @@ export default function ReceiptPage() {
   const docEmoji = DOC_EMOJI[receipt.document_type] ?? '📄';
 
   return (
-    <div className="min-h-screen bg-[#0a0a14] text-foreground print:bg-white print:text-black">
+    <div className="min-h-screen bg-background text-foreground print:bg-white print:text-black">
       {/* Barra top — solo en pantalla */}
       <div className="print:hidden border-b border-border/30 bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">

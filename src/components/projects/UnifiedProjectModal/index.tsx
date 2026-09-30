@@ -333,7 +333,7 @@ export function UnifiedProjectModal({
 
         {/* ============ COMPACT HEADER (collapsed) ============ */}
         {isHeaderCollapsed && (
-          <div className="shrink-0 z-20 bg-white dark:bg-[#14141f] border-b border-zinc-200 dark:border-zinc-800 px-3 py-1.5 flex items-center gap-1.5 pr-10">
+          <div className="shrink-0 z-20 bg-white dark:bg-background border-b border-zinc-200 dark:border-zinc-800 px-3 py-1.5 flex items-center gap-1.5 pr-10">
             {/* Sequence number */}
             {source === 'content' && !isCreateMode && project?.contentData?.sequence_number && (
               <Badge variant="outline" className="text-[10px] font-mono px-1 py-0 shrink-0 bg-primary/5 border-primary/20 text-primary">
@@ -562,7 +562,7 @@ export function UnifiedProjectModal({
 
         {/* ============ WORKFLOW PROGRESS BAR ============ */}
         {!isCreateMode && project?.status && (
-          <div className={cn("px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/10 shrink-0", isHeaderCollapsed && "hidden")}>
+          <div className={cn("px-3 sm:px-4 py-2 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-card/10 shrink-0", isHeaderCollapsed && "hidden")}>
             <WorkflowProgressBar workflow={workflow} currentStatus={project.status} />
           </div>
         )}
@@ -576,7 +576,7 @@ export function UnifiedProjectModal({
           ) : (
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               {/* Sticky tab bar */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-[#14141f] px-2 sm:px-4 pt-2 sm:pt-3 pb-1.5">
+              <div className="sticky top-0 z-10 bg-white dark:bg-background px-2 sm:px-4 pt-2 sm:pt-3 pb-1.5">
                 <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-start bg-zinc-100 dark:bg-zinc-800/50 p-0.5 sm:p-1 rounded-lg">
                   {displaySections.map(sectionKey => {
                     const config = SECTION_TAB_CONFIG[sectionKey];
@@ -588,7 +588,7 @@ export function UnifiedProjectModal({
                         value={sectionKey}
                         className={cn(
                           'text-[11px] sm:text-sm px-1.5 sm:px-3 py-1.5 sm:py-2 flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg transition-colors duration-150',
-                          'data-[state=active]:bg-white data-[state=active]:dark:bg-[#1a1a24] data-[state=active]:shadow-sm data-[state=active]:text-zinc-900 data-[state=active]:dark:text-zinc-100',
+                          'data-[state=active]:bg-white data-[state=active]:dark:bg-background data-[state=active]:shadow-sm data-[state=active]:text-zinc-900 data-[state=active]:dark:text-zinc-100',
                           'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100',
                         )}
                       >
@@ -625,7 +625,7 @@ export function UnifiedProjectModal({
 
           {/* ============ FOOTER: DELETE (inside scroll) ============ */}
           {!isCreateMode && permissions.can('project.delete', 'edit') && (
-            <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 bg-zinc-50 dark:bg-zinc-900/30">
+            <div className="border-t border-zinc-200 dark:border-zinc-800 p-4 bg-zinc-50 dark:bg-card/30">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="sm">

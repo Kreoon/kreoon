@@ -143,7 +143,7 @@ export default function PartnerCommunityLanding() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-card to-black">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
@@ -151,7 +151,7 @@ export default function PartnerCommunityLanding() {
 
   if (error || !community) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-card to-black p-4">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Comunidad no disponible</h1>
@@ -165,7 +165,7 @@ export default function PartnerCommunityLanding() {
   }
 
   const themeColor = community.metadata?.theme_color || community.benefits.custom_badge?.color || '#f59e0b';
-  const bgGradient = community.metadata?.background_gradient || 'from-black via-zinc-900 to-black';
+  const bgGradient = community.metadata?.background_gradient || 'from-black via-card to-black';
   const isBrandTarget = community.target_types.includes("brand");
 
   // Personalizable texts
@@ -273,7 +273,7 @@ export default function PartnerCommunityLanding() {
             {/* Beneficio 1: Meses gratis */}
             {community.benefits.free_months > 0 && (
               <Card
-                className="bg-zinc-900/50 border-zinc-800 p-6 transition-all duration-300 hover:scale-105"
+                className="bg-card/50 border-zinc-800 p-6 transition-all duration-300 hover:scale-105"
                 style={{ '--hover-border': themeColor } as React.CSSProperties}
               >
                 <div
@@ -294,7 +294,7 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 2: Descuento en comisiones */}
             {community.benefits.commission_discount_points > 0 && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
                   <Percent className="w-6 h-6 text-emerald-500" />
                 </div>
@@ -310,7 +310,7 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 3: Badge especial */}
             {community.benefits.custom_badge && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
                   <Star className="w-6 h-6 text-purple-500" />
                 </div>
@@ -335,7 +335,7 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio extra: Tokens AI */}
             {community.benefits.bonus_ai_tokens > 0 && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
+              <Card className="bg-card/50 border-zinc-800 p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-6 h-6 text-blue-500" />
@@ -359,7 +359,7 @@ export default function PartnerCommunityLanding() {
               {community.metadata.features.map((feature, idx) => {
                 const IconComponent = ICON_MAP[feature.icon || 'check'] || CheckCircle2;
                 return (
-                  <Card key={idx} className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-zinc-700 transition-colors">
+                  <Card key={idx} className="bg-card/50 border-zinc-800 p-6 hover:border-zinc-700 transition-colors">
                     <div className="flex items-start gap-4">
                       <div
                         className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
@@ -382,14 +382,14 @@ export default function PartnerCommunityLanding() {
 
       {/* Testimonials */}
       {community.metadata?.testimonials && community.metadata.testimonials.length > 0 && (
-        <section className="py-12 px-4 bg-zinc-900/30">
+        <section className="py-12 px-4 bg-card/30">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
               Lo que dicen nuestros miembros
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {community.metadata.testimonials.map((testimonial, idx) => (
-                <Card key={idx} className="bg-zinc-900/50 border-zinc-800 p-6">
+                <Card key={idx} className="bg-card/50 border-zinc-800 p-6">
                   <p className="text-zinc-300 mb-4 italic">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3">
                     {testimonial.avatar_url ? (

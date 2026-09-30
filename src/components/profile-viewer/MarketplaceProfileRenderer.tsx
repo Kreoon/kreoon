@@ -40,7 +40,7 @@ interface MarketplaceProfileRendererProps {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 animate-pulse" aria-busy="true">
+    <div className="min-h-screen w-full bg-background animate-pulse" aria-busy="true">
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
@@ -57,7 +57,7 @@ function ProfileSkeleton() {
 
 function ProfileError({ message }: { message: string }) {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-xl font-semibold text-zinc-100 mb-2">Perfil no disponible</h2>
@@ -176,7 +176,7 @@ export function MarketplaceProfileRenderer({
             </div>
           ) : (
             <Suspense
-              fallback={<div className="min-h-screen animate-pulse bg-zinc-900/50" />}
+              fallback={<div className="min-h-screen animate-pulse bg-card/50" />}
             >
               {visibleBlocks.map((block) => (
                 <PublicBlockRenderer

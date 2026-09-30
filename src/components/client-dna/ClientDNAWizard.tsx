@@ -240,7 +240,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-8">
+      <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-8">
         <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-6 sm:space-y-8">
           {/* Icono */}
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -300,7 +300,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Panel Izquierdo: Preguntas */}
-        <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+        <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4 sm:mb-5">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
               <span className="text-base sm:text-lg">💬</span>
@@ -327,7 +327,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
         </div>
 
         {/* Panel Derecho: Audio */}
-        <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+        <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4 sm:mb-5">
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
               <span className="text-base sm:text-lg">🎤</span>
@@ -349,7 +349,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                   placeholder="Ej: Webinar gratuito Vlight Solution"
                   disabled={processingStep !== 'idle'}
                   className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
-                             bg-zinc-50 dark:bg-zinc-900
+                             bg-zinc-50 dark:bg-card
                              border border-zinc-200 dark:border-zinc-700
                              text-zinc-900 dark:text-white
                              placeholder-zinc-400 dark:placeholder-zinc-600
@@ -369,7 +369,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                   rows={2}
                   disabled={processingStep !== 'idle'}
                   className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
-                             bg-zinc-50 dark:bg-zinc-900
+                             bg-zinc-50 dark:bg-card
                              border border-zinc-200 dark:border-zinc-700
                              text-zinc-900 dark:text-white
                              placeholder-zinc-400 dark:placeholder-zinc-600
@@ -398,7 +398,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       </div>
 
       {/* Panel Ubicaciones */}
-      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+      <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4 sm:mb-5">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
             <span className="text-base sm:text-lg">📍</span>

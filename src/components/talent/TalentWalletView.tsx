@@ -491,7 +491,7 @@ function ArqRecommendationCard() {
         }}
       >
         {/* Overlay oscuro para legibilidad del texto */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a081f]/95 via-[#0f0c29]/85 to-[#0f0c29]/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/60 pointer-events-none" />
 
         {/* Contenido (encima del overlay) */}
         <div className="relative z-10">

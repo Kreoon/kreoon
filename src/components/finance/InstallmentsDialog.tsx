@@ -167,7 +167,7 @@ export function InstallmentsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#0e0e0e] border-white/10 text-white max-w-xl">
+      <DialogContent className="bg-background border-white/10 text-white max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-400" />

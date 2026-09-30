@@ -77,7 +77,7 @@ export function HelpTip({ text, className = '' }: HelpTipProps) {
         invisible group-hover:visible
         absolute z-50 left-1/2 -translate-x-1/2 top-full mt-1
         w-56 p-2.5 rounded-md
-        bg-[#0a0a0a] border border-white/15
+        bg-background border border-white/15
         text-white text-xs font-normal leading-relaxed
         shadow-lg pointer-events-none
       ">

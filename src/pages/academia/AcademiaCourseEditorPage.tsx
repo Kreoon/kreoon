@@ -40,7 +40,7 @@ export default function AcademiaCourseEditorPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
         <Loader2 className="h-6 w-6 animate-spin mr-2" /> Cargando editor...
       </div>
     );
@@ -48,7 +48,7 @@ export default function AcademiaCourseEditorPage() {
 
   if (!course || !isOwner) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-zinc-400 gap-3">
         <BookOpen className="h-10 w-10" />
         <p>No tienes acceso a editar este curso.</p>
         <Link to={`/academia/${spaceSlug}`} className="text-purple-400 hover:text-purple-300">Volver</Link>
@@ -57,7 +57,7 @@ export default function AcademiaCourseEditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-background text-zinc-100 flex flex-col">
       {/* Header */}
       <div className="border-b border-white/10 bg-black/40 sticky top-0 z-20 backdrop-blur h-14 flex items-center px-4 md:px-6 gap-4 shrink-0">
         <Link to={`/academia/${spaceSlug}/gestionar`} className="text-zinc-500 hover:text-zinc-200 transition-colors">

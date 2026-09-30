@@ -9,7 +9,7 @@ export default function AcademiaVerifyPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-zinc-400">
         Verificando certificado...
       </div>
     );
@@ -17,7 +17,7 @@ export default function AcademiaVerifyPage() {
 
   if (!cert) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-center text-zinc-400 gap-3 px-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center text-zinc-400 gap-3 px-4">
         <ShieldAlert className="h-16 w-16 text-rose-400" />
         <h1 className="text-2xl font-bold text-zinc-100">Certificado no encontrado</h1>
         <p>El código <span className="font-mono text-rose-400">#{certCode}</span> no existe o ha sido revocado.</p>
@@ -30,7 +30,7 @@ export default function AcademiaVerifyPage() {
 
   if (!cert.is_valid) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-center text-zinc-400 gap-3 px-4">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center text-zinc-400 gap-3 px-4">
         <ShieldAlert className="h-16 w-16 text-amber-400" />
         <h1 className="text-2xl font-bold text-zinc-100">Certificado revocado</h1>
         <p>Este certificado ya no es válido.</p>
@@ -42,7 +42,7 @@ export default function AcademiaVerifyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 py-10 px-4">
+    <div className="min-h-screen bg-background text-zinc-100 py-10 px-4">
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center gap-2 mb-6 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 print:hidden">
           <ShieldCheck className="h-5 w-5 text-emerald-400" />

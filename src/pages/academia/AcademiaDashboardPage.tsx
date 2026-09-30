@@ -25,7 +25,7 @@ export default function AcademiaDashboardPage() {
   const { data: certificates = [] } = useMyCertificates();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
         <div className="flex items-center justify-between mb-6">
           <div>

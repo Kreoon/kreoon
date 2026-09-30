@@ -171,10 +171,10 @@ export function BoardListView({
                   className={cn(
                     // Base styles - Nova v2
                     "flex items-center rounded-lg border cursor-pointer",
-                    "bg-white dark:bg-[#0f0f22]",
+                    "bg-white dark:bg-background",
                     "border-zinc-200/80 dark:border-purple-500/15",
                     // Hover state - Nova glow
-                    "hover:bg-zinc-50 dark:hover:bg-[#141428]",
+                    "hover:bg-zinc-50 dark:hover:bg-background",
                     "hover:border-purple-300 dark:hover:border-purple-500/30",
                     "dark:hover:shadow-[0_0_12px_rgba(139,92,246,0.15)]",
                     "transition-all duration-200",

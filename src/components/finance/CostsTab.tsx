@@ -553,7 +553,7 @@ export function CostsTab({ orgId, packages }: Props) {
 
       {/* Dialog crear/editar */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0e0e0e] border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar costo' : 'Registrar costo'}</DialogTitle>
           </DialogHeader>

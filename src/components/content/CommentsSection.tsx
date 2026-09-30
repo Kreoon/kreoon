@@ -138,7 +138,7 @@ export function CommentsSection({ contentId, compact = false, onClose, isOpen = 
 
   // TikTok style bottom sheet
   return (
-    <div className="flex flex-col h-full bg-zinc-900 rounded-t-3xl overflow-hidden">
+    <div className="flex flex-col h-full bg-card rounded-t-3xl overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-center py-3 relative border-b border-white/10">
         <div className="w-10 h-1 bg-white/20 rounded-full absolute top-2" />

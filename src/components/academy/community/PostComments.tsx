@@ -207,7 +207,7 @@ function CommentComposer({
             </button>
             {showEmoji && (
               <div className="absolute z-50 right-0 mt-2">
-                <Suspense fallback={<div className="bg-zinc-950 rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando...</div>}>
+                <Suspense fallback={<div className="bg-background rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando...</div>}>
                   <EmojiPicker
                     onEmojiClick={(e: any) => { setText((t) => t + e.emoji); setShowEmoji(false); }}
                     theme={'dark' as any}

@@ -197,7 +197,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="max-w-3xl h-[85vh] p-0 bg-background border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
         <DialogHeader className="p-6 pb-4 border-b border-white/10">
           <div className="flex items-start gap-4">

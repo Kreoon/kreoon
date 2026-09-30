@@ -66,7 +66,7 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
               src={org.logo_url}
               alt={org.org_display_name}
               loading="lazy"
-              className="h-20 w-20 rounded-sm border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
+              className="h-20 w-20 rounded-sm border-2 border-white/20 object-cover shadow-2xl bg-card"
             />
           ) : (
             <div

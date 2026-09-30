@@ -64,7 +64,7 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
               value={mapping[key] || ''}
               onChange={(e) => handleChange(key, e.target.value)}
               placeholder={defaults[key]}
-              className="bg-gray-900/50 border-gray-700 text-sm h-9"
+              className="bg-card/50 border-gray-700 text-sm h-9"
             />
           </div>
         ))}

@@ -317,13 +317,13 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-[#0a0a18]/95 border-purple-500/15"
+        className="w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl p-0 gap-0 overflow-hidden flex flex-col bg-background/95 border-purple-500/15"
         aria-describedby="board-config-description"
       >
         <Tabs defaultValue="statuses" className="flex h-full overflow-hidden">
           <div className="flex h-full w-full overflow-hidden">
             {/* Sidebar - Nova v2 */}
-            <aside className="w-40 sm:w-56 shrink-0 flex flex-col border-r border-purple-500/10 bg-[#0f0f22]/60">
+            <aside className="w-40 sm:w-56 shrink-0 flex flex-col border-r border-purple-500/10 bg-background/60">
               <SheetHeader className="p-4 border-b border-purple-500/10 shrink-0">
                 <SheetTitle className="flex items-center gap-2 text-[#e4e4e7] text-lg">
                   <Settings className="h-5 w-5 text-[#8b5cf6]" />
@@ -416,7 +416,7 @@ export function BoardConfigDialog({ organizationId, trigger, open: controlledOpe
               </Button>
             </div>
 
-            <ScrollArea className="h-[300px] border border-purple-500/15 rounded-lg p-2 bg-[#0f0f22]/40">
+            <ScrollArea className="h-[300px] border border-purple-500/15 rounded-lg p-2 bg-background/40">
               <DndContext
                 sensors={statusSensors}
                 collisionDetection={closestCenter}

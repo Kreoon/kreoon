@@ -21,7 +21,7 @@ export function OrgProfileHero({ org, accentColor, onContact }: OrgProfileHeroPr
         {org.org_cover_url ? (
           <>
             <img src={org.org_cover_url} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
           </>
         ) : (
           <div
@@ -39,7 +39,7 @@ export function OrgProfileHero({ org, accentColor, onContact }: OrgProfileHeroPr
             <img
               src={org.logo_url}
               alt={displayName}
-              className="h-20 w-20 md:h-24 md:w-24 rounded-sm border-4 border-[#0a0a0f] object-cover shadow-xl bg-gray-900"
+              className="h-20 w-20 md:h-24 md:w-24 rounded-sm border-4 border-[#0a0a0f] object-cover shadow-xl bg-card"
             />
           ) : (
             <div

@@ -295,7 +295,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0e0e0e] border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar gasto recurrente' : 'Nuevo gasto recurrente'}</DialogTitle>
           </DialogHeader>

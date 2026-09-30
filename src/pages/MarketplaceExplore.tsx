@@ -582,7 +582,7 @@ function MobileFilterSheetLocal({
       <div
         className={cn(
           'fixed bottom-0 left-0 right-0 z-50',
-          'bg-card dark:bg-[#0f0f14] border-t border-border/70 dark:border-white/10',
+          'bg-card dark:bg-background border-t border-border/70 dark:border-white/10',
           'rounded-t-2xl transition-transform duration-300 lg:hidden',
           open ? 'translate-y-0' : 'translate-y-full',
         )}

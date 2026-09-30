@@ -733,7 +733,7 @@ export function UnifiedContentViewer({
 
       {/* Comments Drawer */}
       <Drawer open={showCommentsDrawer} onOpenChange={setShowCommentsDrawer}>
-        <DrawerContent className="h-[70vh] bg-zinc-900 border-0">
+        <DrawerContent className="h-[70vh] bg-card border-0">
           {currentItem.type === 'work' && (
             <CommentsSection contentId={currentItem.id} />
           )}

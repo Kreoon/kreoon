@@ -205,7 +205,7 @@ export default function AcademiaSpaceClassroomPage() {
 
                 {/* Candado de desbloqueo condicional (no-owner) */}
                 {courseLocked && (
-                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm bg-zinc-900/80 text-amber-200 border-amber-500/40">
+                  <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border shadow-lg backdrop-blur-sm bg-card/80 text-amber-200 border-amber-500/40">
                     <Lock className="h-3 w-3" /> Bloqueado
                   </span>
                 )}

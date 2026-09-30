@@ -29,7 +29,7 @@ export function PlatformCard({ config, onConfigure, onToggle, onTest, testing, s
       className={`rounded-sm border p-5 transition-all ${
         config.enabled
           ? `${info.bgColor} ${info.borderColor}`
-          : 'bg-gray-900/30 border-gray-800'
+          : 'bg-card/30 border-gray-800'
       }`}
     >
       {/* Header */}

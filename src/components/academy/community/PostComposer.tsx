@@ -316,7 +316,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                 </button>
                 {showEmoji && (
                   <div className="absolute z-50 mt-2">
-                    <Suspense fallback={<div className="bg-zinc-950 rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando emojis...</div>}>
+                    <Suspense fallback={<div className="bg-background rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando emojis...</div>}>
                       <EmojiPicker
                         onEmojiClick={(e: any) => {
                           appendToBody(e.emoji);

@@ -28,7 +28,7 @@ const THEMES = [
   { id: 'ocean_blue', label: 'Ocean Blue', primary: '#3b82f6', secondary: '#06b6d4', gradient: 'from-blue-900/60 to-cyan-900/60' },
   { id: 'sunset_orange', label: 'Sunset', primary: '#f97316', secondary: '#ef4444', gradient: 'from-orange-900/60 to-red-900/60' },
   { id: 'forest_green', label: 'Forest', primary: '#22c55e', secondary: '#14b8a6', gradient: 'from-green-900/60 to-teal-900/60' },
-  { id: 'minimal_white', label: 'Minimal', primary: '#a855f7', secondary: '#ec4899', gradient: 'from-gray-800/60 to-gray-900/60' },
+  { id: 'minimal_white', label: 'Minimal', primary: '#a855f7', secondary: '#ec4899', gradient: 'from-gray-800/60 to-card/60' },
   { id: 'neon_pink', label: 'Neon Pink', primary: '#ec4899', secondary: '#f43f5e', gradient: 'from-pink-900/60 to-rose-900/60' },
 ];
 

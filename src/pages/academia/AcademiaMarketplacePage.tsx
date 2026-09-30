@@ -90,7 +90,7 @@ export default function AcademiaMarketplacePage() {
   }, [items, search]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-zinc-100">
       <header className="border-b border-white/5 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           <Link to="/" className="font-bold text-lg flex items-center gap-2">

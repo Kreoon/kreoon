@@ -194,9 +194,9 @@ export default function AcademiaSpaceHomePage() {
         }}
       >
         {/* Degradado superior: funde el borde de arriba con la página */}
-        <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-background to-transparent pointer-events-none" />
         {/* Degradado inferior: funde el borde de abajo con la página */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-20 relative">

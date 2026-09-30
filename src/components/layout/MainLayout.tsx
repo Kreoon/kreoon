@@ -514,7 +514,7 @@ export function MainLayout({
         {hasBanner && (
           <div className={cn(
             "fixed top-0 right-0 z-[60] h-11",
-            "bg-gradient-to-r from-purple-600 via-purple-500 to-white dark:from-purple-600 dark:via-purple-800 dark:to-zinc-950",
+            "bg-gradient-to-r from-purple-600 via-purple-500 to-white dark:from-purple-600 dark:via-purple-800 dark:to-background",
             sidebarCollapsed ? "left-0 md:left-[104px]" : "left-0 md:left-[288px]"
           )}>
             <div className="h-full px-4 flex items-center">
