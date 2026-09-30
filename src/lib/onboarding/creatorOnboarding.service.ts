@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
 // RPC nuevas (migración 20260930130000): aún no están en los tipos generados.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rpc = (fn: string, args?: Record<string, unknown>) => (supabase as any).rpc(fn, args ?? {});
 
 export interface PendingDocument {

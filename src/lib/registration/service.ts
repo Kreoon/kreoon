@@ -60,7 +60,6 @@ export class RegistrationError extends Error {
 }
 
 // Las RPC nuevas no están en src/integrations/supabase/types.ts (se regenera al aplicar la migración).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const rpc = (fn: string, args?: Record<string, unknown>) => (supabase as any).rpc(fn, args ?? {});
 
 function mapRpcError(message: string): RegistrationError {

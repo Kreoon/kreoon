@@ -126,9 +126,6 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const NoCompany = lazyWithRetry(() => import("./pages/NoCompany"));
 const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
 const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
-const WelcomeNewMember = lazyWithRetry(
-  () => import("./pages/WelcomeNewMember"),
-);
 const MCPDocumentation = lazyWithRetry(
   () => import("./pages/MCPDocumentation"),
 );
@@ -249,13 +246,6 @@ const AllPagesQAPage = lazyWithRetry(
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
-const WelcomeTalent = lazyWithRetry(() => import("./pages/WelcomeTalent"));
-const WelcomeUGCColombia = lazyWithRetry(
-  () => import("./pages/welcome/WelcomeUGCColombia"),
-);
-const OnboardingProfile = lazyWithRetry(
-  () => import("./pages/OnboardingProfile"),
-);
 const ClientOnboarding = lazyWithRetry(
   () => import("./pages/ClientOnboarding"),
 );
@@ -660,15 +650,17 @@ function AppRoutes() {
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
         <Route path="/unlock-access" element={<Navigate to="/" replace />} />
-        <Route path="/welcome-talent" element={<WelcomeTalent />} />
-        <Route path="/welcome/ugc-colombia" element={<WelcomeUGCColombia />} />
-        <Route path="/onboarding/profile" element={<OnboardingProfile />} />
+        {/* Bienvenida/onboarding de creadores unificado: un solo asistente (OnboardingGateProvider) y
+            un solo destino (/bienvenida). Enlaces anteriores (incluido el del formulario externo) siguen vivos. */}
+        <Route path="/welcome-talent" element={<Navigate to="/bienvenida" replace />} />
+        <Route path="/welcome/ugc-colombia" element={<Navigate to="/bienvenida" replace />} />
+        <Route path="/onboarding/profile" element={<Navigate to="/bienvenida" replace />} />
         {/* Formulario público de onboarding de clientes. Sin ProtectedRoute:
             el enlace llega por WhatsApp y el cliente no tiene cuenta.
             React Router prioriza el segmento estático /onboarding/profile
             sobre este dinámico, así que no hay colisión entre ambas. */}
         <Route path="/onboarding/:token" element={<ClientOnboarding />} />
-        <Route path="/welcome" element={<WelcomeNewMember />} />
+        <Route path="/welcome" element={<Navigate to="/bienvenida" replace />} />
         <Route path="/mcp-docs" element={<MCPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />

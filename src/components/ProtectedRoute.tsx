@@ -6,7 +6,8 @@ import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
-import { getPermissionGroup, getDashboardForRole, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
+import { getPermissionGroup, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
+import { getDashboardPathForRoles } from '@/lib/routing/postAuth';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -49,29 +50,8 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
   });
 }
 
-// Helper to get the correct dashboard path based on active role
-function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
-  if (roles.length === 0) return '/marketplace';
-
-  if (activeRole && roles.includes(activeRole)) {
-    return getDashboardForRole(activeRole);
-  }
-
-  const rolePriority: AppRole[] = [
-    'admin', 'team_leader',
-    'digital_strategist', 'creative_strategist', 'strategist',
-    'content_creator', 'creator',
-    'editor',
-    'community_manager',
-    'client'
-  ];
-  for (const priorityRole of rolePriority) {
-    if (roles.includes(priorityRole)) {
-      return getDashboardForRole(priorityRole);
-    }
-  }
-  return '/marketplace';
-}
+// Dashboard según rol activo: fuente única compartida con Auth (src/lib/routing/postAuth.ts)
+const getDashboardPath = getDashboardPathForRoles;
 
 // Routes that users without roles can access (social/marketplace)
 const SOCIAL_ROUTES = ['/marketplace', '/profile', '/settings'];
