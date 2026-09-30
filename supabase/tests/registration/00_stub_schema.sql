@@ -9,13 +9,13 @@ $$ SELECT nullif(current_setting('request.jwt.claims', true)::jsonb->>'sub',''):
 GRANT USAGE ON SCHEMA auth TO anon, authenticated;
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 
-CREATE TYPE public.app_role AS ENUM ('admin','creator','editor','client','team_leader','content_creator','student','strategist');
+CREATE TYPE public.app_role AS ENUM ('admin','creator','editor','client','team_leader','content_creator','student','strategist','ugc_creator');
 
 CREATE TABLE public.organizations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), name text, slug text UNIQUE NOT NULL, logo_url text, description text,
   is_registration_open boolean DEFAULT false, registration_require_invite boolean DEFAULT true,
   is_blocked boolean DEFAULT false, deleted_at timestamptz, default_role public.app_role DEFAULT 'creator',
-  registration_code text, admin_email text);
+  registration_code text, admin_email text, created_at timestamptz DEFAULT now());
 CREATE TABLE public.profiles (id uuid PRIMARY KEY, email text, full_name text, current_organization_id uuid,
   organization_status text NOT NULL DEFAULT 'active', active_role text, is_active boolean DEFAULT true);
 CREATE TABLE public.organization_members (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
