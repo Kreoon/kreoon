@@ -11,9 +11,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { getPermissionGroup } from '@/lib/permissionGroups';
 import { KreoonBadge, KreoonButton } from '@/components/ui/kreoon';
-import type { OnboardingFormData } from '@/components/client-onboarding/schemas';
+import type { OnboardingFormData, SectionKey } from '@/components/client-onboarding/schemas';
 import { OnboardingLinkDialog } from './OnboardingLinkDialog';
 import { OnboardingResponseView } from './OnboardingResponseView';
+import { OnboardingChecklist } from './OnboardingChecklist';
 
 /**
  * Pestaña de Onboarding dentro del detalle del cliente.
@@ -44,6 +45,7 @@ interface FormRow {
   submitted_at: string | null;
   processed_at: string | null;
   claimed_at: string | null;
+  omitted_sections: SectionKey[] | null;
   processing: {
     pasos?: Record<
       string,
@@ -100,7 +102,7 @@ export function OnboardingTab({
     try {
       const { data, error } = await supabase
         .from('client_onboarding_forms')
-        .select('id, status, form_data, submitted_at, processed_at, claimed_at, processing')
+        .select('id, status, form_data, submitted_at, processed_at, claimed_at, omitted_sections, processing')
         .eq('client_id', clientId)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -225,6 +227,11 @@ export function OnboardingTab({
           )}
         </div>
       </div>
+
+      {/* Qué le falta a la cuenta + qué debe llenar el cliente */}
+      {form && (
+        <OnboardingChecklist clientId={clientId} form={form} onChanged={cargar} />
+      )}
 
       {/* Resultado por paso del procesamiento */}
       {Object.keys(pasos).length > 0 && (

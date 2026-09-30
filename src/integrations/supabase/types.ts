@@ -8014,6 +8014,7 @@ export type Database = {
           form_data: Json
           id: string
           organization_id: string
+          omitted_sections: string[]
           portal_invite: Json | null
           processed_at: string | null
           processing: Json | null
@@ -8030,6 +8031,7 @@ export type Database = {
           form_data?: Json
           id?: string
           organization_id: string
+          omitted_sections?: string[]
           portal_invite?: Json | null
           processed_at?: string | null
           processing?: Json | null
@@ -8046,6 +8048,7 @@ export type Database = {
           form_data?: Json
           id?: string
           organization_id?: string
+          omitted_sections?: string[]
           portal_invite?: Json | null
           processed_at?: string | null
           processing?: Json | null

@@ -31,7 +31,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Switch } from '@/components/ui/switch';
-import { Users, Search, Plus, Trash2, Crown, Shield, Eye, Loader2, Building2 } from 'lucide-react';
+import { Users, Search, Plus, Trash2, Crown, Shield, Eye, Loader2, Building2, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ClientUser {
@@ -101,6 +101,11 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
   const [selectedRole, setSelectedRole] = useState<string>('viewer');
   const [adding, setAdding] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<string>('viewer');
+  const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
     if (open && clientId) {
@@ -182,6 +187,24 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
         variant: 'destructive',
       });
     } finally { setAdding(false); }
+  };
+
+  const handleInviteUser = async () => {
+    const email = inviteEmail.trim();
+    if (!email) return;
+    setInviting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('client-user-invite', {
+        body: { client_id: clientId, email, role: inviteRole, full_name: inviteName.trim() || undefined },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.message || data.error);
+      toast({ title: data?.caso === 'invitado' ? 'Invitación enviada' : 'Acceso otorgado', description: data?.message });
+      setInviteEmail(''); setInviteName(''); setInviteRole('viewer'); setShowInviteForm(false);
+      fetchClientUsers(); onUpdate?.();
+    } catch (error: any) {
+      toast({ title: 'No se pudo invitar', description: error?.message || 'Intenta de nuevo', variant: 'destructive' });
+    } finally { setInviting(false); }
   };
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
@@ -292,12 +315,47 @@ export function ClientUsersDialog({ clientId, clientName, organizationId, open, 
             </div>
             {isAdmin && (
               <Button variant="outline" size="sm" className="gap-1.5 h-9"
-                onClick={() => setShowAddForm(!showAddForm)}>
+                onClick={() => { setShowInviteForm(!showInviteForm); setShowAddForm(false); }}>
+                <Mail className="h-3.5 w-3.5" />
+                Invitar por correo
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" className="gap-1.5 h-9"
+                onClick={() => { setShowAddForm(!showAddForm); setShowInviteForm(false); }}>
                 <Plus className="h-3.5 w-3.5" />
                 Agregar
               </Button>
             )}
           </div>
+
+          {/* Formulario invitar por correo */}
+          {showInviteForm && isAdmin && (
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+              <p className="text-sm font-medium text-primary">Invitar a {clientName}</p>
+              <p className="text-xs text-muted-foreground">
+                Le llega un correo para crear su cuenta y queda asociado a esta empresa de una vez.
+              </p>
+              <Input type="email" placeholder="correo@empresa.com" value={inviteEmail}
+                onChange={e => setInviteEmail(e.target.value)} className="h-9 text-sm" />
+              <Input placeholder="Nombre (opcional)" value={inviteName}
+                onChange={e => setInviteName(e.target.value)} className="h-9 text-sm" />
+              <Select value={inviteRole} onValueChange={setInviteRole}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner"><div className="flex items-center gap-2"><Crown className="h-3.5 w-3.5 text-amber-500" />Propietario</div></SelectItem>
+                  <SelectItem value="admin"><div className="flex items-center gap-2"><Shield className="h-3.5 w-3.5 text-blue-400" />Administrador</div></SelectItem>
+                  <SelectItem value="viewer"><div className="flex items-center gap-2"><Eye className="h-3.5 w-3.5 text-slate-400" />Visor (solo lectura)</div></SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" className="flex-1" onClick={() => setShowInviteForm(false)}>Cancelar</Button>
+                <Button size="sm" className="flex-1" onClick={handleInviteUser} disabled={inviting || !inviteEmail.trim()}>
+                  {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enviar invitación'}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Formulario agregar */}
           {showAddForm && isAdmin && (

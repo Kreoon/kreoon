@@ -26,7 +26,7 @@ es de **configuración** (nombre visible, inscripción, rol por defecto, organiz
 
 | Origen | Destino | Acción | Riesgo |
 |---|---|---|---|
-| `organizations.name` ('KREOON') | 'UGC Colombia' | `UPDATE` de 1 fila con guarda de ID+slug (`…120000`) | Bajo. Cambia el nombre visible de la org, no el de la plataforma |
+| `organizations.name` ('KREOON') | 'UGC Colombia' | `UPDATE` de 1 fila con guarda de ID+slug (`…125000`) | Bajo. Cambia el nombre visible de la org, no el de la plataforma |
 | `organizations.is_registration_open / registration_require_invite / default_role` | true / false / `content_creator` | idem | `default_role` estaba en `client`: incompatible con creadores |
 | `organizations.is_default_registration_org` | true | idem | Único por índice parcial |
 | `app_settings.primary_color/theme_color` | '#6D4AFF' (si era '#7700b8') | `…150000` | Bajo; el frontend ya trata ambos como "por defecto" |
@@ -65,6 +65,6 @@ select (select count(*) from profiles) perfiles,
 2. **Ensayo:** crear una rama de Supabase (`create_branch`), aplicar las 6 migraciones, correr `supabase/tests/registration` adaptado y las
    consultas de conciliación. **No se hizo** (requiere autorización y costo); el arnés local valida la lógica sobre un esquema simulado.
 3. **Reversión por migración:** `…100000`, `…130000`, `…140000` y `…160000` son `CREATE OR REPLACE`/`DROP POLICY`: se revierten reaplicando la definición
-   previa (guardada en el respaldo de funciones/policies). `…110000` es aditiva (`DROP FUNCTION`/`TABLE` las retira). `…120000` y `…150000`:
+   previa (guardada en el respaldo de funciones/policies). `…110000` es aditiva (`DROP FUNCTION`/`TABLE` las retira). `…125000` y `…150000`:
    `UPDATE` inverso con los valores del respaldo (`name='KREOON'`, `default_role='client'`, `registration_require_invite=true`, `primary_color='#7700b8'`).
 4. **Conciliación posterior:** repetir el dry-run; los conteos de perfiles, miembros y `auth.users` deben ser idénticos; `organizations` = 1 fila.

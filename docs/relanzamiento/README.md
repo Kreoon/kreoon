@@ -18,7 +18,7 @@ Registro público exclusivo de creadores por organización, cierre de huecos de 
 |---|---|---|---|
 | 1 | `…100000_lockdown_membership_paths` | Seguridad | Bajo; cierra accesos indebidos |
 | 2 | `…110000_creator_registration_core` | Aditiva (RPC, tabla de alias) | Bajo |
-| 3 | `…120000_ugc_colombia_org_config` | **Datos** (1 fila, guarda ID+slug) | Medio: cambia el nombre visible de la org |
+| 3 | `…125000_ugc_colombia_org_config` | **Datos** (1 fila, guarda ID+slug) | Medio: cambia el nombre visible de la org |
 | 4 | `…130000_creator_onboarding_and_unpublished_profiles` | Lógica + triggers | Medio: perfiles nuevos nacen sin publicar |
 | 5 | `…140000_community_benefits_server_only_metadata` | Seguridad | Bajo |
 | 6 | `…150000_platform_brand_defaults` | **Datos** (color) | Bajo |

@@ -150,9 +150,14 @@ function isFilled(value: unknown): boolean {
  * completas. Devuelve la lista de campos faltantes en notacion `seccion.campo`
  * para que el frontend pueda resaltarlos.
  */
-export function findMissingRequiredFields(formData: unknown): string[] {
+export function findMissingRequiredFields(
+  formData: unknown,
+  omittedSections: readonly string[] = [],
+): string[] {
   const missing: string[] = [];
   for (const [section, fields] of Object.entries(REQUIRED_FIELDS)) {
+    // Seccion que el admin decidio que el cliente no llene.
+    if (omittedSections.includes(section)) continue;
     const sectionData = getPath(formData, section);
     for (const field of fields) {
       if (!isFilled(getPath(sectionData, field))) {
@@ -233,6 +238,8 @@ export interface OnboardingForm {
   submitted_at: string | null;
   /** Usuario que creo su cuenta desde el paso 0 del link (null = nadie aun). */
   claimed_user_id: string | null;
+  /** Secciones que el admin decidio que el cliente no llene. */
+  omitted_sections: string[];
 }
 
 export type TokenFailure =
@@ -258,7 +265,7 @@ export async function loadFormByToken(
   const { data, error } = await supabase
     .from("client_onboarding_forms")
     .select(
-      "id, organization_id, client_id, status, form_data, expires_at, submitted_at, claimed_user_id",
+      "id, organization_id, client_id, status, form_data, expires_at, submitted_at, claimed_user_id, omitted_sections",
     )
     .eq("token", token)
     .maybeSingle();

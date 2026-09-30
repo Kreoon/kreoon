@@ -24,7 +24,7 @@ Los hallazgos H1–H3 son explotables hoy. La migración `…100000` no depende 
    - **Auth → Email:** "Confirm email" activo; la plantilla *Confirm signup* debe usar `{{ .ConfirmationURL }}` (respeta `emailRedirectTo`).
    - Variables de las edge functions: `PUBLIC_REGISTRATION_ENABLED` (`false` cuando ugccolombia.co ya enlace al registro canónico),
      `CLIENT_ONBOARDING_CLAIM_ENABLED` (vacío = cerrado), `ENABLE_LEGACY_ADMIN_TOOLS` (vacío = deshabilitadas), `SYNC_TO_KREOON_SECRET` (solo si se reactivara).
-5. Aplicar los datos (**requisito**: `registration_require_invite=false`, porque desde la revisión una organización con invitación obligatoria se considera cerrada para el registro público): `…120000` (UGC Colombia: nombre, inscripción abierta, rol por defecto, organización predeterminada) y `…150000` (color).
+5. Aplicar los datos (**requisito**: `registration_require_invite=false`, porque desde la revisión una organización con invitación obligatoria se considera cerrada para el registro público): `…125000` (UGC Colombia: nombre, inscripción abierta, rol por defecto, organización predeterminada) y `…150000` (color).
 6. `npx supabase gen types typescript --project-id wjkbqcrxwsmvtxmqgiqc > src/integrations/supabase/types.ts` (las RPC nuevas hoy se llaman con *cast*).
 7. Actualizar el formulario de **ugccolombia.co** para enlazar a `https://kreoon.com/registro/ugc-colombia`; después `PUBLIC_REGISTRATION_ENABLED=false`.
 8. Recomendado: eliminar del proyecto las funciones heredadas (`supabase functions delete migrate-to-kreoon sync-to-kreoon kreoon-bootstrap sync-user-permissions bulk-password-reset`).
