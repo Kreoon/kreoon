@@ -87,7 +87,9 @@ export default function OrganizationRegistrationPage({ mode }: { mode: "register
     const s = orgQuery.data?.status;
     if (s === "not_found") return "not_found";
     if (s === "inactive") return "inactive";
-    if (s === "closed") return "closed";
+    // En "continuar" el servidor decide: quien ya es miembro debe poder terminar aunque la inscripción
+    // haya cerrado después; ContinueSignup muestra "cerrada" solo si de verdad no es miembro.
+    if (s === "closed" && mode === "register") return "closed";
     return null;
   };
 
