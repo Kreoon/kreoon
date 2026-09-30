@@ -240,6 +240,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
 const BATCH_SIZE = 12;
 
 export default function PortfolioShowcasePage() {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(EAGER_LOAD_COUNT);
