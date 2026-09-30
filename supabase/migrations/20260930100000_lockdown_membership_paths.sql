@@ -50,12 +50,12 @@ BEGIN
 
   IF NOT (
     v_is_platform_root
-    OR public.is_org_owner(v_caller, v_request.organization_id)
     OR EXISTS (
       SELECT 1 FROM organization_members om
       WHERE om.organization_id = v_request.organization_id
         AND om.user_id = v_caller
-        AND om.role IN ('admin', 'team_leader')
+        AND om.deleted_at IS NULL
+        AND (om.is_owner OR om.role IN ('admin', 'team_leader'))
     )
   ) THEN
     RAISE EXCEPTION 'forbidden: only organization admins can approve requests';

@@ -360,9 +360,18 @@ async function registerCreator(
   }
 
   // 1. Create auth user
+  // PRE-SECUESTRO: la cuenta se crea SIN confirmar el correo. Si se usara la contraseña del formulario,
+  // quien rellena el formulario (que puede ser un tercero con el correo de otra persona) conocería la
+  // contraseña de una cuenta que la víctima luego confirma con el enlace mágico. Por eso la contraseña
+  // de la cuenta es aleatoria y la persona define la suya con el enlace o con "Olvidé mi contraseña".
+  // PUBLIC_REGISTRATION_KEEP_USER_PASSWORD=true restaura el comportamiento anterior (no recomendado).
+  const keepUserPassword = Deno.env.get("PUBLIC_REGISTRATION_KEEP_USER_PASSWORD") === "true";
+  const accountPassword = keepUserPassword
+    ? data.password
+    : `${crypto.randomUUID()}${crypto.randomUUID()}Aa1!`;
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email: data.email.toLowerCase(),
-    password: data.password,
+    password: accountPassword,
     email_confirm: false,
     user_metadata: {
       full_name: data.full_name,
@@ -626,6 +635,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
       </div>
     </div>
 
+    <p style="font-size:13px;color:#666">Este enlace te da acceso por primera vez. Para entrar después, usa «Olvidé mi contraseña» en la pantalla de inicio de sesión y crea la tuya.</p>
     <a href="${loginUrl}" class="button">Ingresar a la Plataforma</a>
 
     <p style="font-size: 14px;">Haz click en el boton para acceder automaticamente (link valido por 24h).</p>
