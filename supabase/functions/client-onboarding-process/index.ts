@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
   const { data: form, error: formError } = await admin
     .from("client_onboarding_forms")
     .select(
-      "id, organization_id, client_id, status, form_data, processing, submitted_at",
+      "id, organization_id, client_id, status, form_data, processing, submitted_at, omitted_sections",
     )
     .eq("id", formId)
     .maybeSingle();
@@ -238,7 +238,20 @@ Deno.serve(async (req) => {
   // ── Paso 3: ADN del producto ─────────────────────────────────────────────
   // Guard de idempotencia: si ya hay product_dna_id, no se recrea ni se
   // reinvoca la IA (cada corrida cuesta Perplexity + Firecrawl + 4 LLM).
-  if (pasosPrevios.adn?.product_dna_id) {
+  // Si el admin decidió que el cliente NO llene "producto", no hay insumo para
+  // el ADN: dispararlo gastaría Perplexity + Firecrawl + 4 LLM sobre un texto
+  // vacío. El pipeline depende del ADN, así que tampoco se arranca (paso 4).
+  const productoOmitido = ((form.omitted_sections ?? []) as string[]).includes(
+    "producto",
+  );
+
+  if (productoOmitido) {
+    pasos.adn = {
+      ok: true,
+      en: ahora(),
+      detalle: "Omitido: el producto no se le pidió al cliente.",
+    };
+  } else if (pasosPrevios.adn?.product_dna_id) {
     pasos.adn = {
       ...pasosPrevios.adn,
       detalle: "Ya se había disparado; no se repite.",
@@ -309,7 +322,13 @@ Deno.serve(async (req) => {
   // empieza" para siempre: la pantalla lee `client_pipeline_runs` y nadie
   // creaba la fila. `start` es idempotente (UNIQUE por client_id), así que
   // reprocesar el formulario no crea un segundo run ni reinicia el vivo.
-  try {
+  if (productoOmitido) {
+    pasos.pipeline = {
+      ok: true,
+      en: ahora(),
+      detalle: "Omitido: sin producto no hay ADN sobre el cual arrancar el proceso.",
+    };
+  } else try {
     const res = await fetch(`${url}/functions/v1/pipeline-orchestrator`, {
       method: "POST",
       headers: {

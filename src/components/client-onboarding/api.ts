@@ -53,6 +53,8 @@ export interface LoadedOnboarding {
   branding: OnboardingBranding;
   status: string;
   formData: OnboardingFormData;
+  /** Secciones que el admin decidió que el cliente no llene. */
+  omittedSections: SectionKey[];
   expiresAt: string;
   account: OnboardingAccount;
   legalDocuments: LegalDocument[];
@@ -158,6 +160,9 @@ export async function loadOnboarding(token: string): Promise<LoadResult> {
         },
         status: String(payload.status ?? 'pending'),
         formData: (payload.form_data ?? {}) as OnboardingFormData,
+        omittedSections: Array.isArray(payload.omitted_sections)
+          ? (payload.omitted_sections as SectionKey[])
+          : [],
         expiresAt: String(payload.expires_at ?? ''),
         account: {
           claimed: account.claimed === true,

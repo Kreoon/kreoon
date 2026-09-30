@@ -59,7 +59,15 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
   const [legalDocuments, setLegalDocuments] = useState<LegalDocument[]>([]);
   const [claimed, setClaimed] = useState(false);
   const [pasoActual, setPasoActual] = useState(0);
+  const [omitidas, setOmitidas] = useState<SectionKey[]>([]);
   const [guardando, setGuardando] = useState(false);
+
+  // Pasos que el admin decidió que el cliente SÍ llene. El de cierre
+  // ('logistica') nunca se omite: es el que trae el botón de envío.
+  const pasos = useMemo(
+    () => STEPS.filter((paso) => !omitidas.includes(paso.key)),
+    [omitidas],
+  );
   const contenedorRef = useRef<HTMLDivElement>(null);
 
   // ── Carga inicial ────────────────────────────────────────────────────────
@@ -87,6 +95,10 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
       setAccount(resultado.data.account);
       setLegalDocuments(resultado.data.legalDocuments ?? []);
       setClaimed(resultado.data.account.claimed);
+      setOmitidas(resultado.data.omittedSections ?? []);
+      const pasosVisibles = STEPS.filter(
+        (paso) => !(resultado.data.omittedSections ?? []).includes(paso.key),
+      );
 
       // Si ya lo había enviado, se muestra la pantalla de éxito en vez del form.
       if (resultado.data.status === 'submitted') {
@@ -101,7 +113,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
       }
 
       // Retoma en el primer paso obligatorio que aún esté vacío.
-      const primerPendiente = STEPS.findIndex(
+      const primerPendiente = pasosVisibles.findIndex(
         (paso) =>
           paso.obligatorio &&
           Object.keys(resultado.data.formData?.[paso.key] ?? {}).length === 0,
@@ -135,7 +147,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
 
       // Retoma en el primer paso obligatorio que aún esté vacío (mismo cálculo
       // que en la carga inicial, con los datos ya presentes en el estado).
-      const primerPendiente = STEPS.findIndex(
+      const primerPendiente = pasos.findIndex(
         (paso) =>
           paso.obligatorio &&
           Object.keys(formData?.[paso.key] ?? {}).length === 0,
@@ -143,7 +155,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
       setPasoActual(primerPendiente === -1 ? 0 : primerPendiente);
       setFase('formulario');
     },
-    [formData],
+    [formData, pasos],
   );
 
   const persistirSeccion = useCallback(
@@ -172,9 +184,9 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
     async (seccion: SectionKey, datos: unknown) => {
       const guardado = await persistirSeccion(seccion, datos);
       if (!guardado) return;
-      setPasoActual((actual) => Math.min(actual + 1, STEPS.length - 1));
+      setPasoActual((actual) => Math.min(actual + 1, pasos.length - 1));
     },
-    [persistirSeccion],
+    [persistirSeccion, pasos],
   );
 
   const retroceder = useCallback(() => {
@@ -202,7 +214,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
         const secciones = new Set(
           resultado.missingFields.map((campo) => campo.split('.')[0]),
         );
-        const indice = STEPS.findIndex((paso) => secciones.has(paso.key));
+        const indice = pasos.findIndex((paso) => secciones.has(paso.key));
         toast.error('Te faltan algunos datos', {
           description: 'Te llevamos al paso que falta completar.',
         });
@@ -212,15 +224,15 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
 
       toast.error('No pudimos enviar', { description: resultado.message });
     },
-    [persistirSeccion, token],
+    [persistirSeccion, token, pasos],
   );
 
   // El indicador de pasos incluye "Tu acceso" al inicio solo mientras ese
   // paso está pendiente; una vez reclamada la cuenta desaparece.
   const pasosIndicador = useMemo(() => {
-    const base = STEPS.map((paso) => ({ label: paso.titulo }));
+    const base = pasos.map((paso) => ({ label: paso.titulo }));
     return claimed ? base : [{ label: 'Tu acceso' }, ...base];
-  }, [claimed]);
+  }, [claimed, pasos]);
 
   const indiceIndicador = claimed ? pasoActual : pasoActual + 1;
 
@@ -228,7 +240,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
   if (fase === 'error') return <PantallaEnlaceNoDisponible mensaje={mensajeError} />;
   if (fase === 'exito') return <PantallaExito orgName={branding?.orgName} tienePortal={claimed} />;
 
-  const paso = fase === 'formulario' ? STEPS[pasoActual] : null;
+  const paso = fase === 'formulario' ? pasos[pasoActual] : null;
 
   return (
     <div className="relative min-h-[100dvh] overflow-hidden bg-kreoon-bg-primary">

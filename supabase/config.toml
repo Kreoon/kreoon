@@ -580,6 +580,13 @@ verify_jwt = true
 # habilitado — no alcanza con estar logueado.
 verify_jwt = true
 
+[functions.client-user-invite]
+# Invita por correo a una persona a una empresa y la deja vinculada en
+# client_users de una vez. verify_jwt=true: la invoca un admin/estratega desde el
+# dialogo de personas de la empresa. El handler valida server-side que el caller
+# sea staff de la organizacion DUENA de la empresa.
+verify_jwt = true
+
 [functions.client-onboarding-submit]
 # Escritura del formulario (guardado por seccion + envio final). Mismo modelo de
 # auth que client-onboarding-get: token en el body, sin JWT.

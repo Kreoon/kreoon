@@ -211,7 +211,10 @@ Deno.serve(async (req) => {
 
   // ── Modo 2: envio final ────────────────────────────────────────────────
   if (body.final === true) {
-    const missing = findMissingRequiredFields(form.form_data);
+    const missing = findMissingRequiredFields(
+      form.form_data,
+      form.omitted_sections ?? [],
+    );
     if (missing.length > 0) {
       return jsonResponse(
         req,
