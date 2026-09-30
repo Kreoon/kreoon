@@ -155,6 +155,7 @@ Deno.serve(async (req) => {
     },
     status: form.status,
     form_data: formData,
+    omitted_sections: form.omitted_sections ?? [],
     expires_at: form.expires_at,
     account: {
       claimed: !!form.claimed_user_id,

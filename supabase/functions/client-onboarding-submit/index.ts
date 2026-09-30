@@ -211,7 +211,10 @@ Deno.serve(async (req) => {
 
   // ── Modo 2: envio final ────────────────────────────────────────────────
   if (body.final === true) {
-    const missing = findMissingRequiredFields(form.form_data);
+    const missing = findMissingRequiredFields(
+      form.form_data,
+      form.omitted_sections ?? [],
+    );
     if (missing.length > 0) {
       return jsonResponse(
         req,
@@ -267,7 +270,13 @@ Deno.serve(async (req) => {
       // Arranca el pipeline autonomo del cliente. Mismo patron que el paso 4
       // de client-onboarding-process (commit c27e144f): fire-and-forget, un
       // fallo acá NO tumba el submit que ya se guardo arriba.
-      try {
+      // Si el admin decidio que el cliente NO llene "producto", no hay ADN
+      // sobre el cual arrancar el pipeline: no se dispara.
+      if ((form.omitted_sections ?? []).includes("producto")) {
+        console.log(
+          "[client-onboarding-submit] producto omitido: no se arranca el pipeline",
+        );
+      } else try {
         const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
         const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
         const pipelineRes = await fetch(
