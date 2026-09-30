@@ -114,6 +114,7 @@ export function OnboardingGateProvider({ children }: OnboardingGateProviderProps
     const track = getOnboardingTrack({
       roles: roles ?? [],
       userType: (profile as { user_type?: string | null } | null)?.user_type,
+      hasBrand: Boolean((profile as { active_brand_id?: string | null } | null)?.active_brand_id),
     });
 
     // Creadores: asistente corto (nombre público, foto, tipo de contenido), reanudable y omitible.

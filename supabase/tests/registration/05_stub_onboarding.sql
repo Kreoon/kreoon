@@ -62,3 +62,23 @@ CREATE POLICY brand_members_select ON public.brand_members FOR SELECT TO authent
 CREATE POLICY brand_members_insert ON public.brand_members FOR INSERT TO authenticated
   WITH CHECK ((user_id = auth.uid()) OR (brand_id IN (SELECT b.id FROM public.brands b WHERE b.owner_id = auth.uid())) OR public.is_platform_root(auth.uid()));
 GRANT SELECT,INSERT ON public.brands, public.brand_members TO authenticated;
+
+-- Guard VIVO de profiles (antes de la migracion 8) + policy "Users can update own profile"
+ALTER TABLE public.profiles ADD COLUMN is_superadmin boolean DEFAULT false, ADD COLUMN is_platform_admin boolean DEFAULT false,
+  ADD COLUMN is_platform_founder boolean DEFAULT false, ADD COLUMN is_banned boolean DEFAULT false;
+CREATE FUNCTION public.user_holds_role(_uid uuid, _role text) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT true $$;
+CREATE FUNCTION public.trg_guard_profile_privileged_columns() RETURNS trigger LANGUAGE plpgsql SET search_path TO 'public' AS $f$
+BEGIN
+  IF current_user <> 'authenticated' THEN RETURN NEW; END IF;
+  IF NEW.email IS DISTINCT FROM OLD.email THEN RAISE EXCEPTION 'forbidden: cannot modify profiles.email directly'; END IF;
+  IF NEW.is_superadmin IS DISTINCT FROM OLD.is_superadmin THEN RAISE EXCEPTION 'forbidden: cannot modify profiles.is_superadmin directly'; END IF;
+  IF NEW.is_platform_admin IS DISTINCT FROM OLD.is_platform_admin THEN RAISE EXCEPTION 'forbidden: is_platform_admin'; END IF;
+  IF NEW.is_platform_founder IS DISTINCT FROM OLD.is_platform_founder THEN RAISE EXCEPTION 'forbidden: is_platform_founder'; END IF;
+  IF NEW.is_banned IS DISTINCT FROM OLD.is_banned THEN RAISE EXCEPTION 'forbidden: is_banned'; END IF;
+  IF NEW.active_role IS DISTINCT FROM OLD.active_role THEN
+    IF NOT public.user_holds_role(NEW.id, NEW.active_role) THEN RAISE EXCEPTION 'forbidden: active_role'; END IF; END IF;
+  RETURN NEW; END $f$;
+CREATE TRIGGER trg_profiles_guard_privileged BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.trg_guard_profile_privileged_columns();
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE TO authenticated USING (id = auth.uid()) WITH CHECK (id = auth.uid());
+CREATE POLICY profiles_select_all ON public.profiles FOR SELECT TO authenticated USING (true);

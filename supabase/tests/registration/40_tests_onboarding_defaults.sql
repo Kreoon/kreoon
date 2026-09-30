@@ -51,3 +51,16 @@ DO $$ BEGIN
     INSERT INTO pg_temp.results VALUES ('T62 el propietario de la plataforma crea marca+membresia de otra persona (CRM)', true, '');
   EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T62 el propietario de la plataforma crea marca+membresia de otra persona (CRM)', false, SQLERRM); END; END $$;
 RESET ROLE;
+
+-- A1: nadie se asigna por PATCH una organizacion de la que no es miembro (corre antes y despues)
+RESET ROLE;
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000a1');  -- admin de A, NO miembro de B
+DO $$ BEGIN
+  BEGIN UPDATE public.profiles SET current_organization_id='bbbbbbbb-0000-0000-0000-00000000000b' WHERE id='00000000-0000-0000-0000-0000000000a1';
+    INSERT INTO pg_temp.results VALUES ('T80 A1 no se fija una organizacion ajena por PATCH', false, 'se actualizo');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T80 A1 no se fija una organizacion ajena por PATCH', SQLERRM LIKE 'forbidden%', SQLERRM); END; END $$;
+DO $$ BEGIN
+  BEGIN UPDATE public.profiles SET current_organization_id='aaaaaaaa-0000-0000-0000-00000000000a', bio='hola' WHERE id='00000000-0000-0000-0000-0000000000a1';
+    INSERT INTO pg_temp.results VALUES ('T81 A1 un miembro SI fija su organizacion y edita su perfil (sin regresion)', true, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T81 A1 un miembro SI fija su organizacion y edita su perfil (sin regresion)', false, SQLERRM); END; END $$;
+RESET ROLE;

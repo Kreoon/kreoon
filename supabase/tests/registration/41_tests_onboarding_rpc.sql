@@ -57,3 +57,69 @@ DO $$ BEGIN
   BEGIN PERFORM public.finish_creator_onboarding(); INSERT INTO pg_temp.results VALUES ('T53 anon no ejecuta finish', false, '');
   EXCEPTION WHEN insufficient_privilege THEN INSERT INTO pg_temp.results VALUES ('T53 anon no ejecuta finish', true, ''); END; END $$;
 RESET ROLE;
+
+-- ══ Revisión adversarial ══
+RESET ROLE;
+-- M1: org abierta pero con invitación obligatoria => cerrada para el registro público
+INSERT INTO public.organizations(id,name,slug,is_registration_open,registration_require_invite) VALUES ('cccccccc-0000-0000-0000-00000000000c','Org C','org-c',true,true);
+SET ROLE anon;
+INSERT INTO pg_temp.results SELECT 'T70 M1 org con invitacion obligatoria aparece cerrada', public.get_registration_org('org-c')->>'status'='closed', '';
+RESET ROLE; SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000e4');
+DO $$ BEGIN
+  BEGIN PERFORM public.complete_creator_signup('org-c', ARRAY['d0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002']::uuid[], NULL, true);
+    INSERT INTO pg_temp.results VALUES ('T71 M1 no se une a una org con invitacion obligatoria', false, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T71 M1 no se une a una org con invitacion obligatoria', SQLERRM='registration_closed', SQLERRM); END; END $$;
+
+-- M2: un admin no puede degradar ni borrar al owner
+RESET ROLE;
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f1','owner_a@test.dev'),('00000000-0000-0000-0000-0000000000f2','tl_a@test.dev');
+INSERT INTO public.profiles(id,email,full_name) VALUES ('00000000-0000-0000-0000-0000000000f1','owner_a@test.dev','Owner A'),('00000000-0000-0000-0000-0000000000f2','tl_a@test.dev','TL A');
+INSERT INTO public.organization_members(organization_id,user_id,role,is_owner) VALUES ('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000f1','admin',true),('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000f2','team_leader',false);
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000f2');
+DO $$ DECLARE n int; BEGIN
+  UPDATE public.organization_members SET is_owner=false WHERE user_id='00000000-0000-0000-0000-0000000000f1'; GET DIAGNOSTICS n=ROW_COUNT;
+  INSERT INTO pg_temp.results VALUES ('T72 M2 team_leader no degrada al owner', n=0, 'filas='||n);
+  DELETE FROM public.organization_members WHERE user_id='00000000-0000-0000-0000-0000000000f1'; GET DIAGNOSTICS n=ROW_COUNT;
+  INSERT INTO pg_temp.results VALUES ('T73 M2 team_leader no borra al owner', n=0, 'filas='||n);
+END $$;
+
+-- M6: miembro soft-deleted no se reactiva solo
+RESET ROLE;
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f6','retirado@test.dev'); INSERT INTO public.profiles(id,email,full_name) VALUES ('00000000-0000-0000-0000-0000000000f6','retirado@test.dev','Retirado');
+INSERT INTO public.organization_members(organization_id,user_id,role,deleted_at) VALUES ('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000f6','content_creator',now());
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000f6');
+DO $$ BEGIN
+  BEGIN PERFORM public.complete_creator_signup('org-a', ARRAY['d0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002']::uuid[], NULL, true);
+    INSERT INTO pg_temp.results VALUES ('T74 M6 miembro retirado no se reincorpora solo', false, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T74 M6 miembro retirado no se reincorpora solo', SQLERRM='registration_closed', SQLERRM); END; END $$;
+
+-- Consentimiento previo con accepted=false se actualiza
+RESET ROLE;
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f3','falso@test.dev'); INSERT INTO public.profiles(id,email,full_name) VALUES ('00000000-0000-0000-0000-0000000000f3','falso@test.dev','Falso');
+INSERT INTO public.user_legal_consents(user_id,document_id,document_type,document_version,accepted) VALUES ('00000000-0000-0000-0000-0000000000f3','d0000000-0000-0000-0000-000000000001','general_terms','v1.0',false);
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000f3');
+SELECT public.complete_creator_signup('org-a', ARRAY['d0000000-0000-0000-0000-000000000001','d0000000-0000-0000-0000-000000000002']::uuid[]);
+RESET ROLE;
+INSERT INTO pg_temp.results SELECT 'T75 consentimiento accepted=false queda aceptado', bool_and(accepted), '' FROM public.user_legal_consents WHERE user_id='00000000-0000-0000-0000-0000000000f3';
+
+-- M3: register_user_to_organization
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000e3');
+DO $$ BEGIN
+  BEGIN PERFORM public.register_user_to_organization('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000e3','client');
+    INSERT INTO pg_temp.results VALUES ('T76 M3 cuenta sin marca/cliente no entra como client', false, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T76 M3 cuenta sin marca/cliente no entra como client', SQLERRM LIKE 'forbidden%', SQLERRM); END; END $$;
+RESET ROLE;
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f4','marca@test.dev'); INSERT INTO public.profiles(id,email,full_name) VALUES ('00000000-0000-0000-0000-0000000000f4','marca@test.dev','Marca Indep');
+INSERT INTO public.brands(id,name,owner_id) VALUES ('bb000000-0000-0000-0000-000000000009','Indep','00000000-0000-0000-0000-0000000000f4');
+INSERT INTO public.brand_members(brand_id,user_id,role) VALUES ('bb000000-0000-0000-0000-000000000009','00000000-0000-0000-0000-0000000000f4','owner');
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000f4');
+INSERT INTO pg_temp.results SELECT 'T77 M3 marca independiente existente SI completa su onboarding legado (sin regresion)', public.register_user_to_organization('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000f4','client'), '';
+RESET ROLE;
+-- creador sin consentimientos no entra por el wrapper
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f5','sinconsent@test.dev'); INSERT INTO public.profiles(id,email,full_name) VALUES ('00000000-0000-0000-0000-0000000000f5','sinconsent@test.dev','Sin Consent');
+SET ROLE authenticated; SELECT pg_temp.as_user('00000000-0000-0000-0000-0000000000f5');
+DO $$ BEGIN
+  BEGIN PERFORM public.register_user_to_organization('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000f5','content_creator');
+    INSERT INTO pg_temp.results VALUES ('T78 M3 el wrapper no salta los consentimientos', false, '');
+  EXCEPTION WHEN others THEN INSERT INTO pg_temp.results VALUES ('T78 M3 el wrapper no salta los consentimientos', SQLERRM LIKE '%consents%', SQLERRM); END; END $$;
+RESET ROLE;

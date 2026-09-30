@@ -54,6 +54,9 @@ export function sanitizeReturnTo(raw: string | null | undefined): string | null 
   if (parsed.origin !== "https://internal.invalid") return null;
 
   const path = parsed.pathname;
+  // Tras normalizar ("/.//evil.com" → "//evil.com") el resultado puede volver a ser protocolo-relativo:
+  // se revalida la RUTA ya normalizada, no solo la entrada.
+  if (!path.startsWith("/") || path.startsWith("//")) return null;
   const lower = path.toLowerCase();
   if (REGISTRATION_CONTINUE_RE.test(lower)) return `${path}${parsed.search}${parsed.hash}`;
   if (BLOCKED_PREFIXES.some((p) => lower === p || lower.startsWith(`${p}/`))) return null;

@@ -15,10 +15,12 @@ const CREATOR_ROLES = new Set(["creator", "content_creator", "ugc_creator"]);
 export interface TrackInput {
   roles: readonly string[];
   userType: string | null | undefined;
+  /** Marca independiente existente (profiles.active_brand_id): conserva su flujo, no se la trata como sin membresía. */
+  hasBrand?: boolean;
 }
 
-export function getOnboardingTrack({ roles, userType }: TrackInput): OnboardingTrack {
-  const hasClientSide = userType === "client" || roles.includes("client");
+export function getOnboardingTrack({ roles, userType, hasBrand }: TrackInput): OnboardingTrack {
+  const hasClientSide = userType === "client" || roles.includes("client") || hasBrand === true;
   if (hasClientSide) return "legacy";
   if (roles.some((r) => CREATOR_ROLES.has(r))) return "creator";
   if (roles.length === 0) return "needs_membership";

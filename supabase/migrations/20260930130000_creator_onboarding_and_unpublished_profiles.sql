@@ -320,7 +320,10 @@ BEGIN
   SELECT v_uid, d.document_id, d.document_type, d.version, true, now(), v_ip, v_ua, 'onboarding', true
   FROM public.list_registration_documents('talent') d
   WHERE d.document_id = ANY (COALESCE(p_document_ids, '{}'))
-  ON CONFLICT (user_id, document_id) DO NOTHING;
+  ON CONFLICT (user_id, document_id) DO UPDATE
+    SET accepted = true, accepted_at = now(), ip_address = EXCLUDED.ip_address,
+        user_agent = EXCLUDED.user_agent, consent_method = EXCLUDED.consent_method, is_current = true
+    WHERE user_legal_consents.accepted = false;
 
   GET DIAGNOSTICS v_count = ROW_COUNT;
   RETURN v_count;

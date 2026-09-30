@@ -1,3 +1,4 @@
+import { escapeHtml } from "../_shared/escapeHtml.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -215,7 +216,7 @@ const handler = async (req: Request): Promise<Response> => {
                             Hola <strong>${adminName}</strong>,
                           </p>
                           <p style="margin: 0 0 30px; color: #374151; font-size: 16px; line-height: 1.6;">
-                            Un nuevo usuario se ha registrado en <strong>${org.name}</strong>:
+                            Un nuevo usuario se ha registrado en <strong>${escapeHtml(org.name)}</strong>:
                           </p>
                           
                           <!-- User Info Card -->
@@ -227,14 +228,14 @@ const handler = async (req: Request): Promise<Response> => {
                                     <td style="padding-bottom: 12px;">
                                       <span style="color: #6b7280; font-size: 14px;">Nombre:</span>
                                       <br>
-                                      <span style="color: #111827; font-size: 16px; font-weight: 600;">${displayName}</span>
+                                      <span style="color: #111827; font-size: 16px; font-weight: 600;">${escapeHtml(displayName)}</span>
                                     </td>
                                   </tr>
                                   <tr>
                                     <td style="padding-bottom: 12px;">
                                       <span style="color: #6b7280; font-size: 14px;">Email:</span>
                                       <br>
-                                      <span style="color: #111827; font-size: 16px;">${newUserEmail || "No disponible"}</span>
+                                      <span style="color: #111827; font-size: 16px;">${escapeHtml(newUserEmail || "No disponible")}</span>
                                     </td>
                                   </tr>
                                   <tr>
@@ -242,7 +243,7 @@ const handler = async (req: Request): Promise<Response> => {
                                       <span style="color: #6b7280; font-size: 14px;">Rol:</span>
                                       <br>
                                       <span style="display: inline-block; margin-top: 4px; padding: 6px 12px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 500; border-radius: 20px;">
-                                        ${roleLabel}
+                                        ${escapeHtml(roleLabel)}
                                       </span>
                                     </td>
                                   </tr>

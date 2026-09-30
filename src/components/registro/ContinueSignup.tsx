@@ -104,7 +104,7 @@ export function ContinueSignup({ slug, orgName, attribution, next }: ContinueSig
 
         // Mismo navegador, sin membresías en otras organizaciones: continuar solo con lo que el
         // usuario aceptó en el formulario (el servidor verifica y registra versión/fecha/IP).
-        const intent = readSignupIntent(slug);
+        const intent = readSignupIntent(slug, user.email);
         const noMissing = (state.missing_documents ?? []).length === 0;
         if (intent && !state.has_other_memberships) {
           setPhase({ kind: "joining" });

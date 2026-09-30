@@ -66,6 +66,15 @@ describe("sanitizeReturnTo", () => {
     expect(sanitizeReturnTo("/registrosx")).toBe("/registrosx");
   });
 
+  it("rechaza rutas que tras normalizarse quedan protocolo-relativas (//evil.com)", () => {
+    for (const v of ["/.//evil.com", "/a/..//evil.com", "/%2e%2e//evil.com", "/./\\/evil.com", "/a/../../evil.com//x"]) {
+      const out = sanitizeReturnTo(v);
+      expect(out === null || !out.startsWith("//")).toBe(true);
+    }
+    expect(sanitizeReturnTo("/.//evil.com")).toBeNull();
+    expect(sanitizeReturnTo("/a/..//evil.com")).toBeNull();
+  });
+
   it("rechaza longitudes excesivas", () => {
     expect(sanitizeReturnTo("/" + "a".repeat(600))).toBeNull();
   });

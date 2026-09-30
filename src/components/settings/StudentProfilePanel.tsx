@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Camera, Building2, GraduationCap, ArrowRight, Lock } from 'lucide-react';
+import { Camera, GraduationCap, ArrowRight, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { UpgradeToCreatorWizard } from '@/components/registration-v2/upgrade/UpgradeToCreatorWizard';
-import { UpgradeToBrandWizard } from '@/components/registration-v2/upgrade/UpgradeToBrandWizard';
 
 /**
  * Panel de perfil para usuarios con rol único 'student'.
@@ -20,7 +19,6 @@ export function StudentProfilePanel() {
   const { user } = useAuth();
   const { profile } = useProfile();
   const [openCreator, setOpenCreator] = useState(false);
-  const [openBrand, setOpenBrand] = useState(false);
 
   const fullName = profile?.full_name || user?.email?.split('@')[0] || 'Estudiante';
   const email = user?.email || '';
@@ -100,36 +98,9 @@ export function StudentProfilePanel() {
             </Button>
           </CardContent>
         </Card>
-
-        {/* Empresa */}
-        <Card className="group transition-shadow hover:shadow-md">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-md bg-amber-500/10 text-amber-500">
-                <Building2 className="h-5 w-5" />
-              </div>
-              <div>
-                <CardTitle className="text-base">Activarme como empresa</CardTitle>
-                <CardDescription>Contrata talento y gestiona tus campañas</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <ul className="text-sm text-muted-foreground space-y-1.5 list-disc pl-5">
-              <li>Publica briefs y recibe propuestas</li>
-              <li>Aprueba entregables y pagos en escrow</li>
-              <li>Dashboard de marca con métricas</li>
-            </ul>
-            <Button className="w-full" onClick={() => setOpenBrand(true)}>
-              Empezar activación
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </CardContent>
-        </Card>
       </div>
 
       <UpgradeToCreatorWizard open={openCreator} onOpenChange={setOpenCreator} />
-      <UpgradeToBrandWizard open={openBrand} onOpenChange={setOpenBrand} />
     </div>
   );
 }

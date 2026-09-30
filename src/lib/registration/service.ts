@@ -117,6 +117,9 @@ const INTENT_KEY = "kreoon:creator-signup-intent";
 
 interface StoredIntent {
   slug: string;
+  /** Correo con el que se inició el registro por correo; en Google se desconoce. Evita que otra persona que
+   *  inicie sesión en la misma pestaña herede los consentimientos de quien abrió el formulario. */
+  email?: string | null;
   documentIds: string[];
   attribution: Attribution;
   next: string | null;
@@ -133,12 +136,13 @@ export function rememberSignupIntent(i: Omit<StoredIntent, "at">): void {
   }
 }
 
-export function readSignupIntent(slug: string): StoredIntent | null {
+export function readSignupIntent(slug: string, currentUserEmail?: string | null): StoredIntent | null {
   try {
     const raw = sessionStorage.getItem(INTENT_KEY);
     if (!raw) return null;
     const v = JSON.parse(raw) as StoredIntent;
     if (v.slug !== slug || Date.now() - v.at > INTENT_TTL_MS) return null;
+    if (v.email && currentUserEmail && v.email.toLowerCase() !== currentUserEmail.toLowerCase()) return null;
     return v;
   } catch {
     return null;

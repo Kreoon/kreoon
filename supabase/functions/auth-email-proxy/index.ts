@@ -1,3 +1,4 @@
+import { escapeHtml } from "../_shared/escapeHtml.ts";
 /**
  * Auth Email Proxy — Enterprise White-Label
  *
@@ -176,7 +177,7 @@ Deno.serve(async (req: Request) => {
 
     switch (type as AuthEmailType) {
       case "signup":
-        html = buildConfirmationEmail(emailConfig, actionLink, user_name);
+        html = buildConfirmationEmail(emailConfig, actionLink, user_name === undefined ? undefined : escapeHtml(user_name));
         subject = `${org.name} — Confirma tu correo electrónico`;
         break;
       case "recovery":
@@ -188,7 +189,7 @@ Deno.serve(async (req: Request) => {
         subject = `${org.name} — Tu enlace de acceso`;
         break;
       case "invite":
-        html = buildInviteEmail(emailConfig, actionLink, inviter_name);
+        html = buildInviteEmail(emailConfig, actionLink, inviter_name === undefined ? undefined : escapeHtml(inviter_name));
         subject = `${org.name} — Has sido invitado`;
         break;
       default:

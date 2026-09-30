@@ -6,9 +6,9 @@ INSERT INTO auth.users (id,email) VALUES
  ('00000000-0000-0000-0000-0000000000c1','new_user@test.dev'),
  ('00000000-0000-0000-0000-0000000000d1','root@test.dev');
 INSERT INTO public.profiles (id,email,full_name) SELECT id,email,split_part(email,'@',1) FROM auth.users;
-INSERT INTO public.organizations (id,name,slug,is_registration_open) VALUES
- ('aaaaaaaa-0000-0000-0000-00000000000a','Org A','org-a',true),
- ('bbbbbbbb-0000-0000-0000-00000000000b','Org B','org-b',false);
+INSERT INTO public.organizations (id,name,slug,is_registration_open,registration_require_invite) VALUES
+ ('aaaaaaaa-0000-0000-0000-00000000000a','Org A','org-a',true,false),
+ ('bbbbbbbb-0000-0000-0000-00000000000b','Org B','org-b',false,false);
 INSERT INTO public.organization_members (organization_id,user_id,role) VALUES
  ('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000a1','admin'),
  ('aaaaaaaa-0000-0000-0000-00000000000a','00000000-0000-0000-0000-0000000000a2','content_creator'),

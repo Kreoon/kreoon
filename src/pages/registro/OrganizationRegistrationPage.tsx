@@ -111,7 +111,7 @@ export default function OrganizationRegistrationPage({ mode }: { mode: "register
     setError(null);
     try {
       setLastEmail(v.email);
-      rememberSignupIntent({ slug: org.slug, documentIds: docIds, attribution, next });
+      rememberSignupIntent({ slug: org.slug, email: v.email.trim(), documentIds: docIds, attribution, next });
       const res = await signUpWithEmail({ slug: org.slug, ...v, attribution, next });
       if (res.kind === "session") {
         navigate(`${registrationContinuePath(org.slug)}${location.search}`, { replace: true });

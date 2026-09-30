@@ -23,12 +23,13 @@ Registro público exclusivo de creadores por organización, cierre de huecos de 
 | 5 | `…140000_community_benefits_server_only_metadata` | Seguridad | Bajo |
 | 6 | `…150000_platform_brand_defaults` | **Datos** (color) | Bajo |
 | 7 | `…160000_brand_members_insert_scope` | Seguridad | Bajo |
+| 8 | `…170000_profiles_guard_current_organization` | Seguridad (trigger) | Bajo: bloquea fijar una organización ajena por PATCH |
 
 ## Pruebas
 
 ```bash
 npm test                       # Vitest (lib de registro, destino, onboarding, componentes)
 npm run check:contrast         # WCAG AA leyendo los tokens reales de src/index.css
-supabase/tests/registration/run.sh            # 61 pruebas SQL sobre Postgres local descartable
+supabase/tests/registration/run.sh            # 72 pruebas SQL sobre Postgres local descartable
 supabase/tests/registration/run.sh --before   # mismas pruebas sin migrar: muestran los huecos
 ```

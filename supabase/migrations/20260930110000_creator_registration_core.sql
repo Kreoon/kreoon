@@ -77,7 +77,9 @@ BEGIN
   END IF;
 
   RETURN jsonb_build_object(
-    'status', CASE WHEN COALESCE(o.is_registration_open, false) THEN 'open' ELSE 'closed' END,
+    -- Abierta = inscripcion abierta Y sin invitacion obligatoria: este flujo no tiene codigo de invitacion,
+    -- asi que una org con registration_require_invite=true NO se puede unir por el registro publico.
+    'status', CASE WHEN COALESCE(o.is_registration_open, false) AND NOT COALESCE(o.registration_require_invite, false) THEN 'open' ELSE 'closed' END,
     'organization', jsonb_build_object(
       'id', o.id,
       'slug', o.slug,
@@ -180,7 +182,14 @@ BEGIN
     RETURN jsonb_build_object('status', 'already_member', 'organization', v_org_json);
   END IF;
 
-  IF NOT COALESCE(o.is_registration_open, false) THEN
+  -- Una membresia eliminada (soft delete) NO se reactiva sola: quien fue retirado de la organizacion no
+  -- vuelve a unirse por el registro publico (equivale a inscripcion cerrada para esa persona).
+  IF EXISTS (SELECT 1 FROM organization_members
+              WHERE organization_id = o.id AND user_id = v_uid AND deleted_at IS NOT NULL) THEN
+    RAISE EXCEPTION 'registration_closed';
+  END IF;
+
+  IF NOT COALESCE(o.is_registration_open, false) OR COALESCE(o.registration_require_invite, false) THEN
     RAISE EXCEPTION 'registration_closed';
   END IF;
 
@@ -224,7 +233,11 @@ BEGIN
          true, now(), v_ip, v_ua, 'registration', true
   FROM public.list_registration_documents('talent') d
   WHERE d.document_id = ANY (COALESCE(p_accepted_document_ids, '{}'))
-  ON CONFLICT (user_id, document_id) DO NOTHING;
+  -- Si quedo una fila previa con accepted=false, se actualiza (antes DO NOTHING la dejaba sin aceptar).
+  ON CONFLICT (user_id, document_id) DO UPDATE
+    SET accepted = true, accepted_at = now(), ip_address = EXCLUDED.ip_address,
+        user_agent = EXCLUDED.user_agent, consent_method = EXCLUDED.consent_method, is_current = true
+    WHERE user_legal_consents.accepted = false;
 
   -- Atribucion: lista blanca de claves, longitud acotada.
   IF p_attribution IS NOT NULL AND jsonb_typeof(p_attribution) = 'object' THEN
@@ -303,7 +316,7 @@ BEGIN
                      WHERE c.user_id = v_uid AND c.document_id = d.document_id AND c.accepted = true);
 
   RETURN jsonb_build_object(
-    'status', CASE WHEN COALESCE(o.is_registration_open, false) THEN 'open' ELSE 'closed' END,
+    'status', CASE WHEN COALESCE(o.is_registration_open, false) AND NOT COALESCE(o.registration_require_invite, false) THEN 'open' ELSE 'closed' END,
     'organization', jsonb_build_object('id', o.id, 'slug', o.slug, 'name', o.name, 'logo_url', o.logo_url),
     'is_member', v_is_member,
     'has_other_memberships', v_has_other,

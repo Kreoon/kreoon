@@ -15,6 +15,11 @@ describe("getOnboardingTrack", () => {
     expect(getOnboardingTrack({ roles: ["client", "content_creator"], userType: null })).toBe("legacy");
   });
 
+  it("una marca independiente existente (sin roles) conserva su flujo y no se manda a 'unirte como creador'", () => {
+    expect(getOnboardingTrack({ roles: [], userType: null, hasBrand: true })).toBe("legacy");
+    expect(getOnboardingTrack({ roles: [], userType: "talent", hasBrand: true })).toBe("legacy");
+  });
+
   it("otros roles (editor, estrategas, estudiantes) siguen su flujo", () => {
     expect(getOnboardingTrack({ roles: ["editor"], userType: null })).toBe("legacy");
     expect(getOnboardingTrack({ roles: ["digital_strategist"], userType: "talent" })).toBe("legacy");

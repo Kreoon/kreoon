@@ -1,3 +1,4 @@
+import { escapeHtml } from "../_shared/escapeHtml.ts";
 /**
  * Public Registration API - Widget de registro para ugccolombia.co
  *
@@ -278,6 +279,13 @@ serve(async (req: Request) => {
       );
     }
 
+    if (typeof body.full_name !== "string" || body.full_name.trim().length < 2 || body.full_name.length > 120) {
+      return new Response(
+        JSON.stringify({ error: "El nombre es requerido" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!body.legal_accepted) {
       return new Response(
         JSON.stringify({ error: "Debes aceptar los términos y condiciones" }),
@@ -542,7 +550,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
         ${community.free_months > 0 ? `<li>${community.free_months} mes${community.free_months > 1 ? 'es' : ''} gratis de suscripcion</li>` : ''}
         ${community.bonus_ai_tokens > 0 ? `<li>${community.bonus_ai_tokens} tokens AI de bienvenida</li>` : ''}
         ${community.commission_discount_points > 0 ? `<li>Descuento en comisiones del marketplace</li>` : ''}
-        <li>Badge exclusivo "${community.custom_badge_text}" en tu perfil</li>
+        <li>Badge exclusivo "${escapeHtml(community.custom_badge_text)}" en tu perfil</li>
       </ul>
     </div>
   ` : '';
@@ -585,7 +593,7 @@ function getCreatorWelcomeEmail(name: string, community: CommunityInfo | null, l
       </span>
     </div>
 
-    <h1>¡Bienvenido, ${name}! 🎬 <span class="badge">En revision</span></h1>
+    <h1>¡Bienvenido, ${escapeHtml(name)}! 🎬 <span class="badge">En revision</span></h1>
 
     <p>Tu registro como <span class="highlight">Creador de Contenido</span> ha sido exitoso.</p>
 

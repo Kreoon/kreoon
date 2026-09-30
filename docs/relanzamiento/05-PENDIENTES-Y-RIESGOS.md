@@ -7,17 +7,37 @@
 | `eslint` en archivos tocados | 0 errores (4 *warnings* de fast-refresh preexistentes) | |
 | `tsc --noEmit` completo | 1.429 errores (línea base del ledger ~1.566): **0 en archivos nuevos**; 1 error nuevo en línea modificada (`navigate` sin definir en `PortfolioShowcasePage`) **corregido**; el resto preexistente | La base ya estaba con errores; se comparó por archivo/línea, no contra un `tsc` de `main` |
 | `npm run build` | OK | |
-| Vitest | 65 pruebas OK (rutas, `returnTo`, atribución, redirects, destino, onboarding, formulario, consentimiento, cooldown) | No hay pruebas E2E automatizadas en CI |
-| Arnés SQL | 61/61 migrado; 13 de 21 fallan sin migrar (evidencia de los huecos) | **Esquema simulado** a partir de las policies vivas, no la base real |
+| Vitest | 67 pruebas OK (rutas, `returnTo`, atribución, redirects, destino, onboarding, formulario, consentimiento, cooldown) | No hay pruebas E2E automatizadas en CI |
+| Arnés SQL | 72/72 migrado; 14 de 23 fallan sin migrar (evidencia de los huecos) | **Esquema simulado** a partir de las policies vivas, no la base real |
 | Navegador (Playwright, backend simulado) | Flujo de registro, estados (cerrada, no encontrada, marcas cerrado), redirects heredados, móvil 390 px y escritorio 1280 px | El backend es simulado: **no** se probaron correo real, Google real ni Supabase real |
 | axe-core (WCAG 2.1 AA + buenas prácticas) | 0 violaciones en 6 estados | Solo las pantallas del viaje del creador |
 | Teclado | Orden lógico, foco visible en todos los controles | |
 | Contraste | `npm run check:contrast` AA completo en claro y oscuro | Solo tokens; los 203 archivos con colores duros no se auditaron |
-| Revisión adversarial independiente | Ver sección siguiente | |
+| Revisión adversarial independiente | Sin críticos en el diff; 1 alto y 7 medios, **corregidos** salvo lo listado abajo | Un agente distinto leyó el diff y atacó un arnés propio; lo dependiente de producción quedó marcado |
 
 **No validado:** callbacks reales de correo y OAuth, apertura del enlace en otro dispositivo con Supabase real, pruebas A/B de aislamiento
 contra el backend real (requiere rama de Supabase y una 2.ª organización), Storage firmado, Realtime, exportaciones, búsqueda, IA, MCP,
 webhooks e integraciones externas, regresión de roles con cuentas reales, migración en ensayo.
+
+## Revisión adversarial: qué se corrigió y qué queda
+
+| Hallazgo | Acción |
+|---|---|
+| **A1** `current_organization_id` editable a mano (acceso cruzado latente) | Corregido: guard ampliado (`…170000`), con pruebas |
+| **M1** org con `registration_require_invite=true` quedaba abierta | Corregido: abierta = inscripción abierta **y** sin invitación obligatoria (get_registration_org, estado, alta y wrapper) |
+| **M2** un admin/team_leader podía degradar o borrar al owner | Corregido: el owner queda fuera de las policies de admin |
+| **M3** `register_user_to_organization` saltaba consentimientos y rompía marcas independientes en el onboarding legado | Corregido: exige consentimientos al creador; acepta `client` solo de cuentas de marca/cliente existentes |
+| **M4** `sanitizeReturnTo("/.//evil.com")` devolvía `//evil.com` | Corregido y con pruebas |
+| **M5** HTML sin escapar en correos (`public-registration`, `notify-new-member`, `auth-email-proxy`); `full_name` ausente causaba 500 tras crear la cuenta | Corregido (`escapeHtml`, validación de nombre) |
+| **M6** miembro retirado (`deleted_at`) se reincorporaba solo | Corregido: queda como inscripción cerrada para esa persona |
+| **M7** `UpgradeToBrandWizard` montado en el panel de estudiantes | Retirado de la UI. **`brands_insert` sigue abierto en BD** (decisión 8) |
+| Consentimiento previo `accepted=false` quedaba sin aceptar | Corregido (`ON CONFLICT … DO UPDATE WHERE accepted = false`) |
+| Intención en `sessionStorage` heredable por otra persona en la pestaña | Mitigado: se liga al correo del registro (en Google se desconoce el correo; TTL 1 h) |
+| Marcas independientes sin roles mandadas a "unirte como creador" | Corregido: `profiles.active_brand_id` las mantiene en su flujo |
+| IP de aceptación tomada del primer `x-forwarded-for` | **Abierto** (bajo): puede venir del cliente; tomar el valor que inyecta el proxy de Supabase |
+| `complete_creator_signup` no verifica `email_confirmed_at` | **Abierto** (bajo): depende de "Confirm email" activo; sin confirmación no hay sesión |
+| Pre-secuestro por `public-registration` (correo de la víctima con contraseña del atacante, sin captcha/rate limit) | **Abierto**: mitigar apagando el puente (`PUBLIC_REGISTRATION_ENABLED=false`) apenas ugccolombia.co enlace al registro canónico |
+| `send-invitation`, `auth-email-proxy` (un admin de org enterprise puede enviar cualquier tipo de enlace a cualquier correo) | **Abierto** (medio-bajo) |
 
 ## Decisiones que necesito de Alexander
 
