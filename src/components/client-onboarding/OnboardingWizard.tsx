@@ -243,7 +243,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
   const paso = fase === 'formulario' ? pasos[pasoActual] : null;
 
   return (
-    <div className="relative min-h-[100dvh] overflow-hidden bg-kreoon-bg-primary">
+    <div className="relative min-h-[100dvh] overflow-hidden bg-background">
       {/* Orbes de gradiente púrpura, decorativos */}
       <div
         aria-hidden
@@ -322,7 +322,7 @@ export function OnboardingWizard({ token }: { token: string | undefined }) {
                 </h1>
                 <p className="mt-1 text-sm text-kreoon-text-secondary">{paso.ayuda}</p>
                 {!paso.obligatorio && (
-                  <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-kreoon-bg-secondary px-2.5 py-1 text-[11px] text-kreoon-text-muted">
+                  <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-[11px] text-kreoon-text-muted">
                     Puedes saltarte lo que no sepas
                   </span>
                 )}

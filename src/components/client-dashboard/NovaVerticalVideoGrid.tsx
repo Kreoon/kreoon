@@ -50,7 +50,7 @@ export function NovaVerticalVideoGrid({
       <div className={cn(
         "flex flex-col items-center justify-center py-12 px-4",
         "rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700",
-        "bg-zinc-50 dark:bg-zinc-900/50",
+        "bg-zinc-50 dark:bg-card/50",
         className
       )}>
         <Video className="h-12 w-12 text-zinc-400 mb-3" />
@@ -81,7 +81,7 @@ export function NovaVerticalVideoGrid({
             className={cn(
               "group relative cursor-pointer overflow-hidden rounded-lg",
               "border border-zinc-200 dark:border-zinc-800",
-              "bg-white dark:bg-[#14141f]",
+              "bg-white dark:bg-background",
               "transition-colors duration-150",
               "hover:border-purple-500/50"
             )}
@@ -100,19 +100,19 @@ export function NovaVerticalVideoGrid({
                   }}
                 />
               ) : (
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+                <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-card">
                   <Video className="h-8 w-8 text-zinc-400" />
                 </div>
               )}
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 dark:from-[#0a0a0f]/70 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
               {/* Play button overlay on hover */}
               <div className={cn(
                 "absolute inset-0 flex items-center justify-center",
                 "opacity-0 group-hover:opacity-100 transition-opacity duration-150",
-                "bg-zinc-900/20 dark:bg-[#0a0a0f]/20"
+                "bg-card/20 dark:bg-background/20"
               )}>
                 <div className="p-2.5 rounded-full bg-white/90">
                   <Play className="h-5 w-5 text-zinc-900" fill="currentColor" />

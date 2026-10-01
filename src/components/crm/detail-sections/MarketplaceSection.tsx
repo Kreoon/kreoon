@@ -114,25 +114,25 @@ export function MarketplaceSection({
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           {basePrice != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <DollarSign className="h-3 w-3" />
                 Precio base
               </span>
-              <span className="text-white/70 font-medium">{formatCurrency(basePrice, currency)}</span>
+              <span className="text-muted-foreground font-medium">{formatCurrency(basePrice, currency)}</span>
             </>
           )}
 
           {ratingAvg != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <Star className="h-3 w-3" />
                 Rating
               </span>
-              <span className="text-white/70 flex items-center gap-1">
+              <span className="text-muted-foreground flex items-center gap-1">
                 <Star className="h-3 w-3 text-yellow-400 fill-yellow-400" />
                 {ratingAvg.toFixed(1)}
                 {ratingCount != null && (
-                  <span className="text-white/30">({ratingCount})</span>
+                  <span className="text-muted-foreground/70">({ratingCount})</span>
                 )}
               </span>
             </>
@@ -140,51 +140,51 @@ export function MarketplaceSection({
 
           {completedProjects != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <Briefcase className="h-3 w-3" />
                 Proyectos
               </span>
-              <span className="text-white/70">{completedProjects}</span>
+              <span className="text-muted-foreground">{completedProjects}</span>
             </>
           )}
 
           {responseTimeHours != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <Clock className="h-3 w-3" />
                 Respuesta
               </span>
-              <span className="text-white/70">{responseTimeHours}h</span>
+              <span className="text-muted-foreground">{responseTimeHours}h</span>
             </>
           )}
 
           {onTimeDeliveryPct != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <TrendingUp className="h-3 w-3" />
                 A tiempo
               </span>
-              <span className="text-white/70">{onTimeDeliveryPct}%</span>
+              <span className="text-muted-foreground">{onTimeDeliveryPct}%</span>
             </>
           )}
 
           {repeatClientsPct != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <Users className="h-3 w-3" />
                 Repiten
               </span>
-              <span className="text-white/70">{repeatClientsPct}%</span>
+              <span className="text-muted-foreground">{repeatClientsPct}%</span>
             </>
           )}
 
           {totalEarned != null && (
             <>
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <DollarSign className="h-3 w-3" />
                 Total ganado
               </span>
-              <span className="text-white/70 font-medium">{formatCurrency(totalEarned, currency)}</span>
+              <span className="text-muted-foreground font-medium">{formatCurrency(totalEarned, currency)}</span>
             </>
           )}
         </div>

@@ -4,14 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Loader2, Gift, Percent, Star, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Zap, Shield, Clock, User, Building2, Briefcase } from "lucide-react";
+import { Loader2, Gift, Percent, Star, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Zap, Shield, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CommunityMetadata {
@@ -74,7 +67,6 @@ export default function PartnerCommunityLanding() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [community, setCommunity] = useState<CommunityInfo | null>(null);
-  const [showUserTypeModal, setShowUserTypeModal] = useState(false);
 
   useEffect(() => {
     if (!slug) {
@@ -143,27 +135,15 @@ export default function PartnerCommunityLanding() {
     }
   }
 
+  // Una comunidad NO es una organización: el alta pública es solo de creadores y va a /registro
+  // (la org la decide el servidor según el host). No se envía `community`.
   function handleOpenRegistration() {
-    setShowUserTypeModal(true);
-  }
-
-  function handleSelectUserType(userType: 'talent' | 'brand' | 'organization') {
-    if (!slug) return;
-    localStorage.setItem("kreoon_partner_community", slug);
-    setShowUserTypeModal(false);
-
-    if (userType === 'talent') {
-      navigate(`/register?intent=talent&community=${slug}`);
-    } else if (userType === 'brand') {
-      navigate(`/register?intent=brand&community=${slug}`);
-    } else if (userType === 'organization') {
-      navigate(`/register?intent=organization&community=${slug}`);
-    }
+    navigate("/registro");
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-black via-card to-black">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
       </div>
     );
@@ -171,11 +151,11 @@ export default function PartnerCommunityLanding() {
 
   if (error || !community) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-zinc-900 to-black p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-black via-card to-black p-4">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-2">Comunidad no disponible</h1>
-          <p className="text-zinc-400 mb-6">{error || "Esta comunidad no existe o ya no esta activa."}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Comunidad no disponible</h1>
+          <p className="text-muted-foreground mb-6">{error || "Esta comunidad no existe o ya no esta activa."}</p>
           <Button asChild variant="outline">
             <Link to="/">Ir al inicio</Link>
           </Button>
@@ -185,7 +165,7 @@ export default function PartnerCommunityLanding() {
   }
 
   const themeColor = community.metadata?.theme_color || community.benefits.custom_badge?.color || '#f59e0b';
-  const bgGradient = community.metadata?.background_gradient || 'from-black via-zinc-900 to-black';
+  const bgGradient = community.metadata?.background_gradient || 'from-black via-card to-black';
   const isBrandTarget = community.target_types.includes("brand");
 
   // Personalizable texts
@@ -198,7 +178,7 @@ export default function PartnerCommunityLanding() {
   return (
     <div className={cn("min-h-screen", `bg-gradient-to-br ${bgGradient}`)}>
       {/* Header */}
-      <header className="border-b border-zinc-800">
+      <header className="border-b border-border">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {community.metadata?.partner_logo_url ? (
@@ -208,12 +188,12 @@ export default function PartnerCommunityLanding() {
                 className="h-8 object-contain"
               />
             ) : (
-              <Link to="/" className="text-xl font-bold text-white">
+              <Link to="/" className="text-xl font-bold text-foreground">
                 KREOON
               </Link>
             )}
-            <span className="text-zinc-600">×</span>
-            <span className="text-zinc-400 font-medium">{community.name}</span>
+            <span className="text-muted-foreground">×</span>
+            <span className="text-muted-foreground font-medium">{community.name}</span>
           </div>
           <Badge
             variant="outline"
@@ -239,7 +219,7 @@ export default function PartnerCommunityLanding() {
             />
           )}
 
-          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4">
             {heroTitle.includes('KREOON') ? (
               <>
                 {heroTitle.split('KREOON')[0]}
@@ -258,7 +238,7 @@ export default function PartnerCommunityLanding() {
             {heroSubtitle}
           </p>
 
-          <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mx-auto mb-8">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             {community.description}
           </p>
 
@@ -270,7 +250,7 @@ export default function PartnerCommunityLanding() {
 
           {/* Video embed if provided */}
           {community.metadata?.video_url && (
-            <div className="max-w-2xl mx-auto mb-8 rounded-sm overflow-hidden border border-zinc-800">
+            <div className="max-w-2xl mx-auto mb-8 rounded-sm overflow-hidden border border-border">
               <iframe
                 src={community.metadata.video_url}
                 className="w-full aspect-video"
@@ -285,7 +265,7 @@ export default function PartnerCommunityLanding() {
       {/* Beneficios */}
       <section className="py-12 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
             Tus beneficios exclusivos
           </h2>
 
@@ -293,7 +273,7 @@ export default function PartnerCommunityLanding() {
             {/* Beneficio 1: Meses gratis */}
             {community.benefits.free_months > 0 && (
               <Card
-                className="bg-zinc-900/50 border-zinc-800 p-6 transition-all duration-300 hover:scale-105"
+                className="bg-card/50 border-border p-6 transition-all duration-300 hover:scale-105"
                 style={{ '--hover-border': themeColor } as React.CSSProperties}
               >
                 <div
@@ -302,10 +282,10 @@ export default function PartnerCommunityLanding() {
                 >
                   <Gift className="w-6 h-6" style={{ color: themeColor }} />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   {community.benefits.free_months} meses gratis
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-muted-foreground">
                   Obtén {community.benefits.free_months} meses gratis en tu primer plan de suscripción.
                   Sin compromiso, cancela cuando quieras.
                 </p>
@@ -314,14 +294,14 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 2: Descuento en comisiones */}
             {community.benefits.commission_discount_points > 0 && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-border p-6 hover:border-emerald-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
                   <Percent className="w-6 h-6 text-emerald-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   -{community.benefits.commission_discount_points}% en comisiones
                 </h3>
-                <p className="text-zinc-400">
+                <p className="text-muted-foreground">
                   Descuento permanente en las comisiones del marketplace.
                   Pagas menos en cada proyecto que contrates.
                 </p>
@@ -330,14 +310,14 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio 3: Badge especial */}
             {community.benefits.custom_badge && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
+              <Card className="bg-card/50 border-border p-6 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
                 <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center mb-4">
                   <Star className="w-6 h-6 text-purple-500" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Etiqueta exclusiva
                 </h3>
-                <p className="text-zinc-400 mb-3">
+                <p className="text-muted-foreground mb-3">
                   Tu marca lucirá la etiqueta "{community.benefits.custom_badge.text}" en el marketplace.
                 </p>
                 <Badge
@@ -355,16 +335,16 @@ export default function PartnerCommunityLanding() {
 
             {/* Beneficio extra: Tokens AI */}
             {community.benefits.bonus_ai_tokens > 0 && (
-              <Card className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
+              <Card className="bg-card/50 border-border p-6 hover:border-blue-500/50 transition-all duration-300 hover:scale-105 md:col-span-3 md:max-w-md md:mx-auto">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-6 h-6 text-blue-500" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-foreground">
                       +{community.benefits.bonus_ai_tokens.toLocaleString()} Tokens IA
                     </h3>
-                    <p className="text-zinc-400 text-sm">
+                    <p className="text-muted-foreground text-sm">
                       Tokens de bienvenida para usar con las funciones de inteligencia artificial.
                     </p>
                   </div>
@@ -379,7 +359,7 @@ export default function PartnerCommunityLanding() {
               {community.metadata.features.map((feature, idx) => {
                 const IconComponent = ICON_MAP[feature.icon || 'check'] || CheckCircle2;
                 return (
-                  <Card key={idx} className="bg-zinc-900/50 border-zinc-800 p-6 hover:border-zinc-700 transition-colors">
+                  <Card key={idx} className="bg-card/50 border-border p-6 hover:border-border transition-colors">
                     <div className="flex items-start gap-4">
                       <div
                         className="w-10 h-10 rounded-sm flex items-center justify-center shrink-0"
@@ -388,8 +368,8 @@ export default function PartnerCommunityLanding() {
                         <IconComponent className="w-5 h-5" style={{ color: themeColor }} />
                       </div>
                       <div>
-                        <h4 className="font-semibold text-white mb-1">{feature.title}</h4>
-                        <p className="text-sm text-zinc-400">{feature.description}</p>
+                        <h4 className="font-semibold text-foreground mb-1">{feature.title}</h4>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
                       </div>
                     </div>
                   </Card>
@@ -402,15 +382,15 @@ export default function PartnerCommunityLanding() {
 
       {/* Testimonials */}
       {community.metadata?.testimonials && community.metadata.testimonials.length > 0 && (
-        <section className="py-12 px-4 bg-zinc-900/30">
+        <section className="py-12 px-4 bg-card/30">
           <div className="max-w-5xl mx-auto">
-            <h2 className="text-2xl md:text-3xl font-bold text-white text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground text-center mb-10">
               Lo que dicen nuestros miembros
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {community.metadata.testimonials.map((testimonial, idx) => (
-                <Card key={idx} className="bg-zinc-900/50 border-zinc-800 p-6">
-                  <p className="text-zinc-300 mb-4 italic">"{testimonial.text}"</p>
+                <Card key={idx} className="bg-card/50 border-border p-6">
+                  <p className="text-muted-foreground mb-4 italic">"{testimonial.text}"</p>
                   <div className="flex items-center gap-3">
                     {testimonial.avatar_url ? (
                       <img
@@ -420,15 +400,15 @@ export default function PartnerCommunityLanding() {
                       />
                     ) : (
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-foreground font-bold"
                         style={{ backgroundColor: themeColor }}
                       >
                         {testimonial.name.charAt(0)}
                       </div>
                     )}
                     <div>
-                      <p className="text-white font-medium">{testimonial.name}</p>
-                      <p className="text-zinc-500 text-sm">{testimonial.role}</p>
+                      <p className="text-foreground font-medium">{testimonial.name}</p>
+                      <p className="text-muted-foreground text-sm">{testimonial.role}</p>
                     </div>
                   </div>
                 </Card>
@@ -448,10 +428,10 @@ export default function PartnerCommunityLanding() {
               borderColor: `${themeColor}30`
             }}
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
               {ctaTitle}
             </h2>
-            <p className="text-zinc-300 mb-8">
+            <p className="text-muted-foreground mb-8">
               {ctaSubtitle}
             </p>
 
@@ -468,95 +448,22 @@ export default function PartnerCommunityLanding() {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
 
-            <p className="text-zinc-500 text-sm mt-6">
+            <p className="text-muted-foreground text-sm mt-6">
               El registro es gratuito. Los beneficios se aplican automaticamente.
             </p>
           </Card>
         </div>
       </section>
 
-      {/* Modal de selección de tipo de usuario */}
-      <Dialog open={showUserTypeModal} onOpenChange={setShowUserTypeModal}>
-        <DialogContent className="sm:max-w-lg bg-zinc-900 border-zinc-800">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-white text-center">
-              ¿Cómo quieres unirte?
-            </DialogTitle>
-            <DialogDescription className="text-zinc-400 text-center">
-              Selecciona el tipo de cuenta que mejor se adapte a ti
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid gap-4 py-6">
-            {/* Opción Talento */}
-            <button
-              onClick={() => handleSelectUserType('talent')}
-              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-primary hover:bg-zinc-800/50 transition-all text-left group"
-            >
-              <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0 group-hover:bg-primary/30 transition-colors">
-                <User className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white group-hover:text-primary transition-colors">
-                  Soy Talento / Creador
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Quiero ofrecer mis servicios como creador de contenido, editor, fotógrafo, etc.
-                </p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-primary transition-colors ml-auto" />
-            </button>
-
-            {/* Opción Marca */}
-            <button
-              onClick={() => handleSelectUserType('brand')}
-              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-amber-500 hover:bg-zinc-800/50 transition-all text-left group"
-            >
-              <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0 group-hover:bg-amber-500/30 transition-colors">
-                <Briefcase className="w-6 h-6 text-amber-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white group-hover:text-amber-500 transition-colors">
-                  Soy una Marca / Empresa
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Quiero contratar talento para crear contenido para mi marca o empresa.
-                </p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-amber-500 transition-colors ml-auto" />
-            </button>
-
-            {/* Opción Organización */}
-            <button
-              onClick={() => handleSelectUserType('organization')}
-              className="flex items-center gap-4 p-4 rounded-sm border border-zinc-700 hover:border-purple-500 hover:bg-zinc-800/50 transition-all text-left group"
-            >
-              <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center shrink-0 group-hover:bg-purple-500/30 transition-colors">
-                <Building2 className="w-6 h-6 text-purple-500" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-white group-hover:text-purple-500 transition-colors">
-                  Soy una Agencia / Organización
-                </h3>
-                <p className="text-sm text-zinc-400">
-                  Tengo un equipo de creadores y quiero gestionar proyectos para mis clientes.
-                </p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-zinc-600 group-hover:text-purple-500 transition-colors ml-auto" />
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
       {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8 px-4">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-zinc-500">
+      <footer className="border-t border-border py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-4">
-            <Link to="/" className="hover:text-white transition-colors">KREOON</Link>
+            <Link to="/" className="hover:text-foreground transition-colors">KREOON</Link>
             <span>•</span>
-            <Link to="/privacy" className="hover:text-white transition-colors">Privacidad</Link>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacidad</Link>
             <span>•</span>
-            <Link to="/terms" className="hover:text-white transition-colors">Terminos</Link>
+            <Link to="/terms" className="hover:text-foreground transition-colors">Terminos</Link>
           </div>
           <div>
             © {new Date().getFullYear()} KREOON. Todos los derechos reservados.

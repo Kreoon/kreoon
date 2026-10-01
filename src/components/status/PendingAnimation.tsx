@@ -130,7 +130,7 @@ function OrbitAnimation({ color, size }: { color: string; size: number }) {
         aria-hidden
       />
       <div
-        className="absolute flex items-center justify-center rounded-full bg-kreoon-bg-card/80"
+        className="absolute flex items-center justify-center rounded-full bg-card/80"
         style={{ width: size * 0.35, height: size * 0.35 }}
         aria-hidden
       >
@@ -170,7 +170,7 @@ function ProgressAnimation({ color, size }: { color: string; size: number }) {
 
   return (
     <div
-      className="overflow-hidden rounded-full bg-kreoon-bg-card"
+      className="overflow-hidden rounded-full bg-card"
       style={{ width: barWidth, height: barHeight }}
     >
       <motion.div

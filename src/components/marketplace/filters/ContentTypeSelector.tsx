@@ -78,7 +78,7 @@ export function ContentTypeSelector({
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
               isActive
                 ? cn(colors.bg, colors.text, colors.border)
-                : 'border-border/20 dark:border-white/10 text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                : 'border-border/20 dark:border-border text-muted-foreground hover:text-foreground hover:bg-muted/50'
             )}
           >
             {type}

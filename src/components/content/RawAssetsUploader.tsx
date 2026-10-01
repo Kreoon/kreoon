@@ -43,6 +43,7 @@ interface UploadedAsset {
   created_at: string;
   uploaded_by: string;
   uploader_name?: string;
+  scene_number?: number | null;
 }
 
 interface RawAssetsUploaderProps {
@@ -52,6 +53,8 @@ interface RawAssetsUploaderProps {
   disabled?: boolean;
   canUpload?: boolean;
   canDelete?: boolean;
+  /** Escenas del guión: si llegan, cada archivo se puede asignar a una */
+  scenes?: { number: number; title: string }[];
 }
 
 const getFileExtension = (filename: string): string => {
@@ -83,7 +86,8 @@ export function RawAssetsUploader({
   clientId,
   disabled = false,
   canUpload = true,
-  canDelete = true
+  canDelete = true,
+  scenes,
 }: RawAssetsUploaderProps) {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -105,25 +109,21 @@ export function RawAssetsUploader({
     
     setLoadingAssets(true);
     try {
-      const { data, error } = await supabase
+      const baseCols = 'id, original_filename, custom_filename, storage_path, file_type, file_size, created_at, uploaded_by';
+      const runQuery = (cols: string) => supabase
         .from('project_raw_assets')
-        .select(`
-          id,
-          original_filename,
-          custom_filename,
-          storage_path,
-          file_type,
-          file_size,
-          created_at,
-          uploaded_by
-        `)
+        .select(cols)
         .eq('project_id', contentId)
         .order('created_at', { ascending: false });
 
+      // scene_number llega con la migración 20260930190000; si aún no existe (42703), consultar sin ella
+      let { data, error } = await runQuery(`${baseCols}, scene_number`);
+      if (error?.code === '42703') ({ data, error } = await runQuery(baseCols));
       if (error) throw error;
 
       // Fetch uploader names - use full_name column
-      const uploaderIds = [...new Set(data?.map(a => a.uploaded_by) || [])];
+      const rows = (data || []) as unknown as UploadedAsset[];
+      const uploaderIds = [...new Set(rows.map(a => a.uploaded_by))];
       const { data: profiles } = await supabase
         .from('profiles')
         .select('id, full_name')
@@ -131,7 +131,7 @@ export function RawAssetsUploader({
 
       const profileMap = new Map((profiles || []).map(p => [p.id, p.full_name || 'Usuario']));
 
-      setUploadedAssets((data || []).map(asset => ({
+      setUploadedAssets(rows.map(asset => ({
         ...asset,
         uploader_name: profileMap.get(asset.uploaded_by) || 'Usuario'
       })));
@@ -146,6 +146,18 @@ export function RawAssetsUploader({
   useEffect(() => {
     fetchAssets();
   }, [fetchAssets]);
+
+  // Asignar un archivo a una escena del guión (optimista; revierte si falla)
+  const handleSceneChange = async (assetId: string, value: string) => {
+    const scene = value ? Number(value) : null;
+    const prev = uploadedAssets;
+    setUploadedAssets(list => list.map(a => (a.id === assetId ? { ...a, scene_number: scene } : a)));
+    const { error } = await supabase.from('project_raw_assets').update({ scene_number: scene } as never).eq('id', assetId);
+    if (error) {
+      setUploadedAssets(prev);
+      toast.error('No se pudo asignar la escena');
+    }
+  };
 
   // Handle file selection
   const handleFileSelect = (files: FileList | null) => {
@@ -729,6 +741,20 @@ export function RawAssetsUploader({
                       <p className="text-xs text-muted-foreground">
                         {formatFileSize(asset.file_size)}
                       </p>
+                      {scenes && scenes.length > 0 && (
+                        <select
+                          aria-label={`Escena de ${asset.custom_filename}`}
+                          value={asset.scene_number ?? ''}
+                          onChange={(e) => handleSceneChange(asset.id, e.target.value)}
+                          disabled={disabled}
+                          className="mt-1 h-7 max-w-full rounded-sm border border-border bg-background px-2 text-xs text-foreground"
+                        >
+                          <option value="">¿De qué escena es?</option>
+                          {scenes.map(sc => (
+                            <option key={sc.number} value={sc.number}>Escena {sc.number} · {sc.title}</option>
+                          ))}
+                        </select>
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-1 flex-shrink-0">

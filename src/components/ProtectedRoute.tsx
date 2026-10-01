@@ -5,9 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useImpersonation } from '@/contexts/ImpersonationContext';
 import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
-import { useTalentGateConfig } from '@/hooks/useTalentGateConfig';
 import { AppRole } from '@/types/database';
-import { getPermissionGroup, getDashboardForRole, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
+import { getPermissionGroup, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
+import { buildAuthPath, getDashboardPathForRoles } from '@/lib/routing/postAuth';
+import { isBlockedForProduction, isProductionOnlyTalent } from '@/lib/creatorScope';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -50,29 +51,8 @@ function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Pro
   });
 }
 
-// Helper to get the correct dashboard path based on active role
-function getDashboardPath(roles: AppRole[], activeRole?: AppRole | null): string {
-  if (roles.length === 0) return '/marketplace';
-
-  if (activeRole && roles.includes(activeRole)) {
-    return getDashboardForRole(activeRole);
-  }
-
-  const rolePriority: AppRole[] = [
-    'admin', 'team_leader',
-    'digital_strategist', 'creative_strategist', 'strategist',
-    'content_creator', 'creator',
-    'editor',
-    'community_manager',
-    'client'
-  ];
-  for (const priorityRole of rolePriority) {
-    if (roles.includes(priorityRole)) {
-      return getDashboardForRole(priorityRole);
-    }
-  }
-  return '/marketplace';
-}
+// Dashboard según rol activo: fuente única compartida con Auth (src/lib/routing/postAuth.ts)
+const getDashboardPath = getDashboardPathForRoles;
 
 // Routes that users without roles can access (social/marketplace)
 const SOCIAL_ROUTES = ['/marketplace', '/profile', '/settings'];
@@ -85,7 +65,6 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   const { isImpersonating, effectiveRoles, isRootAdmin } = useImpersonation();
   const { isPlatformRoot, currentOrgId, loading: orgLoading } = useOrgOwner();
   const { marketplaceEnabled, clientMarketplaceEnabled, loading: mktLoading } = useOrgMarketplace();
-  const { isEnabled: talentGateEnabled, isLoading: talentGateLoading } = useTalentGateConfig();
   const location = useLocation();
 
   const [clientHasCompany, setClientHasCompany] = useState<boolean | null>(null);
@@ -172,7 +151,7 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   }, [user, isClient, isBrandMember, rolesLoaded, isImpersonating]);
 
   // Wait for both auth loading AND roles to be loaded AND org check for platform root
-  if (loading || !rolesLoaded || orgLoading || talentGateLoading || ((isClient || isBrandMember) && clientHasCompany === null) || checkingCompany) {
+  if (loading || !rolesLoaded || orgLoading || ((isClient || isBrandMember) && clientHasCompany === null) || checkingCompany) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -181,7 +160,8 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    // Conserva el destino: tras iniciar sesión, Auth vuelve aquí (?volver= validado, sin open redirect).
+    return <Navigate to={buildAuthPath(`${location.pathname}${location.search}${location.hash}`)} replace />;
   }
 
   // ─── STUDENT GUARD ───────────────────────────────────────────────────
@@ -273,48 +253,6 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     return <Navigate to="/pending-access" replace />;
   }
 
-  // ─── REFERRAL GATE: Must check BEFORE allowing social routes ───
-  // Talents (users with creator_profile but no org) need platform_access_unlocked
-  // They MUST complete 3 referral keys before accessing ANY route including marketplace
-  // Bypass ONLY: platform root/admin, org members, clients, unlock-access page itself, settings/profile, onboarding
-  const hasOrganization = !!(currentOrgId || profile?.current_organization_id);
-  const isTalentRole = rolesToCheck.length > 0 && rolesToCheck.every(r => {
-    const pg = getPermissionGroup(r);
-    return pg === 'talent';
-  });
-  // Routes that talents without keys CAN access (onboarding flow)
-  const isGateBypassRoute = location.pathname === '/unlock-access'
-    || location.pathname.startsWith('/settings')
-    || location.pathname.startsWith('/profile/')
-    || location.pathname === '/welcome-talent'
-    || location.pathname.startsWith('/onboarding');
-
-
-  // Pure talents = users without org roles who need to complete referral gate
-  // Exclude brand members (clients) from gate requirement
-  const isPureTalentWithoutKeys =
-    realRoles.length === 0 &&
-    !hasOrganization &&
-    !isPlatformRoot &&
-    !isPlatformAdmin &&
-    !isBrandMember &&
-    profile?.platform_access_unlocked !== true;
-
-  // Block talents without keys from ALL routes except gate bypass routes
-  // Only apply if talent gate is enabled globally
-  if (
-    talentGateEnabled &&
-    (isTalentRole || isPureTalentWithoutKeys) &&
-    !isPlatformRoot &&
-    !isPlatformAdmin &&
-    !isGateBypassRoute &&
-    !hasOrganization &&
-    !isBrandMember &&
-    profile?.platform_access_unlocked !== true
-  ) {
-    return <Navigate to="/unlock-access" replace />;
-  }
-
   // Módulos vedados para clientes/brand members: no van en su sidebar y
   // tampoco deben quedar accesibles por URL directa (algunas de estas rutas
   // usan allowNoRoles o no tienen ProtectedRoute propio, por eso el chequeo
@@ -328,6 +266,17 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     CLIENT_BLOCKED_ROUTES.some(route => location.pathname.startsWith(route))
   ) {
     return <Navigate to="/client-dashboard" replace />;
+  }
+
+  // Creador/editor: solo lo esencial; el resto tampoco por URL directa (ver lib/creatorScope.ts)
+  if (
+    isProductionOnlyTalent(realRoles) &&
+    !isPlatformAdmin &&
+    !isPlatformRoot &&
+    !isImpersonating &&
+    isBlockedForProduction(location.pathname)
+  ) {
+    return <Navigate to={getDashboardPath(realRoles)} replace />;
   }
 
   // Routes that require a company/brand to be set up

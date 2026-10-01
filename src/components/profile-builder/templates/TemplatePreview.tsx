@@ -64,7 +64,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
     <div
       className={cn(
         'w-full overflow-hidden rounded-lg',
-        config.theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-white text-zinc-900',
+        config.theme === 'dark' ? 'bg-background text-foreground' : 'bg-white text-zinc-900',
         className
       )}
       style={{ fontSize: '10px' }}
@@ -86,13 +86,13 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
         {/* Name & Bio */}
         <h2 className="text-base font-bold mb-1">{SAMPLE_DATA.name}</h2>
-        <p className={cn('text-[9px] mb-3', config.theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600')}>
+        <p className={cn('text-[9px] mb-3', config.theme === 'dark' ? 'text-muted-foreground' : 'text-muted-foreground')}>
           {SAMPLE_DATA.bio}
         </p>
 
         {/* CTA Button */}
         <button
-          className="px-4 py-1.5 rounded-md text-[10px] font-medium text-white"
+          className="px-4 py-1.5 rounded-md text-[10px] font-medium text-foreground"
           style={{ backgroundColor: accentColor }}
         >
           Contactar
@@ -101,11 +101,11 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Stats */}
       {hasStats && (
-        <div className="grid grid-cols-4 gap-2 p-3 border-b border-zinc-800/50">
+        <div className="grid grid-cols-4 gap-2 p-3 border-b border-border">
           {Object.entries(SAMPLE_DATA.stats).slice(0, 4).map(([key, value]) => (
             <div key={key} className="text-center">
               <p className="text-sm font-bold" style={{ color: accentColor }}>{value}</p>
-              <p className={cn('text-[8px] capitalize', config.theme === 'dark' ? 'text-zinc-500' : 'text-zinc-500')}>
+              <p className={cn('text-[8px] capitalize', config.theme === 'dark' ? 'text-muted-foreground' : 'text-muted-foreground')}>
                 {key}
               </p>
             </div>
@@ -140,7 +140,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
               className="w-8 h-8 rounded-full flex items-center justify-center"
               style={{ backgroundColor: accentColor }}
             >
-              <Play className="w-4 h-4 text-white ml-0.5" />
+              <Play className="w-4 h-4 text-foreground ml-0.5" />
             </div>
           </div>
         </div>
@@ -157,7 +157,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
               >
                 <Check className="w-2.5 h-2.5" style={{ color: accentColor }} />
               </div>
-              <span className={cn('text-[9px]', config.theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700')}>
+              <span className={cn('text-[9px]', config.theme === 'dark' ? 'text-muted-foreground' : 'text-zinc-700')}>
                 {item}
               </span>
             </div>
@@ -167,15 +167,15 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Services */}
       {hasServices && (
-        <div className="p-3 border-t border-zinc-800/50">
-          <p className="text-[9px] font-medium mb-2 text-zinc-400">Servicios</p>
+        <div className="p-3 border-t border-border">
+          <p className="text-[9px] font-medium mb-2 text-muted-foreground">Servicios</p>
           <div className="space-y-1.5">
             {SAMPLE_DATA.services.map((service, i) => (
               <div
                 key={i}
                 className={cn(
                   'flex items-center justify-between p-2 rounded-md',
-                  config.theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'
+                  config.theme === 'dark' ? 'bg-card' : 'bg-zinc-100'
                 )}
               >
                 <div className="flex items-center gap-2">
@@ -201,7 +201,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
         >
           <p className="text-[10px] font-bold mb-1">Listo para colaborar?</p>
           <p className="text-[8px] opacity-80 mb-2">Agenda una llamada gratis</p>
-          <button className="px-3 py-1 bg-white/20 rounded text-[9px] font-medium">
+          <button className="px-3 py-1 bg-muted rounded text-[9px] font-medium">
             Contactar ahora
           </button>
         </div>
@@ -209,16 +209,16 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Pricing */}
       {hasPricing && (
-        <div className="p-3 border-t border-zinc-800/50">
-          <p className="text-[9px] font-medium mb-2 text-zinc-400">Paquetes</p>
+        <div className="p-3 border-t border-border">
+          <p className="text-[9px] font-medium mb-2 text-muted-foreground">Paquetes</p>
           <div className="grid grid-cols-3 gap-1.5">
-            {['Basico', 'Pro', 'Premium'].map((plan, i) => (
+            {['Básico', 'Pro', 'Premium'].map((plan, i) => (
               <div
                 key={i}
                 className={cn(
                   'p-2 rounded-md text-center',
                   i === 1 ? 'ring-1' : '',
-                  config.theme === 'dark' ? 'bg-zinc-900' : 'bg-zinc-100'
+                  config.theme === 'dark' ? 'bg-card' : 'bg-zinc-100'
                 )}
                 style={i === 1 ? { ringColor: accentColor } : undefined}
               >
@@ -234,11 +234,11 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Testimonial */}
       {hasTestimonials && (
-        <div className="p-3 border-t border-zinc-800/50">
+        <div className="p-3 border-t border-border">
           <div className="flex items-start gap-2">
             <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: accentColor }} />
             <div>
-              <p className={cn('text-[8px] italic mb-1', config.theme === 'dark' ? 'text-zinc-400' : 'text-zinc-600')}>
+              <p className={cn('text-[8px] italic mb-1', config.theme === 'dark' ? 'text-muted-foreground' : 'text-muted-foreground')}>
                 {SAMPLE_DATA.testimonial.text}
               </p>
               <p className="text-[8px] font-medium">{SAMPLE_DATA.testimonial.author}</p>
@@ -249,15 +249,15 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Brands */}
       {hasBrands && (
-        <div className="p-3 border-t border-zinc-800/50">
-          <p className="text-[8px] text-center text-zinc-500 mb-2">Confian en mi</p>
+        <div className="p-3 border-t border-border">
+          <p className="text-[8px] text-center text-muted-foreground mb-2">Confian en mi</p>
           <div className="flex justify-center gap-3">
             {SAMPLE_DATA.brands.map((brand, i) => (
               <div
                 key={i}
                 className={cn(
                   'px-2 py-1 rounded text-[8px]',
-                  config.theme === 'dark' ? 'bg-zinc-800 text-zinc-400' : 'bg-zinc-200 text-zinc-600'
+                  config.theme === 'dark' ? 'bg-card text-muted-foreground' : 'bg-zinc-200 text-muted-foreground'
                 )}
               >
                 {brand}
@@ -269,8 +269,8 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Skills */}
       {hasSkills && (
-        <div className="p-3 border-t border-zinc-800/50">
-          <p className="text-[9px] font-medium mb-2 text-zinc-400">Habilidades</p>
+        <div className="p-3 border-t border-border">
+          <p className="text-[9px] font-medium mb-2 text-muted-foreground">Habilidades</p>
           <div className="flex flex-wrap gap-1">
             {SAMPLE_DATA.skills.map((skill, i) => (
               <span
@@ -290,8 +290,8 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
 
       {/* Footer branding */}
       {config.showKreoonBranding && (
-        <div className="p-2 border-t border-zinc-800/50 text-center">
-          <span className="text-[7px] text-zinc-600">Creado con Kreoon</span>
+        <div className="p-2 border-t border-border text-center">
+          <span className="text-[7px] text-muted-foreground">Creado con Kreoon</span>
         </div>
       )}
     </div>

@@ -47,10 +47,10 @@ export const BigCard = forwardRef<HTMLDivElement, BigCardProps>(function BigCard
     <div
       ref={ref}
       className={cn(
-        'relative rounded-3xl border-2 border-white/10 bg-kreoon-bg-card overflow-hidden',
+        'relative rounded-3xl border-2 border-border bg-card overflow-hidden',
         'transition-all duration-300',
         liftOnHover &&
-          'motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-2xl motion-safe:hover:border-white/20',
+          'motion-safe:hover:-translate-y-1 motion-safe:hover:shadow-2xl motion-safe:hover:border-border',
         gradient !== 'none' && GRADIENT_MAP[gradient],
         className
       )}

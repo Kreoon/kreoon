@@ -114,7 +114,7 @@ function PriceCell({ item, orgId, clientId }: { item: BillingItem; orgId: string
         min="0"
         value={val}
         onChange={e => setVal(e.target.value)}
-        className="h-7 w-24 text-sm bg-white/5 border-white/10"
+        className="h-7 w-24 text-sm bg-muted/40 border-border"
         onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') setEditing(false); }}
       />
       <Button variant="ghost" size="icon" className="h-6 w-6 text-green-400" onClick={save} disabled={updatePrice.isPending}>
@@ -139,7 +139,7 @@ function BillingItemRow({
       : 'bg-green-500/15 text-green-400 border-green-500/30';
 
   return (
-    <div className="flex items-center gap-3 px-4 py-3 border-b border-white/5 last:border-0">
+    <div className="flex items-center gap-3 px-4 py-3 border-b border-border last:border-0">
       <div className="shrink-0">
         {item.item_type === 'fillmaker'
           ? <Camera className="h-4 w-4 text-violet-400" />
@@ -227,7 +227,7 @@ function ClosingRow({
   }
 
   return (
-    <div className="rounded border border-white/10 bg-card overflow-hidden">
+    <div className="rounded border border-border bg-card overflow-hidden">
       <div className="flex items-center gap-3 p-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-0.5">
@@ -281,7 +281,7 @@ function ClosingRow({
       </div>
 
       {expanded && closing.notes && (
-        <div className="px-3 pb-3 border-t border-white/5 pt-2">
+        <div className="px-3 pb-3 border-t border-border pt-2">
           <p className="text-xs text-muted-foreground">{closing.notes}</p>
         </div>
       )}
@@ -327,23 +327,23 @@ function PackageCardRow({ pkg, clientName, orgName }: { pkg: PackageForInvoice; 
   }
 
   return (
-    <div className="rounded border border-white/10 bg-card p-3">
+    <div className="rounded border border-border bg-card p-3">
       <div className="flex items-center gap-3">
         <Package className="h-4 w-4 text-violet-400 shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className="font-medium text-sm truncate">{pkg.name}</span>
-            <Badge className={`text-xs ${PKG_STATUS_COLOR[pkg.payment_status] ?? 'bg-white/10 text-white/60'}`}>
+            <Badge className={`text-xs ${PKG_STATUS_COLOR[pkg.payment_status] ?? 'bg-muted text-muted-foreground'}`}>
               {PKG_STATUS_LABEL[pkg.payment_status] ?? pkg.payment_status}
             </Badge>
           </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
-            <span>Total: <span className="text-white/80 font-medium">{formatCurrency(pkg.total_value, pkg.currency)}</span></span>
+            <span>Total: <span className="text-muted-foreground font-medium">{formatCurrency(pkg.total_value, pkg.currency)}</span></span>
             <span>Pagado: <span className="text-green-400 font-medium">{formatCurrency(pkg.paid_amount, pkg.currency)}</span></span>
             {saldo > 0 && <span>Saldo: <span className="text-red-400 font-medium">{formatCurrency(Math.max(0, saldo), pkg.currency)}</span></span>}
           </div>
           {pkg.total_value > 0 && (
-            <div className="mt-1.5 h-1 rounded-full bg-white/10 overflow-hidden">
+            <div className="mt-1.5 h-1 rounded-full bg-muted overflow-hidden">
               <div className="h-full bg-violet-500 rounded-full" style={{ width: `${pct}%` }} />
             </div>
           )}
@@ -453,12 +453,12 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
               <DollarSign className="w-5 h-5 text-violet-400" />
             </div>
             <div>
-              <p className="text-white/60 text-xs uppercase tracking-wide">Pendiente de cobrar</p>
+              <p className="text-muted-foreground text-xs uppercase tracking-wide">Pendiente de cobrar</p>
               {hasMultiCurrency
                 ? pendingByCurrency.map(([cur, amt]) => (
-                    <p key={cur} className="text-lg font-bold text-white leading-tight">{formatCurrency(amt, cur)}</p>
+                    <p key={cur} className="text-lg font-bold text-foreground leading-tight">{formatCurrency(amt, cur)}</p>
                   ))
-                : <p className="text-2xl font-bold text-white">{formatCurrency(pendingTotal, pendingByCurrency[0]?.[0] ?? 'COP')}</p>
+                : <p className="text-2xl font-bold text-foreground">{formatCurrency(pendingTotal, pendingByCurrency[0]?.[0] ?? 'COP')}</p>
               }
               <p className="text-violet-400 text-xs mt-0.5">{pendingItems.length} ítem{pendingItems.length !== 1 ? 's' : ''} sin cobrar</p>
               {packagesByCurrency.map(([cur, amt]) => (
@@ -501,9 +501,9 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
       </Card>
 
       {/* ─── Ítems ──────────────────────────────────────── */}
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/40 border-border">
         <div className="p-4 pb-2">
-          <h3 className="text-sm font-semibold text-white">Proyectos y servicios</h3>
+          <h3 className="text-sm font-semibold text-foreground">Proyectos y servicios</h3>
           <p className="text-xs text-muted-foreground">Proyectos sin paquete + servicios Fillmaker</p>
         </div>
 
@@ -537,9 +537,9 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
 
       {/* ─── Campañas / Paquetes ────────────────────────── */}
       {(loadingPackages || packagesForStatement.length > 0) && (
-        <Card className="bg-white/5 border-white/10 p-4">
+        <Card className="bg-muted/40 border-border p-4">
           <div className="mb-3">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Package className="h-4 w-4 text-violet-400" />
               Campañas / Paquetes
             </h3>
@@ -566,10 +566,10 @@ export function ClientBillingTab({ orgId, clientId, clientName, orgName }: Props
       )}
 
       {/* ─── Cierres anteriores ─────────────────────────── */}
-      <Card className="bg-white/5 border-white/10 p-4">
+      <Card className="bg-muted/40 border-border p-4">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
               <Lock className="h-4 w-4 text-muted-foreground" />
               Cierres registrados
             </h3>

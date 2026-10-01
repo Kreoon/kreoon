@@ -43,11 +43,11 @@ const AMBASSADOR_LABELS: Record<string, string> = {
 };
 
 function getRoleColor(role: string): string {
-  return ROLE_COLORS[role] || 'bg-white/10 text-white/60 border-white/20';
+  return ROLE_COLORS[role] || 'bg-muted text-muted-foreground border-border';
 }
 
 function getLevelColor(level: string): string {
-  return LEVEL_COLORS[level.toLowerCase()] || 'bg-white/10 text-white/60 border-white/20';
+  return LEVEL_COLORS[level.toLowerCase()] || 'bg-muted text-muted-foreground border-border';
 }
 
 export function RolesBadgesSection({ roles, badges, ambassadorLevel }: RolesBadgesSectionProps) {
@@ -78,7 +78,7 @@ export function RolesBadgesSection({ roles, badges, ambassadorLevel }: RolesBadg
         {/* Roles */}
         {hasRoles && (
           <div>
-            <p className="text-[10px] text-white/40 mb-1 flex items-center gap-1">
+            <p className="text-[10px] text-muted-foreground/70 mb-1 flex items-center gap-1">
               <Shield className="h-2.5 w-2.5" />
               Roles
             </p>
@@ -101,7 +101,7 @@ export function RolesBadgesSection({ roles, badges, ambassadorLevel }: RolesBadg
         {/* Badges */}
         {hasBadges && (
           <div>
-            <p className="text-[10px] text-white/40 mb-1 flex items-center gap-1">
+            <p className="text-[10px] text-muted-foreground/70 mb-1 flex items-center gap-1">
               <Award className="h-2.5 w-2.5" />
               Badges
             </p>
@@ -111,7 +111,7 @@ export function RolesBadgesSection({ roles, badges, ambassadorLevel }: RolesBadg
                   key={`${b.badge}-${i}`}
                   className={cn(
                     'px-2 py-0.5 rounded-full text-[10px] font-medium border',
-                    b.is_active ? getLevelColor(b.level) : 'bg-white/5 text-white/30 border-white/10',
+                    b.is_active ? getLevelColor(b.level) : 'bg-muted/40 text-muted-foreground/70 border-border',
                   )}
                 >
                   {b.badge} ({b.level})

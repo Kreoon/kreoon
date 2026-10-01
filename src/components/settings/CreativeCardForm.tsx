@@ -139,7 +139,7 @@ function PillPicker<T extends string>({ options, value, onChange }: PillPickerPr
             'text-left rounded-sm border px-3 py-2.5 transition-all',
             value === opt.value
               ? 'border-primary bg-primary/10 text-foreground'
-              : 'border-border bg-white/5 text-muted-foreground hover:border-primary/40 hover:text-foreground',
+              : 'border-border bg-muted/50 text-muted-foreground hover:border-primary/40 hover:text-foreground',
           )}
         >
           <div className="flex items-center gap-2">
@@ -373,7 +373,7 @@ export function CreativeCardForm({ userId, onSaved }: CreativeCardFormProps) {
   return (
     <div className="space-y-6">
       {profile && profile.completitud > 0 && (
-        <div className="bg-white/5 border border-white/10 rounded-sm p-4">
+        <div className="bg-muted/50 border border-border rounded-sm p-4">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Sparkles className="h-4 w-4 text-primary" />
@@ -384,7 +384,7 @@ export function CreativeCardForm({ userId, onSaved }: CreativeCardFormProps) {
         </div>
       )}
 
-      <div className="bg-white/5 border border-white/10 rounded-sm p-5">
+      <div className="bg-muted/50 border border-border rounded-sm p-5">
         <StepHeader step={step} />
 
         {/* Paso 1: Quién eres en cámara */}

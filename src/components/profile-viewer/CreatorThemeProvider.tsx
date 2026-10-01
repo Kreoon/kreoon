@@ -80,7 +80,7 @@ export function CreatorThemeProvider({
         config.theme === 'dark' ? 'dark' : 'light',
         'min-h-screen w-full',
         // Fondo Nova para tema dark
-        config.theme === 'dark' && 'bg-[#0a0a0f] text-zinc-100',
+        config.theme === 'dark' && 'bg-background text-zinc-100',
         config.theme === 'light' && 'bg-white text-zinc-900',
         className,
       )}

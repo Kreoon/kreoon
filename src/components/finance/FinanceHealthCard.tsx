@@ -38,9 +38,9 @@ export function FinanceHealthCard({ orgId }: Props) {
 
   if (isLoading || !health) {
     return (
-      <Card className="bg-white/5 border-white/10 p-5">
-        <div className="flex items-center gap-2 text-white/40 text-sm">
-          <span className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white/70 animate-spin" />
+      <Card className="bg-muted/50 border-border p-5">
+        <div className="flex items-center gap-2 text-muted-foreground text-sm">
+          <span className="w-3 h-3 rounded-full border-2 border-border border-t-foreground/70 animate-spin" />
           Evaluando salud financiera...
         </div>
       </Card>
@@ -57,33 +57,33 @@ export function FinanceHealthCard({ orgId }: Props) {
         <div className="shrink-0">
           <div className={`w-20 h-20 rounded-full border-4 ${styles.border} flex flex-col items-center justify-center ${styles.bg}`}>
             <p className={`text-2xl font-bold ${styles.color}`}>{health.score}</p>
-            <p className="text-[9px] text-white/40 uppercase tracking-wide">de 100</p>
+            <p className="text-[9px] text-muted-foreground uppercase tracking-wide">de 100</p>
           </div>
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             <Icon className={`w-4 h-4 ${styles.color}`} />
-            <h3 className="text-base font-semibold text-white">Salud financiera</h3>
+            <h3 className="text-base font-semibold text-foreground">Salud financiera</h3>
             <span className={`text-xs px-2 py-0.5 rounded-full border ${styles.border} ${styles.color}`}>
               {styles.label}
             </span>
           </div>
 
           {health.factors.length === 0 ? (
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-muted-foreground">
               🎉 Todo en orden — sin alertas financieras importantes.
             </p>
           ) : (
             <div className="space-y-1.5 mt-2">
-              <p className="text-xs text-white/40 uppercase tracking-wide">Factores que afectan tu score:</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">Factores que afectan tu score:</p>
               {health.factors.map((f, i) => (
                 <div key={i} className="flex items-start justify-between gap-3 text-xs">
-                  <span className="text-white/80 flex-1">
+                  <span className="text-foreground flex-1">
                     <span className="font-medium">{f.name}</span>
-                    <span className="text-white/50"> · {f.detail}</span>
+                    <span className="text-muted-foreground"> · {f.detail}</span>
                   </span>
-                  <span className={`font-mono whitespace-nowrap ${parseInt(f.impact) < 0 ? 'text-red-300' : 'text-white/40'}`}>
+                  <span className={`font-mono whitespace-nowrap ${parseInt(f.impact) < 0 ? 'text-red-300' : 'text-muted-foreground'}`}>
                     {f.impact}
                   </span>
                 </div>
@@ -95,15 +95,15 @@ export function FinanceHealthCard({ orgId }: Props) {
 
       {/* Recomendaciones priorizadas */}
       {health.recommendations.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-          <p className="text-xs text-white/40 uppercase tracking-wide">Acciones recomendadas:</p>
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Acciones recomendadas:</p>
           {health.recommendations.map((rec, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
               <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium border ${PRIORITY_STYLES[rec.priority]}`}>
                 {PRIORITY_LABEL[rec.priority]}
               </span>
               <div className="flex-1">
-                <p className="text-white/90">{rec.action}</p>
+                <p className="text-foreground">{rec.action}</p>
                 {rec.impact_potencial > 0 && (
                   <p className="text-green-300/70 text-[10px] mt-0.5">
                     Impacto potencial: {formatCurrency(rec.impact_potencial, currency)}
@@ -117,17 +117,17 @@ export function FinanceHealthCard({ orgId }: Props) {
 
       {/* Anomalías detectadas */}
       {anomalies.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-          <p className="text-xs text-white/40 uppercase tracking-wide flex items-center gap-1.5">
+        <div className="mt-4 pt-4 border-t border-border space-y-2">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
             <AlertCircle className="w-3 h-3" />
             Anomalías detectadas ({anomalies.length})
           </p>
           {anomalies.map((a, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs bg-white/5 rounded p-2">
+            <div key={i} className="flex items-start gap-2 text-xs bg-muted/50 rounded p-2">
               <Activity className="w-3 h-3 text-orange-400 mt-0.5 shrink-0" />
               <div className="flex-1">
-                <p className="text-white/90 font-medium">{a.title}</p>
-                <p className="text-white/50 text-[11px]">{a.detail}</p>
+                <p className="text-foreground font-medium">{a.title}</p>
+                <p className="text-muted-foreground text-[11px]">{a.detail}</p>
               </div>
             </div>
           ))}

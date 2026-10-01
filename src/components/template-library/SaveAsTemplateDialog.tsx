@@ -111,15 +111,15 @@ export function SaveAsTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-gray-950 border-gray-800">
+      <DialogContent className="sm:max-w-lg bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-white">Guardar como plantilla</DialogTitle>
+          <DialogTitle className="text-foreground">Guardar como plantilla</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           {/* Nombre */}
           <div className="space-y-1.5">
-            <Label className="text-gray-300">
+            <Label className="text-muted-foreground">
               Nombre <span className="text-red-400">*</span>
             </Label>
             <Input
@@ -128,36 +128,36 @@ export function SaveAsTemplateDialog({
               placeholder="Ej: Mi perfil UGC minimalista"
               value={form.name}
               onChange={(e) => update({ name: e.target.value })}
-              className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+              className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500"
             />
           </div>
 
           {/* Descripcion */}
           <div className="space-y-1.5">
-            <Label className="text-gray-300">Descripcion</Label>
+            <Label className="text-muted-foreground">Descripcion</Label>
             <Textarea
               maxLength={300}
               rows={2}
               placeholder="Describe brevemente esta plantilla..."
               value={form.description}
               onChange={(e) => update({ description: e.target.value })}
-              className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500 resize-none"
+              className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500 resize-none"
             />
           </div>
 
           {/* Categoria */}
           <div className="space-y-1.5">
-            <Label className="text-gray-300">Categoria</Label>
+            <Label className="text-muted-foreground">Categoria</Label>
             <Select value={form.category} onValueChange={(v) => update({ category: v })}>
-              <SelectTrigger className="bg-gray-900 border-gray-700 text-white focus:border-purple-500">
+              <SelectTrigger className="bg-card border-border text-foreground focus:border-purple-500">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700">
+              <SelectContent className="bg-card border-border">
                 {CATEGORIES.map((cat) => (
                   <SelectItem
                     key={cat.value}
                     value={cat.value}
-                    className="text-white hover:bg-gray-800 focus:bg-gray-800"
+                    className="text-foreground hover:bg-muted focus:bg-muted"
                   >
                     {cat.label}
                   </SelectItem>
@@ -168,7 +168,7 @@ export function SaveAsTemplateDialog({
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <Label className="text-gray-300">Etiquetas</Label>
+            <Label className="text-muted-foreground">Etiquetas</Label>
             <div className="flex gap-2">
               <Input
                 maxLength={30}
@@ -176,7 +176,7 @@ export function SaveAsTemplateDialog({
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={handleTagKeyDown}
-                className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+                className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500"
               />
               <Button
                 type="button"
@@ -184,7 +184,7 @@ export function SaveAsTemplateDialog({
                 size="sm"
                 onClick={addTag}
                 disabled={!tagInput.trim() || form.tags.length >= 8}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800 flex-shrink-0"
+                className="border-border text-muted-foreground hover:bg-muted flex-shrink-0"
                 aria-label="Agregar etiqueta"
               >
                 <Tag className="h-4 w-4" />
@@ -201,7 +201,7 @@ export function SaveAsTemplateDialog({
                     <button
                       type="button"
                       onClick={() => removeTag(tag)}
-                      className="hover:text-white transition-colors"
+                      className="hover:text-foreground transition-colors"
                       aria-label={`Eliminar etiqueta ${tag}`}
                     >
                       <X className="h-3 w-3" />
@@ -214,19 +214,19 @@ export function SaveAsTemplateDialog({
 
           {/* Visibilidad */}
           <div className="space-y-2">
-            <Label className="text-gray-300">Visibilidad</Label>
+            <Label className="text-muted-foreground">Visibilidad</Label>
             <RadioGroup
               value={form.visibility}
               onValueChange={(v) => update({ visibility: v as SaveAsTemplateFormData['visibility'] })}
               className="flex gap-4"
             >
               <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="private" className="border-gray-600 text-purple-500" />
-                <span className="text-sm text-gray-300">Solo yo</span>
+                <RadioGroupItem value="private" className="border-border text-purple-500" />
+                <span className="text-sm text-muted-foreground">Solo yo</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <RadioGroupItem value="public" className="border-gray-600 text-purple-500" />
-                <span className="text-sm text-gray-300">Publica</span>
+                <RadioGroupItem value="public" className="border-border text-purple-500" />
+                <span className="text-sm text-muted-foreground">Publica</span>
               </label>
             </RadioGroup>
 
@@ -246,7 +246,7 @@ export function SaveAsTemplateDialog({
               variant="ghost"
               onClick={handleClose}
               disabled={isSaving}
-              className="text-gray-400 hover:text-white hover:bg-gray-800"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               Cancelar
             </Button>

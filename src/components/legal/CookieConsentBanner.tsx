@@ -24,8 +24,8 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
   version: COOKIE_CONSENT_VERSION,
   timestamp: new Date().toISOString(),
   essential: true,
-  analytics: true,      // Activas por defecto - el usuario puede desactivar en "Personalizar"
-  marketing: true,      // Activas por defecto - el usuario puede desactivar en "Personalizar"
+  analytics: false,     // Consentimiento previo: desactivadas hasta que la persona las acepte
+  marketing: false,     // Consentimiento previo: desactivadas hasta que la persona las acepte
   personalization: true, // Activas por defecto - el usuario puede desactivar en "Personalizar"
 };
 
@@ -167,25 +167,25 @@ export function CookieConsentBanner() {
         className="fixed bottom-0 left-0 right-0 z-[9999] p-4 md:p-6"
       >
         <div className="max-w-4xl mx-auto">
-          <div className="bg-[#0f0a1f]/95 border border-[#8b5cf6]/30 rounded-sm shadow-2xl shadow-purple-500/10 overflow-hidden">
+          <div className="bg-card text-card-foreground border border-border rounded-3xl shadow-lg overflow-hidden">
             {/* Header */}
             <div className="p-4 md:p-6">
               <div className="flex items-start gap-4">
-                <div className="shrink-0 w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                  <Cookie className="w-6 h-6 text-purple-400" />
+                <div className="shrink-0 w-12 h-12 rounded-full bg-accent flex items-center justify-center">
+                  <Cookie className="w-6 h-6 text-accent-foreground" />
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-white mb-1">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">
                     Usamos cookies
                   </h3>
-                  <p className="text-sm text-white/60 leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Utilizamos cookies y tecnologías similares para mejorar tu experiencia,
                     analizar el tráfico y personalizar el contenido. Al continuar navegando,
                     aceptas nuestra{' '}
                     <a
                       href="/legal/cookies"
-                      className="text-purple-400 hover:text-purple-300 underline underline-offset-2"
+                      className="text-primary hover:underline underline-offset-2"
                       target="_blank"
                     >
                       Política de Cookies
@@ -205,24 +205,24 @@ export function CookieConsentBanner() {
                     transition={{ duration: 0.2 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-4 pt-4 border-t border-white/10 space-y-3">
+                    <div className="mt-4 pt-4 border-t border-border space-y-3">
                       {COOKIE_CATEGORIES.map((category) => (
                         <div
                           key={category.id}
-                          className="flex items-start justify-between gap-4 p-3 rounded-sm bg-white/5"
+                          className="flex items-start justify-between gap-4 p-3 rounded-2xl bg-muted"
                         >
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-white">
+                              <span className="text-sm font-medium text-foreground">
                                 {category.name}
                               </span>
                               {category.required && (
-                                <span className="px-1.5 py-0.5 text-[10px] rounded bg-purple-500/20 text-purple-300">
+                                <span className="px-1.5 py-0.5 text-[10px] rounded bg-accent text-accent-foreground">
                                   Requerida
                                 </span>
                               )}
                             </div>
-                            <p className="text-xs text-white/50 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {category.description}
                             </p>
                           </div>
@@ -252,7 +252,7 @@ export function CookieConsentBanner() {
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowSettings(!showSettings)}
-                  className="text-white/60 hover:text-white hover:bg-white/10 gap-2 order-3 sm:order-1"
+                  className="gap-2 order-3 sm:order-1"
                 >
                   <Settings className="w-4 h-4" />
                   Personalizar
@@ -269,7 +269,7 @@ export function CookieConsentBanner() {
                   <Button
                     onClick={saveCustom}
                     disabled={isLoading}
-                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white gap-2 order-1 sm:order-3"
+                    className="gap-2 order-1 sm:order-3"
                   >
                     <Check className="w-4 h-4" />
                     Guardar preferencias
@@ -280,14 +280,14 @@ export function CookieConsentBanner() {
                       variant="outline"
                       onClick={rejectOptional}
                       disabled={isLoading}
-                      className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 order-2 sm:order-3"
+                      className="order-2 sm:order-3"
                     >
                       Solo esenciales
                     </Button>
                     <Button
                       onClick={acceptAll}
                       disabled={isLoading}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white gap-2 order-1 sm:order-4"
+                      className="gap-2 order-1 sm:order-4"
                     >
                       <Check className="w-4 h-4" />
                       Aceptar todas
@@ -298,7 +298,7 @@ export function CookieConsentBanner() {
             </div>
 
             {/* Footer */}
-            <div className="px-4 md:px-6 py-3 bg-white/5 border-t border-white/10 flex items-center justify-center gap-2 text-[11px] text-white/40">
+            <div className="px-4 md:px-6 py-3 bg-muted border-t border-border flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
               <Shield className="w-3.5 h-3.5" />
               Tus datos están protegidos según nuestra Política de Privacidad
             </div>

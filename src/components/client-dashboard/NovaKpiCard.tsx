@@ -138,7 +138,7 @@ export function NovaKpiCard({
           <AnimatedNumber value={value} prefix={prefix} suffix={suffix} />
         </p>
         {subtitle && (
-          <p className="text-xs text-zinc-500 mt-1 truncate">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {subtitle}
           </p>
         )}

@@ -64,7 +64,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
     <div className="space-y-6">
       {/* Demographics */}
       {(demo || isEditing) && (
-        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
             <p className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400">Datos Demográficos</p>
@@ -81,7 +81,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
 
       {/* Psychographics */}
       {(psycho || isEditing) && (
-        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-zinc-700/50">
+        <div className="p-3 sm:p-4 rounded-lg bg-zinc-50 dark:bg-[#1a1a24] border border-zinc-200 dark:border-border">
           <div className="flex items-center gap-2 mb-3 sm:mb-4">
             <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
             <p className="text-xs sm:text-sm font-medium text-purple-600 dark:text-purple-400">Perfil Psicográfico</p>
@@ -90,7 +90,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
             {(psycho?.values?.length > 0 || isEditing) && (
               isEditing ? (
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">Valores</p>
+                  <p className="text-xs text-muted-foreground mb-2">Valores</p>
                   <EditableTags items={data.psychographic?.values || data.psychographics?.values || []} onChange={change('psychographic.values') as (v: string[]) => void} color="purple" placeholder="Agregar valor..." />
                 </div>
               ) : (
@@ -100,7 +100,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
             {(psycho?.interests?.length > 0 || isEditing) && (
               isEditing ? (
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">Intereses</p>
+                  <p className="text-xs text-muted-foreground mb-2">Intereses</p>
                   <EditableTags items={data.psychographic?.interests || data.psychographics?.interests || []} onChange={change('psychographic.interests') as (v: string[]) => void} color="pink" placeholder="Agregar interés..." />
                 </div>
               ) : (
@@ -110,7 +110,7 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
             {(psycho?.personality_traits?.length > 0 || isEditing) && (
               isEditing ? (
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">Rasgos de Personalidad</p>
+                  <p className="text-xs text-muted-foreground mb-2">Rasgos de Personalidad</p>
                   <EditableTags items={data.psychographic?.personality_traits || data.psychographics?.personality_traits || []} onChange={change('psychographic.personality_traits') as (v: string[]) => void} color="blue" placeholder="Agregar rasgo..." />
                 </div>
               ) : (
@@ -119,11 +119,11 @@ export function IdealCustomerSection({ data, isEditing, onFieldChange }: Props) 
             )}
             {(psycho?.lifestyle || isEditing) && (
               <div>
-                <p className="text-xs text-zinc-500 mb-1">Estilo de Vida</p>
+                <p className="text-xs text-muted-foreground mb-1">Estilo de Vida</p>
                 {isEditing ? (
                   <EditableText value={data.psychographic?.lifestyle || data.psychographics?.lifestyle} onChange={change('psychographic.lifestyle') as (v: string) => void} placeholder="Estilo de vida..." />
                 ) : (
-                  <p className="text-sm text-zinc-700 dark:text-zinc-300">{psycho.lifestyle}</p>
+                  <p className="text-sm text-foreground dark:text-muted-foreground">{psycho.lifestyle}</p>
                 )}
               </div>
             )}
@@ -194,11 +194,11 @@ function DemoItem({ label, value, isEditing, onChange }: { label: string; value?
   if (!value && !isEditing) return null;
   return (
     <div className="min-w-0">
-      <p className="text-[10px] sm:text-xs text-zinc-500 mb-0.5">{label}</p>
+      <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">{label}</p>
       {isEditing && onChange ? (
         <EditableText value={value} onChange={onChange} placeholder={label + '...'} />
       ) : (
-        <p className="text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">{value}</p>
+        <p className="text-xs sm:text-sm font-medium text-foreground dark:text-foreground truncate">{value}</p>
       )}
     </div>
   );
@@ -213,7 +213,7 @@ function TagList({ label, items, color }: { label: string; items: string[]; colo
 
   return (
     <div>
-      <p className="text-xs text-zinc-500 mb-2">{label}</p>
+      <p className="text-xs text-muted-foreground mb-2">{label}</p>
       <div className="flex flex-wrap gap-2">
         {items.map((item, i) => (
           <span
@@ -265,7 +265,7 @@ function ListCard({
       ) : (
         <ul className="space-y-1.5 sm:space-y-2">
           {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
+            <li key={i} className="flex items-start gap-2 text-xs sm:text-sm text-foreground dark:text-muted-foreground">
               <div className={`w-1.5 h-1.5 rounded-full ${styles.dot} mt-1.5 shrink-0`} />
               <span className="break-words">{item}</span>
             </li>

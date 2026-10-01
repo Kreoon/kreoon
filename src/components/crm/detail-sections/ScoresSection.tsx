@@ -22,10 +22,10 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-0.5">
-        <span className="text-[10px] text-white/40">{label}</span>
-        <span className="text-[10px] text-white/70 font-medium">{Math.round(value)}</span>
+        <span className="text-[10px] text-muted-foreground/70">{label}</span>
+        <span className="text-[10px] text-muted-foreground font-medium">{Math.round(value)}</span>
       </div>
-      <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+      <div className="h-1.5 rounded-full bg-muted/40 overflow-hidden">
         <div
           className={cn('h-full rounded-full transition-all', getBarColor(clamped))}
           style={{ width: `${clamped}%` }}
@@ -49,9 +49,9 @@ function StarRating({ value }: { value: number }) {
         <Star className="h-3 w-3 text-amber-400 fill-amber-400/50" />
       )}
       {Array.from({ length: empty }).map((_, i) => (
-        <Star key={`e-${i}`} className="h-3 w-3 text-white/10" />
+        <Star key={`e-${i}`} className="h-3 w-3 text-muted-foreground/70" />
       ))}
-      <span className="text-[10px] text-white/50 ml-1">{value.toFixed(1)}</span>
+      <span className="text-[10px] text-muted-foreground/70 ml-1">{value.toFixed(1)}</span>
     </div>
   );
 }
@@ -93,7 +93,7 @@ export function ScoresSection({
         {/* Editor rating */}
         {editorRating != null && (
           <div>
-            <p className="text-[10px] text-white/40 mb-0.5">Rating editor</p>
+            <p className="text-[10px] text-muted-foreground/70 mb-0.5">Rating editor</p>
             <StarRating value={editorRating} />
           </div>
         )}

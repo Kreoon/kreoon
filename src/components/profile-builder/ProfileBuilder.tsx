@@ -246,6 +246,8 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
   useEffect(() => {
     if (!hasLoadedConfig && profile?.builder_config) {
       dispatch({ type: 'SET_BUILDER_CONFIG', payload: profile.builder_config });
+      // Cargar lo guardado no es un cambio del usuario: no marcar «Cambios sin guardar»
+      dispatch({ type: 'SET_DIRTY', payload: false });
       setHasLoadedConfig(true);
     }
   }, [profile?.builder_config, hasLoadedConfig]);
@@ -292,7 +294,7 @@ export function ProfileBuilder({ profileId }: ProfileBuilderProps) {
         if (isFinite(maxBlocks) && state.blocks.length >= maxBlocks) {
           toast({
             title: 'Limite de bloques alcanzado',
-            description: `Tu plan permite maximo ${maxBlocks} bloques. Upgrade para agregar mas.`,
+            description: `Tu plan permite maximo ${maxBlocks} bloques. Mejorar plan para agregar mas.`,
             variant: 'destructive',
           });
           setShowUpgradeModal(true);

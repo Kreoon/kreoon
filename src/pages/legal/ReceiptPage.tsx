@@ -101,7 +101,7 @@ export default function ReceiptPage() {
   const docEmoji = DOC_EMOJI[receipt.document_type] ?? '📄';
 
   return (
-    <div className="min-h-screen bg-[#0a0a14] text-foreground print:bg-white print:text-black">
+    <div className="min-h-screen bg-background text-foreground print:bg-white print:text-black">
       {/* Barra top — solo en pantalla */}
       <div className="print:hidden border-b border-border/30 bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -129,8 +129,8 @@ export default function ReceiptPage() {
         )}>
           <span className="text-5xl block print:hidden">{docEmoji}</span>
           <p className="text-xs font-semibold tracking-widest text-purple-200 uppercase print:text-purple-700">KREOON</p>
-          <h1 className="text-2xl font-bold text-white print:text-gray-900">Comprobante de Firma</h1>
-          <p className="text-sm text-purple-200 print:text-gray-500">Documento firmado electrónicamente con validez legal</p>
+          <h1 className="text-2xl font-bold text-foreground print:text-gray-900">Comprobante de Firma</h1>
+          <p className="text-sm text-purple-200 print:text-muted-foreground">Documento firmado electrónicamente con validez legal</p>
         </div>
 
         {/* Documento */}
@@ -180,7 +180,7 @@ export default function ReceiptPage() {
           <ShieldCheck className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-green-400 print:text-green-700 mb-0.5">Firma electrónica válida</p>
-            <p className="text-xs text-muted-foreground leading-relaxed print:text-gray-600">
+            <p className="text-xs text-muted-foreground leading-relaxed print:text-muted-foreground">
               Esta firma tiene plena validez conforme a la Ley 527 de 1999 (Colombia) y al E-SIGN Act (EE.UU.).
               El registro incluye identidad verificada, timestamp inmutable, IP y huella del documento.
             </p>
@@ -204,7 +204,7 @@ export default function ReceiptPage() {
           <p className="text-xs text-muted-foreground">KREOON · SICOMMER INT LLC</p>
           <p className="text-xs text-muted-foreground">12550 Biscayne Blvd Ste 218, North Miami FL 33181</p>
           <p className="text-xs text-muted-foreground">
-            <a href="mailto:legal@kreoon.com" className="text-primary hover:underline print:text-gray-600">legal@kreoon.com</a>
+            <a href="mailto:legal@kreoon.com" className="text-primary hover:underline print:text-muted-foreground">legal@kreoon.com</a>
           </p>
         </div>
       </div>

@@ -62,7 +62,7 @@ function InlineEdit({
       }}
       placeholder={placeholder}
       type={type || 'text'}
-      className="h-6 text-xs bg-white/5 border-white/10 text-white/70 placeholder:text-white/20 px-2"
+      className="h-6 text-xs bg-muted/40 border-border text-muted-foreground placeholder:text-muted-foreground/70 px-2"
     />
   );
 }
@@ -134,7 +134,7 @@ export function PersonalDataSection({
           const Icon = f.icon;
           return (
             <span key={f.key} className="contents">
-              <span className="text-white/40 flex items-center gap-1.5">
+              <span className="text-muted-foreground/70 flex items-center gap-1.5">
                 <Icon className="h-3 w-3" />
                 {f.label}
               </span>
@@ -147,7 +147,7 @@ export function PersonalDataSection({
                   onSave={handleFieldSave}
                 />
               ) : (
-                <span className="text-white/70 flex items-center gap-1">
+                <span className="text-muted-foreground flex items-center gap-1">
                   <span className="truncate">{f.value}</span>
                   {f.value && <CopyButton text={f.value} />}
                 </span>

@@ -412,7 +412,7 @@ export function CreatorExpertiseTab() {
           <CardDescription>Selecciona hasta 5 roles que describan tus especialidades</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="bg-[#0a0a0f] rounded-sm p-4">
+          <div className="bg-background rounded-sm p-4">
             <MarketplaceRoleSelector
               selectedRoles={marketplaceRoles}
               onChange={setMarketplaceRoles}

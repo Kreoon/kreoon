@@ -54,15 +54,15 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
             variant="ghost"
             size="icon"
             onClick={handleBack}
-            className="text-white/60 hover:text-white hover:bg-white/10 shrink-0"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-sm md:text-base font-semibold text-white truncate">
+            <h1 className="text-sm md:text-base font-semibold text-foreground truncate">
               {productName}
             </h1>
-            <p className="text-[10px] md:text-xs text-white/40">
+            <p className="text-[10px] md:text-xs text-muted-foreground/70">
               Investigacion de Mercado
               {dateStr && <span> &middot; {dateStr}</span>}
               <span className="hidden md:inline"> &middot; Powered by Perplexity AI</span>
@@ -75,7 +75,7 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
             variant="ghost"
             size="sm"
             onClick={handleCopyLink}
-            className="text-white/60 hover:text-white hover:bg-white/10 text-xs hidden md:flex"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs hidden md:flex"
           >
             <Copy className="h-3.5 w-3.5 mr-1.5" />
             Copiar Link
@@ -84,7 +84,7 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
             variant="ghost"
             size="icon"
             onClick={handleCopyLink}
-            className="text-white/60 hover:text-white hover:bg-white/10 md:hidden"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted md:hidden"
           >
             <Copy className="h-4 w-4" />
           </Button>
@@ -92,7 +92,7 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
             variant="ghost"
             size="icon"
             onClick={handleShare}
-            className="text-white/60 hover:text-white hover:bg-white/10"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             <Share2 className="h-4 w-4" />
           </Button>
@@ -100,7 +100,7 @@ export function ResearchHeader({ productName, generatedAt, product }: ResearchHe
             variant="ghost"
             size="sm"
             onClick={handleExportPdf}
-            className="text-white/60 hover:text-white hover:bg-white/10 text-xs hidden md:flex"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted text-xs hidden md:flex"
           >
             <Download className="h-3.5 w-3.5 mr-1.5" />
             PDF

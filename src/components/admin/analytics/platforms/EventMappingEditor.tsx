@@ -33,8 +33,8 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h4 className="text-sm font-medium text-white">Mapeo de Eventos</h4>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h4 className="text-sm font-medium text-foreground">Mapeo de Eventos</h4>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Define cómo se traducen los eventos KAE a eventos de la plataforma
           </p>
         </div>
@@ -42,7 +42,7 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
           variant="ghost"
           size="sm"
           onClick={handleReset}
-          className="text-gray-400 hover:text-white"
+          className="text-muted-foreground hover:text-foreground"
         >
           <RotateCcw className="h-3.5 w-3.5 mr-1" />
           Restaurar defaults
@@ -53,18 +53,18 @@ export function EventMappingEditor({ platform, mapping, onChange }: EventMapping
         {KAE_EVENTS.map(({ key, label, description }) => (
           <div
             key={key}
-            className="grid grid-cols-[1fr,auto,1fr] items-center gap-3 p-3 rounded-sm bg-gray-800/30 border border-gray-700/30"
+            className="grid grid-cols-[1fr,auto,1fr] items-center gap-3 p-3 rounded-sm bg-card/30 border border-border"
           >
             <div>
               <Label className="text-sm text-foreground/80">{label}</Label>
-              <p className="text-xs text-gray-500">{description}</p>
+              <p className="text-xs text-muted-foreground">{description}</p>
             </div>
-            <span className="text-gray-600 text-xs">→</span>
+            <span className="text-muted-foreground text-xs">→</span>
             <Input
               value={mapping[key] || ''}
               onChange={(e) => handleChange(key, e.target.value)}
               placeholder={defaults[key]}
-              className="bg-gray-900/50 border-gray-700 text-sm h-9"
+              className="bg-card/50 border-border text-sm h-9"
             />
           </div>
         ))}

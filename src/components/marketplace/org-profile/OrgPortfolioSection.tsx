@@ -27,8 +27,8 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
   if (!hasGallery && !hasMemberContent) {
     return (
       <div className="text-center py-12">
-        <ImageIcon className="h-12 w-12 mx-auto text-gray-600 mb-3" />
-        <p className="text-gray-500">Esta organizacion aun no ha subido contenido a su portafolio</p>
+        <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+        <p className="text-muted-foreground">Esta organizacion aun no ha subido contenido a su portafolio</p>
       </div>
     );
   }
@@ -39,9 +39,9 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
       {hasMemberContent && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-gray-400" />
-            <h2 className="text-lg font-semibold text-white">Contenido del equipo</h2>
-            <span className="text-sm text-gray-500">({memberContent.length})</span>
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-foreground">Contenido del equipo</h2>
+            <span className="text-sm text-muted-foreground">({memberContent.length})</span>
           </div>
           <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
             {memberContent.map((item, i) => {
@@ -80,16 +80,16 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
                         <img
                           src={item.creator_avatar}
                           alt=""
-                          className="w-5 h-5 rounded-full object-cover border border-white/30"
+                          className="w-5 h-5 rounded-full object-cover border border-border"
                         />
                       ) : (
                         <div className="w-5 h-5 rounded-full bg-purple-500/30 flex items-center justify-center">
-                          <span className="text-[10px] text-white font-bold">
+                          <span className="text-[10px] text-foreground font-bold">
                             {item.creator_name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
-                      <span className="text-white text-xs font-medium truncate">
+                      <span className="text-foreground text-xs font-medium truncate">
                         {item.creator_name}
                       </span>
                     </div>
@@ -105,14 +105,14 @@ export function OrgPortfolioSection({ gallery, memberContent = [], accentColor }
       {hasGallery && (
         <div className="space-y-4">
           {hasMemberContent && (
-            <h2 className="text-lg font-semibold text-white">Galeria</h2>
+            <h2 className="text-lg font-semibold text-foreground">Galeria</h2>
           )}
           {!hasMemberContent && (
-            <h2 className="text-lg font-semibold text-white">Portafolio</h2>
+            <h2 className="text-lg font-semibold text-foreground">Portafolio</h2>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {gallery.map((url, i) => (
-              <div key={i} className="aspect-square rounded-sm overflow-hidden bg-white/5">
+              <div key={i} className="aspect-square rounded-sm overflow-hidden bg-muted/50">
                 <img
                   src={url}
                   alt=""

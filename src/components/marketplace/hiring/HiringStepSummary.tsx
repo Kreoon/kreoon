@@ -25,7 +25,7 @@ export function HiringStepSummary({
   return (
     <div className="space-y-6">
       {/* Creator mini-card */}
-      <div className="bg-white/5 rounded-sm p-4 flex items-center gap-4">
+      <div className="bg-muted/50 rounded-sm p-4 flex items-center gap-4">
         {creator.avatar_url ? (
           <img
             src={creator.avatar_url}
@@ -39,13 +39,13 @@ export function HiringStepSummary({
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-white font-semibold text-sm truncate">{creator.display_name}</span>
+            <span className="text-foreground font-semibold text-sm truncate">{creator.display_name}</span>
             {creator.is_verified && <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />}
           </div>
           <div className="flex items-center gap-1 text-sm">
             <Star className="h-3.5 w-3.5 text-purple-400 fill-purple-400" />
-            <span className="text-white">{creator.rating_avg.toFixed(1)}</span>
-            <span className="text-gray-500">({creator.rating_count})</span>
+            <span className="text-foreground">{creator.rating_avg.toFixed(1)}</span>
+            <span className="text-muted-foreground">({creator.rating_count})</span>
           </div>
         </div>
       </div>
@@ -63,30 +63,30 @@ export function HiringStepSummary({
             Editar
           </button>
         </div>
-        <div className="bg-white/5 rounded-sm p-4 space-y-3 text-sm">
+        <div className="bg-muted/50 rounded-sm p-4 space-y-3 text-sm">
           <div>
-            <span className="text-gray-500">Producto:</span>
-            <span className="text-white ml-2">{brief.product_name}</span>
+            <span className="text-muted-foreground">Producto:</span>
+            <span className="text-foreground ml-2">{brief.product_name}</span>
           </div>
           <div>
-            <span className="text-gray-500">Objetivo:</span>
-            <span className="text-white ml-2">{brief.objective}</span>
+            <span className="text-muted-foreground">Objetivo:</span>
+            <span className="text-foreground ml-2">{brief.objective}</span>
           </div>
           {brief.target_audience && (
             <div>
-              <span className="text-gray-500">Audiencia:</span>
-              <span className="text-white ml-2">{brief.target_audience}</span>
+              <span className="text-muted-foreground">Audiencia:</span>
+              <span className="text-foreground ml-2">{brief.target_audience}</span>
             </div>
           )}
           {brief.tone && (
             <div>
-              <span className="text-gray-500">Tono:</span>
-              <span className="text-white ml-2">{brief.tone}</span>
+              <span className="text-muted-foreground">Tono:</span>
+              <span className="text-foreground ml-2">{brief.tone}</span>
             </div>
           )}
           {brief.key_messages.length > 0 && (
             <div>
-              <span className="text-gray-500 block mb-1">Mensajes clave:</span>
+              <span className="text-muted-foreground block mb-1">Mensajes clave:</span>
               <div className="flex flex-wrap gap-1.5">
                 {brief.key_messages.map((msg, i) => (
                   <span key={i} className="bg-purple-500/20 text-purple-300 text-xs px-2 py-0.5 rounded-full">
@@ -98,8 +98,8 @@ export function HiringStepSummary({
           )}
           {brief.deadline && (
             <div>
-              <span className="text-gray-500">Fecha limite:</span>
-              <span className="text-white ml-2">{new Date(brief.deadline).toLocaleDateString('es-CO')}</span>
+              <span className="text-muted-foreground">Fecha limite:</span>
+              <span className="text-foreground ml-2">{new Date(brief.deadline).toLocaleDateString('es-CO')}</span>
             </div>
           )}
         </div>
@@ -118,32 +118,32 @@ export function HiringStepSummary({
             Cambiar
           </button>
         </div>
-        <div className="bg-white/5 rounded-sm p-4 space-y-2">
+        <div className="bg-muted/50 rounded-sm p-4 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-white font-semibold">{selectedPackage.name}</span>
+            <span className="text-foreground font-semibold">{selectedPackage.name}</span>
             <div className="flex items-center gap-1">
               {paymentMethod === 'exchange' ? (
                 <Gift className="h-4 w-4 text-green-400" />
               ) : (
                 <DollarSign className="h-4 w-4 text-purple-400" />
               )}
-              <span className="text-white font-bold">
+              <span className="text-foreground font-bold">
                 {paymentMethod === 'exchange'
                   ? 'Canje de producto'
                   : `$${selectedPackage.price.toLocaleString()} ${selectedPackage.currency}`}
               </span>
             </div>
           </div>
-          <p className="text-gray-500 text-xs">{selectedPackage.description}</p>
-          <p className="text-gray-500 text-xs">Entrega: {selectedPackage.delivery_days}</p>
+          <p className="text-muted-foreground text-xs">{selectedPackage.description}</p>
+          <p className="text-muted-foreground text-xs">Entrega: {selectedPackage.delivery_days}</p>
         </div>
       </div>
 
       {/* Total */}
-      <div className="border-t border-white/10 pt-4">
+      <div className="border-t border-border pt-4">
         <div className="flex items-center justify-between">
-          <span className="text-gray-400 text-sm">Total</span>
-          <span className="text-2xl font-bold text-white">
+          <span className="text-muted-foreground text-sm">Total</span>
+          <span className="text-2xl font-bold text-foreground">
             {paymentMethod === 'exchange' ? (
               <span className="flex items-center gap-2">
                 <Gift className="h-5 w-5 text-green-400" />
@@ -167,7 +167,7 @@ export function HiringStepSummary({
                 : 'border-gray-600 group-hover:border-purple-500',
             )}
           >
-            {termsAccepted && <CheckCircle2 className="h-3.5 w-3.5 text-white" />}
+            {termsAccepted && <CheckCircle2 className="h-3.5 w-3.5 text-foreground" />}
           </div>
         </div>
         <input
@@ -176,7 +176,7 @@ export function HiringStepSummary({
           onChange={e => onTermsChange(e.target.checked)}
           className="sr-only"
         />
-        <span className="text-gray-400 text-sm leading-relaxed">
+        <span className="text-muted-foreground text-sm leading-relaxed">
           Acepto los{' '}
           <span className="text-purple-400 underline">terminos de servicio</span> de Kreoon.
           Entiendo que el pago se mantiene en escrow hasta que apruebe el contenido entregado.

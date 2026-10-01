@@ -197,7 +197,7 @@ export function PendingWithdrawalsList({
             </div>
           ) : filteredWithdrawals.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <CheckCircle className="h-12 w-12 text-emerald-400/30 mb-4" />
+              <CheckCircle className="h-12 w-12 text-emerald-700 dark:text-emerald-400/30 mb-4" />
               <p className="text-muted-foreground">No hay solicitudes pendientes</p>
             </div>
           ) : (
@@ -251,7 +251,7 @@ export function PendingWithdrawalsList({
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-white truncate max-w-[150px]">
+                              <p className="font-medium text-foreground truncate max-w-[150px]">
                                 {profile?.full_name || 'Usuario'}
                               </p>
                               <p className="text-xs text-muted-foreground truncate max-w-[150px]">
@@ -262,7 +262,7 @@ export function PendingWithdrawalsList({
                         </TableCell>
                         <TableCell>
                           <div>
-                            <p className="font-semibold text-white">
+                            <p className="font-semibold text-foreground">
                               {withdrawal.formattedNetAmount}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -290,7 +290,7 @@ export function PendingWithdrawalsList({
                             variant="outline"
                             className={cn(
                               'text-[10px]',
-                              withdrawal.status === 'pending' && 'border-amber-500/30 text-amber-400',
+                              withdrawal.status === 'pending' && 'border-amber-500/30 text-amber-700 dark:text-amber-400',
                               withdrawal.status === 'processing' && 'border-blue-500/30 text-blue-400'
                             )}
                           >
@@ -308,7 +308,7 @@ export function PendingWithdrawalsList({
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+                              className="h-8 w-8 p-0 text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
                               onClick={() => handleProcess(withdrawal)}
                               title="Procesar"
                             >
@@ -317,7 +317,7 @@ export function PendingWithdrawalsList({
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-8 w-8 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                              className="h-8 w-8 p-0 text-red-700 dark:text-red-400 hover:text-red-300 hover:bg-red-500/10"
                               onClick={() => handleReject(withdrawal)}
                               title="Rechazar"
                             >

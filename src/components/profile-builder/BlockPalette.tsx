@@ -110,12 +110,12 @@ interface DraggablePaletteItemProps {
 }
 
 const CATEGORY_LABELS: Record<BlockCategory, string> = {
-  required: 'Basicos',
+  required: 'Básicos',
   layout: 'Constructor',
   core: 'Perfil',
   content: 'Contenido',
   media: 'Multimedia',
-  conversion: 'Conversion',
+  conversion: 'Conversión',
 };
 
 // Orden: Constructor primero, luego todo lo demas

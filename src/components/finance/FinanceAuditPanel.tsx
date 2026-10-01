@@ -165,34 +165,34 @@ export function FinanceAuditPanel({ orgId }: Props) {
   const totalNomina = (audit?.nomina_talent_payments ?? 0) + (audit?.nomina_content_creator ?? 0) + (audit?.nomina_content_editor ?? 0);
 
   return (
-    <Card className="bg-white/[0.02] border-white/10">
+    <Card className="bg-muted/30 border-border">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full p-4 flex items-center justify-between gap-3 hover:bg-white/[0.02] transition-colors"
+        className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors"
       >
         <div className="flex items-center gap-3">
           <ShieldCheck className="w-5 h-5 text-cyan-400" />
           <div className="text-left">
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-foreground">
               Auditoría de cálculo
               <span className="ml-2 text-[10px] font-normal text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full">
                 Transparencia total
               </span>
             </h3>
-            <p className="text-white/40 text-xs mt-0.5">
+            <p className="text-muted-foreground text-xs mt-0.5">
               Detalle de TODAS las fuentes que componen los KPIs · click para ver
             </p>
           </div>
         </div>
-        {open ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
+        {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
 
       {open && audit && (
-        <div className="px-5 pb-5 space-y-4 border-t border-white/5 pt-4">
+        <div className="px-5 pb-5 space-y-4 border-t border-border pt-4">
           {/* Info histórica */}
           {audit.primer_movimiento && (
-            <div className="text-xs text-white/50 bg-white/5 rounded p-2.5">
-              📅 Primer movimiento de la agencia: <span className="text-white font-medium">{audit.primer_movimiento}</span>
+            <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2.5">
+              📅 Primer movimiento de la agencia: <span className="text-foreground font-medium">{audit.primer_movimiento}</span>
               {(startDate > audit.primer_movimiento) && (
                 <span className="ml-2 text-yellow-300/80">
                   · Hay datos anteriores fuera del filtro actual — usa "Todo" para verlos
@@ -255,16 +255,16 @@ export function FinanceAuditPanel({ orgId }: Props) {
           )}
 
           {/* RESUMEN UTILIDAD */}
-          <div className="bg-white/5 rounded-md p-3 mt-2">
+          <div className="bg-muted/50 rounded-md p-3 mt-2">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-white/70">Cobrado − Costos {currency === 'COP' ? '− Nómina' : ''}</span>
-              <span className="text-white font-medium">
+              <span className="text-muted-foreground">Cobrado − Costos {currency === 'COP' ? '− Nómina' : ''}</span>
+              <span className="text-foreground font-medium">
                 {formatCurrency(totalCobrado, currency)} − {formatCurrency(totalCostos, currency)}
                 {currency === 'COP' && ` − ${formatCurrency(totalNomina, 'COP')}`}
               </span>
             </div>
-            <div className="flex items-center justify-between text-base mt-1.5 pt-1.5 border-t border-white/10">
-              <span className="text-white/70 font-medium">Utilidad neta calculada</span>
+            <div className="flex items-center justify-between text-base mt-1.5 pt-1.5 border-t border-border">
+              <span className="text-muted-foreground font-medium">Utilidad neta calculada</span>
               <span className={`font-bold ${
                 (totalCobrado - totalCostos - (currency === 'COP' ? totalNomina : 0)) >= 0
                   ? 'text-green-400' : 'text-red-400'
@@ -284,9 +284,9 @@ export function FinanceAuditPanel({ orgId }: Props) {
 
 function AuditRow({ label, value, currency, bold }: { label: string; value: number; currency: string; bold?: boolean }) {
   return (
-    <div className={`flex items-center justify-between gap-3 text-xs ${bold ? 'pt-1 border-t border-white/5 mt-1' : ''}`}>
-      <span className={bold ? 'text-white font-medium' : 'text-white/60'}>{label}</span>
-      <span className={`whitespace-nowrap ${bold ? 'text-white font-bold' : value > 0 ? 'text-white/90' : 'text-white/30'}`}>
+    <div className={`flex items-center justify-between gap-3 text-xs ${bold ? 'pt-1 border-t border-border mt-1' : ''}`}>
+      <span className={bold ? 'text-foreground font-medium' : 'text-muted-foreground'}>{label}</span>
+      <span className={`whitespace-nowrap ${bold ? 'text-foreground font-bold' : value > 0 ? 'text-foreground' : 'text-muted-foreground/60'}`}>
         {value > 0 ? formatCurrency(value, currency) : '—'}
       </span>
     </div>

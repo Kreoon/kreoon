@@ -26,7 +26,7 @@ const OrgCRMFinances = () => {
       <div className="min-h-screen p-4 md:p-6">
         <div className="text-center py-16">
           <AlertTriangle className="h-8 w-8 text-yellow-400/50 mx-auto mb-2" />
-          <p className="text-sm text-white/40">Selecciona una organización para acceder</p>
+          <p className="text-sm text-muted-foreground/70">Selecciona una organización para acceder</p>
         </div>
       </div>
     );
@@ -65,8 +65,8 @@ function FinancesShell({ orgId }: { orgId: string }) {
         {/* Header */}
         <div className="flex items-start justify-between mb-2">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white">Finanzas</h1>
-            <p className="text-white/50 text-sm">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Finanzas</h1>
+            <p className="text-muted-foreground/70 text-sm">
               Panel financiero de la agencia · ingresos, nómina, costos y cierres
             </p>
           </div>
@@ -81,7 +81,7 @@ function FinancesShell({ orgId }: { orgId: string }) {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={v => setActiveTab(v as TabKey)}>
-          <TabsList className="bg-white/5 border border-white/10 mb-4">
+          <TabsList className="bg-muted/40 border border-border mb-4">
             <TabsTrigger value="finanzas">Finanzas</TabsTrigger>
             <TabsTrigger value="nomina">Nómina</TabsTrigger>
             <TabsTrigger value="costos">Costos</TabsTrigger>

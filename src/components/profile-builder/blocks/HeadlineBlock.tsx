@@ -100,11 +100,11 @@ function HeadlineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
           'group relative',
           isEditing && isSelected && 'cursor-pointer hover:bg-primary/5 rounded-md py-1 transition-colors'
         )}
-        onClick={() => isEditing && isSelected && openEditor('text', config.text || 'Tu titulo aqui')}
+        onClick={() => isEditing && isSelected && openEditor('text', config.text || 'Tu titulo aquí')}
       >
         {isHtml(config.text || '') ? (
           <SafeHtml
-            html={config.text || 'Tu titulo aqui'}
+            html={config.text || 'Tu titulo aquí'}
             className={cn('font-bold leading-tight tracking-tight', sizeClasses[config.size || 'xl'])}
             style={gradientTextStyle}
           />
@@ -113,7 +113,7 @@ function HeadlineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
             className={cn('font-bold leading-tight tracking-tight', sizeClasses[config.size || 'xl'])}
             style={gradientTextStyle}
           >
-            {config.text || 'Tu titulo aqui'}
+            {config.text || 'Tu titulo aquí'}
           </Tag>
         )}
         {isEditing && isSelected && (

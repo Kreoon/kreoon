@@ -31,9 +31,9 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: CXXXXXXXXXXXXXXXXX"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           El Pixel Code de TikTok. Lo encuentras en TikTok Ads Manager → Events → Web Events.
         </p>
       </div>
@@ -48,17 +48,17 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Token de Events API'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Genera el token en TikTok Ads Manager → Events → Settings → Generate Access Token.
         </p>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-card/30 border border-border">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Los eventos se envían con test_event_code para debugging
           </p>
         </div>
@@ -76,7 +76,7 @@ export function TikTokConfigForm({ data, onChange, hasExistingToken }: TikTokCon
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Ej: TEST_KAE"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-border"
           />
         </div>
       )}

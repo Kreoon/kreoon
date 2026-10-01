@@ -120,7 +120,7 @@ const NotificationItem = memo(function NotificationItem({
             <h4
               className={cn(
                 'text-[11px] font-medium truncate',
-                isUnread ? 'text-violet-200' : 'text-gray-400'
+                isUnread ? 'text-violet-200' : 'text-muted-foreground'
               )}
             >
               {notification.title}
@@ -142,7 +142,7 @@ const NotificationItem = memo(function NotificationItem({
           <p
             className={cn(
               'text-[10px] mt-0.5 line-clamp-2',
-              isUnread ? 'text-gray-400' : 'text-gray-500'
+              isUnread ? 'text-muted-foreground' : 'text-muted-foreground'
             )}
           >
             {notification.message}
@@ -150,7 +150,7 @@ const NotificationItem = memo(function NotificationItem({
 
           {/* Footer: timestamp y acción */}
           <div className="flex items-center justify-between mt-1.5">
-            <span className="text-[9px] text-gray-600">
+            <span className="text-[9px] text-muted-foreground">
               {formatRelativeTime(notification.timestamp)}
             </span>
 
@@ -181,7 +181,7 @@ const NotificationItem = memo(function NotificationItem({
           className={cn(
             'absolute top-1 right-1',
             'w-8 h-8 rounded-sm flex items-center justify-center',
-            'text-gray-500 hover:text-foreground',
+            'text-muted-foreground hover:text-foreground',
             'bg-transparent hover:bg-red-500/20',
             'opacity-0 group-hover:opacity-100 transition-opacity',
             'min-w-[44px] min-h-[44px]' // WCAG touch target
@@ -205,8 +205,8 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center h-full py-8">
       {/* Mini KIRO emoji */}
       <div className="text-4xl mb-3">🤖</div>
-      <p className="text-gray-400 text-sm">Todo tranquilo por acá</p>
-      <p className="text-gray-600 text-xs mt-1">😎</p>
+      <p className="text-muted-foreground text-sm">Todo tranquilo por acá</p>
+      <p className="text-muted-foreground text-xs mt-1">😎</p>
     </div>
   );
 }
@@ -324,7 +324,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
               <Wifi className="w-3 h-3 text-amber-400 animate-pulse" title="Conectando..." />
             )}
             {platformSyncState.connectionStatus === 'disconnected' && (
-              <WifiOff className="w-3 h-3 text-gray-500" title="Desconectado" />
+              <WifiOff className="w-3 h-3 text-muted-foreground" title="Desconectado" />
             )}
             {platformSyncState.connectionStatus === 'error' && (
               <AlertCircle className="w-3 h-3 text-red-400" title={platformSyncState.error || 'Error de conexión'} />
@@ -339,7 +339,7 @@ export function KiroNotificationPanel({ awardPoints }: KiroNotificationPanelProp
             disabled={isSyncing}
             className={cn(
               'p-1.5 rounded-sm',
-              'text-gray-500 hover:text-violet-400',
+              'text-muted-foreground hover:text-violet-400',
               'hover:bg-violet-500/10 transition-colors',
               isSyncing && 'animate-spin'
             )}

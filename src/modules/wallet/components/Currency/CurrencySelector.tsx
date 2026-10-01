@@ -54,7 +54,7 @@ export function CurrencySelector({
             role="combobox"
             aria-expanded={open}
             disabled={disabled || loadingCurrencies}
-            className="w-full justify-between bg-[hsl(270,40%,8%)] border-[hsl(270,30%,20%)] hover:bg-[hsl(270,30%,12%)] hover:border-[hsl(270,50%,40%)]"
+            className="w-full justify-between bg-card border-border hover:bg-muted hover:border-primary/40"
           >
             {selectedCurrency ? (
               <span className="flex items-center gap-2">
@@ -68,11 +68,11 @@ export function CurrencySelector({
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 bg-[hsl(270,40%,6%)] border-[hsl(270,30%,20%)]">
+        <PopoverContent className="w-[300px] p-0 bg-card border-border">
           <Command className="bg-transparent">
             <CommandInput
               placeholder="Buscar moneda..."
-              className="border-b border-[hsl(270,30%,15%)]"
+              className="border-b border-border"
             />
             <CommandList>
               <CommandEmpty>No se encontraron monedas.</CommandEmpty>
@@ -87,7 +87,7 @@ export function CurrencySelector({
                         onChange(currency.code as CurrencyCode);
                         setOpen(false);
                       }}
-                      className="cursor-pointer hover:bg-[hsl(270,30%,15%)]"
+                      className="cursor-pointer hover:bg-muted"
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">

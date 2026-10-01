@@ -121,10 +121,10 @@ export function KiroMentorWidget({ spaceId, spaceSlug }: KiroMentorWidgetProps) 
           >
             🤖 KIRO · tu mentor
           </div>
-          <h3 className="font-extrabold text-lg md:text-xl leading-tight text-white mb-1.5">
+          <h3 className="font-extrabold text-lg md:text-xl leading-tight text-foreground mb-1.5">
             {suggestion.title}
           </h3>
-          <p className="text-sm text-zinc-300 leading-relaxed mb-3">{suggestion.body}</p>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-3">{suggestion.body}</p>
 
           <Link
             to={suggestion.cta.to}

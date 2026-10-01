@@ -80,7 +80,7 @@ export function ManualReviewQueue({ courseId, accentColor = '#8B5CF6' }: ManualR
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 p-6 text-zinc-400">
+      <div className="flex items-center gap-2 p-6 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> Cargando revisiones...
       </div>
     );
@@ -88,8 +88,8 @@ export function ManualReviewQueue({ courseId, accentColor = '#8B5CF6' }: ManualR
 
   if (reviews.length === 0) {
     return (
-      <Card className="p-8 text-center text-zinc-500">
-        <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-emerald-400" />
+      <Card className="p-8 text-center text-muted-foreground">
+        <CheckCircle2 className="h-10 w-10 mx-auto mb-3 text-emerald-600 dark:text-emerald-400" />
         Sin revisiones pendientes
       </Card>
     );
@@ -132,20 +132,20 @@ function ReviewRow({
   const [feedback, setFeedback] = useState('');
 
   return (
-    <Card className="p-5 bg-white/5 border-white/10">
+    <Card className="p-5 bg-muted/50 border-border">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-sm text-zinc-500">{review.student?.full_name ?? review.student?.email ?? 'Estudiante'}</div>
+          <div className="text-sm text-muted-foreground">{review.student?.full_name ?? review.student?.email ?? 'Estudiante'}</div>
           <div className="text-base font-semibold mt-1">{review.question?.question_text}</div>
         </div>
-        <div className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
+        <div className="text-xs px-2 py-1 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
           Pendiente
         </div>
       </div>
 
-      <div className="rounded-lg bg-black/30 border border-white/5 p-3 mb-4">
+      <div className="rounded-lg bg-muted border border-border p-3 mb-4">
         {review.answer?.text_answer && (
-          <p className="text-sm whitespace-pre-wrap text-zinc-200">{review.answer.text_answer}</p>
+          <p className="text-sm whitespace-pre-wrap text-foreground">{review.answer.text_answer}</p>
         )}
         {review.answer?.file_url && (
           <a
@@ -164,7 +164,7 @@ function ReviewRow({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
-          <label className="text-xs uppercase tracking-wide text-zinc-500">Calificación (0–{maxScore})</label>
+          <label className="text-xs uppercase tracking-wide text-muted-foreground">Calificación (0–{maxScore})</label>
           <input
             type="number"
             min={0}
@@ -172,15 +172,15 @@ function ReviewRow({
             step={0.5}
             value={score}
             onChange={(e) => setScore(Number(e.target.value))}
-            className="mt-1 w-full rounded bg-black/30 border border-white/10 p-2 text-sm focus:outline-none focus:border-purple-500"
+            className="mt-1 w-full rounded bg-muted border border-border p-2 text-sm focus:outline-none focus:border-primary"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="text-xs uppercase tracking-wide text-zinc-500">Feedback</label>
+          <label className="text-xs uppercase tracking-wide text-muted-foreground">Feedback</label>
           <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
-            className="mt-1 w-full rounded bg-black/30 border border-white/10 p-2 text-sm h-16 focus:outline-none focus:border-purple-500"
+            className="mt-1 w-full rounded bg-muted border border-border p-2 text-sm h-16 focus:outline-none focus:border-primary"
             placeholder="Comentario para el estudiante..."
           />
         </div>

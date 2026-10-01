@@ -43,25 +43,25 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-gradient-to-b from-slate-900 to-slate-950 border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
+        className="bg-gradient-to-b from-card to-background border border-white/10 rounded-sm w-full max-w-lg max-h-[90vh] overflow-y-auto my-auto"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-green-500/10 sticky top-0 z-10">
+        <div className="flex items-center justify-between p-4 border-b border-border bg-green-500/10 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-500/20 rounded-full">
               <CheckCircle2 className="w-6 h-6 text-green-400" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-white">Comprobante de Firma</h2>
+              <h2 className="text-lg font-semibold text-foreground">Comprobante de Firma</h2>
               <p className="text-sm text-green-400">Firma electrónica válida</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 bg-white/10 hover:bg-white/20 rounded-sm transition-colors"
+            className="p-2 bg-muted hover:bg-muted rounded-sm transition-colors"
             aria-label="Cerrar"
           >
-            <X className="w-5 h-5 text-white" />
+            <X className="w-5 h-5 text-foreground" />
           </button>
         </div>
 
@@ -70,36 +70,36 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="w-8 h-8 text-purple-400 animate-spin mb-4" />
-              <p className="text-white/60">Cargando comprobante...</p>
+              <p className="text-muted-foreground">Cargando comprobante...</p>
             </div>
           ) : receipt ? (
             <>
               {/* Documento */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-white/60">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <FileText className="w-4 h-4" />
                   <span className="text-sm uppercase tracking-wide">Documento</span>
                 </div>
-                <div className="bg-white/5 rounded-sm p-4">
-                  <p className="text-white font-medium">{receipt.document_title}</p>
-                  <p className="text-sm text-white/60">Versión {receipt.document_version}</p>
+                <div className="bg-muted/50 rounded-sm p-4">
+                  <p className="text-foreground font-medium">{receipt.document_title}</p>
+                  <p className="text-sm text-muted-foreground">Versión {receipt.document_version}</p>
                 </div>
               </div>
 
               {/* Firmante */}
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-white/60">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <User className="w-4 h-4" />
                   <span className="text-sm uppercase tracking-wide">Firmante</span>
                 </div>
-                <div className="bg-white/5 rounded-sm p-4 space-y-2">
-                  <p className="text-white font-medium">{receipt.signer_full_name}</p>
+                <div className="bg-muted/50 rounded-sm p-4 space-y-2">
+                  <p className="text-foreground font-medium">{receipt.signer_full_name}</p>
                   {receipt.signer_document_type && receipt.signer_document_number && (
-                    <p className="text-sm text-white/60">
+                    <p className="text-sm text-muted-foreground">
                       {receipt.signer_document_type.toUpperCase()}: {receipt.signer_document_number}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 text-sm text-white/60">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Mail className="w-3 h-3" />
                     {receipt.signer_email}
                   </div>
@@ -109,11 +109,11 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
               {/* Detalles de firma */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white/60">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Calendar className="w-4 h-4" />
                     <span className="text-sm">Fecha</span>
                   </div>
-                  <p className="text-white text-sm">
+                  <p className="text-foreground text-sm">
                     {new Date(receipt.signed_at).toLocaleString('es-CO', {
                       timeZone: 'America/Bogota',
                       dateStyle: 'long',
@@ -123,56 +123,56 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white/60">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-4 h-4" />
                     <span className="text-sm">IP</span>
                   </div>
-                  <p className="text-white text-sm font-mono">{receipt.ip_address}</p>
+                  <p className="text-foreground text-sm font-mono">{receipt.ip_address}</p>
                 </div>
               </div>
 
               {/* Hash */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-white/60">
+                <div className="flex items-center gap-2 text-muted-foreground">
                   <Hash className="w-4 h-4" />
                   <span className="text-sm">Hash SHA-256</span>
                 </div>
-                <p className="text-xs text-white/60 font-mono break-all bg-white/5 rounded p-2">
+                <p className="text-xs text-muted-foreground font-mono break-all bg-muted/50 rounded p-2">
                   {receipt.document_hash}
                 </p>
               </div>
 
               {/* Método de firma */}
-              <div className="flex items-center justify-between py-3 border-t border-white/10">
-                <span className="text-white/60">Método de firma</span>
-                <span className="text-white font-medium">
+              <div className="flex items-center justify-between py-3 border-t border-border">
+                <span className="text-muted-foreground">Método de firma</span>
+                <span className="text-foreground font-medium">
                   {getSignatureMethodLabel(receipt.signature_method)}
                 </span>
               </div>
 
               {/* Firma visual si existe */}
               {receipt.typed_signature && (
-                <div className="text-center py-4 border-t border-white/10">
-                  <p className="text-2xl font-serif italic text-white">
+                <div className="text-center py-4 border-t border-border">
+                  <p className="text-2xl font-serif italic text-foreground">
                     {receipt.typed_signature}
                   </p>
-                  <p className="text-xs text-white/40 mt-2">Firma escrita</p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">Firma escrita</p>
                 </div>
               )}
 
               {receipt.signature_image_url && (
-                <div className="text-center py-4 border-t border-white/10">
+                <div className="text-center py-4 border-t border-border">
                   <img
                     src={receipt.signature_image_url}
                     alt="Firma"
                     className="max-h-20 mx-auto"
                   />
-                  <p className="text-xs text-white/40 mt-2">Firma dibujada</p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">Firma dibujada</p>
                 </div>
               )}
 
               {/* Declaración legal */}
-              <div className="bg-purple-500/10 rounded-sm p-4 text-sm text-white/70">
+              <div className="bg-purple-500/10 rounded-sm p-4 text-sm text-muted-foreground">
                 <p>
                   Este documento fue firmado electrónicamente a través de KREOON,
                   operada por SICOMMER INT LLC. La firma electrónica tiene plena
@@ -182,7 +182,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
               </div>
 
               {/* ID de firma */}
-              <div className="text-center text-xs text-white/30">
+              <div className="text-center text-xs text-muted-foreground/70">
                 ID de firma: {receipt.id}
               </div>
 
@@ -190,7 +190,7 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
               <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
-                  className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
+                  className="flex-1 bg-muted/50 border-border text-foreground hover:bg-muted"
                   onClick={() => {
                     // TODO: Implementar descarga de PDF
                     alert('Próximamente: Descarga de comprobante PDF');
@@ -208,14 +208,14 @@ export function SignatureReceipt({ signatureId, isOpen, onClose }: SignatureRece
               </div>
             </>
           ) : (
-            <div className="text-center py-12 text-white/40">
+            <div className="text-center py-12 text-muted-foreground/70">
               <p>No se pudo cargar el comprobante</p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-center gap-2 p-4 border-t border-white/10 text-xs text-white/30">
+        <div className="flex items-center justify-center gap-2 p-4 border-t border-border text-xs text-muted-foreground/70">
           <Shield className="w-3 h-3" />
           Firma electrónica segura — SICOMMER INT LLC
         </div>

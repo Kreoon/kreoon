@@ -50,7 +50,7 @@ export function ModuleEditorPanel({
     <div className="p-6 max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-zinc-400" />
+          <BookOpen className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-bold truncate max-w-xs">{title || 'Módulo'}</h2>
         </div>
         <div className="flex items-center gap-3">
@@ -63,7 +63,7 @@ export function ModuleEditorPanel({
 
       <div className="space-y-1">
         <Label>Título del módulo</Label>
-        <Input value={title} onChange={(e) => { setTitle(e.target.value); setSaveState('idle'); }} className="bg-white/5 border-white/10" />
+        <Input value={title} onChange={(e) => { setTitle(e.target.value); setSaveState('idle'); }} className="bg-muted/50 border-border" />
       </div>
 
       {/* Condiciones de desbloqueo del módulo */}
@@ -76,7 +76,7 @@ export function ModuleEditorPanel({
         onLogicChange={setUnlockLogic}
         accentColor={accentColor}
       />
-      <p className="text-[11px] text-zinc-500 -mt-2">
+      <p className="text-[11px] text-muted-foreground -mt-2">
         Las condiciones se guardan al instante. La lógica Y/O se aplica al pulsar «Guardar».
       </p>
     </div>

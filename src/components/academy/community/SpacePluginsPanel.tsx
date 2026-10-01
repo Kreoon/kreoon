@@ -30,7 +30,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
     update.mutate({ spaceId, updates: draft });
   }
 
-  if (isLoading) return <div className="text-zinc-500">Cargando plugins...</div>;
+  if (isLoading) return <div className="text-muted-foreground">Cargando plugins...</div>;
 
   return (
     <div className="space-y-4">
@@ -61,7 +61,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
             max={10}
             value={draft.unlock_chat_level ?? 0}
             onChange={(e) => set('unlock_chat_level', Number(e.target.value))}
-            className="bg-black/30 border-white/10 max-w-xs mt-1"
+            className="bg-muted border-border max-w-xs mt-1"
           />
         </div>
       </PluginSection>
@@ -79,7 +79,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           max={10}
           value={draft.unlock_posting_level ?? 0}
           onChange={(e) => set('unlock_posting_level', Number(e.target.value))}
-          className="bg-black/30 border-white/10 max-w-xs"
+          className="bg-muted border-border max-w-xs"
         />
       </PluginSection>
 
@@ -92,10 +92,10 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
         <textarea
           value={draft.auto_dm_message ?? ''}
           onChange={(e) => set('auto_dm_message', e.target.value)}
-          className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-24 focus:outline-none focus:border-purple-500/50"
+          className="w-full bg-muted border border-border rounded p-2 text-sm h-24 focus:outline-none focus:border-primary/50"
           placeholder="¡Hola {nombre}! Bienvenido a {space}..."
         />
-        <p className="mt-2 text-xs text-zinc-500">
+        <p className="mt-2 text-xs text-muted-foreground">
           Variables: <code>{'{nombre}'}</code>, <code>{'{space}'}</code>,{' '}
           <code>{'{curso_destacado}'}</code>, <code>{'{link_comunidad}'}</code>
         </p>
@@ -111,7 +111,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           value={draft.onboarding_video_url ?? ''}
           onChange={(e) => set('onboarding_video_url', e.target.value)}
           placeholder="URL del video (YouTube/Vimeo/Bunny)"
-          className="bg-black/30 border-white/10"
+          className="bg-muted border-border"
         />
       </PluginSection>
 
@@ -125,7 +125,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           value={draft.cancellation_video_url ?? ''}
           onChange={(e) => set('cancellation_video_url', e.target.value)}
           placeholder="URL del video"
-          className="bg-black/30 border-white/10"
+          className="bg-muted border-border"
         />
       </PluginSection>
 
@@ -147,7 +147,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           value={draft.zapier_webhook_url ?? ''}
           onChange={(e) => set('zapier_webhook_url', e.target.value)}
           placeholder="https://hooks.zapier.com/..."
-          className="bg-black/30 border-white/10"
+          className="bg-muted border-border"
         />
       </PluginSection>
 
@@ -162,7 +162,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           value={draft.meta_pixel_id ?? ''}
           onChange={(e) => set('meta_pixel_id', e.target.value)}
           placeholder="Pixel ID"
-          className="bg-black/30 border-white/10"
+          className="bg-muted border-border"
         />
       </PluginSection>
 
@@ -178,13 +178,13 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
             value={draft.google_ads_tag ?? ''}
             onChange={(e) => set('google_ads_tag', e.target.value)}
             placeholder="Tag ID (AW-...)"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
           <Input
             value={draft.google_ads_conversion_label ?? ''}
             onChange={(e) => set('google_ads_conversion_label', e.target.value)}
             placeholder="Conversion Label"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
         </div>
       </PluginSection>
@@ -201,7 +201,7 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
           value={draft.hyros_api_key ?? ''}
           onChange={(e) => set('hyros_api_key', e.target.value)}
           placeholder="API Key"
-          className="bg-black/30 border-white/10"
+          className="bg-muted border-border"
         />
       </PluginSection>
 
@@ -217,14 +217,14 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
             value={draft.kreoon_webhook_url ?? ''}
             onChange={(e) => set('kreoon_webhook_url', e.target.value)}
             placeholder="https://tu-endpoint.com/hook"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
           <Input
             type="password"
             value={draft.kreoon_webhook_secret ?? ''}
             onChange={(e) => set('kreoon_webhook_secret', e.target.value)}
             placeholder="Secret (HMAC)"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
         </div>
       </PluginSection>
@@ -242,11 +242,11 @@ export function SpacePluginsPanel({ spaceId, isPro = true }: SpacePluginsPanelPr
         />
       </PluginSection>
 
-      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-[#0a0a0f]/95 backdrop-blur border-t border-white/10">
+      <div className="sticky bottom-0 -mx-4 px-4 py-3 bg-background/95 backdrop-blur border-t border-border">
         <Button
           onClick={save}
           disabled={update.isPending}
-          className="bg-purple-500 hover:bg-purple-600 text-white"
+          className="bg-primary hover:bg-primary/90 text-white"
         >
           {update.isPending ? 'Guardando...' : 'Guardar cambios'}
         </Button>
@@ -275,7 +275,7 @@ function PluginSection({
   return (
     <Card
       className={cn(
-        'p-5 bg-white/5 border-white/10',
+        'p-5 bg-muted/50 border-border',
         proRequired && 'opacity-60 pointer-events-none'
       )}
     >
@@ -284,19 +284,19 @@ function PluginSection({
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-sm">{title}</h3>
             {proRequired && (
-              <span className="text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                 <Crown className="h-2.5 w-2.5" /> Pro
               </span>
             )}
           </div>
-          <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
         </div>
         {!hideToggle && (
           <button
             onClick={() => onToggle(!enabled)}
             className={cn(
               'relative w-10 h-5 rounded-full transition-colors flex-shrink-0',
-              enabled ? 'bg-purple-500' : 'bg-zinc-700'
+              enabled ? 'bg-primary' : 'bg-muted'
             )}
             disabled={proRequired}
           >
@@ -324,21 +324,21 @@ function MembershipQuestionsEditor({
   return (
     <div className="space-y-2">
       {items.map((q, i) => (
-        <div key={q.id} className="flex gap-2 items-start p-2 rounded bg-black/30 border border-white/5">
+        <div key={q.id} className="flex gap-2 items-start p-2 rounded bg-muted border border-border">
           <Input
             value={q.question}
             onChange={(e) =>
               onChange(items.map((x, j) => (j === i ? { ...x, question: e.target.value } : x)))
             }
             placeholder="Pregunta"
-            className="bg-transparent border-white/10 flex-1"
+            className="bg-transparent border-border flex-1"
           />
           <select
             value={q.type}
             onChange={(e) =>
               onChange(items.map((x, j) => (j === i ? { ...x, type: e.target.value as any } : x)))
             }
-            className="bg-black/30 border border-white/10 rounded px-2 py-1 text-xs"
+            className="bg-muted border border-border rounded px-2 py-1 text-xs"
           >
             <option value="text">Texto corto</option>
             <option value="textarea">Texto largo</option>
@@ -346,7 +346,7 @@ function MembershipQuestionsEditor({
           </select>
           <button
             onClick={() => onChange(items.filter((_, j) => j !== i))}
-            className="text-rose-400 hover:text-rose-300 p-1"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 p-1"
           >
             <X className="h-4 w-4" />
           </button>
@@ -359,7 +359,7 @@ function MembershipQuestionsEditor({
             { id: crypto.randomUUID(), question: '', type: 'text', required: false },
           ])
         }
-        className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+        className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
       >
         <Plus className="h-3.5 w-3.5" /> Agregar pregunta
       </button>
@@ -384,7 +384,7 @@ function SidebarLinksEditor({
               onChange(items.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
             }
             placeholder="Label"
-            className="bg-black/30 border-white/10 max-w-xs"
+            className="bg-muted border-border max-w-xs"
           />
           <Input
             value={l.url}
@@ -392,11 +392,11 @@ function SidebarLinksEditor({
               onChange(items.map((x, j) => (j === i ? { ...x, url: e.target.value } : x)))
             }
             placeholder="URL"
-            className="bg-black/30 border-white/10 flex-1"
+            className="bg-muted border-border flex-1"
           />
           <button
             onClick={() => onChange(items.filter((_, j) => j !== i))}
-            className="text-rose-400 hover:text-rose-300 p-1"
+            className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 p-1"
           >
             <X className="h-4 w-4" />
           </button>
@@ -404,7 +404,7 @@ function SidebarLinksEditor({
       ))}
       <button
         onClick={() => onChange([...items, { label: '', url: '', icon: 'link' }])}
-        className="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1"
+        className="text-sm text-primary hover:text-primary/80 flex items-center gap-1"
       >
         <Plus className="h-3.5 w-3.5" /> Agregar link
       </button>

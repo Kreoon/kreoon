@@ -119,7 +119,7 @@ export function FounderBadge({
         </TooltipTrigger>
         <TooltipContent 
           side="top" 
-          className="glass-card border-white/20 bg-background/95"
+          className="glass-card border-border bg-background/95"
         >
           <div className="flex items-center gap-2">
             <Icon className="h-4 w-4 text-amber-400" />

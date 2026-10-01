@@ -30,7 +30,7 @@ export function AuthTabs({
   return (
     <div
       className={cn(
-        "relative flex w-full rounded-full bg-kreoon-bg-secondary p-1",
+        "relative flex w-full rounded-full bg-muted p-1",
         "transition-[box-shadow] duration-300",
         className,
       )}
@@ -68,8 +68,8 @@ export function AuthTabs({
               "relative z-10 flex flex-1 items-center justify-center rounded-full py-2.5 text-sm font-medium",
               "transition-colors duration-300",
               activeTab === tab.id
-                ? "text-kreoon-text-primary"
-                : "text-kreoon-text-secondary hover:text-kreoon-text-primary/90",
+                ? "text-white"
+                : "text-muted-foreground hover:text-foreground/90",
             )}
           >
             {tab.label}

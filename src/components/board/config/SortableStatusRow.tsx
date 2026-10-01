@@ -36,7 +36,7 @@ export function SortableStatusRow({ id, children, isActive = true }: SortableSta
     >
       <button
         type="button"
-        className="touch-none cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-white/10 text-muted-foreground"
+        className="touch-none cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-muted text-muted-foreground"
         {...attributes}
         {...listeners}
         aria-label="Arrastrar para reordenar"

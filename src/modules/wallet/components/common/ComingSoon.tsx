@@ -55,7 +55,7 @@ export function ComingSoonBanner({
             <Badge
               variant="outline"
               className={cn(
-                'bg-amber-500/10 border-amber-500/30 text-amber-400 cursor-help',
+                'bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400 cursor-help',
                 className
               )}
             >
@@ -90,19 +90,19 @@ export function ComingSoonBanner({
       >
         <div className="flex items-center gap-3">
           <div className="p-1.5 rounded-sm bg-amber-500/20">
-            <Construction className="h-4 w-4 text-amber-400" />
+            <Construction className="h-4 w-4 text-amber-700 dark:text-amber-400" />
           </div>
           <div>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-foreground">
               {config.title}:{' '}
             </span>
-            <span className="text-sm text-[hsl(270,30%,70%)]">
+            <span className="text-sm text-muted-foreground">
               {config.description.slice(0, 80)}...
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="border-amber-500/30 text-amber-400">
+          <Badge variant="outline" className="border-amber-500/30 text-amber-700 dark:text-amber-400">
             {config.estimatedLaunch}
           </Badge>
           {dismissable && (
@@ -156,14 +156,14 @@ export function ComingSoonBanner({
           {/* Icon and Title */}
           <div className="flex items-start gap-4">
             <div className="p-3 rounded-sm bg-gradient-to-br from-amber-500/20 to-[hsl(270,100%,60%,0.2)] animate-pulse">
-              <Rocket className="h-8 w-8 text-amber-400" />
+              <Rocket className="h-8 w-8 text-amber-700 dark:text-amber-400" />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-xl font-bold text-white">{config.title}</h3>
+                <h3 className="text-xl font-bold text-foreground">{config.title}</h3>
                 <Badge
                   variant="outline"
-                  className="border-amber-500/30 text-amber-400"
+                  className="border-amber-500/30 text-amber-700 dark:text-amber-400"
                 >
                   <Clock className="h-3 w-3 mr-1" />
                   {config.estimatedLaunch}
@@ -192,8 +192,8 @@ export function ComingSoonBanner({
                   transition={{ delay: index * 0.1 }}
                   className="flex items-center gap-2"
                 >
-                  <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span className="text-sm text-[hsl(270,30%,70%)]">{feature}</span>
+                  <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">{feature}</span>
                 </motion.div>
               ))}
             </div>
@@ -230,11 +230,11 @@ export function ComingSoonOverlay({
       <div className="opacity-60 pointer-events-none select-none">{children}</div>
 
       {/* Overlay */}
-      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)]-[1px] rounded-sm">
+      <div className="absolute inset-0 flex items-center justify-center bg-[hsl(270,50%,5%,0.3)] rounded-sm">
         <div className="text-center p-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30">
-            <Construction className="h-4 w-4 text-amber-400" />
-            <span className="text-sm font-medium text-amber-400">Próximamente</span>
+            <Construction className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+            <span className="text-sm font-medium text-amber-700 dark:text-amber-400">Próximamente</span>
           </div>
           <p className="text-xs text-muted-foreground mt-2 max-w-xs">{message}</p>
         </div>
@@ -271,7 +271,7 @@ export function ComingSoonTooltip({
         </TooltipTrigger>
         <TooltipContent>
           <div className="flex items-center gap-2">
-            <Construction className="h-3 w-3 text-amber-400" />
+            <Construction className="h-3 w-3 text-amber-700 dark:text-amber-400" />
             <span>{message}</span>
           </div>
         </TooltipContent>
@@ -305,7 +305,7 @@ export function DemoModeIndicator({ className }: DemoModeIndicatorProps) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
             </span>
-            <span className="text-xs font-medium text-amber-400">Modo Demo</span>
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Modo Demo</span>
           </div>
         </TooltipTrigger>
         <TooltipContent side="left">

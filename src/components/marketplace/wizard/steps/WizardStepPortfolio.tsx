@@ -59,7 +59,7 @@ function SortablePortfolioItem({
       style={style}
       className={cn(
         'relative group rounded-sm overflow-hidden border transition-all',
-        isDragging ? 'z-50 border-purple-500 shadow-2xl shadow-purple-500/20' : 'border-white/10',
+        isDragging ? 'z-50 border-purple-500 shadow-2xl shadow-purple-500/20' : 'border-border',
         item.is_featured && 'ring-2 ring-yellow-500/50'
       )}
     >
@@ -72,7 +72,7 @@ function SortablePortfolioItem({
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-600">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
             {item.media_type === 'video' ? <Film className="h-8 w-8" /> : <ImageIcon className="h-8 w-8" />}
             <span className="text-[10px]">Procesando...</span>
           </div>
@@ -123,15 +123,15 @@ function SortablePortfolioItem({
             onClick={() => onDelete(item.id)}
             className="p-2 bg-red-500/40 rounded-sm hover:bg-red-500/60"
           >
-            <Trash2 className="h-4 w-4 text-white" />
+            <Trash2 className="h-4 w-4 text-foreground" />
           </button>
         </div>
       </div>
 
       {/* Title */}
       {item.title && (
-        <div className="p-2 bg-white/5">
-          <p className="text-white text-[10px] font-medium truncate">{item.title}</p>
+        <div className="p-2 bg-muted/50">
+          <p className="text-foreground text-[10px] font-medium truncate">{item.title}</p>
         </div>
       )}
     </div>
@@ -196,8 +196,8 @@ export function WizardStepPortfolio({
     <div className="max-w-3xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Tu portafolio</h2>
-        <p className="text-gray-400 text-sm">
+        <h2 className="text-2xl font-bold text-foreground">Tu portafolio</h2>
+        <p className="text-muted-foreground text-sm">
           Sube tu mejor trabajo. Esto sera lo primero que vean en tu perfil.
         </p>
       </div>
@@ -211,7 +211,7 @@ export function WizardStepPortfolio({
           'border-2 border-dashed rounded-sm p-8 text-center transition-all cursor-pointer',
           dragActive
             ? 'border-purple-500 bg-purple-500/10'
-            : 'border-white/20 bg-white/5 hover:border-white/30 hover:bg-white/10'
+            : 'border-border bg-muted/50 hover:border-border hover:bg-muted'
         )}
         onClick={() => document.getElementById('portfolio-file-input')?.click()}
       >
@@ -226,8 +226,8 @@ export function WizardStepPortfolio({
               <Upload className="h-7 w-7 text-purple-400" />
             </div>
             <div>
-              <p className="text-white font-medium">Arrastra archivos o haz clic para subir</p>
-              <p className="text-gray-500 text-xs mt-1">Videos (MP4, MOV, WebM) e imagenes (JPG, PNG, WebP)</p>
+              <p className="text-foreground font-medium">Arrastra archivos o haz clic para subir</p>
+              <p className="text-muted-foreground text-xs mt-1">Videos (MP4, MOV, WebM) e imagenes (JPG, PNG, WebP)</p>
             </div>
           </div>
         )}
@@ -246,10 +246,10 @@ export function WizardStepPortfolio({
       {items.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-medium text-sm">
+            <h3 className="text-foreground font-medium text-sm">
               {items.length} {items.length === 1 ? 'item' : 'items'} en tu portafolio
             </h3>
-            <p className="text-gray-500 text-xs">Arrastra para reordenar</p>
+            <p className="text-muted-foreground text-xs">Arrastra para reordenar</p>
           </div>
 
           <DndContext
@@ -275,8 +275,8 @@ export function WizardStepPortfolio({
 
       {/* Tips */}
       {items.length === 0 && !adding && (
-        <div className="p-4 rounded-sm bg-white/5 border border-white/10">
-          <p className="text-gray-400 text-sm">
+        <div className="p-4 rounded-sm bg-muted/50 border border-border">
+          <p className="text-muted-foreground text-sm">
             <strong className="text-foreground/80">Tips:</strong> Sube al menos 3 piezas de tu mejor trabajo.
             Los videos verticales (9:16) tienen mejor rendimiento. Puedes destacar hasta 3 items.
           </p>

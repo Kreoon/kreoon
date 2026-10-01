@@ -93,7 +93,7 @@ export function PhoneInput({
 
           {/* Dropdown de países */}
           {isOpen && (
-            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-hidden rounded-sm border border-white/10 bg-slate-900 shadow-xl">
+            <div className="absolute z-50 mt-1 w-64 max-h-64 overflow-hidden rounded-sm border border-white/10 bg-card shadow-xl">
               {/* Búsqueda */}
               <div className="p-2 border-b border-white/10">
                 <input

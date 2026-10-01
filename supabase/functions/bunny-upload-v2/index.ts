@@ -1,10 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  createProxyToken,
+  forwardPutToBunny,
+  functionUrl,
+  getRequestUser,
+  jsonResponse,
+  legacyCompatEnabled,
+  signTusUpload,
+  uploadCorsHeaders,
+  verifyProxyToken,
+} from "../_shared/bunnyUploadSecurity.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const FN = "bunny-upload-v2";
+const LEGACY_STREAM_MAX_BYTES = 5 * 1024 * 1024 * 1024;
 
 interface BunnyVideoResponse {
   guid: string;
@@ -13,13 +22,16 @@ interface BunnyVideoResponse {
 }
 
 /**
- * Bunny Upload V2 - Supports two modes:
- * 1. FormData (multipart/form-data): Receives file + metadata, uploads to Bunny server-side (proxy)
- * 2. JSON (application/json): Creates video entry and returns upload credentials (legacy)
+ * Bunny Upload V2
+ * 1. JSON (application/json): crea el video y devuelve credenciales TUS firmadas (`tus`).
+ *    Nunca devuelve la API key.
+ * 2. FormData (multipart/form-data): recibe el archivo y lo sube a Bunny desde el servidor.
+ * 3. PUT: proxy legado (frontend antiguo) con token de un solo video en `AccessKey`.
+ * Todas las rutas (salvo el PUT con token) exigen JWT de usuario válido.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: uploadCorsHeaders });
   }
 
   try {
@@ -29,6 +41,28 @@ serve(async (req) => {
 
     if (!bunnyApiKey || !bunnyLibraryId) {
       throw new Error("Missing BUNNY_API_KEY or BUNNY_LIBRARY_ID");
+    }
+
+    // === PUT: proxy legado ===
+    if (req.method === "PUT") {
+      const token = req.headers.get("AccessKey") || "";
+      const payload = await verifyProxyToken(token, FN);
+      if (!payload || payload.kind !== "stream") {
+        return jsonResponse({ success: false, error: "Token de subida inválido o vencido" }, 401);
+      }
+      return await forwardPutToBunny(
+        req,
+        `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${payload.target}`,
+        bunnyApiKey,
+        payload.max,
+        "application/octet-stream",
+      );
+    }
+
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const user = await getRequestUser(req, admin);
+    if (!user) {
+      return jsonResponse({ success: false, error: "Unauthorized" }, 401);
     }
 
     const contentType = req.headers.get("content-type") || "";
@@ -45,24 +79,17 @@ serve(async (req) => {
       folder = (formData.get("folder") as string) || "uploads";
 
       if (!file) {
-        return new Response(
-          JSON.stringify({ success: false, error: "file is required in FormData" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return jsonResponse({ success: false, error: "file is required in FormData" }, 400);
       }
 
       console.log(`[bunny-upload-v2] FormData upload: ${fileName}, size: ${file.size}, folder: ${folder}`);
     } else {
-      // === JSON path: return upload credentials (existing behavior) ===
       const body = await req.json();
       fileName = body.fileName;
       folder = body.folder || "uploads";
 
       if (!fileName) {
-        return new Response(
-          JSON.stringify({ success: false, error: "fileName is required" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        return jsonResponse({ success: false, error: "fileName is required" }, 400);
       }
     }
 
@@ -73,8 +100,9 @@ serve(async (req) => {
       .replace(/\.[^/.]+$/, "")
       .replace(/[^a-zA-Z0-9-_]/g, "-")
       .substring(0, 30);
+    const safeFolder = String(folder).replace(/[^a-zA-Z0-9-_/]/g, "-").substring(0, 60);
 
-    const title = `${folder}/${safeName}-${timestamp}-${randomId}`;
+    const title = `${safeFolder}/${safeName}-${timestamp}-${randomId}`;
 
     // Step 1: Create video entry in Bunny Stream
     const createResponse = await fetch(
@@ -92,13 +120,12 @@ serve(async (req) => {
     if (!createResponse.ok) {
       const errorText = await createResponse.text();
       console.error("[bunny-upload-v2] Create video error:", errorText);
-      throw new Error(`Failed to create video: ${errorText}`);
+      return jsonResponse({ success: false, error: "No se pudo crear el video en Bunny" }, 502);
     }
 
     const videoData: BunnyVideoResponse = await createResponse.json();
-    console.log("[bunny-upload-v2] Created video:", videoData.guid);
+    console.log("[bunny-upload-v2] Created video:", videoData.guid, "user:", user.id);
 
-    // Generate URLs
     const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`;
     const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`;
     const thumbnailUrl = bunnyCdnHostname
@@ -107,8 +134,6 @@ serve(async (req) => {
 
     // If FormData with file: upload to Bunny server-side (proxy)
     if (file) {
-      console.log("[bunny-upload-v2] Uploading file to Bunny server-side...");
-
       const uploadResponse = await fetch(uploadUrl, {
         method: "PUT",
         headers: {
@@ -124,42 +149,44 @@ serve(async (req) => {
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
         console.error("[bunny-upload-v2] Upload to Bunny error:", errorText);
-        throw new Error(`Failed to upload to Bunny: ${errorText}`);
+        return jsonResponse({ success: false, error: "No se pudo subir el video a Bunny" }, 502);
       }
 
-      console.log("[bunny-upload-v2] File uploaded successfully to Bunny:", videoData.guid);
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          videoId: videoData.guid,
-          embedUrl,
-          thumbnailUrl,
-          uploaded: true,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // JSON path: return upload credentials for client-side upload
-    return new Response(
-      JSON.stringify({
+      return jsonResponse({
         success: true,
         videoId: videoData.guid,
-        uploadUrl,
         embedUrl,
         thumbnailUrl,
-        accessKey: bunnyApiKey,
-        filePath: title,
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+        uploaded: true,
+      });
+    }
+
+    // JSON path: credenciales TUS firmadas (sin API key)
+    const response: Record<string, unknown> = {
+      success: true,
+      videoId: videoData.guid,
+      embedUrl,
+      thumbnailUrl,
+      filePath: title,
+      tus: await signTusUpload(bunnyLibraryId, bunnyApiKey, videoData.guid),
+    };
+
+    if (legacyCompatEnabled()) {
+      // Frontend antiguo: PUT a uploadUrl con AccessKey -> ahora es esta función + token.
+      response.uploadUrl = functionUrl(FN);
+      response.accessKey = await createProxyToken({
+        fn: FN,
+        kind: "stream",
+        target: videoData.guid,
+        max: LEGACY_STREAM_MAX_BYTES,
+        uid: user.id,
+      });
+    }
+
+    return jsonResponse(response);
 
   } catch (error) {
     console.error("[bunny-upload-v2] Error:", error);
-    return new Response(
-      JSON.stringify({ success: false, error: error.message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return jsonResponse({ success: false, error: error instanceof Error ? error.message : "Error interno" }, 500);
   }
 });

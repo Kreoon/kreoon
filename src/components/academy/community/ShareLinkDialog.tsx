@@ -82,12 +82,12 @@ export function ShareLinkDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl border-2 border-white/10 bg-kreoon-bg-card">
+      <DialogContent className="max-w-sm rounded-3xl border-2 border-border bg-card">
         <DialogHeader>
-          <DialogTitle className="text-xl font-extrabold text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-extrabold text-foreground flex items-center gap-2">
             <span aria-hidden="true">📢</span> Compartir
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-400">
+          <DialogDescription className="text-sm text-muted-foreground">
             {rewardCopy ? (
               <>
                 Comparte y gana{' '}
@@ -111,8 +111,8 @@ export function ShareLinkDialog({
             }}
           >
             <Sparkles className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: KREOON_PURPLE }} />
-            <div className="text-xs text-zinc-300 leading-relaxed">
-              <strong className="text-white">+100 XP</strong> cuando alguien que use tu link se una a
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              <strong className="text-foreground">+100 XP</strong> cuando alguien que use tu link se una a
               la academia. A los <strong>5 referidos</strong> desbloqueas 🤝 <em>Conector</em>.
             </div>
           </div>
@@ -124,29 +124,29 @@ export function ShareLinkDialog({
             <button
               key={c.key}
               onClick={() => share(c.key)}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all motion-safe:hover:scale-[1.02]"
+              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 border-border bg-muted/30 hover:bg-muted/60 hover:border-border transition-all motion-safe:hover:scale-[1.02]"
               aria-label={`Compartir por ${c.label}`}
             >
               <span className="text-3xl" aria-hidden="true">
                 {c.emoji}
               </span>
-              <span className="text-[11px] font-bold text-zinc-200">{c.label}</span>
+              <span className="text-[11px] font-bold text-foreground">{c.label}</span>
             </button>
           ))}
         </div>
 
         {/* Preview del link */}
-        <div className="rounded-2xl bg-white/[0.03] border border-white/5 px-3 py-2 text-[11px] text-zinc-400 truncate font-mono">
+        <div className="rounded-2xl bg-muted/30 border border-border px-3 py-2 text-[11px] text-muted-foreground truncate font-mono">
           {url}
         </div>
 
         <Button
           onClick={() => share('copy')}
-          className="w-full h-11 rounded-2xl border-2 border-white/15 hover:bg-white/5 font-bold mt-1 bg-transparent text-zinc-100"
+          className="w-full h-11 rounded-2xl border-2 border-border hover:bg-muted/50 font-bold mt-1 bg-transparent text-foreground"
         >
           {copied ? (
             <>
-              <Check className="h-4 w-4 mr-2 text-emerald-400" /> Copiado ✓
+              <Check className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" /> Copiado ✓
             </>
           ) : (
             <>

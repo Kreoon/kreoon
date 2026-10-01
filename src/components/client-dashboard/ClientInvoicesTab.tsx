@@ -41,7 +41,7 @@ function fmtDate(d: string) {
 }
 
 function StatusBadge({ status, map }: { status: string; map: Record<string, { label: string; color: string }> }) {
-  const cfg = map[status] ?? { label: status, color: 'text-white/50 bg-white/10' };
+  const cfg = map[status] ?? { label: status, color: 'text-muted-foreground bg-muted' };
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold', cfg.color)}>
       {cfg.label}
@@ -63,13 +63,13 @@ function ClosingRow({ closingId, closing, clientName, orgName }: {
   }
 
   return (
-    <div className="flex items-center justify-between py-3 px-4 rounded-xl border border-white/10 bg-white/5 hover:bg-white/8 transition-colors gap-3">
+    <div className="flex items-center justify-between py-3 px-4 rounded-xl border border-border bg-muted/50 hover:bg-muted transition-colors gap-3">
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-white truncate">{closing?.name}</p>
-        <p className="text-xs text-white/50 mt-0.5">{closing ? fmtDate(closing.created_at) : ''}</p>
+        <p className="text-sm font-medium text-foreground truncate">{closing?.name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{closing ? fmtDate(closing.created_at) : ''}</p>
       </div>
       <StatusBadge status={closing?.status ?? 'draft'} map={CLOSING_STATUS} />
-      <p className="text-sm font-bold text-white whitespace-nowrap">
+      <p className="text-sm font-bold text-foreground whitespace-nowrap">
         {new Intl.NumberFormat('es-CO', { style: 'currency', currency: closing?.currency ?? 'COP', maximumFractionDigits: 0 }).format(closing?.total_amount ?? 0)}
       </p>
       <Button
@@ -114,41 +114,41 @@ function PackageRow({ pkg, clientName, orgName }: {
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: pkg.currency, maximumFractionDigits: 0 }).format(n);
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+    <div className="rounded-xl border border-border bg-muted/50 overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center gap-3 py-3 px-4 hover:bg-white/8 transition-colors text-left"
+        className="w-full flex items-center gap-3 py-3 px-4 hover:bg-muted transition-colors text-left"
       >
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{pkg.name}</p>
+          <p className="text-sm font-medium text-foreground truncate">{pkg.name}</p>
           <div className="flex items-center gap-3 mt-1">
-            <div className="flex-1 bg-white/10 rounded-full h-1.5 max-w-[120px]">
+            <div className="flex-1 bg-muted rounded-full h-1.5 max-w-[120px]">
               <div className="bg-violet-500 rounded-full h-1.5 transition-all" style={{ width: `${pct}%` }} />
             </div>
-            <span className="text-xs text-white/50">{pct}% pagado</span>
+            <span className="text-xs text-muted-foreground">{pct}% pagado</span>
           </div>
         </div>
         <StatusBadge status={pkg.payment_status} map={PKG_STATUS} />
         <div className="text-right shrink-0">
-          <p className="text-xs text-white/40">Saldo</p>
+          <p className="text-xs text-muted-foreground/70">Saldo</p>
           <p className={cn('text-sm font-bold', pkg.paid_amount >= pkg.total_value ? 'text-green-400' : 'text-red-400')}>
             {fmt(Math.max(0, pkg.total_value - pkg.paid_amount))}
           </p>
         </div>
-        {expanded ? <ChevronUp className="h-4 w-4 text-white/40 shrink-0" /> : <ChevronDown className="h-4 w-4 text-white/40 shrink-0" />}
+        {expanded ? <ChevronUp className="h-4 w-4 text-muted-foreground/70 shrink-0" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/70 shrink-0" />}
       </button>
 
       {expanded && (
-        <div className="border-t border-white/10 px-4 pb-4 pt-3 space-y-3">
+        <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Valor total', value: fmt(pkg.total_value), color: 'text-white' },
+              { label: 'Valor total', value: fmt(pkg.total_value), color: 'text-foreground' },
               { label: 'Pagado', value: fmt(pkg.paid_amount), color: 'text-green-400' },
               { label: 'Saldo', value: fmt(Math.max(0, pkg.total_value - pkg.paid_amount)), color: pkg.paid_amount >= pkg.total_value ? 'text-green-400' : 'text-red-400' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="bg-white/5 rounded-lg p-2.5">
-                <p className="text-xs text-white/40 mb-1">{label}</p>
+              <div key={label} className="bg-muted/50 rounded-lg p-2.5">
+                <p className="text-xs text-muted-foreground/70 mb-1">{label}</p>
                 <p className={cn('text-sm font-bold', color)}>{value}</p>
               </div>
             ))}
@@ -156,15 +156,15 @@ function PackageRow({ pkg, clientName, orgName }: {
 
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
-              <Loader2 className="h-4 w-4 animate-spin text-white/40" />
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/70" />
             </div>
           ) : payments.length > 0 ? (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Historial de pagos</p>
+              <p className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">Historial de pagos</p>
               {payments.map((p) => (
-                <div key={p.id} className="flex items-center justify-between text-sm py-1.5 border-b border-white/5 last:border-0">
-                  <span className="text-white/60 text-xs">{fmtDate(p.payment_date)}</span>
-                  <span className="text-white/50 text-xs capitalize">{p.payment_method}</span>
+                <div key={p.id} className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 last:border-0">
+                  <span className="text-muted-foreground text-xs">{fmtDate(p.payment_date)}</span>
+                  <span className="text-muted-foreground text-xs capitalize">{p.payment_method}</span>
                   <span className="text-green-400 font-semibold">
                     {new Intl.NumberFormat('es-CO', { style: 'currency', currency: p.currency, maximumFractionDigits: 0 }).format(p.amount)}
                   </span>
@@ -172,7 +172,7 @@ function PackageRow({ pkg, clientName, orgName }: {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-white/40 text-center py-2">Sin pagos registrados</p>
+            <p className="text-xs text-muted-foreground/70 text-center py-2">Sin pagos registrados</p>
           )}
 
           <Button
@@ -214,11 +214,11 @@ export function ClientInvoicesTab({ clientId, clientName, orgName }: ClientInvoi
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Receipt className="h-5 w-5 text-violet-400" />
             Mis Facturas
           </h2>
-          <p className="text-sm text-white/50 mt-1">Descarga tus cobros, paquetes y estado de cuenta</p>
+          <p className="text-sm text-muted-foreground mt-1">Descarga tus cobros, paquetes y estado de cuenta</p>
         </div>
         <Button
           onClick={handleAccountStatement}
@@ -232,16 +232,16 @@ export function ClientInvoicesTab({ clientId, clientName, orgName }: ClientInvoi
 
       {/* Sección cierres */}
       <section>
-        <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
           <FileText className="h-4 w-4" />
           Cobros / Cierres
         </h3>
         {loadingClosings ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/70" />
           </div>
         ) : closings.length === 0 ? (
-          <div className="text-center py-10 text-white/40 text-sm">Sin cierres registrados</div>
+          <div className="text-center py-10 text-muted-foreground/70 text-sm">Sin cierres registrados</div>
         ) : (
           <div className="space-y-2">
             {closings.map((c) => (
@@ -259,16 +259,16 @@ export function ClientInvoicesTab({ clientId, clientName, orgName }: ClientInvoi
 
       {/* Sección paquetes */}
       <section>
-        <h3 className="text-sm font-semibold text-white/60 uppercase tracking-wider mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
           <Package className="h-4 w-4" />
           Mis Paquetes
         </h3>
         {loadingPackages ? (
           <div className="flex items-center justify-center py-10">
-            <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/70" />
           </div>
         ) : packages.length === 0 ? (
-          <div className="text-center py-10 text-white/40 text-sm">Sin paquetes contratados</div>
+          <div className="text-center py-10 text-muted-foreground/70 text-sm">Sin paquetes contratados</div>
         ) : (
           <div className="space-y-2">
             {packages.map((p) => (

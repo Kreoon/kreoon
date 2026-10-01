@@ -60,8 +60,8 @@ function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }
             <MessageCircle className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h4 className="font-medium text-sm">Boton de WhatsApp</h4>
-            <p className="text-xs text-muted-foreground">Boton flotante para contacto directo</p>
+            <h4 className="font-medium text-sm">Botón de WhatsApp</h4>
+            <p className="text-xs text-muted-foreground">Botón flotante para contacto directo</p>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ function WhatsAppButtonBlockComponent({ block, isEditing, isSelected, onUpdate }
       )}
       aria-label="Contactar por WhatsApp"
     >
-      <MessageCircle className="h-7 w-7 text-white" />
+      <MessageCircle className="h-7 w-7 text-foreground" />
 
       {/* Pulse ring animation */}
       {config.pulseAnimation && (

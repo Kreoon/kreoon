@@ -17,12 +17,10 @@ import { UnifiedKpiDialog } from '@/components/dashboard/UnifiedKpiDialog';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import type { MarketplaceProject } from '@/components/marketplace/types/marketplace';
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
-import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
 import { ClientVideoDetailSheet } from '@/components/client-dashboard/ClientVideoDetailSheet';
-import { VOCABULARIO_ROL } from '@/components/studio';
 import { KreoonEmptyState } from '@/components/ui/kreoon';
 import { cn } from '@/lib/utils';
 
@@ -189,17 +187,22 @@ export default function CreatorDashboard() {
   const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
   const pendingUSD = mktPendingByCurrency['USD'] || 0;
   const paidUSD = mktPaidByCurrency['USD'] || 0;
-  const approvedVideos = useMemo(() =>
-    [...content]
-      .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
-      .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
-      .slice(0, 6),
-  [content]);
+  // Aprobados recientes: solo los de los últimos 7, 15 o 30 días (fecha de aprobación)
+  const [approvedDays, setApprovedDays] = useState<7 | 15 | 30>(30);
+  const approvedVideos = useMemo(() => {
+    const approvedTime = (c: (typeof content)[number]) =>
+      new Date(c.approved_at || c.updated_at || c.created_at || 0).getTime();
+    const since = Date.now() - approvedDays * 86_400_000;
+    return [...content]
+      .filter(c => ['approved', 'paid', 'archived'].includes(c.status) && approvedTime(c) >= since)
+      .sort((a, b) => approvedTime(b) - approvedTime(a));
+  }, [content, approvedDays]);
+  const hasAnyApproved = content.some(c => ['approved', 'paid', 'archived'].includes(c.status));
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-zinc-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -209,17 +212,22 @@ export default function CreatorDashboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h2 className="text-xl font-bold text-zinc-900 dark:text-foreground">
             {getGreeting()}, {profile?.full_name?.split(' ')[0] || 'Creador'}
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-0.5">
-            {VOCABULARIO_ROL.creator.dashboard}
+          <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+            {(() => {
+              const porIniciar = assignedContent.length + mktAssigned.length;
+              const enProceso = inProgressContent.length + mktInProgress.length;
+              if (porIniciar > 0) return `Tienes ${porIniciar} ${porIniciar === 1 ? 'video' : 'videos'} por empezar`;
+              if (enProceso > 0) return `Tienes ${enProceso} ${enProceso === 1 ? 'video' : 'videos'} en proceso`;
+              return 'No tienes videos pendientes';
+            })()}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           {profile?.is_ambassador && <AmbassadorBadge size="md" />}
           <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
-          {targetUserId && <PortfolioButton userId={targetUserId} />}
         </div>
       </div>
 
@@ -232,8 +240,8 @@ export default function CreatorDashboard() {
             className={cn(
               'flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors',
               dashboardTab === id
-                ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
-                : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300',
+                ? 'bg-white dark:bg-muted text-zinc-900 dark:text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-zinc-700 dark:hover:text-muted-foreground',
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -245,12 +253,51 @@ export default function CreatorDashboard() {
       {/* Wallet tab */}
       {dashboardTab === 'wallet' && (
         profile?.current_organization_id && user?.id ? (
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4 md:p-6">
+          <div className="space-y-4">
+          {/* Solo lo que TalentWalletView no muestra: USD y saldo de billetera */}
+          {(pendingUSD > 0 || paidUSD > 0 || (isFreelancer && wallet)) && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {pendingUSD > 0 && (
+              <NovaKpiCard
+                title="Por Cobrar USD"
+                value={pendingUSD}
+                prefix="$"
+                icon={DollarSign}
+                variant="info"
+                subtitle={`${mktUnpaid.filter(p => p.currency === 'USD').length} ítems`}
+                onClick={() => openKpiDialog('Por Cobrar USD', [], mktUnpaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            {paidUSD > 0 && (
+              <NovaKpiCard
+                title="Cobrado USD"
+                value={paidUSD}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={`${mktPaid.filter(p => p.currency === 'USD').length} pagados`}
+                onClick={() => openKpiDialog('Cobrado USD', [], mktPaid.filter(p => p.currency === 'USD'))}
+              />
+            )}
+            {isFreelancer && wallet && (
+              <NovaKpiCard
+                title="Balance Wallet"
+                value={wallet.available_balance || 0}
+                prefix="$"
+                icon={CreditCard}
+                variant="success"
+                subtitle={(wallet.pending_balance ?? 0) > 0 ? `+ $${(wallet.pending_balance ?? 0).toLocaleString()} pendiente` : 'disponible'}
+              />
+            )}
+          </div>
+          )}
+          <div className="rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-background p-4 md:p-6">
             <TalentWalletView
               userId={targetUserId ?? user.id}
               organizationId={profile.current_organization_id}
               talentName={profile.full_name || 'Creador'}
             />
+          </div>
           </div>
         ) : (
           <div className="py-12 text-center text-sm text-muted-foreground">
@@ -279,7 +326,7 @@ export default function CreatorDashboard() {
             const roleLabel = hasEditorRole ? 'Creador & Editor' : 'Creador';
             const actionLabel = hasEditorRole ? 'graba, edita y entrega' : 'graba y entrega';
             return (
-              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 via-zinc-900/60 to-zinc-900/40 p-4">
+              <div className="relative overflow-hidden rounded-xl border border-purple-500/20 bg-gradient-to-r from-primary/10 via-card/60 to-card/40 p-4">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-transparent pointer-events-none" />
                 <div className="relative flex flex-col sm:flex-row sm:items-center gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -292,14 +339,14 @@ export default function CreatorDashboard() {
                           {roleLabel}
                         </span>
                         {totalInProgress > 0 && (
-                          <p className="text-sm font-semibold text-white">
+                          <p className="text-sm font-semibold text-foreground">
                             {totalInProgress} {totalInProgress === 1 ? 'proyecto' : 'proyectos'} en proceso
                           </p>
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                         {totalInProgress > 0 && (
-                          <p className="text-xs text-zinc-400">Es hora de {actionLabel}</p>
+                          <p className="text-xs text-muted-foreground">Es hora de {actionLabel}</p>
                         )}
                         {totalPendingCOP > 0 && (
                           <p className="text-xs font-semibold text-green-400">
@@ -327,22 +374,35 @@ export default function CreatorDashboard() {
             );
           })()}
 
-          {/* KPI Cards — Studio + Marketplace fusionados */}
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Sin nada pendiente: un mensaje claro en vez de cinco tarjetas en cero */}
+          {assignedContent.length + mktAssigned.length + inProgressContent.length + mktInProgress.length
+            + deliveredContent.length + mktDelivered.length + issueContent.length + mktNovedades.length
+            + approvedContent.length + mktApproved.length === 0 ? (
+            <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center">
+              <CheckCircle2 className="h-6 w-6 shrink-0 text-green-600" aria-hidden="true" />
+              <div className="flex-1">
+                <p className="font-semibold text-foreground">Estás al día</p>
+                <p className="text-sm text-muted-foreground">No tienes videos pendientes. Cuando te asignen uno, aparecerá aquí.</p>
+              </div>
+              <Button size="sm" variant="outline" onClick={() => navigate('/board')}>Ver mis proyectos</Button>
+            </div>
+          ) : (
+          /* KPI Cards — Studio + Marketplace fusionados */
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <NovaKpiCard
-              title="Asignados"
+              title="Por empezar"
               value={assignedContent.length + mktAssigned.length}
               icon={Video}
               variant="primary"
-              subtitle="sin iniciar"
+              subtitle="te los asignaron"
               onClick={() => openKpiDialog('Asignados', assignedContent, mktAssigned)}
             />
             <NovaKpiCard
-              title="En Proceso"
+              title="En proceso"
               value={inProgressContent.length + mktInProgress.length}
               icon={Clock}
               variant="warning"
-              subtitle="antes de entrega"
+              subtitle="grabando o editando"
               onClick={() => openKpiDialog('En Proceso', inProgressContent, mktInProgress)}
             />
             <NovaKpiCard
@@ -350,100 +410,75 @@ export default function CreatorDashboard() {
               value={deliveredContent.length + mktDelivered.length}
               icon={CheckCircle2}
               variant="success"
-              subtitle="entregados y corregidos"
+              subtitle="esperando revisión del cliente"
               onClick={() => openKpiDialog('Entregados', deliveredContent, mktDelivered)}
             />
             <NovaKpiCard
-              title="Novedades"
+              title="Requieren tu atención"
               value={issueContent.length + mktNovedades.length}
               icon={AlertTriangle}
               variant="danger"
-              subtitle="requieren atención"
+              subtitle="hay algo por corregir"
               onClick={() => openKpiDialog('Novedades', issueContent, mktNovedades)}
             />
             <NovaKpiCard
-              title="Aprobados"
+              title="Esperando pago"
               value={approvedContent.length + mktApproved.length}
               icon={CheckCircle2}
               variant="success"
-              subtitle="pendientes de cobro"
+              subtitle="aprobados, falta el pago"
               onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
             />
-            <NovaKpiCard
-              title="Por Cobrar COP"
-              value={totalPendingCOP}
-              prefix="$"
-              icon={DollarSign}
-              variant="info"
-              subtitle={`${unpaidContent.length + mktUnpaid.filter(p => p.currency === 'COP' || !p.currency?.startsWith('USD')).length} ítems`}
-              onClick={() => openKpiDialog('Por Cobrar', unpaidContent, mktUnpaid)}
-            />
-            {pendingUSD > 0 && (
-              <NovaKpiCard
-                title="Por Cobrar USD"
-                value={pendingUSD}
-                prefix="$"
-                icon={DollarSign}
-                variant="info"
-                subtitle={`${mktUnpaid.filter(p => p.currency === 'USD').length} ítems`}
-                onClick={() => openKpiDialog('Por Cobrar USD', [], mktUnpaid.filter(p => p.currency === 'USD'))}
-              />
-            )}
-            <NovaKpiCard
-              title="Cobrado COP"
-              value={totalPaidCOP}
-              prefix="$"
-              icon={CreditCard}
-              variant="success"
-              subtitle={`${paidContent.length + mktPaid.filter(p => (p.currency || 'USD') !== 'USD').length} pagados`}
-              onClick={() => openKpiDialog('Cobrado', paidContent, mktPaid)}
-            />
-            {paidUSD > 0 && (
-              <NovaKpiCard
-                title="Cobrado USD"
-                value={paidUSD}
-                prefix="$"
-                icon={CreditCard}
-                variant="success"
-                subtitle={`${mktPaid.filter(p => p.currency === 'USD').length} pagados`}
-                onClick={() => openKpiDialog('Cobrado USD', [], mktPaid.filter(p => p.currency === 'USD'))}
-              />
-            )}
-            {isFreelancer && wallet && (
-              <NovaKpiCard
-                title="Balance Wallet"
-                value={wallet.available_balance || 0}
-                prefix="$"
-                icon={CreditCard}
-                variant="success"
-                subtitle={(wallet.pending_balance ?? 0) > 0 ? `+ $${(wallet.pending_balance ?? 0).toLocaleString()} pendiente` : 'disponible'}
-              />
-            )}
           </div>
+          )}
 
           {/* Videos aprobados */}
-          {approvedVideos.length > 0 && (
-            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-4">
-              <div className="flex items-center justify-between mb-3">
+          {hasAnyApproved && (
+            <div className="rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-background p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">
-                    Últimos Aprobados
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
+                    Tus videos aprobados
                   </h3>
-                  <span className="text-xs text-zinc-500">({approvedVideos.length})</span>
+                  <span className="text-xs text-muted-foreground">({approvedVideos.length})</span>
                 </div>
-                <button
-                  onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
-                  className="text-xs text-purple-500 hover:text-purple-400 transition-colors"
-                >
-                  Ver todos
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex rounded-full bg-muted p-0.5" role="group" aria-label="Periodo">
+                    {([7, 15, 30] as const).map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setApprovedDays(d)}
+                        aria-pressed={approvedDays === d}
+                        className={cn(
+                          'h-7 rounded-full px-2.5 text-xs font-medium transition-colors',
+                          approvedDays === d ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {d} días
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Ver todos
+                  </button>
+                </div>
               </div>
-              <NovaVerticalVideoGrid
-                videos={approvedVideos}
-                onVideoClick={setVideoViewer}
-                maxItems={6}
-              />
+              {approvedVideos.length > 0 ? (
+                <NovaVerticalVideoGrid
+                  videos={approvedVideos}
+                  onVideoClick={setVideoViewer}
+                  maxItems={12}
+                />
+              ) : (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No tienes videos aprobados en los últimos {approvedDays} días.
+                </p>
+              )}
             </div>
           )}
 

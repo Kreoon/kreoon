@@ -6,7 +6,36 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const SPLASH_DURATION_MS = 2000;
 
+/** Rutas de entrada pública donde el splash retrasaría la acción principal. */
+const skipsSplash = (pathname: string) =>
+  pathname === "/" || pathname.startsWith("/registro") || pathname.startsWith("/bienvenida");
+
+// Kiro nuevo (render 3D de la marca). Si el archivo aún no está en public/brand/, se usa el dibujo SVG.
+const KIRO_IMAGE_SRC = "/brand/kiro.png";
+
 function KiroLoader({ size = 140 }: { size?: number }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!imageFailed) {
+    return (
+      <motion.img
+        src={KIRO_IMAGE_SRC}
+        alt=""
+        width={size}
+        height={size}
+        onError={() => setImageFailed(true)}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1, y: [0, -6, 0] }}
+        transition={{
+          scale: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: 0.5 },
+          y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+        }}
+        style={{ width: size, height: size, objectFit: "contain", filter: "drop-shadow(0 12px 24px rgba(109, 74, 255, 0.35))" }}
+      />
+    );
+  }
+
   return (
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
@@ -225,10 +254,19 @@ function KiroLoader({ size = 140 }: { size?: number }) {
 
 export function PageLoader() {
   const location = useLocation();
-  const [visible, setVisible] = useState(true);
+  const startsWithoutSplash = typeof window !== "undefined" && skipsSplash(window.location.pathname);
+  const [visible, setVisible] = useState(!startsWithoutSplash);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
+    // El splash de 2 s no aplica a la home pública ni al viaje del nuevo creador (registro →
+    // continuar → bienvenida): retrasa la acción principal y el LCP, y choca con la marca en claro.
+    if (skipsSplash(location.pathname)) {
+      setVisible(false);
+      setIsFirstLoad(false);
+      return;
+    }
+
     const isProtectedRoute = location.pathname.startsWith("/dashboard") ||
                              location.pathname.startsWith("/admin") ||
                              location.pathname.startsWith("/settings");
@@ -258,7 +296,7 @@ export function PageLoader() {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-kreoon-bg-primary"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-background"
           role="status"
           aria-live="polite"
           aria-label="Cargando"
@@ -313,7 +351,7 @@ export function PageLoader() {
             </motion.div>
 
             {/* Barra de progreso */}
-            <div className="relative w-32 h-[2px] bg-white/10 rounded-full overflow-hidden">
+            <div className="relative w-32 h-[2px] bg-foreground/10 rounded-full overflow-hidden">
               <motion.div
                 initial={{ x: "-100%" }}
                 animate={{ x: "100%" }}

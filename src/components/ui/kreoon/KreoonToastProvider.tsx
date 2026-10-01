@@ -18,7 +18,7 @@ const KREOON_TOAST_VISIBLE = 3;
 const KREOON_TOAST_GAP = 12;
 
 const toastBase =
-  "kreoon-toast !bg-kreoon-bg-card border shadow-lg rounded-sm " +
+  "kreoon-toast !bg-card border shadow-lg rounded-sm " +
   "flex flex-row items-start gap-3 p-4 min-w-[320px] max-w-[calc(100vw-2rem)] " +
   "[&[data-type=success]]:border-green-500/50 [&[data-type=success]]:[--kreoon-progress:#22c55e] " +
   "[&[data-type=error]]:border-red-500/50 [&[data-type=error]]:[--kreoon-progress:#ef4444] " +
@@ -138,7 +138,7 @@ function KreoonToastProvider({
             toast: toastBase,
             description: "text-kreoon-text-secondary text-sm mt-0.5",
             actionButton: "!bg-kreoon-purple-500 hover:!bg-kreoon-purple-400 text-white",
-            cancelButton: "!bg-kreoon-bg-secondary text-kreoon-text-secondary",
+            cancelButton: "!bg-muted text-kreoon-text-secondary",
             ...toastOptions?.classNames,
           },
           ...toastOptions,

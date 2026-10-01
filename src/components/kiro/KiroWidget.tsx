@@ -639,8 +639,10 @@ export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {})
         />
 
         {/* KIRO 3D avatar */}
+        {/* Compacto cuando está cerrado (64 px) para no tapar acciones inferiores como «Configurar»;
+            MainLayout reserva además espacio inferior (md:pb-24). Abierto conserva 100 px. */}
         <Kiro3D
-          size={100}
+          size={isOpen ? 100 : 64}
           mouseAngle={mouseAngle}
           state={kiroState}
           expression={expression}
@@ -664,7 +666,7 @@ export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {})
               'w-5 h-5 rounded-full',
               'bg-red-500 border-2 border-background',
               'flex items-center justify-center',
-              'text-[10px] font-bold text-white',
+              'text-[10px] font-bold text-foreground',
               'shadow-lg shadow-red-500/50'
             )}
           >
@@ -689,7 +691,7 @@ export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {})
             {isConnected ? (
               <Wifi className="w-2.5 h-2.5 text-green-400" />
             ) : (
-              <WifiOff className="w-2.5 h-2.5 text-gray-500" />
+              <WifiOff className="w-2.5 h-2.5 text-muted-foreground" />
             )}
           </motion.div>
         )}

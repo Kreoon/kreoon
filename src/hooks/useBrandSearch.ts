@@ -75,32 +75,18 @@ export function useBrandSearch(searchTerm: string) {
     mutationFn: async (code: string) => {
       if (!user?.id) throw new Error('No autenticado');
 
-      // Find brand by invite code
-      const { data: brand, error: findError } = await sb
-        .from('brands')
-        .select('id, name')
-        .eq('invite_code', code.trim().toUpperCase())
-        .maybeSingle();
-
-      if (findError) throw findError;
-      if (!brand) throw new Error('Codigo de invitacion no valido');
-
-      // Join directly as active member
-      const { error: joinError } = await sb
-        .from('brand_members')
-        .insert({
-          brand_id: brand.id,
-          user_id: user.id,
-          role: 'member',
-          status: 'active',
-        });
-
+      // El código se valida en el servidor (join_brand_with_code); antes se validaba en el navegador
+      const { data: brandId, error: joinError } = await sb.rpc('join_brand_with_code', { p_code: code });
       if (joinError) {
-        if (joinError.code === '23505') {
+        if (joinError.code === '23505' || /Ya perteneces/i.test(joinError.message || '')) {
           throw new Error('Ya perteneces a esta marca');
         }
+        if (/no valido/i.test(joinError.message || '')) throw new Error('Codigo de invitacion no valido');
         throw joinError;
       }
+
+      const { data: brandRow } = await sb.from('brands').select('id, name').eq('id', brandId).maybeSingle();
+      const brand = (brandRow as { id: string; name: string } | null) ?? { id: brandId as string, name: 'la marca' };
 
       // Set as active brand
       await supabase

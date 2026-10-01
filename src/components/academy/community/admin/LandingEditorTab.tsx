@@ -112,17 +112,17 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
   });
 
   if (isLoading) {
-    return <div className="text-zinc-500 p-8 text-center">Cargando...</div>;
+    return <div className="text-muted-foreground p-8 text-center">Cargando...</div>;
   }
 
   const previewUrl = `/a/${spaceSlug}`;
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 bg-violet-500/5 border-violet-500/20 flex items-center justify-between gap-3 flex-wrap">
+      <Card className="p-4 bg-primary/5 border-primary/20 flex items-center justify-between gap-3 flex-wrap">
         <div className="text-sm">
-          <p className="font-medium text-violet-200">Landing pública de tu academia</p>
-          <p className="text-xs text-zinc-400">URL: <code className="bg-black/30 px-1.5 rounded">kreoon.com{previewUrl}</code></p>
+          <p className="font-medium text-primary">Landing pública de tu academia</p>
+          <p className="text-xs text-muted-foreground">URL: <code className="bg-muted px-1.5 rounded">kreoon.com{previewUrl}</code></p>
         </div>
         <a href={previewUrl} target="_blank" rel="noreferrer">
           <Button variant="outline" size="sm">
@@ -132,9 +132,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
         </a>
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-violet-400" /> Hero
+          <Sparkles className="h-4 w-4 text-primary" /> Hero
         </h3>
         <div>
           <Label>Headline principal</Label>
@@ -143,9 +143,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             onChange={(e) => setHeadline(e.target.value.slice(0, 120))}
             maxLength={120}
             placeholder="Ej: Domina la creación de contenido y vive de tu pasión"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{headline.length}/120</div>
+          <div className="text-[10px] text-muted-foreground text-right">{headline.length}/120</div>
         </div>
         <div>
           <Label>Subheadline</Label>
@@ -154,9 +154,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             onChange={(e) => setSubheadline(e.target.value.slice(0, 280))}
             maxLength={280}
             placeholder="La promesa concreta. Qué van a lograr al unirse."
-            className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-20"
+            className="w-full bg-muted border border-border rounded p-2 text-sm h-20"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{subheadline.length}/280</div>
+          <div className="text-[10px] text-muted-foreground text-right">{subheadline.length}/280</div>
         </div>
         <div>
           <Label>URL de video promocional (YouTube, Vimeo, etc.)</Label>
@@ -164,15 +164,15 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="https://youtube.com/watch?v=..."
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
         </div>
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+      <Card className="p-5 bg-muted/50 border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
-            <MessageSquare className="h-4 w-4 text-violet-400" /> Testimonios
+            <MessageSquare className="h-4 w-4 text-primary" /> Testimonios
           </h3>
           <Button
             size="sm" variant="outline"
@@ -182,39 +182,39 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
           </Button>
         </div>
         {testimonials.map((t, idx) => (
-          <div key={idx} className="border border-white/5 rounded-md p-3 space-y-2 bg-black/20">
+          <div key={idx} className="border border-border rounded-md p-3 space-y-2 bg-muted/60">
             <Input
               placeholder="Frase del testimonio"
               value={t.quote}
               onChange={(e) => setTestimonials(testimonials.map((x, i) => i === idx ? { ...x, quote: e.target.value } : x))}
-              className="bg-black/30 border-white/10 text-sm"
+              className="bg-muted border-border text-sm"
             />
             <div className="flex gap-2">
               <Input
                 placeholder="Autor (nombre)"
                 value={t.author}
                 onChange={(e) => setTestimonials(testimonials.map((x, i) => i === idx ? { ...x, author: e.target.value } : x))}
-                className="bg-black/30 border-white/10 text-sm flex-1"
+                className="bg-muted border-border text-sm flex-1"
               />
               <Button
                 size="icon" variant="ghost"
                 onClick={() => setTestimonials(testimonials.filter((_, i) => i !== idx))}
                 aria-label="Eliminar"
               >
-                <Trash2 className="h-4 w-4 text-rose-400" />
+                <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </Button>
             </div>
           </div>
         ))}
         {testimonials.length === 0 && (
-          <p className="text-xs text-zinc-500">Aún no agregaste testimonios.</p>
+          <p className="text-xs text-muted-foreground">Aún no agregaste testimonios.</p>
         )}
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+      <Card className="p-5 bg-muted/50 border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
-            <Users className="h-4 w-4 text-violet-400" /> Instructores
+            <Users className="h-4 w-4 text-primary" /> Instructores
           </h3>
           <Button
             size="sm" variant="outline"
@@ -224,19 +224,19 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
           </Button>
         </div>
         {instructors.map((ins, idx) => (
-          <div key={idx} className="border border-white/5 rounded-md p-3 space-y-2 bg-black/20">
+          <div key={idx} className="border border-border rounded-md p-3 space-y-2 bg-muted/60">
             <div className="grid grid-cols-2 gap-2">
               <Input
                 placeholder="Nombre"
                 value={ins.name}
                 onChange={(e) => setInstructors(instructors.map((x, i) => i === idx ? { ...x, name: e.target.value } : x))}
-                className="bg-black/30 border-white/10 text-sm"
+                className="bg-muted border-border text-sm"
               />
               <Input
                 placeholder="Cargo / título"
                 value={ins.title}
                 onChange={(e) => setInstructors(instructors.map((x, i) => i === idx ? { ...x, title: e.target.value } : x))}
-                className="bg-black/30 border-white/10 text-sm"
+                className="bg-muted border-border text-sm"
               />
             </div>
             <div className="flex gap-2">
@@ -244,24 +244,24 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
                 placeholder="URL de foto (https://...)"
                 value={ins.avatar_url}
                 onChange={(e) => setInstructors(instructors.map((x, i) => i === idx ? { ...x, avatar_url: e.target.value } : x))}
-                className="bg-black/30 border-white/10 text-sm flex-1"
+                className="bg-muted border-border text-sm flex-1"
               />
               <Button
                 size="icon" variant="ghost"
                 onClick={() => setInstructors(instructors.filter((_, i) => i !== idx))}
                 aria-label="Eliminar"
               >
-                <Trash2 className="h-4 w-4 text-rose-400" />
+                <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </Button>
             </div>
           </div>
         ))}
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+      <Card className="p-5 bg-muted/50 border-border space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold flex items-center gap-2">
-            <HelpCircle className="h-4 w-4 text-violet-400" /> Preguntas frecuentes
+            <HelpCircle className="h-4 w-4 text-primary" /> Preguntas frecuentes
           </h3>
           <Button
             size="sm" variant="outline"
@@ -271,35 +271,35 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
           </Button>
         </div>
         {faqs.map((f, idx) => (
-          <div key={idx} className="border border-white/5 rounded-md p-3 space-y-2 bg-black/20">
+          <div key={idx} className="border border-border rounded-md p-3 space-y-2 bg-muted/60">
             <Input
               placeholder="Pregunta"
               value={f.question}
               onChange={(e) => setFaqs(faqs.map((x, i) => i === idx ? { ...x, question: e.target.value } : x))}
-              className="bg-black/30 border-white/10 text-sm"
+              className="bg-muted border-border text-sm"
             />
             <div className="flex gap-2 items-start">
               <textarea
                 placeholder="Respuesta"
                 value={f.answer}
                 onChange={(e) => setFaqs(faqs.map((x, i) => i === idx ? { ...x, answer: e.target.value } : x))}
-                className="flex-1 bg-black/30 border border-white/10 rounded p-2 text-sm h-16"
+                className="flex-1 bg-muted border border-border rounded p-2 text-sm h-16"
               />
               <Button
                 size="icon" variant="ghost"
                 onClick={() => setFaqs(faqs.filter((_, i) => i !== idx))}
                 aria-label="Eliminar"
               >
-                <Trash2 className="h-4 w-4 text-rose-400" />
+                <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               </Button>
             </div>
           </div>
         ))}
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+      <Card className="p-5 bg-muted/50 border-border space-y-3">
         <h3 className="font-semibold flex items-center gap-2">
-          <Globe className="h-4 w-4 text-violet-400" /> Categoría e idioma
+          <Globe className="h-4 w-4 text-primary" /> Categoría e idioma
         </h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -307,7 +307,7 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm mt-1"
+              className="w-full bg-muted border border-border rounded p-2 text-sm mt-1"
             >
               <option value="">Sin categoría</option>
               {CATEGORIES.map((c) => <option key={c.v} value={c.v}>{c.l}</option>)}
@@ -318,7 +318,7 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             <select
               value={languageCode}
               onChange={(e) => setLanguageCode(e.target.value)}
-              className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm mt-1"
+              className="w-full bg-muted border border-border rounded p-2 text-sm mt-1"
             >
               {LANGUAGES.map((l) => <option key={l.v} value={l.v}>{l.l}</option>)}
             </select>
@@ -326,9 +326,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
         </div>
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-3">
+      <Card className="p-5 bg-muted/50 border-border space-y-3">
         <h3 className="font-semibold flex items-center gap-2">
-          <Search className="h-4 w-4 text-violet-400" /> SEO
+          <Search className="h-4 w-4 text-primary" /> SEO
         </h3>
         <div>
           <Label>Meta title (mostrado en Google)</Label>
@@ -337,9 +337,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             onChange={(e) => setSeoTitle(e.target.value.slice(0, 60))}
             maxLength={60}
             placeholder={`${(space as any)?.name ?? 'Tu academia'} — descripción corta`}
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{seoTitle.length}/60</div>
+          <div className="text-[10px] text-muted-foreground text-right">{seoTitle.length}/60</div>
         </div>
         <div>
           <Label>Meta description</Label>
@@ -348,9 +348,9 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             onChange={(e) => setSeoDescription(e.target.value.slice(0, 160))}
             maxLength={160}
             placeholder="Frase que aparece bajo el título en Google. 150-160 caracteres."
-            className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-20"
+            className="w-full bg-muted border border-border rounded p-2 text-sm h-20"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{seoDescription.length}/160</div>
+          <div className="text-[10px] text-muted-foreground text-right">{seoDescription.length}/160</div>
         </div>
         <div>
           <Label>Imagen Open Graph (cuando comparten el link)</Label>
@@ -358,7 +358,7 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
             value={ogImageUrl}
             onChange={(e) => setOgImageUrl(e.target.value)}
             placeholder="https://... (1200x630px recomendado)"
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
         </div>
       </Card>
@@ -366,7 +366,7 @@ export function LandingEditorTab({ spaceId, spaceSlug }: Props) {
       <Button
         onClick={() => saveMutation.mutate()}
         disabled={saveMutation.isPending}
-        className="bg-violet-500 hover:bg-violet-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         <Save className="h-4 w-4 mr-2" />
         {saveMutation.isPending ? 'Guardando...' : 'Guardar landing'}

@@ -171,7 +171,7 @@ function ReviewStatsBar({ stats }: { stats: { total_reviews: number; average_rat
       <div className="h-8 w-px bg-border/50" />
       <div className="text-center">
         <span className="text-xl font-bold text-foreground">{stats.total_reviews}</span>
-        <p className="text-xs text-muted-foreground">Resenas</p>
+        <p className="text-xs text-muted-foreground">Reseñas</p>
       </div>
       <div className="h-8 w-px bg-border/50" />
       <div className="text-center">
@@ -274,7 +274,7 @@ function ReviewsBlockComponent({ block, isEditing, isSelected, onUpdate, creator
       {isEditing && isSelected && (
         <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
           <p className="text-xs text-blue-400">
-            <strong>Resenas verificadas:</strong> Este bloque muestra resenas reales de clientes y agencias
+            <strong>Reseñas verificadas:</strong> Este bloque muestra resenas reales de clientes y agencias
             que han trabajado contigo. No se pueden crear ni editar manualmente para garantizar autenticidad.
           </p>
         </div>

@@ -73,7 +73,7 @@ export default function NoCompany() {
                 <Rocket className="h-7 w-7 text-kreoon-purple-400" />
               </div>
               <div>
-                <p className="font-semibold text-white text-lg">Crear mi marca</p>
+                <p className="font-semibold text-foreground text-lg">Crear mi marca</p>
                 <p className="text-sm text-kreoon-text-secondary mt-1">
                   Registra tu empresa y comienza a buscar talento creativo
                 </p>
@@ -89,7 +89,7 @@ export default function NoCompany() {
                 <Link2 className="h-7 w-7 text-blue-400" />
               </div>
               <div>
-                <p className="font-semibold text-white text-lg">Unirme a una marca</p>
+                <p className="font-semibold text-foreground text-lg">Unirme a una marca</p>
                 <p className="text-sm text-kreoon-text-secondary mt-1">
                   Busca una marca existente o usa un codigo de invitacion
                 </p>

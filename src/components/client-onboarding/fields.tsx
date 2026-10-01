@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
  */
 
 const INPUT_CLASSES =
-  'min-h-[44px] text-base bg-kreoon-bg-secondary border-kreoon-border ' +
+  'min-h-[44px] text-base bg-muted border-kreoon-border ' +
   'placeholder:text-kreoon-text-muted/60 focus-visible:ring-kreoon-purple-500/50 ' +
   'focus-visible:border-kreoon-purple-400';
 
@@ -238,7 +238,7 @@ export function CampoOpciones<T extends FieldValues>({
                     'flex min-h-[44px] items-center gap-2.5 rounded-sm border p-3 text-left transition-all',
                     activa
                       ? 'border-kreoon-purple-500/60 bg-kreoon-purple-500/10 shadow-kreoon-glow-sm'
-                      : 'border-kreoon-border bg-kreoon-bg-secondary hover:border-kreoon-purple-400/30',
+                      : 'border-kreoon-border bg-muted hover:border-kreoon-purple-400/30',
                   )}
                 >
                   <span className="text-xl">{opcion.emoji}</span>
@@ -306,7 +306,7 @@ export function CampoMultiple<T extends FieldValues>({
                       'flex min-h-[44px] items-center gap-2 rounded-sm border p-3 text-left transition-all',
                       activa
                         ? 'border-kreoon-purple-500/60 bg-kreoon-purple-500/10'
-                        : 'border-kreoon-border bg-kreoon-bg-secondary hover:border-kreoon-purple-400/30',
+                        : 'border-kreoon-border bg-muted hover:border-kreoon-purple-400/30',
                     )}
                   >
                     <span className="text-lg">{opcion.emoji}</span>

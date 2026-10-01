@@ -11,7 +11,7 @@ import { KreoonButton } from '@/components/ui/kreoon';
 
 function Fondo({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-kreoon-bg-primary px-5 py-10">
+    <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-background px-5 py-10">
       {/* Orbes de gradiente púrpura, decorativos */}
       <div
         aria-hidden

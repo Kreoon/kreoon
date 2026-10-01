@@ -317,7 +317,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="relative overflow-hidden rounded-sm border border-white/10 bg-black/40 p-8">
+      <div className="relative overflow-hidden rounded-sm border border-border bg-muted p-8">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-pink-600/10" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
 
@@ -328,7 +328,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
               {processingStep === 'complete' ? (
                 <CheckCircle2 className="w-10 h-10 text-white" />
               ) : (
-                <Dna className="w-10 h-10 text-white animate-pulse" />
+                <Dna className="w-10 h-10 text-foreground animate-pulse" />
               )}
             </div>
           </div>
@@ -373,14 +373,14 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
             </div>
           </div>
           <div>
-            <h2 className="text-xl font-bold text-white">Product DNA</h2>
-            <p className="text-sm text-gray-400">Cuéntanos sobre tu producto en un audio</p>
+            <h2 className="text-xl font-bold text-foreground">Product DNA</h2>
+            <p className="text-sm text-muted-foreground">Cuéntanos sobre tu producto en un audio</p>
           </div>
         </div>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="text-sm text-gray-400 hover:text-white transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             Cancelar
           </button>
@@ -397,8 +397,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
               <span className="text-base">🎯</span>
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">¿Qué tipo de oferta es?</h3>
-              <p className="text-[10px] text-gray-400">Esto define toda la estrategia de contenido</p>
+              <h3 className="text-sm font-bold text-foreground">¿Qué tipo de oferta es?</h3>
+              <p className="text-[10px] text-muted-foreground">Esto define toda la estrategia de contenido</p>
             </div>
             {offerType && (
               <span className="ml-auto text-[10px] text-purple-400 flex items-center gap-1">
@@ -415,17 +415,17 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                   "group flex flex-col items-center gap-1.5 p-3 rounded-sm border text-center transition-all duration-200",
                   offerType === opt.id
                     ? "border-purple-500/70 bg-purple-500/20 shadow-[0_0_12px_rgba(168,85,247,0.2)]"
-                    : "border-white/8 bg-white/3 hover:border-white/20 hover:bg-white/8"
+                    : "border-border bg-muted/40 hover:border-border hover:bg-muted"
                 )}
               >
                 <span className="text-xl">{opt.emoji}</span>
                 <span className={cn(
                   "text-[11px] font-semibold leading-tight",
-                  offerType === opt.id ? "text-purple-300" : "text-white/70 group-hover:text-white"
+                  offerType === opt.id ? "text-purple-300" : "text-muted-foreground group-hover:text-foreground"
                 )}>
                   {opt.label}
                 </span>
-                <span className="text-[9px] text-white/30 leading-tight hidden sm:block">
+                <span className="text-[9px] text-muted-foreground/70 leading-tight hidden sm:block">
                   {opt.description}
                 </span>
               </button>
@@ -437,17 +437,17 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
       {/* ── Grid: Preguntas dinámicas + Audio ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Left Panel: Preguntas según tipo de oferta */}
-        <div className="relative overflow-hidden rounded-sm border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-border">
           <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-purple-500/10 to-pink-500/20" />
           <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col justify-center">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center">
                 <span className="text-lg">💬</span>
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Responde en tu audio</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Responde en tu audio</h3>
                 {offerType && (
                   <p className="text-[10px] text-purple-400 mt-0.5">
                     Guía para {OFFER_TYPE_OPTIONS.find(o => o.id === offerType)?.label}
@@ -459,14 +459,14 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
             <div className="space-y-3">
               {dynamicQuestions.map((q) => (
                 <div key={q.id} className="flex gap-2.5 group">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-white/10 flex items-center justify-center text-[10px] font-bold text-purple-300">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-border flex items-center justify-center text-[10px] font-bold text-purple-300">
                     {q.id}
                   </span>
                   <div>
                     <p className="text-xs text-foreground/80 leading-relaxed group-hover:text-foreground transition-colors">
                       {q.question}
                     </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{q.tip}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{q.tip}</p>
                   </div>
                 </div>
               ))}
@@ -475,23 +475,23 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         </div>
 
         {/* Right Panel: Audio */}
-        <div className="relative overflow-hidden rounded-sm border border-white/10">
+        <div className="relative overflow-hidden rounded-sm border border-border">
           <div className="absolute inset-0 bg-gradient-to-br from-pink-600/20 via-pink-500/10 to-purple-500/20" />
           <div className="absolute inset-0 bg-black/40" />
 
           <div className="relative p-6 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-8 h-8 rounded-sm bg-white/10 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-sm bg-muted flex items-center justify-center">
                 <span className="text-lg">🎤</span>
               </div>
-              <h3 className="text-sm font-semibold text-white/80 uppercase tracking-wider">Graba tu audio</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Graba tu audio</h3>
             </div>
 
             <div className="flex-1 flex flex-col">
               {/* Contexto del producto — ayuda a la IA a entender el audio */}
               <div className="space-y-2.5 mb-5">
                 <div>
-                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1.5 block">
+                  <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5 block">
                     Nombre del producto o servicio
                   </label>
                   <input
@@ -501,16 +501,16 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                     placeholder="Ej: Webinar gratuito Be Light / Vlight Solution"
                     disabled={processingStep !== 'idle'}
                     className="w-full px-3 py-2 rounded-sm text-xs
-                               bg-white/5 border border-white/10
-                               text-white placeholder-white/25
+                               bg-muted/40 border border-border
+                               text-foreground placeholder-muted-foreground
                                focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
                                disabled:opacity-40 transition-colors"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold text-white/50 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <label className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                     Descripción corta
-                    <span className="text-white/25 normal-case font-normal">(opcional)</span>
+                    <span className="text-muted-foreground/70 normal-case font-normal">(opcional)</span>
                   </label>
                   <textarea
                     value={productContext}
@@ -519,8 +519,8 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
                     rows={2}
                     disabled={processingStep !== 'idle'}
                     className="w-full px-3 py-2 rounded-sm text-xs
-                               bg-white/5 border border-white/10
-                               text-white placeholder-white/25
+                               bg-muted/40 border border-border
+                               text-foreground placeholder-muted-foreground
                                focus:outline-none focus:ring-1 focus:ring-purple-500/50 focus:border-purple-500/50
                                disabled:opacity-40 resize-none transition-colors"
                   />
@@ -528,7 +528,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
               </div>
 
               <div className="flex flex-col items-center justify-center flex-1">
-                <p className="text-sm text-gray-400 text-center max-w-xs mb-6">
+                <p className="text-sm text-muted-foreground text-center max-w-xs mb-6">
                   Responde las preguntas en un solo audio de 2-5 minutos.
                 </p>
 
@@ -646,7 +646,7 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
             ? "bg-gradient-to-r from-purple-600/80 via-pink-500/80 to-purple-600/80 bg-[length:200%_100%] animate-[shimmerBg_2s_linear_infinite]"
             : canSubmit
               ? "bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-[length:200%_100%] group-hover:bg-right"
-              : "bg-gray-700"
+              : "bg-muted"
         )} />
 
         {buttonTranscribing && (
@@ -664,18 +664,18 @@ export function ProductDNAWizard({ clientId, onComplete, onCancel }: ProductDNAW
         <div className="relative flex items-center justify-center gap-3 px-6 py-4">
           {buttonTranscribing ? (
             <>
-              <Loader2 className="w-5 h-5 text-white animate-spin" />
-              <span className="font-semibold text-white">Transcribiendo audio...</span>
+              <Loader2 className="w-5 h-5 text-foreground animate-spin" />
+              <span className="font-semibold text-foreground">Transcribiendo audio...</span>
             </>
           ) : (
             <>
-              <Sparkles className={cn("w-5 h-5", canSubmit ? "text-white" : "text-gray-500")} />
-              <span className={cn("font-semibold", canSubmit ? "text-white" : "text-gray-500")}>
+              <Sparkles className={cn("w-5 h-5", canSubmit ? "text-foreground" : "text-muted-foreground")} />
+              <span className={cn("font-semibold", canSubmit ? "text-foreground" : "text-muted-foreground")}>
                 Generar Product DNA
               </span>
               <ChevronRight className={cn(
                 "w-5 h-5 transition-transform group-hover:translate-x-1",
-                canSubmit ? "text-white" : "text-gray-500"
+                canSubmit ? "text-foreground" : "text-muted-foreground"
               )} />
             </>
           )}
@@ -693,13 +693,13 @@ function SelectionPanel({ title, emoji, subtitle, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-sm border border-white/10 p-4">
-      <div className="absolute inset-0 bg-white/5" />
+    <div className="relative overflow-hidden rounded-sm border border-border p-4">
+      <div className="absolute inset-0 bg-muted/40" />
       <div className="relative">
         <div className="flex items-center gap-2 mb-3">
           <span className="text-sm">{emoji}</span>
-          <span className="text-xs font-medium text-white/80">{title}</span>
-          {subtitle && <span className="text-[10px] text-gray-500">({subtitle})</span>}
+          <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          {subtitle && <span className="text-[10px] text-muted-foreground">({subtitle})</span>}
         </div>
         {children}
       </div>
@@ -722,7 +722,7 @@ function ChipButton({ label, emoji, selected, onClick }: {
         "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
         selected
           ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg shadow-purple-500/20"
-          : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10"
+          : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground border border-border"
       )}
     >
       <span>{emoji}</span>
@@ -747,15 +747,15 @@ function ProcessingStepItem({ label, status }: { label: string; status: 'pending
         </div>
       )}
       {status === 'pending' && (
-        <div className="w-6 h-6 rounded-full bg-gray-700/50 flex items-center justify-center">
-          <Circle className="w-4 h-4 text-gray-600" />
+        <div className="w-6 h-6 rounded-full bg-muted/50 flex items-center justify-center">
+          <Circle className="w-4 h-4 text-muted-foreground" />
         </div>
       )}
       <span className={cn(
         "text-sm font-medium",
         status === 'done' && "text-green-400",
-        status === 'active' && "text-white",
-        status === 'pending' && "text-gray-500"
+        status === 'active' && "text-foreground",
+        status === 'pending' && "text-muted-foreground"
       )}>
         {label}
       </span>

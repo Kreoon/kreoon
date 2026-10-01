@@ -67,8 +67,8 @@ export function MembersGrid({ spaceId, spaceOwnerId, accentColor = '#8B5CF6' }: 
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors',
                 filter === f.id
-                  ? 'text-zinc-100 border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 text-zinc-500 hover:text-zinc-300'
+                  ? 'text-foreground border-primary bg-primary/10'
+                  : 'border-border text-muted-foreground hover:text-foreground'
               )}
             >
               {f.label}
@@ -76,22 +76,22 @@ export function MembersGrid({ spaceId, spaceOwnerId, accentColor = '#8B5CF6' }: 
           ))}
         </div>
         <div className="md:ml-auto relative md:w-64">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar miembro..."
-            className="bg-black/30 border-white/10 pl-8 h-9 text-sm"
+            className="bg-muted border-border pl-8 h-9 text-sm"
           />
         </div>
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-zinc-500">
+        <div className="flex items-center justify-center py-12 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin mr-2" /> Cargando miembros...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center text-zinc-500 py-12">No hay miembros que coincidan.</div>
+        <div className="text-center text-muted-foreground py-12">No hay miembros que coincidan.</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filtered.map((m: any) => (

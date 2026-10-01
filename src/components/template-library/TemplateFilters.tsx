@@ -44,13 +44,13 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
     <div className="flex flex-col sm:flex-row gap-3">
       {/* Busqueda */}
       <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <Input
           type="search"
           placeholder="Buscar plantillas..."
           value={filters.search}
           onChange={(e) => update({ search: e.target.value })}
-          className="pl-9 bg-gray-900 border-gray-700 text-white placeholder:text-gray-500 focus:border-purple-500"
+          className="pl-9 bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-purple-500"
           aria-label="Buscar plantillas"
         />
       </div>
@@ -61,17 +61,17 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
         onValueChange={(value) => update({ category: value })}
       >
         <SelectTrigger
-          className="w-full sm:w-44 bg-gray-900 border-gray-700 text-white focus:border-purple-500"
+          className="w-full sm:w-44 bg-card border-border text-foreground focus:border-purple-500"
           aria-label="Filtrar por categoria"
         >
           <SelectValue placeholder="Categoria" />
         </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
+        <SelectContent className="bg-card border-border">
           {CATEGORIES.map((cat) => (
             <SelectItem
               key={cat.value}
               value={cat.value}
-              className="text-white hover:bg-gray-800 focus:bg-gray-800"
+              className="text-foreground hover:bg-muted focus:bg-muted"
             >
               {cat.label}
             </SelectItem>
@@ -87,17 +87,17 @@ export function TemplateFilters({ filters, onFiltersChange }: TemplateFiltersPro
         }
       >
         <SelectTrigger
-          className="w-full sm:w-44 bg-gray-900 border-gray-700 text-white focus:border-purple-500"
+          className="w-full sm:w-44 bg-card border-border text-foreground focus:border-purple-500"
           aria-label="Ordenar plantillas"
         >
           <SelectValue placeholder="Ordenar por" />
         </SelectTrigger>
-        <SelectContent className="bg-gray-900 border-gray-700">
+        <SelectContent className="bg-card border-border">
           {SORT_OPTIONS.map((opt) => (
             <SelectItem
               key={opt.value}
               value={opt.value}
-              className="text-white hover:bg-gray-800 focus:bg-gray-800"
+              className="text-foreground hover:bg-muted focus:bg-muted"
             >
               {opt.label}
             </SelectItem>

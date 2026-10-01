@@ -32,6 +32,8 @@ interface DateRangePresetPickerProps {
   /** Number of calendar months to show. Defaults to 2 (1 on mobile). */
   numberOfMonths?: 1 | 2;
   className?: string;
+  /** Texto del disparador cuando todavía no hay un rango aplicado (p. ej. «Todo el período»). */
+  unsetLabel?: string;
 }
 
 // ── Trigger label ──
@@ -185,6 +187,7 @@ export function DateRangePresetPicker({
   align = 'end',
   numberOfMonths = 2,
   className,
+  unsetLabel,
 }: DateRangePresetPickerProps) {
   const timezone = useOrgTimezone();
   const [open, setOpen] = useState(false);
@@ -221,7 +224,7 @@ export function DateRangePresetPicker({
           )}
         >
           <CalendarIcon className="h-4 w-4 shrink-0" />
-          <span className="truncate">{formatTriggerLabel(value)}</span>
+          <span className="truncate">{unsetLabel ?? formatTriggerLabel(value)}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align={align} sideOffset={8}>

@@ -206,10 +206,10 @@ export function LegalConsentsSection({
     >
       {isLoading ? (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-white/40" />
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/70" />
         </div>
       ) : !hasAnyLegal ? (
-        <div className="text-center py-4 text-white/40 text-xs">
+        <div className="text-center py-4 text-muted-foreground/70 text-xs">
           <FileText className="h-8 w-8 mx-auto mb-2 opacity-50" />
           <p>Sin consentimientos registrados</p>
         </div>
@@ -234,14 +234,14 @@ export function LegalConsentsSection({
           {/* Consentimientos */}
           {hasConsents && (
             <div className="space-y-2">
-              <p className="text-[10px] text-white/40 uppercase tracking-wide">
+              <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">
                 Documentos Aceptados ({consents?.length})
               </p>
               <div className="space-y-1.5">
                 {consents?.map((consent) => (
                   <div
                     key={consent.id}
-                    className="flex items-center justify-between p-2 rounded-sm bg-white/5 text-xs"
+                    className="flex items-center justify-between p-2 rounded-sm bg-muted/40 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       {consent.accepted ? (
@@ -249,28 +249,28 @@ export function LegalConsentsSection({
                       ) : (
                         <XCircle className="h-3.5 w-3.5 text-red-400" />
                       )}
-                      <span className="text-white/80">
+                      <span className="text-muted-foreground">
                         {DOC_TYPE_LABELS[consent.document_type] ||
                           consent.document_type}
                       </span>
-                      <span className="text-white/40">
+                      <span className="text-muted-foreground/70">
                         v{consent.document_version}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">
+                      <span className="text-muted-foreground/70">
                         {SIGNATURE_METHOD_LABELS[consent.consent_method] ||
                           consent.consent_method}
                       </span>
-                      <span className="text-white/40">•</span>
-                      <span className="text-white/40">
+                      <span className="text-muted-foreground/70">•</span>
+                      <span className="text-muted-foreground/70">
                         {formatDate(consent.accepted_at)}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedConsent(consent)}
-                        className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                        className="h-6 w-6 p-0 text-muted-foreground/70 hover:text-foreground"
                         title="Ver detalles legales"
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -285,7 +285,7 @@ export function LegalConsentsSection({
           {/* Firmas Digitales */}
           {hasSignatures && (
             <div className="space-y-2">
-              <p className="text-[10px] text-white/40 uppercase tracking-wide">
+              <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide">
                 Firmas Digitales ({signatures?.length})
               </p>
               <div className="space-y-1.5">
@@ -296,11 +296,11 @@ export function LegalConsentsSection({
                   >
                     <div className="flex items-center gap-2">
                       <PenTool className="h-3.5 w-3.5 text-purple-400" />
-                      <span className="text-white/80">
+                      <span className="text-muted-foreground">
                         {DOC_TYPE_LABELS[sig.document_type] ||
                           sig.document_type}
                       </span>
-                      <span className="text-white/40">
+                      <span className="text-muted-foreground/70">
                         v{sig.document_version}
                       </span>
                       {sig.status === "valid" && (
@@ -308,14 +308,14 @@ export function LegalConsentsSection({
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-white/40">
+                      <span className="text-muted-foreground/70">
                         {formatDate(sig.timestamp_utc)}
                       </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedSignature(sig)}
-                        className="h-6 w-6 p-0 text-white/40 hover:text-white"
+                        className="h-6 w-6 p-0 text-muted-foreground/70 hover:text-foreground"
                       >
                         <Eye className="h-3.5 w-3.5" />
                       </Button>
@@ -327,7 +327,7 @@ export function LegalConsentsSection({
           )}
 
           {/* Resumen */}
-          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] text-white/40">
+          <div className="pt-2 border-t border-border flex items-center justify-between text-[10px] text-muted-foreground/70">
             <span>
               {consents?.length || 0} consentimientos •{" "}
               {signatures?.length || 0} firmas
@@ -347,13 +347,13 @@ export function LegalConsentsSection({
         open={!!selectedSignature}
         onOpenChange={() => setSelectedSignature(null)}
       >
-        <DialogContent className="max-w-lg bg-[#1a1a2e] border-white/10">
+        <DialogContent className="max-w-lg bg-[#1a1a2e] border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
               <Shield className="h-5 w-5 text-green-400" />
               Detalle de Firma Digital
             </DialogTitle>
-            <DialogDescription className="text-white/60">
+            <DialogDescription className="text-muted-foreground">
               Información completa de la firma electrónica
             </DialogDescription>
           </DialogHeader>
@@ -361,14 +361,14 @@ export function LegalConsentsSection({
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-white/40 text-xs">Firmante</p>
-                  <p className="text-white font-medium">
+                  <p className="text-muted-foreground/70 text-xs">Firmante</p>
+                  <p className="text-foreground font-medium">
                     {selectedSignature.signer_full_name}
                   </p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Documento</p>
-                  <p className="text-white">
+                  <p className="text-muted-foreground/70 text-xs">Documento</p>
+                  <p className="text-foreground">
                     {DOC_TYPE_LABELS[selectedSignature.document_type] ||
                       selectedSignature.document_type}
                   </p>
@@ -377,16 +377,16 @@ export function LegalConsentsSection({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-white/40 text-xs">Método</p>
-                  <p className="text-white">
+                  <p className="text-muted-foreground/70 text-xs">Método</p>
+                  <p className="text-foreground">
                     {SIGNATURE_METHOD_LABELS[
                       selectedSignature.signature_method
                     ] || selectedSignature.signature_method}
                   </p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Fecha UTC</p>
-                  <p className="text-white">
+                  <p className="text-muted-foreground/70 text-xs">Fecha UTC</p>
+                  <p className="text-foreground">
                     {formatDate(selectedSignature.timestamp_utc)}
                   </p>
                 </div>
@@ -394,8 +394,8 @@ export function LegalConsentsSection({
 
               {selectedSignature.typed_signature && (
                 <div>
-                  <p className="text-white/40 text-xs">Firma Escrita</p>
-                  <p className="text-white text-lg italic">
+                  <p className="text-muted-foreground/70 text-xs">Firma Escrita</p>
+                  <p className="text-foreground text-lg italic">
                     "{selectedSignature.typed_signature}"
                   </p>
                 </div>
@@ -403,7 +403,7 @@ export function LegalConsentsSection({
 
               {selectedSignature.signature_image_url && (
                 <div>
-                  <p className="text-white/40 text-xs mb-2">Firma Dibujada</p>
+                  <p className="text-muted-foreground/70 text-xs mb-2">Firma Dibujada</p>
                   <div className="bg-white rounded-sm p-3">
                     <img
                       src={selectedSignature.signature_image_url}
@@ -415,21 +415,21 @@ export function LegalConsentsSection({
               )}
 
               <div>
-                <p className="text-white/40 text-xs">Declaración</p>
-                <p className="text-white/80 text-xs italic bg-white/5 p-3 rounded-sm">
+                <p className="text-muted-foreground/70 text-xs">Declaración</p>
+                <p className="text-muted-foreground text-xs italic bg-muted/40 p-3 rounded-sm">
                   "{selectedSignature.declaration_text}"
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-white/40 text-xs">IP</p>
-                  <p className="text-white font-mono text-xs">
+                  <p className="text-muted-foreground/70 text-xs">IP</p>
+                  <p className="text-foreground font-mono text-xs">
                     {selectedSignature.ip_address || "N/A"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Estado</p>
+                  <p className="text-muted-foreground/70 text-xs">Estado</p>
                   <Badge
                     className={cn(
                       "text-[10px]",
@@ -446,8 +446,8 @@ export function LegalConsentsSection({
               </div>
 
               <div>
-                <p className="text-white/40 text-xs">ID de Firma</p>
-                <p className="text-white/60 font-mono text-[10px]">
+                <p className="text-muted-foreground/70 text-xs">ID de Firma</p>
+                <p className="text-muted-foreground font-mono text-[10px]">
                   {selectedSignature.id}
                 </p>
               </div>
@@ -461,13 +461,13 @@ export function LegalConsentsSection({
         open={!!selectedConsent}
         onOpenChange={() => setSelectedConsent(null)}
       >
-        <DialogContent className="max-w-lg bg-[#1a1a2e] border-white/10">
+        <DialogContent className="max-w-lg bg-[#1a1a2e] border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
+            <DialogTitle className="flex items-center gap-2 text-foreground">
               <Fingerprint className="h-5 w-5 text-blue-400" />
               Detalle de Consentimiento Legal
             </DialogTitle>
-            <DialogDescription className="text-white/60">
+            <DialogDescription className="text-muted-foreground">
               Información completa del consentimiento para fines legales
             </DialogDescription>
           </DialogHeader>
@@ -475,15 +475,15 @@ export function LegalConsentsSection({
             <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-white/40 text-xs">Documento</p>
-                  <p className="text-white font-medium">
+                  <p className="text-muted-foreground/70 text-xs">Documento</p>
+                  <p className="text-foreground font-medium">
                     {DOC_TYPE_LABELS[selectedConsent.document_type] ||
                       selectedConsent.document_type}
                   </p>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">Versión</p>
-                  <p className="text-white">
+                  <p className="text-muted-foreground/70 text-xs">Versión</p>
+                  <p className="text-foreground">
                     v{selectedConsent.document_version}
                   </p>
                 </div>
@@ -491,7 +491,7 @@ export function LegalConsentsSection({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-white/40 text-xs">Estado</p>
+                  <p className="text-muted-foreground/70 text-xs">Estado</p>
                   <div className="flex items-center gap-2">
                     {selectedConsent.accepted ? (
                       <>
@@ -511,10 +511,10 @@ export function LegalConsentsSection({
                   </div>
                 </div>
                 <div>
-                  <p className="text-white/40 text-xs">
+                  <p className="text-muted-foreground/70 text-xs">
                     Método de Consentimiento
                   </p>
-                  <p className="text-white">
+                  <p className="text-foreground">
                     {SIGNATURE_METHOD_LABELS[selectedConsent.consent_method] ||
                       selectedConsent.consent_method}
                   </p>
@@ -522,35 +522,35 @@ export function LegalConsentsSection({
               </div>
 
               <div>
-                <p className="text-white/40 text-xs">Fecha y Hora UTC</p>
-                <p className="text-white">
+                <p className="text-muted-foreground/70 text-xs">Fecha y Hora UTC</p>
+                <p className="text-foreground">
                   {formatDate(selectedConsent.accepted_at)}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-white/10">
-                <p className="text-[10px] text-white/40 uppercase tracking-wide mb-3">
+              <div className="pt-3 border-t border-border">
+                <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-3">
                   Datos Técnicos (Prueba Legal)
                 </p>
 
                 <div className="space-y-3">
-                  <div className="flex items-start gap-3 p-3 rounded-sm bg-white/5">
+                  <div className="flex items-start gap-3 p-3 rounded-sm bg-muted/40">
                     <Globe className="h-4 w-4 text-blue-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-white/40 text-xs">Dirección IP</p>
-                      <p className="text-white font-mono text-sm">
+                      <p className="text-muted-foreground/70 text-xs">Dirección IP</p>
+                      <p className="text-foreground font-mono text-sm">
                         {selectedConsent.ip_address || "No registrada"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 p-3 rounded-sm bg-white/5">
+                  <div className="flex items-start gap-3 p-3 rounded-sm bg-muted/40">
                     <Monitor className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-white/40 text-xs">
+                      <p className="text-muted-foreground/70 text-xs">
                         User Agent (Navegador/Dispositivo)
                       </p>
-                      <p className="text-white/70 text-xs break-all font-mono leading-relaxed">
+                      <p className="text-muted-foreground text-xs break-all font-mono leading-relaxed">
                         {selectedConsent.user_agent || "No registrado"}
                       </p>
                     </div>
@@ -558,9 +558,9 @@ export function LegalConsentsSection({
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-white/10">
-                <p className="text-white/40 text-xs">ID de Consentimiento</p>
-                <p className="text-white/60 font-mono text-[10px]">
+              <div className="pt-3 border-t border-border">
+                <p className="text-muted-foreground/70 text-xs">ID de Consentimiento</p>
+                <p className="text-muted-foreground font-mono text-[10px]">
                   {selectedConsent.id}
                 </p>
               </div>

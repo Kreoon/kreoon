@@ -174,7 +174,7 @@ function populateBlockContent(
 
     case 'about':
       return {
-        title: (templateBlock.content as any)?.title || 'Sobre mi',
+        title: (templateBlock.content as any)?.title || 'Sobre mí',
         text: profile.bio_full || profile.bio || '',
         showLocation: true,
         location: profile.location_city && profile.location_country
@@ -218,7 +218,7 @@ function populateBlockContent(
         statsItems.push({
           id: 'years',
           value: String(trustStats.years_active),
-          label: 'Anos de experiencia',
+          label: 'Años de experiencia',
           icon: 'trending',
         });
       }
@@ -289,7 +289,7 @@ function populateBlockContent(
       const defaultPackages = [
         {
           id: 'default-1',
-          name: 'Basico',
+          name: 'Básico',
           price: String(profile.base_price || 200),
           currency: profile.currency || 'USD',
           features: ['1 contenido', 'Entrega en 5 dias', '1 revision'],
@@ -297,7 +297,7 @@ function populateBlockContent(
         },
         {
           id: 'default-2',
-          name: 'Estandar',
+          name: 'Estándar',
           price: String((profile.base_price || 200) * 2),
           currency: profile.currency || 'USD',
           features: ['3 contenidos', 'Entrega en 7 dias', '2 revisiones'],
@@ -316,7 +316,7 @@ function populateBlockContent(
 
     case 'reviews':
       return {
-        title: 'Resenas',
+        title: 'Reseñas',
         items: reviews.slice(0, (templateBlock.config as any)?.maxItems || 6).map((r) => ({
           id: r.id,
           author: r.brand_name || 'Cliente',
@@ -445,7 +445,7 @@ function populateBlockContent(
 
     case 'image_gallery':
       return {
-        title: 'Galeria',
+        title: 'Galería',
         items: portfolioItems
           .filter((p) => p.media_type === 'image')
           .slice(0, 6)

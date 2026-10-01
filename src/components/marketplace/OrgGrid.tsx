@@ -26,11 +26,11 @@ function OrgGridComponent({ orgs, hasMore, totalCount, onLoadMore, onOrgClick, l
   if (orgs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-sm bg-white/5 flex items-center justify-center mb-4">
-          <Building2 className="h-8 w-8 text-gray-600" />
+        <div className="w-16 h-16 rounded-sm bg-muted/50 flex items-center justify-center mb-4">
+          <Building2 className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-1">No se encontraron organizaciones</h3>
-        <p className="text-sm text-gray-500 max-w-sm">
+        <h3 className="text-lg font-semibold text-foreground mb-1">No se encontraron organizaciones</h3>
+        <p className="text-sm text-muted-foreground max-w-sm">
           Prueba ajustando los filtros o busca con otras palabras clave
         </p>
       </div>
@@ -41,7 +41,7 @@ function OrgGridComponent({ orgs, hasMore, totalCount, onLoadMore, onOrgClick, l
     <div className="space-y-6">
       {/* Count */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-muted-foreground">
           {totalCount} {totalCount === 1 ? 'organización' : 'organizaciones'}
         </p>
       </div>
@@ -67,7 +67,7 @@ function OrgGridComponent({ orgs, hasMore, totalCount, onLoadMore, onOrgClick, l
         <div className="flex justify-center pt-4">
           <button
             onClick={onLoadMore}
-            className="px-6 py-2.5 rounded-sm bg-white/5 text-white text-sm font-medium hover:bg-white/10 transition-colors"
+            className="px-6 py-2.5 rounded-sm bg-muted/50 text-foreground text-sm font-medium hover:bg-muted transition-colors"
           >
             Ver más organizaciones
           </button>
@@ -79,19 +79,19 @@ function OrgGridComponent({ orgs, hasMore, totalCount, onLoadMore, onOrgClick, l
 
 function OrgCardSkeleton() {
   return (
-    <div className="rounded-sm border border-white/5 bg-card overflow-hidden animate-pulse">
-      <div className="h-28 bg-white/5" />
+    <div className="rounded-sm border border-border bg-card overflow-hidden animate-pulse">
+      <div className="h-28 bg-muted/50" />
       <div className="px-4 pb-4 -mt-8 relative z-10">
-        <div className="h-14 w-14 rounded-sm bg-white/10 mb-3" />
-        <div className="h-4 w-3/4 bg-white/5 rounded mb-1" />
-        <div className="h-3 w-full bg-white/5 rounded mb-3" />
+        <div className="h-14 w-14 rounded-sm bg-muted mb-3" />
+        <div className="h-4 w-3/4 bg-muted/50 rounded mb-1" />
+        <div className="h-3 w-full bg-muted/50 rounded mb-3" />
         <div className="flex gap-1">
-          <div className="h-4 w-12 bg-white/5 rounded-full" />
-          <div className="h-4 w-12 bg-white/5 rounded-full" />
+          <div className="h-4 w-12 bg-muted/50 rounded-full" />
+          <div className="h-4 w-12 bg-muted/50 rounded-full" />
         </div>
         <div className="flex gap-3 mt-3">
-          <div className="h-3 w-16 bg-white/5 rounded" />
-          <div className="h-3 w-12 bg-white/5 rounded" />
+          <div className="h-3 w-16 bg-muted/50 rounded" />
+          <div className="h-3 w-12 bg-muted/50 rounded" />
         </div>
       </div>
     </div>

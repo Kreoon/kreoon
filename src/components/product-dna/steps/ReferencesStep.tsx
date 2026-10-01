@@ -52,7 +52,7 @@ export function ReferencesStep({
         placeholder="https://instagram.com/p/ejemplo"
       />
 
-      <p className="text-center text-xs text-gray-500">
+      <p className="text-center text-xs text-muted-foreground">
         Todos los campos son opcionales. Puedes continuar sin agregar links.
       </p>
     </div>
@@ -117,9 +117,9 @@ function LinkSection({
     <div className={`rounded-sm border ${colors.border} p-4`}>
       <div className="flex items-center gap-2 mb-1">
         <span className={colors.icon}>{icon}</span>
-        <h3 className="text-sm font-medium text-white">{title}</h3>
+        <h3 className="text-sm font-medium text-foreground">{title}</h3>
       </div>
-      <p className="text-xs text-gray-400 mb-4">{subtitle}</p>
+      <p className="text-xs text-muted-foreground mb-4">{subtitle}</p>
 
       {/* Input row */}
       <div className="flex gap-2">
@@ -130,7 +130,7 @@ function LinkSection({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           className="flex-1 px-3 py-2 rounded-sm bg-muted/50 border border-border
-                     text-sm text-white placeholder:text-gray-500
+                     text-sm text-foreground placeholder:text-muted-foreground
                      focus:outline-none focus:border-purple-500/50"
         />
         <button
@@ -153,13 +153,13 @@ function LinkSection({
               key={index}
               className="flex items-center gap-2 px-3 py-2 rounded-sm bg-muted/50 border border-border"
             >
-              <LinkIcon className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+              <LinkIcon className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
               <span className="text-xs text-foreground/80 truncate flex-1">
                 {link.url}
               </span>
               <button
                 onClick={() => removeLink(index)}
-                className="text-gray-500 hover:text-red-400 transition-colors flex-shrink-0"
+                className="text-muted-foreground hover:text-red-400 transition-colors flex-shrink-0"
               >
                 <X className="w-3.5 h-3.5" />
               </button>

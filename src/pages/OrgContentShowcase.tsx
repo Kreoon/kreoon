@@ -131,10 +131,10 @@ const VideoCard = memo(function VideoCard({
 
   return (
     <div
-      className="group relative rounded-sm overflow-hidden bg-card border border-white/[0.06] cursor-pointer hover:border-white/[0.12] transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
+      className="group relative rounded-sm overflow-hidden bg-card border border-border cursor-pointer hover:border-border transition-all duration-300 hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5"
       onClick={onClick}
     >
-      <div className="relative aspect-[9/16] bg-neutral-900">
+      <div className="relative aspect-[9/16] bg-card">
         {thumb ? (
           <img
             src={thumb}
@@ -144,7 +144,7 @@ const VideoCard = memo(function VideoCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Film className="h-10 w-10 text-white/10" />
+            <Film className="h-10 w-10 text-muted-foreground/60" />
           </div>
         )}
 
@@ -165,10 +165,10 @@ function StatCard({ value, label, icon: Icon }: { value: string; label: string; 
   return (
     <div className="text-center">
       <div className="flex items-center justify-center gap-1.5 mb-0.5">
-        <Icon className="h-4 w-4 text-white/40" />
-        <span className="text-2xl md:text-3xl font-bold text-white">{value}</span>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-2xl md:text-3xl font-bold text-foreground">{value}</span>
       </div>
-      <p className="text-xs text-white/50 font-medium uppercase tracking-wider">{label}</p>
+      <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{label}</p>
     </div>
   );
 }
@@ -225,20 +225,20 @@ export default function OrgContentShowcase() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (notFound || !org) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4 px-6">
-          <Building2 className="h-16 w-16 mx-auto text-white/20" />
-          <h1 className="text-xl font-semibold text-white">Portafolio no disponible</h1>
-          <p className="text-white/50">Esta organizacion no tiene un portafolio de contenido publico.</p>
-          <Button variant="outline" className="border-white/10 text-white/70 hover:bg-white/5" onClick={() => (window.location.href = '/')}>
+          <Building2 className="h-16 w-16 mx-auto text-muted-foreground/60" />
+          <h1 className="text-xl font-semibold text-foreground">Portafolio no disponible</h1>
+          <p className="text-muted-foreground">Esta organizacion no tiene un portafolio de contenido publico.</p>
+          <Button variant="outline" className="border-border text-muted-foreground hover:bg-muted/50" onClick={() => (window.location.href = '/')}>
             Ir al inicio
           </Button>
         </div>
@@ -258,9 +258,9 @@ export default function OrgContentShowcase() {
   const location = [org.city, org.country].filter(Boolean).join(', ');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       {/* ═══ NAVBAR ═══ */}
-      <nav className="sticky top-0 z-40 bg-[#0a0a0b]/80 border-b border-white/[0.06]">
+      <nav className="sticky top-0 z-40 bg-background/80 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center gap-3">
           {org.logo_url ? (
             <img src={org.logo_url} alt={displayName} className="h-8 w-8 rounded-sm object-cover" />
@@ -274,17 +274,17 @@ export default function OrgContentShowcase() {
           {/* Social links in navbar */}
           <div className="hidden sm:flex items-center gap-1">
             {igHandle && (
-              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-muted/50 transition-colors text-muted-foreground hover:text-muted-foreground">
                 <Instagram className="h-4 w-4" />
               </a>
             )}
             {tkHandle && (
-              <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-muted/50 transition-colors text-muted-foreground hover:text-muted-foreground">
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.81.13v-3.5a6.37 6.37 0 00-.81-.05A6.34 6.34 0 003.15 15.4a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.22a8.16 8.16 0 004.76 1.52V7.3a4.85 4.85 0 01-1-.61z"/></svg>
               </a>
             )}
             {webUrl && (
-              <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-white/5 transition-colors text-white/40 hover:text-white/80">
+              <a href={ensureUrl(webUrl)} target="_blank" rel="noopener noreferrer" className="p-2 rounded-sm hover:bg-muted/50 transition-colors text-muted-foreground hover:text-muted-foreground">
                 <Globe className="h-4 w-4" />
               </a>
             )}
@@ -304,8 +304,8 @@ export default function OrgContentShowcase() {
           {coverUrl ? (
             <>
               <img src={coverUrl} alt="" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0b]/60 via-transparent to-[#0a0a0b]" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b]/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-transparent to-background" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
             </>
           ) : (
             <div className="w-full h-full" style={{ background: `linear-gradient(135deg, ${accent}15 0%, #0a0a0b 60%)` }} />
@@ -338,10 +338,10 @@ export default function OrgContentShowcase() {
                   {displayName}
                 </h1>
                 {tagline && (
-                  <p className="text-base md:text-lg text-white/60 mt-2 max-w-2xl line-clamp-2">{tagline}</p>
+                  <p className="text-base md:text-lg text-muted-foreground mt-2 max-w-2xl line-clamp-2">{tagline}</p>
                 )}
                 {/* Meta info */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-white/40">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
                   {location && (
                     <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {location}</span>
                   )}
@@ -360,7 +360,7 @@ export default function OrgContentShowcase() {
 
       {/* ═══ STATS BAR ═══ */}
       {stats && (
-        <section className="border-b border-white/[0.06]">
+        <section className="border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
               <StatCard value={`+${formatNumber(stats.total_videos_produced)}`} label="Videos producidos" icon={Film} />
@@ -374,20 +374,20 @@ export default function OrgContentShowcase() {
 
       {/* ═══ SPECIALTIES ═══ */}
       {specialties.length > 0 && (
-        <section className="border-b border-white/[0.06]">
+        <section className="border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <Star className="h-3.5 w-3.5 text-white/30 mr-1" />
+              <Star className="h-3.5 w-3.5 text-muted-foreground/60 mr-1" />
               {specialties.map((s) => (
                 <span
                   key={s}
-                  className="text-xs font-medium px-2.5 py-1 rounded-full border border-white/[0.08] text-white/50 bg-white/[0.03]"
+                  className="text-xs font-medium px-2.5 py-1 rounded-full border border-border text-muted-foreground bg-muted/40"
                 >
                   {SPECIALTY_LABELS[s] || s}
                 </span>
               ))}
             </div>
-            <div className="flex items-center gap-2 text-white/40">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <Lightbulb className="h-3.5 w-3.5 shrink-0" style={{ color: accent }} />
               <p className="text-xs font-medium">Estrategas digitales y de contenido</p>
             </div>
@@ -398,9 +398,9 @@ export default function OrgContentShowcase() {
       {/* ═══ PORTFOLIO TITLE ═══ */}
       {org.portfolio_title && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-2">
-          <h2 className="text-xl md:text-2xl font-bold text-white/90">{org.portfolio_title}</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-foreground">{org.portfolio_title}</h2>
           {org.portfolio_description && org.portfolio_description !== tagline && (
-            <p className="text-sm text-white/40 mt-1 max-w-2xl">{org.portfolio_description}</p>
+            <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{org.portfolio_description}</p>
           )}
         </section>
       )}
@@ -414,7 +414,7 @@ export default function OrgContentShowcase() {
               className={`text-xs font-semibold px-4 py-2 rounded-full border transition-all whitespace-nowrap ${
                 !filterPhase
                   ? 'text-black border-transparent'
-                  : 'bg-transparent text-white/50 border-white/[0.08] hover:border-white/20 hover:text-white/70'
+                  : 'bg-transparent text-muted-foreground border-border hover:border-border hover:text-muted-foreground'
               }`}
               style={!filterPhase ? { backgroundColor: accent } : undefined}
             >
@@ -430,7 +430,7 @@ export default function OrgContentShowcase() {
                   className={`text-xs font-semibold px-4 py-2 rounded-full border transition-all whitespace-nowrap ${
                     isActive
                       ? 'text-black border-transparent'
-                      : 'bg-transparent text-white/50 border-white/[0.08] hover:border-white/20 hover:text-white/70'
+                      : 'bg-transparent text-muted-foreground border-border hover:border-border hover:text-muted-foreground'
                   }`}
                   style={isActive ? { backgroundColor: accent } : undefined}
                 >
@@ -446,8 +446,8 @@ export default function OrgContentShowcase() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {filteredContent.length === 0 ? (
           <div className="text-center py-24">
-            <Film className="h-14 w-14 mx-auto text-white/10 mb-4" />
-            <p className="text-white/40 text-lg">
+            <Film className="h-14 w-14 mx-auto text-muted-foreground/60 mb-4" />
+            <p className="text-muted-foreground text-lg">
               {filterPhase ? 'No hay contenido en esta fase.' : 'No hay contenido disponible.'}
             </p>
           </div>
@@ -461,10 +461,10 @@ export default function OrgContentShowcase() {
       </section>
 
       {/* ═══ CTA SECTION ═══ */}
-      <section className="border-t border-white/[0.06]">
+      <section className="border-t border-border">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-3">Crea contenido con nosotros</h2>
-          <p className="text-white/50 mb-6 max-w-lg mx-auto">
+          <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
             {tagline || `Conecta con ${displayName} para impulsar tu marca con contenido autentico y creativo.`}
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -475,7 +475,7 @@ export default function OrgContentShowcase() {
             </a>
             {igHandle && (
               <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-bold border-white/10 text-white/70 hover:bg-white/5">
+                <Button size="lg" variant="outline" className="h-12 px-6 text-sm font-bold border-border text-muted-foreground hover:bg-muted/50">
                   <Instagram className="h-4 w-4 mr-2" />
                   @{igHandle}
                 </Button>
@@ -486,33 +486,33 @@ export default function OrgContentShowcase() {
       </section>
 
       {/* ═══ FOOTER ═══ */}
-      <footer className="border-t border-white/[0.06] py-8">
+      <footer className="border-t border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {org.logo_url && <img src={org.logo_url} alt="" className="h-6 w-6 rounded" />}
-            <span className="text-xs text-white/30">{displayName} — Portafolio de contenido</span>
+            <span className="text-xs text-muted-foreground">{displayName} — Portafolio de contenido</span>
           </div>
           <div className="flex items-center gap-4">
             {/* Social links */}
             <div className="flex items-center gap-2">
               {igHandle && (
-                <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors">
+                <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">
                   <Instagram className="h-4 w-4" />
                 </a>
               )}
               {tkHandle && (
-                <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors">
+                <a href={`https://tiktok.com/@${tkHandle}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.81.13v-3.5a6.37 6.37 0 00-.81-.05A6.34 6.34 0 003.15 15.4a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V9.22a8.16 8.16 0 004.76 1.52V7.3a4.85 4.85 0 01-1-.61z"/></svg>
                 </a>
               )}
               {liHandle && (
-                <a href={`https://linkedin.com/company/${liHandle}`} target="_blank" rel="noopener noreferrer" className="text-white/20 hover:text-white/60 transition-colors">
+                <a href={`https://linkedin.com/company/${liHandle}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground/60 hover:text-muted-foreground transition-colors">
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 </a>
               )}
             </div>
-            <div className="h-4 w-px bg-white/10" />
-            <a href="/" className="flex items-center gap-1.5 text-white/20 hover:text-white/40 transition-colors">
+            <div className="h-4 w-px bg-muted" />
+            <a href="/" className="flex items-center gap-1.5 text-muted-foreground/60 hover:text-muted-foreground transition-colors">
               <img src="/favicon.png" alt="KREOON" className="h-4 w-4 rounded opacity-40" />
               <span className="text-xs">Powered by KREOON</span>
             </a>
@@ -535,7 +535,7 @@ function VideoLightbox({ item, onClose }: { item: PublicContent; onClose: () => 
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-lg w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black border-white/[0.08] gap-0">
+      <DialogContent className="max-w-lg w-[95vw] max-h-[95vh] p-0 overflow-hidden bg-black border-border gap-0">
         <DialogTitle className="sr-only">Video</DialogTitle>
 
         <div className="relative bg-black aspect-[9/16] max-h-[95vh]">
@@ -553,7 +553,7 @@ function VideoLightbox({ item, onClose }: { item: PublicContent; onClose: () => 
               className="w-full h-full"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center"><Film className="h-10 w-10 text-white/20" /></div>
+            <div className="w-full h-full flex items-center justify-center"><Film className="h-10 w-10 text-muted-foreground/60" /></div>
           )}
         </div>
       </DialogContent>

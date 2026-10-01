@@ -17,7 +17,7 @@ const TABS: { id: MarketplaceTab; label: string; icon: React.ComponentType<{ cla
 
 function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount }: MarketplaceTabBarProps) {
   return (
-    <div className="flex items-center gap-1 pb-3 border-b border-white/5">
+    <div className="flex items-center gap-1 pb-3 border-b border-border">
       {TABS.map(tab => {
         const isActive = activeTab === tab.id;
         const count = tab.id === 'creators' ? creatorsCount : agenciesCount;
@@ -29,7 +29,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount 
               'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium transition-all',
               isActive
                 ? 'bg-purple-500/15 text-purple-400'
-                : 'text-gray-500 hover:text-foreground hover:bg-white/5'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
             )}
           >
             <tab.icon className="h-4 w-4" />
@@ -37,7 +37,7 @@ function TabBarComponent({ activeTab, onTabChange, creatorsCount, agenciesCount 
             {count !== undefined && (
               <span className={cn(
                 'text-xs px-1.5 py-0.5 rounded-full',
-                isActive ? 'bg-purple-500/20 text-purple-300' : 'bg-white/5 text-gray-500'
+                isActive ? 'bg-purple-500/20 text-purple-300' : 'bg-muted/50 text-muted-foreground'
               )}>
                 {count}
               </span>

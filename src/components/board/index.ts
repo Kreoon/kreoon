@@ -1,12 +1,10 @@
 export { BoardConfigDialog } from './BoardConfigDialog';
 export { BoardViewSwitcher, type BoardView } from './BoardViewSwitcher';
-export { EnhancedContentCard } from './EnhancedContentCard';
-export { EnhancedKanbanColumn } from './EnhancedKanbanColumn';
 export { BoardCalendarView } from './BoardCalendarView';
 export { BoardTableView } from './BoardTableView';
 export { BoardListView } from './BoardListView';
 export { BoardAIPanel } from './BoardAIPanel';
-export { StatusChangeDropdown, QuickStatusButtons } from './StatusChangeDropdown';
+export { QuickStatusButtons } from './StatusChangeDropdown';
 export { MarketplaceBoardView } from './MarketplaceBoardView';
 export { ViewSelector } from './ViewSelector';
 export { ResizableTableHeader, useColumnConfig } from './ResizableTableHeader';

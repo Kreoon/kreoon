@@ -49,7 +49,7 @@ export function AIPanel({ selectedLabel }: AIPanelProps) {
       <p className="text-xs text-muted-foreground">
         {selectedLabel
           ? `Acciones sugeridas para: ${selectedLabel}`
-          : "Selecciona una seccion para acciones especificas."}
+          : "Selecciona una sección para acciones especificas."}
       </p>
 
       <div className="space-y-2">

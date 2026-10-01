@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { bunnyFunctionHeaders, uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
@@ -147,7 +148,7 @@ export function BunnyVideoUploader({
       // Step 1: Create video entry in Bunny via edge function (lightweight JSON call)
       const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await bunnyFunctionHeaders(),
         body: JSON.stringify({
           action: 'create',
           user_id: userId,
@@ -167,42 +168,13 @@ export function BunnyVideoUploader({
       }
 
       // Step 2: Upload file DIRECTLY to Bunny (bypasses edge function memory limit)
-      const xhr = new XMLHttpRequest();
 
-      await new Promise<void>((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 90);
-            setProgress(percentComplete);
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', (e) => {
-          console.error('[BunnyVideoUploader] XHR error event:', {
-            readyState: xhr.readyState,
-            status: xhr.status,
-            statusText: xhr.statusText,
-            responseURL: xhr.responseURL,
-            uploadUrl: createData.upload_url,
-          });
-          reject(new Error(`Error de conexión (estado: ${xhr.readyState}). Verifica tu internet y desactiva VPN/bloqueadores si los tienes.`));
-        });
-        xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
-        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado (10 min). Verifica tu conexión a internet.')));
-
-        xhr.open('PUT', createData.upload_url);
-        xhr.setRequestHeader('AccessKey', createData.access_key);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.timeout = 600000;
-        xhr.send(file);
+      // Subida directa a Bunny Stream vía TUS firmado (la API key no sale del servidor)
+      await uploadToBunnyStreamTus(file, createData.tus, {
+        onProgress: (sent, total) => {
+          const percentComplete = Math.round((sent / total) * 90);
+          setProgress(percentComplete);
+        },
       });
 
       setProgress(100);

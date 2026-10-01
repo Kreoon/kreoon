@@ -72,16 +72,16 @@ export function TemplatePreviewModal({
     return (
       <div
         key={i}
-        className={`${height} rounded bg-gray-800/50 border border-gray-700/50 flex items-center justify-center`}
+        className={`${height} rounded bg-muted/50 border border-border/50 flex items-center justify-center`}
       >
-        <span className="text-xs text-gray-500 capitalize">{block.type.replace('_', ' ')}</span>
+        <span className="text-xs text-muted-foreground capitalize">{block.type.replace('_', ' ')}</span>
       </div>
     );
   });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-gray-950 border-gray-800">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col bg-background border-border">
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
@@ -105,9 +105,9 @@ export function TemplatePreviewModal({
                   </Badge>
                 )}
               </div>
-              <DialogTitle className="text-xl text-white">{template.name}</DialogTitle>
+              <DialogTitle className="text-xl text-foreground">{template.name}</DialogTitle>
               {template.description && (
-                <p className="text-sm text-gray-400 mt-1 line-clamp-2">{template.description}</p>
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
               )}
             </div>
 
@@ -115,13 +115,13 @@ export function TemplatePreviewModal({
             <div className="flex items-center gap-2 flex-shrink-0">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={template.author?.avatar_url || undefined} />
-                <AvatarFallback className="bg-gray-800 text-gray-400 text-xs">
+                <AvatarFallback className="bg-muted text-muted-foreground text-xs">
                   {template.author?.display_name?.charAt(0) || '?'}
                 </AvatarFallback>
               </Avatar>
               <div className="text-right">
-                <p className="text-sm text-white">{template.author?.display_name || 'Anonimo'}</p>
-                <p className="text-xs text-gray-500">Creador</p>
+                <p className="text-sm text-foreground">{template.author?.display_name || 'Anonimo'}</p>
+                <p className="text-xs text-muted-foreground">Creador</p>
               </div>
             </div>
           </div>
@@ -134,7 +134,7 @@ export function TemplatePreviewModal({
             {/* Device Toggle */}
             <div className="flex items-center justify-between mb-3">
               <Tabs value={previewDevice} onValueChange={(v) => setPreviewDevice(v as 'desktop' | 'mobile')}>
-                <TabsList className="bg-gray-900">
+                <TabsList className="bg-card">
                   <TabsTrigger value="desktop" className="text-xs">
                     <Monitor className="h-3.5 w-3.5 mr-1" />
                     Desktop
@@ -147,7 +147,7 @@ export function TemplatePreviewModal({
               </Tabs>
 
               {/* Stats */}
-              <div className="flex items-center gap-3 text-xs text-gray-400">
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
                   {template.view_count}
@@ -161,8 +161,8 @@ export function TemplatePreviewModal({
 
             {/* Preview Frame */}
             <div
-              className={`flex-1 overflow-y-auto rounded-lg border border-gray-800 ${
-                theme === 'dark' ? 'bg-gray-950' : 'bg-white'
+              className={`flex-1 overflow-y-auto rounded-lg border border-border ${
+                theme === 'dark' ? 'bg-background' : 'bg-white'
               }`}
               style={{
                 maxWidth: previewDevice === 'mobile' ? '375px' : '100%',
@@ -178,7 +178,7 @@ export function TemplatePreviewModal({
                 {/* Block previews */}
                 {blockPreview}
                 {template.blocks?.length > 8 && (
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     +{template.blocks.length - 8} bloques mas
                   </p>
                 )}
@@ -191,10 +191,10 @@ export function TemplatePreviewModal({
             {/* Tags */}
             {template.tags && template.tags.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 mb-2">Tags</p>
+                <p className="text-xs text-muted-foreground mb-2">Tags</p>
                 <div className="flex flex-wrap gap-1">
                   {template.tags.map((tag, i) => (
-                    <Badge key={i} variant="secondary" className="text-xs bg-gray-800">
+                    <Badge key={i} variant="secondary" className="text-xs bg-muted">
                       {tag}
                     </Badge>
                   ))}
@@ -204,7 +204,7 @@ export function TemplatePreviewModal({
 
             {/* Blocks included */}
             <div>
-              <p className="text-xs text-gray-500 mb-2">Bloques incluidos ({template.blocks?.length || 0})</p>
+              <p className="text-xs text-muted-foreground mb-2">Bloques incluidos ({template.blocks?.length || 0})</p>
               <div className="flex flex-wrap gap-1">
                 {Array.from(new Set(template.blocks?.map(b => b.type) || [])).map((type, i) => (
                   <Badge key={i} variant="outline" className="text-xs capitalize">
@@ -216,22 +216,22 @@ export function TemplatePreviewModal({
 
             {/* Config info */}
             <div>
-              <p className="text-xs text-gray-500 mb-2">Configuracion</p>
-              <div className="space-y-1 text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground mb-2">Configuracion</p>
+              <div className="space-y-1 text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <span>Tema:</span>
-                  <span className="text-white capitalize">{theme}</span>
+                  <span className="text-foreground capitalize">{theme}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span>Color accent:</span>
                   <div
-                    className="w-4 h-4 rounded border border-gray-700"
+                    className="w-4 h-4 rounded border border-border"
                     style={{ backgroundColor: accentColor }}
                   />
                 </div>
                 <div className="flex items-center gap-2">
                   <span>Fuente:</span>
-                  <span className="text-white capitalize">
+                  <span className="text-foreground capitalize">
                     {template.builder_config?.fontHeading || 'Inter'}
                   </span>
                 </div>
@@ -241,7 +241,7 @@ export function TemplatePreviewModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex-shrink-0 flex items-center justify-between pt-4 mt-4 border-t border-gray-800">
+        <div className="flex-shrink-0 flex items-center justify-between pt-4 mt-4 border-t border-border">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

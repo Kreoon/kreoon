@@ -33,7 +33,7 @@ export function DNAQuickSummary({ dna, compact = false }: DNAQuickSummaryProps) 
                         flex items-center justify-center shrink-0">
           <Dna className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
         </div>
-        <span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 truncate">
+        <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground truncate">
           ADN v{dna.version} • {dna.emotional_analysis?.confidence_level ?? '—'}% confianza
         </span>
       </div>
@@ -44,36 +44,36 @@ export function DNAQuickSummary({ dna, compact = false }: DNAQuickSummaryProps) 
     <div className="p-3 sm:p-4 rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
       <div className="flex items-center gap-2 mb-3 sm:mb-4">
         <Dna className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400 shrink-0" />
-        <span className="text-sm sm:font-medium text-zinc-900 dark:text-white">ADN del Negocio v{dna.version}</span>
+        <span className="text-sm sm:font-medium text-foreground dark:text-foreground">ADN del Negocio v{dna.version}</span>
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-1 text-zinc-500 text-[10px] sm:text-xs mb-0.5 sm:mb-1">
+          <div className="flex items-center gap-1 text-muted-foreground text-[10px] sm:text-xs mb-0.5 sm:mb-1">
             <Target className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
             <span className="truncate">Arquetipo</span>
           </div>
-          <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white font-medium truncate">
+          <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground font-medium truncate">
             {getArchetype(dna)}
           </p>
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-1 text-zinc-500 text-[10px] sm:text-xs mb-0.5 sm:mb-1">
+          <div className="flex items-center gap-1 text-muted-foreground text-[10px] sm:text-xs mb-0.5 sm:mb-1">
             <Users className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
             <span className="truncate">Audiencia</span>
           </div>
-          <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white font-medium truncate">
+          <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground font-medium truncate">
             {getAudienceAge(dna)}
           </p>
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-1 text-zinc-500 text-[10px] sm:text-xs mb-0.5 sm:mb-1">
+          <div className="flex items-center gap-1 text-muted-foreground text-[10px] sm:text-xs mb-0.5 sm:mb-1">
             <TrendingUp className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
             <span className="truncate">Pilares</span>
           </div>
-          <p className="text-[10px] sm:text-sm text-zinc-900 dark:text-white font-medium">
+          <p className="text-[10px] sm:text-sm text-foreground dark:text-foreground font-medium">
             {getPillarCount(dna)} pilares
           </p>
         </div>

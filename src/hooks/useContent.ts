@@ -8,7 +8,7 @@ import { markLocalUpdate as markLocalUpdateNew } from '@/hooks/realtime/useRealt
 import type { ProfileCache } from '@/hooks/realtime/types';
 
 // Default page size for content queries to prevent statement timeouts
-const CONTENT_PAGE_SIZE = 500;
+export const CONTENT_PAGE_SIZE = 500;
 
 // Re-export markLocalUpdate from new module for backward compatibility
 // This allows other hooks (like useContentDetail) to continue using it
@@ -86,10 +86,10 @@ async function fetchContentData(opts: {
       ? safeFetch(() => supabase.from('clients').select('id, name, logo_url').in('id', clientIds))
       : [] as any[],
     creatorIds.length > 0
-      ? safeFetch(() => supabase.from('profiles').select('id, full_name').in('id', creatorIds))
+      ? safeFetch(() => supabase.from('profiles').select('id, full_name, avatar_url').in('id', creatorIds))
       : [] as any[],
     editorIds.length > 0
-      ? safeFetch(() => supabase.from('profiles').select('id, full_name').in('id', editorIds))
+      ? safeFetch(() => supabase.from('profiles').select('id, full_name, avatar_url').in('id', editorIds))
       : [] as any[],
   ]);
 
@@ -106,6 +106,11 @@ async function fetchContentData(opts: {
 
   return { items, hasMore };
 }
+
+export type MoveContentResult =
+  | { ok: true }
+  | { ok: false; reason: 'conflict'; serverStatus: ContentStatus }
+  | { ok: false; reason: 'error'; error: unknown };
 
 interface UseContentOptions {
   userId?: string;
@@ -466,6 +471,67 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     }
   };
 
+  /**
+   * Mueve UNA producción de estado con las mismas garantías que `updateContentStatus`
+   * (markLocalUpdate + RPC update_content_status_rpc) pero pensado para el tablero:
+   * - actualización optimista de esa tarjeta;
+   * - antes de escribir compara con el estado que el servidor reporta (get_content_by_id): si otra
+   *   persona ya la movió, NO sobrescribe en silencio: reconcilia la tarjeta y devuelve 'conflict';
+   * - si falla, restaura solo esa tarjeta (sin refetch completo de hasta 500) y devuelve 'error'.
+   * Nunca lanza: devuelve el resultado para que la UI explique qué pasó.
+   * Nota: el servidor (RPC) hoy no valida transiciones ni rol; la validación sigue siendo de cliente.
+   */
+  const moveContentStatus = useCallback(async (
+    contentId: string,
+    newStatus: ContentStatus,
+    expectedStatus: ContentStatus,
+  ): Promise<MoveContentResult> => {
+    markLocalUpdate(contentId);
+    const nowIso = new Date().toISOString();
+    let previousUpdatedAt: string | undefined;
+
+    // Optimista: solo esta tarjeta
+    setContent(prev => prev.map(c => {
+      if (c.id !== contentId) return c;
+      previousUpdatedAt = c.updated_at;
+      return { ...c, status: newStatus, updated_at: nowIso };
+    }));
+
+    const restore = () => setContent(prev => prev.map(c =>
+      // Solo si nadie más (realtime) la cambió mientras tanto
+      c.id === contentId && c.status === newStatus
+        ? { ...c, status: expectedStatus, updated_at: previousUpdatedAt ?? c.updated_at }
+        : c
+    ));
+
+    try {
+      const { data: contentArr, error: readErr } = await supabase
+        .rpc('get_content_by_id', { p_content_id: contentId });
+      if (readErr) throw readErr;
+      const serverRow = contentArr?.[0];
+
+      if (serverRow && serverRow.status && serverRow.status !== expectedStatus) {
+        // Concurrencia: otra persona ya cambió el estado. No se escribe; se reconcilia con el servidor.
+        const serverStatus = serverRow.status as ContentStatus;
+        setContent(prev => prev.map(c => c.id === contentId ? { ...c, status: serverStatus } : c));
+        return { ok: false, reason: 'conflict', serverStatus };
+      }
+
+      if (serverRow) {
+        await updateContentStatusWithUP({ contentId, oldStatus: expectedStatus, newStatus });
+      } else {
+        // Igual que updateContentStatus: si la lectura no devuelve fila, usa update_content_by_id
+        const { error } = await supabase.rpc('update_content_by_id', { p_content_id: contentId, p_updates: { status: newStatus } });
+        if (error) throw error;
+      }
+      return { ok: true };
+    } catch (err) {
+      console.error('Error moving content status:', err);
+      restore();
+      return { ok: false, reason: 'error', error: err };
+    }
+  }, []);
+
   const deleteContent = async (contentId: string, reason?: string) => {
     markLocalUpdate(contentId);
 
@@ -501,5 +567,5 @@ export function useContentWithFilters(options: UseContentOptions = {}) {
     fetchContent();
   }, [fetchContent]);
 
-  return { content, loading, error, refetch: fetchContent, updateContentStatus, deleteContent, restoreContent, hasMore, loadingMore, loadMore };
+  return { content, loading, error, refetch: fetchContent, updateContentStatus, moveContentStatus, deleteContent, restoreContent, hasMore, loadingMore, loadMore };
 }

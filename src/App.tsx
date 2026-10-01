@@ -1,12 +1,11 @@
-import { Suspense, lazy, ComponentType } from "react";
+import { Suspense, lazy, ComponentType, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   QueryClient,
   QueryClientProvider,
-  dehydrate,
-  hydrate,
+  useQueryClient,
 } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
@@ -43,8 +42,17 @@ import { PageLoader } from "./components/PageLoader";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
-import { ProfileLayout } from "./components/profile-viewer/ProfileLayout";
 import { AdminOnlyFeature } from "./components/common/AdminOnlyFeature";
+import {
+  CatchAllRoute,
+  LegacyCreatorProfileRoute,
+} from "./components/routing/PublicProfileRoutes";
+import { getPostAuthDestination } from "@/lib/routing/postAuth";
+import {
+  attachScopedQueryPersistence,
+  removeLegacyQueryCache,
+} from "@/lib/storage/queryCachePersistence";
+import { purgeAuthenticatedCaches } from "@/lib/storage/scopedStorage";
 
 // Helper: detect chunk/module load failures (stale hashes after deploy)
 function isChunkLoadError(error: unknown): boolean {
@@ -83,7 +91,7 @@ function lazyWithRetry<T extends ComponentType<any>>(
 
 // Loading fallback component - Premium animated loader
 const SuspenseLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-kreoon-bg-primary">
+  <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
         <div className="absolute inset-0 rounded-full bg-kreoon-purple-500/20 blur-xl animate-pulse" />
@@ -126,20 +134,23 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const NoCompany = lazyWithRetry(() => import("./pages/NoCompany"));
 const NoOrganization = lazyWithRetry(() => import("./pages/NoOrganization"));
 const PendingAccess = lazyWithRetry(() => import("./pages/PendingAccess"));
-const WelcomeNewMember = lazyWithRetry(
-  () => import("./pages/WelcomeNewMember"),
-);
 const MCPDocumentation = lazyWithRetry(
   () => import("./pages/MCPDocumentation"),
 );
-// OrgAuth eliminado - usar OrgRegister (/auth/org/:slug) en su lugar
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const PortfolioShowcasePage = lazyWithRetry(
   () => import("./pages/PortfolioShowcasePage"),
 );
 const BlogPage = lazyWithRetry(() => import("./pages/BlogPage"));
-const Register = lazyWithRetry(() => import("./pages/Register"));
-const OrgRegister = lazyWithRetry(() => import("./pages/auth/OrgRegister"));
+const OrganizationRegistrationPage = lazyWithRetry(
+  () => import("./pages/registro/OrganizationRegistrationPage"),
+);
+const CreatorWelcomeRoute = lazyWithRetry(
+  () => import("./pages/registro/CreatorWelcomeRoute"),
+);
+const SignupClosedPage = lazyWithRetry(
+  () => import("./pages/registro/SignupClosedPage"),
+);
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
 const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
@@ -148,9 +159,6 @@ const OrgPortfolioPage = lazyWithRetry(
 );
 const OrgContentShowcase = lazyWithRetry(
   () => import("./pages/OrgContentShowcase"),
-);
-const CreatorProfilePage_Marketplace = lazyWithRetry(
-  () => import("./components/marketplace/profile/CreatorProfilePage"),
 );
 const HiringWizardPage = lazyWithRetry(
   () => import("./pages/HiringWizardPage"),
@@ -185,12 +193,10 @@ const FavoritosPage = lazyWithRetry(
 const CreatorProfileSetup = lazyWithRetry(
   () => import("./pages/CreatorProfileSetup"),
 );
-const Unete = lazyWithRetry(() => import("./pages/Unete"));
-const UneteTalento = lazyWithRetry(() => import("./pages/unete/talento"));
-const UneteMarcas = lazyWithRetry(() => import("./pages/unete/marcas"));
-const UneteOrganizaciones = lazyWithRetry(
-  () => import("./pages/unete/organizaciones"),
-);
+import {
+  GenericRegistrationRedirect,
+  LegacySlugRegistrationRedirect,
+} from "./pages/registro/LegacyRedirects";
 // CRM Platform
 const PlatformAdminDashboard = lazyWithRetry(
   () => import("./pages/crm/platform/PlatformAdminDashboard"),
@@ -246,14 +252,6 @@ const AllPagesQAPage = lazyWithRetry(
 
 // Subscription pages
 const ReferralLanding = lazyWithRetry(() => import("./pages/ReferralLanding"));
-const UnlockAccess = lazyWithRetry(() => import("./pages/UnlockAccess"));
-const WelcomeTalent = lazyWithRetry(() => import("./pages/WelcomeTalent"));
-const WelcomeUGCColombia = lazyWithRetry(
-  () => import("./pages/welcome/WelcomeUGCColombia"),
-);
-const OnboardingProfile = lazyWithRetry(
-  () => import("./pages/OnboardingProfile"),
-);
 const ClientOnboarding = lazyWithRetry(
   () => import("./pages/ClientOnboarding"),
 );
@@ -414,50 +412,47 @@ const queryClient = new QueryClient({
   },
 });
 
-// ── localStorage persistence: cache survives page refresh / tab close ──
-const RQ_CACHE_KEY = "kreoon-rq-v1";
-const RQ_CACHE_MAX_AGE = 60 * 60 * 1000; // 1 hour – matches gcTime
+// ── Caché persistida de React Query: SOLO catálogo no sensible y con ámbito usuario+organización ──
+// (ver src/lib/storage/queryCachePersistence.ts). La clave global heredada `kreoon-rq-v1` se borra
+// al arrancar, igual que las cachés del service worker antiguo que guardaban respuestas autenticadas.
+removeLegacyQueryCache();
+void purgeAuthenticatedCaches();
 
-// Restore on startup
-try {
-  const raw = localStorage.getItem(RQ_CACHE_KEY);
-  if (raw) {
-    const { ts, state } = JSON.parse(raw);
-    if (Date.now() - ts < RQ_CACHE_MAX_AGE) {
-      hydrate(queryClient, state);
-    } else {
-      localStorage.removeItem(RQ_CACHE_KEY);
-    }
-  }
-} catch {
-  localStorage.removeItem(RQ_CACHE_KEY);
+/** Rehidrata/persiste la caché de catálogo solo para la sesión actual (usuario + organización). */
+function ScopedQueryPersistence() {
+  const client = useQueryClient();
+  const { user, profile, loading } = useAuth();
+  const userId = user?.id ?? null;
+  const orgId = profile?.current_organization_id ?? null;
+
+  useEffect(() => {
+    if (loading || !userId) return;
+    return attachScopedQueryPersistence(client, userId, orgId);
+  }, [client, loading, userId, orgId]);
+
+  return null;
 }
 
-// Persist on changes (debounced 3s to avoid thrashing)
-let _rqPersistTimer: ReturnType<typeof setTimeout> | null = null;
-queryClient.getQueryCache().subscribe(() => {
-  if (_rqPersistTimer) clearTimeout(_rqPersistTimer);
-  _rqPersistTimer = setTimeout(() => {
-    try {
-      const state = dehydrate(queryClient, {
-        shouldDehydrateQuery: (q) => {
-          if (q.state.status !== "success") return false;
-          // Skip large datasets (content lists 240+ items) to keep cache small
-          const d = q.state.data;
-          if (Array.isArray(d) && d.length > 100) return false;
-          return true;
-        },
-      });
-      const payload = JSON.stringify({ ts: Date.now(), state });
-      // Safety: don't exceed 4 MB in localStorage
-      if (payload.length < 4 * 1024 * 1024) {
-        localStorage.setItem(RQ_CACHE_KEY, payload);
-      }
-    } catch {
-      /* localStorage full – silently ignore */
-    }
-  }, 3000);
-});
+/**
+ * Entrada de la app instalada (`start_url: /inicio?source=pwa`): con sesión va al inicio del rol
+ * (postAuth.ts); sin sesión, a la pantalla de acceso — nunca a la landing.
+ */
+function InicioRoute() {
+  const { user, loading, rolesLoaded, roles, activeRole } = useAuth();
+
+  if (loading || (user && !rolesLoaded)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Cargando">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+  // Sin roles, /auth ya resuelve el destino (marca, perfil de talento o completar el alta).
+  if (roles.length === 0) return <Navigate to="/auth" replace />;
+  return <Navigate to={getPostAuthDestination({ roles, activeRole })} replace />;
+}
 
 // Component to redirect /profile to settings profile
 function ProfileRedirect() {
@@ -478,49 +473,6 @@ function ProfileRedirect() {
   return <Navigate to="/settings?section=profile" replace />;
 }
 
-// Brand referral handler: capture ref param and redirect to register
-function BrandReferralRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  const ref = params.get("ref") || "";
-  if (ref) {
-    try {
-      localStorage.setItem("kreoon_brand_referral", ref);
-    } catch {
-      /* localStorage unavailable in incognito */
-    }
-  }
-  return (
-    <Navigate
-      to={`/register?intent=brand&ref=${encodeURIComponent(ref)}`}
-      replace
-    />
-  );
-}
-
-// Talent referral redirect: /unete-talento?ref=XXX -> /unete/talento?ref=XXX
-function TalentReferralRedirect() {
-  const search = window.location.search;
-  // Save referral code to localStorage so it persists through redirects
-  const params = new URLSearchParams(search);
-  const ref = params.get("ref");
-  if (ref) {
-    try {
-      localStorage.setItem("kreoon_referral_code", ref);
-    } catch {
-      /* localStorage unavailable in incognito */
-    }
-  }
-  return <Navigate to={`/unete/talento${search}`} replace />;
-}
-
-// OrgAuth redirect: /org/:slug and /register/:slug -> /auth/org/:slug
-// OrgAuth.tsx was removed as it was a duplicate of OrgRegister.tsx
-function OrgAuthRedirect() {
-  const slug = window.location.pathname.split("/").filter(Boolean).pop() || "";
-  const search = window.location.search;
-  return <Navigate to={`/auth/org/${slug}${search}`} replace />;
-}
-
 function AppRoutes() {
   const { impersonationKey } = useImpersonation();
 
@@ -535,7 +487,7 @@ function AppRoutes() {
         <Route path="/pricing/creators" element={<CreatorPricingPage />} />
         <Route path="/calculadora-ugc" element={<UGCPriceCalculator />} />
         <Route path="/portafolio" element={<PortfolioShowcasePage />} />
-        <Route path="/marca-referida" element={<BrandReferralRedirect />} />
+        <Route path="/marca-referida" element={<SignupClosedPage audience="brand" />} />
         {/* Legal pages (public, required for Meta app review) */}
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
@@ -563,16 +515,8 @@ function AppRoutes() {
             </TalentGate>
           }
         />
-        <Route
-          path="/marketplace/creator/:id"
-          element={
-            <TalentGate>
-              <ProfileLayout>
-                <CreatorProfilePage_Marketplace />
-              </ProfileLayout>
-            </TalentGate>
-          }
-        />
+        {/* Enlace heredado: redirige a la URL pública única /p/:slug (sin slug, muestra el perfil igual) */}
+        <Route path="/marketplace/creator/:id" element={<LegacyCreatorProfileRoute />} />
         <Route
           path="/marketplace/org/:slug"
           element={
@@ -692,8 +636,10 @@ function AppRoutes() {
         />
         <Route path="/company/:username" element={<CompanyProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
+        {/* URL pública ÚNICA del perfil de creador. /@slug se redirige desde la ruta comodín */}
         <Route path="/p/:username" element={<PublicCreatorPage />} />
-        <Route path="/@:username" element={<PublicCreatorPage />} />
+        {/* Entrada de la app instalada (manifest start_url) */}
+        <Route path="/inicio" element={<InicioRoute />} />
         <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -702,34 +648,47 @@ function AppRoutes() {
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />
-        <Route path="/unlock-access" element={<UnlockAccess />} />
-        <Route path="/welcome-talent" element={<WelcomeTalent />} />
-        <Route path="/welcome/ugc-colombia" element={<WelcomeUGCColombia />} />
-        <Route path="/onboarding/profile" element={<OnboardingProfile />} />
+        <Route path="/unlock-access" element={<Navigate to="/" replace />} />
+        {/* Bienvenida/onboarding de creadores unificado: un solo asistente (OnboardingGateProvider) y
+            un solo destino (/bienvenida). Enlaces anteriores (incluido el del formulario externo) siguen vivos. */}
+        <Route path="/welcome-talent" element={<Navigate to="/bienvenida" replace />} />
+        <Route path="/welcome/ugc-colombia" element={<Navigate to="/bienvenida" replace />} />
+        <Route path="/onboarding/profile" element={<Navigate to="/bienvenida" replace />} />
         {/* Formulario público de onboarding de clientes. Sin ProtectedRoute:
             el enlace llega por WhatsApp y el cliente no tiene cuenta.
             React Router prioriza el segmento estático /onboarding/profile
             sobre este dinámico, así que no hay colisión entre ambas. */}
         <Route path="/onboarding/:token" element={<ClientOnboarding />} />
-        <Route path="/welcome" element={<WelcomeNewMember />} />
+        <Route path="/welcome" element={<Navigate to="/bienvenida" replace />} />
         <Route path="/mcp-docs" element={<MCPDocumentation />} />
         <Route path="/org/:slug/talento" element={<OrgPortfolioPage />} />
         <Route path="/org/:slug/contenido" element={<OrgContentShowcase />} />
-        {/* /org/:slug redirige a /auth/org/:slug (OrgAuth eliminado) */}
-        <Route path="/org/:slug" element={<OrgAuthRedirect />} />
-        <Route path="/auth/org/:slug" element={<OrgRegister />} />
+        <Route path="/org/:slug" element={<LegacySlugRegistrationRedirect />} />
+        {/* Registro público ÚNICO de creadores, parametrizado por organización */}
+        <Route path="/registro" element={<GenericRegistrationRedirect />} />
+        <Route
+          path="/registro/:organizationSlug"
+          element={<OrganizationRegistrationPage mode="register" />}
+        />
+        <Route
+          path="/registro/:organizationSlug/continuar"
+          element={<OrganizationRegistrationPage mode="continue" />}
+        />
+        <Route path="/bienvenida" element={<CreatorWelcomeRoute />} />
+        {/* Entradas de alta heredadas → registro canónico (conservan UTM/ref y destino seguro) */}
+        <Route path="/auth/org/:slug" element={<LegacySlugRegistrationRedirect />} />
         <Route path="/r/:code" element={<ReferralLanding />} />
-        <Route path="/register" element={<Register />} />
-        {/* /register/:slug redirige a /auth/org/:slug */}
-        <Route path="/register/:slug" element={<OrgAuthRedirect />} />
+        <Route path="/register" element={<GenericRegistrationRedirect />} />
+        <Route path="/register/:slug" element={<LegacySlugRegistrationRedirect />} />
         <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/unete" element={<Unete />} />
-        <Route path="/unete/talento" element={<UneteTalento />} />
-        <Route path="/unete-talento" element={<TalentReferralRedirect />} />
-        <Route path="/unete/marcas" element={<UneteMarcas />} />
-        <Route path="/unete/organizaciones" element={<UneteOrganizaciones />} />
+        {/* Altas públicas: solo creadores. Marcas y organizaciones: estado informativo, sin formulario */}
+        <Route path="/unete" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete/talento" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete-talento" element={<GenericRegistrationRedirect />} />
+        <Route path="/unete/marcas" element={<SignupClosedPage audience="brand" />} />
+        <Route path="/unete/organizaciones" element={<SignupClosedPage audience="organization" />} />
         {/* Partner Communities */}
         <Route path="/comunidad/:slug" element={<PartnerCommunityLanding />} />
         <Route path="/" element={<HomePage />} />
@@ -1328,7 +1287,7 @@ function AppRoutes() {
         <Route path="/wallet" element={<Navigate to="/creator-dashboard" replace />} />
         <Route path="/wallet/*" element={<Navigate to="/creator-dashboard" replace />} />
         <Route path="/admin/wallets" element={<Navigate to="/admin/payouts" replace />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<CatchAllRoute fallback={<NotFound />} />} />
       </Routes>
     </Suspense>
   );
@@ -1343,6 +1302,7 @@ function AppContent() {
         <BrandingProvider>
           <AuthProvider>
             <AuthStoreBridge />
+            <ScopedQueryPersistence />
             <OnboardingGateProvider>
               <RoleLegalGateProvider>
                 <CurrencyProvider>
@@ -1393,8 +1353,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider
       attribute="class"
-      defaultTheme="dark"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       storageKey="kreoon-theme"
     >
       <AppContent />

@@ -24,7 +24,7 @@ export function CertificateProgressPanel({
 
   if (isLoading) {
     return (
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 flex items-center gap-3 text-zinc-400">
+      <div className="rounded-2xl bg-muted/50 border border-border p-6 flex items-center gap-3 text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" /> Verificando elegibilidad...
       </div>
     );
@@ -33,14 +33,14 @@ export function CertificateProgressPanel({
   if (!eligibility) return null;
   if (eligibility.reason === 'no_requirements_configured') {
     return (
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-zinc-400">
+      <div className="rounded-2xl bg-muted/50 border border-border p-6 text-sm text-muted-foreground">
         Este curso aún no tiene certificado configurado.
       </div>
     );
   }
   if (eligibility.reason === 'not_enrolled') {
     return (
-      <div className="rounded-2xl bg-white/5 border border-white/10 p-6 text-sm text-zinc-400">
+      <div className="rounded-2xl bg-muted/50 border border-border p-6 text-sm text-muted-foreground">
         Inscríbete al curso para optar al certificado.
       </div>
     );
@@ -58,7 +58,7 @@ export function CertificateProgressPanel({
   }
 
   return (
-    <div className="rounded-2xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 p-6 space-y-4">
+    <div className="rounded-2xl bg-gradient-to-br from-muted/60 to-muted/30 border border-border p-6 space-y-4">
       <div className="flex items-center gap-3">
         <div
           className="h-10 w-10 rounded-xl flex items-center justify-center"
@@ -67,8 +67,8 @@ export function CertificateProgressPanel({
           <Award className="h-5 w-5" style={{ color: accentColor }} />
         </div>
         <div>
-          <h3 className="font-semibold text-zinc-100">Tu certificado</h3>
-          <p className="text-xs text-zinc-500">Requisitos para obtenerlo</p>
+          <h3 className="font-semibold text-foreground">Tu certificado</h3>
+          <p className="text-xs text-muted-foreground">Requisitos para obtenerlo</p>
         </div>
       </div>
 
@@ -76,21 +76,21 @@ export function CertificateProgressPanel({
         {reqRows.map((row, i) => (
           <li key={i} className="flex items-start gap-3 text-sm">
             {row.done ? (
-              <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
             ) : (
-              <Circle className="h-4 w-4 flex-shrink-0 mt-0.5 text-zinc-600" />
+              <Circle className="h-4 w-4 flex-shrink-0 mt-0.5 text-muted-foreground" />
             )}
-            <span className={cn(row.done ? 'text-zinc-300' : 'text-zinc-500')}>{row.label}</span>
+            <span className={cn(row.done ? 'text-muted-foreground' : 'text-muted-foreground')}>{row.label}</span>
           </li>
         ))}
       </ul>
 
-      <div className="pt-2 border-t border-white/5">
-        <div className="flex items-center justify-between mb-2 text-xs text-zinc-500">
+      <div className="pt-2 border-t border-border">
+        <div className="flex items-center justify-between mb-2 text-xs text-muted-foreground">
           <span>Progreso</span>
           <span>{Math.round(completionPct)}%</span>
         </div>
-        <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+        <div className="h-1.5 rounded-full bg-muted/50 overflow-hidden">
           <div
             className="h-full transition-all"
             style={{ width: `${Math.min(100, completionPct)}%`, backgroundColor: accentColor }}

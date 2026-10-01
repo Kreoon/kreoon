@@ -97,7 +97,7 @@ export function EscrowCard({
               <LockIcon
                 className={cn(
                   'h-5 w-5',
-                  isLocked ? 'text-amber-400' : 'text-emerald-400'
+                  isLocked ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'
                 )}
               />
             </div>
@@ -122,14 +122,14 @@ export function EscrowCard({
         {/* Total amount */}
         <div className="text-center p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
           <p className="text-sm text-muted-foreground">Total bloqueado</p>
-          <p className="text-2xl font-bold text-white mt-1">{escrow.formattedTotal}</p>
+          <p className="text-2xl font-bold text-foreground mt-1">{escrow.formattedTotal}</p>
         </div>
 
         {/* Progress bar */}
         <div>
           <div className="flex items-center justify-between text-xs mb-2">
             <span className="text-muted-foreground">Progreso</span>
-            <span className="text-white">{escrow.progress}%</span>
+            <span className="text-foreground">{escrow.progress}%</span>
           </div>
           <Progress value={escrow.progress} className="h-1.5" />
         </div>

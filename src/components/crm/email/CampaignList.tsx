@@ -135,7 +135,7 @@ export function CampaignList({ onEdit, onCreate, onDetail }: CampaignListProps) 
                         <div className="text-muted-foreground">Clicks</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-slate-400">{campaign.total_sent}</div>
+                        <div className="font-semibold text-muted-foreground">{campaign.total_sent}</div>
                         <div className="text-muted-foreground">Enviados</div>
                       </div>
                     </div>

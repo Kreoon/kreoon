@@ -9,7 +9,7 @@
  * mientras mantiene un fallback funcional para quienes no lo han hecho.
  */
 
-import { useMemo, Suspense } from 'react';
+import { useMemo } from 'react';
 import { Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,10 @@ import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
 import { usePublishedProfileBlocks } from '@/hooks/usePublishedProfileBlocks';
 import { PROFILE_TEMPLATES, getTemplateByName } from '@/lib/profile-builder/templates';
 import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
-import { CreatorThemeProvider } from './CreatorThemeProvider';
-import { PublicBlockRenderer } from './PublicBlockRenderer';
+
+
 import { ProfileHeader } from './ProfileHeader';
+import { StudioUgcProfile } from './StudioUgcProfile';
 import type { ProfileBlock, ProfileTemplate, BuilderConfig } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ interface TemplateProfileRendererProps {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 animate-pulse" aria-busy="true">
+    <div className="min-h-screen w-full bg-background animate-pulse" aria-busy="true">
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
@@ -58,7 +59,7 @@ function ProfileSkeleton() {
 
 function ProfileError({ message, onBack }: { message: string; onBack: () => void }) {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md space-y-4">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
         <h2 className="text-xl font-semibold text-zinc-100">Perfil no disponible</h2>
@@ -75,7 +76,7 @@ function ProfileError({ message, onBack }: { message: string; onBack: () => void
 
 function KreoonBranding() {
   return (
-    <footer className="py-6 text-center border-t border-white/5" aria-label="Powered by Kreoon">
+    <footer className="py-6 text-center border-t border-border/50" aria-label="Powered by Kreoon">
       <a
         href="https://kreoon.com"
         target="_blank"
@@ -204,7 +205,7 @@ export function TemplateProfileRenderer({
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorProfileId}
@@ -219,7 +220,7 @@ export function TemplateProfileRenderer({
   // Error state
   if (error || !creatorData) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorProfileId}
@@ -239,7 +240,7 @@ export function TemplateProfileRenderer({
   const hasMinimumRequirements = hasPublishedProfile || creatorData.portfolioItems.length > 0;
   if (!hasMinimumRequirements) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="min-h-screen bg-background">
         {shouldShowHeader && (
           <ProfileHeader
             creatorId={creatorData.profile.id}
@@ -254,10 +255,9 @@ export function TemplateProfileRenderer({
     );
   }
 
-  const showBranding = builderConfig.showKreoonBranding !== false;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {shouldShowHeader && (
         <ProfileHeader
           creatorId={creatorData.profile.id}
@@ -265,46 +265,9 @@ export function TemplateProfileRenderer({
         />
       )}
 
-      <CreatorThemeProvider config={builderConfig}>
-        <main
-          className="w-full min-h-screen"
-          aria-label={`Perfil de ${creatorData.profile.display_name}`}
-        >
-          {/* Contenedor: full-width en móvil, centrado con max-width en tablet+ */}
-          <div className="w-full md:max-w-4xl md:mx-auto">
-            {/* Renderizar bloques de la plantilla */}
-            {visibleBlocks.length === 0 ? (
-              <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-zinc-500 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500">Cargando contenido...</p>
-                </div>
-              </div>
-            ) : (
-              <Suspense fallback={<div className="min-h-screen animate-pulse bg-zinc-900/50" />}>
-                <div className="py-8 space-y-8">
-                  {visibleBlocks.map((block) => (
-                    <PublicBlockRenderer
-                      key={block.id}
-                      block={block}
-                      creatorProfile={{
-                        id: creatorData.profile.id,
-                        user_id: creatorData.profile.user_id,
-                        display_name: creatorData.profile.display_name,
-                        categories: creatorData.profile.categories || [],
-                      }}
-                    />
-                  ))}
-                </div>
-              </Suspense>
-            )}
-
-          </div>
-
-          {/* Branding Kreoon */}
-          {showBranding && <KreoonBranding />}
-        </main>
-      </CreatorThemeProvider>
+      {/* Estilo único «Estudio UGC» (propuesta enlace profesional aprobada 2026-10-01).
+          Reemplaza el render por bloques del constructor en la página pública. */}
+      <StudioUgcProfile data={creatorData} />
     </div>
   );
 }

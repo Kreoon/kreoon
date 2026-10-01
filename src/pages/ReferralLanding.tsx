@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Building2, Briefcase, Loader2, AlertCircle, Gift } from "lucide-react";
+import { Sparkles, Loader2, AlertCircle, Gift } from "lucide-react";
 import { PromoBanner } from "@/components/referrals/PromoBanner";
 import { TierBadge } from "@/components/referrals/TierBadge";
 import type { PromotionalCampaign } from "@/types/unified-finance.types";
 import type { ReferralTierKey } from "@/lib/finance/constants";
 import { REFERRAL_TIERS } from "@/lib/finance/constants";
-
-const REFERRAL_STORAGE_KEY = "kreoon_referral_code";
+import { REGISTRATION_BASE } from "@/lib/registration/paths";
 
 interface ReferrerInfo {
   name: string | null;
@@ -68,8 +67,6 @@ export default function ReferralLanding() {
           setReferrer(data.referrer ?? null);
           setRewards(data.rewards ?? null);
           setActivePromo(data.active_promo ?? null);
-          // Persist code for registration flow
-          localStorage.setItem(REFERRAL_STORAGE_KEY, code.toUpperCase());
         }
       } catch {
         if (!cancelled) {
@@ -85,10 +82,13 @@ export default function ReferralLanding() {
     return () => { cancelled = true; };
   }, [code]);
 
-  const goRegister = (intent: "talent" | "brand" | "organization") => {
-    const params = new URLSearchParams({ intent });
+  // El slug de la organización lo decide el servidor según el host: /registro resuelve la org
+  // predeterminada y conserva `ref` (atribución validada).
+  const goRegister = () => {
+    const params = new URLSearchParams();
     if (code) params.set("ref", code);
-    navigate(`/register?${params.toString()}`);
+    const qs = params.toString();
+    navigate(`${REGISTRATION_BASE}${qs ? `?${qs}` : ""}`);
   };
 
   // ── Loading state ──
@@ -138,8 +138,8 @@ export default function ReferralLanding() {
                 </div>
               )}
               <div className="flex flex-col items-center gap-1">
-                <p className="text-white/70 text-sm">
-                  <span className="font-semibold text-white">{referrer.name ?? "Alguien"}</span>{" "}
+                <p className="text-muted-foreground text-sm">
+                  <span className="font-semibold text-foreground">{referrer.name ?? "Alguien"}</span>{" "}
                   te invito a unirte a KREOON
                 </p>
                 {referrer.tier && referrer.tier !== "starter" && REFERRAL_TIERS[referrer.tier as ReferralTierKey] && (
@@ -150,7 +150,7 @@ export default function ReferralLanding() {
 
             {/* Bilateral rewards */}
             {rewards && (
-              <div className="flex items-center gap-3 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-white/10">
+              <div className="flex items-center gap-3 p-4 rounded-sm bg-gradient-to-r from-purple-500/10 to-green-500/10 border border-border">
                 <Gift className="w-8 h-8 text-purple-400 shrink-0" />
                 <div className="text-left">
                   <p className="text-white text-sm font-semibold">Al registrarte recibes:</p>
@@ -176,39 +176,23 @@ export default function ReferralLanding() {
             )}
 
             {/* Value prop */}
-            <p className="text-white/60 text-sm max-w-md leading-relaxed">
-              La plataforma todo-en-uno para creadores, editores, marcas y agencias.
-              Gestiona contenido, conecta con talento y escala tu operacion creativa.
+            <p className="text-muted-foreground text-sm max-w-md leading-relaxed">
+              La plataforma para creadores de contenido. Gestiona tu trabajo, muestra tu portafolio
+              y conecta con oportunidades.
             </p>
 
-            {/* CTA buttons */}
+            {/* CTA único: el registro público es solo de creadores */}
             <div className="flex flex-col gap-3 w-full max-w-sm">
               <button
-                onClick={() => goRegister("talent")}
+                onClick={goRegister}
                 className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
               >
                 <Sparkles className="h-4 w-4" />
-                Soy Talento
+                Crear mi cuenta de creador
               </button>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => goRegister("brand")}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
-                >
-                  <Building2 className="h-4 w-4" />
-                  Soy Marca
-                </button>
-                <button
-                  onClick={() => goRegister("organization")}
-                  className="flex-1 flex items-center justify-center gap-2 px-5 py-3.5 rounded-sm bg-white/10 hover:bg-white/15 border border-white/10 font-semibold text-sm transition-all"
-                >
-                  <Briefcase className="h-4 w-4" />
-                  Soy Agencia
-                </button>
-              </div>
             </div>
 
-            <p className="text-white/30 text-xs">
+            <p className="text-muted-foreground/60 text-xs">
               Al registrarte con este enlace, ambos reciben beneficios en el programa de referidos.
             </p>
           </>
@@ -219,17 +203,17 @@ export default function ReferralLanding() {
               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
                 <AlertCircle className="h-8 w-8 text-red-400" />
               </div>
-              <p className="text-white/70 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {errorMsg ?? "Este enlace de referido no es valido."}
               </p>
             </div>
 
             {/* Fallback CTA */}
             <button
-              onClick={() => navigate("/register")}
+              onClick={goRegister}
               className="px-8 py-3 rounded-sm bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 font-semibold text-sm transition-all"
             >
-              Registrarse en KREOON
+              Crear mi cuenta de creador
             </button>
           </>
         )}

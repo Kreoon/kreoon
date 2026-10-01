@@ -98,8 +98,8 @@ export function UsersDetailSheet({ stats }: UsersDetailSheetProps) {
       header: "Usuario",
       render: (u) => (
         <div>
-          <p className="font-medium text-white">{u.full_name || "Sin nombre"}</p>
-          <p className="text-xs text-white/40">{u.email}</p>
+          <p className="font-medium text-foreground">{u.full_name || "Sin nombre"}</p>
+          <p className="text-xs text-muted-foreground/70">{u.email}</p>
         </div>
       ),
     },
@@ -114,7 +114,7 @@ export function UsersDetailSheet({ stats }: UsersDetailSheetProps) {
             </Badge>
           )}
           {u.roles.map((r) => (
-            <Badge key={r} variant="outline" className="text-[10px] border-white/20 text-white/60">
+            <Badge key={r} variant="outline" className="text-[10px] border-border text-muted-foreground">
               {r}
             </Badge>
           ))}
@@ -125,14 +125,14 @@ export function UsersDetailSheet({ stats }: UsersDetailSheetProps) {
       key: "org",
       header: "Organizacion",
       render: (u) => (
-        <span className="text-white/60">{u.organization_name || "-"}</span>
+        <span className="text-muted-foreground">{u.organization_name || "-"}</span>
       ),
     },
     {
       key: "created",
       header: "Registro",
       render: (u) => (
-        <span className="text-white/50 text-xs">
+        <span className="text-muted-foreground/70 text-xs">
           {new Date(u.created_at).toLocaleDateString("es-CO")}
         </span>
       ),
@@ -158,7 +158,7 @@ export function UsersDetailSheet({ stats }: UsersDetailSheetProps) {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="bg-white/5 w-full justify-start">
+        <TabsList className="bg-muted/40 w-full justify-start">
           <TabsTrigger value="all" className="text-xs">Todos</TabsTrigger>
           <TabsTrigger value="with_org" className="text-xs">Con Org</TabsTrigger>
           <TabsTrigger value="no_org" className="text-xs">Sin Org</TabsTrigger>
@@ -173,7 +173,7 @@ export function UsersDetailSheet({ stats }: UsersDetailSheetProps) {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-white/30 text-sm">
+        <div className="flex items-center justify-center py-12 text-muted-foreground/70 text-sm">
           Cargando usuarios...
         </div>
       ) : (

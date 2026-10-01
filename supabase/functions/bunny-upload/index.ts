@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { canWriteContent, getRequestUser, signTusUpload } from '../_shared/bunnyUploadSecurity.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -157,6 +158,24 @@ Deno.serve(async (req) => {
 
     const contentType = req.headers.get('content-type') || ''
     const url = new URL(req.url)
+
+    // Identidad + autorización: todas las rutas escriben sobre `content` con
+    // service_role, así que se exige JWT de usuario y permiso sobre el contenido.
+    const user = await getRequestUser(req, supabase)
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const assertContent = async (id: string): Promise<Response | null> => {
+      const access = await canWriteContent(supabase, user.id, id)
+      if (access.ok) return null
+      return new Response(
+        JSON.stringify({ error: access.status === 404 ? 'Content not found' : 'Forbidden' }),
+        { status: access.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
     
     // ========== PATH A: Create video and get upload URL (for direct browser upload) ==========
     if (req.method === 'GET' || (req.method === 'POST' && contentType.includes('application/json'))) {
@@ -182,6 +201,9 @@ Deno.serve(async (req) => {
         )
       }
       
+      const denied = await assertContent(contentId)
+      if (denied) return denied
+
       console.log(`[bunny-upload] Creating video slot for content ${contentId}, variant ${variantIndex}`);
 
       // Update status to processing
@@ -215,15 +237,14 @@ Deno.serve(async (req) => {
       const videoData: BunnyVideoResponse = await createResponse.json()
       console.log('[bunny-upload] Created Bunny video slot:', videoData.guid)
 
-      // Return upload URL and credentials for direct browser upload
-      const uploadUrl = `https://video.bunnycdn.com/library/${bunnyLibraryId}/videos/${videoData.guid}`
+      // Credenciales TUS firmadas para subida directa (NUNCA la API key)
       const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${videoData.guid}`
+      const tus = await signTusUpload(bunnyLibraryId, bunnyApiKey, videoData.guid)
 
       return new Response(
         JSON.stringify({
           success: true,
-          uploadUrl,
-          accessKey: bunnyApiKey,
+          tus,
           video_id: videoData.guid,
           embed_url: embedUrl,
           content_id: contentId,
@@ -246,6 +267,9 @@ Deno.serve(async (req) => {
         )
       }
       
+      const denied = await assertContent(contentId)
+      if (denied) return denied
+
       console.log(`[bunny-upload] Confirming upload for content ${contentId}, video ${videoId}`);
 
       // Update database with video URL
@@ -322,6 +346,9 @@ Deno.serve(async (req) => {
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
+
+      const deniedC = await assertContent(contentId)
+      if (deniedC) return deniedC
 
       const fileSize = file.size;
       console.log(`[bunny-upload] Received file: ${file.name}, size: ${fileSize} bytes (${(fileSize / 1024 / 1024).toFixed(2)} MB)`);
@@ -482,6 +509,9 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
+
+    const deniedUrl = await assertContent(content_id)
+    if (deniedUrl) return deniedUrl
 
     // Update status to processing
     await supabase

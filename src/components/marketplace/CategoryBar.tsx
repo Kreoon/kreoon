@@ -73,7 +73,7 @@ export function CategoryBar({
                 className={cn(
                   'flex flex-col items-center gap-1.5 min-w-[56px] pb-2 border-b-2 transition-all duration-200',
                   isActive
-                    ? 'border-primary text-white'
+                    ? 'border-primary text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
                 )}
               >

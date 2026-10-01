@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,32 +55,11 @@ async function fetchPortfolioContent(): Promise<PortfolioContent[]> {
 const EAGER_LOAD_COUNT = 12;
 
 function VideoCard({ content, index, eager = false }: { content: PortfolioContent; index: number; eager?: boolean }) {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isVisible, setIsVisible] = useState(eager);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-
-  // Intersection Observer para lazy loading (solo si no es eager)
-  useEffect(() => {
-    if (eager) return;
-
-    const element = containerRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "300px", threshold: 0.1 }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [eager]);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Generar thumbnail optimizado
   const thumbnailUrl = useMemo(() => {
@@ -101,8 +81,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
       if (url.protocol !== "https:" && url.protocol !== "http:") return "";
       url.searchParams.set("autoplay", "true");
       url.searchParams.set("loop", "true");
-      url.searchParams.set("muted", "true");
-      url.searchParams.set("preload", "true");
+      url.searchParams.set("preload", "false");
       return url.toString();
     } catch {
       return "";
@@ -143,57 +122,57 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
       className="group relative"
     >
       <div
-        className="relative overflow-hidden rounded-xl bg-kreoon-bg-card shadow-lg hover:shadow-kreoon-glow-sm transition-shadow"
+        className="relative overflow-hidden rounded-xl bg-card shadow-lg hover:shadow-kreoon-glow-sm transition-shadow"
         style={{ aspectRatio: "9/16" }}
       >
-        {/* Thumbnail - siempre visible hasta que el video cargue */}
-        {thumbnailUrl && !isPlaying && (
-          <img
-            src={thumbnailUrl}
-            alt={`Video de ${content.creator_name}`}
-            loading={eager ? "eager" : "lazy"}
-            fetchpriority={eager ? "high" : "auto"}
-            className="absolute inset-0 w-full h-full object-cover z-[1]"
-          />
+        {/* Póster: se muestra hasta que el usuario pulsa play */}
+        {!isPlaying && (
+          <>
+            {thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt={`Video de ${content.creator_name}`}
+                loading={eager ? "eager" : "lazy"}
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover z-[1]"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-muted z-[1]" aria-hidden="true" />
+            )}
+            {embedUrl && (
+              <button
+                type="button"
+                onClick={() => setIsPlaying(true)}
+                aria-label={`Reproducir video de ${content.creator_name}: ${content.title}`}
+                className="absolute inset-0 z-[5] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="rounded-full p-4 bg-primary/90 backdrop-blur-sm">
+                  <Play className="h-6 w-6 text-primary-foreground fill-current" />
+                </span>
+              </button>
+            )}
+          </>
         )}
 
-        {/* Play button overlay cuando no está reproduciendo */}
-        {!isPlaying && isVisible && (
-          <div className="absolute inset-0 flex items-center justify-center z-[5]">
-            <div className="rounded-full p-4 bg-kreoon-purple-500/80 backdrop-blur-sm">
-              <Play className="h-6 w-6 text-white fill-white" />
-            </div>
-          </div>
-        )}
-
-        {/* Loading spinner cuando está visible pero no ha cargado */}
-        {isVisible && !isPlaying && !thumbnailUrl && (
-          <div className="absolute inset-0 flex items-center justify-center bg-kreoon-bg-card z-[2]">
-            <Loader2 className="h-6 w-6 animate-spin text-kreoon-purple-500" />
-          </div>
-        )}
-
-        {/* Video iframe - solo se renderiza cuando es visible */}
-        {isVisible && (
+        {/* Iframe: solo se monta tras el clic */}
+        {isPlaying && embedUrl && (
           <iframe
             ref={iframeRef}
             src={embedUrl}
-            loading={eager ? "eager" : "lazy"}
-            onLoad={() => setIsPlaying(true)}
+            title={`Video de ${content.creator_name}`}
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            className="absolute left-1/2 top-1/2 pointer-events-none z-[3]"
+            className="absolute left-1/2 top-1/2 z-[3]"
             style={{
               border: 0,
               width: "103%",
               height: "103%",
               transform: "translate(-50%, -50%)",
-              opacity: isPlaying ? 1 : 0,
             }}
           />
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-[6]" />
 
         {/* Creator info */}
         <div className="absolute inset-x-0 bottom-0 p-3 z-10">
@@ -202,7 +181,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
               <img
                 src={content.creator_avatar}
                 alt={content.creator_name}
-                className="h-6 w-6 rounded-full object-cover border border-white/20"
+                className="h-6 w-6 rounded-full object-cover border border-border"
               />
             ) : (
               <div className="h-6 w-6 rounded-full bg-kreoon-purple-600 flex items-center justify-center text-[10px] font-bold text-white">
@@ -220,6 +199,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
           <button
             type="button"
             onClick={toggleMute}
+            aria-label={isMuted ? "Activar sonido" : "Silenciar"}
             className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
           >
             {isMuted ? (
@@ -238,6 +218,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
 const BATCH_SIZE = 12;
 
 export default function PortfolioShowcasePage() {
+  const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(EAGER_LOAD_COUNT);
@@ -315,7 +296,12 @@ export default function PortfolioShowcasePage() {
   const headerY = useTransform(scrollYProgress, [0, 0.3], [0, -100]);
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.8]);
 
+  // El alta pública es solo de creadores y vive en /registro; el modal solo sirve para login.
   const handleOpenAuth = (tab: "login" | "register") => {
+    if (tab === "register") {
+      navigate("/registro");
+      return;
+    }
     setAuthModal({ open: true, tab });
   };
 
@@ -342,7 +328,7 @@ export default function PortfolioShowcasePage() {
                 <span className="h-px w-8 bg-gradient-to-l from-transparent to-kreoon-purple-500/60" />
               </div>
 
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight mb-6">
                 Portafolio de{" "}
                 <span className="bg-gradient-to-r from-kreoon-purple-400 to-kreoon-purple-600 bg-clip-text text-transparent">
                   Contenido Aprobado
@@ -395,9 +381,9 @@ export default function PortfolioShowcasePage() {
             </div>
           </section>
 
-          <section className="relative py-20 border-t border-white/5">
+          <section className="relative py-20 border-t border-border">
             <div className="container mx-auto px-4 text-center">
-              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
                 ¿Quieres que tu contenido aparezca aquí?
               </h2>
               <p className="text-kreoon-text-secondary mb-8 max-w-xl mx-auto">
@@ -406,7 +392,7 @@ export default function PortfolioShowcasePage() {
               </p>
               <button
                 onClick={() => handleOpenAuth("register")}
-                className="px-8 py-4 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-white font-medium transition-colors shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
+                className="px-8 py-4 rounded-sm bg-kreoon-purple-600 hover:bg-kreoon-purple-500 text-foreground font-medium transition-colors shadow-kreoon-glow-sm hover:shadow-kreoon-glow"
               >
                 Comenzar como Creador
               </button>

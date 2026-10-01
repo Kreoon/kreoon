@@ -7,25 +7,25 @@
   /* =========================================================================
      FONDOS - Profundidad extrema
      ========================================================================= */
-  --nova-bg-void: #030308;
-  --nova-bg-deep: #050510;
-  --nova-bg-surface: #0a0a18;
-  --nova-bg-elevated: #0f0f22;
-  --nova-bg-hover: #141428;
+  --nova-bg-void: #15121F;
+  --nova-bg-deep: #191625;
+  --nova-bg-surface: #1F1B2E;
+  --nova-bg-elevated: #272238;
+  --nova-bg-hover: #302A44;
 
   /* =========================================================================
      ACENTOS - Sistema Dual Púrpura/Cyan
      ========================================================================= */
-  --nova-accent-primary: #8b5cf6;
-  --nova-accent-primary-hover: #a78bfa;
-  --nova-accent-secondary: #06b6d4;
-  --nova-accent-secondary-hover: #22d3ee;
-  --nova-accent-glow: #c084fc;
+  --nova-accent-primary: #9A82FF;
+  --nova-accent-primary-hover: #B3A1FF;
+  --nova-accent-secondary: #6FD6A8;
+  --nova-accent-secondary-hover: #9BE5C3;
+  --nova-accent-glow: #C6B8FF;
 
   /* Aurora Gradients */
-  --nova-aurora-1: #7c3aed;
-  --nova-aurora-2: #db2777;
-  --nova-aurora-3: #06b6d4;
+  --nova-aurora-1: #6D4AFF;
+  --nova-aurora-2: #FF8F7A;
+  --nova-aurora-3: #6FD6A8;
 
   /* =========================================================================
      TEXTO - Jerarquía Clara
@@ -39,10 +39,10 @@
   /* =========================================================================
      BORDES - Ultra Sutiles
      ========================================================================= */
-  --nova-border-subtle: rgba(139, 92, 246, 0.08);
-  --nova-border-default: rgba(139, 92, 246, 0.15);
-  --nova-border-accent: rgba(139, 92, 246, 0.3);
-  --nova-border-focus: rgba(139, 92, 246, 0.5);
+  --nova-border-subtle: rgba(154, 130, 255, 0.08);
+  --nova-border-default: rgba(154, 130, 255, 0.15);
+  --nova-border-accent: rgba(154, 130, 255, 0.3);
+  --nova-border-focus: rgba(154, 130, 255, 0.5);
 
   /* =========================================================================
      ESTADOS
@@ -62,19 +62,19 @@
   --nova-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --nova-shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
   --nova-shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-  --nova-shadow-glow: 0 0 40px rgba(139, 92, 246, 0.25);
+  --nova-shadow-glow: 0 0 40px rgba(154, 130, 255, 0.25);
   --nova-shadow-glow-intense:
-    0 0 20px rgba(139, 92, 246, 0.3),
-    0 0 40px rgba(139, 92, 246, 0.2),
-    0 0 60px rgba(139, 92, 246, 0.1);
-  --nova-shadow-glow-cyan: 0 0 40px rgba(6, 182, 212, 0.25);
+    0 0 20px rgba(154, 130, 255, 0.3),
+    0 0 40px rgba(154, 130, 255, 0.2),
+    0 0 60px rgba(154, 130, 255, 0.1);
+  --nova-shadow-glow-cyan: 0 0 40px rgba(111, 214, 168, 0.25);
 
   /* =========================================================================
      GLASSMORPHISM
      ========================================================================= */
   --nova-glass-bg: rgba(10, 10, 24, 0.7);
   --nova-glass-bg-light: rgba(10, 10, 24, 0.5);
-  --nova-glass-border: rgba(139, 92, 246, 0.1);
+  --nova-glass-border: rgba(154, 130, 255, 0.1);
   --nova-glass-blur: 24px;
   --nova-glass-shadow:
     0 4px 30px rgba(0, 0, 0, 0.3),
@@ -83,10 +83,10 @@
   /* =========================================================================
      GRADIENTES
      ========================================================================= */
-  --nova-gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-  --nova-gradient-aurora: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #06b6d4 100%);
+  --nova-gradient-primary: linear-gradient(135deg, #9A82FF 0%, #6FD6A8 100%);
+  --nova-gradient-aurora: linear-gradient(135deg, #6D4AFF 0%, #FF8F7A 50%, #6FD6A8 100%);
   --nova-gradient-surface: linear-gradient(145deg, #0a0a18 0%, #050510 100%);
-  --nova-gradient-border: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.1));
+  --nova-gradient-border: linear-gradient(135deg, rgba(154, 130, 255, 0.3), rgba(111, 214, 168, 0.1));
 
   /* =========================================================================
      ESPACIADO Y RADIOS (sutiles, no muy redondeados)
@@ -278,4 +278,51 @@
     rgba(0,0,0,0.2) 55%,
     transparent 70%
   );
+}
+
+
+/* =============================================================================
+   Variante CLARA de los tokens nova (tema por defecto). Antes solo existía la oscura, y las tarjetas
+   que los usan salían casi negras en la plataforma clara. Con `.dark` se conservan los valores originales.
+   Textos semánticos sobre blanco con contraste AA (≥ 4.5:1).
+   ============================================================================= */
+:root:not(.dark) {
+  --nova-bg-void: #FAF8F5;
+  --nova-bg-deep: #FAF8F5;
+  --nova-bg-surface: #FFFFFF;
+  --nova-bg-elevated: #FFFFFF;
+  --nova-bg-hover: #F3EFFB;
+
+  --nova-accent-primary: #6D4AFF;
+  --nova-accent-primary-hover: #5A38E6;
+  --nova-accent-secondary: #167A55;
+  --nova-accent-secondary-hover: #0F6246;
+  --nova-accent-glow: #C6B8FF;
+
+  --nova-text-bright: #242135;
+  --nova-text-primary: #342F4B;
+  --nova-text-secondary: #52506A;
+  --nova-text-muted: #6B6784;
+  --nova-text-disabled: #A29EB8;
+
+  --nova-border-subtle: rgba(36, 33, 53, 0.06);
+  --nova-border-default: rgba(36, 33, 53, 0.1);
+  --nova-border-accent: rgba(109, 74, 255, 0.3);
+  --nova-border-focus: rgba(109, 74, 255, 0.55);
+
+  --nova-success: #0B7A55;
+  --nova-success-bg: rgba(16, 185, 129, 0.12);
+  --nova-warning: #8A5A00;
+  --nova-warning-bg: rgba(245, 158, 11, 0.14);
+  --nova-error: #C42B2B;
+  --nova-error-bg: rgba(239, 68, 68, 0.1);
+  --nova-info: #1D4ED8;
+  --nova-info-bg: rgba(59, 130, 246, 0.1);
+
+  --nova-shadow-sm: 0 1px 2px rgba(36, 33, 53, 0.06);
+  --nova-shadow-md: 0 8px 24px -14px rgba(36, 33, 53, 0.16);
+  --nova-shadow-lg: 0 18px 40px -18px rgba(36, 33, 53, 0.24);
+  --nova-shadow-glow: 0 10px 30px -12px rgba(109, 74, 255, 0.3);
+  --nova-shadow-glow-intense: 0 14px 40px -12px rgba(109, 74, 255, 0.4);
+  --nova-shadow-glow-cyan: 0 10px 30px -12px rgba(22, 122, 85, 0.3);
 }

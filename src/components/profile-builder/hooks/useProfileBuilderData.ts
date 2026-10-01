@@ -60,7 +60,22 @@ export function useProfileBuilderData(profileId: string | undefined) {
         throw rpcError;
       }
 
-      return rpcData as unknown as ProfileBuilderData;
+      const result = rpcData as unknown as ProfileBuilderData;
+      // get_profile_builder_data devuelve borradores Y publicados mezclados. El editor trabaja sobre el
+      // borrador si existe; si no, sobre lo publicado. Sin este filtro, tras un autoguardado el editor
+      // cargaba ambas copias (secciones duplicadas) y el siguiente guardado las duplicaba en la BD.
+      if (Array.isArray(result?.blocks) && result.blocks.some((b) => b.isDraft)) {
+        result.blocks = result.blocks.filter((b) => b.isDraft);
+      }
+      // El editor trabaja sobre el estilo en BORRADOR si existe (builder_config_draft, migración 20261001100000)
+      const { data: draftRow, error: draftError } = await supabase
+        .from('creator_profiles')
+        .select('builder_config_draft')
+        .eq('id', profileId)
+        .maybeSingle();
+      const draft = !draftError ? (draftRow as { builder_config_draft?: BuilderConfig | null } | null)?.builder_config_draft : null;
+      if (draft && result?.profile) result.profile.builder_config = draft;
+      return result;
     },
     enabled: !!profileId,
     staleTime: 5 * 60 * 1000,
@@ -141,17 +156,34 @@ export function useProfileBuilderData(profileId: string | undefined) {
   // ─── Mutation: guardar configuración del builder ──────────────────────────
 
   const saveConfigMutation = useMutation({
-    mutationFn: async ({ profileId: pid, config }: { profileId: string; config: BuilderConfig }) => {
-      const { error } = await supabase
+    mutationFn: async ({ profileId: pid, config, isDraft = false }: { profileId: string; config: BuilderConfig; isDraft?: boolean }) => {
+      const value = config as unknown as Record<string, unknown>;
+      if (isDraft) {
+        // Borrador: nunca tocar builder_config (lo lee la página pública en vivo)
+        const { error } = await supabase.from('creator_profiles').update({ builder_config_draft: value } as never).eq('id', pid);
+        if (!error) return;
+        // Sin la migración aplicada (columna inexistente) se conserva el comportamiento anterior
+        if (error.code !== '42703' && !/builder_config_draft/.test(error.message)) throw error;
+      }
+      // Publicado: escribir el estilo y descartar el borrador (que ya quedó incorporado)
+      let { error } = await supabase
         .from('creator_profiles')
-        .update({ builder_config: config as unknown as Record<string, unknown> })
+        .update({ builder_config: value, builder_config_draft: null } as never)
         .eq('id', pid);
+      if (error && (error.code === '42703' || /builder_config_draft/.test(error.message))) {
+        ({ error } = await supabase.from('creator_profiles').update({ builder_config: value }).eq('id', pid));
+      }
 
       if (error) {
         throw error;
       }
     },
     onSuccess: (_data, variables) => {
+      // Un borrador no cambia lo público: solo refrescar los datos del editor
+      if (variables.isDraft) {
+        queryClient.invalidateQueries({ queryKey: profileBuilderKeys.data(variables.profileId) });
+        return;
+      }
       // Invalidar datos del builder
       queryClient.invalidateQueries({
         queryKey: profileBuilderKeys.data(variables.profileId),
@@ -228,14 +260,20 @@ export function useProfileBuilderData(profileId: string | undefined) {
     publishMutation.mutate({ profileId });
   };
 
+  /** Igual que publishBlocks pero esperable (para encadenar «guardar borrador → publicar»). */
+  const publishBlocksAsync = async () => {
+    if (!profileId) return;
+    await publishMutation.mutateAsync({ profileId });
+  };
+
   const saveBuilderConfig = (config: BuilderConfig) => {
     if (!profileId) return;
     saveConfigMutation.mutate({ profileId, config });
   };
 
-  const saveBuilderConfigAsync = async (config: BuilderConfig) => {
+  const saveBuilderConfigAsync = async (config: BuilderConfig, options: { isDraft?: boolean } = {}) => {
     if (!profileId) return;
-    return saveConfigMutation.mutateAsync({ profileId, config });
+    return saveConfigMutation.mutateAsync({ profileId, config, isDraft: options.isDraft });
   };
 
   const generatePreviewToken = () => {
@@ -307,6 +345,7 @@ export function useProfileBuilderData(profileId: string | undefined) {
     saveBlocks,
     saveBlocksAsync,
     publishBlocks,
+    publishBlocksAsync,
     saveBuilderConfig,
     saveBuilderConfigAsync,
     generatePreviewToken,

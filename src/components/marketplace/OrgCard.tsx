@@ -66,11 +66,11 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
               src={org.logo_url}
               alt={org.org_display_name}
               loading="lazy"
-              className="h-20 w-20 rounded-sm border-2 border-white/20 object-cover shadow-2xl bg-gray-900"
+              className="h-20 w-20 rounded-sm border-2 border-border object-cover shadow-2xl bg-card"
             />
           ) : (
             <div
-              className="h-20 w-20 rounded-sm border-2 border-white/20 flex items-center justify-center shadow-2xl"
+              className="h-20 w-20 rounded-sm border-2 border-border flex items-center justify-center shadow-2xl"
               style={{ backgroundColor: `${accentColor}30` }}
             >
               <Building2 className="h-10 w-10" style={{ color: accentColor }} />
@@ -85,19 +85,19 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
           </h3>
 
           {org.org_tagline && (
-            <p className="text-white/70 text-xs line-clamp-2">{org.org_tagline}</p>
+            <p className="text-muted-foreground text-xs line-clamp-2">{org.org_tagline}</p>
           )}
 
           {/* Specialties */}
           {org.org_specialties.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {org.org_specialties.slice(0, 2).map(spec => (
-                <span key={spec} className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/80 capitalize">
+                <span key={spec} className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground capitalize">
                   {spec}
                 </span>
               ))}
               {org.org_specialties.length > 2 && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/10 text-white/60">
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                   +{org.org_specialties.length - 2}
                 </span>
               )}
@@ -108,16 +108,16 @@ function OrgCardComponent({ org, onClick, className }: OrgCardProps) {
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1">
               <Star className="h-3 w-3 text-[var(--nova-accent-primary)] fill-[var(--nova-accent-primary)]" />
-              <span className="text-white font-medium">{org.org_marketplace_rating_avg.toFixed(1)}</span>
+              <span className="text-foreground font-medium">{org.org_marketplace_rating_avg.toFixed(1)}</span>
             </div>
             {org.org_team_size_range && (
-              <div className="flex items-center gap-1 text-white/60">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <Users className="h-3 w-3" />
                 <span>{TEAM_SIZE_LABELS[org.org_team_size_range] || org.org_team_size_range}</span>
               </div>
             )}
             {org.org_marketplace_projects_count > 0 && (
-              <div className="flex items-center gap-1 text-white/60">
+              <div className="flex items-center gap-1 text-muted-foreground">
                 <Briefcase className="h-3 w-3" />
                 <span>{org.org_marketplace_projects_count}</span>
               </div>

@@ -166,7 +166,7 @@ export function OrgContactDialog({ organizationId, organizationName, accentColor
           <Button
             type="submit"
             disabled={submitting || !form.sender_name.trim() || !form.sender_email.trim() || !form.subject.trim() || !form.message.trim()}
-            className="w-full text-white"
+            className="w-full text-foreground"
             style={{ backgroundColor: accentColor }}
           >
             {submitting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}

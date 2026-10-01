@@ -5,9 +5,9 @@
  * - Plantilla por defecto: Profesional B2B
  * - Los creadores pueden cambiar su plantilla desde Settings > Profile Builder
  *
- * Soporta acceso por:
- * - UUID: /marketplace/creator/550e8400-e29b-41d4-a716-446655440000
- * - Slug: /marketplace/creator/carloslima
+ * URL pública canónica: /p/:slug (PublicCreatorPage pasa el slug en `profileKey`).
+ * /marketplace/creator/:id redirige allí (LegacyCreatorProfileRoute); si el perfil no tiene slug,
+ * se muestra aquí por id (UUID del perfil o del usuario).
  */
 
 import { useEffect } from 'react';
@@ -15,8 +15,14 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { TemplateProfileRenderer } from '@/components/profile-viewer/TemplateProfileRenderer';
 import { useToast } from '@/hooks/use-toast';
 
-export default function CreatorProfilePage() {
-  const { id } = useParams<{ id: string }>();
+interface CreatorProfilePageProps {
+  /** Slug o UUID del perfil. Si no se pasa, se toma del parámetro `:id` de la ruta. */
+  profileKey?: string;
+}
+
+export default function CreatorProfilePage({ profileKey }: CreatorProfilePageProps = {}) {
+  const params = useParams<{ id: string }>();
+  const id = profileKey ?? params.id;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();

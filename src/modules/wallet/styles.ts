@@ -3,13 +3,13 @@
 
 export const walletStyles = {
   // Cards
-  card: 'bg-white/5 border border-white/10 rounded-sm p-6',
-  cardHover: 'hover:bg-white/10 hover:border-[hsl(270,100%,60%,0.3)] transition-all duration-300',
+  card: 'bg-card border border-border rounded-sm p-6',
+  cardHover: 'hover:bg-muted hover:border-[hsl(270,100%,60%,0.3)] transition-all duration-300',
   cardGlass: 'bg-[hsl(270,100%,60%,0.05)] border border-[hsl(270,100%,60%,0.1)] rounded-sm',
 
   // Gradients
   gradientPurple: 'bg-gradient-to-br from-[hsl(270,100%,60%,0.2)] to-[hsl(280,100%,60%,0.1)]',
-  gradientText: 'bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent',
+  gradientText: 'bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent',
 
   // Glows
   glowPurple: 'shadow-lg shadow-[hsl(270,100%,60%,0.2)]',
@@ -29,14 +29,14 @@ export const walletStyles = {
   borderHighlight: 'border border-[hsl(270,100%,60%,0.3)]',
 
   // Text
-  textMuted: 'text-[hsl(270,30%,60%)]',
-  textSubtle: 'text-[hsl(270,30%,50%)]',
-  textPurple: 'text-[hsl(270,100%,70%)]',
+  textMuted: 'text-muted-foreground',
+  textSubtle: 'text-muted-foreground',
+  textPurple: 'text-primary',
 
   // Buttons
   buttonPrimary: 'bg-[hsl(270,100%,60%)] hover:bg-[hsl(270,100%,55%)] text-white',
-  buttonGhost: 'hover:bg-[hsl(270,100%,60%,0.1)] text-white',
-  buttonOutline: 'border border-[hsl(270,100%,60%,0.3)] hover:bg-[hsl(270,100%,60%,0.1)] text-white',
+  buttonGhost: 'hover:bg-[hsl(270,100%,60%,0.1)] text-foreground',
+  buttonOutline: 'border border-[hsl(270,100%,60%,0.3)] hover:bg-[hsl(270,100%,60%,0.1)] text-foreground',
 
   // Icons
   iconContainer: 'p-2 rounded-sm bg-[hsl(270,100%,60%,0.1)]',
@@ -57,12 +57,12 @@ export const walletStyles = {
   statusSuspended: 'bg-red-500/10 text-red-400 border-red-500/20',
   statusCompleted: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   statusFailed: 'bg-red-500/10 text-red-400 border-red-500/20',
-  statusCancelled: 'bg-gray-500/10 text-gray-400 border-gray-500/20',
+  statusCancelled: 'bg-gray-500/10 text-muted-foreground border-gray-500/20',
 
   // Balance colors
   balancePositive: 'text-emerald-400',
   balanceNegative: 'text-red-400',
-  balanceNeutral: 'text-white',
+  balanceNeutral: 'text-foreground',
 };
 
 // Animation variants for framer-motion

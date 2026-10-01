@@ -62,9 +62,9 @@ export function ProviderSelector({
 
   if (categories.length === 0) {
     return (
-      <Card className={cn('bg-[hsl(270,40%,6%)] border-[hsl(270,30%,18%)]', className)}>
+      <Card className={cn('bg-card border-border', className)}>
         <CardContent className="py-8 text-center">
-          <Globe className="h-12 w-12 mx-auto text-[hsl(270,30%,40%)] mb-3" />
+          <Globe className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <p className="text-muted-foreground">
             No hay métodos de retiro disponibles para {currency} en tu país.
           </p>
@@ -97,25 +97,25 @@ export function ProviderSelector({
                   disabled={disabled}
                   className={cn(
                     'w-full p-4 rounded-sm border-2 transition-all text-left',
-                    'bg-[hsl(270,40%,6%)] hover:bg-[hsl(270,30%,10%)]',
+                    'bg-card hover:bg-muted',
                     isSelected
-                      ? 'border-[hsl(270,80%,60%)] bg-[hsl(270,50%,15%)]/30'
-                      : 'border-[hsl(270,30%,18%)] hover:border-[hsl(270,30%,30%)]',
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-primary/40',
                     disabled && 'opacity-50 cursor-not-allowed'
                   )}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       {/* Logo/Emoji */}
-                      <div className="w-10 h-10 rounded-sm bg-[hsl(270,30%,15%)] flex items-center justify-center text-xl">
+                      <div className="w-10 h-10 rounded-sm bg-muted flex items-center justify-center text-xl">
                         {PROVIDER_LOGOS[provider.id] || '💳'}
                       </div>
 
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-white">{provider.name}</span>
+                          <span className="font-medium text-foreground">{provider.name}</span>
                           {isSelected && (
-                            <Check className="h-4 w-4 text-[hsl(270,80%,70%)]" />
+                            <Check className="h-4 w-4 text-primary" />
                           )}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
@@ -134,7 +134,7 @@ export function ProviderSelector({
                           'text-xs',
                           provider.fixed_fee === 0 && provider.percentage_fee === 0
                             ? 'bg-[hsl(150,60%,30%)] text-white'
-                            : 'bg-[hsl(270,30%,20%)]'
+                            : 'bg-muted'
                         )}
                       >
                         {provider.formattedFee}
@@ -157,7 +157,7 @@ export function ProviderSelector({
 
                   {/* Monto neto si hay amount */}
                   {amount > 0 && isSelected && (
-                    <div className="mt-3 pt-3 border-t border-[hsl(270,30%,15%)] flex justify-between items-center">
+                    <div className="mt-3 pt-3 border-t border-border flex justify-between items-center">
                       <span className="text-sm text-muted-foreground">Recibirás:</span>
                       <span className="font-semibold text-[hsl(150,60%,50%)]">
                         ${netAmount.toFixed(2)} {currency}

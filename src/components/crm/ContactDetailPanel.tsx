@@ -99,7 +99,7 @@ const CONTACT_TYPE_COLORS: Record<ContactType, string> = {
   partner: 'bg-blue-500/20 text-blue-400',
   vendor: 'bg-orange-500/20 text-orange-400',
   influencer: 'bg-pink-500/20 text-pink-400',
-  other: 'bg-white/10 text-white/60',
+  other: 'bg-muted text-muted-foreground',
 };
 
 function getInitials(name: string | null): string {
@@ -134,7 +134,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors text-white/30 hover:text-white/60"
+      className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground/70 hover:text-muted-foreground"
     >
       {copied ? <Check className="h-3 w-3 text-green-400" /> : <Copy className="h-3 w-3" />}
     </button>
@@ -410,11 +410,11 @@ export function ContactDetailPanel({
                   }
                 }}
                 autoFocus
-                className="bg-white/5 border-white/10 text-white text-sm h-7 px-2"
+                className="bg-muted/40 border-border text-foreground text-sm h-7 px-2"
               />
             ) : (
               <h3
-                className="text-white font-semibold truncate cursor-pointer hover:text-white/80 transition-colors"
+                className="text-foreground font-semibold truncate cursor-pointer hover:text-muted-foreground transition-colors"
                 onClick={() => setEditingName(true)}
                 title="Click para editar nombre"
               >
@@ -452,7 +452,7 @@ export function ContactDetailPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+                  className="h-7 w-7 text-muted-foreground/70 hover:text-foreground hover:bg-muted"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -460,12 +460,12 @@ export function ContactDetailPanel({
               <DropdownMenuContent align="end" className="w-44 bg-popover border-[#8b5cf6]/30">
                 <DropdownMenuItem
                   onClick={() => setEditingName(true)}
-                  className="gap-2 text-white focus:bg-white/10"
+                  className="gap-2 text-foreground focus:bg-muted"
                 >
                   <Edit className="h-4 w-4 text-[#a855f7]" />
                   Editar nombre
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-white/10" />
+                <DropdownMenuSeparator className="bg-muted" />
                 <DropdownMenuItem
                   onClick={handleDelete}
                   className="gap-2 text-red-400 focus:bg-red-500/10 focus:text-red-400"
@@ -479,7 +479,7 @@ export function ContactDetailPanel({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+              className="h-7 w-7 text-muted-foreground/70 hover:text-foreground hover:bg-muted"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -492,29 +492,29 @@ export function ContactDetailPanel({
 
             {/* ---- Contact Info ---- */}
             <section className="space-y-2.5">
-              <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+              <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 Contacto
               </h4>
 
               {contact.email && (
                 <div className="flex items-center gap-2">
-                  <Mail className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
-                  <span className="text-sm text-white/70 truncate flex-1">{contact.email}</span>
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground truncate flex-1">{contact.email}</span>
                   <CopyButton text={contact.email} />
                 </div>
               )}
 
               {contact.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
-                  <span className="text-sm text-white/70 truncate flex-1">{contact.phone}</span>
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground truncate flex-1">{contact.phone}</span>
                   <CopyButton text={contact.phone} />
                   <a
                     href={`https://wa.me/${contact.phone.replace(/[^0-9]/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors text-green-400/60 hover:text-green-400"
+                    className="flex-shrink-0 p-1 rounded hover:bg-muted transition-colors text-green-400/60 hover:text-green-400"
                   >
                     <MessageCircle className="h-3 w-3" />
                   </a>
@@ -523,22 +523,22 @@ export function ContactDetailPanel({
 
               {contact.company && (
                 <div className="flex items-center gap-2">
-                  <Building2 className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
-                  <span className="text-sm text-white/70">{contact.company}</span>
+                  <Building2 className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">{contact.company}</span>
                 </div>
               )}
 
               {contact.position && (
                 <div className="flex items-center gap-2">
-                  <Briefcase className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
-                  <span className="text-sm text-white/70">{contact.position}</span>
+                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground">{contact.position}</span>
                 </div>
               )}
             </section>
 
             {/* ---- Relationship Strength ---- */}
             <section className="space-y-2">
-              <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+              <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 Temperatura de relacion
               </h4>
               <div className="flex items-center gap-2">
@@ -555,10 +555,10 @@ export function ContactDetailPanel({
                         'flex flex-col items-center gap-1 px-4 py-2.5 rounded-sm border transition-all',
                         isActive
                           ? cn(
-                              'border-white/20 bg-white/5',
+                              'border-border bg-muted/40',
                               config.glowColor,
                             )
-                          : 'border-white/5 bg-white/[0.02] hover:bg-white/5 hover:border-white/10',
+                          : 'border-border bg-muted/40 hover:bg-muted/40 hover:border-border',
                       )}
                     >
                       <Icon
@@ -570,7 +570,7 @@ export function ContactDetailPanel({
                       <span
                         className={cn(
                           'text-[10px] font-medium transition-colors',
-                          isActive ? 'text-white/80' : 'text-white/30',
+                          isActive ? 'text-muted-foreground' : 'text-muted-foreground/70',
                         )}
                       >
                         {RELATIONSHIP_STRENGTH_LABELS[strength]}
@@ -584,18 +584,18 @@ export function ContactDetailPanel({
             {/* ---- Pipeline Info (leads only) ---- */}
             {isLead && allStages.length > 0 && (
               <section className="space-y-3">
-                <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                   Pipeline
                 </h4>
 
                 {/* Stage */}
                 <div className="space-y-1.5">
-                  <span className="text-xs text-white/40">Etapa</span>
+                  <span className="text-xs text-muted-foreground/70">Etapa</span>
                   <Select
                     value={contact.pipeline_stage || ''}
                     onValueChange={handleStageChange}
                   >
-                    <SelectTrigger className="bg-white/5 border-white/10 text-white h-9">
+                    <SelectTrigger className="bg-muted/40 border-border text-foreground h-9">
                       <SelectValue placeholder="Seleccionar etapa" />
                     </SelectTrigger>
                     <SelectContent className="bg-popover border-[#8b5cf6]/30">
@@ -603,7 +603,7 @@ export function ContactDetailPanel({
                         <SelectItem
                           key={s.name}
                           value={s.name}
-                          className="text-white focus:bg-white/10"
+                          className="text-foreground focus:bg-muted"
                         >
                           <span className="flex items-center gap-2">
                             {s.color && (
@@ -623,9 +623,9 @@ export function ContactDetailPanel({
                 {/* Deal value & Close date */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <span className="text-xs text-white/40">Valor del deal</span>
+                    <span className="text-xs text-muted-foreground/70">Valor del deal</span>
                     <div className="relative">
-                      <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+                      <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
                       <Input
                         type="number"
                         value={dealValue}
@@ -634,19 +634,19 @@ export function ContactDetailPanel({
                           saveDealValue(e.target.value);
                         }}
                         placeholder="0"
-                        className="bg-white/5 border-white/10 text-white pl-8 h-9 text-sm placeholder:text-white/30"
+                        className="bg-muted/40 border-border text-foreground pl-8 h-9 text-sm placeholder:text-muted-foreground/70"
                       />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <span className="text-xs text-white/40">Cierre esperado</span>
+                    <span className="text-xs text-muted-foreground/70">Cierre esperado</span>
                     <div className="relative">
-                      <CalendarClock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+                      <CalendarClock className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
                       <Input
                         type="date"
                         value={expectedClose}
                         onChange={(e) => handleExpectedCloseChange(e.target.value)}
-                        className="bg-white/5 border-white/10 text-white pl-8 h-9 text-sm [color-scheme:dark]"
+                        className="bg-muted/40 border-border text-foreground pl-8 h-9 text-sm [color-scheme:dark]"
                       />
                     </div>
                   </div>
@@ -656,48 +656,48 @@ export function ContactDetailPanel({
 
             {/* ---- Details Grid ---- */}
             <section className="space-y-2.5">
-              <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+              <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 Detalles
               </h4>
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                 {contact.contact_type && (
                   <>
-                    <span className="text-white/40">Tipo</span>
-                    <span className="text-white/70">
+                    <span className="text-muted-foreground/70">Tipo</span>
+                    <span className="text-muted-foreground">
                       {CONTACT_TYPE_LABELS[contact.contact_type]}
                     </span>
                   </>
                 )}
                 {contact.company && (
                   <>
-                    <span className="text-white/40">Empresa</span>
-                    <span className="text-white/70">{contact.company}</span>
+                    <span className="text-muted-foreground/70">Empresa</span>
+                    <span className="text-muted-foreground">{contact.company}</span>
                   </>
                 )}
                 {contact.position && (
                   <>
-                    <span className="text-white/40">Cargo</span>
-                    <span className="text-white/70">{contact.position}</span>
+                    <span className="text-muted-foreground/70">Cargo</span>
+                    <span className="text-muted-foreground">{contact.position}</span>
                   </>
                 )}
                 {isLead && contact.deal_value != null && contact.deal_value > 0 && (
                   <>
-                    <span className="text-white/40">Valor deal</span>
-                    <span className="text-white/70 font-medium">
+                    <span className="text-muted-foreground/70">Valor deal</span>
+                    <span className="text-muted-foreground font-medium">
                       ${contact.deal_value.toLocaleString()}
                     </span>
                   </>
                 )}
                 {isLead && contact.expected_close_date && (
                   <>
-                    <span className="text-white/40">Cierre esperado</span>
-                    <span className="text-white/70">
+                    <span className="text-muted-foreground/70">Cierre esperado</span>
+                    <span className="text-muted-foreground">
                       {format(new Date(contact.expected_close_date), 'd MMM yyyy', { locale: es })}
                     </span>
                   </>
                 )}
-                <span className="text-white/40">Creado</span>
-                <span className="text-white/70">
+                <span className="text-muted-foreground/70">Creado</span>
+                <span className="text-muted-foreground">
                   {formatDistanceToNow(new Date(contact.created_at), {
                     addSuffix: true,
                     locale: es,
@@ -709,7 +709,7 @@ export function ContactDetailPanel({
             {/* ---- Social Links ---- */}
             {hasSocials && (
               <section className="space-y-2">
-                <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                   Redes sociales
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -718,7 +718,7 @@ export function ContactDetailPanel({
                       href={`https://instagram.com/${socialLinks.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-muted/40 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-pink-500/40 hover:bg-pink-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       Instagram
@@ -730,7 +730,7 @@ export function ContactDetailPanel({
                       href={`https://tiktok.com/@${socialLinks.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-muted/40 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       TikTok
@@ -746,7 +746,7 @@ export function ContactDetailPanel({
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-white/5 border border-white/10 text-xs text-white/60 hover:text-white hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-muted/40 border border-border text-xs text-muted-foreground hover:text-foreground hover:border-blue-500/40 hover:bg-blue-500/10 transition-all"
                     >
                       <Globe className="h-3 w-3" />
                       LinkedIn
@@ -759,7 +759,7 @@ export function ContactDetailPanel({
 
             {/* ---- Tags ---- */}
             <section className="space-y-2">
-              <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+              <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 Etiquetas
               </h4>
               <div className="flex items-center gap-2">
@@ -773,14 +773,14 @@ export function ContactDetailPanel({
                     }
                   }}
                   placeholder="Agregar etiqueta..."
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8 flex-1"
+                  className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-xs h-8 flex-1"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   onClick={addTag}
-                  className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white/50"
+                  className="h-8 w-8 bg-muted/40 hover:bg-muted text-muted-foreground/70"
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
@@ -804,7 +804,7 @@ export function ContactDetailPanel({
 
             {/* ---- Notes ---- */}
             <section className="space-y-2">
-              <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+              <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                 Notas
               </h4>
               <Textarea
@@ -812,10 +812,10 @@ export function ContactDetailPanel({
                 onChange={(e) => handleNotesChange(e.target.value)}
                 placeholder="Notas sobre este contacto..."
                 rows={3}
-                className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none text-xs"
+                className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none text-xs"
               />
               {updateContact.isPending && (
-                <p className="text-[10px] text-white/30">Guardando...</p>
+                <p className="text-[10px] text-muted-foreground/70">Guardando...</p>
               )}
             </section>
 
@@ -828,10 +828,10 @@ export function ContactDetailPanel({
                 configAction={
                   <button
                     onClick={() => setShowFieldsConfig(true)}
-                    className="p-1 rounded hover:bg-white/10 transition-colors"
+                    className="p-1 rounded hover:bg-muted transition-colors"
                     title="Configurar campos"
                   >
-                    <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+                    <Settings className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
                   </button>
                 }
               />
@@ -840,7 +840,7 @@ export function ContactDetailPanel({
             {/* ---- Interactions Timeline ---- */}
             <section className="space-y-2">
               <div className="flex items-center justify-between">
-                <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                <h4 className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-semibold">
                   Interacciones
                 </h4>
                 <Button

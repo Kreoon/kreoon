@@ -10,14 +10,14 @@ interface ReferralDetailListProps {
 function QualCheckIcon({ ok }: { ok: boolean }) {
   return ok
     ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
-    : <Clock className="w-3.5 h-3.5 text-white/20" />;
+    : <Clock className="w-3.5 h-3.5 text-muted-foreground/50" />;
 }
 
 export function ReferralDetailList({ referrals }: ReferralDetailListProps) {
   if (referrals.length === 0) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-white/40 text-sm">Aun no tienes referidos. Comparte tu link para empezar.</p>
+        <p className="text-muted-foreground/70 text-sm">Aun no tienes referidos. Comparte tu link para empezar.</p>
       </Card>
     );
   }
@@ -25,7 +25,7 @@ export function ReferralDetailList({ referrals }: ReferralDetailListProps) {
   return (
     <Card className="divide-y divide-white/5">
       <div className="px-4 py-3">
-        <h3 className="text-white font-semibold text-sm">Tus Referidos</h3>
+        <h3 className="text-foreground font-semibold text-sm">Tus Referidos</h3>
       </div>
       {referrals.map((ref) => (
         <div key={ref.referred_id} className="px-4 py-3 flex items-center gap-3">
@@ -40,7 +40,7 @@ export function ReferralDetailList({ referrals }: ReferralDetailListProps) {
 
           {/* Name + badge */}
           <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-medium truncate">{ref.full_name || 'Usuario'}</p>
+            <p className="text-foreground text-sm font-medium truncate">{ref.full_name || 'Usuario'}</p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className={cn(
                 'px-2 py-0.5 rounded-full text-[10px] font-medium',
@@ -57,15 +57,15 @@ export function ReferralDetailList({ referrals }: ReferralDetailListProps) {
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1" title="Perfil activo en marketplace">
               <QualCheckIcon ok={ref.has_active_profile} />
-              <UserCheck className="w-3.5 h-3.5 text-white/30" />
+              <UserCheck className="w-3.5 h-3.5 text-muted-foreground/70" />
             </div>
             <div className="flex items-center gap-1" title="Foto de perfil">
               <QualCheckIcon ok={ref.has_avatar} />
-              <Image className="w-3.5 h-3.5 text-white/30" />
+              <Image className="w-3.5 h-3.5 text-muted-foreground/70" />
             </div>
             <div className="flex items-center gap-1" title="Portafolio">
               <QualCheckIcon ok={ref.has_portfolio} />
-              <Briefcase className="w-3.5 h-3.5 text-white/30" />
+              <Briefcase className="w-3.5 h-3.5 text-muted-foreground/70" />
             </div>
           </div>
         </div>

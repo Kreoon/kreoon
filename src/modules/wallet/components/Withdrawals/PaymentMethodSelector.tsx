@@ -128,7 +128,7 @@ export function PaymentMethodSelector({
                       'mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors',
                       isSelected
                         ? 'border-[hsl(270,100%,60%)] bg-[hsl(270,100%,60%)]'
-                        : 'border-[hsl(270,30%,40%)]'
+                        : 'border-border'
                     )}
                   >
                     {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -154,9 +154,9 @@ export function PaymentMethodSelector({
                   {/* Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="font-medium text-white truncate">{method.label}</p>
+                      <p className="font-medium text-foreground truncate">{method.label}</p>
                       {method.is_verified && (
-                        <Shield className="h-3 w-3 text-emerald-400 flex-shrink-0" />
+                        <Shield className="h-3 w-3 text-emerald-700 dark:text-emerald-400 flex-shrink-0" />
                       )}
                       {method.is_default && (
                         <Badge variant="outline" className="text-[10px] h-5">
@@ -193,7 +193,7 @@ export function PaymentMethodSelector({
       {methods.length > 0 && (
         <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.03)] border border-[hsl(270,100%,60%,0.1)]">
           <p className="text-xs text-muted-foreground">
-            <strong className="text-[hsl(270,30%,70%)]">Comisiones por método:</strong>
+            <strong className="text-muted-foreground">Comisiones por método:</strong>
           </p>
           <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span>• Bancolombia: Gratis</span>

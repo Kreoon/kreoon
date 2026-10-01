@@ -89,7 +89,7 @@ export default function AcademiaChallengeDetailPage() {
 
   if (!space || !challenge) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando…
       </div>
     );
@@ -98,7 +98,7 @@ export default function AcademiaChallengeDetailPage() {
   const currentOrder = participant?.current_checkpoint_order ?? 0;
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-3xl mx-auto px-4 md:px-8 py-6 space-y-5">
         <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export default function AcademiaChallengeDetailPage() {
           <div>
             <h1 className="text-xl font-bold">{challenge.title}</h1>
             {challenge.description && (
-              <p className="text-sm text-zinc-400">{challenge.description}</p>
+              <p className="text-sm text-muted-foreground">{challenge.description}</p>
             )}
           </div>
         </div>
@@ -188,14 +188,14 @@ function CheckpointCard({
 
   return (
     <Card
-      className={`p-4 border ${isCompleted ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-white/5 border-white/10'}`}
+      className={`p-4 border ${isCompleted ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-muted/50 border-border'}`}
     >
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2">
           {isCompleted ? (
-            <Check className="h-5 w-5 text-emerald-400" />
+            <Check className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
           ) : !isUnlocked ? (
-            <Lock className="h-4 w-4 text-zinc-600" />
+            <Lock className="h-4 w-4 text-muted-foreground" />
           ) : (
             <div
               className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold"
@@ -204,23 +204,23 @@ function CheckpointCard({
               {checkpoint.sort_order + 1}
             </div>
           )}
-          <h3 className={`text-sm font-medium ${isUnlocked ? 'text-zinc-100' : 'text-zinc-500'}`}>
+          <h3 className={`text-sm font-medium ${isUnlocked ? 'text-foreground' : 'text-muted-foreground'}`}>
             {checkpoint.title}
           </h3>
         </div>
-        <Badge variant="outline" className="border-white/10 text-zinc-400 text-[10px]">
+        <Badge variant="outline" className="border-border text-muted-foreground text-[10px]">
           +{checkpoint.xp_reward} XP
         </Badge>
       </div>
 
       {isUnlocked && checkpoint.description && (
-        <p className="text-xs text-zinc-400 mb-3">{checkpoint.description}</p>
+        <p className="text-xs text-muted-foreground mb-3">{checkpoint.description}</p>
       )}
 
       {isUnlocked && !isCompleted && checkpoint.submission_type !== 'none' && (
         <div className="space-y-2 mt-3">
           {isPending && (
-            <p className="text-xs text-amber-300">En revisión por el instructor</p>
+            <p className="text-xs text-amber-700 dark:text-amber-300">En revisión por el instructor</p>
           )}
           {!isPending && (
             <>
@@ -230,7 +230,7 @@ function CheckpointCard({
                   onChange={(e) => setText(e.target.value)}
                   placeholder={checkpoint.submission_prompt || 'Tu respuesta'}
                   rows={3}
-                  className="bg-white/5 border-white/10 text-sm"
+                  className="bg-muted/50 border-border text-sm"
                 />
               )}
               {checkpoint.submission_type === 'link' && (
@@ -238,7 +238,7 @@ function CheckpointCard({
                   value={link}
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="https://…"
-                  className="bg-white/5 border-white/10 text-sm"
+                  className="bg-muted/50 border-border text-sm"
                 />
               )}
               <Button
@@ -261,7 +261,7 @@ function CheckpointCard({
           disabled={submitMutation.isPending}
           size="sm"
           variant="outline"
-          className="border-white/10 mt-3"
+          className="border-border mt-3"
         >
           Marcar como visto
         </Button>

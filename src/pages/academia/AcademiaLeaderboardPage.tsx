@@ -11,21 +11,21 @@ export default function AcademiaLeaderboardPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando ranking...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-8">
         <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-white">
+          <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-foreground">
             <span aria-hidden="true">👑</span> Ranking
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Los miembros más activos de esta semana, mes y siempre
           </p>
         </div>

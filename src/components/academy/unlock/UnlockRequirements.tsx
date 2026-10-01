@@ -29,7 +29,7 @@ export function LockBadge({ className, label = 'Bloqueado' }: { className?: stri
     <span
       className={cn(
         'inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full',
-        'bg-zinc-800/90 border border-white/15 text-zinc-300 backdrop-blur-md',
+        'bg-card/90 border border-border text-muted-foreground backdrop-blur-md',
         className
       )}
     >
@@ -56,7 +56,7 @@ export function UnlockRequirements({ evaluation, compact, className, accentColor
   return (
     <div
       className={cn(
-        'rounded-2xl border border-white/10 bg-white/[0.03]',
+        'rounded-2xl border border-border bg-muted/30',
         compact ? 'p-3' : 'p-5',
         className
       )}
@@ -69,10 +69,10 @@ export function UnlockRequirements({ evaluation, compact, className, accentColor
           <Lock className="h-4 w-4" style={{ color: accentColor }} />
         </div>
         <div>
-          <p className={cn('font-bold text-white', compact ? 'text-sm' : 'text-base')}>
+          <p className={cn('font-bold text-foreground', compact ? 'text-sm' : 'text-base')}>
             Contenido bloqueado
           </p>
-          <p className="text-[11px] text-zinc-400">
+          <p className="text-[11px] text-muted-foreground">
             {isAny ? 'Cumple al menos uno de estos requisitos:' : 'Necesitas cumplir todo esto:'}
           </p>
         </div>
@@ -86,16 +86,16 @@ export function UnlockRequirements({ evaluation, compact, className, accentColor
               key={i}
               className={cn(
                 'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm',
-                req.met ? 'bg-emerald-500/10 text-emerald-200' : 'bg-white/5 text-zinc-300'
+                req.met ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-200' : 'bg-muted/50 text-muted-foreground'
               )}
             >
               <span
                 className={cn(
                   'h-5 w-5 rounded-full flex items-center justify-center flex-shrink-0',
-                  req.met ? 'bg-emerald-500/30' : 'bg-zinc-700/60'
+                  req.met ? 'bg-emerald-500/30' : 'bg-muted'
                 )}
               >
-                {req.met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-zinc-400" />}
+                {req.met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3 text-muted-foreground" />}
               </span>
               <Icon className="h-4 w-4 flex-shrink-0 opacity-70" />
               <span className="flex-1 min-w-0">
@@ -103,7 +103,7 @@ export function UnlockRequirements({ evaluation, compact, className, accentColor
                   {requirementLabel(req)}
                 </span>
                 {req.detail && !req.met && (
-                  <span className="text-[11px] text-zinc-500 ml-1.5">· {req.detail}</span>
+                  <span className="text-[11px] text-muted-foreground ml-1.5">· {req.detail}</span>
                 )}
               </span>
             </li>

@@ -53,17 +53,17 @@ export function SpaceMap({ spaceId, accentColor = '#8B5CF6' }: SpaceMapProps) {
 
   return (
     <div className="space-y-6">
-      <Card className="p-4 bg-white/5 border-white/10 overflow-hidden">
-        <div className="flex items-center gap-2 mb-4 text-sm text-zinc-400">
+      <Card className="p-4 bg-muted/50 border-border overflow-hidden">
+        <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
           <Globe className="h-4 w-4" /> {locations.length} miembros · {pins.length} ubicaciones
         </div>
         <div className="relative w-full rounded-lg overflow-hidden" style={{ height: 420 }}>
           {isLoading ? (
-            <div className="absolute inset-0 flex items-center justify-center text-zinc-500 bg-black/30">
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted">
               Cargando ubicaciones...
             </div>
           ) : pins.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-zinc-500 gap-2 bg-black/30">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground gap-2 bg-muted">
               <MapPin className="h-8 w-8" />
               <span className="text-sm">Aún no hay miembros con ubicación pública</span>
             </div>
@@ -98,7 +98,7 @@ export function SpaceMap({ spaceId, accentColor = '#8B5CF6' }: SpaceMapProps) {
                   <Popup>
                     <div className="text-sm">
                       <div className="font-semibold">{p.user?.full_name ?? 'Miembro'}</div>
-                      <div className="text-xs text-zinc-600 mt-0.5">
+                      <div className="text-xs text-muted-foreground mt-0.5">
                         {p.city ? `${p.city}, ` : ''}{p.country ?? ''}
                       </div>
                     </div>
@@ -111,13 +111,13 @@ export function SpaceMap({ spaceId, accentColor = '#8B5CF6' }: SpaceMapProps) {
       </Card>
 
       {byCountry.length > 0 && (
-        <Card className="p-4 bg-white/5 border-white/10">
+        <Card className="p-4 bg-muted/50 border-border">
           <h3 className="font-semibold mb-3">Miembros por país</h3>
           <ul className="space-y-1">
             {byCountry.map(([country, count]) => (
               <li key={country} className="flex items-center gap-3 text-sm">
-                <span className="flex-1 truncate text-zinc-300">{country}</span>
-                <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <span className="flex-1 truncate text-muted-foreground">{country}</span>
+                <div className="w-24 h-1.5 bg-muted/50 rounded-full overflow-hidden">
                   <div
                     className="h-full"
                     style={{
@@ -126,7 +126,7 @@ export function SpaceMap({ spaceId, accentColor = '#8B5CF6' }: SpaceMapProps) {
                     }}
                   />
                 </div>
-                <span className="text-xs text-zinc-500 w-8 text-right">{count}</span>
+                <span className="text-xs text-muted-foreground w-8 text-right">{count}</span>
               </li>
             ))}
           </ul>

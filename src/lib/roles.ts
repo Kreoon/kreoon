@@ -272,6 +272,17 @@ export function getBaseRole(role: AppRole | string | null | undefined): BaseRole
   return 'content_creator';
 }
 
+/**
+ * Normaliza un rol (canónico o legado) a su rol base SIN valor por defecto: devuelve `null` para
+ * vacío o desconocido. Úsalo para comparar permisos (`content_creator` y el legado `creator` son el
+ * mismo rol); `getBaseRole` cae a `content_creator` y no sirve para eso.
+ */
+export function normalizeRole(role: AppRole | string | null | undefined): BaseRole | null {
+  if (!role) return null;
+  if (BASE_ROLE_LABELS[role as BaseRole]) return role as BaseRole;
+  return LEGACY_TO_BASE_ROLE[role] ?? null;
+}
+
 /** Get the display label for any role (base role → legacy mapping → group fallback) */
 export function getRoleLabel(role: AppRole | string): string {
   // Check base roles first

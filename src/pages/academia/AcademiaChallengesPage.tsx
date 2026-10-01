@@ -79,20 +79,20 @@ export default function AcademiaChallengesPage() {
 
   if (!space)
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando…
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-6">
         <div className="flex items-center gap-3 mb-6">
           <Trophy className="h-6 w-6" style={{ color: accent }} />
           <div>
             <h1 className="text-2xl font-bold">Retos</h1>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-muted-foreground">
               Series de checkpoints para construir hábito y desbloquear XP.
             </p>
           </div>
@@ -105,10 +105,10 @@ export default function AcademiaChallengesPage() {
             ))}
           </div>
         ) : !challenges?.length ? (
-          <Card className="bg-white/5 border-white/10 p-10 text-center">
+          <Card className="bg-muted/50 border-border p-10 text-center">
             <Sparkles className="h-10 w-10 mx-auto mb-3" style={{ color: accent }} />
-            <p className="text-zinc-300">No hay retos activos por ahora.</p>
-            <p className="text-xs text-zinc-500 mt-1">Pronto se publicarán nuevos.</p>
+            <p className="text-muted-foreground">No hay retos activos por ahora.</p>
+            <p className="text-xs text-muted-foreground mt-1">Pronto se publicarán nuevos.</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,7 +116,7 @@ export default function AcademiaChallengesPage() {
               const part = partMap.get(c.id) as any;
               const joined = !!part;
               return (
-                <Card key={c.id} className="bg-white/5 border-white/10 overflow-hidden">
+                <Card key={c.id} className="bg-muted/50 border-border overflow-hidden">
                   {c.cover_url ? (
                     <img src={c.cover_url} alt="" className="w-full h-32 object-cover" />
                   ) : (
@@ -129,15 +129,15 @@ export default function AcademiaChallengesPage() {
                   )}
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-base font-semibold text-zinc-100">{c.title}</h3>
-                      <Badge variant="outline" className="border-white/10 text-zinc-300 text-[10px] shrink-0">
+                      <h3 className="text-base font-semibold text-foreground">{c.title}</h3>
+                      <Badge variant="outline" className="border-border text-muted-foreground text-[10px] shrink-0">
                         +{c.xp_reward} XP
                       </Badge>
                     </div>
                     {c.description && (
-                      <p className="text-xs text-zinc-400 line-clamp-2">{c.description}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">{c.description}</p>
                     )}
-                    <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                       {c.mode === 'fixed_dates' ? (
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
@@ -162,7 +162,7 @@ export default function AcademiaChallengesPage() {
                       <Link to={`/academia/${spaceSlug}/retos/${c.slug}`}>
                         <Button
                           variant="outline"
-                          className="w-full justify-between border-white/10"
+                          className="w-full justify-between border-border"
                           style={{ color: accent }}
                         >
                           Continuar reto <ChevronRight className="h-4 w-4" />

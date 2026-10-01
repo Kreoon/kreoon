@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { ArrowLeft, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type {
+  BlockType,
   BuilderConfig,
   ProfileBlock,
   ProfileTemplate,
@@ -9,6 +13,7 @@ import { StylePanel } from "./panels/StylePanel";
 import { TemplatesPanel, type ApplyMode } from "./panels/TemplatesPanel";
 import { PublishPanel } from "./panels/PublishPanel";
 import { AIPanel } from "./panels/AIPanel";
+import { AddSectionPanel } from "./panels/AddSectionPanel";
 import {
   HeroSectionEditor,
   AboutSectionEditor,
@@ -39,6 +44,11 @@ interface ContextPanelProps {
   onApplyTemplate: (template: ProfileTemplate, mode: ApplyMode) => void;
   onPreview: () => void;
   onPublish: () => void;
+  onAddSection: (type: BlockType) => void;
+  onClearSelection: () => void;
+  /** Solo < md: el panel se muestra como hoja inferior cuando está abierto. */
+  isMobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 const PANEL_TITLES: Record<BuilderPanel, string> = {
@@ -51,30 +61,79 @@ const PANEL_TITLES: Record<BuilderPanel, string> = {
 };
 
 export function ContextPanel(props: ContextPanelProps) {
-  const { activePanel, selectedSection } = props;
-  const headerTitle =
-    selectedSection && activePanel === "sections"
+  const { activePanel, selectedSection, isMobileOpen, onCloseMobile } = props;
+  const [isAdding, setIsAdding] = useState(false);
+  const showAdd = isAdding && activePanel === "sections" && !selectedSection;
+  const headerTitle = showAdd
+    ? "Añadir sección"
+    : selectedSection && activePanel === "sections"
       ? selectedSection.label
       : PANEL_TITLES[activePanel];
 
   return (
-    <aside className="flex w-80 flex-col border-l border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">{headerTitle}</h2>
+    <aside
+      className={cn(
+        "flex-col border-border bg-card",
+        // Móvil: hoja inferior sobre el lienzo, encima de la barra de herramientas inferior
+        "fixed inset-x-0 bottom-16 z-40 max-h-[70dvh] rounded-t-2xl border-t shadow-2xl",
+        // Escritorio: panel lateral fijo
+        "md:static md:z-auto md:flex md:max-h-none md:w-80 md:rounded-none md:border-l md:border-t-0 md:shadow-none",
+        isMobileOpen ? "flex" : "hidden",
+      )}
+      aria-label={headerTitle}
+    >
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <h2 className="truncate text-sm font-semibold">{headerTitle}</h2>
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          aria-label="Cerrar panel"
+          className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted md:hidden"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">{renderPanel(props)}</div>
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4">
+        {renderPanel(props, showAdd, setIsAdding)}
+      </div>
     </aside>
   );
 }
 
-function renderPanel(props: ContextPanelProps) {
+function renderPanel(
+  props: ContextPanelProps,
+  showAdd: boolean,
+  setIsAdding: (value: boolean) => void,
+) {
   switch (props.activePanel) {
     case "sections":
+      if (showAdd) {
+        return (
+          <AddSectionPanel
+            blocks={props.blocks}
+            onBack={() => setIsAdding(false)}
+            onAdd={(type) => {
+              setIsAdding(false);
+              props.onAddSection(type);
+            }}
+          />
+        );
+      }
       return props.selectedSection ? (
-        <SectionEditor
-          section={props.selectedSection}
-          onUpdateBlock={props.onUpdateBlock}
-        />
+        <div className="space-y-4">
+          <button
+            type="button"
+            onClick={props.onClearSelection}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Volver a las secciones
+          </button>
+          <SectionEditor
+            section={props.selectedSection}
+            onUpdateBlock={props.onUpdateBlock}
+          />
+        </div>
       ) : (
         <SectionsPanel
           sections={props.sections}
@@ -84,6 +143,7 @@ function renderPanel(props: ContextPanelProps) {
           onMoveUp={(id) => props.onMoveSection(id, -1)}
           onMoveDown={(id) => props.onMoveSection(id, 1)}
           onDelete={props.onDeleteSection}
+          onAddClick={() => setIsAdding(true)}
         />
       );
     case "style":

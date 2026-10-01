@@ -53,7 +53,7 @@ export const KreoonSkeleton = React.forwardRef<HTMLDivElement, KreoonSkeletonPro
       <div
         ref={ref}
         className={cn(
-          "bg-kreoon-bg-secondary",
+          "bg-muted",
           variantRadius[variant],
           animationClasses[animation],
           className
@@ -119,7 +119,7 @@ export function KreoonSkeletonCard({
   return (
     <div
       className={cn(
-        "rounded-sm border border-kreoon-border bg-kreoon-bg-card/80 overflow-hidden",
+        "rounded-sm border border-kreoon-border bg-card/80 overflow-hidden",
         className
       )}
       aria-hidden
@@ -172,7 +172,7 @@ export function KreoonSkeletonTable({
       <table className="w-full border-collapse">
         {showHeader && (
           <thead>
-            <tr className="border-b border-kreoon-border bg-kreoon-bg-secondary/50">
+            <tr className="border-b border-kreoon-border bg-muted/50">
               {Array.from({ length: columns }, (_, i) => (
                 <th key={i} className="p-3 text-left">
                   <KreoonSkeleton variant="text" className="h-4 w-20" />
@@ -222,7 +222,7 @@ export function KreoonLoadingScreen({
   return (
     <div
       className={cn(
-        "flex min-h-screen flex-col items-center justify-center bg-kreoon-bg-primary p-4",
+        "flex min-h-screen flex-col items-center justify-center bg-background p-4",
         className
       )}
       role="status"
@@ -231,7 +231,7 @@ export function KreoonLoadingScreen({
     >
       {showLogo && (
         <div className="mb-8 animate-kreoon-skeleton-pulse">
-          <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-kreoon-bg-card">
+          <div className="flex h-14 w-14 items-center justify-center rounded-sm border border-kreoon-purple-500/30 bg-card">
             <img
               src="/favicon.png"
               alt=""

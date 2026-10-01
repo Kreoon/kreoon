@@ -8,9 +8,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useJoinSpace } from '@/hooks/academy/useAcademyJoinSpace';
 import { supabase } from '@/integrations/supabase/client';
 import { sanitizeHTML } from '@/lib/sanitizeHTML';
+import { sanitizeReturnTo } from '@/lib/registration/returnTo';
+import { REGISTRATION_BASE } from '@/lib/registration/paths';
+import { attributionToSearchParams, pickAttribution } from '@/lib/registration/attribution';
 import { validateCouponCode, type CouponPlan } from '@/hooks/academy/useAcademyCoupons';
 
-const KREOON_PURPLE = '#7c3aed';
+const KREOON_PURPLE = '#6D4AFF';
 
 interface SpaceJoinGateProps {
   space: any;
@@ -122,8 +125,11 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   const source = searchParams.get('utm_source') || searchParams.get('source') || null;
 
   const handleAnonRegister = () => {
-    const redirectTo = `/academia/${spaceSlug}`;
-    navigate(`/register?role=student&redirect=${encodeURIComponent(redirectTo)}`);
+    // Sin sesión: alta pública canónica (solo creadores); se vuelve al recurso tras registrarse.
+    const next = sanitizeReturnTo(`/academia/${spaceSlug}`);
+    const qs = attributionToSearchParams(pickAttribution(searchParams));
+    if (next) qs.set('next', next);
+    navigate(`${REGISTRATION_BASE}${qs.toString() ? `?${qs.toString()}` : ''}`);
   };
 
   const handleFreeJoin = async () => {
@@ -171,33 +177,33 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
   };
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* HERO */}
       <div
         className="relative h-64 md:h-80 overflow-hidden"
         style={{
           background: coverUrl
             ? `url(${coverUrl}) center/cover`
-            : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, #0a0a0f)`,
+            : `linear-gradient(135deg, ${spaceAccent}60, ${spaceAccent}20 50%, hsl(var(--background)))`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
       </div>
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 -mt-24 relative pb-16">
         {/* Card central */}
-        <div className="rounded-3xl border border-white/10 bg-[#0a0a0f]/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl text-center space-y-6">
+        <div className="rounded-3xl border border-border bg-background/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl text-center space-y-6">
           {/* Logo */}
           <div className="flex justify-center">
             {logoUrl ? (
               <img
                 src={logoUrl}
                 alt={spaceName}
-                className="h-24 w-24 md:h-28 md:w-28 rounded-2xl object-cover border-2 border-white/10 shadow-xl"
+                className="h-24 w-24 md:h-28 md:w-28 rounded-2xl object-cover border-2 border-border shadow-xl"
               />
             ) : (
               <div
-                className="h-24 w-24 md:h-28 md:w-28 rounded-2xl border-2 border-white/10 shadow-xl flex items-center justify-center text-5xl"
+                className="h-24 w-24 md:h-28 md:w-28 rounded-2xl border-2 border-border shadow-xl flex items-center justify-center text-5xl"
                 style={{ backgroundColor: `${spaceAccent}40` }}
                 aria-hidden="true"
               >
@@ -208,9 +214,9 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
 
           {/* Identidad */}
           <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white">{spaceName}</h1>
-            <div className="flex items-center justify-center gap-2 text-sm text-zinc-400 flex-wrap">
-              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/10">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">{spaceName}</h1>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50 border border-border">
                 <Users className="h-3.5 w-3.5" />
                 {memberCount} miembros
               </span>
@@ -241,14 +247,14 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                         onClick={() => setPlan(p)}
                         className={`rounded-2xl border-2 p-3 text-left transition-all ${
                           plan === p
-                            ? 'border-white/30 bg-white/10'
-                            : 'border-white/10 hover:border-white/20'
+                            ? 'border-border bg-muted'
+                            : 'border-border hover:border-border'
                         }`}
                       >
-                        <div className="text-xs text-zinc-400">{label}</div>
-                        <div className="text-lg font-bold text-white mt-0.5">
+                        <div className="text-xs text-muted-foreground">{label}</div>
+                        <div className="text-lg font-bold text-foreground mt-0.5">
                           USD {price.toFixed(0)}
-                          <span className="text-xs text-zinc-400 font-normal">{per}</span>
+                          <span className="text-xs text-muted-foreground font-normal">{per}</span>
                         </div>
                       </button>
                     );
@@ -263,13 +269,13 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
                     placeholder="¿Tienes un cupón?"
-                    className="flex-1 bg-white/5 border-white/10 text-white font-mono"
+                    className="flex-1 bg-muted/50 border-border text-foreground font-mono"
                   />
                   <Button
                     onClick={handleApplyCoupon}
                     disabled={!couponCode || validatingCoupon}
                     variant="outline"
-                    className="border-white/15"
+                    className="border-border"
                   >
                     {validatingCoupon ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -281,15 +287,15 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
               ) : (
                 <div className="flex items-center justify-between bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-3">
                   <div className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-emerald-400" />
-                    <code className="font-mono font-bold text-emerald-300">{appliedCoupon.code}</code>
-                    <span className="text-xs text-zinc-400">
+                    <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <code className="font-mono font-bold text-emerald-700 dark:text-emerald-300">{appliedCoupon.code}</code>
+                    <span className="text-xs text-muted-foreground">
                       −USD {appliedCoupon.discountAmount.toFixed(2)}
                     </span>
                   </div>
                   <button
                     onClick={removeCoupon}
-                    className="text-zinc-400 hover:text-zinc-200"
+                    className="text-muted-foreground hover:text-foreground"
                     aria-label="Quitar cupón"
                   >
                     <X className="h-4 w-4" />
@@ -301,18 +307,18 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
               <div className="text-center pt-1">
                 {appliedCoupon && appliedCoupon.finalPrice !== currentPrice ? (
                   <div className="space-y-0.5">
-                    <div className="text-zinc-500 line-through text-sm">
+                    <div className="text-muted-foreground line-through text-sm">
                       USD {currentPrice.toFixed(2)}
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-foreground">
                       USD {finalPrice.toFixed(2)}{' '}
-                      <span className="text-sm font-normal text-zinc-400">/{planLabel}</span>
+                      <span className="text-sm font-normal text-muted-foreground">/{planLabel}</span>
                     </div>
                   </div>
                 ) : (
-                  <div className="text-2xl font-bold text-white">
+                  <div className="text-2xl font-bold text-foreground">
                     USD {currentPrice.toFixed(2)}{' '}
-                    <span className="text-sm font-normal text-zinc-400">/{planLabel}</span>
+                    <span className="text-sm font-normal text-muted-foreground">/{planLabel}</span>
                   </div>
                 )}
               </div>
@@ -322,7 +328,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
           {/* Descripción */}
           {description && (
             <div
-              className="text-sm md:text-base text-zinc-300 leading-relaxed max-w-xl mx-auto prose prose-invert prose-sm"
+              className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto prose prose-invert prose-sm"
               dangerouslySetInnerHTML={{ __html: sanitizeHTML(description) }}
             />
           )}
@@ -335,7 +341,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
               { emoji: '🎥', text: 'Lives semanales con los mentores' },
               { emoji: '🏆', text: 'Sube de nivel y gana insignias' },
             ].map(({ emoji, text }) => (
-              <li key={text} className="flex items-center gap-3 text-zinc-200">
+              <li key={text} className="flex items-center gap-3 text-foreground">
                 <span className="text-xl" aria-hidden="true">{emoji}</span>
                 {text}
               </li>
@@ -350,14 +356,14 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   onClick={handleAnonRegister}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >
                   <GraduationCap className="h-5 w-5 mr-2" />
                   Crear cuenta para entrar
                 </Button>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Es gratis. Solo te pediremos email y contraseña.
                 </p>
               </>
@@ -368,7 +374,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   disabled={checkoutLoading}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >
@@ -384,7 +390,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Pago seguro con Stripe. Cancela cuando quieras.
                 </p>
               </>
@@ -395,7 +401,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   disabled={join.isPending}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >
@@ -411,7 +417,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                     </>
                   )}
                 </Button>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Acceso inmediato. Sin tarjeta.
                 </p>
               </>
@@ -419,7 +425,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
           </div>
 
           <div className="pt-2">
-            <Link to="/academia" className="text-xs text-zinc-500 hover:text-zinc-300 inline-flex items-center gap-1">
+            <Link to="/academia" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
               <Lock className="h-3 w-3" />
               Explorar otras academias
             </Link>

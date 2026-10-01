@@ -125,8 +125,8 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
           className={cn(
             'rounded-lg border px-3 py-2 text-sm',
             actionError
-              ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
-              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+              ? 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300'
+              : 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
           )}
         >
           {actionError ?? actionSuccess}
@@ -142,10 +142,10 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
               aria-selected={filter === f}
               onClick={() => setFilter(f)}
               className={cn(
-                'px-3 py-1.5 rounded-full text-xs border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50',
+                'px-3 py-1.5 rounded-full text-xs border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
                 filter === f
-                  ? 'text-zinc-100 border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 text-zinc-400 hover:text-zinc-200'
+                  ? 'text-foreground border-primary bg-primary/10'
+                  : 'border-border text-muted-foreground hover:text-foreground'
               )}
             >
               {f === 'active' ? 'Activos' : f === 'banned' ? 'Baneados' : 'Todos'}
@@ -154,14 +154,14 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
         </div>
         <div className="md:ml-auto flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" aria-hidden="true" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             <label className="sr-only" htmlFor="member-search">Buscar miembro</label>
             <Input
               id="member-search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar..."
-              className="bg-black/30 border-white/10 pl-8 h-9 text-sm w-full sm:w-64"
+              className="bg-muted border-border pl-8 h-9 text-sm w-full sm:w-64"
             />
           </div>
           <Button variant="outline" onClick={exportCSV} aria-label="Exportar lista de miembros a CSV">
@@ -170,13 +170,13 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
         </div>
       </div>
 
-      <Card className="bg-white/5 border-white/10 overflow-hidden">
+      <Card className="bg-muted/50 border-border overflow-hidden">
         {isLoading ? (
-          <div className="text-center py-8 text-zinc-500">Cargando...</div>
+          <div className="text-center py-8 text-muted-foreground">Cargando...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-8 text-zinc-500">Sin miembros</div>
+          <div className="text-center py-8 text-muted-foreground">Sin miembros</div>
         ) : (
-          <ul className="divide-y divide-white/5">
+          <ul className="divide-y divide-border">
             {(filtered as any[]).map((m) => (
               <li key={m.id} className="px-4 py-3 flex items-center gap-3">
                 <Avatar profile={m.user} accentColor={accentColor} />
@@ -184,23 +184,23 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
                   <div className="font-semibold text-sm truncate flex items-center gap-2">
                     {m.user?.full_name ?? 'Miembro'}
                     {m.role === 'owner' && (
-                      <Crown className="h-3 w-3 text-amber-400" />
+                      <Crown className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                     )}
                   </div>
-                  <div className="text-xs text-zinc-500 truncate flex items-center gap-1">
+                  <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                     <Mail className="h-3 w-3" />
                     {m.user?.email ?? '(sin email)'}
                   </div>
                 </div>
-                <div className="text-[10px] text-zinc-500 hidden sm:block">
+                <div className="text-[10px] text-muted-foreground hidden sm:block">
                   {new Date(m.joined_at).toLocaleDateString('es-ES')}
                 </div>
                 <span
                   className={cn(
                     'text-[10px] px-2 py-0.5 rounded',
                     m.is_active
-                      ? 'bg-emerald-500/10 text-emerald-300'
-                      : 'bg-rose-500/10 text-rose-300'
+                      ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'
                   )}
                 >
                   {m.is_active ? 'Activo' : 'Baneado'}
@@ -213,7 +213,7 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
                         ? `Banear a ${m.user?.full_name ?? 'miembro'}`
                         : `Reactivar a ${m.user?.full_name ?? 'miembro'}`
                     }
-                    className="text-rose-400 hover:text-rose-300 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
+                    className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/50"
                   >
                     <UserX className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -224,7 +224,7 @@ export function MembersAdminTab({ spaceId, accentColor = '#8B5CF6' }: MembersAdm
         )}
       </Card>
 
-      <div className="text-xs text-zinc-500 text-right">
+      <div className="text-xs text-muted-foreground text-right">
         {filtered.length} de {members.length} miembros
       </div>
     </div>

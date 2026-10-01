@@ -179,15 +179,15 @@ export function FollowersModal({ isOpen, onClose, userId, initialTab = 'follower
 
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full bg-background">
-            <TabsTrigger value="followers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="followers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Users className="h-4 w-4 mr-2" />
               Seguidores ({followers.length})
             </TabsTrigger>
-            <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="following" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <UserPlus className="h-4 w-4 mr-2" />
               Siguiendo ({following.length})
             </TabsTrigger>
-            <TabsTrigger value="likers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-white">
+            <TabsTrigger value="likers" className="flex-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Heart className="h-4 w-4 mr-2" />
               Likes ({likers.length})
             </TabsTrigger>

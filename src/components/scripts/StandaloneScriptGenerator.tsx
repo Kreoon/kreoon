@@ -1090,7 +1090,7 @@ export function StandaloneScriptGenerator() {
 
             {/* Info contextual de la fase seleccionada */}
             {formData.sphere_phase && (
-              <div className="bg-white dark:bg-slate-900 rounded-lg p-3 border text-sm space-y-1">
+              <div className="bg-white dark:bg-card rounded-lg p-3 border text-sm space-y-1">
                 {(() => {
                   const phase = ESFERA_PHASES.find(p => p.value === formData.sphere_phase);
                   return phase ? (

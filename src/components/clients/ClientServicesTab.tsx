@@ -70,10 +70,10 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded border border-white/10 overflow-hidden">
+    <div className="rounded border border-border overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-2.5 bg-white/[0.03] hover:bg-white/[0.06] transition-colors text-left"
+        className="w-full flex items-center justify-between px-4 py-2.5 bg-muted/40 hover:bg-muted/40 transition-colors text-left"
       >
         <span className="text-sm font-medium capitalize">{month}</span>
         <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ function MonthSection({ month, count, children, defaultOpen = false }: {
           {open ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}
         </div>
       </button>
-      {open && <div className="divide-y divide-white/5">{children}</div>}
+      {open && <div className="divide-y divide-border">{children}</div>}
     </div>
   );
 }
@@ -173,7 +173,7 @@ export function ClientServicesTab({
             { label: 'Grabaciones', value: fillmakers.length, icon: Camera, color: 'text-violet-400' },
             { label: 'Proyectos', value: projects.length, icon: FolderKanban, color: 'text-blue-400' },
           ].map(({ label, value, icon: Icon, color }) => (
-            <div key={label} className="p-3 rounded border border-white/10 bg-white/[0.02] text-center">
+            <div key={label} className="p-3 rounded border border-border bg-muted/40 text-center">
               <Icon className={`h-4 w-4 mx-auto mb-1 ${color}`} />
               <p className="text-lg font-bold">{value}</p>
               <p className="text-xs text-muted-foreground">{label}</p>
@@ -206,7 +206,7 @@ export function ClientServicesTab({
             <Skeleton className="h-24 rounded" />
           </div>
         ) : packages.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-white/10 rounded">
+          <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded">
             Sin campañas registradas
           </p>
         ) : (
@@ -216,7 +216,7 @@ export function ClientServicesTab({
               const delivered = assignedContent.filter(c => c.client_package_id === pkg.id && ['approved', 'paid'].includes(c.status)).length;
               const owed = pkg.content_quantity - delivered;
               return (
-                <Card key={pkg.id} className="p-4 bg-card border-white/10">
+                <Card key={pkg.id} className="p-4 bg-card border-border">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
@@ -325,7 +325,7 @@ export function ClientServicesTab({
         {loadingItems ? (
           <Skeleton className="h-16 rounded" />
         ) : fillmakers.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-white/10 rounded">
+          <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded">
             Sin grabaciones registradas
           </p>
         ) : (

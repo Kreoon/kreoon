@@ -23,7 +23,7 @@ const PLAN_CONFIG: Record<
   creator_free: {
     label: 'Free',
     icon: Sparkles,
-    color: 'text-zinc-400',
+    color: 'text-muted-foreground',
     bgColor: 'bg-zinc-500/10',
   },
   creator_pro: {
@@ -53,7 +53,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
 
   return (
     <TooltipProvider>
-      <div className="h-10 bg-gradient-to-r from-zinc-900/95 via-zinc-900/90 to-zinc-900/95 border-b border-border/50 flex items-center justify-between px-4 gap-4 flex-shrink-0">
+      <div className="h-10 bg-gradient-to-r from-card/95 via-card/90 to-card/95 border-b border-border/50 flex items-center justify-between px-4 gap-4 flex-shrink-0">
         {/* Izquierda: Plan actual */}
         <div className="flex items-center gap-3">
           <Badge
@@ -81,7 +81,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
                       ? 'text-green-400'
                       : commissionRate <= 0.25
                         ? 'text-amber-400'
-                        : 'text-zinc-400'
+                        : 'text-muted-foreground'
                   )}
                 >
                   {(commissionRate * 100).toFixed(0)}%
@@ -137,7 +137,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
                 {isUnlimited
                   ? 'Bloques ilimitados'
                   : isAtLimit
-                    ? 'Limite alcanzado. Upgrade para mas bloques.'
+                    ? 'Limite alcanzado. Mejorar plan para mas bloques.'
                     : isNearLimit
                       ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
                       : `Tienes ${blocksRemaining} bloques disponibles`}
@@ -203,7 +203,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
               className="h-7 text-xs gap-1.5 border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
             >
               <Crown className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Upgrade</span>
+              <span className="hidden sm:inline">Mejorar plan</span>
             </Button>
           )}
 

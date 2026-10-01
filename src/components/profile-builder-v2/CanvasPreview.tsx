@@ -44,6 +44,7 @@ export function CanvasPreview({
         builderConfig={builderConfig}
         userId={userId}
         creatorProfileId={creatorProfileId}
+        emptyStateHint="Toca «Secciones» y luego «Añadir sección», o elige una plantilla para empezar."
       />
     </DndContext>
   );

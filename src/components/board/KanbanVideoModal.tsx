@@ -65,7 +65,7 @@ export function KanbanVideoModal({
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-white/10">
+            <div className="flex items-center justify-between p-3 border-b border-border">
               <h3 className="text-sm font-medium text-[#f8fafc] truncate pr-4">
                 {title || "Video"}
               </h3>
@@ -73,7 +73,7 @@ export function KanbanVideoModal({
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="h-8 w-8 rounded-sm text-[#cbd5e1] hover:text-[#f8fafc] hover:bg-white/10"
+                className="h-8 w-8 rounded-sm text-[#cbd5e1] hover:text-[#f8fafc] hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </Button>

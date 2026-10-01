@@ -110,7 +110,7 @@ export function UserIpManager({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-xs text-white/40 py-2">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground/70 py-2">
         <Loader2 className="h-3.5 w-3.5 animate-spin" /> Cargando IPs…
       </div>
     );
@@ -118,7 +118,7 @@ export function UserIpManager({ userId }: { userId: string }) {
 
   if (rows.length === 0) {
     return (
-      <p className="text-xs text-white/40 py-2">
+      <p className="text-xs text-muted-foreground/70 py-2">
         Sin IPs registradas todavía. Se registran cuando el usuario abre la
         plataforma.
       </p>
@@ -130,12 +130,12 @@ export function UserIpManager({ userId }: { userId: string }) {
       {rows.map((row, i) => (
         <div
           key={`${row.ip_address}-${row.device_id}-${i}`}
-          className="rounded-sm bg-white/5 border border-white/10 p-2.5 space-y-2"
+          className="rounded-sm bg-muted/40 border border-border p-2.5 space-y-2"
         >
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <Globe className="h-3.5 w-3.5 text-white/40 flex-shrink-0" />
-              <span className="font-mono text-xs text-white/80 truncate">
+              <Globe className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+              <span className="font-mono text-xs text-muted-foreground truncate">
                 {row.ip_address}
               </span>
               {row.ip_blocked && (
@@ -162,7 +162,7 @@ export function UserIpManager({ userId }: { userId: string }) {
             </Button>
           </div>
 
-          <div className="flex items-center justify-between gap-2 text-[10px] text-white/40">
+          <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground/70">
             <span>
               {formatDistanceToNow(new Date(row.last_seen), {
                 addSuffix: true,

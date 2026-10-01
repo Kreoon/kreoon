@@ -32,9 +32,9 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: 1234567"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Partner ID de LinkedIn. Lo encuentras en Campaign Manager → Account Assets → Insight Tag.
         </p>
       </div>
@@ -49,9 +49,9 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'OAuth2 Access Token'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Token OAuth2 con scope r_conversions y rw_conversions. Requiere app en LinkedIn Developer Portal.
         </p>
       </div>
@@ -69,10 +69,10 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-card/30 border border-border">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Los eventos no se envían a producción de LinkedIn
           </p>
         </div>
@@ -90,7 +90,7 @@ export function LinkedInConfigForm({ data, onChange, hasExistingToken }: LinkedI
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Opcional"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-border"
           />
         </div>
       )}

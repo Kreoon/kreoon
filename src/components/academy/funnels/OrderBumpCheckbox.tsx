@@ -50,7 +50,7 @@ export function OrderBumpCheckbox({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-zinc-400 font-medium">Agregar a la compra</p>
+      <p className="text-xs text-muted-foreground font-medium">Agregar a la compra</p>
       {bumps.map((b) => {
         const basePrice = Number(b.bump_course.price_usd);
         const finalPrice = basePrice * (1 - b.discount_percent / 100);
@@ -59,25 +59,25 @@ export function OrderBumpCheckbox({
           <Card
             key={b.id}
             className={`p-3 cursor-pointer border ${
-              checked ? 'border-2' : 'border-dashed border-white/20'
-            } bg-white/5 hover:bg-white/10 transition-colors`}
+              checked ? 'border-2' : 'border-dashed border-border'
+            } bg-muted/50 hover:bg-muted transition-colors`}
             style={checked ? { borderColor: accentColor } : undefined}
             onClick={() => onToggle(b.id, b.bump_course.id, finalPrice)}
           >
             <div className="flex items-start gap-3">
               <Checkbox checked={checked} className="mt-1" onCheckedChange={() => {}} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-zinc-100">{b.headline}</p>
+                <p className="text-sm font-medium text-foreground">{b.headline}</p>
                 {b.subheadline && (
-                  <p className="text-xs text-zinc-400 mt-0.5">{b.subheadline}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{b.subheadline}</p>
                 )}
                 <div className="flex items-center gap-2 mt-1.5">
-                  <span className="text-sm font-semibold text-zinc-100">
+                  <span className="text-sm font-semibold text-foreground">
                     ${finalPrice.toFixed(2)}
                   </span>
                   {b.discount_percent > 0 && (
                     <>
-                      <span className="text-xs text-zinc-500 line-through">${basePrice.toFixed(2)}</span>
+                      <span className="text-xs text-muted-foreground line-through">${basePrice.toFixed(2)}</span>
                       <span
                         className="text-[10px] font-bold rounded px-1.5 py-0.5"
                         style={{ backgroundColor: accentColor + '22', color: accentColor }}

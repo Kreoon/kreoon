@@ -1,3 +1,5 @@
+import { guardedResend } from "../_shared/notification-guard.ts";
+import { escapeHtml } from "../_shared/escapeHtml.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -8,7 +10,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 declare const EdgeRuntime: { waitUntil?: (p: Promise<unknown>) => void } | undefined;
 import { getOrgEmailConfig } from "../_shared/resend-client.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resend = guardedResend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,6 +48,31 @@ const handler = async (req: Request): Promise<Response> => {
 
     const payload: NewMemberPayload = await req.json();
     const { user_id, organization_id, role, user_name, user_email } = payload;
+
+    // Autorización: solo el propio miembro, con membresía real en esa organización, puede disparar el
+    // aviso. Antes era pública y aceptaba organization_id/role/email del body (spam a admins).
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: callerData } = jwt ? await supabase.auth.getUser(jwt) : { data: { user: null } };
+    const caller = callerData?.user;
+    if (!caller || caller.id !== user_id) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { data: membership } = await supabase
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", organization_id)
+      .eq("user_id", user_id)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!membership) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     console.log("Processing new member notification:", { user_id, organization_id, role });
 
@@ -190,7 +217,7 @@ const handler = async (req: Request): Promise<Response> => {
                             Hola <strong>${adminName}</strong>,
                           </p>
                           <p style="margin: 0 0 30px; color: #374151; font-size: 16px; line-height: 1.6;">
-                            Un nuevo usuario se ha registrado en <strong>${org.name}</strong>:
+                            Un nuevo usuario se ha registrado en <strong>${escapeHtml(org.name)}</strong>:
                           </p>
                           
                           <!-- User Info Card -->
@@ -202,14 +229,14 @@ const handler = async (req: Request): Promise<Response> => {
                                     <td style="padding-bottom: 12px;">
                                       <span style="color: #6b7280; font-size: 14px;">Nombre:</span>
                                       <br>
-                                      <span style="color: #111827; font-size: 16px; font-weight: 600;">${displayName}</span>
+                                      <span style="color: #111827; font-size: 16px; font-weight: 600;">${escapeHtml(displayName)}</span>
                                     </td>
                                   </tr>
                                   <tr>
                                     <td style="padding-bottom: 12px;">
                                       <span style="color: #6b7280; font-size: 14px;">Email:</span>
                                       <br>
-                                      <span style="color: #111827; font-size: 16px;">${newUserEmail || "No disponible"}</span>
+                                      <span style="color: #111827; font-size: 16px;">${escapeHtml(newUserEmail || "No disponible")}</span>
                                     </td>
                                   </tr>
                                   <tr>
@@ -217,7 +244,7 @@ const handler = async (req: Request): Promise<Response> => {
                                       <span style="color: #6b7280; font-size: 14px;">Rol:</span>
                                       <br>
                                       <span style="display: inline-block; margin-top: 4px; padding: 6px 12px; background-color: #6366f1; color: #ffffff; font-size: 14px; font-weight: 500; border-radius: 20px;">
-                                        ${roleLabel}
+                                        ${escapeHtml(roleLabel)}
                                       </span>
                                     </td>
                                   </tr>

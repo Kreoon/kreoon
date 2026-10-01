@@ -1,20 +1,17 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   Video, Users, CheckCircle, Clock, DollarSign, TrendingUp,
-  Activity, Target, BarChart3, ArrowUpRight, ArrowDownRight,
-  Play, UserCheck, Calendar, Banknote, Filter, X, Settings,
+  Activity, Target, BarChart3, ArrowDownRight,
+  Play, UserCheck, Calendar, Banknote, Settings,
   Building2, Scissors, Trophy, Crown, Store,
   Clapperboard, AlertTriangle, PackageCheck
 } from "lucide-react";
-import { format, endOfMonth } from "date-fns";
-import { es } from "date-fns/locale";
-import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
-import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
+import { endOfMonth } from "date-fns";
+import { type DateRangeValue } from "@/lib/date-presets";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useAuth } from "@/hooks/useAuth";
-import { useContentWithFilters } from "@/hooks/useContent";
+import { useContentWithFilters, CONTENT_PAGE_SIZE } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { Content, Client, Profile, ClientPackage } from "@/types/database";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,17 +23,17 @@ import { TechKpiDialog } from "@/components/dashboard/TechKpiDialog";
 import { KpiListDialog } from "@/components/dashboard/KpiListDialog";
 import { GoalsDialog } from "@/components/dashboard/GoalsDialog";
 import { GoalsChart } from "@/components/dashboard/GoalsChart";
-import { DashboardKpiCard, TechProgress, PipelineItem, TechSectionHeader } from "@/components/dashboard/TechDashboardCards";
-import { TechGrid, TechParticles, TechOrb, StaggerContainer, StaggerItem } from "@/components/ui/tech-effects";
+import { StatTile, GoalBar } from "@/components/dashboard/StatTile";
+import { AttentionPanel, type AttentionItem } from "@/components/dashboard/AttentionPanel";
+import { PipelineStrip, type PipelineStage } from "@/components/dashboard/PipelineStrip";
+import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
+import { DataStateNotice } from "@/components/dashboard/DataStateNotice";
 import { cn } from "@/lib/utils";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AmbassadorBadge } from "@/components/ui/ambassador-badge";
 import { ReferralStats } from "@/components/dashboard/ReferralStats";
 import { MarketplaceDashboardTab } from "@/components/marketplace/dashboard/MarketplaceDashboardTab";
-import { CurrencyDisplay, CurrencyBadge, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
+import { CurrencyDisplay, formatCurrency, type CurrencyType } from "@/components/ui/currency-input";
 import { useCurrency } from "@/hooks/useCurrency";
 import { KreoonEmptyState } from "@/components/ui/kreoon";
 
@@ -86,193 +83,6 @@ const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number; pr
   }, [value]);
 
   return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
-};
-
-// Premium Stats Card with glow effect - Nova Design System
-const PremiumStatsCard = ({
-  title,
-  value,
-  icon: Icon,
-  trend,
-  color = "primary",
-  onClick,
-  subtitle,
-  goalValue,
-  goalLabel
-}: {
-  title: string;
-  value: number;
-  icon: any;
-  trend?: number;
-  color?: "primary" | "success" | "warning" | "info" | "destructive";
-  onClick?: () => void;
-  subtitle?: string;
-  goalValue?: number;
-  goalLabel?: string;
-}) => {
-  // Nova color mapping
-  const novaColorMap = {
-    primary: { bg: "rgba(139, 92, 246, 0.1)", border: "var(--nova-border-accent)", text: "var(--nova-accent-primary)" },
-    success: { bg: "var(--nova-success-bg)", border: "var(--nova-success)", text: "var(--nova-success)" },
-    warning: { bg: "var(--nova-warning-bg)", border: "var(--nova-warning)", text: "var(--nova-warning)" },
-    info: { bg: "var(--nova-info-bg)", border: "var(--nova-info)", text: "var(--nova-info)" },
-    destructive: { bg: "var(--nova-error-bg)", border: "var(--nova-error)", text: "var(--nova-error)" },
-  };
-
-  const novaColors = novaColorMap[color];
-  const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
-
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "group relative overflow-hidden rounded-sm border p-6",
-        "bg-[var(--nova-bg-elevated)]",
-        "transition-all duration-500 hover:scale-[1.02] nova-hover-glow",
-        onClick && "cursor-pointer"
-      )}
-      style={{ borderColor: novaColors.border }}
-    >
-      <div
-        className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-20 blur-3xl transition-all duration-700 group-hover:scale-150"
-        style={{ background: novaColors.text }}
-      />
-
-      <div
-        className="absolute right-4 top-4 p-3 rounded-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6"
-        style={{ background: novaColors.bg }}
-      >
-        <Icon className="h-6 w-6" style={{ color: novaColors.text }} />
-      </div>
-
-      <div className="relative z-10">
-        <p className="text-xs font-medium text-[var(--nova-text-secondary)] uppercase tracking-wider mb-2">
-          {title}
-        </p>
-        <p className="text-4xl font-bold tracking-tight text-[var(--nova-text-bright)] mb-1">
-          <AnimatedNumber value={value} />
-        </p>
-        {subtitle && (
-          <p className="text-sm text-[var(--nova-text-secondary)]">{subtitle}</p>
-        )}
-        {goalValue && goalValue > 0 && (
-          <div className="mt-3 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span className="text-[var(--nova-text-secondary)]">{goalLabel || 'Meta'}</span>
-              <span className="text-[var(--nova-text-secondary)]">{Math.round(progressPercent)}%</span>
-            </div>
-            <Progress value={progressPercent} className="h-1.5" />
-          </div>
-        )}
-        {trend !== undefined && (
-          <div className="flex items-center gap-1 mt-2">
-            {trend > 0 ? (
-              <ArrowUpRight className="h-4 w-4 text-[var(--nova-success)]" />
-            ) : trend < 0 ? (
-              <ArrowDownRight className="h-4 w-4 text-[var(--nova-error)]" />
-            ) : null}
-            <span className={cn(
-              "text-sm font-medium",
-              trend > 0 ? "text-[var(--nova-success)]" : trend < 0 ? "text-[var(--nova-error)]" : "text-[var(--nova-text-secondary)]"
-            )}>
-              {trend > 0 && "+"}{trend}% vs mes anterior
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1 opacity-50 transition-all duration-500 group-hover:opacity-100"
-        style={{ background: novaColors.text }}
-      />
-    </div>
-  );
-};
-
-// Large KPI Card for main metrics - Nova Design System
-const LargeKpiCard = ({
-  title,
-  value,
-  prefix = "",
-  suffix = "",
-  icon: Icon,
-  trend,
-  description,
-  onClick,
-  goalValue,
-  goalLabel
-}: {
-  title: string;
-  value: number;
-  prefix?: string;
-  suffix?: string;
-  icon: any;
-  trend?: number;
-  description?: string;
-  onClick?: () => void;
-  goalValue?: number;
-  goalLabel?: string;
-}) => {
-  const progressPercent = goalValue && goalValue > 0 ? Math.min((value / goalValue) * 100, 100) : 0;
-
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        "group relative overflow-hidden rounded-sm border p-8",
-        "bg-[var(--nova-bg-elevated)]",
-        "border-[var(--nova-border-default)]",
-        "transition-all duration-500 nova-hover-glow",
-        onClick && "cursor-pointer"
-      )}
-    >
-      <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-gradient-to-br from-[rgba(139,92,246,0.1)] to-transparent blur-3xl transition-transform duration-700 group-hover:scale-125" />
-
-      <div className="relative z-10 flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-sm bg-[rgba(139,92,246,0.1)]">
-              <Icon className="h-8 w-8 text-[var(--nova-accent-primary)]" />
-            </div>
-            <p className="text-lg font-medium text-[var(--nova-text-secondary)]">{title}</p>
-          </div>
-
-          <p className="text-6xl font-bold tracking-tight text-[var(--nova-text-bright)] mb-2">
-            {prefix}<AnimatedNumber value={value} />{suffix}
-          </p>
-
-          {description && (
-            <p className="text-sm text-[var(--nova-text-secondary)] max-w-xs">{description}</p>
-          )}
-
-          {goalValue && goalValue > 0 && (
-            <div className="mt-4 space-y-1 max-w-xs">
-              <div className="flex justify-between text-sm">
-                <span className="text-[var(--nova-text-secondary)]">{goalLabel || 'Meta'}: {prefix}{goalValue.toLocaleString()}</span>
-                <span className={cn(
-                  "font-medium",
-                  progressPercent >= 100 ? "text-[var(--nova-success)]" : progressPercent >= 75 ? "text-[var(--nova-warning)]" : "text-[var(--nova-text-secondary)]"
-                )}>
-                  {Math.round(progressPercent)}%
-                </span>
-              </div>
-              <Progress value={progressPercent} className="h-2" />
-            </div>
-          )}
-        </div>
-
-        {trend !== undefined && (
-          <div className={cn(
-            "flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium",
-            trend > 0 ? "bg-[var(--nova-success-bg)] text-[var(--nova-success)]" : "bg-[var(--nova-error-bg)] text-[var(--nova-error)]"
-          )}>
-            {trend > 0 ? <TrendingUp className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-            {trend > 0 && "+"}{trend}%
-          </div>
-        )}
-      </div>
-    </div>
-  );
 };
 
 function DashboardSkeleton() {
@@ -430,7 +240,7 @@ export default function Dashboard() {
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
   
   // Only fetch content once org context is loaded
-  const { content: allContent, loading: contentLoading, refetch, deleteContent } = useContentWithFilters({
+  const { content: allContent, loading: contentLoading, error: contentError, hasMore: contentTruncated, refetch, deleteContent } = useContentWithFilters({
     userId: user?.id,
     role: 'admin',
     clientId: filterClientId !== 'all' ? filterClientId : undefined,
@@ -847,215 +657,142 @@ export default function Dashboard() {
     return <DashboardSkeleton />;
   }
 
+  // Estados honestos de los datos: «—» si la carga falló y no hay nada que mostrar (no es un cero real);
+  // «N+» si el hook devolvió una página completa y puede haber más.
+  const dataUnavailable = !!contentError && allContent.length === 0;
+  const num = (n: number): ReactNode => (dataUnavailable ? '—' : <AnimatedNumber value={n} />);
+  const filteredEmpty = !contentError && allContent.length > 0 && content.length === 0;
+
+  const attentionItems: AttentionItem[] = [
+    {
+      key: 'parados',
+      label: `Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`,
+      value: num(contenidoParado.length),
+      hint: 'Sin ningún cambio',
+      icon: AlertTriangle,
+      tone: contenidoParado.length > 0 ? 'danger' : 'neutral',
+      onClick: () => openKpiDialog(`Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`, contenidoParado),
+    },
+    {
+      key: 'esperando',
+      label: 'Esperando al cliente',
+      value: num(esperandoCliente.length),
+      hint: 'Falta que el cliente responda',
+      icon: Clock,
+      tone: esperandoCliente.length > 0 ? 'warning' : 'neutral',
+      onClick: () => openKpiDialog('Esperando al cliente', esperandoCliente),
+    },
+    {
+      key: 'entregas',
+      label: 'Entregas esta semana',
+      value: num(entregasSemana.length),
+      hint: 'Entregado en los últimos 7 días',
+      icon: PackageCheck,
+      tone: 'success',
+      onClick: () => openKpiDialog('Entregas esta semana', entregasSemana),
+    },
+  ];
+
+  const stage = (label: string, status: string, title: string) => {
+    const items = content.filter(c => c.status === status);
+    return { label, value: dataUnavailable ? '—' : items.length, onClick: () => openKpiDialog(title, items) };
+  };
+  const pipelineStages: PipelineStage[] = [
+    {
+      key: 'pendientes', label: 'Pendientes', icon: Calendar,
+      value: dataUnavailable ? '—' : pending,
+      onClick: () => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status))),
+    },
+    { key: 'grabacion', icon: Video, ...stage('Grabación', 'recording', 'En Grabación') },
+    { key: 'edicion', icon: Scissors, ...stage('Edición', 'editing', 'En Edición') },
+    { key: 'entregados', icon: Play, ...stage('Entregados', 'delivered', 'Entregados') },
+    { key: 'novedad', icon: Activity, tone: 'danger', ...stage('Novedad', 'issue', 'Con Novedad') },
+    { key: 'corregidos', icon: TrendingUp, tone: 'warning', ...stage('Corregidos', 'corrected', 'Corregidos') },
+    {
+      key: 'aprobados', label: 'Aprobados', icon: CheckCircle, tone: 'success',
+      value: dataUnavailable ? '—' : completed,
+      onClick: () => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved')),
+    },
+  ];
+
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Animated Tech Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <TechGrid className="absolute inset-0" />
-        <TechParticles count={20} />
-        <TechOrb size="lg" position="top-right" delay={0} />
-        <TechOrb size="md" position="bottom-left" delay={1} />
-      </div>
-      {/* Page Header */}
-      <div className="p-4 md:p-6">
-        <PageHeader
-          icon={Crown}
-          title="Inicio"
-          subtitle="Centro de comando y métricas"
-          action={
-            <div className="flex items-center gap-2">
-              <DateRangePresetPicker
-                value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
-                onChange={setDateRangeFilter}
-                presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'this_quarter', 'custom']}
-              />
-              {profile?.is_ambassador && (
-                <AmbassadorBadge size="sm" variant="glow" />
-              )}
-              {isAdmin && (
-                <Button variant="outline" size="sm" onClick={() => setGoalsDialogOpen(true)} className="h-8 px-2 md:px-3 border-primary/30 hover:bg-primary/10">
-                  <Target className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">Metas</span>
-                </Button>
-              )}
-            </div>
-          }
+    <div className="relative mx-auto w-full max-w-[1600px]">
+      {/* Cabecera compacta: una línea de título + acciones */}
+      <PageHeader
+        compact
+        icon={Crown}
+        title="Inicio"
+        subtitle="Centro de comando y métricas"
+        action={
+          <div className="flex items-center gap-2">
+            {profile?.is_ambassador && (
+              <AmbassadorBadge size="sm" variant="glow" />
+            )}
+            {isAdmin && (
+              <Button variant="outline" onClick={() => setGoalsDialogOpen(true)} className="h-10 rounded-control bg-card px-3">
+                <Target className="h-4 w-4 md:mr-2" aria-hidden="true" />
+                <span className="sr-only md:not-sr-only">Metas</span>
+              </Button>
+            )}
+          </div>
+        }
+      />
+
+      {/* Filtros. Bajo md no hay cabecera fija; desde md la cabecera ocupa 56 px (h-14, z-40),
+          así que la barra se ancla justo debajo para no quedar tapada. */}
+      <div className="z-30 bg-background py-3 md:sticky md:top-14">
+        <DashboardFilters
+          showEntityFilters={isAdmin}
+          dateRange={dateRangeFilter}
+          onDateRangeChange={setDateRangeFilter}
+          clientId={filterClientId}
+          onClientChange={setFilterClientId}
+          creatorId={filterCreatorId}
+          onCreatorChange={setFilterCreatorId}
+          editorId={filterEditorId}
+          onEditorChange={setFilterEditorId}
+          clients={clients}
+          creators={creators}
+          editors={editors}
+          hasActiveFilters={!!hasActiveFilters}
+          onClear={clearFilters}
         />
       </div>
 
-      {/* Filters section */}
-      <div className="sticky top-0 z-30 border-b border-border/50 bg-background/80">
-
-        {/* Filters - Mobile optimized */}
-        {isAdmin && (
-          <div className="px-4 md:px-6 pb-3">
-            {/* Mobile: Collapsible filter button */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full md:hidden justify-between h-9"
-                >
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-xs">
-                      {hasActiveFilters ? 'Filtros activos' : 'Filtrar resultados'}
-                    </span>
-                  </div>
-                  {hasActiveFilters && (
-                    <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
-                      {[filterClientId !== 'all', filterCreatorId !== 'all', filterEditorId !== 'all', startDateFilter, endDateFilter].filter(Boolean).length}
-                    </span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[calc(100vw-2rem)] p-4" align="start">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Filtros</span>
-                    {hasActiveFilters && (
-                      <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-7">
-                        <X className="h-3 w-3 mr-1" />
-                        Limpiar
-                      </Button>
-                    )}
-                  </div>
-                  
-                  <DateRangePresetPicker
-                    value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
-                    onChange={setDateRangeFilter}
-                    presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'custom']}
-                    numberOfMonths={1}
-                    align="start"
-                  />
-
-                  <Select value={filterClientId} onValueChange={setFilterClientId}>
-                    <SelectTrigger className="w-full h-9 text-xs">
-                      <SelectValue placeholder="Cliente" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los clientes</SelectItem>
-                      {clients.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
-                      <SelectTrigger className="w-full h-9 text-xs">
-                        <SelectValue placeholder="Creador" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {creators.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={filterEditorId} onValueChange={setFilterEditorId}>
-                      <SelectTrigger className="w-full h-9 text-xs">
-                        <SelectValue placeholder="Productor AV" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        {editors.map(e => (
-                          <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Desktop: Inline filters */}
-            <div className="hidden md:flex flex-wrap items-center gap-2 md:gap-3">
-              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-
-              <DateRangePresetPicker
-                value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
-                onChange={setDateRangeFilter}
-                presets={['today', 'last_7', 'last_30', 'this_month', 'last_month', 'this_quarter', 'custom']}
-                align="start"
-              />
-
-              <Select value={filterClientId} onValueChange={setFilterClientId}>
-                <SelectTrigger className="w-[130px] h-8 text-xs">
-                  <SelectValue placeholder="Cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los clientes</SelectItem>
-                  {clients.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterCreatorId} onValueChange={setFilterCreatorId}>
-                <SelectTrigger className="w-[130px] h-8 text-xs">
-                  <SelectValue placeholder="Creador" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los creadores</SelectItem>
-                  {creators.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={filterEditorId} onValueChange={setFilterEditorId}>
-                <SelectTrigger className="w-[130px] h-8 text-xs">
-                  <SelectValue placeholder="Editor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los editores</SelectItem>
-                  {editors.map(e => (
-                    <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs h-8">
-                  <X className="h-3 w-3 mr-1" />
-                  Limpiar
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="px-4 py-2 lg:px-6">
+      <div>
         {/* Main Dashboard Tabs */}
         <Tabs defaultValue="principal" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-10 mb-4">
-            <TabsTrigger value="principal" className="text-xs gap-1">
-              <BarChart3 className="h-3.5 w-3.5" />
+          <TabsList className="mb-5 grid h-11 w-full grid-cols-4 rounded-control p-1">
+            <TabsTrigger value="principal" className="gap-1.5 rounded-[0.5rem] text-sm" aria-label="Principal">
+              <BarChart3 className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Principal</span>
             </TabsTrigger>
-            <TabsTrigger value="financiero" className="text-xs gap-1">
-              <DollarSign className="h-3.5 w-3.5" />
+            <TabsTrigger value="financiero" className="gap-1.5 rounded-[0.5rem] text-sm" aria-label="Financiero">
+              <DollarSign className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Financiero</span>
             </TabsTrigger>
-            <TabsTrigger value="usuarios" className="text-xs gap-1">
-              <Users className="h-3.5 w-3.5" />
+            <TabsTrigger value="usuarios" className="gap-1.5 rounded-[0.5rem] text-sm" aria-label="Usuarios">
+              <Users className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Usuarios</span>
             </TabsTrigger>
-            <TabsTrigger value="marketplace" className="text-xs gap-1">
-              <Store className="h-3.5 w-3.5" />
+            <TabsTrigger value="marketplace" className="gap-1.5 rounded-[0.5rem] text-sm" aria-label="Marketplace">
+              <Store className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">Marketplace</span>
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: PRINCIPAL - KPIs de la Organización */}
-          <TabsContent value="principal" className="space-y-3 mt-0">
+          <TabsContent value="principal" className="mt-0 space-y-5">
+            <DataStateNotice
+              error={contentError}
+              truncated={contentTruncated}
+              pageSize={CONTENT_PAGE_SIZE}
+              onRetry={refetch}
+            />
+
             {/* Solo cuando la organización está realmente vacía: con filtros puestos
                 el vacío significa "no hay resultados", no "no hay videos". */}
-            {allContent.length === 0 && !hasActiveFilters && (
+            {allContent.length === 0 && !hasActiveFilters && !contentError && (
               <KreoonEmptyState
                 icon={<Clapperboard className="h-9 w-9" />}
                 title="Todavía no hay videos"
@@ -1063,243 +800,123 @@ export default function Dashboard() {
                 action={{ label: 'Crear el primer video', onClick: () => navigate('/board') }}
               />
             )}
+            {allContent.length === 0 && hasActiveFilters && !contentError && (
+              <p role="status" className="rounded-card border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-soft">
+                Ningún video coincide con estos filtros.{' '}
+                <button type="button" onClick={clearFilters} className="font-medium text-accent-foreground underline underline-offset-2">
+                  Limpiar filtros
+                </button>
+              </p>
+            )}
+            {filteredEmpty && (
+              <p role="status" className="rounded-card border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-soft">
+                Ningún video cae dentro del rango de fechas elegido.
+              </p>
+            )}
 
-            {/* Row 0: Widgets operativos - qué está pasando ahora mismo */}
-            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
-              {/* Proyectos activos */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Proyectos activos"
-                  value={<AnimatedNumber value={proyectosActivos.length} />}
+            {/* 1. Lo que requiere atención */}
+            <AttentionPanel items={attentionItems} />
+
+            {/* 2. Resumen en filas compactas */}
+            <section aria-labelledby="resumen-titulo">
+              <h2 id="resumen-titulo" className="mb-3 text-base font-semibold text-foreground">Resumen</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                <StatTile
+                  className="lg:col-span-2"
+                  label="Proyectos activos"
+                  value={num(proyectosActivos.length)}
+                  hint="En producción ahora"
                   icon={Clapperboard}
-                  iconColor="hsl(200 100% 50%)"
-                  borderColor="hsl(200 100% 50% / 0.3)"
-                  subtitle="En producción ahora"
+                  tone="info"
                   onClick={() => openKpiDialog('Proyectos activos', proyectosActivos)}
                 />
-              </StaggerItem>
-
-              {/* Esperando al cliente */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Esperando al cliente"
-                  value={<AnimatedNumber value={esperandoCliente.length} />}
-                  icon={Clock}
-                  iconColor="hsl(45 100% 50%)"
-                  borderColor="hsl(45 100% 50% / 0.3)"
-                  subtitle="Falta que el cliente responda"
-                  onClick={() => openKpiDialog('Esperando al cliente', esperandoCliente)}
-                />
-              </StaggerItem>
-
-              {/* Entregas esta semana */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Entregas esta semana"
-                  value={<AnimatedNumber value={entregasSemana.length} />}
-                  icon={PackageCheck}
-                  iconColor="hsl(160 100% 45%)"
-                  borderColor="hsl(160 100% 45% / 0.3)"
-                  subtitle="Entregado en los últimos 7 días"
-                  onClick={() => openKpiDialog('Entregas esta semana', entregasSemana)}
-                />
-              </StaggerItem>
-
-              {/* Parados */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title={`Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`}
-                  value={<AnimatedNumber value={contenidoParado.length} />}
-                  icon={AlertTriangle}
-                  iconColor="hsl(0 80% 55%)"
-                  borderColor="hsl(0 80% 55% / 0.3)"
-                  subtitle="Sin ningún cambio"
-                  onClick={() => openKpiDialog(`Parados hace más de ${DIAS_SIN_MOVIMIENTO} días`, contenidoParado)}
-                />
-              </StaggerItem>
-            </StaggerContainer>
-
-            {/* Row 1: Main KPIs - Tech Style */}
-            <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-3" staggerDelay={0.1}>
-              {/* Total Contenidos */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Total Contenidos"
-                  value={<AnimatedNumber value={totalContent} />}
+                <StatTile
+                  className="lg:col-span-2"
+                  label="Total Contenidos"
+                  value={dataUnavailable ? '—' : contentTruncated ? `${totalContent.toLocaleString()}+` : <AnimatedNumber value={totalContent} />}
+                  hint={contentTruncated ? `Mostrando los primeros ${CONTENT_PAGE_SIZE}` : undefined}
                   icon={Video}
-                  iconColor="hsl(270 100% 60%)"
                   onClick={() => openKpiDialog('Todos los Contenidos', content)}
                 >
-                  {currentGoal?.content_goal && currentGoal.content_goal > 0 && (
-                    <TechProgress 
-                      value={totalContent} 
-                      max={currentGoal.content_goal} 
-                      color="hsl(270 100% 60%)"
-                      label="Meta"
-                    />
+                  {!dataUnavailable && currentGoal?.content_goal && currentGoal.content_goal > 0 && (
+                    <GoalBar value={totalContent} max={currentGoal.content_goal} />
                   )}
-                </DashboardKpiCard>
-              </StaggerItem>
-
-              {/* Ingresos COP */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Ingresos COP"
-                  value={<CurrencyDisplay value={clientsBilling.totalBilledCOP} currency="COP" size="sm" />}
-                  icon={DollarSign}
-                  iconColor="hsl(45 100% 50%)"
-                  borderColor="hsl(45 100% 50% / 0.3)"
-                  onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
-                >
-                  {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
-                    <TechProgress 
-                      value={clientsBilling.totalBilledCOP} 
-                      max={currentGoal.revenue_goal} 
-                      color="hsl(45 100% 50%)"
-                      label="Meta"
-                    />
-                  )}
-                </DashboardKpiCard>
-              </StaggerItem>
-
-              {/* Ingresos USD */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Ingresos USD"
-                  value={<CurrencyDisplay value={clientsBilling.totalBilledUSD} currency="USD" size="sm" />}
-                  icon={DollarSign}
-                  iconColor="hsl(160 100% 45%)"
-                  borderColor="hsl(160 100% 45% / 0.3)"
-                  onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
-                  subtitle={<span>Recaudado: <CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></span>}
-                />
-              </StaggerItem>
-
-              {/* Clientes Activos */}
-              <StaggerItem>
-                <DashboardKpiCard
-                  title="Clientes"
+                </StatTile>
+                <StatTile
+                  className="lg:col-span-2"
+                  label="Clientes"
                   value={activeClients.length}
                   icon={Building2}
-                  iconColor="hsl(270 100% 60%)"
                   onClick={() => openListDialog('Clientes Activos', 'clients', { clients: activeClients })}
                 >
                   {currentGoal?.new_clients_goal && currentGoal.new_clients_goal > 0 && (
-                    <TechProgress 
-                      value={activeClients.length} 
-                      max={currentGoal.new_clients_goal} 
-                      color="hsl(270 100% 60%)"
-                      label="Meta"
-                    />
+                    <GoalBar value={activeClients.length} max={currentGoal.new_clients_goal} />
                   )}
-                </DashboardKpiCard>
-              </StaggerItem>
-            </StaggerContainer>
+                </StatTile>
+                <StatTile
+                  className="sm:col-span-1 lg:col-span-3"
+                  label="Ingresos COP"
+                  value={formatCurrency(clientsBilling.totalBilledCOP, 'COP')}
+                  icon={DollarSign}
+                  onClick={() => openListDialog('Paquetes Vendidos (COP)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'COP' || !(p as any).currency) })}
+                >
+                  {currentGoal?.revenue_goal && currentGoal.revenue_goal > 0 && (
+                    <GoalBar value={clientsBilling.totalBilledCOP} max={currentGoal.revenue_goal} />
+                  )}
+                </StatTile>
+                <StatTile
+                  className="sm:col-span-1 lg:col-span-3"
+                  label="Ingresos USD"
+                  value={formatCurrency(clientsBilling.totalBilledUSD, 'USD')}
+                  hint={<>Recaudado: <span className="tabular-nums">{formatCurrency(clientsBilling.totalPaidUSD, 'USD')}</span></>}
+                  icon={DollarSign}
+                  onClick={() => openListDialog('Paquetes Vendidos (USD)', 'packages-sold', { packages: packages.filter(p => (p as any).currency === 'USD') })}
+                />
+              </div>
+            </section>
 
-            {/* Row 2: Content Status Pipeline - Tech Style */}
-            <motion.div 
-              className="rounded-sm border border-[hsl(270,100%,60%,0.15)] bg-gradient-to-br from-card to-card p-4"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <TechSectionHeader icon={Activity} title="Cómo van los videos" />
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                <PipelineItem
-                  icon={Calendar}
-                  value={pending}
-                  label="Pendientes"
-                  color="hsl(270 30% 55%)"
-                  onClick={() => openKpiDialog('Pendientes', content.filter(c => ['draft', 'script_approved', 'assigned'].includes(c.status)))}
-                />
-                <PipelineItem
-                  icon={Video}
-                  value={content.filter(c => c.status === 'recording').length}
-                  label="Grabación"
-                  color="hsl(200 100% 50%)"
-                  onClick={() => openKpiDialog('En Grabación', content.filter(c => c.status === 'recording'))}
-                />
-                <PipelineItem
-                  icon={Scissors}
-                  value={content.filter(c => c.status === 'editing').length}
-                  label="Edición"
-                  color="hsl(45 100% 50%)"
-                  onClick={() => openKpiDialog('En Edición', content.filter(c => c.status === 'editing'))}
-                />
-                <PipelineItem
-                  icon={Play}
-                  value={content.filter(c => c.status === 'delivered').length}
-                  label="Entregados"
-                  color="hsl(270 100% 60%)"
-                  onClick={() => openKpiDialog('Entregados', content.filter(c => c.status === 'delivered'))}
-                />
-                <PipelineItem
-                  icon={Activity}
-                  value={content.filter(c => c.status === 'issue').length}
-                  label="Novedad"
-                  color="hsl(0 80% 55%)"
-                  onClick={() => openKpiDialog('Con Novedad', content.filter(c => c.status === 'issue'))}
-                />
-                <PipelineItem
-                  icon={TrendingUp}
-                  value={content.filter(c => c.status === 'corrected').length}
-                  label="Corregidos"
-                  color="hsl(35 100% 50%)"
-                  onClick={() => openKpiDialog('Corregidos', content.filter(c => c.status === 'corrected'))}
-                />
-                <PipelineItem
-                  icon={CheckCircle}
-                  value={completed}
-                  label="Aprobados"
-                  color="hsl(160 100% 45%)"
-                  onClick={() => openKpiDialog('Aprobados', content.filter(c => c.status === 'approved'))}
-                />
-              </div>
-            </motion.div>
+            {/* 3. Cómo van los videos */}
+            <PipelineStrip stages={pipelineStages} />
 
-            {/* Row 3: Videos Adeudados + Quick Financial Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
-                className="p-4 rounded-sm bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Video className="h-5 w-5 text-destructive" />
-                    <span className="text-sm font-medium">Videos Adeudados</span>
-                  </div>
-                  <span className="text-2xl font-bold text-destructive">{clientsBilling.contentOwed}</span>
-                </div>
-              </div>
-              
-              <div className="p-4 rounded-sm bg-success/10 border border-success/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-success" />
-                    <span className="text-sm font-medium">Total Recaudado</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-success"><CurrencyDisplay value={clientsBilling.totalPaidCOP} currency="COP" size="sm" /></p>
-                    <p className="text-xs text-success/70"><CurrencyDisplay value={clientsBilling.totalPaidUSD} currency="USD" size="sm" /></p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-4 rounded-sm bg-warning/10 border border-warning/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-warning" />
-                    <span className="text-sm font-medium">Total Por Cobrar</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-warning"><CurrencyDisplay value={clientsBilling.totalPendingCOP} currency="COP" size="sm" /></p>
-                    <p className="text-xs text-warning/70"><CurrencyDisplay value={clientsBilling.totalPendingUSD} currency="USD" size="sm" /></p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* 4. Franjas financieras: tintes suaves semánticos, cifras en tinta */}
+            <section aria-label="Resumen de cobros" className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <StatTile
+                className="border-destructive/20 bg-destructive/5"
+                label="Videos Adeudados"
+                value={clientsBilling.contentOwed}
+                icon={Video}
+                tone="danger"
+                onClick={() => openKpiDialog('Videos Adeudados', content.filter(c => ['approved', 'delivered'].includes(c.status)))}
+              />
+              <StatTile
+                className="border-success/20 bg-success/5"
+                label="Total Recaudado"
+                value={
+                  <>
+                    <span className="block">{formatCurrency(clientsBilling.totalPaidCOP, 'COP')}</span>
+                    <span className="mt-2 block text-[22px]">{formatCurrency(clientsBilling.totalPaidUSD, 'USD')}</span>
+                  </>
+                }
+                icon={CheckCircle}
+                tone="success"
+              />
+              <StatTile
+                className="border-warning/40 bg-warning/10"
+                label="Total Por Cobrar"
+                value={
+                  <>
+                    <span className="block">{formatCurrency(clientsBilling.totalPendingCOP, 'COP')}</span>
+                    <span className="mt-2 block text-[22px]">{formatCurrency(clientsBilling.totalPendingUSD, 'USD')}</span>
+                  </>
+                }
+                icon={Clock}
+                tone="warning"
+              />
+            </section>
 
             {/* Row 4: Goals Chart */}
             {allGoals.length > 0 && (
-              <div className="rounded-sm border border-border/50 bg-card p-4">
+              <div className="rounded-card border border-border bg-card p-5 shadow-soft">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Target className="h-4 w-4 text-primary" />

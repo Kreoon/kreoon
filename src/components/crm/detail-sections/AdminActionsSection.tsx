@@ -255,7 +255,7 @@ export function AdminActionsSection({
               size="sm"
               onClick={() => setChangeRoleOpen(true)}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <UserCog className="h-3.5 w-3.5 text-purple-400" />
               Cambiar rol{" "}
@@ -264,20 +264,20 @@ export function AdminActionsSection({
                 : "(Sin rol)"}
             </Button>
           ) : (
-            <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
-              <p className="text-[10px] text-white/40">
+            <div className="space-y-2 p-2 rounded-sm bg-muted/40 border border-border">
+              <p className="text-[10px] text-muted-foreground/70">
                 Seleccionar rol de plataforma
               </p>
               <Select
                 value={selectedActiveRole}
                 onValueChange={setSelectedActiveRole}
               >
-                <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
+                <SelectTrigger className="h-8 text-xs bg-transparent border-border">
                   <SelectValue placeholder="Rol..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    <span className="text-white/40">Sin rol</span>
+                    <span className="text-muted-foreground/70">Sin rol</span>
                   </SelectItem>
                   {ALL_ASSIGNABLE_ROLES.map((r) => (
                     <SelectItem key={r.value} value={r.value}>
@@ -291,7 +291,7 @@ export function AdminActionsSection({
                   size="sm"
                   onClick={handleSetActiveRole}
                   disabled={!selectedActiveRole || !!loading}
-                  className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
+                  className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-foreground"
                 >
                   {loading === "set_active_role" ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -303,7 +303,7 @@ export function AdminActionsSection({
                   size="sm"
                   variant="ghost"
                   onClick={() => setChangeRoleOpen(false)}
-                  className="h-7 text-xs text-white/50"
+                  className="h-7 text-xs text-muted-foreground/70"
                 >
                   Cancelar
                 </Button>
@@ -318,7 +318,7 @@ export function AdminActionsSection({
               size="sm"
               onClick={handleTogglePlatformAdmin}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {loading === "update_role" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -364,7 +364,7 @@ export function AdminActionsSection({
                 }
               }}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {loading === "grant_access" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -382,7 +382,7 @@ export function AdminActionsSection({
               size="sm"
               onClick={handleToggleOwner}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {loading === "set_owner" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -390,7 +390,7 @@ export function AdminActionsSection({
                 <Crown
                   className={cn(
                     "h-3.5 w-3.5",
-                    isOwner ? "text-yellow-400" : "text-white/40",
+                    isOwner ? "text-yellow-400" : "text-muted-foreground/70",
                   )}
                 />
               )}
@@ -405,18 +405,18 @@ export function AdminActionsSection({
               size="sm"
               onClick={() => setAssignOpen(true)}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               <Building2 className="h-3.5 w-3.5 text-blue-400" />
               {orgId ? "Cambiar organización" : "Asignar a organización"}
             </Button>
           ) : (
-            <div className="space-y-2 p-2 rounded-sm bg-white/5 border border-white/10">
-              <p className="text-[10px] text-white/40">
+            <div className="space-y-2 p-2 rounded-sm bg-muted/40 border border-border">
+              <p className="text-[10px] text-muted-foreground/70">
                 Seleccionar organización y rol
               </p>
               <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
-                <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
+                <SelectTrigger className="h-8 text-xs bg-transparent border-border">
                   <SelectValue placeholder="Organización..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -428,12 +428,12 @@ export function AdminActionsSection({
                 </SelectContent>
               </Select>
               <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="h-8 text-xs bg-transparent border-white/10">
+                <SelectTrigger className="h-8 text-xs bg-transparent border-border">
                   <SelectValue placeholder="Rol (opcional)..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    <span className="text-white/40">Sin rol</span>
+                    <span className="text-muted-foreground/70">Sin rol</span>
                   </SelectItem>
                   {ORG_ASSIGNABLE_ROLES.map((r) => (
                     <SelectItem key={r} value={r}>
@@ -446,9 +446,9 @@ export function AdminActionsSection({
                 <Checkbox
                   checked={assignAsOwner}
                   onCheckedChange={(v) => setAssignAsOwner(v === true)}
-                  className="border-white/20 data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
+                  className="border-border data-[state=checked]:bg-yellow-500 data-[state=checked]:border-yellow-500"
                 />
-                <span className="flex items-center gap-1 text-xs text-white/60">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Crown className="h-3 w-3 text-yellow-400" />
                   Asignar como propietario
                 </span>
@@ -458,7 +458,7 @@ export function AdminActionsSection({
                   size="sm"
                   onClick={handleAssignToOrg}
                   disabled={!selectedOrgId || !!loading}
-                  className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white"
+                  className="h-7 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-foreground"
                 >
                   {loading === "assign_to_org" ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -470,7 +470,7 @@ export function AdminActionsSection({
                   size="sm"
                   variant="ghost"
                   onClick={() => setAssignOpen(false)}
-                  className="h-7 text-xs text-white/50"
+                  className="h-7 text-xs text-muted-foreground/70"
                 >
                   Cancelar
                 </Button>
@@ -485,7 +485,7 @@ export function AdminActionsSection({
               size="sm"
               onClick={handleRemoveFromOrg}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {loading === "remove_from_org" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -502,7 +502,7 @@ export function AdminActionsSection({
             size="sm"
             onClick={handleResetPassword}
             disabled={!!loading}
-            className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+            className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
           >
             {loading === "send_password_reset" ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -519,7 +519,7 @@ export function AdminActionsSection({
               size="sm"
               onClick={handleCreateProfile}
               disabled={!!loading}
-              className="w-full justify-start gap-2 h-8 text-xs text-white/70 hover:text-white hover:bg-white/10"
+              className="w-full justify-start gap-2 h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               {loading === "create_profile" ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -569,14 +569,14 @@ export function AdminActionsSection({
               <AlertTriangle className="h-5 w-5" />
               Eliminar usuario
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-white/60">
+            <AlertDialogDescription className="text-muted-foreground">
               Esta acción eliminará permanentemente al usuario{" "}
-              <strong className="text-white">{userName || userEmail}</strong> y
+              <strong className="text-foreground">{userName || userEmail}</strong> y
               todos sus datos asociados. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white/60 hover:bg-white/5">
+            <AlertDialogCancel className="border-border text-muted-foreground hover:bg-muted/40">
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction

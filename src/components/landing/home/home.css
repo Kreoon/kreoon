@@ -1,0 +1,37 @@
+/* Flotación sutil de las tarjetas de la home. Solo CSS, sin will-change global y sin librerías.
+   --r: rotación base; --d: desfase de la animación. Con movimiento reducido quedan estáticas. */
+.home-float {
+  transform: rotate(var(--r, 0deg));
+}
+
+@keyframes home-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--r, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(var(--r, 0deg));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-float {
+    animation: home-float 7s ease-in-out infinite;
+    animation-delay: var(--d, 0s);
+  }
+}
+
+/* Las anclas no quedan tapadas por el header sticky (ni el foco al llegar a ellas). */
+.home-anchor {
+  scroll-margin-top: 5.5rem;
+}
+
+html:has(.home-root) {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:has(.home-root) {
+    scroll-behavior: auto;
+  }
+}

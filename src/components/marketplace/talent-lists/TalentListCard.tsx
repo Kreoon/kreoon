@@ -12,7 +12,7 @@ export function TalentListCard({ list }: TalentListCardProps) {
   return (
     <div
       onClick={() => navigate(`/marketplace/talent-lists/${list.id}`)}
-      className="group cursor-pointer p-4 rounded-sm border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all"
+      className="group cursor-pointer p-4 rounded-sm border border-border bg-muted/40 hover:bg-muted/50 transition-all"
     >
       <div className="flex items-start gap-3">
         <div
@@ -22,15 +22,15 @@ export function TalentListCard({ list }: TalentListCardProps) {
           <Users className="h-5 w-5" style={{ color: list.color }} />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-white truncate">{list.name}</h3>
+          <h3 className="text-sm font-semibold text-foreground truncate">{list.name}</h3>
           {list.description && (
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{list.description}</p>
+            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{list.description}</p>
           )}
-          <p className="text-xs text-gray-600 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {list.member_count} {list.member_count === 1 ? 'creador' : 'creadores'}
           </p>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-600 group-hover:text-gray-400 transition-colors flex-shrink-0 mt-1" />
+        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-muted-foreground transition-colors flex-shrink-0 mt-1" />
       </div>
     </div>
   );

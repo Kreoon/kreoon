@@ -1,12 +1,13 @@
 /**
  * Header para la vista de perfil del creador en el marketplace.
  *
- * - Usuario autenticado: Volver, Logo, Guardar, Compartir, Contactar, Avatar
- * - No autenticado: Volver, Logo, Iniciar sesión, Soy Talento, Busco Talento
+ * - Usuario autenticado: Volver, Guardar, Compartir (sin contacto en esta fase)
+ * - No autenticado: Volver, Logo, Iniciar sesión, Crear cuenta de creador, Busco Talento
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bookmark, Share2, MessageCircle, LogIn, Sparkles, UserPlus } from 'lucide-react';
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
+import { ArrowLeft, Bookmark, Share2, LogIn, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -17,10 +18,11 @@ import { cn } from '@/lib/utils';
 interface ProfileHeaderProps {
   creatorId: string;
   creatorName: string;
+  /** @deprecated En esta fase no hay contacto directo desde el perfil público */
   onContact?: () => void;
 }
 
-export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHeaderProps) {
+export function ProfileHeader({ creatorId, creatorName }: ProfileHeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { branding } = useBranding();
@@ -63,25 +65,14 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
     toggleSave();
   };
 
-  const handleContact = () => {
-    if (onContact) {
-      onContact();
-    } else {
-      // Scroll al bloque de contacto si existe
-      const contactSection = document.querySelector('[data-block-type="contact"]');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
 
   return (
     <header
       className={cn(
         'sticky top-0 z-50',
         'flex h-14 items-center justify-between',
-        'border-b border-white/5',
-        'bg-[#0a0a0f]/95 backdrop-blur-sm',
+        'border-b border-border/50',
+        'bg-background/95 backdrop-blur-sm',
         'px-4 md:px-6'
       )}
     >
@@ -91,7 +82,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
           variant="ghost"
           size="icon"
           onClick={handleBack}
-          className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-white/10"
+          className="h-9 w-9 text-foreground/75 hover:text-foreground hover:bg-muted"
           aria-label="Volver"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -103,10 +94,16 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
             onClick={() => navigate('/marketplace')}
             className="flex items-center gap-2"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
-              <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
-            </div>
-            <span className="text-sm font-bold text-white hidden sm:inline">{platformName}</span>
+            {branding.logo_url ? (
+              <>
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
+                  <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
+                </div>
+                <span className="text-sm font-bold text-foreground hidden sm:inline">{platformName}</span>
+              </>
+            ) : (
+              <KreoonLogo heightClass="h-8" alt={platformName} eager />
+            )}
           </button>
         )}
       </div>
@@ -122,8 +119,8 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               onClick={handleSave}
               disabled={isSaving}
               className={cn(
-                'text-zinc-400 hover:text-white hover:bg-white/10',
-                isSaved && 'text-purple-400 hover:text-purple-300'
+                'text-foreground/75 hover:text-foreground hover:bg-muted',
+                isSaved && 'text-primary hover:text-primary'
               )}
             >
               <Bookmark className={cn('h-4 w-4 mr-1.5', isSaved && 'fill-current')} />
@@ -134,19 +131,10 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={handleContact}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-            >
-              <MessageCircle className="h-4 w-4 mr-1.5" />
-              Contactar
             </Button>
           </>
         ) : (
@@ -156,7 +144,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
@@ -166,29 +154,19 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={() => navigate('/auth')}
-              className="text-zinc-400 hover:text-white hover:bg-white/10"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <LogIn className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Iniciar sesion</span>
+              <span className="hidden sm:inline">Iniciar sesión</span>
             </Button>
 
             <Button
               size="sm"
-              onClick={() => navigate('/register?intent=talent')}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={() => navigate('/registro')}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Soy Talento</span>
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => navigate('/register?intent=brand')}
-              className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 hidden md:flex"
-            >
-              <UserPlus className="h-4 w-4 mr-1.5" />
-              Busco Talento
+              <span className="sm:hidden">Crear cuenta</span><span className="hidden sm:inline">Crear cuenta de creador</span>
             </Button>
           </>
         )}

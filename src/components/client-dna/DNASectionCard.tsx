@@ -18,7 +18,7 @@ export function DNASectionCard({
   children
 }: DNASectionCardProps) {
   return (
-    <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none overflow-hidden">
+    <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-border shadow-sm dark:shadow-none overflow-hidden">
       {/* Header - Siempre visible */}
       <div className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
         {/* Icon */}
@@ -28,13 +28,13 @@ export function DNASectionCard({
 
         {/* Title & Description */}
         <div className="min-w-0">
-          <h3 className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-white truncate">{title}</h3>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 line-clamp-1">{description}</p>
+          <h3 className="text-base sm:text-lg font-semibold text-foreground dark:text-foreground truncate">{title}</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground line-clamp-1">{description}</p>
         </div>
       </div>
 
       {/* Content - Siempre desplegado */}
-      <div className="p-4 sm:p-6 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+      <div className="p-4 sm:p-6 pt-2 border-t border-zinc-100 dark:border-border">
         {children}
       </div>
     </div>

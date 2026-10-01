@@ -155,6 +155,8 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.bunny-portfolio-upload]
+# verify_jwt=false: el PUT del proxy de subida llega sin Authorization (lo autentica un token HMAC);
+# el resto de rutas valida el JWT de usuario dentro de la funcion (_shared/bunnyUploadSecurity.ts).
 verify_jwt = false
 
 [functions.n8n-proxy]
@@ -239,7 +241,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-raw-upload]
-verify_jwt = true
+# verify_jwt=false: el PUT del proxy de subida llega sin Authorization (lo autentica un token HMAC);
+# el resto de rutas valida el JWT de usuario dentro de la funcion (_shared/bunnyUploadSecurity.ts).
+verify_jwt = false
 
 [functions.bunny-media-upload]
 # JWT verification handled internally - gateway verify_jwt causes 401 issues
@@ -265,7 +269,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.bunny-upload-v2]
-verify_jwt = true
+# verify_jwt=false: el PUT del proxy de subida llega sin Authorization (lo autentica un token HMAC);
+# el resto de rutas valida el JWT de usuario dentro de la funcion (_shared/bunnyUploadSecurity.ts).
+verify_jwt = false
 
 [functions.bunny-download-v2]
 verify_jwt = true

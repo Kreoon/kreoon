@@ -58,7 +58,7 @@ const DEFAULT_ITEMS: FAQItem[] = [
     id: '3',
     question: 'Los videos incluyen derechos comerciales?',
     answer:
-      'Si, todos los videos incluyen licencia para uso en redes sociales organico. Para publicidad paga, se recomienda el paquete Estandar o Premium.',
+      'Si, todos los videos incluyen licencia para uso en redes sociales organico. Para publicidad paga, se recomienda el paquete Estándar o Premium.',
   },
   {
     id: '4',
@@ -265,7 +265,7 @@ function FAQBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProp
           'Editar respuesta'
         }
         placeholder={
-          editingField === 'title' ? 'Titulo de la seccion...' :
+          editingField === 'title' ? 'Título de la sección...' :
           editingField === 'question' ? 'Escribe la pregunta...' :
           'Escribe la respuesta...'
         }

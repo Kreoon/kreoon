@@ -1,3 +1,4 @@
+import { STATUS_LABELS, type ContentStatus } from "@/types/database";
 import { useState } from "react";
 import { Bell, Check, CheckCheck } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
@@ -21,7 +22,15 @@ import { cn } from "@/lib/utils";
  * fija de ancho completo pensada para escritorio; en móvil hace falta un icono
  * compacto que quepa junto al avatar.
  */
-export function MobileNotificationsBell() {
+/** Notificaciones antiguas guardaron el estado crudo («cambió a approved»): mostrarlo en español */
+function humanizeStatuses(message: string): string {
+  return message.replace(/\b(cambió a|a) ([a-z_]+)\b/g, (m, prefix: string, key: string) => {
+    const label = STATUS_LABELS[key as ContentStatus];
+    return label ? `${prefix} «${label}»` : m;
+  });
+}
+
+export function MobileNotificationsBell({ className }: { className?: string } = {}) {
   const [open, setOpen] = useState(false);
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useUserNotifications();
 
@@ -35,7 +44,7 @@ export function MobileNotificationsBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-8 w-8"
+          className={cn("relative h-8 w-8", className)}
           aria-label={unreadCount > 0 ? `Notificaciones (${unreadCount} sin leer)` : "Notificaciones"}
         >
           <Bell className="h-4 w-4" />
@@ -96,7 +105,7 @@ export function MobileNotificationsBell() {
                       <span className="block truncate text-sm font-medium">{n.title}</span>
                       {n.message && (
                         <span className="mt-0.5 block line-clamp-2 text-xs text-muted-foreground">
-                          {n.message}
+                          {humanizeStatuses(n.message)}
                         </span>
                       )}
                       <span className="mt-1 block text-[11px] text-muted-foreground/70">

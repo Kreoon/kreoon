@@ -83,11 +83,11 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
 
   return (
     <div className="space-y-4">
-      <Card className="bg-white/5 border-white/10 p-4">
+      <Card className="bg-muted/50 border-border p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h4 className="text-sm font-semibold text-zinc-100">Modalidad del curso</h4>
-            <p className="text-xs text-zinc-400 mt-1">
+            <h4 className="text-sm font-semibold text-foreground">Modalidad del curso</h4>
+            <p className="text-xs text-muted-foreground mt-1">
               {courseMode === 'cohort'
                 ? 'Cohorte: drip por start_date de cohorte, capacidad limitada.'
                 : 'Self-paced: drip por enrolled_at de cada estudiante.'}
@@ -99,7 +99,7 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
                 key={m}
                 onClick={() => onModeChange(m)}
                 className={`px-3 py-1 rounded text-xs ${
-                  courseMode === m ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'
+                  courseMode === m ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
                 }`}
                 style={courseMode === m ? { color: accentColor } : undefined}
               >
@@ -113,51 +113,51 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
       {courseMode === 'cohort' && (
         <>
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-zinc-100">Cohortes</h4>
+            <h4 className="text-sm font-semibold text-foreground">Cohortes</h4>
             <Button size="sm" onClick={() => setShowCreate((v) => !v)} variant="outline">
               <Plus className="h-3.5 w-3.5 mr-1" /> Nueva cohorte
             </Button>
           </div>
 
           {showCreate && (
-            <Card className="bg-white/5 border-white/10 p-4 space-y-3">
+            <Card className="bg-muted/50 border-border p-4 space-y-3">
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-400">Nombre</Label>
+                <Label className="text-xs text-muted-foreground">Nombre</Label>
                 <Input
                   value={newCohort.name}
                   onChange={(e) => setNewCohort((s) => ({ ...s, name: e.target.value }))}
                   placeholder="Cohorte Junio 2026"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-zinc-400">Inicio</Label>
+                  <Label className="text-xs text-muted-foreground">Inicio</Label>
                   <Input
                     type="date"
                     value={newCohort.start_date}
                     onChange={(e) => setNewCohort((s) => ({ ...s, start_date: e.target.value }))}
-                    className="bg-white/5 border-white/10"
+                    className="bg-muted/50 border-border"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs text-zinc-400">Fin (opcional)</Label>
+                  <Label className="text-xs text-muted-foreground">Fin (opcional)</Label>
                   <Input
                     type="date"
                     value={newCohort.end_date}
                     onChange={(e) => setNewCohort((s) => ({ ...s, end_date: e.target.value }))}
-                    className="bg-white/5 border-white/10"
+                    className="bg-muted/50 border-border"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-zinc-400">Cupos totales (opcional)</Label>
+                <Label className="text-xs text-muted-foreground">Cupos totales (opcional)</Label>
                 <Input
                   type="number"
                   value={newCohort.seats_total}
                   onChange={(e) => setNewCohort((s) => ({ ...s, seats_total: e.target.value }))}
                   placeholder="30"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <Button
@@ -173,10 +173,10 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
 
           <div className="space-y-2">
             {cohorts?.map((c) => (
-              <Card key={c.id} className="bg-white/5 border-white/10 p-3 flex items-center justify-between gap-3">
+              <Card key={c.id} className="bg-muted/50 border-border p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-zinc-100 truncate">{c.name}</p>
-                  <div className="flex items-center gap-3 text-xs text-zinc-400 mt-0.5">
+                  <p className="text-sm font-medium text-foreground truncate">{c.name}</p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {new Date(c.start_date).toLocaleDateString('es-CO', {
@@ -188,7 +188,7 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
                       <Users className="h-3 w-3" />
                       {c.seats_total ? `${c.seats_taken}/${c.seats_total}` : c.seats_taken}
                     </span>
-                    <Badge variant="outline" className="border-white/10 text-[10px]">
+                    <Badge variant="outline" className="border-border text-[10px]">
                       {c.status}
                     </Badge>
                   </div>
@@ -199,14 +199,14 @@ export function CohortAdminEditor({ courseId, courseMode, onModeChange, accentCo
                   onClick={() => {
                     if (confirm(`¿Eliminar cohorte "${c.name}"?`)) deleteMutation.mutate(c.id);
                   }}
-                  className="text-zinc-400 hover:text-red-400"
+                  className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               </Card>
             ))}
             {!cohorts?.length && (
-              <p className="text-xs text-zinc-500 text-center py-4">
+              <p className="text-xs text-muted-foreground text-center py-4">
                 No hay cohortes. Crea la primera para abrir inscripciones.
               </p>
             )}

@@ -10,7 +10,7 @@ export function ResearchSidebar({ activeSectionId, onSectionClick }: ResearchSid
   return (
     <aside className="hidden lg:block w-[220px] shrink-0 sticky top-[57px] h-[calc(100vh-57px)] overflow-y-auto bg-black/60 border-r border-white/10">
       <nav className="py-4 px-2 space-y-0.5">
-        <p className="px-3 mb-3 text-[10px] font-semibold text-white/30 uppercase tracking-wider">
+        <p className="px-3 mb-3 text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-wider">
           Secciones
         </p>
         {SECTIONS.map((section) => {
@@ -23,11 +23,11 @@ export function ResearchSidebar({ activeSectionId, onSectionClick }: ResearchSid
               className={cn(
                 'w-full flex items-center gap-2.5 px-3 py-2 rounded-sm text-xs transition-all duration-200 text-left',
                 isActive
-                  ? 'bg-purple-500/15 text-white border-l-2 border-purple-500 font-medium'
-                  : 'text-white/50 hover:text-white/80 hover:bg-white/5 border-l-2 border-transparent'
+                  ? 'bg-purple-500/15 text-foreground border-l-2 border-purple-500 font-medium'
+                  : 'text-muted-foreground hover:text-muted-foreground hover:bg-muted/50 border-l-2 border-transparent'
               )}
             >
-              <Icon className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-purple-400' : 'text-white/40')} />
+              <Icon className={cn('h-3.5 w-3.5 shrink-0', isActive ? 'text-purple-400' : 'text-muted-foreground/70')} />
               <span className="truncate">{section.label}</span>
             </button>
           );

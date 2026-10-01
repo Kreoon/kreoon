@@ -90,36 +90,36 @@ export default function AcademiaMarketplacePage() {
   }, [items, search]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
-      <header className="border-b border-white/5 px-4 py-4">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b border-border px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center gap-3">
           <Link to="/" className="font-bold text-lg flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-violet-400" /> KREOON
+            <Sparkles className="h-5 w-5 text-primary" /> KREOON
           </Link>
-          <span className="text-zinc-500 text-sm ml-auto">Academia · Marketplace</span>
+          <span className="text-muted-foreground text-sm ml-auto">Academia · Marketplace</span>
         </div>
       </header>
 
       <section className="px-4 md:px-8 py-12 text-center max-w-3xl mx-auto">
         <h1 className="text-3xl md:text-5xl font-extrabold">Explorar academias</h1>
-        <p className="text-zinc-400 mt-3">
+        <p className="text-muted-foreground mt-3">
           Comunidades de creadores que aprenden, crean y crecen juntos.
         </p>
       </section>
 
       <section className="px-4 md:px-8 max-w-7xl mx-auto">
         {/* Filtros */}
-        <Card className="p-4 bg-white/5 border-white/10 mb-6">
+        <Card className="p-4 bg-muted/50 border-border mb-6">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[180px]">
-              <label className="text-[10px] uppercase text-zinc-400 mb-1 block">Buscar</label>
+              <label className="text-[10px] uppercase text-muted-foreground mb-1 block">Buscar</label>
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-500" />
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Nombre o tema..."
-                  className="bg-black/30 border-white/10 pl-8"
+                  className="bg-muted border-border pl-8"
                 />
               </div>
             </div>
@@ -131,9 +131,9 @@ export default function AcademiaMarketplacePage() {
 
         {/* Grid */}
         {isLoading ? (
-          <div className="text-center text-zinc-500 py-12">Cargando academias...</div>
+          <div className="text-center text-muted-foreground py-12">Cargando academias...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center text-zinc-500 py-12">
+          <div className="text-center text-muted-foreground py-12">
             No encontramos academias con esos filtros.
           </div>
         ) : (
@@ -143,8 +143,8 @@ export default function AcademiaMarketplacePage() {
         )}
       </section>
 
-      <footer className="border-t border-white/5 px-4 py-6 text-center text-xs text-zinc-500">
-        ¿Sos creador? <Link to="/academia/crear" className="text-violet-400 hover:text-violet-300">Crear tu academia →</Link>
+      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+        ¿Sos creador? <Link to="/academia/crear" className="text-primary hover:text-primary/80">Crear tu academia →</Link>
       </footer>
     </div>
   );
@@ -155,7 +155,7 @@ function Pills({
 }: { label: string; value: string; onChange: (v: string) => void; options: { v: string; l: string }[] }) {
   return (
     <div>
-      <label className="text-[10px] uppercase text-zinc-400 mb-1 block">{label}</label>
+      <label className="text-[10px] uppercase text-muted-foreground mb-1 block">{label}</label>
       <div className="flex gap-1 flex-wrap">
         {options.map((o) => (
           <button
@@ -164,8 +164,8 @@ function Pills({
             className={cn(
               'px-2.5 py-1 rounded-full text-xs border transition-colors',
               value === o.v
-                ? 'bg-violet-500/20 border-violet-500/50 text-violet-100'
-                : 'border-white/10 text-zinc-400 hover:text-zinc-100'
+                ? 'bg-primary/20 border-primary/50 text-primary'
+                : 'border-border text-muted-foreground hover:text-foreground'
             )}
           >
             {o.l}
@@ -189,39 +189,39 @@ function AcademyCard({ academy: a }: { academy: any }) {
 
   return (
     <Link to={`/a/${a.slug}`} className="block group">
-      <Card className="bg-white/5 border-white/10 overflow-hidden h-full hover:border-violet-500/40 transition-colors">
+      <Card className="bg-muted/50 border-border overflow-hidden h-full hover:border-primary/40 transition-colors">
         <div
           className="h-32 relative"
           style={{
             background: safeCover
               ? `linear-gradient(135deg, ${accent}40 0%, transparent 60%), url("${encodeURI(safeCover)}") center/cover`
-              : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
+              : `linear-gradient(135deg, ${accent}50, hsl(var(--background)))`,
           }}
         >
           {safeLogo && (
             <img src={safeLogo} alt={a.name}
-              className="absolute bottom-2 left-3 h-10 w-10 rounded-lg border-2 border-[#0a0a0f] object-cover" />
+              className="absolute bottom-2 left-3 h-10 w-10 rounded-lg border-2 border-background object-cover" />
           )}
           {a.plan_slug === 'pro' && (
-            <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-bold uppercase">
+            <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-700 dark:text-amber-300 text-[10px] font-bold uppercase">
               Pro
             </span>
           )}
         </div>
         <div className="p-4">
-          <h3 className="font-semibold text-base line-clamp-1 group-hover:text-violet-300 transition-colors">
+          <h3 className="font-semibold text-base line-clamp-1 group-hover:text-primary/80 transition-colors">
             {a.name}
           </h3>
           {a.description && (
-            <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{a.description}</p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{a.description}</p>
           )}
-          <div className="flex items-center gap-3 text-[11px] text-zinc-500 mt-3">
+          <div className="flex items-center gap-3 text-[11px] text-muted-foreground mt-3">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" /> {Number(a.member_count ?? 0).toLocaleString()}
             </span>
             {a.avg_rating && (
               <span className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                <Star className="h-3 w-3 fill-amber-400 text-amber-600 dark:text-amber-400" />
                 {Number(a.avg_rating).toFixed(1)}
               </span>
             )}
@@ -231,11 +231,11 @@ function AcademyCard({ academy: a }: { academy: any }) {
               </span>
             )}
           </div>
-          <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
+          <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
             <span className="text-sm font-bold" style={{ color: accent }}>
               {minPrice === 0 ? 'Gratis' : `Desde $${minPrice}`}
             </span>
-            <span className="text-xs text-zinc-500">{a.category ?? ''}</span>
+            <span className="text-xs text-muted-foreground">{a.category ?? ''}</span>
           </div>
         </div>
       </Card>

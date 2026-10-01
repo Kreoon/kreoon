@@ -30,14 +30,14 @@ export function TiersAdminTab({ spaceId, accentColor = '#8B5CF6' }: Props) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h3 className="font-semibold flex items-center gap-2">
               <Crown className="h-4 w-4" style={{ color: accentColor }} />
               Tiers de membresía
             </h3>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Definí planes con distintos precios y features. Los miembros eligen al suscribirse.
             </p>
           </div>
@@ -48,13 +48,13 @@ export function TiersAdminTab({ spaceId, accentColor = '#8B5CF6' }: Props) {
       </Card>
 
       {isLoading ? (
-        <Card className="p-12 text-center text-zinc-500">
+        <Card className="p-12 text-center text-muted-foreground">
           <Loader2 className="h-6 w-6 mx-auto animate-spin" />
         </Card>
       ) : tiers.length === 0 ? (
-        <Card className="p-10 text-center text-zinc-500">
+        <Card className="p-10 text-center text-muted-foreground">
           <Crown className="h-10 w-10 mx-auto mb-3 opacity-40" />
-          <p className="text-sm font-medium text-zinc-300">Sin tiers aún</p>
+          <p className="text-sm font-medium text-muted-foreground">Sin tiers aún</p>
           <p className="text-xs mt-1">Creá Bronce/Plata/Oro o tus propios niveles.</p>
         </Card>
       ) : (
@@ -95,7 +95,7 @@ function TierCard({
 }) {
   const badge = tier.badge_color || accentColor;
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="flex items-start gap-4">
         <div className="h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0"
              style={{ backgroundColor: `${badge}26` }}>
@@ -104,21 +104,21 @@ function TierCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="font-bold text-base" style={{ color: badge }}>{tier.name}</h4>
-            <code className="text-[10px] text-zinc-500 font-mono">{tier.tier_slug}</code>
+            <code className="text-[10px] text-muted-foreground font-mono">{tier.tier_slug}</code>
           </div>
-          {tier.description && <p className="text-xs text-zinc-400 mt-1">{tier.description}</p>}
+          {tier.description && <p className="text-xs text-muted-foreground mt-1">{tier.description}</p>}
           <div className="flex gap-4 mt-2 text-xs">
             {tier.monthly_price_usd != null && (
-              <span className="text-zinc-300">${tier.monthly_price_usd}/mes</span>
+              <span className="text-muted-foreground">${tier.monthly_price_usd}/mes</span>
             )}
             {tier.yearly_price_usd != null && (
-              <span className="text-zinc-300">${tier.yearly_price_usd}/año</span>
+              <span className="text-muted-foreground">${tier.yearly_price_usd}/año</span>
             )}
           </div>
           {Array.isArray(tier.features) && tier.features.length > 0 && (
             <ul className="mt-2 space-y-0.5">
               {tier.features.map((f, idx) => (
-                <li key={idx} className="text-xs text-zinc-400 flex items-start gap-1">
+                <li key={idx} className="text-xs text-muted-foreground flex items-start gap-1">
                   <span style={{ color: badge }}>✓</span> {f}
                 </li>
               ))}
@@ -126,7 +126,7 @@ function TierCard({
           )}
         </div>
         <Button variant="ghost" size="icon" onClick={onDelete} aria-label="Eliminar tier">
-          <Trash2 className="h-4 w-4 text-rose-400" />
+          <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
         </Button>
       </div>
     </Card>
@@ -226,12 +226,12 @@ function CreateTierDialog({
                   value={f}
                   onChange={(e) => setFeatures(features.map((x, i) => i === idx ? e.target.value : x))}
                   placeholder="Acceso al feed"
-                  className="bg-black/30 border-white/10"
+                  className="bg-muted border-border"
                 />
                 <Button variant="ghost" size="icon"
                         onClick={() => setFeatures(features.filter((_, i) => i !== idx))}
                         aria-label="Eliminar">
-                  <Trash2 className="h-4 w-4 text-rose-400" />
+                  <Trash2 className="h-4 w-4 text-rose-600 dark:text-rose-400" />
                 </Button>
               </div>
             ))}

@@ -11,6 +11,7 @@
  */
 
 import { Resend } from "https://esm.sh/resend@4.0.0";
+import { guardedResend, logPaused, notificationsPaused } from "./notification-guard.ts";
 
 const RESEND_BASE = "https://api.resend.com";
 const DEFAULT_FROM = "KREOON <noreply@kreoon.com>";
@@ -18,8 +19,9 @@ const KREOON_LOGO_HTML = '<img src="https://kreoon.com/favicon.png" alt="KREOON"
 
 let _resendInstance: Resend | null = null;
 
-/** Get singleton Resend SDK instance */
-export function getResend(): Resend {
+/** Get singleton Resend SDK instance (respeta NOTIFICATIONS_PAUSED salvo envíos esenciales) */
+export function getResend(opts: { essential?: boolean } = {}): Resend {
+  if (notificationsPaused() && !opts.essential) return guardedResend(undefined);
   if (!_resendInstance) {
     const key = Deno.env.get("RESEND_API_KEY");
     if (!key) throw new Error("RESEND_API_KEY not configured");
@@ -48,6 +50,11 @@ async function resendFetch(
   options: RequestInit = {},
   retries = 3
 ): Promise<Response> {
+  // Envíos (emails, lotes, broadcasts) se omiten con el interruptor activo
+  if (notificationsPaused() && /^\/(emails(\/batch)?|broadcasts\/[^/]+\/send)$/.test(path)) {
+    logPaused("email", { path });
+    return new Response(JSON.stringify({ id: "paused", data: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+  }
   const apiKey = getApiKey();
   const headers: Record<string, string> = {
     Authorization: `Bearer ${apiKey}`,

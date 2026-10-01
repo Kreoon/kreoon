@@ -10,17 +10,17 @@ export default function AcademiaSpaceDMPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando mensajes...
       </div>
     );
   }
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center gap-3 text-zinc-400">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 text-muted-foreground">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Volver
         </Link>
       </div>
@@ -28,11 +28,11 @@ export default function AcademiaSpaceDMPage() {
   }
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug!} />
       <div className="max-w-6xl mx-auto px-4 md:px-8 py-6">
         <h1 className="text-2xl md:text-3xl font-extrabold mb-1">Mensajes</h1>
-        <p className="text-xs text-zinc-500 mb-4">
+        <p className="text-xs text-muted-foreground mb-4">
           Estudiantes y clientes solo pueden chatear con administradores. Creadores y editores pueden chatear libremente.
         </p>
         <AcademyDMPanel spaceId={(space as any).id} />

@@ -34,7 +34,7 @@ export function GoogleCalendarConnectButton({
   }
 
   return (
-    <Card className="p-4 bg-white/5 border-white/10">
+    <Card className="p-4 bg-muted/50 border-border">
       <div className="flex items-start gap-3">
         <div
           className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -45,20 +45,20 @@ export function GoogleCalendarConnectButton({
         <div className="flex-1">
           <h3 className="font-semibold text-sm">Google Calendar</h3>
           {isLoading ? (
-            <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1">
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" /> Verificando estado...
             </p>
           ) : connection?.is_active ? (
-            <p className="text-xs text-emerald-300 mt-1 flex items-center gap-1">
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 flex items-center gap-1">
               <Check className="h-3 w-3" /> Conectado · sincroniza eventos automáticamente
             </p>
           ) : (
-            <p className="text-xs text-zinc-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Conecta tu Google Calendar para que los eventos se creen allí y se inviten miembros.
             </p>
           )}
           {error && (
-            <p className="text-xs text-rose-400 mt-1">{error}</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400 mt-1">{error}</p>
           )}
         </div>
         {!connection?.is_active && (

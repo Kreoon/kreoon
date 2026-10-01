@@ -142,17 +142,17 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
                      flex flex-col items-center justify-center gap-1
                      transition-colors duration-150 hover:brightness-110 hover:shadow-lg disabled:opacity-50"
         >
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/20 flex items-center justify-center">
-            <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center">
+            <Mic className="w-5 h-5 sm:w-6 sm:h-6 text-foreground" />
           </div>
-          <span className="text-[9px] sm:text-[10px] font-medium text-white/80 uppercase tracking-wider">
+          <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
             Grabar
           </span>
         </button>
 
         {/* Texto y botón subir */}
         <div className="flex flex-col items-center gap-2 sm:gap-3">
-          <p className="text-[10px] sm:text-xs text-zinc-500">o</p>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">o</p>
 
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -190,16 +190,16 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
             ? 'bg-gradient-to-br from-red-500 via-pink-500 to-purple-500'
             : 'bg-gradient-to-br from-yellow-500 via-orange-500 to-pink-500'
         }`}>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-white/20">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center bg-muted">
             {state === 'recording' ? (
               <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white animate-pulse" />
             ) : (
-              <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-foreground" />
             )}
           </div>
 
           {/* Timer */}
-          <span className="text-xs sm:text-sm font-mono font-bold text-white">
+          <span className="text-xs sm:text-sm font-mono font-bold text-foreground">
             {formatTime(recordingTime)}
           </span>
         </div>
@@ -214,9 +214,9 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
                        hover:bg-zinc-200 dark:hover:bg-zinc-700 active:bg-zinc-300 dark:active:bg-zinc-600 transition-colors duration-150"
           >
             {state === 'recording' ? (
-              <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-700 dark:text-white" />
+              <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-foreground dark:text-foreground" />
             ) : (
-              <Play className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-700 dark:text-white ml-0.5" />
+              <Play className="w-4 h-4 sm:w-5 sm:h-5 text-foreground dark:text-foreground ml-0.5" />
             )}
           </button>
 
@@ -227,7 +227,7 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
                        flex items-center justify-center
                        transition-colors duration-150"
           >
-            <Square className="w-4 h-4 sm:w-5 sm:h-5 text-white fill-white" />
+            <Square className="w-4 h-4 sm:w-5 sm:h-5 text-foreground fill-white" />
           </button>
 
           {/* Cancel */}
@@ -238,11 +238,11 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
                        hover:bg-red-100 dark:hover:bg-red-500/20 hover:border-red-200 dark:hover:border-red-500/30
                        active:bg-red-200 dark:active:bg-red-500/30 transition-colors duration-150"
           >
-            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-500 hover:text-red-500 dark:hover:text-red-400" />
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground hover:text-red-500 dark:hover:text-red-400" />
           </button>
         </div>
 
-        <p className="text-[10px] sm:text-xs text-zinc-500">
+        <p className="text-[10px] sm:text-xs text-muted-foreground">
           {state === 'recording' ? 'KIRO está escuchando...' : 'Grabación pausada'}
         </p>
       </div>
@@ -273,7 +273,7 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
 
       {/* Info y botón eliminar */}
       <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-center">
-        <span className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+        <span className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
           Duración: {formatTime(recordingTime)}
         </span>
 

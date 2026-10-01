@@ -126,7 +126,7 @@ function CountdownBlockComponent({ block, isEditing, isSelected }: BlockProps) {
                     'flex items-center justify-center rounded-xl',
                     'min-w-[64px] md:min-w-[88px] h-[72px] md:h-[96px]',
                     'shadow-lg',
-                    !accentColor && 'bg-zinc-800/80 dark:bg-zinc-800/80',
+                    !accentColor && 'bg-muted',
                   )}
                   style={accentColor ? { backgroundColor: accentColor } : undefined}
                 >

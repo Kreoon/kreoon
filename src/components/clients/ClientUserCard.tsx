@@ -107,7 +107,7 @@ export function ClientUserCard({ user, onClick, isSelected, onMarkAsLead, onUnma
               </span>
             ))}
             {user.linked_companies.length > 2 && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/10 text-white/50">
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground/70">
                 +{user.linked_companies.length - 2}
               </span>
             )}
@@ -134,7 +134,7 @@ export function ClientUserCard({ user, onClick, isSelected, onMarkAsLead, onUnma
           </span>
         )}
         {!user.phone && !user.city && (
-          <span className="text-white/30">Sin datos de contacto</span>
+          <span className="text-muted-foreground/70">Sin datos de contacto</span>
         )}
       </div>
     </div>

@@ -1,0 +1,14 @@
+CONTEXTO: Kreoon es un SaaS para creadores de contenido UGC en LATAM (español). Meta de producto: que hasta un niño la use; uniforme, mínima, sin fricción ni errores. Sitio a probar (preview): https://kreoon-git-claude-focused-mendel-es4xcv-kreoon-s-projects.vercel.app/
+
+CÓMO PROBAR (con tu navegador):
+- Haz clic en TODOS los botones, enlaces, pestañas, menús, filtros, toggles y modales visibles. Prueba en móvil (390px), TABLET (768px) y escritorio (1440px): todo debe ser responsive (sin scroll horizontal, sin textos cortados ni superpuestos, botones tocables >=44px). Agrega columna «dispositivo». Prueba tema claro y oscuro si hay selector.
+- Revisa: errores de consola, peticiones fallidas (4xx/5xx), enlaces rotos, textos en inglés o con faltas, textos cortados, contraste bajo (texto < 4.5:1), elementos superpuestos, scroll horizontal en móvil, cargas lentas (>3 s), imágenes pesadas, estados vacíos sin acción, botones que no hacen nada, cifras/fórmulas incoherentes (sumas, porcentajes, precios, fechas).
+- Cookies: elige siempre «Solo esenciales».
+
+LÍMITES (obligatorios):
+- NO crees cuentas, NO inicies sesión, NO escribas correos, contraseñas ni datos personales reales en ningún formulario. NO envíes formularios (registro, contacto, pago, postulaciones). Puedes llenar campos con datos ficticios obvios para ver validaciones, pero NO pulses el botón final de envío.
+- NO compres nada ni aceptes términos.
+
+ENTREGA: un markdown en tu carpeta de trabajo con una tabla por página: | ruta | severidad (crítica/alta/media/baja) | tipo (bug/UX/UI/contraste/rendimiento/copy/fórmula) | qué pasa | pasos para reproducir | propuesta concreta |. Al final: top 10 priorizado. Incluye capturas en la carpeta y referéncialas por nombre. Sé específico: nada de «mejorar el diseño» sin decir qué y cómo.
+
+MARCA: la página de inicio (/) es la referencia visual obligatoria (crema, morado #6D4AFF, texto #242135, tarjetas redondeadas con borde suave y sombra ligera, botones redondeados morados, misma tipografía y efectos). Toda pantalla distinta se reporta con tipo «branding» y captura comparativa.

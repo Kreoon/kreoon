@@ -246,8 +246,8 @@ function CollectionCard({
       )}
 
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-        <div className="text-white font-medium truncate">{name}</div>
-        <div className="text-white/70 text-sm">{count} elementos</div>
+        <div className="text-foreground font-medium truncate">{name}</div>
+        <div className="text-muted-foreground text-sm">{count} elementos</div>
       </div>
 
       {onDelete && (

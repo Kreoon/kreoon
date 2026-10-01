@@ -114,14 +114,14 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
   }
 
   return (
-    <div className="rounded-2xl bg-white/5 border border-white/10 p-4 mb-4">
+    <div className="rounded-2xl bg-muted/50 border border-border p-4 mb-4">
       {!expanded ? (
         <button
           onClick={() => setExpanded(true)}
           className="w-full flex items-center gap-3 text-left"
         >
           <Avatar profile={profile} />
-          <div className="flex-1 px-4 py-2.5 rounded-full bg-black/30 border border-white/5 text-sm text-zinc-500 hover:bg-black/50 transition-colors">
+          <div className="flex-1 px-4 py-2.5 rounded-full bg-muted border border-border text-sm text-muted-foreground hover:bg-muted/80 transition-colors">
             ¿Qué quieres compartir, {profile?.full_name?.split(' ')[0] ?? 'creador'}?
           </div>
         </button>
@@ -134,7 +134,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="text-xs bg-transparent border border-white/10 rounded px-2 py-1 mt-1"
+                className="text-xs bg-transparent border border-border rounded px-2 py-1 mt-1"
               >
                 {categories.length === 0 && <option value="">Sin categorías</option>}
                 {categories.map((c) => (
@@ -144,7 +144,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                 ))}
               </select>
             </div>
-            <button onClick={reset} className="text-zinc-500 hover:text-zinc-300 p-1">
+            <button onClick={reset} className="text-muted-foreground hover:text-foreground p-1">
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -154,7 +154,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={kind === 'question' ? 'Tu pregunta...' : 'Título (opcional)'}
-              className="bg-transparent border-white/10 text-base font-semibold"
+              className="bg-transparent border-border text-base font-semibold"
             />
           )}
 
@@ -189,12 +189,12 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                       setPollOptions((arr) => arr.map((o, j) => (j === i ? e.target.value : o)))
                     }
                     placeholder={`Opción ${i + 1}`}
-                    className="bg-transparent border-white/10"
+                    className="bg-transparent border-border"
                   />
                   {pollOptions.length > 2 && (
                     <button
                       onClick={() => setPollOptions((arr) => arr.filter((_, j) => j !== i))}
-                      className="text-rose-400 hover:text-rose-300 px-2"
+                      className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 px-2"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -204,7 +204,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               {pollOptions.length < 6 && (
                 <button
                   onClick={() => setPollOptions((arr) => [...arr, ''])}
-                  className="text-sm text-purple-400 hover:text-purple-300"
+                  className="text-sm text-primary hover:text-primary/80"
                 >
                   + Agregar opción
                 </button>
@@ -214,10 +214,10 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
 
           {uploading && uploadProgress && uploadProgress.percentage < 100 && (
             <div className="space-y-1">
-              <div className="text-[10px] text-zinc-500">
+              <div className="text-[10px] text-muted-foreground">
                 Subiendo a Bunny CDN... {uploadProgress.percentage}%
               </div>
-              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1 w-full bg-muted/50 rounded-full overflow-hidden">
                 <div
                   className="h-full transition-all"
                   style={{ width: `${uploadProgress.percentage}%`, backgroundColor: accentColor }}
@@ -243,7 +243,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                         preload="metadata"
                       />
                     ) : isAudio ? (
-                      <div className="rounded-lg h-24 w-full bg-violet-500/10 border border-violet-500/30 flex items-center justify-center text-xs text-violet-300 px-2">
+                      <div className="rounded-lg h-24 w-full bg-primary/10 border border-primary/30 flex items-center justify-center text-xs text-primary px-2">
                         🎵 Audio
                       </div>
                     ) : (
@@ -251,7 +251,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                     )}
                     <button
                       onClick={() => setMediaUrls((arr) => arr.filter((u) => u !== url))}
-                      className="absolute -top-2 -right-2 bg-zinc-800 rounded-full p-1 hover:bg-zinc-700"
+                      className="absolute -top-2 -right-2 bg-muted rounded-full p-1 hover:bg-muted"
                       aria-label="Quitar"
                     >
                       <X className="h-3 w-3" />
@@ -262,13 +262,13 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
             </div>
           )}
 
-          <div className="flex items-center justify-between pt-2 border-t border-white/5">
+          <div className="flex items-center justify-between pt-2 border-t border-border">
             <div className="flex items-center gap-1">
               <KindButton active={kind === 'post'} onClick={() => setKind('post')} icon={MessageCircle} label="Post" />
               <KindButton active={kind === 'question'} onClick={() => setKind('question')} icon={HelpCircle} label="Pregunta" />
               <KindButton active={kind === 'poll'} onClick={() => setKind('poll')} icon={ListChecks} label="Poll" />
               <label
-                className="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                 title="Imagen, sticker, video o audio"
               >
                 <ImageIcon className="h-4 w-4" />
@@ -290,7 +290,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               <div className="relative">
                 <button
                   onClick={() => { setShowGif((v) => !v); setShowEmoji(false); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground"
                   title="Buscar GIF"
                   type="button"
                 >
@@ -308,7 +308,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
               <div className="relative">
                 <button
                   onClick={() => { setShowEmoji((v) => !v); setShowGif(false); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-zinc-400 hover:text-zinc-200"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground"
                   title="Insertar emoji"
                   type="button"
                 >
@@ -316,7 +316,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
                 </button>
                 {showEmoji && (
                   <div className="absolute z-50 mt-2">
-                    <Suspense fallback={<div className="bg-zinc-950 rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando emojis...</div>}>
+                    <Suspense fallback={<div className="bg-background rounded-xl border border-border p-4 text-xs text-muted-foreground">Cargando emojis...</div>}>
                       <EmojiPicker
                         onEmojiClick={(e: any) => {
                           appendToBody(e.emoji);
@@ -335,7 +335,7 @@ export function PostComposer({ spaceId, categories, accentColor = '#8B5CF6', onS
 
               <button
                 onClick={() => setShowKiro(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-purple-400 hover:text-purple-300"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs text-primary hover:text-primary/80"
                 type="button"
               >
                 <Sparkles className="h-3.5 w-3.5" /> KIRO
@@ -371,7 +371,7 @@ function Avatar({ profile }: { profile: any }) {
     return <img src={profile.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />;
   }
   return (
-    <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 font-semibold">
+    <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
       {(profile?.full_name ?? '?').charAt(0).toUpperCase()}
     </div>
   );
@@ -383,7 +383,7 @@ function KindButton({ active, onClick, icon: Icon, label }: { active: boolean; o
       onClick={onClick}
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs transition-colors',
-        active ? 'bg-purple-500/20 text-purple-200' : 'text-zinc-500 hover:text-zinc-300'
+        active ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground'
       )}
     >
       <Icon className="h-3.5 w-3.5" /> {label}

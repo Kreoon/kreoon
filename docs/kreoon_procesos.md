@@ -21,64 +21,23 @@
 
 ## 1. Registro y Onboarding
 
-### 1.1 Flujo de Registro - Marcas
+### 1.1 Registro de Marcas y Organizaciones (cerrado en esta fase)
+
+El único alta pública es el de **creadores** en `/registro` (ver 1.2). El alta de marcas y
+organizaciones está **cerrada en esta fase**: `/unete/marcas`, `/unete/organizaciones` y
+`/marca-referida` muestran una página informativa de alta cerrada. Las cuentas de marcas y
+organizaciones existentes siguen funcionando con normalidad (login en `/auth`).
+
+### 1.2 Flujo de Registro - Creadores (único alta público)
+
+Ruta canónica: `/registro/:organizationSlug`. La ruta genérica `/registro` (y los enlaces heredados
+`/register`, `/unete`, `/unete/talento`, `/unete-talento`, `/auth?tab=register`) redirigen a la
+organización predeterminada según el host, conservando solo UTM/`ref` y un destino interno seguro (`next`).
 
 ```
 ┌─────────────────┐
 │  Landing Page   │
-│   /unete/marcas │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Formulario Base │
-│ - Email         │
-│ - Password      │
-│ - Nombre marca  │
-│ - Industria     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Email de        │
-│ Confirmación    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Email Verificado│────▶│ Trigger:        │
-│                 │     │ apply_community │
-└────────┬────────┘     │ _benefits       │
-         │              └────────┬────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Onboarding      │     │ Auto-crear:     │
-│ Profile Setup   │     │ - Suscripción   │
-└────────┬────────┘     │ - AI Tokens     │
-         │              │ - Pricing       │
-         ▼              └─────────────────┘
-┌─────────────────┐
-│ Dashboard       │
-│ Principal       │
-└─────────────────┘
-```
-
-**Tablas involucradas:**
-
-- `auth.users` - Cuenta de autenticación
-- `profiles` - Perfil de usuario
-- `organizations` - Organización creada
-- `organization_members` - Membresía
-- `platform_subscriptions` - Plan asignado
-- `ai_token_balances` - Tokens iniciales
-
-### 1.2 Flujo de Registro - Creadores
-
-```
-┌─────────────────┐
-│  Landing Page   │
-│ /unete/talento  │
+│ /registro       │
 └────────┬────────┘
          │
          ▼

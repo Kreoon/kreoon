@@ -68,14 +68,14 @@ export function CloneTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-gray-950 border-gray-800">
+      <DialogContent className="sm:max-w-md bg-background border-border">
         <DialogHeader>
-          <DialogTitle className="text-white">Aplicar plantilla</DialogTitle>
+          <DialogTitle className="text-foreground">Aplicar plantilla</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5 mt-1">
           {/* Preview compacto del template */}
-          <div className="flex gap-3 p-3 rounded-xl bg-gray-900 border border-gray-800">
+          <div className="flex gap-3 p-3 rounded-xl bg-card border border-border">
             {template.thumbnail_url ? (
               <img
                 src={template.thumbnail_url}
@@ -83,23 +83,23 @@ export function CloneTemplateDialog({
                 className="w-16 h-12 rounded-lg object-cover flex-shrink-0"
               />
             ) : (
-              <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-purple-900 to-slate-900 flex-shrink-0 flex items-center justify-center">
-                <span className="text-white/30 text-xl font-bold">
+              <div className="w-16 h-12 rounded-lg bg-gradient-to-br from-purple-500/25 to-card flex-shrink-0 flex items-center justify-center">
+                <span className="text-muted-foreground/70 text-xl font-bold">
                   {template.name.charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div className="min-w-0 flex flex-col justify-center">
-              <p className="text-white font-medium text-sm truncate">{template.name}</p>
+              <p className="text-foreground font-medium text-sm truncate">{template.name}</p>
               {template.description && (
-                <p className="text-gray-400 text-xs line-clamp-2 mt-0.5">{template.description}</p>
+                <p className="text-muted-foreground text-xs line-clamp-2 mt-0.5">{template.description}</p>
               )}
               <div className="flex items-center gap-2.5 mt-1.5">
-                <span className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Users className="h-3 w-3" />
                   {formatCount(template.use_count)} usos
                 </span>
-                <span className="flex items-center gap-1 text-xs text-gray-500">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Heart className="h-3 w-3" />
                   {formatCount(template.like_count)}
                 </span>
@@ -109,7 +109,7 @@ export function CloneTemplateDialog({
 
           {/* Opcion: copiar textos */}
           <div className="space-y-2">
-            <Label className="text-gray-300 text-sm font-medium">Contenido</Label>
+            <Label className="text-muted-foreground text-sm font-medium">Contenido</Label>
             <RadioGroup
               value={copyMode}
               onValueChange={(v) => setCopyMode(v as CopyMode)}
@@ -120,16 +120,16 @@ export function CloneTemplateDialog({
                   'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                   copyMode === 'structure_only'
                     ? 'border-purple-500/50 bg-purple-500/5'
-                    : 'border-gray-800 hover:border-gray-700',
+                    : 'border-border hover:border-border',
                 )}
               >
                 <RadioGroupItem
                   value="structure_only"
-                  className="border-gray-600 text-purple-500 mt-0.5"
+                  className="border-border text-purple-500 mt-0.5"
                 />
                 <div>
-                  <p className="text-sm text-white font-medium">Solo estructura</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm text-foreground font-medium">Solo estructura</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Importa el diseno y disposicion de bloques sin textos de ejemplo.
                   </p>
                 </div>
@@ -139,16 +139,16 @@ export function CloneTemplateDialog({
                   'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                   copyMode === 'with_content'
                     ? 'border-purple-500/50 bg-purple-500/5'
-                    : 'border-gray-800 hover:border-gray-700',
+                    : 'border-border hover:border-border',
                 )}
               >
                 <RadioGroupItem
                   value="with_content"
-                  className="border-gray-600 text-purple-500 mt-0.5"
+                  className="border-border text-purple-500 mt-0.5"
                 />
                 <div>
-                  <p className="text-sm text-white font-medium">Copiar textos de ejemplo</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm text-foreground font-medium">Copiar textos de ejemplo</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Incluye los textos de la plantilla como punto de partida.
                   </p>
                 </div>
@@ -158,7 +158,7 @@ export function CloneTemplateDialog({
 
           {/* Opcion: reemplazar o agregar */}
           <div className="space-y-2">
-            <Label className="text-gray-300 text-sm font-medium">Como aplicarla</Label>
+            <Label className="text-muted-foreground text-sm font-medium">Como aplicarla</Label>
             <RadioGroup
               value={applyMode}
               onValueChange={(v) => setApplyMode(v as ApplyMode)}
@@ -169,16 +169,16 @@ export function CloneTemplateDialog({
                   'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                   applyMode === 'replace'
                     ? 'border-purple-500/50 bg-purple-500/5'
-                    : 'border-gray-800 hover:border-gray-700',
+                    : 'border-border hover:border-border',
                 )}
               >
                 <RadioGroupItem
                   value="replace"
-                  className="border-gray-600 text-purple-500 mt-0.5"
+                  className="border-border text-purple-500 mt-0.5"
                 />
                 <div>
-                  <p className="text-sm text-white font-medium">Reemplazar mi perfil</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm text-foreground font-medium">Reemplazar mi perfil</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Borra el diseno actual y lo reemplaza con esta plantilla.
                   </p>
                 </div>
@@ -188,16 +188,16 @@ export function CloneTemplateDialog({
                   'flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors',
                   applyMode === 'append'
                     ? 'border-purple-500/50 bg-purple-500/5'
-                    : 'border-gray-800 hover:border-gray-700',
+                    : 'border-border hover:border-border',
                 )}
               >
                 <RadioGroupItem
                   value="append"
-                  className="border-gray-600 text-purple-500 mt-0.5"
+                  className="border-border text-purple-500 mt-0.5"
                 />
                 <div>
-                  <p className="text-sm text-white font-medium">Agregar bloques</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-sm text-foreground font-medium">Agregar bloques</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Anade los bloques de la plantilla al final de tu perfil actual.
                   </p>
                 </div>
@@ -222,7 +222,7 @@ export function CloneTemplateDialog({
               variant="ghost"
               onClick={handleClose}
               disabled={isApplying}
-              className="text-gray-400 hover:text-white hover:bg-gray-800"
+              className="text-muted-foreground hover:text-foreground hover:bg-muted"
             >
               Cancelar
             </Button>
@@ -230,7 +230,7 @@ export function CloneTemplateDialog({
               onClick={handleApply}
               disabled={isApplying || !onClone}
               className={cn(
-                'text-white',
+                'text-foreground',
                 applyMode === 'replace'
                   ? 'bg-red-600 hover:bg-red-700'
                   : 'bg-purple-600 hover:bg-purple-700',

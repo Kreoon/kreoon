@@ -39,7 +39,7 @@ export function AdPlatformsSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -55,8 +55,8 @@ export function AdPlatformsSettings() {
           <Satellite className="h-5 w-5 text-purple-400" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Plataformas de Ads</h3>
-          <p className="text-sm text-gray-400">
+          <h3 className="text-lg font-semibold text-foreground">Plataformas de Ads</h3>
+          <p className="text-sm text-muted-foreground">
             Configura las credenciales y el mapeo de eventos para cada plataforma
           </p>
         </div>
@@ -99,23 +99,23 @@ export function AdPlatformsSettings() {
 
       {/* Summary stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
-          <p className="text-2xl font-bold text-white tabular-nums">
+        <div className="rounded-sm bg-card/30 border border-border p-4 text-center">
+          <p className="text-2xl font-bold text-foreground tabular-nums">
             {platforms.filter((p) => p.enabled).length}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Plataformas activas</p>
+          <p className="text-xs text-muted-foreground mt-1">Plataformas activas</p>
         </div>
-        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
-          <p className="text-2xl font-bold text-white tabular-nums">
+        <div className="rounded-sm bg-card/30 border border-border p-4 text-center">
+          <p className="text-2xl font-bold text-foreground tabular-nums">
             {platforms.filter((p) => p.pixel_id && p.access_token).length}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Configuradas</p>
+          <p className="text-xs text-muted-foreground mt-1">Configuradas</p>
         </div>
-        <div className="rounded-sm bg-gray-800/30 border border-gray-700/30 p-4 text-center">
-          <p className="text-2xl font-bold text-white tabular-nums">
+        <div className="rounded-sm bg-card/30 border border-border p-4 text-center">
+          <p className="text-2xl font-bold text-foreground tabular-nums">
             {platforms.filter((p) => p.test_mode && p.enabled).length}
           </p>
-          <p className="text-xs text-gray-500 mt-1">En modo test</p>
+          <p className="text-xs text-muted-foreground mt-1">En modo test</p>
         </div>
       </div>
 

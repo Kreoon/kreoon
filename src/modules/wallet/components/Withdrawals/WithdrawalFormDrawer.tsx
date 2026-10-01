@@ -123,7 +123,7 @@ export function WithdrawalFormDrawer({
             {/* Available balance */}
             <div className="text-center p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)]">
               <p className="text-sm text-muted-foreground mb-1">Disponible para retiro</p>
-              <p className="text-2xl font-bold text-white">{wallet.formattedAvailable}</p>
+              <p className="text-2xl font-bold text-foreground">{wallet.formattedAvailable}</p>
             </div>
 
             {/* Pending warning */}
@@ -193,11 +193,11 @@ export function WithdrawalFormDrawer({
               <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Comisión estimada</span>
-                  <span className="text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
+                  <span className="text-amber-700 dark:text-amber-400">-{formatCurrency(fee, wallet.currency)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Recibirás</span>
-                  <span className="font-semibold text-emerald-400">
+                  <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                     {formatCurrency(netAmount, wallet.currency)}
                   </span>
                 </div>
@@ -319,15 +319,15 @@ export function WithdrawalFormDrawer({
             className="space-y-6 text-center py-8"
           >
             <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-emerald-400" />
+              <CheckCircle2 className="h-10 w-10 text-emerald-700 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 ¡Solicitud Enviada!
               </h3>
               <p className="text-muted-foreground">
                 Tu solicitud de retiro por{' '}
-                <span className="text-white font-medium">
+                <span className="text-foreground font-medium">
                   {formatCurrency(netAmount, wallet.currency)}
                 </span>{' '}
                 ha sido recibida.
@@ -336,7 +336,7 @@ export function WithdrawalFormDrawer({
 
             <div className="p-4 rounded-sm bg-[hsl(270,100%,60%,0.05)] text-left space-y-2">
               <p className="text-sm text-muted-foreground">
-                <span className="text-white">¿Qué sigue?</span>
+                <span className="text-foreground">¿Qué sigue?</span>
               </p>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>• Nuestro equipo revisará tu solicitud</li>

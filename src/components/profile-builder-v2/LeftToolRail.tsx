@@ -2,8 +2,6 @@ import {
   LayoutTemplate,
   Layers,
   Palette,
-  Images,
-  Sparkles,
   Send,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -23,8 +21,8 @@ const RAIL_ITEMS: Array<{
   { panel: "templates", icon: LayoutTemplate, label: "Plantillas" },
   { panel: "sections", icon: Layers, label: "Secciones" },
   { panel: "style", icon: Palette, label: "Estilo" },
-  { panel: "media", icon: Images, label: "Medios" },
-  { panel: "ai", icon: Sparkles, label: "IA" },
+  // «Medios» e «IA» se retiraron del carril: no tenían funciones (paneles «Pronto»). Las fotos y
+  // videos se suben desde cada sección en el lienzo (MediaLibraryPicker).
   { panel: "publish", icon: Send, label: "Publicar" },
 ];
 
@@ -33,14 +31,23 @@ export function LeftToolRail({
   onPanelChange,
 }: LeftToolRailProps) {
   return (
-    <nav className="flex w-16 flex-col items-center gap-1 border-r border-border bg-card py-3">
+    <nav
+      className={cn(
+        "flex shrink-0 border-border bg-card",
+        // Móvil: barra inferior horizontal
+        "order-last h-16 w-full flex-row items-center justify-around border-t px-2 pb-[env(safe-area-inset-bottom)]",
+        // Escritorio: carril vertical a la izquierda
+        "md:order-none md:h-auto md:w-16 md:flex-col md:justify-start md:gap-1 md:border-r md:border-t-0 md:px-0 md:py-3",
+      )}
+      aria-label="Herramientas del editor"
+    >
       {RAIL_ITEMS.map(({ panel, icon: Icon, label }) => (
         <button
           key={panel}
           type="button"
           onClick={() => onPanelChange(panel)}
           className={cn(
-            "flex w-14 flex-col items-center gap-1 rounded-lg py-2 text-[10px] font-medium transition-colors",
+            "flex min-h-11 w-16 flex-col items-center justify-center gap-1 rounded-lg py-1.5 md:w-14 md:py-2 text-[10px] font-medium transition-colors",
             activePanel === panel
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-muted hover:text-foreground",

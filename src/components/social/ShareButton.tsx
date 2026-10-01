@@ -103,7 +103,7 @@ export function ShareButton({
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
-        className="bg-card border border-border border-white/10 min-w-[200px]"
+        className="bg-card border border-border border-border min-w-[200px]"
         align="center"
         side="top"
         sideOffset={8}
@@ -116,7 +116,7 @@ export function ShareButton({
           >
             <DropdownMenuItem
               onClick={handleCopyLink}
-              className="flex items-center gap-3 cursor-pointer hover:bg-white/10"
+              className="flex items-center gap-3 cursor-pointer hover:bg-muted"
             >
               {copied ? (
                 <Check className="h-4 w-4 text-green-500" />
@@ -129,7 +129,7 @@ export function ShareButton({
             {typeof navigator !== 'undefined' && navigator.share && (
               <DropdownMenuItem
                 onClick={handleNativeShare}
-                className="flex items-center gap-3 cursor-pointer hover:bg-white/10"
+                className="flex items-center gap-3 cursor-pointer hover:bg-muted"
               >
                 <Share2 className="h-4 w-4" />
                 <span>Compartir...</span>
@@ -138,7 +138,7 @@ export function ShareButton({
 
             <DropdownMenuItem
               onClick={handleWhatsAppShare}
-              className="flex items-center gap-3 cursor-pointer hover:bg-white/10"
+              className="flex items-center gap-3 cursor-pointer hover:bg-muted"
             >
               <MessageCircle className="h-4 w-4 text-green-500" />
               <span>WhatsApp</span>
@@ -146,7 +146,7 @@ export function ShareButton({
 
             <DropdownMenuItem
               onClick={handleTwitterShare}
-              className="flex items-center gap-3 cursor-pointer hover:bg-white/10"
+              className="flex items-center gap-3 cursor-pointer hover:bg-muted"
             >
               <Twitter className="h-4 w-4 text-blue-400" />
               <span>Twitter / X</span>
@@ -154,7 +154,7 @@ export function ShareButton({
 
             <DropdownMenuItem
               onClick={handleTelegramShare}
-              className="flex items-center gap-3 cursor-pointer hover:bg-white/10"
+              className="flex items-center gap-3 cursor-pointer hover:bg-muted"
             >
               <Send className="h-4 w-4 text-blue-500" />
               <span>Telegram</span>

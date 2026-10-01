@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { User, Copy, ExternalLink, Check } from 'lucide-react';
+import { getPublicProfilePath } from '@/lib/routing/publicProfile';
 
 interface PortfolioButtonProps {
   userId: string;
@@ -47,9 +48,9 @@ export function PortfolioButton({
 
   const { data: slug } = useCreatorSlug(userId);
 
-  const profileId = slug ?? userId;
-  const publicUrl = `${window.location.origin}/marketplace/creator/${profileId}`;
-  const internalPath = `/marketplace/creator/${profileId}`;
+  // URL pública única /p/:slug; sin slug, el enlace heredado por id (que redirige si llega a tener slug).
+  const internalPath = slug ? getPublicProfilePath(slug) : `/marketplace/creator/${userId}`;
+  const publicUrl = `${window.location.origin}${internalPath}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(publicUrl);

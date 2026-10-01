@@ -160,9 +160,9 @@ function EditableField({
 
   return (
     <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
+      {Icon && <Icon className="h-4 w-4 text-muted-foreground/70 mt-0.5 shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">
+        <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">
           {label}
           {required && !value && <span className="text-red-400 ml-1">*</span>}
         </p>
@@ -176,7 +176,7 @@ function EditableField({
               }}
               placeholder={placeholder}
               rows={3}
-              className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20 resize-none"
+              className="text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
             />
           ) : (
             <Input
@@ -187,11 +187,11 @@ function EditableField({
               }}
               placeholder={placeholder}
               type={type}
-              className="h-8 text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20"
+              className="h-8 text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
             />
           )
         ) : (
-          <p className={cn("text-sm break-words", value ? "text-white/80" : "text-red-400/60 italic")}>
+          <p className={cn("text-sm break-words", value ? "text-muted-foreground" : "text-red-400/60 italic")}>
             {value || 'No especificado'}
           </p>
         )}
@@ -229,9 +229,9 @@ function EditableSelectField({
 
   return (
     <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
+      {Icon && <Icon className="h-4 w-4 text-muted-foreground/70 mt-0.5 shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">
+        <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">
           {label}
           {required && !value && <span className="text-red-400 ml-1">*</span>}
         </p>
@@ -243,7 +243,7 @@ function EditableSelectField({
               console.log('[CRM Select] onChange:', { fieldKey, newValue, previousValue: value });
               onSave(fieldKey, newValue);
             }}
-            className="w-full h-8 text-sm bg-white/5 border border-white/10 text-white rounded-sm px-2"
+            className="w-full h-8 text-sm bg-muted/40 border border-border text-foreground rounded-sm px-2"
           >
             <option value="" className="bg-[#1a1a2e]">{placeholder || 'Seleccionar...'}</option>
             {options.map(opt => (
@@ -253,7 +253,7 @@ function EditableSelectField({
             ))}
           </select>
         ) : (
-          <p className={cn("text-sm break-words", value ? "text-white/80" : "text-red-400/60 italic")}>
+          <p className={cn("text-sm break-words", value ? "text-muted-foreground" : "text-red-400/60 italic")}>
             {displayValue || 'No especificado'}
           </p>
         )}
@@ -726,9 +726,9 @@ export function UnifiedTalentDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-background border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
-        <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
+        <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-border">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative shrink-0 group">
@@ -760,9 +760,9 @@ export function UnifiedTalentDetailDialog({
                     className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   >
                     {uploadAvatar.isPending ? (
-                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                      <Loader2 className="h-6 w-6 text-foreground animate-spin" />
                     ) : (
-                      <Camera className="h-6 w-6 text-white" />
+                      <Camera className="h-6 w-6 text-foreground" />
                     )}
                   </button>
                   <input
@@ -778,10 +778,10 @@ export function UnifiedTalentDetailDialog({
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-xl font-semibold text-white truncate">
+              <DialogTitle className="text-xl font-semibold text-foreground truncate">
                 {displayName}
               </DialogTitle>
-              <p className="text-sm text-white/50 truncate">
+              <p className="text-sm text-muted-foreground/70 truncate">
                 {creatorUsername ? `@${creatorUsername}` : displayEmail}
               </p>
 
@@ -792,9 +792,9 @@ export function UnifiedTalentDetailDialog({
                   <span className="font-semibold">
                     {ratingAvg > 0 ? ratingAvg.toFixed(1) : 'N/A'}
                   </span>
-                  <span className="text-xs text-white/40">({ratingCount})</span>
+                  <span className="text-xs text-muted-foreground/70">({ratingCount})</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/70">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Briefcase className="h-4 w-4" />
                   <span>{completedProjects} proyectos</span>
                 </div>
@@ -816,13 +816,13 @@ export function UnifiedTalentDetailDialog({
                 )}
                 <span className={cn(
                   'px-2 py-0.5 rounded-full text-xs font-medium',
-                  isActive ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/50'
+                  isActive ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground/70'
                 )}>
                   {isActive ? 'Activo' : 'Inactivo'}
                 </span>
                 <span className={cn(
                   'px-2 py-0.5 rounded-full text-xs font-medium',
-                  isAvailable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/50'
+                  isAvailable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground/70'
                 )}>
                   {isAvailable ? 'Disponible' : 'No disponible'}
                 </span>
@@ -857,7 +857,7 @@ export function UnifiedTalentDetailDialog({
                   'shrink-0 gap-2',
                   isEditing
                     ? 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                    : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted'
                 )}
               >
                 {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
@@ -869,25 +869,25 @@ export function UnifiedTalentDetailDialog({
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 border-b border-white/10">
+          <div className="px-6 border-b border-border">
             <TabsList className="bg-transparent h-12 p-0 gap-0">
               <TabsTrigger
                 value="general"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <User className="h-4 w-4" />
                 General
               </TabsTrigger>
               <TabsTrigger
                 value="portfolio"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Image className="h-4 w-4" />
                 Portafolio
               </TabsTrigger>
               <TabsTrigger
                 value="services"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Briefcase className="h-4 w-4" />
                 Servicios
@@ -895,7 +895,7 @@ export function UnifiedTalentDetailDialog({
               {isOrgContext && (
                 <TabsTrigger
                   value="relationship"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
                 >
                   <Heart className="h-4 w-4" />
                   Relación
@@ -903,7 +903,7 @@ export function UnifiedTalentDetailDialog({
               )}
               <TabsTrigger
                 value="organization"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Building2 className="h-4 w-4" />
                 Organización
@@ -911,7 +911,7 @@ export function UnifiedTalentDetailDialog({
               {isRoot && (
                 <TabsTrigger
                   value="admin"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
                 >
                   <Shield className="h-4 w-4" />
                   Admin
@@ -919,7 +919,7 @@ export function UnifiedTalentDetailDialog({
               )}
               <TabsTrigger
                 value="legal"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <FileText className="h-4 w-4" />
                 Legal
@@ -931,17 +931,17 @@ export function UnifiedTalentDetailDialog({
             <div className="p-6">
               {fullLoading && (
                 <div className="space-y-4">
-                  <Skeleton className="h-20 rounded-sm bg-white/5" />
-                  <Skeleton className="h-16 rounded-sm bg-white/5" />
-                  <Skeleton className="h-24 rounded-sm bg-white/5" />
+                  <Skeleton className="h-20 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-16 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-24 rounded-sm bg-muted/40" />
                 </div>
               )}
 
               {/* GENERAL TAB */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* Personal Data */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <User className="h-4 w-4 text-pink-400" />
                     Datos Personales
                   </h3>
@@ -1009,8 +1009,8 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Location & Identity */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-blue-400" />
                     Ubicación e Identidad
                   </h3>
@@ -1081,8 +1081,8 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Social Networks */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Globe className="h-4 w-4 text-purple-400" />
                     Redes Sociales
                   </h3>
@@ -1145,19 +1145,19 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Activity & Metrics */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Activity className="h-4 w-4 text-green-400" />
                     Actividad y Métricas
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {/* Fecha de registro */}
-                    <div className="bg-white/5 rounded-sm p-3">
-                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                    <div className="bg-muted/40 rounded-sm p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground/70 text-xs mb-1">
                         <Calendar className="h-3 w-3" />
                         Registro
                       </div>
-                      <p className="text-white font-medium text-sm">
+                      <p className="text-foreground font-medium text-sm">
                         {userDetail?.created_at
                           ? format(new Date(userDetail.created_at), 'd MMM yyyy', { locale: es })
                           : '—'}
@@ -1165,16 +1165,16 @@ export function UnifiedTalentDetailDialog({
                     </div>
 
                     {/* Último ingreso */}
-                    <div className="bg-white/5 rounded-sm p-3">
-                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                    <div className="bg-muted/40 rounded-sm p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground/70 text-xs mb-1">
                         <LogIn className="h-3 w-3" />
                         Último ingreso
                       </div>
                       <p className={cn(
                         'font-medium text-sm',
                         userDetail?.last_login_at
-                          ? (userDetail.days_since_last_activity ?? 0) > 14 ? 'text-red-400' : 'text-white'
-                          : 'text-white/40'
+                          ? (userDetail.days_since_last_activity ?? 0) > 14 ? 'text-red-400' : 'text-foreground'
+                          : 'text-muted-foreground/70'
                       )}>
                         {userDetail?.last_login_at
                           ? formatDistanceToNow(new Date(userDetail.last_login_at), { addSuffix: true, locale: es })
@@ -1183,27 +1183,27 @@ export function UnifiedTalentDetailDialog({
                     </div>
 
                     {/* Días inactivo */}
-                    <div className="bg-white/5 rounded-sm p-3">
-                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                    <div className="bg-muted/40 rounded-sm p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground/70 text-xs mb-1">
                         <Clock className="h-3 w-3" />
                         Días inactivo
                       </div>
                       <p className={cn(
                         'font-medium text-sm',
                         (userDetail?.days_since_last_activity ?? 0) > 14 ? 'text-red-400' :
-                        (userDetail?.days_since_last_activity ?? 0) > 7 ? 'text-yellow-400' : 'text-white'
+                        (userDetail?.days_since_last_activity ?? 0) > 7 ? 'text-yellow-400' : 'text-foreground'
                       )}>
                         {userDetail?.days_since_last_activity ?? '—'}
                       </p>
                     </div>
 
                     {/* Total logins */}
-                    <div className="bg-white/5 rounded-sm p-3">
-                      <div className="flex items-center gap-2 text-white/50 text-xs mb-1">
+                    <div className="bg-muted/40 rounded-sm p-3">
+                      <div className="flex items-center gap-2 text-muted-foreground/70 text-xs mb-1">
                         <TrendingUp className="h-3 w-3" />
                         Total ingresos
                       </div>
-                      <p className="text-white font-medium text-sm">
+                      <p className="text-foreground font-medium text-sm">
                         {userDetail?.total_logins ?? 0}
                       </p>
                     </div>
@@ -1213,13 +1213,13 @@ export function UnifiedTalentDetailDialog({
                   {userDetail && (
                     <div className="mt-4 flex items-center gap-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-white/50 text-xs">Estado de salud:</span>
+                        <span className="text-muted-foreground/70 text-xs">Estado de salud:</span>
                         <span className={cn(
                           'px-2 py-0.5 rounded-full text-xs font-medium',
                           userDetail.health_status === 'healthy' ? 'bg-green-500/20 text-green-400' :
                           userDetail.health_status === 'at_risk' ? 'bg-yellow-500/20 text-yellow-400' :
                           userDetail.health_status === 'churned' ? 'bg-red-500/20 text-red-400' :
-                          'bg-white/10 text-white/50'
+                          'bg-muted text-muted-foreground/70'
                         )}>
                           {userDetail.health_status === 'healthy' ? 'Saludable' :
                            userDetail.health_status === 'at_risk' ? 'En riesgo' :
@@ -1234,7 +1234,7 @@ export function UnifiedTalentDetailDialog({
                         </span>
                       )}
                       {userDetail.health_score != null && (
-                        <span className="text-white/40 text-xs">
+                        <span className="text-muted-foreground/70 text-xs">
                           Score: {userDetail.health_score}/100
                         </span>
                       )}
@@ -1243,8 +1243,8 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Bio */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Biografía</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Biografía</h3>
                   <EditableField
                     label="Tagline"
                     value={full?.tagline}
@@ -1274,11 +1274,11 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Specialization */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Especialización</h3>
                   {categories?.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-white/40 mb-2">Categorías</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Categorías</p>
                       <div className="flex flex-wrap gap-2">
                         {categories.map((cat: string) => (
                           <Badge key={cat} variant="secondary" className="bg-pink-500/20 text-pink-300">
@@ -1290,7 +1290,7 @@ export function UnifiedTalentDetailDialog({
                   )}
                   {contentTypes?.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-white/40 mb-2">Tipos de contenido</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Tipos de contenido</p>
                       <div className="flex flex-wrap gap-2">
                         {contentTypes.map((t: string) => (
                           <Badge key={t} variant="secondary" className="bg-purple-500/20 text-purple-300">
@@ -1302,7 +1302,7 @@ export function UnifiedTalentDetailDialog({
                   )}
                   {marketplaceRoles?.length > 0 && (
                     <div>
-                      <p className="text-xs text-white/40 mb-2">Roles Marketplace</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Roles Marketplace</p>
                       <div className="flex flex-wrap gap-2">
                         {marketplaceRoles.map((role: string) => (
                           <Badge key={role} variant="secondary" className="bg-blue-500/20 text-blue-300">
@@ -1315,45 +1315,45 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Marketplace Stats */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Estadísticas Marketplace</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Estadísticas Marketplace</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-yellow-400">
                         {ratingAvg > 0 ? ratingAvg.toFixed(1) : '—'}
                       </p>
-                      <p className="text-xs text-white/50">Rating ({ratingCount})</p>
+                      <p className="text-xs text-muted-foreground/70">Rating ({ratingCount})</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-2xl font-bold text-white">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-2xl font-bold text-foreground">
                         {completedProjects}
                       </p>
-                      <p className="text-xs text-white/50">Proyectos</p>
+                      <p className="text-xs text-muted-foreground/70">Proyectos</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-green-400">
                         {formatCurrency(totalEarned)}
                       </p>
-                      <p className="text-xs text-white/50">Total ganado</p>
+                      <p className="text-xs text-muted-foreground/70">Total ganado</p>
                     </div>
                   </div>
                   {full && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                       {full.response_time_hours && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
-                          <Clock className="h-4 w-4 text-white/40" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 text-muted-foreground/70" />
                           <span>Respuesta: {full.response_time_hours}h</span>
                         </div>
                       )}
                       {full.on_time_delivery_pct && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Check className="h-4 w-4 text-green-400" />
                           <span>A tiempo: {full.on_time_delivery_pct}%</span>
                         </div>
                       )}
                       {full.repeat_clients_pct && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
-                          <Users className="h-4 w-4 text-white/40" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-4 w-4 text-muted-foreground/70" />
                           <span>Recurrentes: {full.repeat_clients_pct}%</span>
                         </div>
                       )}
@@ -1362,40 +1362,40 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Organization Stats */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-blue-400" />
                     Estadísticas Organizaciones
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-blue-400">
                         {full?.organizations?.length || 0}
                       </p>
-                      <p className="text-xs text-white/50">Organizaciones</p>
+                      <p className="text-xs text-muted-foreground/70">Organizaciones</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-purple-400">
                         {full?.roles?.length || 0}
                       </p>
-                      <p className="text-xs text-white/50">Roles</p>
+                      <p className="text-xs text-muted-foreground/70">Roles</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-yellow-400">
                         {full?.badges?.length || 0}
                       </p>
-                      <p className="text-xs text-white/50">Badges</p>
+                      <p className="text-xs text-muted-foreground/70">Badges</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-green-400">
                         {full?.companies?.length || 0}
                       </p>
-                      <p className="text-xs text-white/50">Empresas</p>
+                      <p className="text-xs text-muted-foreground/70">Empresas</p>
                     </div>
                   </div>
                   {full?.organizations && full.organizations.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-xs text-white/40 uppercase tracking-wide">Miembro de:</p>
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-wide">Miembro de:</p>
                       <div className="flex flex-wrap gap-2">
                         {full.organizations.map((org: any) => (
                           <Badge
@@ -1418,7 +1418,7 @@ export function UnifiedTalentDetailDialog({
                   )}
                   {full?.badges && full.badges.length > 0 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-xs text-white/40 uppercase tracking-wide">Badges:</p>
+                      <p className="text-xs text-muted-foreground/70 uppercase tracking-wide">Badges:</p>
                       <div className="flex flex-wrap gap-2">
                         {full.badges.map((badge: any, idx: number) => (
                           <Badge
@@ -1427,7 +1427,7 @@ export function UnifiedTalentDetailDialog({
                             className={cn(
                               "text-xs",
                               badge.level === 'gold' && "bg-yellow-500/20 text-yellow-300",
-                              badge.level === 'silver' && "bg-gray-400/20 text-gray-300",
+                              badge.level === 'silver' && "bg-gray-400/20 text-muted-foreground",
                               badge.level === 'bronze' && "bg-orange-500/20 text-orange-300",
                               !badge.level && "bg-purple-500/20 text-purple-300"
                             )}
@@ -1441,69 +1441,69 @@ export function UnifiedTalentDetailDialog({
                 </div>
 
                 {/* Financial Stats */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-green-400" />
                     Estadísticas Financieras
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-green-400">
                         {formatCurrency(full?.total_earned || totalEarned || 0)}
                       </p>
-                      <p className="text-xs text-white/50">Total ganado</p>
+                      <p className="text-xs text-muted-foreground/70">Total ganado</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-red-400">
                         {formatCurrency(full?.total_spent || 0)}
                       </p>
-                      <p className="text-xs text-white/50">Total gastado</p>
+                      <p className="text-xs text-muted-foreground/70">Total gastado</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-blue-400">
                         {full?.total_applications || 0}
                       </p>
-                      <p className="text-xs text-white/50">Aplicaciones</p>
+                      <p className="text-xs text-muted-foreground/70">Aplicaciones</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-purple-400">
                         {full?.total_completed_projects || completedProjects || 0}
                       </p>
-                      <p className="text-xs text-white/50">Proyectos completados</p>
+                      <p className="text-xs text-muted-foreground/70">Proyectos completados</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                    <div className="flex items-center gap-2 p-3 rounded-sm bg-white/5">
+                    <div className="flex items-center gap-2 p-3 rounded-sm bg-muted/40">
                       <TrendingUp className={cn("h-4 w-4", (full?.net_balance || 0) >= 0 ? "text-green-400" : "text-red-400")} />
                       <div>
                         <p className={cn("text-sm font-medium", (full?.net_balance || 0) >= 0 ? "text-green-400" : "text-red-400")}>
                           {formatCurrency(full?.net_balance || 0)}
                         </p>
-                        <p className="text-xs text-white/50">Balance neto</p>
+                        <p className="text-xs text-muted-foreground/70">Balance neto</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 p-3 rounded-sm bg-white/5">
+                    <div className="flex items-center gap-2 p-3 rounded-sm bg-muted/40">
                       <Activity className="h-4 w-4 text-yellow-400" />
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {full?.conversion_rate
                             ? `${Math.round(full.conversion_rate)}%`
                             : '—'
                           }
                         </p>
-                        <p className="text-xs text-white/50">Tasa conversión</p>
+                        <p className="text-xs text-muted-foreground/70">Tasa conversión</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 p-3 rounded-sm bg-white/5">
+                    <div className="flex items-center gap-2 p-3 rounded-sm bg-muted/40">
                       <DollarSign className="h-4 w-4 text-purple-400" />
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {full?.avg_per_project
                             ? formatCurrency(full.avg_per_project)
                             : '—'
                           }
                         </p>
-                        <p className="text-xs text-white/50">Promedio por proyecto</p>
+                        <p className="text-xs text-muted-foreground/70">Promedio por proyecto</p>
                       </div>
                     </div>
                   </div>
@@ -1518,16 +1518,16 @@ export function UnifiedTalentDetailDialog({
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Active Toggle */}
-                      <div className="flex items-center justify-between p-3 rounded-sm bg-white/5">
+                      <div className="flex items-center justify-between p-3 rounded-sm bg-muted/40">
                         <div>
-                          <p className="text-sm text-white">Perfil Activo</p>
-                          <p className="text-xs text-white/50">Visible en el marketplace</p>
+                          <p className="text-sm text-foreground">Perfil Activo</p>
+                          <p className="text-xs text-muted-foreground/70">Visible en el marketplace</p>
                         </div>
                         <button
                           onClick={() => handleCreatorFieldSave('is_active', !isActive)}
                           className={cn(
                             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                            isActive ? 'bg-green-500' : 'bg-white/20'
+                            isActive ? 'bg-green-500' : 'bg-muted'
                           )}
                         >
                           <span className={cn(
@@ -1537,16 +1537,16 @@ export function UnifiedTalentDetailDialog({
                         </button>
                       </div>
                       {/* Available Toggle */}
-                      <div className="flex items-center justify-between p-3 rounded-sm bg-white/5">
+                      <div className="flex items-center justify-between p-3 rounded-sm bg-muted/40">
                         <div>
-                          <p className="text-sm text-white">Disponible</p>
-                          <p className="text-xs text-white/50">Aceptando nuevos proyectos</p>
+                          <p className="text-sm text-foreground">Disponible</p>
+                          <p className="text-xs text-muted-foreground/70">Aceptando nuevos proyectos</p>
                         </div>
                         <button
                           onClick={() => handleCreatorFieldSave('is_available', !isAvailable)}
                           className={cn(
                             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                            isAvailable ? 'bg-emerald-500' : 'bg-white/20'
+                            isAvailable ? 'bg-emerald-500' : 'bg-muted'
                           )}
                         >
                           <span className={cn(
@@ -1556,16 +1556,16 @@ export function UnifiedTalentDetailDialog({
                         </button>
                       </div>
                       {/* Accepts Exchange Toggle */}
-                      <div className="flex items-center justify-between p-3 rounded-sm bg-white/5 md:col-span-2">
+                      <div className="flex items-center justify-between p-3 rounded-sm bg-muted/40 md:col-span-2">
                         <div>
-                          <p className="text-sm text-white">Acepta Canje de Productos</p>
-                          <p className="text-xs text-white/50">Intercambio de productos por contenido</p>
+                          <p className="text-sm text-foreground">Acepta Canje de Productos</p>
+                          <p className="text-xs text-muted-foreground/70">Intercambio de productos por contenido</p>
                         </div>
                         <button
                           onClick={() => handleCreatorFieldSave('accepts_product_exchange', !(full?.accepts_product_exchange))}
                           className={cn(
                             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                            full?.accepts_product_exchange ? 'bg-purple-500' : 'bg-white/20'
+                            full?.accepts_product_exchange ? 'bg-purple-500' : 'bg-muted'
                           )}
                         >
                           <span className={cn(
@@ -1576,10 +1576,10 @@ export function UnifiedTalentDetailDialog({
                       </div>
                       {/* Level */}
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Nivel</label>
+                        <label className="text-xs text-muted-foreground">Nivel</label>
                         <select
                           defaultValue={level || 'bronze'}
-                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-sm text-white text-sm"
+                          className="w-full px-3 py-2 bg-muted/40 border border-border rounded-sm text-foreground text-sm"
                           onChange={(e) => handleCreatorFieldSave('level', e.target.value)}
                         >
                           <option value="bronze">Bronze</option>
@@ -1589,16 +1589,16 @@ export function UnifiedTalentDetailDialog({
                         </select>
                       </div>
                       {/* Verified Toggle */}
-                      <div className="flex items-center justify-between p-3 rounded-sm bg-white/5">
+                      <div className="flex items-center justify-between p-3 rounded-sm bg-muted/40">
                         <div>
-                          <p className="text-sm text-white">Verificado</p>
-                          <p className="text-xs text-white/50">Mostrar badge de verificación</p>
+                          <p className="text-sm text-foreground">Verificado</p>
+                          <p className="text-xs text-muted-foreground/70">Mostrar badge de verificación</p>
                         </div>
                         <button
                           onClick={() => handleCreatorFieldSave('is_verified', !isVerified)}
                           className={cn(
                             'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                            isVerified ? 'bg-blue-500' : 'bg-white/20'
+                            isVerified ? 'bg-blue-500' : 'bg-muted'
                           )}
                         >
                           <span className={cn(
@@ -1626,7 +1626,7 @@ export function UnifiedTalentDetailDialog({
                           'px-3 py-1.5 rounded-full text-xs transition-colors',
                           portfolioFilter === filter
                             ? 'bg-white text-black font-semibold'
-                            : 'bg-white/5 text-gray-400 hover:text-white border border-white/10'
+                            : 'bg-muted/40 text-muted-foreground hover:text-foreground border border-border'
                         )}
                       >
                         {filter === 'all' ? 'Todo' : filter === 'video' ? 'Videos' : 'Fotos'}
@@ -1695,7 +1695,7 @@ export function UnifiedTalentDetailDialog({
                       <Skeleton
                         key={i}
                         className={cn(
-                          'w-full rounded-sm bg-white/5 break-inside-avoid',
+                          'w-full rounded-sm bg-muted/40 break-inside-avoid',
                           i % 3 === 0 ? 'aspect-[9/16]' : 'aspect-[3/4]'
                         )}
                       />
@@ -1709,8 +1709,8 @@ export function UnifiedTalentDetailDialog({
                   if (filteredItems.length === 0) {
                     return (
                       <div className="text-center py-12">
-                        <Image className="h-12 w-12 text-white/10 mx-auto mb-3" />
-                        <p className="text-white/40">
+                        <Image className="h-12 w-12 text-muted-foreground/70 mx-auto mb-3" />
+                        <p className="text-muted-foreground/70">
                           {portfolioFilter === 'all'
                             ? 'Sin elementos en el portafolio'
                             : `Sin ${portfolioFilter === 'video' ? 'videos' : 'fotos'} en el portafolio`}
@@ -1773,16 +1773,16 @@ export function UnifiedTalentDetailDialog({
                                   })}
                                 />
                               ) : (
-                                <div className="w-full h-full bg-gradient-to-b from-purple-900/40 to-black/60 flex items-center justify-center">
+                                <div className="w-full h-full bg-gradient-to-b from-primary/10 to-black/60 flex items-center justify-center">
                                   {item.media_type === 'video' ? (
                                     <div className="flex flex-col items-center gap-2">
-                                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-                                        <Play className="h-6 w-6 text-white/60 fill-white/60" />
+                                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                                        <Play className="h-6 w-6 text-muted-foreground fill-white/60" />
                                       </div>
-                                      <span className="text-[10px] text-white/40">Video</span>
+                                      <span className="text-[10px] text-muted-foreground/70">Video</span>
                                     </div>
                                   ) : (
-                                    <Image className="h-8 w-8 text-white/30" />
+                                    <Image className="h-8 w-8 text-muted-foreground/70" />
                                   )}
                                 </div>
                               )}
@@ -1790,7 +1790,7 @@ export function UnifiedTalentDetailDialog({
                               {/* Hover overlay for preview */}
                               {!isEditing && (
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-                                  <Maximize2 className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  <Maximize2 className="h-6 w-6 text-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>
                               )}
 
@@ -1805,7 +1805,7 @@ export function UnifiedTalentDetailDialog({
                               {/* Featured badge */}
                               {item.is_featured && (
                                 <div className="absolute top-2 left-2 bg-amber-500/90 rounded-full p-1.5">
-                                  <Star className="h-3 w-3 text-white fill-white" />
+                                  <Star className="h-3 w-3 text-foreground fill-white" />
                                 </div>
                               )}
 
@@ -1814,7 +1814,7 @@ export function UnifiedTalentDetailDialog({
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setPreviewIndex(index); }}
-                                    className="p-2 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+                                    className="p-2 rounded-full bg-muted text-foreground hover:bg-muted transition-colors"
                                     title="Ver"
                                   >
                                     <Maximize2 className="h-4 w-4" />
@@ -1823,7 +1823,7 @@ export function UnifiedTalentDetailDialog({
                                     onClick={(e) => { e.stopPropagation(); handleTogglePortfolioPin(item.id); }}
                                     className={cn(
                                       'p-2 rounded-full transition-colors',
-                                      item.is_featured ? 'bg-amber-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+                                      item.is_featured ? 'bg-amber-500 text-white' : 'bg-muted text-foreground hover:bg-muted'
                                     )}
                                     title={item.is_featured ? 'Quitar destacado' : 'Destacar'}
                                   >
@@ -1832,7 +1832,7 @@ export function UnifiedTalentDetailDialog({
                                   <button
                                     onClick={(e) => { e.stopPropagation(); handleDeletePortfolioItem(item.id); }}
                                     disabled={deletingPortfolioId === item.id}
-                                    className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-600 transition-colors"
+                                    className="p-2 rounded-full bg-red-500/80 text-foreground hover:bg-red-600 transition-colors"
                                     title="Eliminar"
                                   >
                                     {deletingPortfolioId === item.id ? (
@@ -1861,26 +1861,26 @@ export function UnifiedTalentDetailDialog({
                           {/* Close button */}
                           <button
                             onClick={() => setPreviewIndex(null)}
-                            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                            className="absolute top-4 right-4 p-2 rounded-full bg-muted hover:bg-muted transition-colors z-10"
                           >
-                            <X className="h-6 w-6 text-white" />
+                            <X className="h-6 w-6 text-foreground" />
                           </button>
 
                           {/* Navigation arrows */}
                           {previewIndex > 0 && (
                             <button
                               onClick={() => setPreviewIndex(previewIndex - 1)}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                              className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-muted hover:bg-muted transition-colors z-10"
                             >
-                              <ChevronLeft className="h-6 w-6 text-white" />
+                              <ChevronLeft className="h-6 w-6 text-foreground" />
                             </button>
                           )}
                           {previewIndex < filteredItems.length - 1 && (
                             <button
                               onClick={() => setPreviewIndex(previewIndex + 1)}
-                              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-10"
+                              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-muted hover:bg-muted transition-colors z-10"
                             >
-                              <ChevronRight className="h-6 w-6 text-white" />
+                              <ChevronRight className="h-6 w-6 text-foreground" />
                             </button>
                           )}
 
@@ -1935,15 +1935,15 @@ export function UnifiedTalentDetailDialog({
                               <div>
                                 {filteredItems[previewIndex]?.title &&
                                  !/^[a-f0-9-]{36}$/i.test(filteredItems[previewIndex].title) && (
-                                  <p className="text-white font-medium">{filteredItems[previewIndex].title}</p>
+                                  <p className="text-foreground font-medium">{filteredItems[previewIndex].title}</p>
                                 )}
                                 {filteredItems[previewIndex]?.category && (
-                                  <Badge variant="secondary" className="mt-1 text-[10px] bg-white/10">
+                                  <Badge variant="secondary" className="mt-1 text-[10px] bg-muted">
                                     {filteredItems[previewIndex].category}
                                   </Badge>
                                 )}
                               </div>
-                              <span className="text-white/40 text-sm">
+                              <span className="text-muted-foreground/70 text-sm">
                                 {previewIndex + 1} / {filteredItems.length}
                               </span>
                             </div>
@@ -1987,18 +1987,18 @@ export function UnifiedTalentDetailDialog({
                       </h4>
                       <button
                         onClick={resetServiceForm}
-                        className="text-white/40 hover:text-white"
+                        className="text-muted-foreground/70 hover:text-foreground"
                       >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Tipo de Servicio</label>
+                        <label className="text-xs text-muted-foreground">Tipo de Servicio</label>
                         <select
                           value={serviceFormData.service_type || 'ugc_video'}
                           onChange={(e) => setServiceFormData(prev => ({ ...prev, service_type: e.target.value as ServiceType }))}
-                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-sm text-white text-sm"
+                          className="w-full px-3 py-2 bg-muted/40 border border-border rounded-sm text-foreground text-sm"
                         >
                           <option value="ugc_video">UGC Video</option>
                           <option value="reels_tiktok">Reels/TikTok</option>
@@ -2013,26 +2013,26 @@ export function UnifiedTalentDetailDialog({
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Título *</label>
+                        <label className="text-xs text-muted-foreground">Título *</label>
                         <Input
                           value={serviceFormData.title || ''}
                           onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
                           placeholder="Ej: Video UGC para redes"
-                          className="bg-white/5 border-white/20"
+                          className="bg-muted/40 border-border"
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <label className="text-xs text-white/60">Descripción</label>
+                        <label className="text-xs text-muted-foreground">Descripción</label>
                         <Textarea
                           value={serviceFormData.description || ''}
                           onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
                           placeholder="Describe qué incluye este servicio..."
                           rows={2}
-                          className="bg-white/5 border-white/20 resize-none"
+                          className="bg-muted/40 border-border resize-none"
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Precio (USD)</label>
+                        <label className="text-xs text-muted-foreground">Precio (USD)</label>
                         <div className="flex gap-2">
                           <Input
                             type="number"
@@ -2040,22 +2040,22 @@ export function UnifiedTalentDetailDialog({
                             value={serviceFormData.price_amount || ''}
                             onChange={(e) => setServiceFormData(prev => ({ ...prev, price_amount: e.target.value ? parseFloat(e.target.value) : undefined }))}
                             placeholder="100"
-                            className="bg-white/5 border-white/20 flex-1"
+                            className="bg-muted/40 border-border flex-1"
                           />
-                          <span className="px-3 py-2 bg-white/5 border border-white/20 rounded-sm text-white/60 text-sm flex items-center">
+                          <span className="px-3 py-2 bg-muted/40 border border-border rounded-sm text-muted-foreground text-sm flex items-center">
                             USD
                           </span>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-white/60">Días de entrega</label>
+                        <label className="text-xs text-muted-foreground">Días de entrega</label>
                         <Input
                           type="number"
                           min="1"
                           value={serviceFormData.delivery_days || ''}
                           onChange={(e) => setServiceFormData(prev => ({ ...prev, delivery_days: e.target.value ? parseInt(e.target.value) : undefined }))}
                           placeholder="7"
-                          className="bg-white/5 border-white/20"
+                          className="bg-muted/40 border-border"
                         />
                       </div>
                     </div>
@@ -2065,16 +2065,16 @@ export function UnifiedTalentDetailDialog({
                           type="checkbox"
                           checked={serviceFormData.is_active !== false}
                           onChange={(e) => setServiceFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                          className="rounded border-white/20 bg-white/5"
+                          className="rounded border-border bg-muted/40"
                         />
-                        <span className="text-sm text-white/70">Activo</span>
+                        <span className="text-sm text-muted-foreground">Activo</span>
                       </label>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={resetServiceForm}
-                          className="border-white/20 text-white/70"
+                          className="border-border text-muted-foreground"
                         >
                           Cancelar
                         </Button>
@@ -2100,7 +2100,7 @@ export function UnifiedTalentDetailDialog({
                 {servicesHook.isLoading ? (
                   <div className="space-y-4">
                     {[1, 2].map((i) => (
-                      <Skeleton key={i} className="h-24 rounded-sm bg-white/5" />
+                      <Skeleton key={i} className="h-24 rounded-sm bg-muted/40" />
                     ))}
                   </div>
                 ) : servicesHook.services.length > 0 ? (
@@ -2111,16 +2111,16 @@ export function UnifiedTalentDetailDialog({
                         className={cn(
                           'rounded-sm border p-4 transition-colors',
                           service.is_active
-                            ? 'border-white/10 hover:border-purple-500/30'
-                            : 'border-white/5 bg-white/5 opacity-60'
+                            ? 'border-border hover:border-purple-500/30'
+                            : 'border-border bg-muted/40 opacity-60'
                         )}
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-medium text-white truncate">{service.title}</h4>
+                              <h4 className="font-medium text-foreground truncate">{service.title}</h4>
                               {!service.is_active && (
-                                <Badge variant="secondary" className="bg-white/10 text-white/50 text-[10px]">
+                                <Badge variant="secondary" className="bg-muted text-muted-foreground/70 text-[10px]">
                                   Inactivo
                                 </Badge>
                               )}
@@ -2132,7 +2132,7 @@ export function UnifiedTalentDetailDialog({
                               )}
                             </div>
                             {service.description && (
-                              <p className="text-sm text-white/60 mt-1 line-clamp-2">
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {service.description}
                               </p>
                             )}
@@ -2145,7 +2145,7 @@ export function UnifiedTalentDetailDialog({
                               {formatCurrency(service.price_amount)}
                             </p>
                             {service.delivery_days && (
-                              <p className="text-xs text-white/40">
+                              <p className="text-xs text-muted-foreground/70">
                                 {service.delivery_days} días
                               </p>
                             )}
@@ -2156,7 +2156,7 @@ export function UnifiedTalentDetailDialog({
                                   onClick={() => handleToggleServiceActive(service.id, service.is_active)}
                                   className={cn(
                                     'p-1.5 rounded transition-colors',
-                                    service.is_active ? 'text-green-400 hover:bg-green-500/20' : 'text-white/40 hover:bg-white/10'
+                                    service.is_active ? 'text-green-400 hover:bg-green-500/20' : 'text-muted-foreground/70 hover:bg-muted'
                                   )}
                                   title={service.is_active ? 'Desactivar' : 'Activar'}
                                 >
@@ -2166,7 +2166,7 @@ export function UnifiedTalentDetailDialog({
                                   onClick={() => handleToggleServiceFeatured(service.id, service.is_featured)}
                                   className={cn(
                                     'p-1.5 rounded transition-colors',
-                                    service.is_featured ? 'text-amber-400 hover:bg-amber-500/20' : 'text-white/40 hover:bg-white/10'
+                                    service.is_featured ? 'text-amber-400 hover:bg-amber-500/20' : 'text-muted-foreground/70 hover:bg-muted'
                                   )}
                                   title={service.is_featured ? 'Quitar destacado' : 'Destacar'}
                                 >
@@ -2174,7 +2174,7 @@ export function UnifiedTalentDetailDialog({
                                 </button>
                                 <button
                                   onClick={() => handleEditService(service)}
-                                  className="p-1.5 rounded text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                                  className="p-1.5 rounded text-muted-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
                                   title="Editar"
                                 >
                                   <Pencil className="h-4 w-4" />
@@ -2200,8 +2200,8 @@ export function UnifiedTalentDetailDialog({
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Briefcase className="h-12 w-12 text-white/10 mx-auto mb-3" />
-                    <p className="text-white/40">Sin servicios configurados</p>
+                    <Briefcase className="h-12 w-12 text-muted-foreground/70 mx-auto mb-3" />
+                    <p className="text-muted-foreground/70">Sin servicios configurados</p>
                     {isEditing && userId && (
                       <Button
                         size="sm"
@@ -2224,8 +2224,8 @@ export function UnifiedTalentDetailDialog({
               {isOrgContext && (
                 <TabsContent value="relationship" className="mt-0 space-y-6">
                   {/* Relationship controls */}
-                  <div className="rounded-sm border border-white/10 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <div className="rounded-sm border border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Heart className="h-4 w-4 text-pink-400" />
                       Relación
                     </h3>
@@ -2240,7 +2240,7 @@ export function UnifiedTalentDetailDialog({
                           'h-8 px-3 text-xs border transition-all',
                           isFavorite
                             ? 'bg-pink-500/20 border-pink-500/30 text-pink-400 hover:bg-pink-500/30'
-                            : 'bg-white/5 border-white/10 text-white/50 hover:text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/30',
+                            : 'bg-muted/40 border-border text-muted-foreground/70 hover:text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/30',
                         )}
                       >
                         <Heart className={cn('h-3.5 w-3.5 mr-1.5', isFavorite && 'fill-current')} />
@@ -2256,7 +2256,7 @@ export function UnifiedTalentDetailDialog({
                           'h-8 px-3 text-xs border transition-all',
                           isBlocked
                             ? 'bg-red-500/20 border-red-500/30 text-red-400'
-                            : 'bg-white/5 border-white/10 text-white/50 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30',
+                            : 'bg-muted/40 border-border text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30',
                         )}
                       >
                         <Ban className="h-3.5 w-3.5 mr-1.5" />
@@ -2267,29 +2267,29 @@ export function UnifiedTalentDetailDialog({
 
                   {/* Collaboration Stats */}
                   {orgCreator && (
-                    <div className="rounded-sm border border-white/10 p-4">
-                      <h3 className="text-sm font-semibold text-white mb-4">Estadísticas de Colaboración</h3>
+                    <div className="rounded-sm border border-border p-4">
+                      <h3 className="text-sm font-semibold text-foreground mb-4">Estadísticas de Colaboración</h3>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-3 rounded-sm bg-white/5">
+                        <div className="text-center p-3 rounded-sm bg-muted/40">
                           <p className="text-2xl font-bold text-blue-400">{orgCreator.times_worked_together}</p>
-                          <p className="text-xs text-white/50">Colaboraciones</p>
+                          <p className="text-xs text-muted-foreground/70">Colaboraciones</p>
                         </div>
-                        <div className="text-center p-3 rounded-sm bg-white/5">
+                        <div className="text-center p-3 rounded-sm bg-muted/40">
                           <p className="text-2xl font-bold text-green-400">{formatCurrency(orgCreator.total_paid)}</p>
-                          <p className="text-xs text-white/50">Pagado</p>
+                          <p className="text-xs text-muted-foreground/70">Pagado</p>
                         </div>
                         {orgCreator.average_rating_given != null && (
-                          <div className="text-center p-3 rounded-sm bg-white/5">
+                          <div className="text-center p-3 rounded-sm bg-muted/40">
                             <p className="text-2xl font-bold text-amber-400">{orgCreator.average_rating_given.toFixed(1)}</p>
-                            <p className="text-xs text-white/50">Rating dado</p>
+                            <p className="text-xs text-muted-foreground/70">Rating dado</p>
                           </div>
                         )}
                         {orgCreator.last_collaboration_at && (
-                          <div className="text-center p-3 rounded-sm bg-white/5">
-                            <p className="text-sm font-medium text-white/70">
+                          <div className="text-center p-3 rounded-sm bg-muted/40">
+                            <p className="text-sm font-medium text-muted-foreground">
                               {formatDistanceToNow(new Date(orgCreator.last_collaboration_at), { addSuffix: true, locale: es })}
                             </p>
-                            <p className="text-xs text-white/50">Última colaboración</p>
+                            <p className="text-xs text-muted-foreground/70">Última colaboración</p>
                           </div>
                         )}
                       </div>
@@ -2297,8 +2297,8 @@ export function UnifiedTalentDetailDialog({
                   )}
 
                   {/* Tags */}
-                  <div className="rounded-sm border border-white/10 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <div className="rounded-sm border border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <Tag className="h-4 w-4 text-pink-400" />
                       Etiquetas
                     </h3>
@@ -2313,14 +2313,14 @@ export function UnifiedTalentDetailDialog({
                           }
                         }}
                         placeholder="Agregar etiqueta..."
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-sm h-9 flex-1"
+                        className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-sm h-9 flex-1"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={addTag}
-                        className="h-9 w-9 bg-white/5 hover:bg-white/10 text-white/50"
+                        className="h-9 w-9 bg-muted/40 hover:bg-muted text-muted-foreground/70"
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -2343,8 +2343,8 @@ export function UnifiedTalentDetailDialog({
                   </div>
 
                   {/* Notes */}
-                  <div className="rounded-sm border border-white/10 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <div className="rounded-sm border border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <FileText className="h-4 w-4 text-pink-400" />
                       Notas internas
                     </h3>
@@ -2353,24 +2353,24 @@ export function UnifiedTalentDetailDialog({
                       onChange={(e) => handleNotesChange(e.target.value)}
                       placeholder="Notas sobre este talento..."
                       rows={4}
-                      className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none"
+                      className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
                     />
                     {updateRelationship.isPending && (
-                      <p className="text-xs text-white/30 mt-1">Guardando...</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">Guardando...</p>
                     )}
                   </div>
 
                   {/* Custom Fields */}
                   {fieldDefs.filter(d => d.is_active).length > 0 && (
-                    <div className="rounded-sm border border-white/10 p-4">
+                    <div className="rounded-sm border border-border p-4">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-sm font-semibold text-white">Campos personalizados</h3>
+                        <h3 className="text-sm font-semibold text-foreground">Campos personalizados</h3>
                         <button
                           onClick={() => setShowFieldsConfig(true)}
-                          className="p-1 rounded hover:bg-white/10 transition-colors"
+                          className="p-1 rounded hover:bg-muted transition-colors"
                           title="Configurar campos"
                         >
-                          <Settings className="h-4 w-4 text-white/40 hover:text-white/60" />
+                          <Settings className="h-4 w-4 text-muted-foreground/70 hover:text-muted-foreground" />
                         </button>
                       </div>
                       <CustomFieldsSection
@@ -2387,7 +2387,7 @@ export function UnifiedTalentDetailDialog({
               <TabsContent value="organization" className="mt-0 space-y-6">
                 {/* Roles & Badges */}
                 {userDetail && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <RolesBadgesSection
                       roles={userDetail.roles}
                       badges={userDetail.badges}
@@ -2398,7 +2398,7 @@ export function UnifiedTalentDetailDialog({
 
                 {/* Organizations */}
                 {userDetail && userId && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <OrganizationsListSection
                       organizations={userDetail.organizations || []}
                       userId={userId}
@@ -2409,7 +2409,7 @@ export function UnifiedTalentDetailDialog({
 
                 {/* Companies */}
                 {userDetail && userId && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <CompaniesSection
                       companies={userDetail.companies || []}
                       userId={userId}
@@ -2419,26 +2419,26 @@ export function UnifiedTalentDetailDialog({
                 )}
 
                 {/* System Info */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Información del Sistema</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Información del Sistema</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-xs text-white/40">Registrado</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Registrado</p>
+                      <p className="text-muted-foreground">
                         {createdAt && format(new Date(createdAt), 'd MMM yyyy, HH:mm', { locale: es })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Nivel</p>
-                      <p className="text-white/70 capitalize">{level}</p>
+                      <p className="text-xs text-muted-foreground/70">Nivel</p>
+                      <p className="text-muted-foreground capitalize">{level}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Moneda</p>
-                      <p className="text-white/70">USD</p>
+                      <p className="text-xs text-muted-foreground/70">Moneda</p>
+                      <p className="text-muted-foreground">USD</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Plataformas</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Plataformas</p>
+                      <p className="text-muted-foreground">
                         {platforms?.join(', ') || 'No especificadas'}
                       </p>
                     </div>
@@ -2456,7 +2456,7 @@ export function UnifiedTalentDetailDialog({
                         Acciones Administrativas
                       </h3>
                     </div>
-                    <p className="text-xs text-white/50 mb-4">
+                    <p className="text-xs text-muted-foreground/70 mb-4">
                       Estas acciones afectan directamente al usuario. Úsalas con precaución.
                     </p>
                     <AdminActionsSection

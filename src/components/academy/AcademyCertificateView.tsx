@@ -39,8 +39,8 @@ export function AcademyCertificateView({
     <div className="space-y-4">
       {showActions && (
         <div className="flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-2 text-sm text-zinc-400">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>Certificado verificado · #{certificate.cert_code}</span>
           </div>
           <Button onClick={handleDownload} variant="outline">
@@ -133,7 +133,7 @@ export function AcademyCertificateView({
               </div>
             </div>
             <div className="text-center">
-              <img src={qrUrl} alt="QR de verificación" className="h-20 w-20 rounded bg-white/5 p-1" />
+              <img src={qrUrl} alt="QR de verificación" className="h-20 w-20 rounded bg-muted/50 p-1" />
               <div className="mt-1 text-[9px] uppercase tracking-wide opacity-60">Verificar</div>
             </div>
             <div className="text-right">

@@ -32,7 +32,7 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <h3 className="font-semibold">Identidad</h3>
 
         <div>
@@ -41,9 +41,9 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
             value={draft.name ?? ''}
             onChange={(e) => set('name', e.target.value.slice(0, 30))}
             maxLength={30}
-            className="bg-black/30 border-white/10"
+            className="bg-muted border-border"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{(draft.name ?? '').length}/30</div>
+          <div className="text-[10px] text-muted-foreground text-right">{(draft.name ?? '').length}/30</div>
         </div>
 
         <div>
@@ -52,21 +52,21 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
             value={draft.description ?? ''}
             onChange={(e) => set('description', e.target.value.slice(0, 150))}
             maxLength={150}
-            className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-20 focus:outline-none focus:border-purple-500/50"
+            className="w-full bg-muted border border-border rounded p-2 text-sm h-20 focus:outline-none focus:border-primary/50"
           />
-          <div className="text-[10px] text-zinc-500 text-right">{(draft.description ?? '').length}/150</div>
+          <div className="text-[10px] text-muted-foreground text-right">{(draft.description ?? '').length}/150</div>
         </div>
 
         <div>
           <Label>URL del space</Label>
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-sm text-zinc-500">kreoon.com/academia/</span>
+            <span className="text-sm text-muted-foreground">kreoon.com/academia/</span>
             <Input
               value={draft.slug ?? ''}
               onChange={(e) =>
                 set('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))
               }
-              className="bg-black/30 border-white/10 flex-1"
+              className="bg-muted border-border flex-1"
             />
           </div>
         </div>
@@ -84,8 +84,8 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
             height="h-32"
             maxSizeMB={5}
           />
-          <p className="text-[11px] text-zinc-500 mt-1">
-            📐 Tamaño recomendado: <span className="font-semibold text-zinc-400">1800 × 900 px</span> (formato 2:1).
+          <p className="text-[11px] text-muted-foreground mt-1">
+            📐 Tamaño recomendado: <span className="font-semibold text-muted-foreground">1800 × 900 px</span> (formato 2:1).
             Se muestra como banner y se funde con el fondo arriba y abajo.
           </p>
 
@@ -93,21 +93,21 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
           {draft.cover_image_url && (
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs text-zinc-400">Posición del banner</Label>
-                <span className="text-[10px] text-zinc-500">
+                <Label className="text-xs text-muted-foreground">Posición del banner</Label>
+                <span className="text-[10px] text-muted-foreground">
                   {draft.cover_position ?? 50}% vertical
                 </span>
               </div>
               {/* Preview imitando el hero real (degradados arriba/abajo) */}
-              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden bg-[#0a0a0f] border border-white/10">
+              <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden bg-background border border-border">
                 <img
                   src={draft.cover_image_url}
                   alt="Preview del banner"
                   className="w-full h-full object-cover"
                   style={{ objectPosition: `center ${draft.cover_position ?? 50}%` }}
                 />
-                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-[#0a0a0f] to-transparent pointer-events-none" />
-                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-background to-transparent pointer-events-none" />
+                <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-background via-background/70 to-transparent pointer-events-none" />
               </div>
               <Slider
                 value={[draft.cover_position ?? 50]}
@@ -117,7 +117,7 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
                 step={1}
                 aria-label="Posición vertical del banner"
               />
-              <div className="flex justify-between text-[10px] text-zinc-600">
+              <div className="flex justify-between text-[10px] text-muted-foreground">
                 <span>⬆️ Arriba</span>
                 <span>Centro</span>
                 <span>Abajo ⬇️</span>
@@ -148,14 +148,14 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
               type="color"
               value={draft.accent_color ?? '#8B5CF6'}
               onChange={(e) => set('accent_color', e.target.value)}
-              className="h-10 w-10 rounded cursor-pointer bg-transparent border border-white/10"
+              className="h-10 w-10 rounded cursor-pointer bg-transparent border border-border"
             />
-            <span className="text-sm text-zinc-400">{draft.accent_color}</span>
+            <span className="text-sm text-muted-foreground">{draft.accent_color}</span>
           </div>
         </div>
       </Card>
 
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <h3 className="font-semibold">Modelo de precios</h3>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -166,9 +166,9 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
               step={1}
               value={draft.membership_price_usd ?? 0}
               onChange={(e) => set('membership_price_usd', Number(e.target.value))}
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
-            <p className="text-xs text-zinc-500 mt-1">0 = sin plan mensual</p>
+            <p className="text-xs text-muted-foreground mt-1">0 = sin plan mensual</p>
           </div>
           <div>
             <Label>Precio anual (USD)</Label>
@@ -178,16 +178,16 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
               step={1}
               value={(draft as any).yearly_price_usd ?? 0}
               onChange={(e) => set('yearly_price_usd' as any, Number(e.target.value))}
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
-            <p className="text-xs text-zinc-500 mt-1">0 = sin plan anual</p>
+            <p className="text-xs text-muted-foreground mt-1">0 = sin plan anual</p>
           </div>
           <div className="col-span-2">
             <Label>Visibilidad</Label>
             <select
               value={draft.is_public ? 'public' : 'private'}
               onChange={(e) => set('is_public', e.target.value === 'public')}
-              className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm mt-1"
+              className="w-full bg-muted border border-border rounded p-2 text-sm mt-1"
             >
               <option value="public">Pública (cualquiera puede unirse)</option>
               <option value="private">Privada (solo por invitación)</option>
@@ -199,7 +199,7 @@ export function SpaceSettingsPanel({ space }: SpaceSettingsPanelProps) {
       <Button
         onClick={save}
         disabled={update.isPending}
-        className="bg-purple-500 hover:bg-purple-600 text-white"
+        className="bg-primary hover:bg-primary/90 text-white"
       >
         <Save className="h-4 w-4 mr-2" />
         {update.isPending ? 'Guardando...' : 'Guardar cambios'}

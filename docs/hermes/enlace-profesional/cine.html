@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cine · Prototipo de portafolio · Kreoon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap">
+<link rel="stylesheet" href="portafolio-muestra.css">
+<style>
+/* Temas completos. El ámbar es un acento opcional del creador; la base sigue
+   siendo Kreoon (tipografía, controles y firma). Contrastes medidos en el QA. */
+:root,[data-tema="claro"]{
+  --bg:#FAF8F5; --surface:#FFFFFF; --surface-2:#F1EEF7; --tx:#242135; --mu:#4A4660; --ln:#DDD8E6;
+  --focus:#6D4AFF; --matte:#E9E5EF; --brand-tx:#5B3BE8;
+  --ac:#6D4AFF; --ac-ink:#FFFFFF; --ac-tx:#5B3BE8;
+}
+[data-tema="claro"][data-acento="ambar"]{--ac:#8A5300; --ac-ink:#FFFFFF; --ac-tx:#8A5300}
+[data-tema="oscuro"]{
+  --bg:#121019; --surface:#1E1A2C; --surface-2:#29243A; --tx:#F4F2FB; --mu:#C4BFD9; --ln:#5A5280;
+  --focus:#B9A8FF; --matte:#0B0A11; --brand-tx:#B9A8FF;
+  --ac:#A994FF; --ac-ink:#14121F; --ac-tx:#B9A8FF;
+}
+[data-tema="oscuro"][data-acento="ambar"]{--ac:#FFB84D; --ac-ink:#14121F; --ac-tx:#FFB84D}
+:root{--r-card:14px; --r-ctl:12px}
+body{background:var(--bg);color:var(--tx);font:400 16px/1.55 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:Outfit,Manrope,system-ui,sans-serif;line-height:1.05;letter-spacing:-.015em}
+.in{max-width:1240px;margin:0 auto;padding:0 20px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:12px;font:700 16px Manrope,system-ui,sans-serif;text-decoration:none;cursor:pointer;border:2px solid transparent}
+.btn-p{background:var(--ac);color:var(--ac-ink)}
+.btn-s{background:transparent;color:var(--tx);border-color:var(--ln)}
+.btn-s:hover{border-color:var(--mu)}
+.k{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ac-tx);margin:0}
+
+.cab{border-bottom:1px solid var(--ln)}
+.cab .in{display:flex;align-items:center;gap:12px;min-height:64px}
+.cab-nombre{font:700 18px Outfit,sans-serif;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cab nav{display:flex;gap:4px}
+.cab nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;color:var(--mu);text-decoration:none;font-weight:600}
+.cab nav a:hover{color:var(--tx);background:var(--surface-2)}
+.cab .btn{min-height:44px;padding:8px 16px;font-size:15px}
+
+/* Portada: reel vertical protagonista, sin estirarlo */
+.portada .in{display:grid;grid-template-columns:minmax(0,1fr) auto 140px;gap:32px;align-items:end;padding-top:40px;padding-bottom:44px}
+.portada h1{font-size:clamp(46px,6.4vw,96px);font-weight:800;margin:10px 0 14px}
+.frase{font-size:19px;color:var(--mu);margin:0 0 24px;max-width:40ch}
+.acts{display:flex;gap:12px;flex-wrap:wrap}
+.reel{position:relative;width:min(320px,26vw);aspect-ratio:9/16;border-radius:18px;overflow:hidden;background:var(--matte);border:1px solid var(--ln)}
+.reel img{width:100%;height:100%;object-fit:cover;display:block}
+.reel-play{position:absolute;left:12px;right:12px;bottom:12px;display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 16px 8px 8px;border-radius:999px;border:0;
+  background:rgba(14,12,22,.88);color:#FFFFFF;font:700 15px Manrope,system-ui,sans-serif;cursor:pointer;text-align:left}
+.reel-play .ico{display:inline-flex;align-items:center;justify-content:center;flex:none;width:38px;height:38px;border-radius:50%;background:var(--ac);color:var(--ac-ink);font-size:14px}
+.reel-play:focus-visible{outline:3px solid #FFFFFF;outline-offset:2px}
+.secundarias{display:grid;gap:16px}
+.secundarias[hidden]{display:none}
+.secundarias .pie{display:none}
+
+/* Galería con la personalidad de esta plantilla */
+.galeria{padding:8px 0 16px}
+.gf-titulo{font-size:clamp(26px,3vw,38px)}
+.pie b{font:600 17px/1.25 Outfit,sans-serif}
+.marco{border:1px solid var(--ln)}
+
+/* Sobre mí */
+.sobre-sec{padding:40px 0 16px}
+.sobre{display:grid;grid-template-columns:200px minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:start;border-top:1px solid var(--ln);padding-top:44px}
+.foto{aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:var(--matte)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.sobre h2{font-size:clamp(28px,3vw,40px);margin:6px 0 10px}
+.sobre p{margin:0 0 12px;color:var(--mu);max-width:56ch}
+.roles{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.roles li{display:flex;justify-content:space-between;gap:12px;padding:12px 14px;background:var(--surface);border:1px solid var(--ln);border-radius:12px}
+.roles span{color:var(--mu);font-size:14px;white-space:nowrap}
+.muestra-nota{font-size:14px;font-style:italic}
+
+.pie-pf{border-top:1px solid var(--ln);padding:28px 0 44px;margin-top:32px}
+.pie-pf .in{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.firma{color:var(--mu);font-size:14px;margin:0}
+.firma b{color:var(--brand-tx)}
+
+/* Tira de piezas del proyecto (dentro del visor) */
+.tira{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 0;padding:0;list-style:none}
+.tira button{all:unset;box-sizing:border-box;width:46px;height:46px;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;background:#1F1B30}
+.tira button[aria-current="true"]{border-color:#FFFFFF}
+.tira button:focus-visible{outline:3px solid #C9BCFF;outline-offset:2px}
+.tira img{width:100%;height:100%;object-fit:cover;display:block}
+.ficha{margin:6px 0 0;color:#D9D5EC;font-size:14px}
+
+@media (max-width:1100px){
+  .portada .in{grid-template-columns:minmax(0,1fr) auto}
+  .secundarias{display:none!important}
+  .sobre{grid-template-columns:160px minmax(0,1fr)}
+  .sobre > :last-child{grid-column:1/-1}
+}
+@media (max-width:767px){
+  .cab nav{display:none}
+  .portada .in{grid-template-columns:1fr;gap:18px;padding-top:22px;padding-bottom:28px}
+  .portada h1{font-size:44px;margin:6px 0 8px}
+  .frase{font-size:17px;margin-bottom:0}
+  /* Altura limitada: se intuye que hay más trabajos debajo, sin recortar el 9:16 */
+  .reel{width:auto;height:min(52svh,440px);justify-self:center}
+  .acts .btn{flex:1 1 auto}
+  .pie b{font-size:15px}
+  .sobre{grid-template-columns:1fr;gap:20px;padding-top:32px}
+  .foto{width:140px}
+}
+</style>
+</head>
+<body>
+
+<!-- Barra del prototipo: controles de prueba. No forma parte del portafolio público. -->
+<div class="proto" role="region" aria-label="Controles del prototipo">
+  <div class="proto-in">
+    <b>Prototipo · Cine · contenido de muestra</b>
+    <fieldset><legend>Piezas:</legend>
+      <label><input type="radio" name="n" value="1"> 1</label>
+      <label><input type="radio" name="n" value="4"> 4</label>
+      <label><input type="radio" name="n" value="6"> 6</label>
+      <label><input type="radio" name="n" value="20"> 20</label>
+      <label><input type="radio" name="n" value="30"> 30</label>
+      <label><input type="radio" name="n" value="100"> 100</label>
+    </fieldset>
+    <fieldset><legend>Tema:</legend>
+      <label><input type="radio" name="tema" value="oscuro"> Oscuro</label>
+      <label><input type="radio" name="tema" value="claro"> Claro</label>
+    </fieldset>
+    <fieldset><legend>Acento:</legend>
+      <label><input type="radio" name="acento" value="kreoon"> Kreoon</label>
+      <label><input type="radio" name="acento" value="ambar"> Ámbar</label>
+    </fieldset>
+    <fieldset><legend>Vista:</legend>
+      <label><input type="radio" name="vista" value="publica"> Visitante</label>
+      <label><input type="radio" name="vista" value="editor"> Editor</label>
+    </fieldset>
+  </div>
+</div>
+
+<section class="editor" id="editor" aria-label="Panel del editor" hidden>
+  <div class="editor-in"><h2>Panel del editor (el visitante no ve esta sección)</h2><div id="editor-cont" style="display:contents"></div></div>
+</section>
+
+<div id="publico">
+  <header class="cab">
+    <div class="in">
+      <span class="cab-nombre">Mateo Arango · muestra</span>
+      <nav aria-label="Secciones del portafolio">
+        <a href="#proyectos">Proyectos</a>
+        <a href="#sobre">Sobre mí</a>
+      </nav>
+      <button type="button" class="btn btn-s" data-compartir>Compartir</button>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="portada" aria-labelledby="nombre">
+      <div class="in">
+        <div>
+          <p class="k">Dirección y fotografía · vertical</p>
+          <h1 id="nombre">Mateo Arango</h1>
+          <p class="frase">Historias cortas con tratamiento de cine, pensadas para verse en pantalla vertical.</p>
+          <div class="acts">
+            <a class="btn btn-p" href="#proyectos">Explorar mis proyectos</a>
+            <button type="button" class="btn btn-s" data-compartir>Compartir portafolio</button>
+          </div>
+        </div>
+        <div class="reel" id="reel"></div>
+        <div class="secundarias" id="secundarias" aria-label="Dos proyectos de la portada"></div>
+      </div>
+    </section>
+
+    <section class="galeria" id="proyectos" aria-label="Proyectos">
+      <div class="in" id="carruseles"></div>
+    </section>
+
+    <section class="sobre-sec" id="sobre" aria-labelledby="t-sobre">
+      <div class="in sobre">
+        <div class="foto" id="foto"></div>
+        <div>
+          <p class="k">Sobre mí</p>
+          <h2 id="t-sobre">Cómo trabajo</h2>
+          <p>Escribo, dirijo y fotografío piezas cortas en formato vertical. Cuido la luz, el ritmo y el sonido como en un rodaje, aunque el equipo sea pequeño.</p>
+          <p class="muestra-nota">Biografía de muestra.</p>
+        </div>
+        <div>
+          <h3 style="margin:8px 0 12px;font-size:20px">Roles en estos proyectos</h3>
+          <ul class="roles" id="roles"></ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <main id="vista" hidden></main>
+
+  <footer class="pie-pf">
+    <div class="in">
+      <p class="firma">Portafolio en <b>Kreoon</b></p>
+      <button type="button" class="btn btn-s" data-compartir>Compartir portafolio</button>
+    </div>
+  </footer>
+</div>
+
+<script src="portafolio-muestra.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PM = window.PortafolioMuestra, el = PM.el;
+  var URL_PORTAFOLIO = 'kreoon.com/p/mateo-arango-muestra';
+  var COLECCIONES = ['Campañas', 'Videoclip', 'Moda', 'Producto', 'Detrás de cámaras'];
+  var qs = PM.params();
+  var st = {
+    n: [1, 4, 6, 20, 30, 100].indexOf(+qs.get('n')) >= 0 ? +qs.get('n') : 20,
+    tema: qs.get('tema') === 'claro' ? 'claro' : 'oscuro',
+    acento: qs.get('acento') === 'kreoon' ? 'kreoon' : 'ambar',
+    vista: qs.get('vista') === 'editor' ? 'editor' : 'publica'
+  };
+  var retrato = { w: 1080, h: 1350, formato: '4:5', coleccion: 'Fotografía', sujeto: { tipo: 'persona', x: 0.55, y: 0.32 }, foco: { x: 0.55, y: 0.32 }, nombre: 'tu retrato' };
+  retrato.src = PM.poster(retrato);
+  var unidades = [], destacadas = [];
+
+  function resumenPiezas(p) {
+    var v = p.piezas.filter(function (i) { return i.tipo === 'video'; }).length, f = p.piezas.length - v;
+    return [v ? v + (v === 1 ? ' video' : ' videos') : '', f ? f + (f === 1 ? ' foto' : ' fotos') : ''].filter(Boolean).join(' · ');
+  }
+  function formatoDe(p) { var m = p.piezas[0]; return m.tipo === 'foto' ? 'foto' : PM.orientacion(m) === 'horizontal' ? 'horizontal' : 'vertical'; }
+  function unidad(p) {
+    return {
+      id: p.id, portada: p.piezas[0], titulo: p.titulo, coleccion: p.coleccion, proyecto: p,
+      linea: p.coleccion + ' · ' + p.anio + ' · ' + resumenPiezas(p),
+      aria: p.titulo + '. ' + p.coleccion + ', ' + p.anio + '. ' + resumenPiezas(p) + '. Abrir proyecto.',
+      // Un proyecto agrupa video principal y fotografías; el visor recorre sus piezas.
+      entradas: function (lista, pi) {
+        return p.piezas.map(function (it, k) {
+          return {
+            item: it, titulo: p.titulo,
+            detalle: (it.tipo === 'video' ? 'Video principal · ' + PM.mmss(it.duracion) : 'Fotografía') + ' · formato ' + it.formato,
+            contador: (lista.length > 1 ? 'Proyecto ' + (pi + 1) + ' de ' + lista.length + ' · ' : '') + 'pieza ' + (k + 1) + ' de ' + p.piezas.length,
+            extra: function (v) {
+              var base = v.i - k, ul = el('ul', { class: 'tira', 'aria-label': 'Piezas del proyecto' });
+              if (p.piezas.length > 1) p.piezas.forEach(function (q, j) {
+                ul.appendChild(el('li', null, [el('button', {
+                  type: 'button', 'aria-label': 'Pieza ' + (j + 1) + ': ' + (q.tipo === 'video' ? 'video' : 'foto') + ' ' + q.formato,
+                  'aria-current': j === k ? 'true' : null, onclick: function () { v.ir(base + j); }
+                }, [el('img', { src: q.src, alt: '', width: q.w, height: q.h, loading: 'lazy' })])]));
+              });
+              return el('div', null, [el('p', { class: 'ficha', text: p.rol + ' · ' + p.coleccion + ' · ' + p.anio + '. ' + p.resumen }), ul]);
+            }
+          };
+        });
+      }
+    };
+  }
+
+  var galeria = new PM.Galeria({
+    inicio: document.getElementById('inicio'), vista: document.getElementById('vista'), carruseles: document.getElementById('carruseles'),
+    lote: 12, maxCarrusel: 10, maxColecciones: 3, umbralFila: 4, nombre: ['proyecto', 'proyectos'],
+    tituloFila: 'Proyectos', tituloDestacados: 'Proyectos destacados', tituloArchivo: 'Todos los proyectos',
+    filtros: [
+      { clave: 'vertical', etiqueta: 'Vertical', fn: function (u) { return formatoDe(u.proyecto) === 'vertical'; } },
+      { clave: 'horizontal', etiqueta: 'Horizontal', fn: function (u) { return formatoDe(u.proyecto) === 'horizontal'; } },
+      { clave: 'foto', etiqueta: 'Solo fotografía', fn: function (u) { return formatoDe(u.proyecto) === 'foto'; } }
+    ],
+    resumen: function (us) {
+      var piezas = us.reduce(function (a, u) { return a + u.proyecto.piezas.length; }, 0);
+      return us.length + (us.length === 1 ? ' proyecto' : ' proyectos') + ' con ' + piezas + (piezas === 1 ? ' pieza.' : ' piezas.');
+    }
+  });
+
+  function pintarPortada() {
+    // El reel es la pieza principal del primer proyecto destacado elegido por el creador.
+    var base = destacadas.length ? destacadas : unidades;
+    var u = base.filter(function (x) { return x.portada.tipo === 'video'; })[0] || base[0];
+    var r = document.getElementById('reel'); r.textContent = ''; r.hidden = !u;
+    if (u) {
+      var m = u.portada;
+      var img = el('img', { src: m.src, alt: '', width: m.w, height: m.h, fetchpriority: 'high' });
+      if (m.foco) img.style.objectPosition = Math.round(m.foco.x * 100) + '% ' + Math.round(m.foco.y * 100) + '%';
+      else img.style.objectFit = 'contain';
+      img.addEventListener('error', function () { img.remove(); });
+      var play = el('button', { type: 'button', class: 'reel-play', 'aria-label': (m.tipo === 'video' ? 'Reproducir ' : 'Ver ') + u.titulo }, [
+        el('span', { class: 'ico', 'aria-hidden': 'true', text: m.tipo === 'video' ? '▶' : '◻' }),
+        (m.tipo === 'video' ? 'Reproducir · ' + PM.mmss(m.duracion) : 'Ver proyecto') + ' — ' + u.titulo
+      ]);
+      play.addEventListener('click', function () { galeria.abrir([u], u, play, {}); });
+      r.append(img, play);
+    }
+    var sec = document.getElementById('secundarias'); sec.textContent = '';
+    var dos = base.filter(function (x) { return x !== u; }).slice(0, 2);
+    sec.hidden = unidades.length <= 4 || dos.length < 2;
+    dos.forEach(function (x) { sec.appendChild(PM.tarjeta(x, { eager: true, alAbrir: function (b) { galeria.abrir(dos, x, b, {}); } })); });
+    var f = document.getElementById('foto'); f.textContent = '';
+    var fi = el('img', { src: retrato.src, alt: 'Retrato de muestra del creador', width: retrato.w, height: retrato.h, loading: 'lazy' });
+    fi.style.objectPosition = Math.round(retrato.foco.x * 100) + '% ' + Math.round(retrato.foco.y * 100) + '%';
+    f.appendChild(fi);
+  }
+  function pintarRoles() {
+    var c = {}; unidades.forEach(function (u) { c[u.proyecto.rol] = (c[u.proyecto.rol] || 0) + 1; });
+    var ul = document.getElementById('roles'); ul.textContent = '';
+    Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).forEach(function (r) {
+      ul.appendChild(el('li', null, [el('b', { text: r }), el('span', { text: c[r] + (c[r] === 1 ? ' proyecto' : ' proyectos') })]));
+    });
+  }
+  function pintarEditor() {
+    var ed = document.getElementById('editor');
+    ed.hidden = st.vista !== 'editor';
+    if (ed.hidden) { document.getElementById('editor-cont').textContent = ''; return; }
+    PM.panelEditor(document.getElementById('editor-cont'), {
+      retrato: retrato,
+      alFoco: function (f) { retrato.foco = f; var i = document.querySelector('#foto img'); if (i) i.style.objectPosition = Math.round(f.x * 100) + '% ' + Math.round(f.y * 100) + '%'; },
+      destacados: function () { return unidades.length > 4 ? destacadas.map(function (u) { return { titulo: u.titulo, tipo: u.portada.tipo }; }) : []; },
+      mover: function (i, d) { var t = destacadas[i]; destacadas[i] = destacadas[i + d]; destacadas[i + d] = t; galeria.pintarInicio(); pintarPortada(); }
+    });
+  }
+  function aplicarTema() {
+    document.documentElement.setAttribute('data-tema', st.tema);
+    document.documentElement.setAttribute('data-acento', st.acento);
+  }
+  function cargar() {
+    unidades = PM.proyectosCine(st.n).map(unidad);
+    destacadas = unidades.slice(0, 6); // selección y orden del creador
+    pintarPortada(); pintarRoles(); pintarEditor();
+    galeria.datos({ unidades: unidades, destacadas: destacadas, colecciones: COLECCIONES });
+  }
+  function sincronizarURL() {
+    var p = new URLSearchParams(location.search);
+    ['n', 'tema', 'acento', 'vista'].forEach(function (k) { p.set(k, st[k]); });
+    history.replaceState(null, '', '?' + p.toString() + location.hash);
+  }
+  document.querySelectorAll('[data-compartir]').forEach(function (b) {
+    b.addEventListener('click', function () { PM.compartir('https://' + URL_PORTAFOLIO, 'Mateo Arango · portafolio en Kreoon'); });
+  });
+  [['n', function (v) { st.n = +v; cargar(); }], ['tema', function (v) { st.tema = v; aplicarTema(); }],
+   ['acento', function (v) { st.acento = v; aplicarTema(); }], ['vista', function (v) { st.vista = v; pintarEditor(); }]].forEach(function (c) {
+    document.querySelectorAll('input[name="' + c[0] + '"]').forEach(function (r) {
+      r.checked = String(st[c[0]]) === r.value;
+      r.addEventListener('change', function () { c[1](r.value); sincronizarURL(); });
+    });
+  });
+  aplicarTema();
+  cargar();
+})();
+</script>
+</body>
+</html>

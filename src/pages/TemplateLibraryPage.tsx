@@ -64,7 +64,7 @@ export default function TemplateLibraryPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-950/50">
+      <div className="border-b border-border bg-background/50">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -72,9 +72,9 @@ export default function TemplateLibraryPage() {
                 <div className="p-2 bg-purple-500/10 rounded-lg">
                   <LayoutTemplate className="h-6 w-6 text-purple-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-white">Biblioteca de Plantillas</h1>
+                <h1 className="text-2xl font-bold text-foreground">Biblioteca de Plantillas</h1>
               </div>
-              <p className="text-gray-400">
+              <p className="text-muted-foreground">
                 Explora y usa plantillas creadas por la comunidad para tu perfil
               </p>
             </div>

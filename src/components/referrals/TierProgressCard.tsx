@@ -30,8 +30,8 @@ export function TierProgressCard({ currentTierKey, activeReferrals, effectiveRat
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="text-white font-semibold text-sm mb-1">Tu Nivel de Referidos</h3>
-          <p className="text-white/40 text-xs">Comision efectiva: {effectiveRate}%</p>
+          <h3 className="text-foreground font-semibold text-sm mb-1">Tu Nivel de Referidos</h3>
+          <p className="text-muted-foreground/70 text-xs">Comision efectiva: {effectiveRate}%</p>
         </div>
         <TierBadge tierKey={currentTierKey} size="lg" />
       </div>
@@ -39,7 +39,7 @@ export function TierProgressCard({ currentTierKey, activeReferrals, effectiveRat
       {/* Progress bar */}
       {!isMaxTier && nextTier && (
         <div className="space-y-2">
-          <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+          <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
@@ -49,14 +49,14 @@ export function TierProgressCard({ currentTierKey, activeReferrals, effectiveRat
             />
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-white/50">
+            <span className="text-muted-foreground">
               {activeReferrals} / {nextTier.minReferrals} referidos
             </span>
-            <span className="text-white/50">
+            <span className="text-muted-foreground">
               Siguiente: <TierBadge tierKey={nextTierKey as ReferralTierKey} size="sm" />
             </span>
           </div>
-          <p className="text-center text-xs text-white/60 mt-1">
+          <p className="text-center text-xs text-muted-foreground mt-1">
             Invita <strong className="text-purple-300">{referralsToNext} mas</strong> para ser{' '}
             <strong style={{ color: nextTier.badgeColor }}>{nextTier.label}</strong>{' '}
             y ganar {nextTier.effectiveRate}% de comision
@@ -85,7 +85,7 @@ export function TierProgressCard({ currentTierKey, activeReferrals, effectiveRat
               }}
             >
               <div className="text-sm">{t.badgeEmoji}</div>
-              <div className="text-[9px] text-white/60 mt-0.5">{t.effectiveRate}%</div>
+              <div className="text-[9px] text-muted-foreground mt-0.5">{t.effectiveRate}%</div>
             </div>
           );
         })}

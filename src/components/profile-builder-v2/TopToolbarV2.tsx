@@ -1,4 +1,4 @@
-import { Monitor, Smartphone, Eye, Save, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Monitor, Smartphone, Eye, Save, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { DevicePreview } from "./types";
@@ -11,6 +11,7 @@ interface TopToolbarV2Props {
   onSave: () => void;
   onPreview: () => void;
   onPublish: () => void;
+  onExit: () => void;
 }
 
 export function TopToolbarV2({
@@ -21,17 +22,33 @@ export function TopToolbarV2({
   onSave,
   onPreview,
   onPublish,
+  onExit,
 }: TopToolbarV2Props) {
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-card px-4">
-      {/* Estado de guardado */}
-      <div className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-        {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        <span className="truncate">{statusLabel}</span>
+    <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b border-border bg-card px-2 sm:px-4">
+      {/* Salir + estado de guardado */}
+      <div className="flex min-w-0 items-center gap-1 sm:gap-2">
+        <button
+          type="button"
+          onClick={onExit}
+          aria-label="Salir del editor"
+          title="Salir del editor"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+        <div
+          className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
+          {isSaving && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />}
+          <span className="truncate">{statusLabel}</span>
+        </div>
       </div>
 
-      {/* Selector de dispositivo */}
-      <div className="flex items-center gap-1 rounded-lg border border-border bg-background p-1">
+      {/* Selector de dispositivo (en el teléfono el lienzo ya es móvil) */}
+      <div className="hidden items-center gap-1 rounded-lg border border-border bg-background p-1 sm:flex">
         <button
           type="button"
           onClick={() => onDeviceChange("desktop")}
@@ -63,21 +80,29 @@ export function TopToolbarV2({
       </div>
 
       {/* Acciones */}
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={onPreview}>
-          <Eye className="mr-1.5 h-4 w-4" />
-          Vista previa
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onPreview}
+          aria-label="Vista previa"
+          className="px-2 sm:px-3"
+        >
+          <Eye className="h-4 w-4 sm:mr-1.5" />
+          <span className="hidden sm:inline">Vista previa</span>
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={onSave}
           disabled={isSaving}
+          aria-label="Guardar"
+          className="hidden px-2 sm:inline-flex sm:px-3"
         >
-          <Save className="mr-1.5 h-4 w-4" />
+          <Save className="h-4 w-4 sm:mr-1.5" />
           Guardar
         </Button>
-        <Button size="sm" onClick={onPublish}>
+        <Button size="sm" onClick={onPublish} className="px-3">
           <Send className="mr-1.5 h-4 w-4" />
           Publicar
         </Button>

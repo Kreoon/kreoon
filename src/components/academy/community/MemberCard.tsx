@@ -59,14 +59,14 @@ export function MemberCard({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <h3 className="font-extrabold text-base text-white truncate">
+            <h3 className="font-extrabold text-base text-foreground truncate">
               {profile?.full_name ?? 'Miembro'}
             </h3>
           </div>
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             {isOwner && (
               <span
-                className="text-[10px] font-bold flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                className="text-[10px] font-bold flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/40"
                 title="Owner"
               >
                 <Crown className="h-2.5 w-2.5" /> Owner
@@ -78,7 +78,7 @@ export function MemberCard({
                 style={{
                   borderColor: `${KREOON_PURPLE}40`,
                   backgroundColor: `${KREOON_PURPLE}20`,
-                  color: '#c084fc',
+                  color: 'hsl(var(--primary))',
                 }}
               >
                 Instructor
@@ -86,22 +86,22 @@ export function MemberCard({
             )}
           </div>
           {spaceProfile?.title && (
-            <p className="text-xs text-zinc-400 mt-1 truncate">{spaceProfile.title}</p>
+            <p className="text-xs text-muted-foreground mt-1 truncate">{spaceProfile.title}</p>
           )}
         </div>
       </div>
 
       {/* Bio */}
       {spaceProfile?.bio && (
-        <p className="text-sm text-zinc-300 line-clamp-2 mb-4 leading-relaxed">
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
           {spaceProfile.bio}
         </p>
       )}
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-2 mb-4">
-        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-3">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-0.5">
+        <div className="rounded-2xl bg-muted/30 border border-border p-3">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">
             ⭐ XP total
           </div>
           <div
@@ -111,12 +111,12 @@ export function MemberCard({
             {totalPoints.toLocaleString()}
           </div>
         </div>
-        <div className="rounded-2xl bg-white/[0.03] border border-white/5 p-3">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-0.5">
+        <div className="rounded-2xl bg-muted/30 border border-border p-3">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">
             🔥 Esta semana
           </div>
           <div
-            className="text-lg font-extrabold tabular-nums leading-tight text-zinc-100"
+            className="text-lg font-extrabold tabular-nums leading-tight text-foreground"
           >
             {weekPoints.toLocaleString()}
           </div>
@@ -150,7 +150,7 @@ export function MemberCard({
           className={cn(
             'w-full mt-auto rounded-2xl font-bold text-sm h-10',
             !isFollowing && 'text-white shadow-lg',
-            isFollowing && 'border-2 border-white/15 hover:bg-white/5'
+            isFollowing && 'border-2 border-border hover:bg-muted/50'
           )}
           style={
             !isFollowing
@@ -174,13 +174,13 @@ function Avatar({ profile }: { profile: any }) {
       <img
         src={profile.avatar_url}
         alt=""
-        className="h-16 w-16 rounded-2xl object-cover border-2 border-white/10 shadow-xl"
+        className="h-16 w-16 rounded-2xl object-cover border-2 border-border shadow-xl"
       />
     );
   }
   return (
     <div
-      className="h-16 w-16 rounded-2xl flex items-center justify-center font-extrabold text-white text-xl border-2 border-white/10 shadow-xl"
+      className="h-16 w-16 rounded-2xl flex items-center justify-center font-extrabold text-white text-xl border-2 border-border shadow-xl"
       style={{
         background: `linear-gradient(135deg, ${KREOON_PURPLE}80, ${KREOON_PURPLE}30)`,
       }}
@@ -196,7 +196,7 @@ function SocialLink({ href, icon: Icon }: { href: string; icon: any }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="h-8 w-8 rounded-xl flex items-center justify-center text-zinc-400 hover:text-zinc-100 bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 hover:border-white/15 transition-all"
+      className="h-8 w-8 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/60 border border-border hover:border-border transition-all"
     >
       <Icon className="h-4 w-4" />
     </a>

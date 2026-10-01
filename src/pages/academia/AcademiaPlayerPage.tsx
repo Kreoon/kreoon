@@ -59,7 +59,7 @@ export default function AcademiaPlayerPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando curso...
       </div>
     );
@@ -67,7 +67,7 @@ export default function AcademiaPlayerPage() {
 
   if (!user || !course || !enrollment) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>No tienes acceso a este curso.</p>
         <Button onClick={() => navigate(`/academia/${spaceSlug}/${courseSlug}`)}>
@@ -135,29 +135,29 @@ export default function AcademiaPlayerPage() {
   const completionPct = Math.round(enrollment.completion_pct);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <SpaceNavbar spaceSlug={spaceSlug!} />
 
       <div className="flex flex-col lg:flex-row flex-1">
         {/* Sidebar lecciones */}
-        <aside className="lg:w-96 border-b lg:border-b-0 lg:border-r border-white/5 bg-kreoon-bg-secondary flex-shrink-0">
-          <div className="p-5 border-b border-white/5">
+        <aside className="lg:w-96 border-b lg:border-b-0 lg:border-r border-border bg-muted flex-shrink-0">
+          <div className="p-5 border-b border-border">
             <Link
               to={`/academia/${spaceSlug}/${courseSlug}`}
-              className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-zinc-300 font-bold flex items-center gap-1 mb-2"
+              className="text-[10px] uppercase tracking-widest text-muted-foreground hover:text-foreground font-bold flex items-center gap-1 mb-2"
             >
               <ChevronLeft className="h-3 w-3" /> Volver al curso
             </Link>
-            <h2 className="font-extrabold text-base text-white leading-tight mb-3">
+            <h2 className="font-extrabold text-base text-foreground leading-tight mb-3">
               {course.title}
             </h2>
 
             {/* Progress bar XL */}
             <div className="flex items-center justify-between text-xs font-bold mb-2">
-              <span className="text-zinc-300">📚 Tu progreso</span>
+              <span className="text-muted-foreground">📚 Tu progreso</span>
               <span style={{ color: KREOON_PURPLE }}>{completionPct}%</span>
             </div>
-            <div className="h-2.5 bg-white/5 rounded-full overflow-hidden">
+            <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{
@@ -167,7 +167,7 @@ export default function AcademiaPlayerPage() {
                 }}
               />
             </div>
-            <div className="mt-1.5 text-[11px] text-zinc-500">
+            <div className="mt-1.5 text-[11px] text-muted-foreground">
               Lección {activeIndex + 1} de {flatLessons.length}
             </div>
           </div>
@@ -177,15 +177,15 @@ export default function AcademiaPlayerPage() {
               .slice()
               .sort((a, b) => a.sort_order - b.sort_order)
               .map((m, mi) => (
-                <div key={m.id} className="border-b border-white/5">
+                <div key={m.id} className="border-b border-border">
                   <div className="px-5 pt-4 pb-2 flex items-center gap-2">
                     <span
                       className="h-6 w-6 rounded-lg flex items-center justify-center text-xs font-extrabold flex-shrink-0"
-                      style={{ backgroundColor: `${KREOON_PURPLE}25`, color: '#c084fc' }}
+                      style={{ backgroundColor: `${KREOON_PURPLE}25`, color: 'hsl(var(--primary))' }}
                     >
                       {mi + 1}
                     </span>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-300">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                       {m.title}
                     </span>
                   </div>
@@ -204,8 +204,8 @@ export default function AcademiaPlayerPage() {
                               className={cn(
                                 'w-full text-left px-5 py-3 flex items-center gap-3 text-sm transition-all border-l-2',
                                 isActive
-                                  ? 'text-white bg-white/[0.06]'
-                                  : 'text-zinc-400 border-transparent hover:bg-white/[0.03] hover:text-zinc-200'
+                                  ? 'text-foreground bg-muted/60'
+                                  : 'text-muted-foreground border-transparent hover:bg-muted/40 hover:text-foreground'
                               )}
                               style={
                                 isActive
@@ -214,13 +214,13 @@ export default function AcademiaPlayerPage() {
                               }
                             >
                               <span
-                                className="text-[10px] font-bold tabular-nums text-zinc-500 w-4 text-right"
+                                className="text-[10px] font-bold tabular-nums text-muted-foreground w-4 text-right"
                                 aria-hidden="true"
                               >
                                 {li + 1}
                               </span>
                               {isComplete ? (
-                                <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
                               ) : (
                                 <Play
                                   className="h-4 w-4 flex-shrink-0"
@@ -229,7 +229,7 @@ export default function AcademiaPlayerPage() {
                               )}
                               <span className="line-clamp-2 flex-1 font-medium">{l.title}</span>
                               {l.duration_minutes && (
-                                <span className="text-[10px] text-zinc-500 tabular-nums">
+                                <span className="text-[10px] text-muted-foreground tabular-nums">
                                   {l.duration_minutes}m
                                 </span>
                               )}
@@ -254,7 +254,7 @@ export default function AcademiaPlayerPage() {
                 >
                   Lección {activeIndex + 1} de {flatLessons.length}
                 </div>
-                <h1 className="text-2xl md:text-4xl font-extrabold text-white leading-tight">
+                <h1 className="text-2xl md:text-4xl font-extrabold text-foreground leading-tight">
                   {activeLesson.title}
                 </h1>
               </div>
@@ -265,7 +265,7 @@ export default function AcademiaPlayerPage() {
               <>
               {/* Player según tipo */}
               {(activeLesson.type === 'video' || activeLesson.type === 'live') && (
-                <div className="rounded-3xl overflow-hidden border-2 border-white/5 shadow-2xl">
+                <div className="rounded-3xl overflow-hidden border-2 border-border shadow-2xl">
                   <AcademyVideoPlayer
                     lesson={activeLesson}
                     enrollmentId={enrollment.id}
@@ -309,10 +309,10 @@ export default function AcademiaPlayerPage() {
                     <div className="flex items-start gap-3 mb-3">
                       <span className="text-3xl" aria-hidden="true">🧠</span>
                       <div>
-                        <h3 className="font-extrabold text-lg text-white">
+                        <h3 className="font-extrabold text-lg text-foreground">
                           Evaluación de esta lección
                         </h3>
-                        <p className="text-sm text-zinc-300">
+                        <p className="text-sm text-muted-foreground">
                           Pon a prueba lo que aprendiste antes de continuar
                         </p>
                       </div>
@@ -329,10 +329,10 @@ export default function AcademiaPlayerPage() {
                   </BigCard>
                 )}
 
-              <div className="flex items-center justify-between pt-4 border-t border-white/5">
+              <div className="flex items-center justify-between pt-4 border-t border-border">
                 <Button
                   variant="outline"
-                  className="rounded-2xl font-bold border-2 border-white/15 hover:bg-white/5"
+                  className="rounded-2xl font-bold border-2 border-border hover:bg-muted/50"
                   disabled={activeIndex === 0}
                   onClick={() => setActiveLessonId(flatLessons[activeIndex - 1].id)}
                 >
@@ -377,7 +377,7 @@ export default function AcademiaPlayerPage() {
               )}
             </div>
           ) : (
-            <div className="text-zinc-500 text-center py-12">Selecciona una lección</div>
+            <div className="text-muted-foreground text-center py-12">Selecciona una lección</div>
           )}
         </main>
 

@@ -54,7 +54,7 @@ export function GatewaySelector({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs text-zinc-400 font-medium">Método de pago</p>
+      <p className="text-xs text-muted-foreground font-medium">Método de pago</p>
       {visible.map((g) => {
         const isSelected = selected === g.id;
         const isRecommended = userCountry && g.availableIn.includes(userCountry);
@@ -66,7 +66,7 @@ export function GatewaySelector({
             className="w-full text-left"
           >
             <Card
-              className={`p-3 border ${isSelected ? 'border-2' : 'border-white/10'} bg-white/5 hover:bg-white/10 transition-colors`}
+              className={`p-3 border ${isSelected ? 'border-2' : 'border-border'} bg-muted/50 hover:bg-muted transition-colors`}
               style={isSelected ? { borderColor: accentColor } : undefined}
             >
               <div className="flex items-start gap-3">
@@ -78,7 +78,7 @@ export function GatewaySelector({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-zinc-100">{g.label}</p>
+                    <p className="text-sm font-medium text-foreground">{g.label}</p>
                     {isRecommended && (
                       <span
                         className="text-[10px] font-bold rounded px-1.5 py-0.5"
@@ -88,7 +88,7 @@ export function GatewaySelector({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-400 mt-0.5">{g.description}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{g.description}</p>
                 </div>
               </div>
             </Card>

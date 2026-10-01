@@ -1,3 +1,4 @@
+import { escapeHtml } from "../_shared/escapeHtml.ts";
 /**
  * Auth Email Proxy — Enterprise White-Label
  *
@@ -68,6 +69,34 @@ Deno.serve(async (req: Request) => {
       user_name,
     } = await req.json();
 
+    // Autorización: solo un admin/owner de ESA organización puede disparar correos de marca. Antes la
+    // función aceptaba cualquier JWT (y generateLink crea el usuario si no existe).
+    const jwt = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const { data: callerData } = jwt ? await supabase.auth.getUser(jwt) : { data: { user: null } };
+    const caller = callerData?.user;
+    if (!caller) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (organization_id) {
+      const { data: membership } = await supabase
+        .from("organization_members")
+        .select("role, is_owner")
+        .eq("organization_id", organization_id)
+        .eq("user_id", caller.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      const isOrgAdmin = !!membership && (membership.is_owner === true || ["admin", "team_leader"].includes(String(membership.role)));
+      if (!isOrgAdmin) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Validate required fields
     if (!type || !email || !organization_id) {
       return new Response(
@@ -109,9 +138,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // Generate auth link server-side
-    const redirectTo = redirect_to || (org.custom_domain
-      ? `https://${org.custom_domain}/`
-      : "https://kreoon.com/");
+    // redirect_to solo puede apuntar a la plataforma o al dominio verificado de la organización
+    // (evita que un enlace de marca lleve a un sitio externo).
+    const defaultRedirect = org.custom_domain ? `https://${org.custom_domain}/` : "https://kreoon.com/";
+    const allowedPrefixes = ["https://kreoon.com/", "https://www.kreoon.com/", defaultRedirect];
+    const redirectTo = typeof redirect_to === "string" && allowedPrefixes.some((p) => redirect_to.startsWith(p))
+      ? redirect_to
+      : defaultRedirect;
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: type as any,
@@ -144,7 +177,7 @@ Deno.serve(async (req: Request) => {
 
     switch (type as AuthEmailType) {
       case "signup":
-        html = buildConfirmationEmail(emailConfig, actionLink, user_name);
+        html = buildConfirmationEmail(emailConfig, actionLink, user_name === undefined ? undefined : escapeHtml(user_name));
         subject = `${org.name} — Confirma tu correo electrónico`;
         break;
       case "recovery":
@@ -156,7 +189,7 @@ Deno.serve(async (req: Request) => {
         subject = `${org.name} — Tu enlace de acceso`;
         break;
       case "invite":
-        html = buildInviteEmail(emailConfig, actionLink, inviter_name);
+        html = buildInviteEmail(emailConfig, actionLink, inviter_name === undefined ? undefined : escapeHtml(inviter_name));
         subject = `${org.name} — Has sido invitado`;
         break;
       default:
@@ -170,7 +203,7 @@ Deno.serve(async (req: Request) => {
     const senderName = org.sender_name || org.name;
     const from = `${senderName} <${org.sender_email}>`;
 
-    const resend = getResend();
+    const resend = getResend({ essential: true }); // correos de acceso: nunca se pausan
     const { data: sendData, error: sendError } = await resend.emails.send({
       from,
       to: [email],

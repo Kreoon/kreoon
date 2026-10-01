@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Video, Upload, X, Loader2 } from 'lucide-react';
+import { bunnyFunctionHeaders, uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 
 interface FeaturedVideoUploaderProps {
   userId: string;
@@ -87,7 +88,7 @@ export function FeaturedVideoUploader({
 
       const createRes = await fetch(`${supabaseUrl}/functions/v1/bunny-portfolio-upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await bunnyFunctionHeaders(),
         body: JSON.stringify({
           action: 'create',
           user_id: userId,
@@ -108,20 +109,11 @@ export function FeaturedVideoUploader({
         throw new Error(result.error || 'Error al crear video en Bunny');
       }
 
-      // Step 2: Upload file directly to Bunny
-      const uploadRes = await fetch(result.upload_url, {
-        method: 'PUT',
-        headers: {
-          'AccessKey': result.access_key,
-          'Content-Type': 'application/octet-stream',
-        },
-        body: selectedFile,
-      });
-
-      clearInterval(progressInterval);
-
-      if (!uploadRes.ok) {
-        throw new Error(`Error subiendo a Bunny: ${uploadRes.status}`);
+      // Step 2: Subida directa a Bunny vía TUS firmado (sin API key en el navegador)
+      try {
+        await uploadToBunnyStreamTus(selectedFile, result.tus);
+      } finally {
+        clearInterval(progressInterval);
       }
 
       console.log('[FeaturedVideoUploader] Video uploaded to Bunny:', result);

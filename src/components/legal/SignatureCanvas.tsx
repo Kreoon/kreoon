@@ -177,7 +177,7 @@ export function SignatureCanvas({
       <div className="relative">
         <canvas
           ref={canvasRef}
-          className="border border-white/20 rounded-sm bg-white/5 cursor-crosshair touch-none"
+          className="border border-border rounded-sm bg-muted/50 cursor-crosshair touch-none"
           style={{ width, height }}
           onMouseDown={startDrawing}
           onMouseMove={draw}
@@ -189,7 +189,7 @@ export function SignatureCanvas({
         />
         {!hasSignature && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-white/30 text-sm">Firma aquí con tu dedo o mouse</span>
+            <span className="text-muted-foreground/70 text-sm">Firma aquí con tu dedo o mouse</span>
           </div>
         )}
       </div>
@@ -200,7 +200,7 @@ export function SignatureCanvas({
           variant="outline"
           size="sm"
           onClick={clearCanvas}
-          className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
+          className="flex-1 bg-muted/50 border-border text-foreground hover:bg-muted"
         >
           <Eraser className="w-4 h-4 mr-2" />
           Limpiar
@@ -211,7 +211,7 @@ export function SignatureCanvas({
             variant="outline"
             size="sm"
             onClick={useTypedName}
-            className="flex-1 bg-white/5 border-white/10 text-white hover:bg-white/10"
+            className="flex-1 bg-muted/50 border-border text-foreground hover:bg-muted"
           >
             <Type className="w-4 h-4 mr-2" />
             Usar nombre

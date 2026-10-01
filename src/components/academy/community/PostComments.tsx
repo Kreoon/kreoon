@@ -38,7 +38,7 @@ export function PostComments({ postId, spaceId, accentColor = '#8B5CF6' }: PostC
   }
 
   return (
-    <div className="border-t border-white/5 pt-4 mt-4 space-y-3">
+    <div className="border-t border-border pt-4 mt-4 space-y-3">
       <CommentComposer
         spaceId={spaceId}
         accentColor={accentColor}
@@ -51,7 +51,7 @@ export function PostComments({ postId, spaceId, accentColor = '#8B5CF6' }: PostC
       />
 
       {isLoading ? (
-        <div className="text-sm text-zinc-500">Cargando comentarios...</div>
+        <div className="text-sm text-muted-foreground">Cargando comentarios...</div>
       ) : (
         <div className="space-y-3">
           {comments.map((c) => (
@@ -156,13 +156,13 @@ function CommentComposer({
             }}
             placeholder={placeholder ?? 'Escribe...'}
             className={cn(
-              'flex-1 bg-black/30 border border-white/10 rounded-full px-4 text-sm focus:outline-none focus:border-purple-500/50',
+              'flex-1 bg-muted border border-border rounded-full px-4 text-sm focus:outline-none focus:border-primary/50',
               compact ? 'py-1.5 text-xs' : 'py-2'
             )}
           />
 
           <label
-            className="p-1.5 rounded-full hover:bg-white/5 cursor-pointer text-zinc-400 hover:text-zinc-200"
+            className="p-1.5 rounded-full hover:bg-muted/50 cursor-pointer text-muted-foreground hover:text-foreground"
             title="Subir imagen, GIF, sticker, video o audio"
           >
             <ImageIcon className="h-4 w-4" />
@@ -183,7 +183,7 @@ function CommentComposer({
             <button
               type="button"
               onClick={() => { setShowGif((v) => !v); setShowEmoji(false); }}
-              className="p-1.5 rounded-full hover:bg-white/5 text-zinc-400 hover:text-zinc-200"
+              className="p-1.5 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground"
               title="Buscar GIF"
             >
               <Sticker className="h-4 w-4" />
@@ -200,14 +200,14 @@ function CommentComposer({
             <button
               type="button"
               onClick={() => { setShowEmoji((v) => !v); setShowGif(false); }}
-              className="p-1.5 rounded-full hover:bg-white/5 text-zinc-400 hover:text-zinc-200"
+              className="p-1.5 rounded-full hover:bg-muted/50 text-muted-foreground hover:text-foreground"
               title="Emoji"
             >
               <Smile className="h-4 w-4" />
             </button>
             {showEmoji && (
               <div className="absolute z-50 right-0 mt-2">
-                <Suspense fallback={<div className="bg-zinc-950 rounded-xl border border-white/10 p-4 text-xs text-zinc-500">Cargando...</div>}>
+                <Suspense fallback={<div className="bg-background rounded-xl border border-border p-4 text-xs text-muted-foreground">Cargando...</div>}>
                   <EmojiPicker
                     onEmojiClick={(e: any) => { setText((t) => t + e.emoji); setShowEmoji(false); }}
                     theme={'dark' as any}
@@ -225,7 +225,7 @@ function CommentComposer({
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs text-zinc-500 hover:text-zinc-300 px-2"
+              className="text-xs text-muted-foreground hover:text-foreground px-2"
             >
               Cancelar
             </button>
@@ -259,14 +259,14 @@ function MediaThumb({ url, onRemove }: { url: string; onRemove: () => void }) {
         <video src={url} muted playsInline preload="metadata"
                className="h-16 w-16 rounded-lg object-cover bg-black" />
       ) : isAudio ? (
-        <div className="h-16 w-16 rounded-lg bg-violet-500/10 border border-violet-500/30
-                        flex items-center justify-center text-xs text-violet-300">🎵</div>
+        <div className="h-16 w-16 rounded-lg bg-primary/10 border border-primary/30
+                        flex items-center justify-center text-xs text-primary">🎵</div>
       ) : (
         <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover" />
       )}
       <button
         onClick={onRemove}
-        className="absolute -top-1 -right-1 bg-zinc-800 rounded-full p-0.5 hover:bg-zinc-700"
+        className="absolute -top-1 -right-1 bg-muted rounded-full p-0.5 hover:bg-muted"
       >
         <X className="h-3 w-3" />
       </button>
@@ -307,27 +307,27 @@ function CommentItem({
   })();
 
   if (comment.is_deleted) {
-    return <div className="text-xs text-zinc-600 italic pl-12">[comentario eliminado]</div>;
+    return <div className="text-xs text-muted-foreground italic pl-12">[comentario eliminado]</div>;
   }
 
   return (
     <div className="flex items-start gap-2">
       <MiniAvatar profile={comment.author} />
       <div className="flex-1">
-        <div className="bg-white/5 rounded-2xl px-3 py-2 inline-block max-w-full">
+        <div className="bg-muted/50 rounded-2xl px-3 py-2 inline-block max-w-full">
           <div className="text-xs font-semibold">{comment.author?.full_name ?? 'Usuario'}</div>
           {comment.body && (
             <div className="text-sm whitespace-pre-wrap break-words">{comment.body}</div>
           )}
         </div>
         <CommentMedia urls={(comment as any).media_urls ?? []} />
-        <div className="text-[10px] text-zinc-500 mt-1 flex items-center gap-3 pl-2">
+        <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-3 pl-2">
           <span>{timeAgo}</span>
-          <button onClick={onReplyOpen} className="hover:text-zinc-300">Responder</button>
+          <button onClick={onReplyOpen} className="hover:text-foreground">Responder</button>
           {isAuthor && (
             <button
               onClick={() => del.mutate({ commentId: comment.id, postId: comment.post_id })}
-              className="hover:text-rose-300"
+              className="hover:text-rose-700 dark:hover:text-rose-300"
             >
               Eliminar
             </button>
@@ -348,19 +348,19 @@ function CommentItem({
         )}
 
         {comment.replies && comment.replies.length > 0 && (
-          <div className="mt-2 space-y-2 pl-4 border-l border-white/5">
+          <div className="mt-2 space-y-2 pl-4 border-l border-border">
             {comment.replies.map((r) => (
               <div key={r.id} className="flex items-start gap-2">
                 <MiniAvatar profile={r.author} />
                 <div className="flex-1">
-                  <div className="bg-white/5 rounded-2xl px-3 py-2 inline-block max-w-full">
+                  <div className="bg-muted/50 rounded-2xl px-3 py-2 inline-block max-w-full">
                     <div className="text-xs font-semibold">{r.author?.full_name ?? 'Usuario'}</div>
                     {r.body && (
                       <div className="text-sm whitespace-pre-wrap break-words">{r.body}</div>
                     )}
                   </div>
                   <CommentMedia urls={(r as any).media_urls ?? []} />
-                  <div className="text-[10px] text-zinc-500 mt-1 pl-2">
+                  <div className="text-[10px] text-muted-foreground mt-1 pl-2">
                     {(() => {
                       try {
                         return formatDistanceToNow(new Date(r.created_at), { locale: es, addSuffix: true });
@@ -419,7 +419,7 @@ function MiniAvatar({ profile }: { profile: any }) {
     return <img src={profile.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />;
   }
   return (
-    <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-semibold">
+    <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-semibold">
       {(profile?.full_name ?? '?').charAt(0).toUpperCase()}
     </div>
   );

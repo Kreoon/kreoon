@@ -81,7 +81,7 @@ export function AcademyVideoPlayer({
 
 function Unsupported() {
   return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm">
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-card text-muted-foreground text-sm">
       Origen de video no soportado o sin configurar
     </div>
   );
@@ -164,13 +164,13 @@ function BunnyEmbedPlayer({ lesson, lessonId, resumeFrom, onProgress, onComplete
   }, [embedUrl, effectiveResume]);
 
   if (error) return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm">
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-card text-muted-foreground text-sm">
       No se pudo cargar el video (¿leccion bloqueada?)
     </div>
   );
 
   if (!embedUrl) return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm animate-pulse">
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-card text-muted-foreground text-sm animate-pulse">
       Cargando video...
     </div>
   );
@@ -398,7 +398,7 @@ function YouTubePlayer({ lesson, url, resumeFrom, onProgress, onComplete, onMidl
   }, [lesson.id, effectiveResume]);
 
   if (!videoId) return (
-    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-zinc-900 text-zinc-500 text-sm">
+    <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-card text-muted-foreground text-sm">
       URL de YouTube no válida
     </div>
   );

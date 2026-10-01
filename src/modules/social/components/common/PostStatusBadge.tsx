@@ -21,7 +21,7 @@ interface PostStatusBadgeProps {
 export function PostStatusBadge({ status, className }: PostStatusBadgeProps) {
   const Icon = statusIcons[status] || Send;
   const label = POST_STATUS_LABELS[status] || status;
-  const colorClass = POST_STATUS_COLORS[status] || 'bg-gray-500/20 text-gray-400';
+  const colorClass = POST_STATUS_COLORS[status] || 'bg-gray-500/20 text-muted-foreground';
 
   return (
     <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium', colorClass, className)}>

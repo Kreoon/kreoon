@@ -59,7 +59,7 @@ function OptimizedImageComponent({
     setError(true);
   };
 
-  const placeholderBg = placeholderId ? getPlaceholderColor(placeholderId) : 'bg-white/5';
+  const placeholderBg = placeholderId ? getPlaceholderColor(placeholderId) : 'bg-muted/50';
 
   if (error || !src) {
     return fallback ? (

@@ -89,7 +89,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
                   href={competitor.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 rounded-lg border border-pink-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card rounded-lg border border-pink-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Instagram className="h-4 w-4 text-pink-500" />
                   Instagram
@@ -101,7 +101,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
                   href={competitor.tiktok}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 rounded-lg border border-zinc-700 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card rounded-lg border border-zinc-700 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
                 >
                   🎵 TikTok
                   <ExternalLink className="h-3 w-3" />
@@ -112,7 +112,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
                   href={competitor.facebook}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 rounded-lg border border-blue-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card rounded-lg border border-blue-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Facebook className="h-4 w-4 text-blue-500" />
                   Facebook
@@ -124,7 +124,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
                   href={competitor.youtube}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 rounded-lg border border-red-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card rounded-lg border border-red-500/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Youtube className="h-4 w-4 text-red-500" />
                   YouTube
@@ -136,7 +136,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
                   href={competitor.linkedin}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 rounded-lg border border-blue-600/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-card rounded-lg border border-blue-600/30 text-sm text-zinc-300 hover:bg-zinc-800 transition-colors duration-150"
                 >
                   <Linkedin className="h-4 w-4 text-blue-600" />
                   LinkedIn
@@ -150,13 +150,13 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
         {/* Value Proposition & Promise */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {competitor.valueProposition && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-primary mb-1">Propuesta de Valor</p>
               <p className="text-sm text-zinc-300">{competitor.valueProposition}</p>
             </div>
           )}
           {competitor.promise && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-amber-500 mb-1">Promesa Central</p>
               <p className="text-sm text-zinc-300">{competitor.promise}</p>
             </div>
@@ -166,13 +166,13 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
         {/* Differentiator & Pricing */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {competitor.differentiator && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-green-500 mb-1">Diferenciador</p>
               <p className="text-sm text-zinc-300">{competitor.differentiator}</p>
             </div>
           )}
           {competitor.price && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-blue-500 mb-1 flex items-center gap-1">
                 <DollarSign className="h-3 w-3" /> Rango de Precios
               </p>
@@ -234,7 +234,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
         {/* Strengths & Weaknesses */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {competitor.strengths && competitor.strengths.length > 0 && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-green-500 mb-2">Fortalezas</p>
               <ul className="space-y-1">
                 {competitor.strengths.map((s, idx) => (
@@ -246,7 +246,7 @@ function CompetitorDetailDialog({ competitor }: { competitor: Competitor }) {
             </div>
           )}
           {competitor.weaknesses && competitor.weaknesses.length > 0 && (
-            <div className="p-3 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+            <div className="p-3 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
               <p className="text-xs font-medium text-red-500 mb-2">Debilidades</p>
               <ul className="space-y-1">
                 {competitor.weaknesses.map((w, idx) => (
@@ -290,7 +290,7 @@ export function CompetitionAnalysisTab({ competitorAnalysis }: CompetitionAnalys
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="p-4 bg-[#1a1a24] rounded-lg border border-zinc-800 dark:border-zinc-700/50">
+      <div className="p-4 bg-background rounded-lg border border-zinc-800 dark:border-zinc-700/50">
         <h3 className="font-semibold text-sm mb-2 flex items-center gap-2 text-zinc-100">
           <Swords className="h-4 w-4 text-red-500" />
           Análisis de Competencia 360°

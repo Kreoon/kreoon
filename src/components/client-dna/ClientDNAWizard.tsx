@@ -240,14 +240,14 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
   // Full-screen processing state
   if (processingStep !== 'idle' && processingStep !== 'error') {
     return (
-      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-8">
+      <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-border shadow-sm dark:shadow-none p-4 sm:p-8">
         <div className="flex flex-col items-center justify-center py-8 sm:py-12 space-y-6 sm:space-y-8">
           {/* Icono */}
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
             {processingStep === 'complete' ? (
               <CheckCircle2 className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
             ) : (
-              <Dna className="w-8 h-8 sm:w-10 sm:h-10 text-white animate-pulse" />
+              <Dna className="w-8 h-8 sm:w-10 sm:h-10 text-foreground animate-pulse" />
             )}
           </div>
 
@@ -291,8 +291,8 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
           <Dna className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-white">Configura el ADN de tu Negocio</h2>
-          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Responde las preguntas en un solo audio</p>
+          <h2 className="text-lg sm:text-xl font-bold text-foreground dark:text-foreground">Configura el ADN de tu Negocio</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">Responde las preguntas en un solo audio</p>
         </div>
       </div>
 
@@ -300,12 +300,12 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* Panel Izquierdo: Preguntas */}
-        <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+        <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-border shadow-sm dark:shadow-none p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4 sm:mb-5">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-card flex items-center justify-center shrink-0">
               <span className="text-base sm:text-lg">💬</span>
             </div>
-            <h3 className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Preguntas</h3>
+            <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Preguntas</h3>
           </div>
 
           <div className="space-y-2.5 sm:space-y-3">
@@ -318,7 +318,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                                  border border-purple-200 dark:border-purple-500/30 flex items-center justify-center text-[10px] font-bold text-purple-600 dark:text-purple-300">
                   {q.id}
                 </span>
-                <p className="text-[11px] sm:text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed group-hover:text-zinc-900 dark:group-hover:text-white transition-colors">
+                <p className="text-[11px] sm:text-xs text-foreground dark:text-muted-foreground leading-relaxed group-hover:text-foreground dark:group-hover:text-foreground transition-colors">
                   {q.question}
                 </p>
               </div>
@@ -327,19 +327,19 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
         </div>
 
         {/* Panel Derecho: Audio */}
-        <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+        <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-border shadow-sm dark:shadow-none p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4 sm:mb-5">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-card flex items-center justify-center shrink-0">
               <span className="text-base sm:text-lg">🎤</span>
             </div>
-            <h3 className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">Graba tu audio</h3>
+            <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">Graba tu audio</h3>
           </div>
 
           <div className="flex-1 flex flex-col">
             {/* Contexto del producto — ayuda a la IA a entender el audio */}
             <div className="space-y-2.5 mb-5">
               <div>
-                <label className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5 block">
+                <label className="text-[10px] sm:text-xs font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5 block">
                   Producto o servicio principal
                 </label>
                 <input
@@ -349,7 +349,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                   placeholder="Ej: Webinar gratuito Vlight Solution"
                   disabled={processingStep !== 'idle'}
                   className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
-                             bg-zinc-50 dark:bg-zinc-900
+                             bg-zinc-50 dark:bg-card
                              border border-zinc-200 dark:border-zinc-700
                              text-zinc-900 dark:text-white
                              placeholder-zinc-400 dark:placeholder-zinc-600
@@ -358,9 +358,9 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                 />
               </div>
               <div>
-                <label className="text-[10px] sm:text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <label className="text-[10px] sm:text-xs font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   Descripción corta
-                  <span className="text-zinc-400 dark:text-zinc-600 normal-case font-normal">(opcional)</span>
+                  <span className="text-muted-foreground dark:text-muted-foreground normal-case font-normal">(opcional)</span>
                 </label>
                 <textarea
                   value={productContext}
@@ -369,7 +369,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
                   rows={2}
                   disabled={processingStep !== 'idle'}
                   className="w-full px-3 py-2 rounded-lg text-xs sm:text-sm
-                             bg-zinc-50 dark:bg-zinc-900
+                             bg-zinc-50 dark:bg-card
                              border border-zinc-200 dark:border-zinc-700
                              text-zinc-900 dark:text-white
                              placeholder-zinc-400 dark:placeholder-zinc-600
@@ -379,7 +379,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
               </div>
             </div>
 
-            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 text-center max-w-xs mx-auto mb-5 sm:mb-8">
+            <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground text-center max-w-xs mx-auto mb-5 sm:mb-8">
               Responde todas las preguntas en un solo audio. Entre más detalles, mejor será tu ADN.
             </p>
 
@@ -390,7 +390,7 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
               />
             </div>
 
-            <p className="text-[10px] sm:text-[11px] text-zinc-500 text-center mt-4 sm:mt-6">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground text-center mt-4 sm:mt-6">
               Intenta resumir tus respuestas en máximo 5 minutos de audio.
             </p>
           </div>
@@ -398,12 +398,12 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
       </div>
 
       {/* Panel Ubicaciones */}
-      <div className="rounded-lg bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 shadow-sm dark:shadow-none p-4 sm:p-6">
+      <div className="rounded-lg bg-white dark:bg-background border border-zinc-200 dark:border-border shadow-sm dark:shadow-none p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4 sm:mb-5">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-card flex items-center justify-center shrink-0">
             <span className="text-base sm:text-lg">📍</span>
           </div>
-          <h3 className="text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+          <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
             ¿Dónde está tu audiencia?
           </h3>
         </div>
@@ -430,22 +430,22 @@ export function ClientDNAWizard({ clientId, onComplete }: ClientDNAWizardProps) 
             ? 'bg-purple-500'
             : canSubmit
               ? 'bg-purple-600 hover:bg-purple-500 active:bg-purple-700'
-              : 'bg-zinc-300 dark:bg-zinc-700 cursor-not-allowed'
+              : 'bg-zinc-300 dark:bg-muted cursor-not-allowed'
           } disabled:opacity-70`}
       >
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           {buttonTranscribing ? (
             <>
-              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" />
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 text-foreground animate-spin" />
               <span className="text-sm sm:text-base">Transcribiendo...</span>
             </>
           ) : (
             <>
-              <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${canSubmit ? 'text-white' : 'text-zinc-500'}`} />
-              <span className={`text-sm sm:text-base ${canSubmit ? 'text-white' : 'text-zinc-500'}`}>
+              <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${canSubmit ? 'text-foreground' : 'text-muted-foreground'}`} />
+              <span className={`text-sm sm:text-base ${canSubmit ? 'text-foreground' : 'text-muted-foreground'}`}>
                 Generar ADN de mi Negocio
               </span>
-              <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 ${canSubmit ? 'text-white' : 'text-zinc-500'} hidden sm:block`} />
+              <ChevronRight className={`w-4 h-4 sm:w-5 sm:h-5 ${canSubmit ? 'text-foreground' : 'text-muted-foreground'} hidden sm:block`} />
             </>
           )}
         </div>
@@ -468,14 +468,14 @@ function ProcessingStepItem({ label, status }: { label: string; status: 'pending
         </div>
       )}
       {status === 'pending' && (
-        <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-          <Circle className="w-4 h-4 text-zinc-400 dark:text-zinc-600" />
+        <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-card flex items-center justify-center">
+          <Circle className="w-4 h-4 text-muted-foreground dark:text-muted-foreground" />
         </div>
       )}
       <span className={`text-sm font-medium ${
         status === 'done' ? 'text-green-600 dark:text-green-400' :
-        status === 'active' ? 'text-zinc-900 dark:text-white' :
-        'text-zinc-500'
+        status === 'active' ? 'text-foreground dark:text-foreground' :
+        'text-muted-foreground'
       }`}>
         {label}
       </span>

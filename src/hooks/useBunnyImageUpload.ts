@@ -117,7 +117,8 @@ export function useBunnyImageUpload() {
       });
 
       setProgress({ loaded: 1, total: 1, percentage: 100 });
-      return { success: true, cdnUrl: creds.cdnUrl, storagePath };
+      // El servidor genera el nombre final del archivo (evita sobrescrituras): usar su ruta.
+      return { success: true, cdnUrl: creds.cdnUrl, storagePath: creds.storagePath || storagePath };
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al subir la imagen';

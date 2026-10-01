@@ -117,7 +117,7 @@ function EditableTagList({
             {item}
             <button
               onClick={() => onChange(items.filter((_, idx) => idx !== i))}
-              className="ml-1 hover:text-white"
+              className="ml-1 hover:text-foreground"
             >
               <X className="h-2.5 w-2.5" />
             </button>

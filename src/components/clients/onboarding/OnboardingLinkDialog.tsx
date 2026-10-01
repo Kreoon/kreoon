@@ -264,7 +264,7 @@ export function OnboardingLinkDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
-          className="w-[calc(100%-1rem)] sm:w-full max-w-md max-h-[90dvh] overflow-y-auto bg-kreoon-bg-secondary border-kreoon-border"
+          className="w-[calc(100%-1rem)] sm:w-full max-w-md max-h-[90dvh] overflow-y-auto bg-muted border-kreoon-border"
         >
           <DialogHeader>
             <DialogTitle className="text-kreoon-text-primary">
@@ -319,7 +319,7 @@ export function OnboardingLinkDialog({
                     readOnly
                     value={onboardingUrl}
                     onFocus={(e) => e.currentTarget.select()}
-                    className="text-xs text-kreoon-text-primary bg-kreoon-bg-secondary border-kreoon-border"
+                    className="text-xs text-kreoon-text-primary bg-muted border-kreoon-border"
                   />
                   <KreoonButton
                     variant="outline"
@@ -345,7 +345,7 @@ export function OnboardingLinkDialog({
                   value={whatsappMessage}
                   rows={5}
                   onFocus={(e) => e.currentTarget.select()}
-                  className="text-xs text-kreoon-text-primary bg-kreoon-bg-secondary border-kreoon-border resize-none"
+                  className="text-xs text-kreoon-text-primary bg-muted border-kreoon-border resize-none"
                 />
                 <KreoonButton
                   variant="outline"

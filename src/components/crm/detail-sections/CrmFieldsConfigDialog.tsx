@@ -85,9 +85,9 @@ export function CrmFieldsConfigDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-popover/95 border-white/10">
+      <DialogContent className="sm:max-w-md bg-popover/95 border-border">
         <DialogHeader>
-          <DialogTitle className="text-white text-base">Configurar campos personalizados</DialogTitle>
+          <DialogTitle className="text-foreground text-base">Configurar campos personalizados</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[60vh] overflow-y-auto">
@@ -97,16 +97,16 @@ export function CrmFieldsConfigDialog({
               {activeDefs.map((def) => (
                 <div
                   key={def.id}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-sm bg-white/[0.03] border border-white/5"
+                  className="flex items-center gap-2 px-2.5 py-2 rounded-sm bg-muted/40 border border-border"
                 >
-                  <GripVertical className="h-3.5 w-3.5 text-white/20 flex-shrink-0" />
-                  <span className="text-xs text-white/70 flex-1 truncate">{def.name}</span>
-                  <span className="text-[10px] text-white/30 px-1.5 py-0.5 rounded bg-white/5">
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
+                  <span className="text-xs text-muted-foreground flex-1 truncate">{def.name}</span>
+                  <span className="text-[10px] text-muted-foreground/70 px-1.5 py-0.5 rounded bg-muted/40">
                     {FIELD_TYPE_LABELS[def.field_type] || def.field_type}
                   </span>
                   <button
                     onClick={() => deleteField.mutate(def.id)}
-                    className="p-1 rounded hover:bg-red-500/20 text-white/30 hover:text-red-400 transition-colors"
+                    className="p-1 rounded hover:bg-red-500/20 text-muted-foreground/70 hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -116,8 +116,8 @@ export function CrmFieldsConfigDialog({
           )}
 
           {/* Add new field */}
-          <div className="space-y-2 pt-2 border-t border-white/5">
-            <p className="text-[10px] text-white/40 uppercase tracking-wider">Agregar campo</p>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Agregar campo</p>
             <Input
               placeholder="Nombre del campo"
               value={newName}
@@ -128,15 +128,15 @@ export function CrmFieldsConfigDialog({
                   handleAdd();
                 }
               }}
-              className="bg-white/5 border-white/10 text-white text-xs placeholder:text-white/30"
+              className="bg-muted/40 border-border text-foreground text-xs placeholder:text-muted-foreground/70"
             />
             <Select value={newType} onValueChange={(v) => setNewType(v as CrmCustomFieldType)}>
-              <SelectTrigger className="bg-white/5 border-white/10 text-white text-xs">
+              <SelectTrigger className="bg-muted/40 border-border text-foreground text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a0a2e] border-white/10">
+              <SelectContent className="bg-[#1a0a2e] border-border">
                 {FIELD_TYPES.map((t) => (
-                  <SelectItem key={t} value={t} className="text-white text-xs">
+                  <SelectItem key={t} value={t} className="text-foreground text-xs">
                     {FIELD_TYPE_LABELS[t]}
                   </SelectItem>
                 ))}
@@ -147,13 +147,13 @@ export function CrmFieldsConfigDialog({
                 placeholder="Opciones separadas por coma"
                 value={newOptions}
                 onChange={(e) => setNewOptions(e.target.value)}
-                className="bg-white/5 border-white/10 text-white text-xs placeholder:text-white/30"
+                className="bg-muted/40 border-border text-foreground text-xs placeholder:text-muted-foreground/70"
               />
             )}
             <Button
               onClick={handleAdd}
               disabled={!newName.trim() || createField.isPending}
-              className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-xs"
+              className="w-full bg-[#8b5cf6] hover:bg-[#7c3aed] text-foreground text-xs"
               size="sm"
             >
               <Plus className="h-3.5 w-3.5 mr-1.5" />

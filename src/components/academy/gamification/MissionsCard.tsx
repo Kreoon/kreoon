@@ -23,10 +23,10 @@ export function MissionsCard({ spaceId }: MissionsCardProps) {
         <div className="flex items-start gap-3">
           <div className="text-4xl" aria-hidden="true">🎯</div>
           <div className="flex-1">
-            <h2 className="font-extrabold text-base text-zinc-100 mb-1">
+            <h2 className="font-extrabold text-base text-foreground mb-1">
               Misiones semanales
             </h2>
-            <p className="text-sm text-zinc-400 leading-relaxed">
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Cada lunes recibes 3 misiones nuevas. Mantente activo esta semana para empezar.
             </p>
           </div>
@@ -45,10 +45,10 @@ export function MissionsCard({ spaceId }: MissionsCardProps) {
         <div className="flex items-center gap-2.5">
           <div className="text-3xl" aria-hidden="true">{allDone ? '🏆' : '🎯'}</div>
           <div>
-            <h2 className="font-extrabold text-base text-zinc-100 leading-tight">
+            <h2 className="font-extrabold text-base text-foreground leading-tight">
               Misiones semanales
             </h2>
-            <div className="text-xs text-zinc-400 mt-0.5">
+            <div className="text-xs text-muted-foreground mt-0.5">
               {allDone ? '¡Todas completas, leyenda!' : `${completed} de ${total} completas`}
             </div>
           </div>
@@ -74,7 +74,7 @@ export function MissionsCard({ spaceId }: MissionsCardProps) {
                 'rounded-2xl border-2 p-3 transition-all',
                 m.completed
                   ? 'border-emerald-500/40 bg-emerald-500/10'
-                  : 'border-white/5 bg-black/20 hover:border-white/15'
+                  : 'border-border bg-muted/60 hover:border-border'
               )}
             >
               <div className="flex items-start gap-3">
@@ -92,17 +92,17 @@ export function MissionsCard({ spaceId }: MissionsCardProps) {
                     <span
                       className={cn(
                         'text-sm font-semibold leading-snug',
-                        m.completed ? 'text-emerald-300 line-through' : 'text-zinc-100'
+                        m.completed ? 'text-emerald-700 dark:text-emerald-300 line-through' : 'text-foreground'
                       )}
                     >
                       {m.title}
                     </span>
-                    <span className="text-xs font-bold text-zinc-400 whitespace-nowrap tabular-nums">
+                    <span className="text-xs font-bold text-muted-foreground whitespace-nowrap tabular-nums">
                       {m.progress}/{m.goal}
                     </span>
                   </div>
                   <div
-                    className="h-2.5 bg-white/5 rounded-full overflow-hidden"
+                    className="h-2.5 bg-muted/50 rounded-full overflow-hidden"
                     role="progressbar"
                     aria-valuenow={pct}
                     aria-valuemin={0}
@@ -139,7 +139,7 @@ export function MissionsCard({ spaceId }: MissionsCardProps) {
                       ⚡ +{m.energy_reward}
                     </span>
                     {m.completed && (
-                      <span className="ml-auto flex items-center gap-1 text-emerald-300 font-bold">
+                      <span className="ml-auto flex items-center gap-1 text-emerald-700 dark:text-emerald-300 font-bold">
                         <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                         Hecho
                       </span>

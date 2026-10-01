@@ -32,7 +32,7 @@ const STATUS_CONFIG: Record<
     icon: Lock,
     label: 'Fondos Bloqueados',
     description: 'Los fondos están asegurados en escrow esperando que se complete la campaña.',
-    color: 'text-amber-400 border-amber-500/30',
+    color: 'text-amber-700 dark:text-amber-400 border-amber-500/30',
     bgColor: 'bg-amber-500/10',
   },
   pending_editor: {
@@ -53,14 +53,14 @@ const STATUS_CONFIG: Record<
     icon: CheckCircle,
     label: 'Liberado',
     description: 'Los fondos han sido liberados a los participantes de la campaña.',
-    color: 'text-emerald-400 border-emerald-500/30',
+    color: 'text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
     bgColor: 'bg-emerald-500/10',
   },
   partially_released: {
     icon: Unlock,
     label: 'Parcialmente Liberado',
     description: 'Parte de los fondos ha sido liberada. El resto sigue en escrow.',
-    color: 'text-emerald-400/80 border-emerald-500/20',
+    color: 'text-emerald-700 dark:text-emerald-400/80 border-emerald-500/20',
     bgColor: 'bg-emerald-500/5',
   },
   refunded: {
@@ -74,14 +74,14 @@ const STATUS_CONFIG: Record<
     icon: AlertTriangle,
     label: 'En Disputa',
     description: 'Hay una disputa activa. Los fondos permanecen bloqueados hasta resolución.',
-    color: 'text-red-400 border-red-500/30',
+    color: 'text-red-700 dark:text-red-400 border-red-500/30',
     bgColor: 'bg-red-500/10',
   },
   cancelled: {
     icon: XCircle,
     label: 'Cancelado',
     description: 'El escrow fue cancelado y los fondos fueron devueltos.',
-    color: 'text-gray-400 border-gray-500/30',
+    color: 'text-muted-foreground border-gray-500/30',
     bgColor: 'bg-gray-500/10',
   },
 };

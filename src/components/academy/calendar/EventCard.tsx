@@ -71,7 +71,7 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
   }
 
   return (
-    <Card className="p-4 bg-white/5 border-white/10 hover:border-white/20 transition-colors">
+    <Card className="p-4 bg-muted/50 border-border hover:border-border transition-colors">
       <div className="flex items-start gap-4">
         <div
           className="rounded-lg p-3 text-center flex-shrink-0"
@@ -84,7 +84,7 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold truncate">{event.title}</h3>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 border border-white/10 uppercase">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/50 border border-border uppercase">
               {event.type}
             </span>
             {event.google_event_id && (
@@ -102,9 +102,9 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
             )}
           </div>
           {event.description && (
-            <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{event.description}</p>
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{event.description}</p>
           )}
-          <div className="mt-1.5 flex items-center gap-3 text-xs text-zinc-500">
+          <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {format(dt, "PPP 'a las' HH:mm", { locale: es })}
@@ -135,7 +135,7 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
               variant="outline"
               size="sm"
               onClick={() => onCancel?.(event)}
-              className="text-rose-300 border-rose-500/30 hover:bg-rose-500/10"
+              className="text-rose-700 dark:text-rose-300 border-rose-500/30 hover:bg-rose-500/10"
             >
               <X className="h-3 w-3 mr-1" /> Cancelar
             </Button>
@@ -156,7 +156,7 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
                 </Button>
               )}
               {myAttended && (
-                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <Check className="h-2.5 w-2.5" /> Asististe
                 </span>
               )}
@@ -168,8 +168,8 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
                   className={cn(
                     'text-[10px] px-2 py-1 rounded border flex items-center gap-1',
                     myStatus === s
-                      ? 'border-purple-500 bg-purple-500/15 text-purple-200'
-                      : 'border-white/10 text-zinc-500 hover:text-zinc-300'
+                      ? 'border-primary bg-primary/15 text-primary'
+                      : 'border-border text-muted-foreground hover:text-foreground'
                   )}
                 >
                   {myStatus === s && <Check className="h-2.5 w-2.5" />}
@@ -177,14 +177,14 @@ export function EventCard({ event, spaceId, isOwner, accentColor = '#8B5CF6', on
                 </button>
               ))}
               {myStatus === 'accepted' && myInv?.google_calendar_added && (
-                <span className="text-[9px] text-emerald-400 flex items-center gap-0.5 mt-0.5">
+                <span className="text-[9px] text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5 mt-0.5">
                   <Check className="h-2.5 w-2.5" /> En tu Calendar
                 </span>
               )}
               {myStatus === 'accepted' && !myInv?.google_calendar_added && !memberCalStatus?.is_active && (
                 <button
                   onClick={() => connectMemberCal.mutate()}
-                  className="text-[9px] text-zinc-500 hover:text-purple-300 underline"
+                  className="text-[9px] text-muted-foreground hover:text-primary/80 underline"
                 >
                   + Mi Calendar
                 </button>

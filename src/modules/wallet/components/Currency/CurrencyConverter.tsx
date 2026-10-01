@@ -65,13 +65,13 @@ export function CurrencyConverter({
   };
 
   return (
-    <Card className={cn('bg-[hsl(270,40%,6%)] border-[hsl(270,30%,18%)]', className)}>
+    <Card className={cn('bg-card border-border', className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
           <span>Convertir Moneda</span>
           <button
             onClick={() => refetch()}
-            className="p-1.5 rounded-sm hover:bg-[hsl(270,30%,15%)] transition-colors"
+            className="p-1.5 rounded-sm hover:bg-muted transition-colors"
             title="Actualizar tasa"
           >
             <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
@@ -91,11 +91,11 @@ export function CurrencyConverter({
                   onChange={(e) => setFromAmount(e.target.value ? Number(e.target.value) : undefined)}
                   placeholder="0.00"
                   disabled={readOnly}
-                  className="bg-[hsl(270,40%,8%)] border-[hsl(270,30%,20%)] text-lg font-medium"
+                  className="bg-card border-border text-lg font-medium"
                 />
               </div>
             ) : (
-              <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,40%,8%)] border border-[hsl(270,30%,20%)] rounded-sm">
+              <div className="flex-1 flex items-center px-3 py-2 bg-card border border-border rounded-sm">
                 <span className="text-lg font-medium">
                   {fromAmount ? formatAmount(fromAmount, fromCurrency) : '$0.00'}
                 </span>
@@ -117,9 +117,9 @@ export function CurrencyConverter({
           <button
             onClick={swapCurrencies}
             disabled={readOnly}
-            className="p-2 rounded-full bg-[hsl(270,50%,30%)]/20 hover:bg-[hsl(270,50%,40%)]/30 transition-colors disabled:opacity-50"
+            className="p-2 rounded-full bg-primary/20 hover:bg-primary/30 transition-colors disabled:opacity-50"
           >
-            <ArrowRight className="h-5 w-5 text-[hsl(270,80%,70%)]" />
+            <ArrowRight className="h-5 w-5 text-primary" />
           </button>
         </div>
 
@@ -127,11 +127,11 @@ export function CurrencyConverter({
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">A</Label>
           <div className="flex gap-2">
-            <div className="flex-1 flex items-center px-3 py-2 bg-[hsl(270,30%,12%)] border border-[hsl(270,30%,20%)] rounded-sm min-h-[42px]">
+            <div className="flex-1 flex items-center px-3 py-2 bg-muted border border-border rounded-sm min-h-[42px]">
               {isLoading ? (
                 <Skeleton className="h-6 w-32" />
               ) : quote ? (
-                <span className="text-lg font-semibold text-[hsl(270,80%,75%)]">
+                <span className="text-lg font-semibold text-primary">
                   {formatAmount(quote.toAmount, toCurrency)}
                 </span>
               ) : fromCurrency === toCurrency ? (
@@ -155,7 +155,7 @@ export function CurrencyConverter({
 
         {/* Detalles de la conversión */}
         {quote && fromCurrency !== toCurrency && (
-          <div className="pt-3 border-t border-[hsl(270,30%,15%)] space-y-2 text-sm">
+          <div className="pt-3 border-t border-border space-y-2 text-sm">
             <div className="flex justify-between text-muted-foreground">
               <span>Tasa de cambio</span>
               <span>
@@ -164,11 +164,11 @@ export function CurrencyConverter({
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Spread ({(quote.spread * 100).toFixed(1)}%)</span>
-              <span className="text-amber-400">
+              <span className="text-amber-700 dark:text-amber-400">
                 -{formatCurrencyAmount(quote.spreadAmount, toCurrency)}
               </span>
             </div>
-            <div className="flex justify-between font-medium text-white pt-2 border-t border-[hsl(270,30%,15%)]">
+            <div className="flex justify-between font-medium text-foreground pt-2 border-t border-border">
               <span>Recibirás</span>
               <span className="text-[hsl(150,60%,50%)]">
                 {formatCurrencyAmount(quote.toAmount, toCurrency)}
@@ -187,7 +187,7 @@ export function CurrencyConverter({
 
         {/* Última actualización */}
         {quote?.expiresAt && (
-          <p className="text-xs text-[hsl(270,30%,45%)] text-center">
+          <p className="text-xs text-muted-foreground text-center">
             Tasa válida hasta: {new Date(quote.expiresAt).toLocaleTimeString('es-CO')}
           </p>
         )}

@@ -50,7 +50,7 @@ const STATUS_INFO: Record<string, {
   border: string;
   icon: React.ReactNode;
 }> = {
-  draft:          { label: 'Recién creado',      bg: 'bg-slate-500/10',   text: 'text-slate-400',   border: 'border-slate-500/20',   icon: <FileText className="h-3 w-3" />     },
+  draft:          { label: 'Recién creado',      bg: 'bg-slate-500/10',   text: 'text-muted-foreground',   border: 'border-slate-500/20',   icon: <FileText className="h-3 w-3" />     },
   script_pending: { label: 'Guión pendiente',    bg: 'bg-yellow-500/10',  text: 'text-yellow-400',  border: 'border-yellow-500/20',  icon: <FileText className="h-3 w-3" />     },
   script_approved:{ label: 'Guión aprobado',     bg: 'bg-cyan-500/10',    text: 'text-cyan-400',    border: 'border-cyan-500/20',    icon: <FileCheck className="h-3 w-3" />    },
   assigned:       { label: 'Asignado a creator', bg: 'bg-blue-500/10',    text: 'text-blue-400',    border: 'border-blue-500/20',    icon: <UserCheck className="h-3 w-3" />    },

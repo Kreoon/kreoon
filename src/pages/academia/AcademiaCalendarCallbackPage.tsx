@@ -72,27 +72,27 @@ export default function AcademiaCalendarCallbackPage() {
   }, [params, exchange]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center space-y-4">
         {status === 'loading' && (
           <>
-            <Loader2 className="h-12 w-12 mx-auto text-purple-400 animate-spin" />
+            <Loader2 className="h-12 w-12 mx-auto text-primary animate-spin" />
             <h1 className="text-xl font-bold">Conectando con Google Calendar...</h1>
-            <p className="text-sm text-zinc-400">Esto solo tomará un momento.</p>
+            <p className="text-sm text-muted-foreground">Esto solo tomará un momento.</p>
           </>
         )}
         {status === 'success' && (
           <>
-            <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-400" />
+            <CheckCircle2 className="h-12 w-12 mx-auto text-emerald-600 dark:text-emerald-400" />
             <h1 className="text-xl font-bold">¡Conectado!</h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               Tu Google Calendar ya está sincronizado con tu academia.
             </p>
             <Button
               onClick={() =>
                 spaceSlug ? navigate(`/academia/${spaceSlug}/calendar`) : navigate('/academia/dashboard')
               }
-              className="bg-purple-500 hover:bg-purple-600 text-white"
+              className="bg-primary hover:bg-primary/90 text-white"
             >
               Volver al calendario
             </Button>
@@ -100,9 +100,9 @@ export default function AcademiaCalendarCallbackPage() {
         )}
         {status === 'error' && (
           <>
-            <XCircle className="h-12 w-12 mx-auto text-rose-400" />
+            <XCircle className="h-12 w-12 mx-auto text-rose-600 dark:text-rose-400" />
             <h1 className="text-xl font-bold">Error al conectar</h1>
-            <p className="text-sm text-zinc-400">{errorMsg ?? 'Intenta de nuevo desde el calendario.'}</p>
+            <p className="text-sm text-muted-foreground">{errorMsg ?? 'Intenta de nuevo desde el calendario.'}</p>
             <Button onClick={() => navigate('/academia/dashboard')} variant="outline">
               Volver al panel
             </Button>

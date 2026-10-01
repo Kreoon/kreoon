@@ -26,11 +26,11 @@ function TransformRow({ label, before, after, color }: { label: string; before?:
     <div className="grid grid-cols-[100px_1fr_auto_1fr] items-center gap-2">
       <span className={`text-xs font-medium ${color}`}>{label}</span>
       <div className="bg-red-500/5 border border-red-500/10 rounded-sm p-2">
-        <p className="text-xs text-white/60">{before || '-'}</p>
+        <p className="text-xs text-muted-foreground">{before || '-'}</p>
       </div>
-      <span className="text-white/30 text-lg">→</span>
+      <span className="text-muted-foreground/70 text-lg">→</span>
       <div className="bg-green-500/5 border border-green-500/10 rounded-sm p-2">
-        <p className="text-xs text-white/60">{after || '-'}</p>
+        <p className="text-xs text-muted-foreground">{after || '-'}</p>
       </div>
     </div>
   );
@@ -48,7 +48,7 @@ export function LandingPUVTransformation({ salesAnglesData }: Props) {
       {puv?.statement && (
         <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-sm p-5">
           <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3">Propuesta Unica de Valor</h4>
-          <p className="text-base text-white/90 font-medium leading-relaxed">"{puv.statement}"</p>
+          <p className="text-base text-foreground font-medium leading-relaxed">"{puv.statement}"</p>
         </div>
       )}
 
@@ -56,27 +56,27 @@ export function LandingPUVTransformation({ salesAnglesData }: Props) {
       {puv && (puv.centralProblem || puv.tangibleResult || puv.marketDifference) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {puv.centralProblem && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
+            <div className="bg-muted/40 border border-border rounded-sm p-4">
               <h5 className="text-[10px] text-red-300/60 uppercase mb-1">Problema Central</h5>
-              <p className="text-sm text-white/70">{puv.centralProblem}</p>
+              <p className="text-sm text-muted-foreground">{puv.centralProblem}</p>
             </div>
           )}
           {puv.tangibleResult && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
+            <div className="bg-muted/40 border border-border rounded-sm p-4">
               <h5 className="text-[10px] text-green-300/60 uppercase mb-1">Resultado Tangible</h5>
-              <p className="text-sm text-white/70">{puv.tangibleResult}</p>
+              <p className="text-sm text-muted-foreground">{puv.tangibleResult}</p>
             </div>
           )}
           {puv.marketDifference && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
+            <div className="bg-muted/40 border border-border rounded-sm p-4">
               <h5 className="text-[10px] text-purple-300/60 uppercase mb-1">Diferencia en el Mercado</h5>
-              <p className="text-sm text-white/70">{puv.marketDifference}</p>
+              <p className="text-sm text-muted-foreground">{puv.marketDifference}</p>
             </div>
           )}
           {puv.idealClient && (
-            <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4">
+            <div className="bg-muted/40 border border-border rounded-sm p-4">
               <h5 className="text-[10px] text-blue-300/60 uppercase mb-1">Cliente Ideal</h5>
-              <p className="text-sm text-white/70">{puv.idealClient}</p>
+              <p className="text-sm text-muted-foreground">{puv.idealClient}</p>
             </div>
           )}
         </div>
@@ -86,9 +86,9 @@ export function LandingPUVTransformation({ salesAnglesData }: Props) {
       {transformation && (
         <div>
           <h4 className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-3">Tabla de Transformacion</h4>
-          <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm p-4 space-y-3 overflow-x-auto">
+          <div className="bg-muted/40 border border-border rounded-sm p-4 space-y-3 overflow-x-auto">
             <div className="grid grid-cols-[100px_1fr_auto_1fr] items-center gap-2 mb-2">
-              <span className="text-[10px] text-white/30 uppercase">Dimension</span>
+              <span className="text-[10px] text-muted-foreground/70 uppercase">Dimension</span>
               <span className="text-[10px] text-red-300/40 uppercase text-center">Antes</span>
               <span />
               <span className="text-[10px] text-green-300/40 uppercase text-center">Despues</span>

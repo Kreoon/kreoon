@@ -50,7 +50,7 @@ export function ManualScriptInput({
           rows={12}
           className={cn(
             'font-mono text-sm resize-none',
-            'bg-white dark:bg-gray-950',
+            'bg-white dark:bg-background',
             'border-green-200 dark:border-green-800/50',
             'focus:border-green-500 focus:ring-green-500/20'
           )}
@@ -58,7 +58,7 @@ export function ManualScriptInput({
       ) : (
         <div className={cn(
           'min-h-[200px] p-4 rounded-md',
-          'bg-white dark:bg-gray-950',
+          'bg-white dark:bg-background',
           'border border-green-200 dark:border-green-800/50'
         )}>
           {value ? (

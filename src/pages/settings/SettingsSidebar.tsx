@@ -1,3 +1,5 @@
+import { isProductionOnlyTalent } from '@/lib/creatorScope';
+import { useAuth } from '@/hooks/useAuth';
 import { memo, useMemo } from 'react';
 import {
   User, Bell, Shield, HelpCircle, Building2, History,
@@ -67,6 +69,8 @@ const ALL_SECTIONS: SectionGroup[] = [
   },
 ];
 
+const TALENT_HIDDEN_SECTIONS: string[] = ['client_company', 'my_plan', 'mcp_integrations'];
+
 interface SettingsSidebarProps {
   activeSection: SettingsSectionKey | null;
   onSectionChange: (section: SettingsSectionKey) => void;
@@ -81,11 +85,17 @@ export const SettingsSidebar = memo(({
   variant = 'nav' 
 }: SettingsSidebarProps) => {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  // Creador/editor: solo ajustes de su cuenta (sin empresa, plan ni integraciones técnicas)
+  const talentView = isProductionOnlyTalent(roles);
   // Filter groups based on permissions
   const visibleGroups = useMemo(() => {
     return ALL_SECTIONS.map(group => ({
       ...group,
-      sections: group.sections.map(section => ({
+      title: talentView && group.id === 'user' ? 'Tu cuenta' : group.title,
+      sections: group.sections
+        .filter(section => !(talentView && TALENT_HIDDEN_SECTIONS.includes(section.key)))
+        .map(section => ({
         ...section,
         permission: permissions.getPermission(section.key),
       })),
@@ -95,7 +105,7 @@ export const SettingsSidebar = memo(({
       }
       return true;
     });
-  }, [permissions]);
+  }, [permissions, talentView]);
 
   // Cards variant for mobile
   if (variant === 'cards') {
@@ -103,7 +113,7 @@ export const SettingsSidebar = memo(({
       <div className="space-y-6">
         {visibleGroups.map((group, groupIndex) => (
           <Card key={group.id} className="overflow-hidden">
-            <CardHeader className="pb-3 bg-zinc-50 dark:bg-kreoon-bg-card">
+            <CardHeader className="pb-3 bg-zinc-50 dark:bg-card">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
                   <group.icon className="h-5 w-5 text-primary" />
@@ -127,8 +137,8 @@ export const SettingsSidebar = memo(({
                       className={cn(
                         "w-full flex items-center justify-between px-4 py-3 text-left transition-colors duration-150",
                         canAccess
-                          ? "hover:bg-zinc-100 dark:hover:bg-kreoon-bg-card active:bg-zinc-200 dark:active:bg-zinc-800"
-                          : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-zinc-900/20"
+                          ? "hover:bg-zinc-100 dark:hover:bg-card active:bg-zinc-200 dark:active:bg-zinc-800"
+                          : "opacity-50 cursor-not-allowed bg-zinc-50 dark:bg-card/20"
                       )}
                     >
                       <div className="flex items-center gap-3">
@@ -188,7 +198,7 @@ export const SettingsSidebar = memo(({
               </div>
               
               {/* Section items */}
-              <div className="space-y-0.5 bg-zinc-50 dark:bg-kreoon-bg-card rounded-lg p-1">
+              <div className="space-y-0.5 bg-zinc-50 dark:bg-card rounded-lg p-1">
                 {group.sections.map((section, idx) => {
                   const canAccess = section.permission.canAccess;
                   const isActive = activeSection === section.key;
@@ -203,7 +213,7 @@ export const SettingsSidebar = memo(({
                         isActive && canAccess
                           ? 'bg-primary text-primary-foreground shadow-sm'
                           : canAccess
-                            ? 'text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-[#14141f] hover:text-zinc-900 dark:hover:text-zinc-100 hover:shadow-sm'
+                            ? 'text-zinc-500 dark:text-zinc-400 hover:bg-white dark:hover:bg-background hover:text-zinc-900 dark:hover:text-zinc-100 hover:shadow-sm'
                             : 'text-zinc-400/40 dark:text-zinc-500/40 cursor-not-allowed'
                       )}
                     >

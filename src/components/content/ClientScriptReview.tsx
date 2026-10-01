@@ -1014,7 +1014,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
             <TabsContent value="admin" className="m-0 p-4 sm:p-6 space-y-4">
               <div className="grid gap-4">
                 {/* Status Card */}
-                <div className="rounded-sm border p-4 bg-slate-50/50 dark:bg-slate-950/20 border-slate-200/50 dark:border-slate-800/50">
+                <div className="rounded-sm border p-4 bg-slate-50/50 dark:bg-background/20 border-slate-200/50 dark:border-slate-800/50">
                   <div className="flex items-center gap-2 mb-3">
                     <CheckSquare className="h-5 w-5" />
                     <h4 className="font-semibold">Estado del guión</h4>
@@ -1052,7 +1052,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                     `${format(new Date(r.requestedAt), "d/MM")} - ${r.types?.join(', ') || 'Cambios solicitados'}`
                   )}
                   emptyText="No hay historial de cambios"
-                  color="bg-gray-50/50 dark:bg-gray-950/20 border-gray-200/50 dark:border-gray-800/50"
+                  color="bg-gray-50/50 dark:bg-background/20 border-gray-200/50 dark:border-gray-800/50"
                 />
 
                 <InfoCard
@@ -1060,7 +1060,7 @@ export function ClientScriptReview({ content, onUpdate, userId, open, onOpenChan
                   title="Indicaciones administrativas"
                   items={adminItems.length > 0 ? adminItems : []}
                   emptyText="Las indicaciones administrativas se generarán junto con el guión"
-                  color="bg-zinc-50/50 dark:bg-zinc-950/20 border-zinc-200/50 dark:border-zinc-800/50"
+                  color="bg-zinc-50/50 dark:bg-background/20 border-zinc-200/50 dark:border-zinc-800/50"
                 />
               </div>
             </TabsContent>

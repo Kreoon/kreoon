@@ -6,12 +6,12 @@ import type { BuilderSection } from "./types";
 
 const FALLBACK_LABELS: Record<string, string> = {
   hero_banner: "Portada",
-  about: "Sobre mi",
+  about: "Sobre mí",
   portfolio: "Portafolio",
   services: "Servicios",
   pricing: "Precios",
-  reviews: "Resenas",
-  verified_reviews: "Resenas verificadas",
+  reviews: "Reseñas",
+  verified_reviews: "Reseñas verificadas",
   contact: "Contacto",
   cta_banner: "CTA",
   whatsapp_button: "WhatsApp",
@@ -25,9 +25,9 @@ export function blockToSection(block: ProfileBlock): BuilderSection {
     blockId: block.id,
     type: block.type,
     label:
-      FALLBACK_LABELS[block.type] || definition?.label || "Seccion avanzada",
+      FALLBACK_LABELS[block.type] || definition?.label || "Sección avanzada",
     description:
-      definition?.description || "Seccion personalizada del portafolio",
+      definition?.description || "Sección personalizada del portafolio",
     isVisible: block.isVisible,
     isRequired: definition?.isRequired ?? false,
     isDeletable: definition?.isDeletable ?? true,

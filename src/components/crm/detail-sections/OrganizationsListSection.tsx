@@ -63,12 +63,12 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
         {organizations.map((org) => (
           <div
             key={org.organization_id}
-            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]"
+            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-muted/40 border border-border"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Building2 className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs text-white/80 truncate">{org.organization_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{org.organization_name}</p>
                 <div className="flex items-center gap-1 mt-0.5">
                   {org.is_owner && (
                     <span className="flex items-center gap-0.5 px-1.5 py-0 rounded-full text-[9px] font-semibold bg-yellow-500/20 text-yellow-400">
@@ -77,11 +77,11 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
                     </span>
                   )}
                   {org.role ? (
-                    <span className={cn('px-1.5 py-0 rounded-full text-[9px] font-medium', ROLE_COLORS[org.role] || 'bg-white/10 text-white/50')}>
+                    <span className={cn('px-1.5 py-0 rounded-full text-[9px] font-medium', ROLE_COLORS[org.role] || 'bg-muted text-muted-foreground/70')}>
                       {org.role}
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0 rounded-full text-[9px] font-medium bg-white/5 text-white/30">
+                    <span className="px-1.5 py-0 rounded-full text-[9px] font-medium bg-muted/40 text-muted-foreground/70">
                       Sin rol
                     </span>
                   )}
@@ -95,8 +95,8 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
                 onClick={() => handleToggleOwner(org.organization_id, org.is_owner)}
                 disabled={loading === 'set_owner'}
                 className={cn(
-                  'p-1 rounded hover:bg-white/10 transition-colors',
-                  org.is_owner ? 'text-yellow-400' : 'text-white/30 hover:text-yellow-400',
+                  'p-1 rounded hover:bg-muted transition-colors',
+                  org.is_owner ? 'text-yellow-400' : 'text-muted-foreground/70 hover:text-yellow-400',
                 )}
                 title={org.is_owner ? 'Quitar propietario' : 'Hacer propietario'}
               >
@@ -109,7 +109,7 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
                   defaultValue={org.role || 'none'}
                   onValueChange={(v) => handleChangeRole(org.organization_id, v)}
                 >
-                  <SelectTrigger className="h-6 w-24 text-[10px] bg-white/5 border-white/10">
+                  <SelectTrigger className="h-6 w-24 text-[10px] bg-muted/40 border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -125,7 +125,7 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
               ) : (
                 <button
                   onClick={() => setEditingRole(org.organization_id)}
-                  className="p-1 rounded hover:bg-white/10 transition-colors text-white/30 hover:text-[#a855f7]"
+                  className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground/70 hover:text-[#a855f7]"
                   title="Cambiar rol"
                 >
                   <Shield className="h-3 w-3" />
@@ -136,7 +136,7 @@ export function OrganizationsListSection({ organizations, userId, onActionComple
               <button
                 onClick={() => handleRemoveFromOrg(org.organization_id)}
                 disabled={loading === 'remove_from_org'}
-                className="p-1 rounded hover:bg-red-500/10 transition-colors text-white/20 hover:text-red-400"
+                className="p-1 rounded hover:bg-red-500/10 transition-colors text-muted-foreground/70 hover:text-red-400"
                 title="Quitar de organización"
               >
                 <Trash2 className="h-3 w-3" />

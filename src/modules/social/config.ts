@@ -176,11 +176,11 @@ export const POST_STATUS_LABELS: Record<string, string> = {
 };
 
 export const POST_STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-gray-500/20 text-gray-400',
+  draft: 'bg-gray-500/20 text-muted-foreground',
   scheduled: 'bg-blue-500/20 text-blue-400',
   publishing: 'bg-yellow-500/20 text-yellow-400',
   published: 'bg-green-500/20 text-green-400',
   partially_published: 'bg-orange-500/20 text-orange-400',
   failed: 'bg-red-500/20 text-red-400',
-  cancelled: 'bg-gray-500/20 text-gray-500',
+  cancelled: 'bg-gray-500/20 text-muted-foreground',
 };

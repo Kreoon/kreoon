@@ -31,7 +31,7 @@ const KreoonInput = React.forwardRef<HTMLInputElement, KreoonInputProps>(
         {label ? (
           <label
             htmlFor={id}
-            className="block text-sm font-medium text-kreoon-text-secondary"
+            className="block text-sm font-medium text-muted-foreground"
           >
             {label}
           </label>
@@ -39,7 +39,7 @@ const KreoonInput = React.forwardRef<HTMLInputElement, KreoonInputProps>(
         <div className="relative">
           {icon ? (
             <div
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-kreoon-text-muted pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
               aria-hidden
             >
               {icon}
@@ -52,8 +52,8 @@ const KreoonInput = React.forwardRef<HTMLInputElement, KreoonInputProps>(
             aria-invalid={hasError}
             aria-describedby={hasError ? `${id}-error` : undefined}
             className={cn(
-              "flex h-10 w-full rounded-sm border bg-kreoon-bg-secondary px-3 py-2 text-sm text-kreoon-text-primary",
-              "placeholder:text-kreoon-text-muted/70",
+              "flex h-10 w-full rounded-sm border bg-muted px-3 py-2 text-sm text-foreground",
+              "placeholder:text-muted-foreground/70",
               "transition-all duration-200 ease-out",
               icon && "pl-10",
               "border-kreoon-border",

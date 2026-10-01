@@ -61,6 +61,19 @@ export const canMoveToStatusLegacy = (
   return false;
 };
 
+/** Roles que gestionan la producción: pueden mover cualquier tarjeta (salvo poner «Archivado») */
+const MANAGEMENT_ROLES = new Set(['strategist', 'digital_strategist', 'creative_strategist', 'team_leader', 'trafficker']);
+
+/** Movimientos permitidos «origen>destino» por rol de producción, siempre sobre sus propios videos */
+const PRODUCTION_MOVES: Record<string, string[]> = {
+  creator: ['assigned>recording', 'recording>recorded', 'issue>corrected'],
+  editor: ['recorded>editing', 'editing>delivered', 'issue>corrected'],
+  client: ['draft>script_approved', 'script_pending>script_approved', 'delivered>approved', 'delivered>issue'],
+};
+
+/** content_creator (canónico) y creator (legado) son el mismo rol para el tablero */
+const normalizeBoardRole = (r: string): string => (r === 'content_creator' ? 'creator' : r);
+
 // Verificar si un movimiento de estado es válido según el rol y las reglas configuradas
 // Ahora acepta múltiples roles para usuarios con permisos combinados (ej: creator + editor)
 export const canMoveToStatusWithRules = (
@@ -73,8 +86,27 @@ export const canMoveToStatusWithRules = (
   rules: StatusRule[],
   allUserRoles?: string[] // Opcional: todos los roles del usuario para verificación combinada
 ): boolean => {
+  // «Archivado» es automático (aprobado por el cliente + pagos completos): nadie lo pone a mano.
+  // La base de datos también lo rechaza (fn_content_archive_rule).
+  if (targetStatus === 'archived' && currentStatus !== 'archived') return false;
+
   // Admin siempre puede mover
   if (role === 'admin' || allUserRoles?.includes('admin')) return true;
+
+  // Mapa fijo para roles de producción (aprobado por Alexander, 2026-10-01). Manda sobre las reglas
+  // configurables, que solo miraban la dirección (un creador podía saltar de «Entregado» a «Aprobado»)
+  // y no revisaban si el video era suyo.
+  const roles = (allUserRoles && allUserRoles.length > 0 ? allUserRoles : [role]).map(normalizeBoardRole);
+  if (roles.some(r => MANAGEMENT_ROLES.has(r))) return true;
+  const mapped = roles.filter(r => r in PRODUCTION_MOVES);
+  if (mapped.length > 0) {
+    const move = `${currentStatus}>${targetStatus}`;
+    return mapped.some(r => {
+      if (r === 'creator' && content.creator_id !== userId) return false;
+      if (r === 'editor' && content.editor_id !== userId) return false;
+      return PRODUCTION_MOVES[r].includes(move);
+    });
+  }
 
   // Encontrar los estados en la configuración de la organización
   const currentOrgStatus = orgStatuses.find(s => s.status_key === currentStatus);

@@ -7,20 +7,16 @@ import { SHARE_MESSAGES, REFERRAL_BILATERAL } from '@/lib/finance/constants';
 import { PromoBanner } from '@/components/referrals/PromoBanner';
 import type { PromotionalCampaign } from '@/types/unified-finance.types';
 
-type TargetPage = 'default' | 'talento' | 'marcas' | 'organizaciones';
+type TargetPage = 'default' | 'talento';
 
 const TARGET_PAGE_PATHS: Record<TargetPage, string> = {
   default: '/r',
-  talento: '/unete/talento',
-  marcas: '/unete/marcas',
-  organizaciones: '/unete/organizaciones',
+  talento: '/registro',
 };
 
 const TARGET_PAGE_LABELS: Record<TargetPage, string> = {
   default: 'Link general',
-  talento: 'Para talento',
-  marcas: 'Para marcas',
-  organizaciones: 'Para organizaciones',
+  talento: 'Registro de creadores',
 };
 
 interface ReferralShareCardProps {
@@ -97,8 +93,8 @@ export function ReferralShareCard({
   if (!code) {
     return (
       <Card className="p-6">
-        <h3 className="text-white font-semibold mb-3">Tu Link de Referido</h3>
-        <p className="text-white/50 text-sm mb-4">Genera tu codigo para empezar a invitar personas.</p>
+        <h3 className="text-foreground font-semibold mb-3">Tu Link de Referido</h3>
+        <p className="text-muted-foreground text-sm mb-4">Genera tu codigo para empezar a invitar personas.</p>
         <Button
           onClick={onGenerateCode}
           disabled={isGenerating}
@@ -116,7 +112,7 @@ export function ReferralShareCard({
 
   return (
     <Card className="p-6">
-      <h3 className="text-white font-semibold mb-4">Tu Link de Referido</h3>
+      <h3 className="text-foreground font-semibold mb-4">Tu Link de Referido</h3>
 
       {/* Rewards preview */}
       <div className="flex flex-wrap gap-2 mb-4">
@@ -130,7 +126,7 @@ export function ReferralShareCard({
 
       {/* Code display */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 font-mono text-sm text-purple-300 truncate">
+        <div className="flex-1 bg-muted/40 border border-border rounded-sm px-4 py-2.5 font-mono text-sm text-purple-300 truncate">
           {code}
         </div>
         <Button
@@ -154,7 +150,7 @@ export function ReferralShareCard({
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 targetPage === page
                   ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                  : 'bg-white/5 text-white/50 border border-white/10 hover:border-white/20'
+                  : 'bg-muted/50 text-muted-foreground border border-border hover:border-border'
               }`}
             >
               {TARGET_PAGE_LABELS[page]}
@@ -165,7 +161,7 @@ export function ReferralShareCard({
 
       {/* URL display */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="flex-1 bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-xs text-white/60 truncate">
+        <div className="flex-1 bg-muted/40 border border-border rounded-sm px-4 py-2.5 text-xs text-muted-foreground truncate">
           {referralUrl}
         </div>
         <Button

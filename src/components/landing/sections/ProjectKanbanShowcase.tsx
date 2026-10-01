@@ -56,7 +56,7 @@ export function ProjectKanbanShowcase() {
                 </span>
               </div>
 
-              <div className="min-h-[300px] rounded-sm border border-white/5 bg-white/[0.02] p-3 backdrop-blur-md shadow-inner">
+              <div className="min-h-[300px] rounded-sm border border-white/5 bg-muted/40 p-3 backdrop-blur-md shadow-inner">
                 <AnimatePresence mode="popLayout">
                   {tasks
                     .filter((task) => task.status === column.id)

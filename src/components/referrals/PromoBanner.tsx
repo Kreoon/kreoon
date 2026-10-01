@@ -85,9 +85,9 @@ export function PromoBanner({ campaign, compact = false }: PromoBannerProps) {
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="text-white font-semibold text-sm">{campaign.name}</h3>
+          <h3 className="text-foreground font-semibold text-sm">{campaign.name}</h3>
           {campaign.description && (
-            <p className="text-white/50 text-xs mt-1 line-clamp-2">{campaign.description}</p>
+            <p className="text-muted-foreground text-xs mt-1 line-clamp-2">{campaign.description}</p>
           )}
 
           {/* Benefits */}
@@ -110,7 +110,7 @@ export function PromoBanner({ campaign, compact = false }: PromoBannerProps) {
           </div>
 
           {/* Countdown + availability */}
-          <div className="flex items-center gap-3 mt-3 text-[10px] text-white/40">
+          <div className="flex items-center gap-3 mt-3 text-[10px] text-muted-foreground/70">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
               Termina en {timeLeft}

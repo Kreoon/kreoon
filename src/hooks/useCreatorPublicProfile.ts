@@ -11,9 +11,11 @@ import { fetchUserSpecializations } from './useUserSpecializations';
 // columnas privadas (stripe_account_id, whatsapp_phone, payout_method, trust_score_breakdown, etc.)
 // que un select('*') expondria a cualquier visitante — la RLS solo filtra filas, no columnas.
 // Debe incluir exactamente lo que mapProfileRow() lee, nada mas.
+// Sin social_links: en esta fase el portafolio publico no publica redes ni contacto
+// (docs/hermes/enlace-profesional/restriccion-contacto.md). Los datos se conservan en privado.
 const PUBLIC_CREATOR_PROFILE_COLUMNS =
   'id, user_id, display_name, slug, bio, bio_full, avatar_url, banner_url, location_city, ' +
-  'location_country, country_flag, categories, content_types, languages, platforms, social_links, ' +
+  'location_country, country_flag, categories, content_types, languages, platforms, ' +
   'level, is_verified, is_available, rating_avg, rating_count, completed_projects, base_price, ' +
   'currency, accepts_product_exchange, exchange_conditions, response_time_hours, ' +
   'on_time_delivery_pct, repeat_clients_pct, marketplace_roles, is_active, profile_customization, ' +

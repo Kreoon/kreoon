@@ -75,12 +75,12 @@ export function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm rounded-3xl border-2 border-white/10 bg-kreoon-bg-card">
+      <DialogContent className="max-w-sm rounded-3xl border-2 border-border bg-card">
         <DialogHeader>
-          <DialogTitle className="text-xl font-extrabold text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-extrabold text-foreground flex items-center gap-2">
             <span aria-hidden="true">📢</span> Compartir
           </DialogTitle>
-          <DialogDescription className="text-sm text-zinc-400">
+          <DialogDescription className="text-sm text-muted-foreground">
             Multiplica el alcance — y ganas <span style={{ color: KREOON_PURPLE }} className="font-bold">+5 XP</span> por compartir.
           </DialogDescription>
         </DialogHeader>
@@ -90,10 +90,10 @@ export function ShareDialog({
             <button
               key={c.key}
               onClick={() => share(c.key)}
-              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all motion-safe:hover:scale-[1.02]"
+              className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 border-border bg-muted/30 hover:bg-muted/60 hover:border-border transition-all motion-safe:hover:scale-[1.02]"
             >
               <span className="text-3xl" aria-hidden="true">{c.emoji}</span>
-              <span className="text-[11px] font-bold text-zinc-200">{c.label}</span>
+              <span className="text-[11px] font-bold text-foreground">{c.label}</span>
             </button>
           ))}
         </div>
@@ -101,11 +101,11 @@ export function ShareDialog({
         <Button
           onClick={() => share('copy')}
           variant="outline"
-          className="w-full h-11 rounded-2xl border-2 border-white/15 hover:bg-white/5 font-bold mt-2"
+          className="w-full h-11 rounded-2xl border-2 border-border hover:bg-muted/50 font-bold mt-2"
         >
           {copied ? (
             <>
-              <Check className="h-4 w-4 mr-2 text-emerald-400" /> Copiado
+              <Check className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" /> Copiado
             </>
           ) : (
             <>

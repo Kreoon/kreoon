@@ -152,7 +152,7 @@ function MetaAdsPickerBody({
   return (
     <div className="flex flex-col sm:flex-row w-full max-w-[680px]">
       {/* Sidebar: Presets */}
-      <div className="flex sm:flex-col gap-1 p-3 sm:w-[180px] border-b sm:border-b-0 sm:border-r border-white/10 overflow-x-auto sm:overflow-x-visible bg-white/[0.02] shrink-0">
+      <div className="flex sm:flex-col gap-1 p-3 sm:w-[180px] border-b sm:border-b-0 sm:border-r border-border overflow-x-auto sm:overflow-x-visible bg-muted/40 shrink-0">
         <span className="hidden sm:block text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-3 pb-1">
           Rango de fechas
         </span>
@@ -164,7 +164,7 @@ function MetaAdsPickerBody({
               'whitespace-nowrap rounded-md px-3 py-1.5 text-xs font-medium transition-colors text-left shrink-0',
               draftPreset === p.key
                 ? 'bg-primary/15 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-white/5',
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50',
             )}
           >
             {p.label}
@@ -186,7 +186,7 @@ function MetaAdsPickerBody({
         </div>
 
         {/* Preview + Comparison toggle */}
-        <div className="border-t border-white/10 px-4 py-3 space-y-2">
+        <div className="border-t border-border px-4 py-3 space-y-2">
           {/* Date preview */}
           <div className="text-xs text-muted-foreground">
             {draftRange.from && draftRange.to ? (
@@ -219,7 +219,7 @@ function MetaAdsPickerBody({
         </div>
 
         {/* Footer buttons */}
-        <div className="flex items-center justify-end gap-2 border-t border-white/10 px-4 py-2">
+        <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-2">
           <Button
             variant="ghost"
             size="sm"
@@ -268,7 +268,7 @@ export function MetaAdsDateRangePicker({
           variant="outline"
           size="sm"
           className={cn(
-            'justify-start text-left font-normal gap-2 h-9 border-white/10 bg-white/5 hover:bg-white/10',
+            'justify-start text-left font-normal gap-2 h-9 border-border bg-muted/50 hover:bg-muted',
             !value && 'text-muted-foreground',
             className,
           )}
@@ -280,7 +280,7 @@ export function MetaAdsDateRangePicker({
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 border-white/10 bg-background" align={align} sideOffset={8}>
+      <PopoverContent className="w-auto p-0 border-border bg-background" align={align} sideOffset={8}>
         <MetaAdsPickerBody
           value={value}
           onChange={onChange}

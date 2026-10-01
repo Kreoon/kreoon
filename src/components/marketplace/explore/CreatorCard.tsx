@@ -143,7 +143,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
         'relative w-full cursor-pointer select-none overflow-hidden rounded-xl',
         'aspect-[9/16]',
         // Nova Design System base — dark: color fijo / light: card oscuro con fallback
-        'bg-card dark:bg-[#0f0f22] border border-border dark:border-purple-500/15',
+        'bg-card dark:bg-background border border-border dark:border-purple-500/15',
         // Hover: sutil escala + glow purple
         'transition-all duration-300 ease-out',
         'hover:scale-[1.025] hover:-translate-y-0.5',
@@ -173,7 +173,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
         {firstMedia && !imgError ? (
           <>
             {!imgLoaded && (
-              <div className="absolute inset-0 bg-[#1a1a35] animate-pulse" />
+              <div className="absolute inset-0 bg-muted animate-pulse" />
             )}
             <img
               src={resolveThumb(firstMedia)}
@@ -205,7 +205,7 @@ function CreatorCardComponent({ creator, onClick, style, priority = false }: Cre
           />
         ) : (
           // Fallback: initial con fondo degradado
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-[#0f0f22]">
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/15 to-background">
             <span className="text-5xl font-bold text-purple-400/60 select-none" aria-hidden="true">
               {creator.display_name.charAt(0).toUpperCase()}
             </span>

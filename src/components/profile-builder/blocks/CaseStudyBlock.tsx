@@ -180,7 +180,7 @@ function CaseStudyBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
             <Input
               value={item.title}
               onChange={(e) => handleUpdateItem(item.id, { title: e.target.value })}
-              placeholder="Titulo del caso"
+              placeholder="Título del caso"
               className="font-semibold"
             />
             <Input

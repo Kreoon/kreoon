@@ -34,7 +34,7 @@ function PhoneFrame({ video }: { video: PortfolioVideo }) {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 w-16 h-4 bg-neutral-800 rounded-b-xl" />
 
         {/* Screen */}
-        <div className="relative overflow-hidden rounded-[1.7rem] bg-neutral-900" style={{ aspectRatio: '9/16' }}>
+        <div className="relative overflow-hidden rounded-[1.7rem] bg-card" style={{ aspectRatio: '9/16' }}>
           <video
             src={`${BUNNY_CDN_BASE}/${video.bunny_video_id}/play_480p.mp4`}
             poster={video.thumbnail_url || `${BUNNY_CDN_BASE}/${video.bunny_video_id}/thumbnail.jpg`}

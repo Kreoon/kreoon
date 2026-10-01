@@ -1,3 +1,4 @@
+import { legacyToolGuard } from "../_shared/legacyToolGuard.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
@@ -6,6 +7,10 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return handleCorsOptions(req);
   }
+
+  // Herramienta heredada: deshabilitada por defecto (ver _shared/legacyToolGuard.ts).
+  const legacyDisabled = legacyToolGuard();
+  if (legacyDisabled) return legacyDisabled;
 
   const corsHeaders = getCorsHeaders(req);
 
@@ -145,7 +150,11 @@ serve(async (req) => {
     // ACTION: migrate_all_users - Create all users from source in Kreoon with temp password
     // Also creates users from profiles that exist in Kreoon DB but not in Auth
     if (action === 'migrate_all_users') {
-      const tempPassword = password || 'Kreoon2026!';
+      // Sin contraseña por defecto en el código: debe venir explícita en la solicitud.
+      if (!password || typeof password !== 'string' || password.length < 12) {
+        return new Response(JSON.stringify({ error: 'password (>=12 caracteres) es requerida' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const tempPassword = password;
       
       // Get all users from source
       const { data: sourceUsers, error: sourceErr } = await sourceClient.auth.admin.listUsers();

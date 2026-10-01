@@ -42,7 +42,7 @@ const sizeMap = {
 function ButtonBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockProps) {
   const config = block.config as ButtonConfig;
   const styles = block.styles;
-  const [localText, setLocalText] = useState(config.text || 'Click aqui');
+  const [localText, setLocalText] = useState(config.text || 'Click aquí');
   const [localUrl, setLocalUrl] = useState(config.url || '#');
 
   const handleBlur = () => {
@@ -66,7 +66,7 @@ function ButtonBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockP
       {IconComponent && config.iconPosition === 'left' && (
         <IconComponent className="h-4 w-4 mr-2" />
       )}
-      {config.text || 'Click aqui'}
+      {config.text || 'Click aquí'}
       {IconComponent && config.iconPosition === 'right' && (
         <IconComponent className="h-4 w-4 ml-2" />
       )}

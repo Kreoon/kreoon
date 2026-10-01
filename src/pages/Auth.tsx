@@ -1,17 +1,18 @@
 import { useEffect, useCallback, useState, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthTabs } from "@/components/auth/AuthTabs";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { useBranding } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
+import { REGISTRATION_BASE } from "@/lib/registration/paths";
+import { getPostAuthDestination, readReturnTo } from "@/lib/routing/postAuth";
 
-export type AuthView = "login" | "register" | "forgot-password";
+export type AuthView = "login" | "forgot-password";
 
 const viewTransition = {
   initial: (dir: number) => ({ opacity: 0, x: dir > 0 ? 12 : -12 }),
@@ -21,34 +22,22 @@ const viewTransition = {
 };
 
 function getInitialView(tab: string | null): AuthView {
-  if (tab === "register") return "register";
   if (tab === "forgot-password") return "forgot-password";
   return "login";
 }
 
 export default function Auth() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, loading: authLoading, rolesLoaded, roles, profile } = useAuth();
+  const { user, loading: authLoading, rolesLoaded, roles, activeRole, profile } = useAuth();
 
   const tabParam = searchParams.get("tab");
-  const roleParam = searchParams.get("role");
-  const intentParam = searchParams.get("intent");
-  const nextParam = searchParams.get("next"); // Para redirecciones específicas (ej: /welcome/ugc-colombia)
+  // Destino de retorno (?volver=, o el heredado ?next=): solo rutas internas validadas (evita open redirect)
+  const nextParam = readReturnTo(searchParams);
 
   const [view, setView] = useState<AuthView>(() => getInitialView(tabParam));
   const [direction, setDirection] = useState(0);
-  const initialRole =
-    roleParam && ["creator", "editor", "client"].includes(roleParam)
-      ? roleParam
-      : null;
-
-  // Map intent param to RegistrationIntent
-  const initialIntent =
-    intentParam && ["talent", "brand", "organization", "join"].includes(intentParam)
-      ? (intentParam as "talent" | "brand" | "organization" | "join")
-      : null;
-
   useEffect(() => {
     setView(getInitialView(tabParam));
   }, [tabParam]);
@@ -59,105 +48,65 @@ export default function Auth() {
   useEffect(() => {
     if (!user || authLoading || !branding.resolved_org_id || orgAutoSelectedRef.current) return;
     orgAutoSelectedRef.current = true;
-    // Set the user's current_organization_id to the domain-resolved org
+    // Visitar un dominio NO concede membresía ni cambia de contexto por sí solo: el contexto activo
+    // solo se ajusta a la organización del dominio si la persona YA es miembro de ella.
+    const resolvedOrgId = branding.resolved_org_id;
     supabase
-      .from("profiles")
-      .update({ current_organization_id: branding.resolved_org_id })
-      .eq("id", user.id)
-      .then(() => {
-        // The auth context will pick up the change via its listener
+      .from("organization_members")
+      .select("id")
+      .eq("organization_id", resolvedOrgId)
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .limit(1)
+      .maybeSingle()
+      .then(({ data: membership }) => {
+        if (!membership) return;
+        return supabase.from("profiles").update({ current_organization_id: resolvedOrgId }).eq("id", user.id);
       });
   }, [user, authLoading, branding.resolved_org_id]);
 
   useEffect(() => {
     if (!user || authLoading || !rolesLoaded) return;
 
-    // Si hay un parámetro next, redirigir a esa URL
-    // Esto permite que usuarios que inician sesión desde ugccolombia.co lleguen a /welcome/ugc-colombia
-    if (nextParam) {
-      navigate(nextParam, { replace: true });
+    // Un destino explícito (o la vuelta al paso /continuar del registro) se respeta si es interno.
+    // Los roles existentes van a su espacio habitual: ver src/lib/routing/postAuth.ts.
+    const direct = getPostAuthDestination({ roles, activeRole, next: nextParam });
+    if (roles.length > 0 || direct !== "/registro") {
+      navigate(direct, { replace: true });
       return;
     }
 
-    // User has roles in an organization - navigate to their dashboard
-    if (roles.length > 0) {
-      if (roles.includes("admin")) {
-        navigate("/dashboard", { replace: true });
-        return;
-      }
-      if (roles.includes("strategist")) {
-        navigate("/strategist-dashboard", { replace: true });
-        return;
-      }
-      if (roles.includes("creator") || roles.includes("content_creator") || roles.includes("ambassador")) {
-        navigate("/creator-dashboard", { replace: true });
-        return;
-      }
-      if (roles.includes("editor")) {
-        navigate("/editor-dashboard", { replace: true });
-        return;
-      }
-      if (roles.includes("client")) {
-        navigate("/client-dashboard", { replace: true });
-        return;
-      }
-    }
-
-    // User has no roles - check if they're a talent or brand
-    const checkUserType = async () => {
+    // Sin roles: marcas independientes y talento con perfil conservan su acceso; una identidad sin
+    // nada se lleva a confirmar su alta como creador (nunca a elegir marca u organización).
+    let cancelled = false;
+    (async () => {
       try {
-        // Check if user has a creator_profile (talent)
-        const { data: creatorProfile } = await supabase
-          .from('creator_profiles')
-          .select('id, is_active, bio, avatar_url')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (creatorProfile) {
-          // User is a talent - check if they completed onboarding
-          const hasCompletedProfile = creatorProfile.bio && creatorProfile.avatar_url;
-          if (hasCompletedProfile) {
-            // Profile completed - go to marketplace
-            // ProtectedRoute will redirect to /unlock-access if gate is enabled and not unlocked
-            navigate("/marketplace", { replace: true });
-          } else {
-            // Profile not completed - go to welcome/wizard
-            navigate("/welcome-talent", { replace: true });
-          }
-          return;
-        }
-
-        // Check if user is a brand member
-        const { data: brandMember } = await supabase
-          .from('brand_members')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-
-        if (brandMember) {
-          // User is a brand - go to marketplace
-          navigate("/marketplace", { replace: true });
-          return;
-        }
-
-        // User has no profile type yet - default to talent flow
-        navigate("/welcome-talent", { replace: true });
+        const [{ data: creatorProfile }, { data: brandMember }] = await Promise.all([
+          supabase.from("creator_profiles").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
+          supabase.from("brand_members").select("id").eq("user_id", user.id).limit(1).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        navigate(
+          getPostAuthDestination({
+            roles,
+            hasCreatorProfile: Boolean(creatorProfile),
+            isBrandMember: Boolean(brandMember),
+          }),
+          { replace: true },
+        );
       } catch (error) {
-        console.error('Error checking user type:', error);
-        navigate("/welcome-talent", { replace: true });
+        console.error("Error checking user type:", error);
+        if (!cancelled) navigate("/registro", { replace: true });
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-
-    checkUserType();
-  }, [user, authLoading, rolesLoaded, roles, navigate, nextParam]);
+  }, [user, authLoading, rolesLoaded, roles, activeRole, navigate, nextParam]);
 
   const setViewAndSyncUrl = useCallback(
     (nextView: AuthView) => {
-      setDirection(
-        nextView === "register" || nextView === "forgot-password" ? 1 : -1,
-      );
+      setDirection(nextView === "forgot-password" ? 1 : -1);
       setView(nextView);
       const next = new URLSearchParams(searchParams);
       next.set("tab", nextView);
@@ -165,6 +114,15 @@ export default function Auth() {
     },
     [searchParams, setSearchParams],
   );
+
+  const goToRegistration = useCallback(() => {
+    navigate(REGISTRATION_BASE, { replace: false });
+  }, [navigate]);
+
+  // El alta ya no vive en /auth: el redirect genérico de /registro filtra la query (UTM/ref/next).
+  if (tabParam === "register") {
+    return <Navigate to={`${REGISTRATION_BASE}${location.search}`} replace />;
+  }
 
   if (authLoading || (user && !rolesLoaded)) {
     return (
@@ -199,34 +157,14 @@ export default function Auth() {
             >
               <AuthTabs
                 activeTab="login"
-                onTabChange={(tab) => setViewAndSyncUrl(tab)}
+                onTabChange={(tab) => {
+                  if (tab === "register") goToRegistration();
+                  else setViewAndSyncUrl(tab);
+                }}
               />
               <LoginForm
                 onForgotPassword={() => setViewAndSyncUrl("forgot-password")}
-                onSwitchToRegister={() => setViewAndSyncUrl("register")}
-              />
-            </motion.div>
-          )}
-
-          {view === "register" && (
-            <motion.div
-              key="register"
-              custom={direction}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              variants={viewTransition}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              <AuthTabs
-                activeTab="register"
-                onTabChange={(tab) => setViewAndSyncUrl(tab)}
-              />
-              <RegisterForm
-                onSwitchToLogin={() => setViewAndSyncUrl("login")}
-                preselectedRole={initialRole ?? undefined}
-                initialIntent={initialIntent}
+                onSwitchToRegister={goToRegistration}
               />
             </motion.div>
           )}

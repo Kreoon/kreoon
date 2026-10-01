@@ -18,7 +18,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <state.selectedGroup.icon className="w-4 h-4 text-purple-400" />
-              <span className="text-sm text-white font-medium">{state.selectedGroup.name}</span>
+              <span className="text-sm text-foreground font-medium">{state.selectedGroup.name}</span>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {state.selectedServices.map((s) => {
@@ -43,7 +43,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
             {formatGoal(state.responses.primary_goal)}
           </p>
           {state.responses.goal_description && (
-            <p className="text-xs text-gray-400 mt-1">{state.responses.goal_description}</p>
+            <p className="text-xs text-muted-foreground mt-1">{state.responses.goal_description}</p>
           )}
         </ReviewCard>
       )}
@@ -66,7 +66,7 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
           {Array.isArray(state.responses.target_interests) && state.responses.target_interests.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-2">
               {state.responses.target_interests.map((interest: string) => (
-                <span key={interest} className="px-2 py-0.5 rounded-full bg-muted/50 border border-border text-xs text-gray-400">
+                <span key={interest} className="px-2 py-0.5 rounded-full bg-muted/50 border border-border text-xs text-muted-foreground">
                   {interest}
                 </span>
               ))}
@@ -84,15 +84,15 @@ export function ReviewStep({ state, onEdit }: ReviewStepProps) {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Mic className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-500">Sin audio</span>
+            <Mic className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">Sin audio</span>
           </div>
         )}
       </ReviewCard>
 
       {/* References */}
       <ReviewCard title="Referencias" onEdit={() => onEdit('references')}>
-        <div className="flex items-center gap-4 text-xs text-gray-400">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <LinkIcon className="w-3 h-3" />
             {state.referenceLinks.length} producto
@@ -125,7 +125,7 @@ function ReviewCard({
   return (
     <div className="rounded-sm border border-border bg-muted/50 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider">{title}</h4>
+        <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</h4>
         <button
           onClick={onEdit}
           className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"

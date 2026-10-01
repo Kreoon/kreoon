@@ -363,7 +363,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
                 className={cn(
                   avatarSizeClasses[avatarSize],
                   avatarShapeClasses[avatarShape],
-                  'object-cover border-4 border-white/10 shadow-2xl'
+                  'object-cover border-4 border-border shadow-2xl'
                 )}
                 loading="eager"
                 decoding="async"
@@ -373,10 +373,10 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
                 className={cn(
                   avatarSizeClasses[avatarSize],
                   avatarShapeClasses[avatarShape],
-                  'bg-white/10 flex items-center justify-center border-4 border-white/10'
+                  'bg-muted flex items-center justify-center border-4 border-border'
                 )}
               >
-                <span className="text-4xl md:text-5xl text-white/40">?</span>
+                <span className="text-4xl md:text-5xl text-muted-foreground">?</span>
               </div>
             )}
             {isEditing && isSelected && userId && (
@@ -387,7 +387,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
                 )}
                 onClick={() => openMediaPicker('avatarUrl')}
               >
-                <Camera className="h-6 w-6 text-white" />
+                <Camera className="h-6 w-6 text-foreground" />
               </button>
             )}
           </div>
@@ -414,22 +414,22 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
           <div
             className={cn(
               'group relative',
-              isEditing && isSelected && 'cursor-pointer hover:bg-white/5 rounded-md px-2 py-1 -mx-2 transition-colors'
+              isEditing && isSelected && 'cursor-pointer hover:bg-muted/50 rounded-md px-2 py-1 -mx-2 transition-colors'
             )}
             onClick={() => isEditing && isSelected && openEditor('headline', content.headline || 'Tu nombre')}
           >
             {isHtml(content.headline || '') ? (
               <SafeHtml
                 html={content.headline || 'Tu nombre'}
-                className="text-2xl md:text-4xl lg:text-5xl font-bold text-white"
+                className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground"
               />
             ) : (
-              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-foreground">
                 {content.headline || 'Tu nombre'}
               </h1>
             )}
             {isEditing && isSelected && (
-              <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             )}
           </div>
 
@@ -438,23 +438,23 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
             <div
               className={cn(
                 'group relative max-w-xl',
-                isEditing && isSelected && 'cursor-pointer hover:bg-white/5 rounded-md px-2 py-1 -mx-2 transition-colors'
+                isEditing && isSelected && 'cursor-pointer hover:bg-muted/50 rounded-md px-2 py-1 -mx-2 transition-colors'
               )}
               onClick={() => isEditing && isSelected && openEditor('subheadline', content.subheadline || '')}
             >
               {content.subheadline ? (
                 isHtml(content.subheadline) ? (
-                  <SafeHtml html={content.subheadline} className="text-base md:text-lg lg:text-xl text-white/70" />
+                  <SafeHtml html={content.subheadline} className="text-base md:text-lg lg:text-xl text-muted-foreground" />
                 ) : (
-                  <p className="text-base md:text-lg lg:text-xl text-white/70">{content.subheadline}</p>
+                  <p className="text-base md:text-lg lg:text-xl text-muted-foreground">{content.subheadline}</p>
                 )
               ) : (
-                <span className="text-base md:text-lg text-white/40 italic">
+                <span className="text-base md:text-lg text-muted-foreground italic">
                   {isEditing ? 'Haz clic para agregar tu tagline...' : 'Transformo ideas en contenido que conecta'}
                 </span>
               )}
               {isEditing && isSelected && (
-                <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               )}
             </div>
           )}
@@ -467,7 +467,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
                 className="bg-white text-zinc-900 hover:bg-white/90 font-semibold px-8 shadow-lg"
                 onClick={handleCtaClick}
               >
-                {config.ctaText || 'Ver Portfolio'}
+                {config.ctaText || 'Ver Portafolio'}
               </Button>
             </div>
           )}
@@ -484,7 +484,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
         placeholder={
           editingField === 'headline'
             ? 'Tu nombre o titulo...'
-            : 'Una breve descripcion de lo que haces...'
+            : 'Una breve descripción de lo que haces...'
         }
         mode={editingField === 'headline' ? 'inline' : 'block'}
       />

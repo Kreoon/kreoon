@@ -80,8 +80,8 @@ export function PostCard({
   return (
     <article
       className={cn(
-        'rounded-3xl bg-kreoon-bg-card border-2 border-white/10 p-5 md:p-6',
-        'motion-safe:hover:border-white/20 motion-safe:hover:-translate-y-0.5 transition-all duration-300',
+        'rounded-3xl bg-card border-2 border-border p-5 md:p-6',
+        'motion-safe:hover:border-border motion-safe:hover:-translate-y-0.5 transition-all duration-300',
         post.is_pinned && 'border-l-4'
       )}
       style={post.is_pinned ? { borderLeftColor: '#7c3aed' } : undefined}
@@ -91,16 +91,16 @@ export function PostCard({
         <Avatar profile={post.author} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold text-base text-zinc-100">
+            <span className="font-bold text-base text-foreground">
               {post.author?.full_name ?? 'Usuario'}
             </span>
             {post.is_pinned && (
-              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7c3aed]/20 text-[#c084fc] border border-[#7c3aed]/40">
+              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7c3aed]/20 text-[#7c3aed] dark:text-[#c084fc] border border-[#7c3aed]/40">
                 <Pin className="h-2.5 w-2.5" /> Fijado
               </span>
             )}
             {post.is_announcement && (
-              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <span className="text-[10px] font-bold flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                 <Megaphone className="h-2.5 w-2.5" /> Anuncio
               </span>
             )}
@@ -117,21 +117,21 @@ export function PostCard({
               </span>
             )}
           </div>
-          <div className="text-xs text-zinc-500 mt-0.5">{timeAgo}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">{timeAgo}</div>
         </div>
         {canDelete && (
           <div className="relative">
             <button
               onClick={() => setShowActions((v) => !v)}
-              className="text-zinc-500 hover:text-zinc-300 p-1"
+              className="text-muted-foreground hover:text-foreground p-1"
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
             {showActions && (
-              <div className="absolute right-0 top-7 z-10 bg-kreoon-bg-secondary border border-white/10 rounded-lg overflow-hidden min-w-[140px]">
+              <div className="absolute right-0 top-7 z-10 bg-muted border border-border rounded-lg overflow-hidden min-w-[140px]">
                 <button
                   onClick={handleDelete}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-300 hover:bg-rose-500/10"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-rose-700 dark:text-rose-300 hover:bg-rose-500/10"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> Eliminar
                 </button>
@@ -147,7 +147,7 @@ export function PostCard({
       {/* Body */}
       <div
         className={cn(
-          'prose prose-invert prose-sm max-w-none text-zinc-300',
+          'prose prose-invert prose-sm max-w-none text-muted-foreground',
           !showFull && 'line-clamp-3'
         )}
         dangerouslySetInnerHTML={{ __html: bodyHtmlClean }}
@@ -155,7 +155,7 @@ export function PostCard({
       {post.body.length > 280 && !showFull && (
         <button
           onClick={() => setShowFull(true)}
-          className="text-sm text-purple-400 hover:text-purple-300 mt-1"
+          className="text-sm text-primary hover:text-primary/80 mt-1"
         >
           Ver más
         </button>
@@ -171,7 +171,7 @@ export function PostCard({
           <div
             className={cn(
               'mt-3 gap-2 rounded-xl overflow-hidden',
-              isSingle ? 'flex justify-center bg-black/20' : 'grid grid-cols-2'
+              isSingle ? 'flex justify-center bg-muted/60' : 'grid grid-cols-2'
             )}
           >
             {post.media_urls.slice(0, 4).map((url, i) => {
@@ -237,7 +237,7 @@ export function PostCard({
       )}
 
       {/* Reactions */}
-      <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-3">
+      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
         <div className="flex items-center gap-1">
           {REACTIONS.map((r) => {
             const isActive = myReaction === r.key;
@@ -248,30 +248,30 @@ export function PostCard({
                 title={r.label}
                 className={cn(
                   'flex items-center gap-1 px-2 py-1 rounded text-xs transition-colors',
-                  isActive ? 'bg-white/10' : 'hover:bg-white/5'
+                  isActive ? 'bg-muted' : 'hover:bg-muted/50'
                 )}
                 style={isActive ? { color: r.color } : undefined}
               >
-                <r.icon className={cn('h-3.5 w-3.5', !isActive && 'text-zinc-500')} />
+                <r.icon className={cn('h-3.5 w-3.5', !isActive && 'text-muted-foreground')} />
               </button>
             );
           })}
           {post.like_count > 0 && (
-            <span className="text-xs text-zinc-500 ml-1">{post.like_count}</span>
+            <span className="text-xs text-muted-foreground ml-1">{post.like_count}</span>
           )}
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => onCommentClick?.(post.id)}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             {post.comment_count > 0 ? `${post.comment_count} comentarios` : 'Comentar'}
           </button>
           <button
             onClick={() => setShareOpen(true)}
-            className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
             title="Compartir (+5 XP)"
           >
             <Share2 className="h-3.5 w-3.5" />
@@ -337,7 +337,7 @@ function PollDisplay({
               setSelected(next);
               if (!post.poll_allows_multiple) onVote([opt.id]);
             }}
-            className="w-full relative p-3 rounded-lg border border-white/10 bg-white/5 hover:border-white/20 transition-colors overflow-hidden text-left"
+            className="w-full relative p-3 rounded-lg border border-border bg-muted/50 hover:border-border transition-colors overflow-hidden text-left"
           >
             {(hasVoted || totalVotes > 0) && (
               <div
@@ -348,7 +348,7 @@ function PollDisplay({
             <div className="relative flex items-center justify-between text-sm">
               <span>{opt.text}</span>
               {(hasVoted || totalVotes > 0) && (
-                <span className="text-xs text-zinc-400">
+                <span className="text-xs text-muted-foreground">
                   {pct}% · {opt.vote_count}
                 </span>
               )}
@@ -375,13 +375,13 @@ function Avatar({ profile }: { profile: any }) {
       <img
         src={profile.avatar_url}
         alt=""
-        className="h-12 w-12 rounded-2xl object-cover border-2 border-white/10 shadow-lg flex-shrink-0"
+        className="h-12 w-12 rounded-2xl object-cover border-2 border-border shadow-lg flex-shrink-0"
       />
     );
   }
   return (
     <div
-      className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-base border-2 border-white/10 shadow-lg flex-shrink-0"
+      className="h-12 w-12 rounded-2xl flex items-center justify-center text-white font-bold text-base border-2 border-border shadow-lg flex-shrink-0"
       style={{
         background: 'linear-gradient(135deg, #7c3aed80, #7c3aed30)',
       }}

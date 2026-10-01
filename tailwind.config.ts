@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 export default {
   darkMode: ["class"],
@@ -90,7 +91,8 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			violet: 'hsl(var(--violet))',
+  			// Objeto (no string): un string anulaba toda la escala violet-50…950 y dejaba botones invisibles en ~59 archivos
+  			violet: { ...colors.violet, DEFAULT: 'hsl(var(--violet))' },
   			bronze: 'hsl(var(--level-bronze))',
   			silver: 'hsl(var(--level-silver))',
   			gold: 'hsl(var(--level-gold))',
@@ -117,10 +119,10 @@ export default {
   			'kreoon-bg-primary': '#0a0a0f',
   			'kreoon-bg-secondary': '#12121a',
   			'kreoon-bg-card': '#1a1a24',
-  			'kreoon-purple-500': '#7c3aed',
-  			'kreoon-purple-400': '#a855f7',
-  			'kreoon-purple-600': '#6d28d9',
-  			'kreoon-purple-glow': 'rgba(124, 58, 237, 0.3)',
+  			'kreoon-purple-500': '#6D4AFF',
+  			'kreoon-purple-400': '#9A82FF',
+  			'kreoon-purple-600': '#5A38E0',
+  			'kreoon-purple-glow': 'rgba(109, 74, 255, 0.3)',
   			'kreoon-border': 'rgba(139, 92, 246, 0.2)',
   			'kreoon-text-primary': '#ffffff',
   			'kreoon-text-secondary': '#a1a1aa',
@@ -131,12 +133,12 @@ export default {
   			'nova-bg-surface': '#0a0a18',
   			'nova-bg-elevated': '#0f0f22',
   			'nova-bg-hover': '#141428',
-  			'nova-accent-primary': '#8b5cf6',
-  			'nova-accent-secondary': '#06b6d4',
-  			'nova-accent-glow': '#c084fc',
-  			'nova-aurora-1': '#7c3aed',
-  			'nova-aurora-2': '#db2777',
-  			'nova-aurora-3': '#06b6d4',
+  			'nova-accent-primary': '#9A82FF',
+  			'nova-accent-secondary': '#6FD6A8',
+  			'nova-accent-glow': '#C6B8FF',
+  			'nova-aurora-1': '#6D4AFF',
+  			'nova-aurora-2': '#FF8F7A',
+  			'nova-aurora-3': '#6FD6A8',
   			'nova-text-bright': '#fafafa',
   			'nova-text-primary': '#e4e4e7',
   			'nova-text-secondary': '#a1a1aa',
@@ -151,7 +153,9 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
   			xl: 'calc(var(--radius) + 4px)',
-  			'2xl': 'calc(var(--radius) + 8px)'
+  			'2xl': 'calc(var(--radius) + 8px)',
+  			card: 'var(--radius-card)',
+  			control: 'var(--radius-control)'
   		},
   		keyframes: {
   			'accordion-down': {
@@ -425,14 +429,16 @@ export default {
   			'gradient-subtle': 'var(--gradient-subtle)',
   			'gradient-card': 'var(--gradient-card)',
   			'gradient-glow': 'var(--gradient-glow)',
-  			'kreoon-gradient': 'linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)',
+  			'kreoon-gradient': 'linear-gradient(135deg, #6D4AFF 0%, #9A82FF 100%)',
   			'kreoon-gradient-dark': 'linear-gradient(135deg, #1a1a24 0%, #0a0a0f 100%)'
   		},
   		boxShadow: {
+  			soft: 'var(--shadow-soft)',
+  			raised: 'var(--shadow-raised)',
   			glow: 'var(--shadow-glow)',
   			violet: 'var(--shadow-violet)',
   			'glow-sm': '0 0 15px hsl(282 100% 36% / 0.2)',
-  			'kreoon-glow': '0 0 40px rgba(124, 58, 237, 0.3)',
+  			'kreoon-glow': '0 0 40px rgba(109, 74, 255, 0.3)',
   			'kreoon-glow-lg': '0 0 60px rgba(124, 58, 237, 0.4)'
   		}
   	}

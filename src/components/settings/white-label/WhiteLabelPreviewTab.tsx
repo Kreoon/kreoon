@@ -128,7 +128,7 @@ export default function WhiteLabelPreviewTab() {
             <CardContent>
               <div className="rounded-sm border bg-card overflow-hidden max-w-md mx-auto">
                 {/* Email header */}
-                <div className="p-4 text-center border-b border-white/10">
+                <div className="p-4 text-center border-b border-border">
                   <div className="inline-block h-12 w-12 rounded-sm overflow-hidden mb-2">
                     {orgBranding?.logoUrl ? (
                       <img src={orgBranding.logoUrl} alt="Logo" className="h-12 w-12 object-contain" />
@@ -145,10 +145,10 @@ export default function WhiteLabelPreviewTab() {
 
                 {/* Email body */}
                 <div className="p-6 text-center">
-                  <h3 className="text-white text-base font-semibold mb-2">
+                  <h3 className="text-foreground text-base font-semibold mb-2">
                     Nuevo contenido asignado
                   </h3>
-                  <p className="text-gray-400 text-xs mb-4">
+                  <p className="text-muted-foreground text-xs mb-4">
                     Se te ha asignado un nuevo contenido para producción
                   </p>
                   <div
@@ -160,14 +160,14 @@ export default function WhiteLabelPreviewTab() {
                 </div>
 
                 {/* Email footer */}
-                <div className="border-t border-white/10 p-4 text-center">
-                  <p className="text-gray-500 text-[10px]">
+                <div className="border-t border-border p-4 text-center">
+                  <p className="text-muted-foreground text-[10px]">
                     {effectivePlatformName} — {effectiveSupportEmail}
                   </p>
                 </div>
 
                 {/* Sender info */}
-                <div className="bg-black/30 px-4 py-2 text-[10px] text-gray-500">
+                <div className="bg-muted px-4 py-2 text-[10px] text-muted-foreground">
                   <p>
                     De: {orgBranding?.senderName || effectivePlatformName}{' '}
                     &lt;{capabilities.customSenderDomain && orgBranding?.senderEmail
@@ -188,7 +188,7 @@ export default function WhiteLabelPreviewTab() {
               <CardDescription>Así verán tus miembros la pantalla de inicio de sesión</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-sm border bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] overflow-hidden max-w-sm mx-auto">
+              <div className="rounded-sm border bg-gradient-to-b from-background to-muted overflow-hidden max-w-sm mx-auto">
                 {/* Auth header */}
                 <div className="p-8 flex flex-col items-center gap-3">
                   <div className="h-14 w-14 rounded-sm overflow-hidden">
@@ -198,18 +198,18 @@ export default function WhiteLabelPreviewTab() {
                       className="h-14 w-14 object-contain"
                     />
                   </div>
-                  <h2 className="text-white text-lg font-bold">{effectivePlatformName}</h2>
+                  <h2 className="text-foreground text-lg font-bold">{effectivePlatformName}</h2>
                 </div>
 
                 {/* Mock form */}
                 <div className="px-8 pb-4 space-y-3">
                   <div className="space-y-1.5">
-                    <p className="text-[10px] text-gray-400 uppercase">Email</p>
-                    <div className="h-8 rounded-sm bg-white/5 border border-white/10" />
+                    <p className="text-[10px] text-muted-foreground uppercase">Email</p>
+                    <div className="h-8 rounded-sm bg-muted/50 border border-border" />
                   </div>
                   <div className="space-y-1.5">
-                    <p className="text-[10px] text-gray-400 uppercase">Contraseña</p>
-                    <div className="h-8 rounded-sm bg-white/5 border border-white/10" />
+                    <p className="text-[10px] text-muted-foreground uppercase">Contraseña</p>
+                    <div className="h-8 rounded-sm bg-muted/50 border border-border" />
                   </div>
                   <div
                     className="h-9 rounded-sm flex items-center justify-center text-white text-xs font-medium mt-2"
@@ -220,8 +220,8 @@ export default function WhiteLabelPreviewTab() {
                 </div>
 
                 {/* Domain */}
-                <div className="border-t border-white/10 p-3 text-center">
-                  <p className="text-[10px] text-gray-500">
+                <div className="border-t border-border p-3 text-center">
+                  <p className="text-[10px] text-muted-foreground">
                     {orgBranding?.customDomain
                       ? orgBranding.customDomain
                       : orgBranding?.slug

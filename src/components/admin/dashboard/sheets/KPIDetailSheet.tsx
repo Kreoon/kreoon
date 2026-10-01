@@ -35,7 +35,7 @@ export function KPIDetailSheet({ type, isOpen, onClose, stats, aiStats }: KPIDet
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
         side="right"
-        className="sm:max-w-2xl w-full p-0 overflow-hidden bg-[#1a1a2e] border-white/10"
+        className="sm:max-w-2xl w-full p-0 overflow-hidden bg-[#1a1a2e] border-border"
       >
         <SheetTitle className="sr-only">
           {type ? KPI_TITLES[type] : "Detalle KPI"}

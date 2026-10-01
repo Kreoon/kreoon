@@ -75,7 +75,7 @@ export function LevelBadge({
         {showProgress && nextTier && xp != null && (
           <div className="mt-1">
             <div
-              className="h-1 w-24 bg-white/5 rounded-full overflow-hidden"
+              className="h-1 w-24 bg-muted/50 rounded-full overflow-hidden"
               role="progressbar"
               aria-valuenow={Math.round(progressPct)}
               aria-valuemin={0}
@@ -87,7 +87,7 @@ export function LevelBadge({
                 style={{ width: `${progressPct}%`, backgroundColor: accentColor }}
               />
             </div>
-            <div className="text-[10px] text-zinc-300 mt-0.5 font-mono">
+            <div className="text-[10px] text-muted-foreground mt-0.5 font-mono">
               {xp} / {nextTier.min_xp} XP
             </div>
           </div>

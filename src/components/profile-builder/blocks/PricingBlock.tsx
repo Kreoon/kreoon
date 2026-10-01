@@ -49,7 +49,7 @@ interface PricingContent {
 const DEFAULT_PACKAGES: PricingPackage[] = [
   {
     id: '1',
-    name: 'Basico',
+    name: 'Básico',
     price: '200',
     currency: 'USD',
     features: ['1 video UGC', 'Entrega en 5 dias', '1 revision'],
@@ -57,7 +57,7 @@ const DEFAULT_PACKAGES: PricingPackage[] = [
   },
   {
     id: '2',
-    name: 'Estandar',
+    name: 'Estándar',
     price: '400',
     currency: 'USD',
     features: ['3 videos UGC', 'Entrega en 7 dias', '2 revisiones', 'Licencia comercial'],
@@ -512,7 +512,7 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate, userId 
             )
           ) : (
             <span className="text-muted-foreground/50 text-sm italic">
-              {isEditing ? 'Haz clic para agregar descripcion...' : 'Elige el paquete que mejor se adapte a tus necesidades'}
+              {isEditing ? 'Haz clic para agregar descripción...' : 'Elige el paquete que mejor se adapte a tus necesidades'}
             </span>
           )}
           {isEditing && isSelected && (
@@ -685,8 +685,8 @@ function PricingBlockComponent({ block, isEditing, isSelected, onUpdate, userId 
         onOpenChange={(open) => !open && closeEditor()}
         initialContent={editingContent}
         onSave={handleSave}
-        title={editingField === 'title' ? 'Editar titulo' : 'Editar descripcion'}
-        placeholder={editingField === 'title' ? 'Titulo de precios...' : 'Descripcion de tus paquetes...'}
+        title={editingField === 'title' ? 'Editar titulo' : 'Editar descripción'}
+        placeholder={editingField === 'title' ? 'Título de precios...' : 'Descripción de tus paquetes...'}
         mode={editingField === 'subtitle' ? 'block' : 'inline'}
       />
     </div>

@@ -83,7 +83,7 @@ export default function AcademiaPublicLandingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando...
       </div>
     );
@@ -91,10 +91,10 @@ export default function AcademiaPublicLandingPage() {
 
   if (!landing || landing.error) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3 px-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3 px-6">
         <h1 className="text-2xl font-bold">Academia no disponible</h1>
         <p>Esta academia no existe o no es pública.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Explorar academias →
         </Link>
       </div>
@@ -116,33 +116,33 @@ export default function AcademiaPublicLandingPage() {
   const safeVideoUrl = safeUrl(landing.landing_video_url);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       {/* HERO */}
       <section
         className="relative px-4 md:px-8 py-16 md:py-24 overflow-hidden"
         style={{
           background: safeCoverUrl
             ? `linear-gradient(135deg, ${accent}40 0%, transparent 60%), ${cssUrl(safeCoverUrl)} center/cover`
-            : `linear-gradient(135deg, ${accent}50, #0a0a0f)`,
+            : `linear-gradient(135deg, ${accent}50, hsl(var(--background)))`,
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="relative max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-4">
             {safeLogoUrl && (
               <img src={safeLogoUrl} alt={landing.name}
-                className="h-14 w-14 rounded-xl object-cover border-2 border-white/10" />
+                className="h-14 w-14 rounded-xl object-cover border-2 border-border" />
             )}
             <div>
-              <h1 className="text-3xl md:text-5xl font-extrabold text-white">{landing.name}</h1>
-              <div className="text-sm text-zinc-300 flex items-center gap-3 mt-1">
+              <h1 className="text-3xl md:text-5xl font-extrabold text-foreground">{landing.name}</h1>
+              <div className="text-sm text-muted-foreground flex items-center gap-3 mt-1">
                 <span className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
                   {landing.member_count.toLocaleString()} miembros
                 </span>
                 {landing.avg_rating && (
                   <span className="flex items-center gap-1">
-                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-600 dark:text-amber-400" />
                     {Number(landing.avg_rating).toFixed(1)} ({landing.rating_count})
                   </span>
                 )}
@@ -156,7 +156,7 @@ export default function AcademiaPublicLandingPage() {
             </h2>
           )}
           {landing.landing_subheadline && (
-            <p className="text-lg text-zinc-300 mt-3 max-w-2xl">
+            <p className="text-lg text-muted-foreground mt-3 max-w-2xl">
               {landing.landing_subheadline}
             </p>
           )}
@@ -205,14 +205,14 @@ export default function AcademiaPublicLandingPage() {
 
       {/* CURSOS PREVIEW */}
       {landing.courses?.length > 0 && (
-        <section className="px-4 md:px-8 py-12 bg-white/[0.02]">
+        <section className="px-4 md:px-8 py-12 bg-muted/30">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Cursos incluidos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {landing.courses.map((c: any) => {
                 const safeCourseImg = safeUrl(c.cover_image_url);
                 return (
-                <Card key={c.id} className="bg-white/5 border-white/10 overflow-hidden">
+                <Card key={c.id} className="bg-muted/50 border-border overflow-hidden">
                   {safeCourseImg && (
                     <div className="relative aspect-video w-full overflow-hidden">
                       {/* Fondo difuminado de relleno */}
@@ -226,7 +226,10 @@ export default function AcademiaPublicLandingPage() {
                   <div className="p-4">
                     <h3 className="font-semibold text-base">{c.title}</h3>
                     {c.description && (
-                      <p className="text-xs text-zinc-400 mt-2 line-clamp-2">{c.description}</p>
+                      <div
+                        className="text-xs text-muted-foreground mt-2 line-clamp-2 [&_p]:m-0"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHTML(c.description) }}
+                      />
                     )}
                   </div>
                 </Card>
@@ -246,13 +249,13 @@ export default function AcademiaPublicLandingPage() {
               {landing.landing_instructors.map((i: any, idx: number) => {
                 const safeAvatar = safeUrl(i.avatar_url);
                 return (
-                  <Card key={idx} className="bg-white/5 border-white/10 p-4 text-center">
+                  <Card key={idx} className="bg-muted/50 border-border p-4 text-center">
                     {safeAvatar && (
                       <img src={safeAvatar} alt={i.name}
                            className="h-20 w-20 rounded-full mx-auto object-cover mb-3" />
                     )}
                     <h3 className="font-semibold">{i.name}</h3>
-                    <p className="text-xs text-zinc-400 mt-1">{i.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{i.title}</p>
                   </Card>
                 );
               })}
@@ -263,14 +266,14 @@ export default function AcademiaPublicLandingPage() {
 
       {/* TESTIMONIALS */}
       {Array.isArray(landing.landing_testimonials) && landing.landing_testimonials.length > 0 && (
-        <section className="px-4 md:px-8 py-12 bg-white/[0.02]">
+        <section className="px-4 md:px-8 py-12 bg-muted/30">
           <div className="max-w-5xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Lo que dicen los miembros</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {landing.landing_testimonials.map((t: any, idx: number) => (
-                <Card key={idx} className="bg-white/5 border-white/10 p-5">
-                  <p className="text-sm text-zinc-200 italic">"{t.quote}"</p>
-                  <div className="text-xs text-zinc-400 mt-3">— {t.author}</div>
+                <Card key={idx} className="bg-muted/50 border-border p-5">
+                  <p className="text-sm text-foreground italic">"{t.quote}"</p>
+                  <div className="text-xs text-muted-foreground mt-3">— {t.author}</div>
                 </Card>
               ))}
             </div>
@@ -285,11 +288,11 @@ export default function AcademiaPublicLandingPage() {
             <h2 className="text-2xl md:text-3xl font-bold mb-6">Preguntas frecuentes</h2>
             <div className="space-y-3">
               {landing.landing_faqs.map((f: any, idx: number) => (
-                <Card key={idx} className="bg-white/5 border-white/10 p-4">
+                <Card key={idx} className="bg-muted/50 border-border p-4">
                   <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-violet-400" /> {f.question}
+                    <CheckCircle2 className="h-4 w-4 text-primary" /> {f.question}
                   </h3>
-                  <p className="text-xs text-zinc-400 mt-2 pl-6">{f.answer}</p>
+                  <p className="text-xs text-muted-foreground mt-2 pl-6">{f.answer}</p>
                 </Card>
               ))}
             </div>
@@ -301,7 +304,7 @@ export default function AcademiaPublicLandingPage() {
       <section className="px-4 md:px-8 py-16 text-center">
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl md:text-4xl font-bold">¿Te unís?</h2>
-          <p className="text-zinc-300 mt-3">Comunidad activa, contenido nuevo cada semana.</p>
+          <p className="text-muted-foreground mt-3">Comunidad activa, contenido nuevo cada semana.</p>
           <Link to={ctaHref}>
             <Button
               size="lg"
@@ -317,8 +320,8 @@ export default function AcademiaPublicLandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/5 px-4 py-6 text-center text-xs text-zinc-500">
-        <Link to="/academia" className="hover:text-zinc-300 flex items-center justify-center gap-1.5">
+      <footer className="border-t border-border px-4 py-6 text-center text-xs text-muted-foreground">
+        <Link to="/academia" className="hover:text-foreground flex items-center justify-center gap-1.5">
           <Globe2 className="h-3 w-3" /> Explorar más academias en KREOON
         </Link>
       </footer>

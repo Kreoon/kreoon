@@ -64,11 +64,11 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
 
   return (
     <div className="space-y-4">
-      <Card className="p-5 bg-white/5 border-white/10 space-y-4">
+      <Card className="p-5 bg-muted/50 border-border space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold">Visible en Discovery</h3>
-            <p className="text-xs text-zinc-500 mt-0.5">Permite que tu academia aparezca en búsquedas y marketplace</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Permite que tu academia aparezca en búsquedas y marketplace</p>
           </div>
           <Toggle
             value={!!draft.is_discoverable}
@@ -82,7 +82,7 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
             <select
               value={draft.category ?? 'general'}
               onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
-              className="w-full bg-black/30 border border-white/10 rounded px-2 py-2 text-sm mt-1"
+              className="w-full bg-muted border border-border rounded px-2 py-2 text-sm mt-1"
             >
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
@@ -96,7 +96,7 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
             <select
               value={draft.language ?? 'es'}
               onChange={(e) => setDraft((d) => ({ ...d, language: e.target.value }))}
-              className="w-full bg-black/30 border border-white/10 rounded px-2 py-2 text-sm mt-1"
+              className="w-full bg-muted border border-border rounded px-2 py-2 text-sm mt-1"
             >
               {LANGUAGES.map((l) => (
                 <option key={l} value={l}>
@@ -120,7 +120,7 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
                 }
               }}
               placeholder="Agrega una keyword y presiona Enter"
-              className="bg-black/30 border-white/10"
+              className="bg-muted border-border"
             />
             <Button onClick={addKeyword} variant="outline">
               Agregar
@@ -130,17 +130,17 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
             {(draft.keywords ?? []).map((k) => (
               <span
                 key={k}
-                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20"
+                className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-primary/10 border border-primary/20"
                 style={{ color: accentColor }}
               >
                 {k}
-                <button onClick={() => removeKeyword(k)} className="hover:text-rose-400">
+                <button onClick={() => removeKeyword(k)} className="hover:text-rose-600 dark:hover:text-rose-400">
                   <X className="h-2.5 w-2.5" />
                 </button>
               </span>
             ))}
             {(draft.keywords ?? []).length === 0 && (
-              <span className="text-xs text-zinc-500">Sin keywords aún</span>
+              <span className="text-xs text-muted-foreground">Sin keywords aún</span>
             )}
           </div>
         </div>
@@ -152,20 +152,20 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
             onChange={(e) => setDraft((d) => ({ ...d, meta_description: e.target.value }))}
             placeholder="Resumen de tu academia para motores de búsqueda (máx 160 chars)"
             maxLength={160}
-            className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm h-16 mt-1 focus:outline-none focus:border-purple-500/50"
+            className="w-full bg-muted border border-border rounded p-2 text-sm h-16 mt-1 focus:outline-none focus:border-primary/50"
           />
-          <div className="text-[10px] text-zinc-500 text-right">
+          <div className="text-[10px] text-muted-foreground text-right">
             {(draft.meta_description ?? '').length}/160
           </div>
         </div>
       </Card>
 
       {/* Preview card */}
-      <Card className="p-5 bg-white/5 border-white/10">
+      <Card className="p-5 bg-muted/50 border-border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <Eye className="h-4 w-4" /> Vista previa en Discovery
         </h3>
-        <div className="max-w-sm rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+        <div className="max-w-sm rounded-2xl bg-muted/50 border border-border overflow-hidden">
           <div
             className="h-24"
             style={{ background: `linear-gradient(135deg, ${accentColor}40, transparent)` }}
@@ -173,13 +173,13 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
           <div className="p-4">
             <h4 className="font-bold">{spaceName}</h4>
             {draft.meta_description && (
-              <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{draft.meta_description}</p>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{draft.meta_description}</p>
             )}
-            <div className="mt-2 flex items-center gap-2 text-xs text-zinc-500">
-              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="px-1.5 py-0.5 rounded bg-muted/50 border border-border">
                 {draft.category}
               </span>
-              <span className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10">
+              <span className="px-1.5 py-0.5 rounded bg-muted/50 border border-border">
                 {(draft.language ?? '').toUpperCase()}
               </span>
             </div>
@@ -187,7 +187,7 @@ export function SpaceDiscoveryPanel({ spaceId, spaceName, accentColor = '#8B5CF6
         </div>
       </Card>
 
-      <Button onClick={save} disabled={update.isPending} className="bg-purple-500 hover:bg-purple-600 text-white">
+      <Button onClick={save} disabled={update.isPending} className="bg-primary hover:bg-primary/90 text-white">
         {update.isPending ? 'Guardando...' : 'Guardar Discovery'}
       </Button>
     </div>
@@ -200,7 +200,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       onClick={() => onChange(!value)}
       className={cn(
         'relative w-10 h-5 rounded-full transition-colors',
-        value ? 'bg-purple-500' : 'bg-zinc-700'
+        value ? 'bg-primary' : 'bg-muted'
       )}
     >
       <span

@@ -46,7 +46,7 @@ export function AdminWithdrawalsPage({ className }: AdminWithdrawalsPageProps) {
           <Shield className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Panel de Retiros</h1>
+          <h1 className="text-2xl font-bold text-foreground">Panel de Retiros</h1>
           <p className="text-muted-foreground">
             Administración de solicitudes de retiro
           </p>

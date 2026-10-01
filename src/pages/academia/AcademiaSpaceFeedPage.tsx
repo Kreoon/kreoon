@@ -14,7 +14,7 @@ export default function AcademiaSpaceFeedPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         Cargando comunidad...
       </div>
     );
@@ -22,10 +22,10 @@ export default function AcademiaSpaceFeedPage() {
 
   if (!space) {
     return (
-      <div className="min-h-screen bg-kreoon-bg-primary flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <Lock className="h-10 w-10" />
         <p>Esta academia no existe o no es pública.</p>
-        <Link to="/academia" className="text-purple-400 hover:text-purple-300">
+        <Link to="/academia" className="text-primary hover:text-primary/80">
           Volver a Academia
         </Link>
       </div>
@@ -48,15 +48,15 @@ function FeedWithLive({
   useAcademyLiveContent(space.id);
 
   return (
-    <div className="min-h-screen bg-kreoon-bg-primary text-zinc-100">
+    <div className="min-h-screen bg-background text-foreground">
       <SpaceNavbar spaceSlug={spaceSlug} />
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
         <div>
           <div className="mb-5">
-            <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-white">
+            <h1 className="text-3xl md:text-4xl font-extrabold flex items-center gap-3 text-foreground">
               <span aria-hidden="true">💬</span> Feed
             </h1>
-            <p className="text-sm text-zinc-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Lo que comparte la comunidad de {space.name}
             </p>
           </div>

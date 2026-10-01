@@ -206,7 +206,7 @@ function SectionBlockComponent({
               </Button>
             )}
             {isOver && (
-              <p className="text-xs text-primary mt-2">Soltar aqui</p>
+              <p className="text-xs text-primary mt-2">Soltar aquí</p>
             )}
           </div>
         )}

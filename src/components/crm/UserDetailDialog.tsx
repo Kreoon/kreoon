@@ -103,9 +103,9 @@ function EditableField({
 
   return (
     <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
+      {Icon && <Icon className="h-4 w-4 text-muted-foreground/70 mt-0.5 shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">{label}</p>
         {isEditing ? (
           multiline ? (
             <Textarea
@@ -116,7 +116,7 @@ function EditableField({
               }}
               placeholder={placeholder}
               rows={3}
-              className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20 resize-none"
+              className="text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
             />
           ) : (
             <Input
@@ -127,11 +127,11 @@ function EditableField({
               }}
               placeholder={placeholder}
               type={type}
-              className="h-8 text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20"
+              className="h-8 text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
             />
           )
         ) : (
-          <p className="text-sm text-white/80 break-words">{value}</p>
+          <p className="text-sm text-muted-foreground break-words">{value}</p>
         )}
       </div>
     </div>
@@ -197,9 +197,9 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl h-[85vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="max-w-3xl h-[85vh] p-0 bg-background border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
-        <DialogHeader className="p-6 pb-4 border-b border-white/10">
+        <DialogHeader className="p-6 pb-4 border-b border-border">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative shrink-0">
@@ -226,10 +226,10 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-xl font-semibold text-white truncate">
+              <DialogTitle className="text-xl font-semibold text-foreground truncate">
                 {user.full_name || 'Sin nombre'}
               </DialogTitle>
-              <p className="text-sm text-white/50 truncate">{user.email}</p>
+              <p className="text-sm text-muted-foreground/70 truncate">{user.email}</p>
 
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-2 mt-2">
@@ -277,7 +277,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                   'shrink-0 gap-2',
                   isEditing
                     ? 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                    : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted'
                 )}
               >
                 {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
@@ -289,25 +289,25 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-6 border-b border-white/10">
+          <div className="px-6 border-b border-border">
             <TabsList className="bg-transparent h-12 p-0 gap-0">
               <TabsTrigger
                 value="general"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <User className="h-4 w-4" />
                 General
               </TabsTrigger>
               <TabsTrigger
                 value="professional"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Briefcase className="h-4 w-4" />
                 Profesional
               </TabsTrigger>
               <TabsTrigger
                 value="organization"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Building2 className="h-4 w-4" />
                 Organización
@@ -315,7 +315,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               {isRoot && (
                 <TabsTrigger
                   value="admin"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-purple-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
                 >
                   <Shield className="h-4 w-4" />
                   Admin
@@ -328,17 +328,17 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
             <div className="p-6">
               {fullLoading && (
                 <div className="space-y-4">
-                  <Skeleton className="h-20 rounded-sm bg-white/5" />
-                  <Skeleton className="h-16 rounded-sm bg-white/5" />
-                  <Skeleton className="h-24 rounded-sm bg-white/5" />
+                  <Skeleton className="h-20 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-16 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-24 rounded-sm bg-muted/40" />
                 </div>
               )}
 
               {/* GENERAL TAB */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* Personal Data */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <User className="h-4 w-4 text-purple-400" />
                     Datos Personales
                   </h3>
@@ -443,8 +443,8 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 </div>
 
                 {/* Social Links */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-purple-400" />
                     Redes Sociales
                   </h3>
@@ -507,39 +507,39 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 </div>
 
                 {/* Activity Stats */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Settings className="h-4 w-4 text-purple-400" />
                     Actividad
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-2xl font-bold text-white">{user.total_logins}</p>
-                      <p className="text-xs text-white/50">Logins totales</p>
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-2xl font-bold text-foreground">{user.total_logins}</p>
+                      <p className="text-xs text-muted-foreground/70">Logins totales</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-2xl font-bold text-white">{user.total_actions}</p>
-                      <p className="text-xs text-white/50">Acciones</p>
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-2xl font-bold text-foreground">{user.total_actions}</p>
+                      <p className="text-xs text-muted-foreground/70">Acciones</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-2xl font-bold text-white">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-2xl font-bold text-foreground">
                         {user.days_since_last_activity ?? '—'}
                       </p>
-                      <p className="text-xs text-white/50">Días inactivo</p>
+                      <p className="text-xs text-muted-foreground/70">Días inactivo</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-sm font-medium text-white">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-sm font-medium text-foreground">
                         {user.last_login_at
                           ? format(new Date(user.last_login_at), 'd MMM yyyy', { locale: es })
                           : 'Nunca'}
                       </p>
-                      <p className="text-xs text-white/50">Último login</p>
+                      <p className="text-xs text-muted-foreground/70">Último login</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Legal Consents */}
-                <div className="rounded-sm border border-white/10 p-4">
+                <div className="rounded-sm border border-border p-4">
                   <LegalConsentsSection
                     userId={user.id}
                     onboardingCompleted={full?.onboarding_completed}
@@ -550,8 +550,8 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               {/* PROFESSIONAL TAB */}
               <TabsContent value="professional" className="mt-0 space-y-6">
                 {/* Bio */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Biografía</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Biografía</h3>
                   <EditableField
                     label="Bio corta"
                     value={full?.bio}
@@ -574,11 +574,11 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Categories & Roles */}
                 {(full?.categories?.length || full?.marketplace_roles?.length) && (
-                  <div className="rounded-sm border border-white/10 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
+                  <div className="rounded-sm border border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4">Especialización</h3>
                     {full?.categories?.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-xs text-white/40 mb-2">Categorías</p>
+                        <p className="text-xs text-muted-foreground/70 mb-2">Categorías</p>
                         <div className="flex flex-wrap gap-2">
                           {full.categories.map((cat: string) => (
                             <Badge key={cat} variant="secondary" className="bg-purple-500/20 text-purple-300">
@@ -590,7 +590,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                     )}
                     {full?.marketplace_roles?.length > 0 && (
                       <div>
-                        <p className="text-xs text-white/40 mb-2">Roles Marketplace</p>
+                        <p className="text-xs text-muted-foreground/70 mb-2">Roles Marketplace</p>
                         <div className="flex flex-wrap gap-2">
                           {full.marketplace_roles.map((role: string) => (
                             <Badge key={role} variant="secondary" className="bg-blue-500/20 text-blue-300">
@@ -605,35 +605,35 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Creator Profile Stats */}
                 {full?.creator_profile_id && (
-                  <div className="rounded-sm border border-white/10 p-4">
-                    <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                  <div className="rounded-sm border border-border p-4">
+                    <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                       <BadgeCheck className="h-4 w-4 text-blue-400" />
                       Perfil de Creador
                     </h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-3 rounded-sm bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-muted/40">
                         <p className="text-xl font-bold text-yellow-400">
                           {full.rating_avg?.toFixed(1) || '—'}
                         </p>
-                        <p className="text-xs text-white/50">Rating</p>
+                        <p className="text-xs text-muted-foreground/70">Rating</p>
                       </div>
-                      <div className="text-center p-3 rounded-sm bg-white/5">
-                        <p className="text-xl font-bold text-white">
+                      <div className="text-center p-3 rounded-sm bg-muted/40">
+                        <p className="text-xl font-bold text-foreground">
                           {full.completed_projects ?? 0}
                         </p>
-                        <p className="text-xs text-white/50">Proyectos</p>
+                        <p className="text-xs text-muted-foreground/70">Proyectos</p>
                       </div>
-                      <div className="text-center p-3 rounded-sm bg-white/5">
+                      <div className="text-center p-3 rounded-sm bg-muted/40">
                         <p className="text-xl font-bold text-green-400">
                           ${full.total_earned?.toLocaleString() ?? 0}
                         </p>
-                        <p className="text-xs text-white/50">Ganado</p>
+                        <p className="text-xs text-muted-foreground/70">Ganado</p>
                       </div>
-                      <div className="text-center p-3 rounded-sm bg-white/5">
-                        <p className="text-sm font-medium text-white capitalize">
+                      <div className="text-center p-3 rounded-sm bg-muted/40">
+                        <p className="text-sm font-medium text-foreground capitalize">
                           {full.level || 'Starter'}
                         </p>
-                        <p className="text-xs text-white/50">Nivel</p>
+                        <p className="text-xs text-muted-foreground/70">Nivel</p>
                       </div>
                     </div>
                     <div className="mt-4 flex items-center gap-4">
@@ -654,29 +654,29 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                 )}
 
                 {/* Meta */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Información del Sistema</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Información del Sistema</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-xs text-white/40">Registrado</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Registrado</p>
+                      <p className="text-muted-foreground">
                         {format(new Date(user.created_at), 'd MMM yyyy, HH:mm', { locale: es })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Tipo de usuario</p>
-                      <p className="text-white/70 capitalize">{user.user_type || 'No definido'}</p>
+                      <p className="text-xs text-muted-foreground/70">Tipo de usuario</p>
+                      <p className="text-muted-foreground capitalize">{user.user_type || 'No definido'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Email confirmado</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Email confirmado</p>
+                      <p className="text-muted-foreground">
                         {user.email_confirmed_at
                           ? format(new Date(user.email_confirmed_at), 'd MMM yyyy', { locale: es })
                           : 'No confirmado'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Acceso plataforma</p>
+                      <p className="text-xs text-muted-foreground/70">Acceso plataforma</p>
                       <p className={user.platform_access_unlocked ? 'text-green-400' : 'text-red-400'}>
                         {user.platform_access_unlocked ? 'Desbloqueado' : 'Bloqueado'}
                       </p>
@@ -689,7 +689,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
               <TabsContent value="organization" className="mt-0 space-y-6">
                 {/* Roles & Badges */}
                 {full && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <RolesBadgesSection
                       roles={full.roles}
                       badges={full.badges}
@@ -700,7 +700,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Organizations */}
                 {full && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <OrganizationsListSection
                       organizations={full.organizations || []}
                       userId={user.id}
@@ -711,7 +711,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
 
                 {/* Companies */}
                 {full && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <CompaniesSection
                       companies={full.companies || []}
                       userId={user.id}
@@ -731,7 +731,7 @@ export function UserDetailDialog({ user, open, onOpenChange, onUpdate }: UserDet
                         Acciones Administrativas
                       </h3>
                     </div>
-                    <p className="text-xs text-white/50 mb-4">
+                    <p className="text-xs text-muted-foreground/70 mb-4">
                       Estas acciones afectan directamente al usuario. Úsalas con precaución.
                     </p>
                     <AdminActionsSection

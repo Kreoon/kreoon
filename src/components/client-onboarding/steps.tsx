@@ -329,7 +329,7 @@ export function PasoMarca({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onNext)} className="space-y-5">
-        <div className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 p-3">
+        <div className="rounded-sm border border-kreoon-border bg-muted/50 p-3">
           <p className="text-xs text-kreoon-text-muted">
             Este paso es opcional, pero mientras más nos cuentes, más se parecen
             los videos a tu marca.
@@ -752,7 +752,7 @@ function BloqueResumen({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/60 p-3">
+    <div className="rounded-sm border border-kreoon-border bg-muted/60 p-3">
       <p className="mb-1 text-sm font-medium text-kreoon-text-primary">
         {emoji} {titulo}
       </p>
@@ -822,7 +822,7 @@ export function PasoLogistica({
           </div>
         ) : (
           <div className="space-y-5">
-            <div className="rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 p-3">
+            <div className="rounded-sm border border-kreoon-border bg-muted/50 p-3">
               <p className="text-xs text-kreoon-text-muted">
                 Como no vendes un producto físico, no hay nada que despachar. Solo
                 necesitamos saber cómo le damos acceso a los creadores.

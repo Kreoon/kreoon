@@ -76,7 +76,7 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
       action={
         <button
           onClick={linkOpen ? () => setLinkOpen(false) : openLinkForm}
-          className="p-1 rounded hover:bg-white/10 transition-colors text-white/40 hover:text-[#a855f7]"
+          className="p-1 rounded hover:bg-muted transition-colors text-muted-foreground/70 hover:text-[#a855f7]"
           title="Vincular a empresa"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -86,11 +86,11 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
       <div className="space-y-2">
         {/* Link form */}
         {linkOpen && (
-          <div className="flex gap-2 items-end p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]">
+          <div className="flex gap-2 items-end p-2 rounded-sm bg-muted/40 border border-border">
             <div className="flex-1">
-              <label className="text-[10px] text-white/40 mb-1 block">Empresa</label>
+              <label className="text-[10px] text-muted-foreground/70 mb-1 block">Empresa</label>
               <Select value={selectedClient} onValueChange={setSelectedClient}>
-                <SelectTrigger className="h-7 text-[10px] bg-white/5 border-white/10">
+                <SelectTrigger className="h-7 text-[10px] bg-muted/40 border-border">
                   <SelectValue placeholder="Seleccionar empresa..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -113,21 +113,21 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
 
         {/* Companies list */}
         {companies.length === 0 && !linkOpen && (
-          <p className="text-[10px] text-white/30 italic">Sin empresas vinculadas</p>
+          <p className="text-[10px] text-muted-foreground/70 italic">Sin empresas vinculadas</p>
         )}
 
         {companies.map((company) => (
           <div
             key={company.client_id}
-            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-white/[0.03] border border-white/[0.06]"
+            className="flex items-center justify-between gap-2 p-2 rounded-sm bg-muted/40 border border-border"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Briefcase className="h-3.5 w-3.5 text-white/30 flex-shrink-0" />
+              <Briefcase className="h-3.5 w-3.5 text-muted-foreground/70 flex-shrink-0" />
               <div className="min-w-0">
-                <p className="text-xs text-white/80 truncate">{company.client_name}</p>
+                <p className="text-xs text-muted-foreground truncate">{company.client_name}</p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {company.organization_name && (
-                    <span className="flex items-center gap-0.5 text-[9px] text-white/30">
+                    <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground/70">
                       <Building2 className="h-2 w-2" />
                       {company.organization_name}
                     </span>
@@ -142,7 +142,7 @@ export function CompaniesSection({ companies, userId, onActionComplete }: Compan
             <button
               onClick={() => handleUnlink(company.client_id)}
               disabled={loading === 'unlink_from_company'}
-              className="p-1 rounded hover:bg-red-500/10 transition-colors text-white/20 hover:text-red-400 flex-shrink-0"
+              className="p-1 rounded hover:bg-red-500/10 transition-colors text-muted-foreground/70 hover:text-red-400 flex-shrink-0"
               title="Desvincular"
             >
               <Trash2 className="h-3 w-3" />

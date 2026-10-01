@@ -26,10 +26,10 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
   return (
     <div className="sticky top-24 space-y-4">
       {/* Contact card */}
-      <div className="rounded-sm border border-white/5 bg-card p-5 space-y-4">
+      <div className="rounded-sm border border-border bg-card p-5 space-y-4">
         <Button
           onClick={onContact}
-          className="w-full text-white font-semibold"
+          className="w-full text-foreground font-semibold"
           style={{ backgroundColor: accentColor }}
         >
           <Mail className="h-4 w-4 mr-2" />
@@ -39,10 +39,10 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
         {/* Budget */}
         {budgetLabel && (
           <div className="flex items-start gap-3 text-sm">
-            <DollarSign className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+            <DollarSign className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-gray-400">Presupuesto</p>
-              <p className="text-white font-medium">{budgetLabel}</p>
+              <p className="text-muted-foreground">Presupuesto</p>
+              <p className="text-foreground font-medium">{budgetLabel}</p>
             </div>
           </div>
         )}
@@ -50,10 +50,10 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
         {/* Response time */}
         {org.org_response_time && (
           <div className="flex items-start gap-3 text-sm">
-            <Clock className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+            <Clock className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-gray-400">Tiempo de respuesta</p>
-              <p className="text-white font-medium">
+              <p className="text-muted-foreground">Tiempo de respuesta</p>
+              <p className="text-foreground font-medium">
                 {RESPONSE_TIME_LABELS[org.org_response_time] || org.org_response_time}
               </p>
             </div>
@@ -63,15 +63,15 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
 
       {/* Social links */}
       {socialLinks.length > 0 && (
-        <div className="rounded-sm border border-white/5 bg-card p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">Enlaces</h3>
+        <div className="rounded-sm border border-border bg-card p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Enlaces</h3>
           {socialLinks.map(link => (
             <a
               key={link.label}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <link.icon className="h-4 w-4" />
               <span>{link.label}</span>
@@ -82,13 +82,13 @@ export function OrgProfileSidebar({ org, accentColor, onContact }: OrgProfileSid
 
       {/* Specialties */}
       {org.org_specialties.length > 0 && (
-        <div className="rounded-sm border border-white/5 bg-card p-5 space-y-3">
-          <h3 className="text-sm font-semibold text-white">Especialidades</h3>
+        <div className="rounded-sm border border-border bg-card p-5 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Especialidades</h3>
           <div className="flex flex-wrap gap-2">
             {org.org_specialties.map(spec => (
               <span
                 key={spec}
-                className="px-2.5 py-1 rounded-full text-xs capitalize bg-white/5 text-foreground/80"
+                className="px-2.5 py-1 rounded-full text-xs capitalize bg-muted/50 text-foreground/80"
               >
                 {spec}
               </span>

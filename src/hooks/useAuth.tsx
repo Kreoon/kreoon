@@ -9,6 +9,7 @@ import {
   ReactNode,
 } from "react";
 import { User, Session } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { invokeEdgeFunction } from "@/lib/edgeFunctions";
 import { getDeviceId } from "@/lib/deviceId";
@@ -19,6 +20,8 @@ import {
 } from "@/lib/permissionGroups";
 import { getUserType } from "@/lib/roles";
 import { logger } from "@/lib/logger";
+import { clearUserData, purgeAuthenticatedCaches } from "@/lib/storage/scopedStorage";
+import { useAuthStore } from "@/stores/authStore";
 
 interface AuthContextType {
   user: User | null;
@@ -71,6 +74,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
+
+  // Limpieza local centralizada (cerrar sesión, sesión expirada, cambio de cuenta, baneo):
+  // memoria de React Query + almacenamiento privado + cachés de respuestas autenticadas.
+  // Ver src/lib/storage/scopedStorage.ts para la lista de claves.
+  const queryClient = useQueryClient();
+  const clearLocalSessionDataRef = useRef<() => void>(() => {});
+  clearLocalSessionDataRef.current = () => {
+    try {
+      void queryClient.cancelQueries();
+      queryClient.clear();
+    } catch {
+      /* el cliente puede no estar listo en pruebas */
+    }
+    clearUserData();
+    useAuthStore.getState().reset();
+    void purgeAuthenticatedCaches();
+  };
 
   // Keep latest values accessible inside auth listeners (effect has [] deps).
   const userIdRef = useRef<string | null>(null);
@@ -200,6 +220,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Browsers (especially mobile) can emit transient null session events on focus.
       if (!nextSession && event !== "SIGNED_OUT") {
         return;
+      }
+
+      // Cierre de sesión (también el de otra pestaña o por token vencido) o cambio de cuenta en la
+      // misma pestaña: nunca dejar datos de la sesión anterior en memoria ni en el equipo.
+      if (event === "SIGNED_OUT" || (!!currentUserId && !!nextUserId && userChanged)) {
+        clearLocalSessionDataRef.current();
       }
 
       // If we already bootstrapped and it's the same user, never show global loading.
@@ -386,6 +412,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             logger.warn("auth user is banned, signing out", { userId });
             fetchInProgressRef.current = null;
             await supabase.auth.signOut();
+            clearLocalSessionDataRef.current();
             if (typeof window !== "undefined")
               window.location.href = "/auth?banned=1";
             return;
@@ -711,8 +738,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
-    await supabase.auth.signOut();
+    try {
+      localStorage.removeItem(ACTIVE_ROLE_STORAGE_KEY);
+    } catch {
+      /* almacenamiento no disponible */
+    }
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      // Aunque falle la red, el equipo queda limpio (el evento SIGNED_OUT también limpia: idempotente).
+      clearLocalSessionDataRef.current();
+    }
   }, []);
 
   const hasRole = useCallback((role: AppRole) => roles.includes(role), [roles]);

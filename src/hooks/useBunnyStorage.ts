@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 
 interface UploadProgress {
   loaded: number;
@@ -49,36 +50,17 @@ export function useBunnyStorage() {
         throw new Error(fnError?.message || data?.error || 'Failed to get upload URL');
       }
 
-      const { videoId, uploadUrl, embedUrl, thumbnailUrl, accessKey } = data;
+      const { videoId, embedUrl, thumbnailUrl, tus } = data;
 
-      // 2. Upload file to Bunny Stream
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            setProgress({
-              loaded: event.loaded,
-              total: event.total,
-              percentage: Math.round((event.loaded / event.total) * 100),
-            });
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Upload failed: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
-
-        xhr.open('PUT', uploadUrl);
-        xhr.setRequestHeader('AccessKey', accessKey);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.send(file);
+      // 2. Subida directa a Bunny Stream vía TUS firmado (la API key no sale del servidor)
+      await uploadToBunnyStreamTus(file, tus, {
+        onProgress: (loaded, total) => {
+          setProgress({
+            loaded,
+            total,
+            percentage: Math.round((loaded / total) * 100),
+          });
+        },
       });
 
       return { success: true, videoId, embedUrl, thumbnailUrl };

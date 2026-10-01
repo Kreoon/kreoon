@@ -183,8 +183,8 @@ export default function OrgProfilePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-bold text-white">Organización no encontrada</h2>
-          <p className="text-gray-400">El perfil que buscas no existe o no está disponible.</p>
+          <h2 className="text-2xl font-bold text-foreground">Organización no encontrada</h2>
+          <p className="text-muted-foreground">El perfil que buscas no existe o no está disponible.</p>
           <button
             onClick={() => navigate('/marketplace')}
             className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-6 py-3 rounded-sm transition-colors"
@@ -206,17 +206,17 @@ export default function OrgProfilePage() {
         <div className="flex items-center gap-2 text-sm">
           <button
             onClick={() => navigate(-1)}
-            className="md:hidden w-8 h-8 rounded-full bg-white/10 flex items-center justify-center mr-1"
+            className="md:hidden w-8 h-8 rounded-full bg-muted flex items-center justify-center mr-1"
           >
-            <ArrowLeft className="h-4 w-4 text-white" />
+            <ArrowLeft className="h-4 w-4 text-foreground" />
           </button>
-          <Link to="/marketplace" className="text-gray-500 hover:text-foreground transition-colors">
+          <Link to="/marketplace" className="text-muted-foreground hover:text-foreground transition-colors">
             Marketplace
           </Link>
-          <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
-          <span className="text-gray-500">Organizaciones</span>
-          <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
-          <span className="text-white truncate">{displayName}</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-muted-foreground">Organizaciones</span>
+          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-foreground truncate">{displayName}</span>
         </div>
       </div>
 
@@ -225,7 +225,7 @@ export default function OrgProfilePage() {
 
       {/* Tabs */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-1 border-b border-border overflow-x-auto no-scrollbar">
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -233,16 +233,16 @@ export default function OrgProfilePage() {
               className={cn(
                 'px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2',
                 activeTab === tab.id
-                  ? 'text-white border-purple-500'
-                  : 'text-gray-500 border-transparent hover:text-foreground'
+                  ? 'text-foreground border-purple-500'
+                  : 'text-muted-foreground border-transparent hover:text-foreground'
               )}
             >
               {tab.label}
               {tab.id === 'reviews' && reviews.length > 0 && (
-                <span className="ml-1.5 text-xs text-gray-500">({reviews.length})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({reviews.length})</span>
               )}
               {tab.id === 'team' && teamMembers.length > 0 && (
-                <span className="ml-1.5 text-xs text-gray-500">({teamMembers.length})</span>
+                <span className="ml-1.5 text-xs text-muted-foreground">({teamMembers.length})</span>
               )}
             </button>
           ))}

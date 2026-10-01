@@ -174,7 +174,7 @@ export function OnboardingTab({
   return (
     <div className="space-y-5">
       {/* Encabezado: estado + acciones */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-kreoon-border bg-kreoon-bg-secondary/50 p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-kreoon-border bg-muted/50 p-3">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Estado:</span>
           <KreoonBadge variant={VARIANTE_ESTADO[estado]} size="sm">

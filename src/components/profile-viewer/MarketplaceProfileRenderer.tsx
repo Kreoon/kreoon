@@ -40,7 +40,7 @@ interface MarketplaceProfileRendererProps {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 animate-pulse" aria-busy="true">
+    <div className="min-h-screen w-full bg-background animate-pulse" aria-busy="true">
       {/* Hero skeleton */}
       <div className="h-80 w-full bg-zinc-800/50" />
       {/* Content skeletons */}
@@ -57,7 +57,7 @@ function ProfileSkeleton() {
 
 function ProfileError({ message }: { message: string }) {
   return (
-    <div className="min-h-screen w-full bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
         <h2 className="text-xl font-semibold text-zinc-100 mb-2">Perfil no disponible</h2>
@@ -71,7 +71,7 @@ function ProfileError({ message }: { message: string }) {
 
 function KreoonBranding() {
   return (
-    <footer className="py-6 text-center border-t border-white/5" aria-label="Powered by Kreoon">
+    <footer className="py-6 text-center border-t border-border/50" aria-label="Powered by Kreoon">
       <a
         href="https://kreoon.com"
         target="_blank"
@@ -176,7 +176,7 @@ export function MarketplaceProfileRenderer({
             </div>
           ) : (
             <Suspense
-              fallback={<div className="min-h-screen animate-pulse bg-zinc-900/50" />}
+              fallback={<div className="min-h-screen animate-pulse bg-card/50" />}
             >
               {visibleBlocks.map((block) => (
                 <PublicBlockRenderer
@@ -192,7 +192,7 @@ export function MarketplaceProfileRenderer({
         {/* Creadores similares */}
         {showSimilarCreators && creatorData.profile.categories?.length > 0 && (
           <Suspense fallback={null}>
-            <section className="py-8 px-4 border-t border-white/5">
+            <section className="py-8 px-4 border-t border-border/50">
               <div className="max-w-5xl mx-auto">
                 <SimilarCreators
                   creatorIds={[]}

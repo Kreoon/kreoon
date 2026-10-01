@@ -75,7 +75,7 @@ function VideoThumbnailCard({
   return (
     <div
       onClick={onClick}
-      className="group relative cursor-pointer overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] hover:border-purple-500/60 transition-colors"
+      className="group relative cursor-pointer overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background hover:border-purple-500/60 transition-colors"
     >
       {/* 9:16 aspect ratio */}
       <div className="aspect-[9/16] relative">
@@ -88,16 +88,16 @@ function VideoThumbnailCard({
             onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-zinc-900">
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-100 dark:bg-card">
             <Video className="h-8 w-8 text-zinc-400" />
           </div>
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
         {/* Play overlay on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-900/20">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-card/20">
           <div className="p-2.5 rounded-full bg-white/90 shadow-lg">
             <Play className="h-5 w-5 text-zinc-900" fill="currentColor" />
           </div>
@@ -209,7 +209,7 @@ export function ClientDashboardOverview({
   );
 
   const activityPanel = (maxItems: number, extraClass?: string) => (
-    <div className={cn("rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#14141f] p-2", extraClass)}>
+    <div className={cn("rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-background p-2", extraClass)}>
       <NovaActivityFeed
         activities={activities}
         maxItems={maxItems}
@@ -223,7 +223,7 @@ export function ClientDashboardOverview({
 
   const emptyState = (tall: boolean) => (
     <div className={cn(
-      "flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/50 gap-2",
+      "flex flex-col items-center justify-center rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-card/50 gap-2",
       tall ? "py-14" : "py-10"
     )}>
       <CheckCircle2 className={cn("text-zinc-400", tall ? "h-10 w-10" : "h-8 w-8")} />

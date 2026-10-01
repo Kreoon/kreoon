@@ -53,7 +53,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 const CLOSING_STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  draft: { label: 'Borrador',    className: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400' },
+  draft: { label: 'Borrador',    className: 'bg-zinc-100 text-muted-foreground dark:bg-card dark:text-muted-foreground' },
   sent:  { label: 'En proceso',  className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' },
   paid:  { label: 'Pagado',      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' },
 };
@@ -491,7 +491,7 @@ function ArqRecommendationCard() {
         }}
       >
         {/* Overlay oscuro para legibilidad del texto */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a081f]/95 via-[#0f0c29]/85 to-[#0f0c29]/60 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/85 to-background/60 pointer-events-none" />
 
         {/* Contenido (encima del overlay) */}
         <div className="relative z-10">
@@ -504,7 +504,7 @@ function ArqRecommendationCard() {
                   Recomendado por Kreoon
                 </span>
               </div>
-              <p className="text-sm font-semibold text-white leading-tight">
+              <p className="text-sm font-semibold text-foreground leading-tight">
                 Recibe pagos globales sin comisiones
               </p>
               <p className="text-xs text-indigo-200/80 mt-0.5">
@@ -521,7 +521,7 @@ function ArqRecommendationCard() {
               { icon: Globe,       text: 'Cambio sin fricción',    sub: 'USD → COP al instante'     },
               { icon: ShieldCheck, text: 'ARQ Card física gratis', sub: 'Con tu registro'           },
             ].map(({ icon: Icon, text, sub }) => (
-              <div key={text} className="flex items-start gap-2 bg-white/8 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
+              <div key={text} className="flex items-start gap-2 bg-white/8 backdrop-blur-sm rounded-lg px-3 py-2 border border-border">
                 <Icon className="h-3.5 w-3.5 text-indigo-300 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-medium text-white leading-tight">{text}</p>
@@ -533,7 +533,7 @@ function ArqRecommendationCard() {
 
           {/* CTA */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-indigo-300 font-medium group-hover:text-white transition-colors">
+            <span className="text-xs text-indigo-300 font-medium group-hover:text-foreground transition-colors">
               Obtener ARQ Card gratuita →
             </span>
           </div>
@@ -873,7 +873,7 @@ function PaymentAccountsManager({
                 <p className="text-[10px] text-indigo-300 font-medium uppercase tracking-widest mb-0.5">
                   {editing ? 'Editando cuenta' : step === 0 ? 'Paso 1 de 2' : 'Paso 2 de 2'}
                 </p>
-                <h2 className="text-base font-bold text-white leading-tight">
+                <h2 className="text-base font-bold text-foreground leading-tight">
                   {editing
                     ? '✏️ ¿Qué quieres cambiar?'
                     : step === 0

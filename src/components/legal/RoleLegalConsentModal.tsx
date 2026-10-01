@@ -238,7 +238,7 @@ export function RoleLegalConsentModal({
         <DialogContent
           className={cn(
             "sm:max-w-2xl max-h-[90vh] overflow-hidden",
-            "bg-white dark:bg-[#14141f]",
+            "bg-white dark:bg-background",
             "border border-zinc-200 dark:border-zinc-800"
           )}
           onPointerDownOutside={isBlocking ? (e) => e.preventDefault() : undefined}
@@ -281,7 +281,7 @@ export function RoleLegalConsentModal({
                         "p-4 rounded-sm border transition-colors",
                         isSigned
                           ? "border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30"
-                          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-[#1a1a24]"
+                          : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-background"
                       )}
                     >
                       <div className="flex items-start gap-3">
@@ -406,7 +406,7 @@ export function RoleLegalConsentModal({
       <Sheet open={!!openDocument} onOpenChange={(open) => !open && closeDocumentDrawer()}>
         <SheetContent
           side="right"
-          className="w-full sm:max-w-2xl bg-white dark:bg-[#0F0F23] border-zinc-200 dark:border-white/10 p-0 z-[250] flex flex-col h-full"
+          className="w-full sm:max-w-2xl bg-white dark:bg-background border-zinc-200 dark:border-white/10 p-0 z-[250] flex flex-col h-full"
         >
           <SheetHeader className="p-4 sm:p-6 border-b border-zinc-200 dark:border-white/10 flex-shrink-0">
             <SheetTitle className="text-zinc-900 dark:text-white text-base sm:text-lg">
@@ -438,7 +438,7 @@ export function RoleLegalConsentModal({
             </div>
           </ScrollArea>
 
-          <div className="p-4 sm:p-6 border-t border-zinc-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-[#0F0F23]">
+          <div className="p-4 sm:p-6 border-t border-zinc-200 dark:border-white/10 flex-shrink-0 bg-white dark:bg-background">
             {openDocument && getSignatureMethodForDocument(openDocument.document_type) !== 'clickwrap' ? (
               <Button
                 onClick={() => {

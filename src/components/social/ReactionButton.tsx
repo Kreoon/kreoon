@@ -182,7 +182,7 @@ export function ReactionButton({
                   aria-label={reaction.label}
                   className={cn(
                     "min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full transition-all duration-200",
-                    "hover:scale-125 hover:bg-white/10",
+                    "hover:scale-125 hover:bg-muted",
                     currentReaction === reaction.type && reaction.bgColor
                   )}
                   title={reaction.label}
@@ -198,7 +198,7 @@ export function ReactionButton({
               ))}
             </div>
             {/* Arrow */}
-            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-card rotate-45 border-r border-b border-white/10" />
+            <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-card rotate-45 border-r border-b border-border" />
           </motion.div>
         )}
       </AnimatePresence>

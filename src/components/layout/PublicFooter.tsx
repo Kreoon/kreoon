@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { Instagram, Linkedin, Youtube, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FOOTER_PRODUCT = [
-  { label: "Para Marcas", to: "/unete/marcas" },
-  { label: "Para Creadores", to: "/unete/talento" },
-  { label: "Para Agencias", to: "/unete/organizaciones" },
+  { label: "Para Creadores", to: "/registro" },
   { label: "Marketplace", to: "/marketplace" },
   { label: "Precios", to: "/#pricing" },
 ];
@@ -34,16 +33,8 @@ const SOCIAL_LINKS = [
 
 function Logo({ className }: { className?: string }) {
   return (
-    <Link to="/" className={cn("flex items-center gap-3 group", className)}>
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-br from-kreoon-purple-500/30 to-kreoon-purple-500/10">
-        <img src="/favicon.png" alt="Kreoon" className="h-10 w-10 object-cover" />
-      </div>
-      <div className="flex flex-col">
-        <span className="font-bold tracking-tight text-xl text-white">KREOON</span>
-        <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-kreoon-purple-400">
-          AI Platform
-        </span>
-      </div>
+    <Link to="/" className={cn("flex items-center group", className)} aria-label="Kreoon, inicio">
+      <KreoonLogo heightClass="h-9 md:h-10" alt="Kreoon" variant="dark" />
     </Link>
   );
 }

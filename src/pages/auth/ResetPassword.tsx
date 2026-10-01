@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Link2Off, Loader2 } from 'lucide-react';
+import { CheckCircle2, Link2Off, Loader2, Lock, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { KreoonButton, KreoonInput } from '@/components/ui/kreoon';
 import { initialAuthUrl } from '@/lib/auth/initialAuthUrl';
 
 type Phase = 'checking' | 'set' | 'invalid' | 'done';
@@ -12,8 +10,6 @@ type Phase = 'checking' | 'set' | 'invalid' | 'done';
 /**
  * Pantalla de recuperación de contraseña (/reset-password).
  *
- * El correo de recuperación siempre apuntó aquí, pero la ruta no existía: el usuario caía en 404 o en el
- * inicio con sesión iniciada y sin forma de fijar la contraseña.
  * - Enlace válido → establecer la nueva contraseña ANTES de cualquier onboarding o redirección.
  * - Enlace vencido/usado (otp_expired, access_denied) o visita sin enlace → «Este enlace ya no es válido»
  *   con opción de pedir otro. Nunca se envía al usuario en silencio al inicio ni al onboarding.
@@ -30,6 +26,7 @@ export default function ResetPassword() {
   const [requestSent, setRequestSent] = useState(false);
 
   useEffect(() => {
+    // Error explícito del enlace (otp_expired, access_denied…)
     if (initialAuthUrl.errorCode || initialAuthUrl.error) {
       setPhase('invalid');
       return;
@@ -51,6 +48,7 @@ export default function ResetPassword() {
       if (data.session && initialAuthUrl.type === 'recovery') finish('set');
     });
 
+    // Sin enlace de recuperación válido en unos segundos → inválido (no redirigir en silencio)
     const timer = setTimeout(() => finish('invalid'), initialAuthUrl.hasToken ? 6000 : 1500);
     return () => {
       sub.subscription.unsubscribe();
@@ -67,11 +65,12 @@ export default function ResetPassword() {
     const { error: updError } = await supabase.auth.updateUser({ password });
     setSaving(false);
     if (updError) {
-      const expired = /expired|invalid|session/i.test(updError.message);
-      setError(expired
-        ? 'Tu enlace venció mientras escribías. Pide uno nuevo para continuar.'
-        : 'No pudimos guardar la contraseña. Inténtalo de nuevo.');
-      if (expired) setPhase('invalid');
+      setError(
+        /expired|invalid|session/i.test(updError.message)
+          ? 'Tu enlace venció mientras escribías. Pide uno nuevo para continuar.'
+          : 'No pudimos guardar la contraseña. Inténtalo de nuevo.',
+      );
+      if (/expired|invalid|session/i.test(updError.message)) setPhase('invalid');
       return;
     }
     setPhase('done');
@@ -91,7 +90,7 @@ export default function ResetPassword() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-sm sm:p-8">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
         {phase === 'checking' && (
           <div className="flex flex-col items-center gap-3 py-8 text-center" role="status">
             <Loader2 className="h-6 w-6 animate-spin text-primary" aria-hidden="true" />
@@ -105,25 +104,32 @@ export default function ResetPassword() {
               <h1 className="text-2xl font-bold text-foreground">Crea tu nueva contraseña</h1>
               <p className="text-sm text-muted-foreground">Elige una contraseña de al menos 8 caracteres.</p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="rp-password">Nueva contraseña</Label>
-              <Input id="rp-password" type="password" autoComplete="new-password" value={password}
-                onChange={(e) => setPassword(e.target.value)} disabled={saving} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="rp-confirm">Repite la contraseña</Label>
-              <Input id="rp-confirm" type="password" autoComplete="new-password" value={confirm}
-                onChange={(e) => setConfirm(e.target.value)} disabled={saving} />
-            </div>
+            <KreoonInput
+              label="Nueva contraseña"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              icon={<Lock className="h-4 w-4" />}
+              disabled={saving}
+            />
+            <KreoonInput
+              label="Repite la contraseña"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              icon={<Lock className="h-4 w-4" />}
+              disabled={saving}
+            />
             {error && (
               <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={saving}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            <KreoonButton type="submit" size="lg" className="w-full" loading={saving} disabled={saving}>
               Guardar contraseña
-            </Button>
+            </KreoonButton>
           </form>
         )}
 
@@ -146,19 +152,26 @@ export default function ResetPassword() {
               </p>
             ) : (
               <form onSubmit={handleRequestNew} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rp-email">Tu correo</Label>
-                  <Input id="rp-email" type="email" autoComplete="email" placeholder="tu@correo.com" value={email}
-                    onChange={(e) => setEmail(e.target.value)} disabled={requesting} />
-                </div>
-                <Button type="submit" className="w-full" disabled={requesting || !email.trim()}>
-                  {requesting && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+                <KreoonInput
+                  label="Tu correo"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="tu@correo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  icon={<Mail className="h-4 w-4" />}
+                  disabled={requesting}
+                />
+                <KreoonButton type="submit" size="lg" className="w-full" loading={requesting} disabled={requesting || !email.trim()}>
                   Enviarme un enlace nuevo
-                </Button>
+                </KreoonButton>
               </form>
             )}
-            <button type="button" onClick={() => navigate('/auth')}
-              className="w-full text-center text-sm font-medium text-primary underline underline-offset-2 hover:text-primary/80">
+            <button
+              type="button"
+              onClick={() => navigate('/auth')}
+              className="w-full text-center text-sm font-medium text-primary underline underline-offset-2 hover:text-primary/80"
+            >
               Volver a iniciar sesión
             </button>
           </div>
@@ -169,7 +182,10 @@ export default function ResetPassword() {
             <CheckCircle2 className="h-10 w-10 text-green-600" aria-hidden="true" />
             <h1 className="text-2xl font-bold text-foreground">Listo, contraseña guardada</h1>
             <p className="text-sm text-muted-foreground">Ya puedes usar tu nueva contraseña.</p>
-            <Button className="mt-2 w-full" onClick={() => navigate('/auth')}>Continuar</Button>
+            {/* Solo ahora sigue el flujo normal (dashboard u onboarding según corresponda) */}
+            <KreoonButton size="lg" className="mt-2 w-full" onClick={() => navigate('/auth')}>
+              Continuar
+            </KreoonButton>
           </div>
         )}
       </div>

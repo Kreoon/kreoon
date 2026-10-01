@@ -32,7 +32,7 @@ export function ContactSectionEditor({
         onChange={(v) => patchContent(section, onUpdateBlock, "phone", v)}
       />
       <TextField
-        label="Ubicacion"
+        label="Ubicación"
         value={asString(content.location)}
         placeholder="Bogota, Colombia"
         onChange={(v) => patchContent(section, onUpdateBlock, "location", v)}

@@ -34,7 +34,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: AW-123456789"
-          className={`bg-gray-900/50 border-gray-700 ${!isValidFormat ? 'border-red-500/50' : ''}`}
+          className={`bg-card/50 border-border ${!isValidFormat ? 'border-red-500/50' : ''}`}
         />
         {!isValidFormat && (
           <div className="flex items-center gap-1.5 text-xs text-amber-400">
@@ -42,7 +42,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
             El formato esperado es AW-XXXXXXXXX
           </div>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Conversion ID de Google Ads. Lo encuentras en Tools → Conversions → Conversion action details.
         </p>
       </div>
@@ -57,9 +57,9 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Conversion label o API secret'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           El Conversion Label de la acción de conversión. Necesario para Enhanced Conversions.
         </p>
       </div>
@@ -77,10 +77,10 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-card/30 border border-border">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Los eventos no se envían a Google hasta que OAuth2 esté configurado
           </p>
         </div>
@@ -98,7 +98,7 @@ export function GoogleConfigForm({ data, onChange, hasExistingToken }: GoogleCon
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Opcional"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-border"
           />
         </div>
       )}

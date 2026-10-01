@@ -8,27 +8,27 @@ export function ConversionFunnel({ data }: ConversionFunnelProps) {
   const maxCount = data[0]?.count || 1;
 
   return (
-    <div className="bg-gray-900/50 rounded-sm p-6 border border-gray-800">
-      <h3 className="text-lg font-semibold text-white mb-6">Funnel de Conversión</h3>
+    <div className="bg-card/50 rounded-sm p-6 border border-border">
+      <h3 className="text-lg font-semibold text-foreground mb-6">Funnel de Conversión</h3>
       <div className="space-y-5">
         {data.map((stage, index) => {
           const widthPct = Math.max((stage.count / maxCount) * 100, 4);
           return (
             <div key={stage.stage} className="relative">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm text-gray-400">{stage.stage}</span>
+                <span className="text-sm text-muted-foreground">{stage.stage}</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-white font-semibold tabular-nums">
+                  <span className="text-sm text-foreground font-semibold tabular-nums">
                     {stage.count.toLocaleString()}
                   </span>
                   {index > 0 && (
-                    <span className="text-xs text-gray-500 tabular-nums w-16 text-right">
+                    <span className="text-xs text-muted-foreground tabular-nums w-16 text-right">
                       {stage.conversionRate.toFixed(1)}%
                     </span>
                   )}
                 </div>
               </div>
-              <div className="h-9 bg-gray-800/80 rounded-sm overflow-hidden">
+              <div className="h-9 bg-card/80 rounded-sm overflow-hidden">
                 <div
                   className="h-full rounded-sm transition-all duration-700 ease-out"
                   style={{
@@ -48,8 +48,8 @@ export function ConversionFunnel({ data }: ConversionFunnelProps) {
 
       {/* Summary row */}
       {data.length >= 2 && (
-        <div className="mt-6 pt-4 border-t border-gray-800/50 flex items-center justify-between">
-          <span className="text-xs text-gray-500">Conversión total</span>
+        <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">Conversión total</span>
           <span className="text-sm font-semibold text-purple-400 tabular-nums">
             {data[0].count > 0
               ? ((data[data.length - 1].count / data[0].count) * 100).toFixed(2)

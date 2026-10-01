@@ -43,8 +43,8 @@ export function ReferralProgressRing({ qualified, total = 3 }: ReferralProgressR
         </svg>
         {/* Center content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-bold text-white">{qualified}/{total}</span>
-          <span className="text-xs text-white/50 mt-0.5">llaves</span>
+          <span className="text-3xl font-bold text-foreground">{qualified}/{total}</span>
+          <span className="text-xs text-muted-foreground mt-0.5">llaves</span>
         </div>
       </div>
 
@@ -57,12 +57,12 @@ export function ReferralProgressRing({ qualified, total = 3 }: ReferralProgressR
               'w-10 h-10 rounded-sm flex items-center justify-center transition-all duration-300',
               i < qualified
                 ? 'bg-purple-500/20 border border-purple-500/40 shadow-[0_0_12px_-3px_hsl(270,100%,60%,0.4)]'
-                : 'bg-white/5 border border-white/10'
+                : 'bg-muted/40 border border-border'
             )}
           >
             <Key className={cn(
               'w-5 h-5 transition-colors',
-              i < qualified ? 'text-purple-400' : 'text-white/20'
+              i < qualified ? 'text-purple-400' : 'text-muted-foreground/50'
             )} />
           </div>
         ))}

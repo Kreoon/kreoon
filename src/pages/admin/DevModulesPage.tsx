@@ -29,7 +29,7 @@ function ModuleCard({ module }: { module: DevelopmentModule }) {
   };
 
   return (
-    <Card className="bg-[#14141f] border-zinc-800 hover:border-purple-500/30 transition-colors duration-150">
+    <Card className="bg-background border-zinc-800 hover:border-purple-500/30 transition-colors duration-150">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="p-2 rounded-lg bg-purple-500/10 w-fit">
@@ -90,7 +90,7 @@ export default function DevModulesPage() {
   const pausedModules = DEVELOPMENT_MODULES.filter(m => m.status === 'paused');
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] p-6 md:p-8">
+    <div className="min-h-screen bg-background p-6 md:p-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -109,15 +109,15 @@ export default function DevModulesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8 max-w-md">
-        <div className="bg-[#14141f] border border-zinc-800 rounded-lg p-4 text-center">
+        <div className="bg-background border border-zinc-800 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-amber-500">{devModules.length}</p>
           <p className="text-xs text-zinc-500">En Desarrollo</p>
         </div>
-        <div className="bg-[#14141f] border border-zinc-800 rounded-lg p-4 text-center">
+        <div className="bg-background border border-zinc-800 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-blue-500">{betaModules.length}</p>
           <p className="text-xs text-zinc-500">Beta</p>
         </div>
-        <div className="bg-[#14141f] border border-zinc-800 rounded-lg p-4 text-center">
+        <div className="bg-background border border-zinc-800 rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-zinc-500">{pausedModules.length}</p>
           <p className="text-xs text-zinc-500">Pausados</p>
         </div>

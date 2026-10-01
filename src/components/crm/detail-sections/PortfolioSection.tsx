@@ -28,7 +28,7 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
         {portfolio.map((item) => (
           <div key={item.id} className="relative group">
-            <div className="aspect-video rounded-sm bg-white/5 overflow-hidden">
+            <div className="aspect-video rounded-sm bg-muted/40 overflow-hidden">
               {hasValidUrl(item.thumbnail_url) ? (
                 <img
                   src={item.thumbnail_url}
@@ -38,20 +38,20 @@ export function PortfolioSection({ portfolio }: PortfolioSectionProps) {
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   {item.media_type === 'video' ? (
-                    <Video className="h-5 w-5 text-white/20" />
+                    <Video className="h-5 w-5 text-muted-foreground/70" />
                   ) : (
-                    <Image className="h-5 w-5 text-white/20" />
+                    <Image className="h-5 w-5 text-muted-foreground/70" />
                   )}
                 </div>
               )}
             </div>
             {item.is_featured && (
               <div className="absolute top-1 right-1 bg-amber-500/90 rounded-full p-0.5">
-                <Star className="h-2.5 w-2.5 text-white fill-white" />
+                <Star className="h-2.5 w-2.5 text-foreground fill-white" />
               </div>
             )}
             {item.title && (
-              <p className="text-[10px] text-white/50 truncate mt-1">{item.title}</p>
+              <p className="text-[10px] text-muted-foreground/70 truncate mt-1">{item.title}</p>
             )}
           </div>
         ))}

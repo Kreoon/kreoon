@@ -23,12 +23,12 @@ interface TransactionIconProps {
 const ICON_CONFIG: Record<TransactionType, { icon: LucideIcon; color: string; bgColor: string }> = {
   deposit: {
     icon: ArrowDownCircle,
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-500/10',
   },
   withdrawal: {
     icon: ArrowUpCircle,
-    color: 'text-amber-400',
+    color: 'text-amber-700 dark:text-amber-400',
     bgColor: 'bg-amber-500/10',
   },
   transfer_in: {
@@ -43,22 +43,22 @@ const ICON_CONFIG: Record<TransactionType, { icon: LucideIcon; color: string; bg
   },
   escrow_hold: {
     icon: Lock,
-    color: 'text-yellow-400',
+    color: 'text-yellow-700 dark:text-yellow-400',
     bgColor: 'bg-yellow-500/10',
   },
   escrow_release: {
     icon: Unlock,
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-500/10',
   },
   escrow_refund: {
     icon: RotateCcw,
-    color: 'text-amber-400',
+    color: 'text-amber-700 dark:text-amber-400',
     bgColor: 'bg-amber-500/10',
   },
   payment_received: {
     icon: DollarSign,
-    color: 'text-emerald-400',
+    color: 'text-emerald-700 dark:text-emerald-400',
     bgColor: 'bg-emerald-500/10',
   },
   platform_fee: {

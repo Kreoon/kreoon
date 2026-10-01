@@ -79,18 +79,18 @@ function StatCard({
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-2xl font-bold text-white mt-1">{value}</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
             {change !== undefined && (
               <div className="flex items-center gap-1 mt-2">
                 {change >= 0 ? (
-                  <ArrowUpRight className="h-3 w-3 text-emerald-400" />
+                  <ArrowUpRight className="h-3 w-3 text-emerald-700 dark:text-emerald-400" />
                 ) : (
-                  <ArrowDownRight className="h-3 w-3 text-red-400" />
+                  <ArrowDownRight className="h-3 w-3 text-red-700 dark:text-red-400" />
                 )}
                 <span
                   className={cn(
                     'text-xs',
-                    change >= 0 ? 'text-emerald-400' : 'text-red-400'
+                    change >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
                   )}
                 >
                   {change >= 0 ? '+' : ''}
@@ -231,7 +231,7 @@ export function WithdrawalStats({ className }: WithdrawalStatsProps) {
         value={stats?.pending_count ?? 0}
         icon={Clock}
         iconBg="bg-amber-500/10"
-        iconColor="text-amber-400"
+        iconColor="text-amber-700 dark:text-amber-400"
         change={stats?.pending_change}
         changeLabel="vs semana pasada"
         isLoading={isLoading}
@@ -249,7 +249,7 @@ export function WithdrawalStats({ className }: WithdrawalStatsProps) {
         value={stats?.today_processed_count ?? 0}
         icon={CheckCircle}
         iconBg="bg-emerald-500/10"
-        iconColor="text-emerald-400"
+        iconColor="text-emerald-700 dark:text-emerald-400"
         isLoading={isLoading}
       />
       <StatCard
@@ -265,7 +265,7 @@ export function WithdrawalStats({ className }: WithdrawalStatsProps) {
         value={formatCurrency(stats?.week_processed_amount ?? 0, 'USD')}
         icon={TrendingUp}
         iconBg="bg-emerald-500/10"
-        iconColor="text-emerald-400"
+        iconColor="text-emerald-700 dark:text-emerald-400"
         change={stats?.processed_change}
         changeLabel="vs semana pasada"
         isLoading={isLoading}

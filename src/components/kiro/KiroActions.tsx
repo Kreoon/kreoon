@@ -96,7 +96,7 @@ export function KiroActions({ onStateChange, onSendMessage, currentZone = 'gener
             <h3 className="text-sm font-medium text-violet-300">
               {zoneConfig.zoneName}
             </h3>
-            <p className="text-[10px] text-gray-500">
+            <p className="text-[10px] text-muted-foreground">
               Acciones disponibles en esta zona
             </p>
           </div>
@@ -153,7 +153,7 @@ export function KiroActions({ onStateChange, onSendMessage, currentZone = 'gener
       {/* ACCIONES GENÉRICAS */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="pt-2 border-t border-violet-500/10">
-        <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-wider mb-2">
+        <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
           Siempre disponibles
         </h3>
         <div className="grid grid-cols-2 gap-1.5">
@@ -173,10 +173,10 @@ export function KiroActions({ onStateChange, onSendMessage, currentZone = 'gener
       {/* ESTADO DEL SISTEMA */}
       {/* ═══════════════════════════════════════════════════════════════════ */}
       <div className="pt-2 border-t border-violet-500/10">
-        <h3 className="text-[10px] font-mono text-gray-500 uppercase tracking-wider mb-2">
+        <h3 className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-2">
           Sistema
         </h3>
-        <div className="space-y-1 text-[11px] text-gray-500">
+        <div className="space-y-1 text-[11px] text-muted-foreground">
           <div className="flex justify-between">
             <span>Tokens IA</span>
             <span className="text-violet-400">∞</span>

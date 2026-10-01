@@ -35,7 +35,7 @@ export function NovaActivityFeed({
       <div className={cn(
         "flex flex-col items-center justify-center py-8 px-4",
         "rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700",
-        "bg-zinc-50 dark:bg-zinc-900/50",
+        "bg-zinc-50 dark:bg-card/50",
         className
       )}>
         <Clock className="h-10 w-10 text-zinc-400 mb-3" />

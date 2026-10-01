@@ -54,7 +54,7 @@ export default function Unauthorized() {
             <Lock className="h-6 w-6 text-red-500" />
           </div>
           <div>
-            <p className="mb-1 font-medium text-white">Área restringida</p>
+            <p className="mb-1 font-medium text-foreground">Área restringida</p>
             <p className="text-sm text-kreoon-text-secondary">
               La página que intentas acceder requiere permisos especiales que tu
               rol actual no tiene.
@@ -68,7 +68,7 @@ export default function Unauthorized() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-kreoon-border py-2">
             <span className="text-kreoon-text-secondary">Email</span>
-            <span className="text-white">{user?.email}</span>
+            <span className="text-foreground">{user?.email}</span>
           </div>
           <div className="flex items-center justify-between border-b border-kreoon-border py-2">
             <span className="text-kreoon-text-secondary">Roles asignados</span>

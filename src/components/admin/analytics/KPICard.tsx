@@ -41,11 +41,11 @@ export function KPICard({ label, value, previousValue, format, color }: KPIData)
       'bg-gradient-to-br rounded-sm p-5 border transition-all hover:scale-[1.02]',
       COLOR_CLASSES[color]
     )}>
-      <p className="text-sm text-gray-400 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-white">{formatValue(value, format)}</p>
+      <p className="text-sm text-muted-foreground mb-1">{label}</p>
+      <p className="text-2xl font-bold text-foreground">{formatValue(value, format)}</p>
       <div className="flex items-center gap-1.5 mt-2">
         {isZero ? (
-          <Minus className="h-3.5 w-3.5 text-gray-500" />
+          <Minus className="h-3.5 w-3.5 text-muted-foreground" />
         ) : isPositive ? (
           <TrendingUp className={cn('h-3.5 w-3.5', TREND_ICON_COLOR[color])} />
         ) : (
@@ -53,11 +53,11 @@ export function KPICard({ label, value, previousValue, format, color }: KPIData)
         )}
         <span className={cn(
           'text-xs font-medium',
-          isZero ? 'text-gray-500' : isPositive ? 'text-green-400' : 'text-red-400',
+          isZero ? 'text-muted-foreground' : isPositive ? 'text-green-400' : 'text-red-400',
         )}>
           {isZero ? '0%' : `${isPositive ? '+' : ''}${change.toFixed(1)}%`}
         </span>
-        <span className="text-xs text-gray-600 ml-1">vs periodo anterior</span>
+        <span className="text-xs text-muted-foreground ml-1">vs periodo anterior</span>
       </div>
     </div>
   );

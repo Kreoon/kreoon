@@ -10,7 +10,14 @@ import { ProfileBuilderV2 } from "@/components/profile-builder-v2";
 export default function ProfileBuilderPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
-  const useV2 = searchParams.get("v") === "2";
+  // D3 paso 1 (2026-10-01): V2 es el editor por defecto. `?v=1` abre V1 como respaldo temporal
+  // (se retira en el paso 2); `?v=2` se conserva como alias de V2 para enlaces antiguos.
+  const useLegacyV1 = searchParams.get("v") === "1";
+  const tabParam = searchParams.get("tab");
+  const initialPanel =
+    tabParam === "templates" || tabParam === "style" || tabParam === "publish"
+      ? tabParam
+      : "sections";
   const [profileId, setProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,9 +133,9 @@ export default function ProfileBuilderPage() {
     );
   }
 
-  return useV2 ? (
-    <ProfileBuilderV2 profileId={profileId} />
-  ) : (
+  return useLegacyV1 ? (
     <ProfileBuilder profileId={profileId} />
+  ) : (
+    <ProfileBuilderV2 profileId={profileId} initialPanel={initialPanel} />
   );
 }

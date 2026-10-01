@@ -71,7 +71,7 @@ export function SocialLinksSection({
               href={href}
               target="_blank"
               rel="noopener"
-              className="flex items-center gap-2 text-sm text-white/70 hover:text-[#a855f7] transition-colors truncate"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-[#a855f7] transition-colors truncate"
             >
               <Icon className="h-3.5 w-3.5 flex-shrink-0" />
               <span className="truncate">{label}: {url}</span>

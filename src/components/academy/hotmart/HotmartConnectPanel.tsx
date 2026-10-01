@@ -146,7 +146,7 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
   return (
     <div className="space-y-4">
       {/* Header */}
-      <Card className="bg-white/5 border-white/10 p-5 space-y-3">
+      <Card className="bg-muted/50 border-border p-5 space-y-3">
         <div className="flex items-start gap-3">
           <div
             className="h-10 w-10 rounded-md flex items-center justify-center shrink-0"
@@ -155,8 +155,8 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
             <Link2 className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-zinc-100">Hotmart Co-producción</h3>
-            <p className="text-xs text-zinc-400 mt-1">
+            <h3 className="text-base font-semibold text-foreground">Hotmart Co-producción</h3>
+            <p className="text-xs text-muted-foreground mt-1">
               Vende tus cursos con PIX, Boleto, OXXO, PSE y cuotas locales LATAM. Hotmart cobra al
               cliente y divide automáticamente cada venta entre ti y KREOON.
             </p>
@@ -164,23 +164,23 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-lg bg-white/5 p-3">
-            <p className="text-zinc-500 text-[10px] uppercase font-semibold">Tu parte</p>
-            <p className="text-lg font-bold text-emerald-400">{(100 - 9.9 - commission).toFixed(1)}%</p>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-muted-foreground text-[10px] uppercase font-semibold">Tu parte</p>
+            <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">{(100 - 9.9 - commission).toFixed(1)}%</p>
           </div>
-          <div className="rounded-lg bg-white/5 p-3">
-            <p className="text-zinc-500 text-[10px] uppercase font-semibold">KREOON</p>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-muted-foreground text-[10px] uppercase font-semibold">KREOON</p>
             <p className="text-lg font-bold" style={{ color: accentColor }}>
               {commission}%
             </p>
           </div>
-          <div className="rounded-lg bg-white/5 p-3">
-            <p className="text-zinc-500 text-[10px] uppercase font-semibold">Hotmart</p>
-            <p className="text-lg font-bold text-zinc-300">9.9%</p>
+          <div className="rounded-lg bg-muted/50 p-3">
+            <p className="text-muted-foreground text-[10px] uppercase font-semibold">Hotmart</p>
+            <p className="text-lg font-bold text-muted-foreground">9.9%</p>
           </div>
         </div>
 
-        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-200/90">
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-200/90">
           <p className="font-semibold flex items-center gap-1.5">
             <AlertCircle className="h-3.5 w-3.5" /> Pasos para conectar
           </p>
@@ -195,7 +195,7 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
                   navigator.clipboard.writeText(KREOON_HOTMART_ACCOUNT_ID);
                   toast.success('Copiado');
                 }}
-                className="ml-2 inline-flex items-center gap-1 font-mono text-amber-100 hover:text-white"
+                className="ml-2 inline-flex items-center gap-1 font-mono text-amber-800 dark:text-amber-100 hover:text-foreground"
               >
                 {KREOON_HOTMART_ACCOUNT_ID}
                 <Copy className="h-3 w-3" />
@@ -208,15 +208,15 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
       </Card>
 
       {/* Form de conexión nueva */}
-      <Card className="bg-white/5 border-white/10 p-5 space-y-3">
-        <h4 className="text-sm font-semibold text-zinc-100">Conectar producto nuevo</h4>
+      <Card className="bg-muted/50 border-border p-5 space-y-3">
+        <h4 className="text-sm font-semibold text-foreground">Conectar producto nuevo</h4>
 
         <div className="space-y-1.5">
-          <Label className="text-xs text-zinc-400">Curso a entregar</Label>
+          <Label className="text-xs text-muted-foreground">Curso a entregar</Label>
           <select
             value={selectedCourseId}
             onChange={(e) => setSelectedCourseId(e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm text-zinc-100"
+            className="w-full bg-muted/50 border border-border rounded-md px-3 py-2 text-sm text-foreground"
           >
             <option value="">Membresía del space (sin curso específico)</option>
             {courses?.map((c) => (
@@ -229,43 +229,43 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">hotmart_product_id</Label>
+            <Label className="text-xs text-muted-foreground">hotmart_product_id</Label>
             <Input
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
               placeholder="A12345678"
-              className="bg-white/5 border-white/10 font-mono text-xs"
+              className="bg-muted/50 border-border font-mono text-xs"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Hottok (token webhook)</Label>
+            <Label className="text-xs text-muted-foreground">Hottok (token webhook)</Label>
             <Input
               value={hottok}
               onChange={(e) => setHottok(e.target.value)}
               type="password"
               placeholder="••••••••"
-              className="bg-white/5 border-white/10 font-mono text-xs"
+              className="bg-muted/50 border-border font-mono text-xs"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Offer code (opcional)</Label>
+            <Label className="text-xs text-muted-foreground">Offer code (opcional)</Label>
             <Input
               value={offerCode}
               onChange={(e) => setOfferCode(e.target.value)}
               placeholder="abc12345"
-              className="bg-white/5 border-white/10 font-mono text-xs"
+              className="bg-muted/50 border-border font-mono text-xs"
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs text-zinc-400">Product ucode (opcional)</Label>
+            <Label className="text-xs text-muted-foreground">Product ucode (opcional)</Label>
             <Input
               value={productUcode}
               onChange={(e) => setProductUcode(e.target.value)}
               placeholder="uuid"
-              className="bg-white/5 border-white/10 font-mono text-xs"
+              className="bg-muted/50 border-border font-mono text-xs"
             />
           </div>
         </div>
@@ -290,33 +290,33 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
       {/* Conexiones existentes */}
       {!!connections?.length && (
         <div className="space-y-2">
-          <h4 className="text-sm font-semibold text-zinc-100">Productos conectados</h4>
+          <h4 className="text-sm font-semibold text-foreground">Productos conectados</h4>
           {connections.map((c: any) => (
             <Card
               key={c.id}
-              className={`p-4 bg-white/5 border ${c.active ? 'border-emerald-500/30' : 'border-amber-500/30'}`}
+              className={`p-4 bg-muted/50 border ${c.active ? 'border-emerald-500/30' : 'border-amber-500/30'}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-zinc-100">
+                    <p className="text-sm font-medium text-foreground">
                       {c.course?.title ?? 'Membresía del space'}
                     </p>
                     <Badge
                       variant="outline"
                       className={`text-[10px] ${
                         c.active
-                          ? 'border-emerald-500/30 text-emerald-300'
-                          : 'border-amber-500/30 text-amber-300'
+                          ? 'border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                          : 'border-amber-500/30 text-amber-700 dark:text-amber-300'
                       }`}
                     >
                       {c.coproduction_status}
                     </Badge>
-                    <Badge variant="outline" className="text-[10px] border-white/10 text-zinc-400">
+                    <Badge variant="outline" className="text-[10px] border-border text-muted-foreground">
                       {c.kreoon_commission_percent}% KREOON
                     </Badge>
                   </div>
-                  <p className="text-xs text-zinc-500 mt-1 font-mono">
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">
                     {c.hotmart_product_id}
                     {c.hotmart_offer_code && ` · off=${c.hotmart_offer_code}`}
                   </p>
@@ -326,7 +326,7 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
                     href={`https://pay.hotmart.com/${c.hotmart_product_id}${c.hotmart_offer_code ? `?off=${c.hotmart_offer_code}` : ''}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-zinc-400 hover:text-zinc-200 p-1.5"
+                    className="text-muted-foreground hover:text-foreground p-1.5"
                     title="Ver checkout"
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
@@ -349,7 +349,7 @@ export function HotmartConnectPanel({ spaceId, planSlug, accentColor = '#8B5CF6'
                       if (confirm(`¿Eliminar conexión ${c.hotmart_product_id}?`))
                         deleteMutation.mutate(c.id);
                     }}
-                    className="text-zinc-400 hover:text-red-400 h-7 w-7 p-0"
+                    className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400 h-7 w-7 p-0"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

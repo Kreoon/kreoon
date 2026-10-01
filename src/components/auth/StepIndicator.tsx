@@ -35,7 +35,7 @@ export function StepIndicator({
   return (
     <div className={cn("w-full", className)}>
       {/* Mobile: solo "Paso X de Y" */}
-      <div className="mb-2 text-center text-sm text-kreoon-text-muted lg:hidden">
+      <div className="mb-2 text-center text-sm text-muted-foreground lg:hidden">
         Paso {currentStep + 1} de {steps.length}
       </div>
 
@@ -58,13 +58,13 @@ export function StepIndicator({
                     className={cn(
                       "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors duration-200",
                       isCurrent && [
-                        "border-kreoon-purple-500 bg-kreoon-purple-500/20 text-kreoon-purple-400",
+                        "border-kreoon-purple-500 bg-kreoon-purple-500/20 text-primary",
                         "shadow-kreoon-glow-sm",
                       ],
                       completed &&
                         !isCurrent &&
-                        "border-kreoon-purple-500 bg-kreoon-purple-500 text-kreoon-text-primary",
-                      isFuture && "border-kreoon-border bg-transparent text-kreoon-text-muted",
+                        "border-kreoon-purple-500 bg-kreoon-purple-500 text-foreground",
+                      isFuture && "border-kreoon-border bg-transparent text-muted-foreground",
                     )}
                   >
                     {completed && !isCurrent ? (
@@ -77,15 +77,15 @@ export function StepIndicator({
                     <p
                       className={cn(
                         "text-xs font-medium transition-colors duration-200",
-                        isCurrent && "text-kreoon-purple-400",
-                        completed && !isCurrent && "text-kreoon-text-primary",
-                        isFuture && "text-kreoon-text-muted",
+                        isCurrent && "text-primary",
+                        completed && !isCurrent && "text-foreground",
+                        isFuture && "text-muted-foreground",
                       )}
                     >
                       {step.label}
                     </p>
                     {step.description && (
-                      <p className="mt-0.5 text-[10px] text-kreoon-text-muted line-clamp-2 max-w-[80px]">
+                      <p className="mt-0.5 text-[10px] text-muted-foreground line-clamp-2 max-w-[80px]">
                         {step.description}
                       </p>
                     )}

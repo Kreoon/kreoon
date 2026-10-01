@@ -1,0 +1,88 @@
+-- ============================================================================================
+-- FASE 2 — AISLAMIENTO ENTRE ORGANIZACIONES (BORRADOR · NO SE APLICA AUTOMÁTICAMENTE)
+-- ============================================================================================
+-- Este archivo NO está en supabase/migrations a propósito: cada bloque puede romper páginas
+-- públicas o flujos que dependen de la exposición actual y necesita (1) inventario de consumidores,
+-- (2) ensayo en una rama de Supabase y (3) autorización. Hallazgos [VIVO] 30/09/2026.
+-- ============================================================================================
+
+-- ─── A. organization_members legible por anon ───────────────────────────────────────────────
+-- Policy "Anon can view org memberships" (SELECT, rol anon, USING true): cualquier visitante sin
+-- sesión puede listar quién es miembro de qué organización y con qué rol (user_id, role, is_owner).
+-- ANTES de eliminarla: confirmar qué páginas públicas la usan (p. ej. /org/:slug/talento,
+-- /org/:slug/contenido, perfiles públicos, feeds). Sugerencia: reemplazar por una vista/RPC que
+-- devuelva solo los miembros con perfil público y sin exponer rol ni is_owner.
+--
+--   DROP POLICY IF EXISTS "Anon can view org memberships" ON public.organization_members;
+--   NOTIFY pgrst, 'reload schema';
+
+-- ─── B. organizations legible por anon/authenticated con TODAS las columnas ─────────────────
+-- allow_public_read_organizations (SELECT, TO public, USING true) + GRANT SELECT a anon expone
+-- registration_code, registration_link, admin_email, admin_phone, billing_email, sender_email,
+-- resend_domain_id, settings, white_label_config, created_by, blocked_*, trial_*, selected_plan...
+-- Con registration_code público, un código de invitación deja de proteger nada.
+-- Opción recomendada (columnas públicas explícitas; las funciones SECURITY DEFINER —resolve_org_by_domain,
+-- get_registration_org— no se ven afectadas). PRIMERO buscar consumidores con `select('*')` sobre
+-- organizations en src/ y en edge functions: fallarán con "permission denied".
+--
+--   REVOKE SELECT ON public.organizations FROM anon;
+--   GRANT SELECT (id, name, slug, logo_url, logo_dark_url, favicon_url, description, primary_color, secondary_color,
+--                 platform_name, og_image_url, is_registration_open, is_blocked, deleted_at, allow_public_network,
+--                 marketplace_enabled, portfolio_enabled, portfolio_title, portfolio_description, portfolio_cover,
+--                 portfolio_color, org_profile_public, org_marketplace_visible, org_type, org_display_name, org_tagline,
+--                 org_cover_url, org_gallery, org_specialties, org_team_size_range, org_year_founded, org_website,
+--                 org_linkedin, org_instagram, org_tiktok, org_marketplace_rating_avg, org_marketplace_rating_count,
+--                 org_marketplace_projects_count, country, city, website, instagram, tiktok, facebook, linkedin)
+--     ON public.organizations TO anon;
+--   -- Para authenticated el problema es el mismo (la policy es TO public): hacer lo análogo y dar
+--   -- acceso completo solo a admins de la organización vía RPC (p. ej. get_my_organization_settings).
+
+-- ─── C. Storage: product-documents (bucket privado) ─────────────────────────────────────────
+-- Políticas vivas (las 4, TO authenticated): USING (bucket_id = 'product-documents') sin filtro:
+-- cualquier usuario autenticado lee, sube, reemplaza y BORRA documentos de productos de otras
+-- organizaciones. Hoy hay 3 objetos; el primer segmento de la ruta es el product_id.
+-- Propuesta (validar la cadena products → clients → organización con datos reales antes de aplicar):
+--
+--   DROP POLICY IF EXISTS "Authenticated users can read product documents"   ON storage.objects;
+--   DROP POLICY IF EXISTS "Authenticated users can upload product documents" ON storage.objects;
+--   DROP POLICY IF EXISTS "Authenticated users can update product documents" ON storage.objects;
+--   DROP POLICY IF EXISTS "Authenticated users can delete product documents" ON storage.objects;
+--
+--   CREATE POLICY "Org members manage product documents" ON storage.objects
+--     FOR ALL TO authenticated
+--     USING (bucket_id = 'product-documents' AND EXISTS (
+--       SELECT 1 FROM public.products p JOIN public.clients c ON c.id = p.client_id
+--       WHERE p.id::text = (storage.foldername(name))[1]
+--         AND c.organization_id IN (SELECT public.get_my_organization_ids())))
+--     WITH CHECK (bucket_id = 'product-documents' AND EXISTS (
+--       SELECT 1 FROM public.products p JOIN public.clients c ON c.id = p.client_id
+--       WHERE p.id::text = (storage.foldername(name))[1]
+--         AND c.organization_id IN (SELECT public.get_my_organization_ids())));
+--   -- Ojo: get_my_organization_ids() devuelve TODAS las orgs del usuario (y todas las orgs a un superadmin);
+--   -- para escritura conviene exigir además rol de staff (is_org_admin / estratega), no cualquier miembro.
+
+-- ─── D. Buckets públicos con escritura abierta a authenticated ─────────────────────────────
+-- Reportado por lectura de repo, NO verificado en vivo política por política: public-assets,
+-- content-thumbnails, streaming-media, ad-generator, marketplace-media (INSERT sin filtro de org).
+-- Verificar con: select policyname, cmd, qual, with_check from pg_policies
+--                where schemaname='storage' and tablename='objects' order by 1;
+-- `financial-receipts`: el repo define políticas con solo `auth.uid() IS NOT NULL`, pero EN VIVO no
+-- existen políticas que mencionen ese bucket (0 objetos): sin políticas, el acceso de clientes queda denegado.
+
+-- ─── E. brands_insert: altas de marca por PostgREST ─────────────────────────────────────────
+-- Policy viva brands_insert: (owner_id = auth.uid()) OR is_platform_root(auth.uid()). Cualquier
+-- usuario autenticado (p. ej. un creador recién registrado) puede crear una marca directamente.
+-- El brief cierra las altas públicas de marcas; esta es la vía autenticada que lo elude. NO se aplicó
+-- porque afecta a clientes existentes que crean su primera marca desde ClientDashboard y a
+-- UpgradeToBrandWizard. Opción mínima: permitir solo a quien ya es miembro de alguna marca, a admins
+-- de organización y al propietario de la plataforma.
+--
+--   DROP POLICY IF EXISTS brands_insert ON public.brands;
+--   CREATE POLICY brands_insert ON public.brands FOR INSERT TO authenticated
+--     WITH CHECK (
+--       public.is_platform_root(auth.uid())
+--       OR (owner_id = auth.uid() AND (
+--             EXISTS (SELECT 1 FROM public.brand_members bm WHERE bm.user_id = auth.uid())
+--          OR EXISTS (SELECT 1 FROM public.organization_members om
+--                      WHERE om.user_id = auth.uid() AND om.deleted_at IS NULL AND om.role IN ('admin','team_leader'))))
+--     );

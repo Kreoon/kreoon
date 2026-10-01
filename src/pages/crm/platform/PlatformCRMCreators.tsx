@@ -73,9 +73,9 @@ function StatCard({
           <Icon className={cn("h-5 w-5", c.text)} />
         </div>
         <div className="min-w-0">
-          <p className="text-2xl font-bold text-white">{value}</p>
-          <p className="text-xs text-white/50">{title}</p>
-          {subtitle && <p className="text-[10px] text-white/30 mt-0.5">{subtitle}</p>}
+          <p className="text-2xl font-bold text-foreground">{value}</p>
+          <p className="text-xs text-muted-foreground/70">{title}</p>
+          {subtitle && <p className="text-[10px] text-muted-foreground/70 mt-0.5">{subtitle}</p>}
         </div>
       </div>
     </Card>
@@ -189,15 +189,15 @@ const PlatformCRMCreators = () => {
         {/* ========== HEADER ========== */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white">Talento</h1>
-            <p className="text-white/60">Todo el talento del ecosistema Kreoon</p>
+            <h1 className="text-3xl font-bold text-foreground">Talento</h1>
+            <p className="text-muted-foreground">Todo el talento del ecosistema Kreoon</p>
           </div>
           <div className="flex gap-3 items-center">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70" />
               <Input
                 placeholder="Buscar talento..."
-                className="w-64 bg-white/5 border-white/10 pl-9"
+                className="w-64 bg-muted/40 border-border pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -229,7 +229,7 @@ const PlatformCRMCreators = () => {
         {/* ========== FILTERS ========== */}
         <div className="flex flex-wrap gap-3">
           <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-            <SelectTrigger className="w-48 bg-white/5 border-white/10">
+            <SelectTrigger className="w-48 bg-muted/40 border-border">
               <SelectValue placeholder={"Categor\u00eda"} />
             </SelectTrigger>
             <SelectContent>
@@ -243,7 +243,7 @@ const PlatformCRMCreators = () => {
           </Select>
 
           <Select value={roleFilter} onValueChange={setRoleFilter}>
-            <SelectTrigger className="w-48 bg-white/5 border-white/10">
+            <SelectTrigger className="w-48 bg-muted/40 border-border">
               <SelectValue placeholder="Rol" />
             </SelectTrigger>
             <SelectContent className="max-h-60">
@@ -257,7 +257,7 @@ const PlatformCRMCreators = () => {
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40 bg-white/5 border-white/10">
+            <SelectTrigger className="w-40 bg-muted/40 border-border">
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
@@ -268,7 +268,7 @@ const PlatformCRMCreators = () => {
             </SelectContent>
           </Select>
 
-          <div className="ml-auto text-sm text-white/40 self-center">
+          <div className="ml-auto text-sm text-muted-foreground/70 self-center">
             {filtered.length} talento
           </div>
         </div>
@@ -277,15 +277,15 @@ const PlatformCRMCreators = () => {
         {isLoading && (
           <div className="p-12 text-center">
             <div className="w-8 h-8 border-2 border-pink-500/30 border-t-pink-500 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-sm text-white/40">Cargando talento...</p>
+            <p className="text-sm text-muted-foreground/70">Cargando talento...</p>
           </div>
         )}
 
         {/* ========== EMPTY STATE ========== */}
         {!isLoading && filtered.length === 0 && (
           <div className="p-12 text-center">
-            <Video className="h-10 w-10 text-white/10 mx-auto mb-3" />
-            <p className="text-sm text-white/40">
+            <Video className="h-10 w-10 text-muted-foreground/70 mx-auto mb-3" />
+            <p className="text-sm text-muted-foreground/70">
               {search || categoryFilter !== "all" || roleFilter !== "all" || statusFilter !== "all"
                 ? "Sin resultados para los filtros aplicados"
                 : "A\u00fan no hay talento registrado"}
@@ -304,8 +304,8 @@ const PlatformCRMCreators = () => {
                   key={creator.id}
                   onClick={() => handleSelect(creator)}
                   className={cn(
-                    "p-4 hover:bg-white/10 transition-colors cursor-pointer",
-                    selectedCreator?.id === creator.id && "ring-1 ring-[#8b5cf6] bg-white/10"
+                    "p-4 hover:bg-muted transition-colors cursor-pointer",
+                    selectedCreator?.id === creator.id && "ring-1 ring-[#8b5cf6] bg-muted"
                   )}
                 >
                   <div className="flex items-start gap-3 mb-3">
@@ -328,8 +328,8 @@ const PlatformCRMCreators = () => {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium truncate">{creator.full_name}</p>
-                      <p className="text-white/50 text-sm truncate">
+                      <p className="text-foreground font-medium truncate">{creator.full_name}</p>
+                      <p className="text-muted-foreground/70 text-sm truncate">
                         {creator.username ? `@${creator.username}` : creator.email}
                       </p>
                     </div>
@@ -347,7 +347,7 @@ const PlatformCRMCreators = () => {
                       </span>
                     )}
                     {role && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                         {SPECIFIC_ROLE_LABELS[role]}
                       </span>
                     )}
@@ -360,7 +360,7 @@ const PlatformCRMCreators = () => {
                         {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "N/A"}
                       </span>
                     </div>
-                    <span className="text-white/50">
+                    <span className="text-muted-foreground/70">
                       {creator.completed_projects} proyectos
                     </span>
                   </div>
@@ -374,7 +374,7 @@ const PlatformCRMCreators = () => {
                         "px-2 py-0.5 rounded-full text-xs",
                         creator.is_active
                           ? "bg-green-500/20 text-green-300"
-                          : "bg-white/10 text-white/50"
+                          : "bg-muted text-muted-foreground/70"
                       )}
                     >
                       {creator.is_active ? "Activo" : "Inactivo"}
@@ -391,18 +391,18 @@ const PlatformCRMCreators = () => {
           <Card>
             <Table>
               <TableHeader>
-                <TableRow className="border-white/10 hover:bg-transparent">
-                  <TableHead className="text-white/70">Talento</TableHead>
-                  <TableHead className="text-white/70">{"Categor\u00eda"}</TableHead>
-                  <TableHead className="text-white/70 hidden md:table-cell">Rol</TableHead>
-                  <TableHead className="text-white/70">Rating</TableHead>
-                  <TableHead className="text-white/70 hidden md:table-cell">
+                <TableRow className="border-border hover:bg-transparent">
+                  <TableHead className="text-muted-foreground">Talento</TableHead>
+                  <TableHead className="text-muted-foreground">{"Categor\u00eda"}</TableHead>
+                  <TableHead className="text-muted-foreground hidden md:table-cell">Rol</TableHead>
+                  <TableHead className="text-muted-foreground">Rating</TableHead>
+                  <TableHead className="text-muted-foreground hidden md:table-cell">
                     Proyectos
                   </TableHead>
-                  <TableHead className="text-white/70 hidden lg:table-cell">
+                  <TableHead className="text-muted-foreground hidden lg:table-cell">
                     Ganado
                   </TableHead>
-                  <TableHead className="text-white/70">Estado</TableHead>
+                  <TableHead className="text-muted-foreground">Estado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -414,7 +414,7 @@ const PlatformCRMCreators = () => {
                       key={creator.id}
                       onClick={() => handleSelect(creator)}
                       className={cn(
-                        "border-white/10 hover:bg-white/5 cursor-pointer",
+                        "border-border hover:bg-muted/40 cursor-pointer",
                         selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10"
                       )}
                     >
@@ -437,10 +437,10 @@ const PlatformCRMCreators = () => {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-white font-medium truncate">
+                            <p className="text-foreground font-medium truncate">
                               {creator.full_name}
                             </p>
-                            <p className="text-white/50 text-sm truncate">
+                            <p className="text-muted-foreground/70 text-sm truncate">
                               {creator.email}
                             </p>
                           </div>
@@ -457,10 +457,10 @@ const PlatformCRMCreators = () => {
                             {TALENT_CATEGORY_LABELS[category]}
                           </span>
                         ) : (
-                          <span className="text-white/30 text-xs">{"\u2014"}</span>
+                          <span className="text-muted-foreground/70 text-xs">{"\u2014"}</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-white/70 hidden md:table-cell">
+                      <TableCell className="text-muted-foreground hidden md:table-cell">
                         {role ? SPECIFIC_ROLE_LABELS[role] : "\u2014"}
                       </TableCell>
                       <TableCell>
@@ -471,7 +471,7 @@ const PlatformCRMCreators = () => {
                             : "N/A"}
                         </div>
                       </TableCell>
-                      <TableCell className="text-white hidden md:table-cell">
+                      <TableCell className="text-foreground hidden md:table-cell">
                         {creator.completed_projects}
                       </TableCell>
                       <TableCell className="text-green-400 hidden lg:table-cell">
@@ -483,7 +483,7 @@ const PlatformCRMCreators = () => {
                             "px-2 py-1 rounded-full text-xs",
                             creator.is_active
                               ? "bg-green-500/20 text-green-300"
-                              : "bg-white/10 text-white/50"
+                              : "bg-muted text-muted-foreground/70"
                           )}
                         >
                           {creator.is_active ? "Activo" : "Inactivo"}
@@ -507,7 +507,7 @@ const PlatformCRMCreators = () => {
                   key={creator.id}
                   onClick={() => handleSelect(creator)}
                   className={cn(
-                    "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-white/5 cursor-pointer transition-colors border border-transparent",
+                    "flex items-center gap-4 px-4 py-3 rounded-sm hover:bg-muted/40 cursor-pointer transition-colors border border-transparent",
                     selectedCreator?.id === creator.id && "bg-[#8b5cf6]/10 border-[#8b5cf6]/30"
                   )}
                 >
@@ -528,8 +528,8 @@ const PlatformCRMCreators = () => {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-white font-medium truncate">{creator.full_name}</p>
-                    <p className="text-xs text-white/40 truncate">{creator.email}</p>
+                    <p className="text-sm text-foreground font-medium truncate">{creator.full_name}</p>
+                    <p className="text-xs text-muted-foreground/70 truncate">{creator.email}</p>
                   </div>
                   {category && (
                     <span
@@ -545,7 +545,7 @@ const PlatformCRMCreators = () => {
                     <Star className="w-3.5 h-3.5 fill-current" />
                     {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : "—"}
                   </div>
-                  <span className="text-xs text-white/50 hidden md:inline">
+                  <span className="text-xs text-muted-foreground/70 hidden md:inline">
                     {creator.completed_projects} proy.
                   </span>
                   <span
@@ -553,7 +553,7 @@ const PlatformCRMCreators = () => {
                       "px-2 py-0.5 rounded-full text-[10px]",
                       creator.is_active
                         ? "bg-green-500/20 text-green-300"
-                        : "bg-white/10 text-white/50"
+                        : "bg-muted text-muted-foreground/70"
                     )}
                   >
                     {creator.is_active ? "Activo" : "Inactivo"}

@@ -18,7 +18,7 @@ const PILL_COLORS: Record<string, string> = {
   specialtiesTags: 'bg-green-500/20 text-green-300 border-green-500/30',
   industries: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
   languages: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-  styleKeywords: 'bg-white/10 text-white/60 border-white/20',
+  styleKeywords: 'bg-muted text-muted-foreground border-border',
   interests: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
 };
 
@@ -28,7 +28,7 @@ function PillGroup({ items, colorKey, label }: { items: string[]; colorKey: stri
 
   return (
     <div className="space-y-1">
-      <span className="text-[10px] text-white/30 uppercase tracking-wider">{label}</span>
+      <span className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">{label}</span>
       <div className="flex flex-wrap gap-1">
         {items.map((item) => (
           <span
@@ -74,14 +74,14 @@ export function SpecializationSection({
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
             {experienceLevel && (
               <>
-                <span className="text-white/40">Nivel</span>
-                <span className="text-white/70">{experienceLevel}</span>
+                <span className="text-muted-foreground/70">Nivel</span>
+                <span className="text-muted-foreground">{experienceLevel}</span>
               </>
             )}
             {bestAt && (
               <>
-                <span className="text-white/40">Mejor en</span>
-                <span className="text-white/70">{bestAt}</span>
+                <span className="text-muted-foreground/70">Mejor en</span>
+                <span className="text-muted-foreground">{bestAt}</span>
               </>
             )}
           </div>

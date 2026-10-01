@@ -123,7 +123,7 @@ export function TransactionFilters({
       <PopoverContent className="w-80 p-4" align="end">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-white">Filtrar Transacciones</h4>
+            <h4 className="font-medium text-foreground">Filtrar Transacciones</h4>
             {activeFilterCount > 0 && (
               <Button
                 variant="ghost"

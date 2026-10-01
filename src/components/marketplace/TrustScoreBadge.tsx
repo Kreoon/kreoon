@@ -127,9 +127,9 @@ function getScoreConfig(score: number, isNew: boolean): ScoreConfig {
     label: 'En desarrollo',
     Icon: Clock,
     badgeClass:
-      'bg-zinc-500/15 border border-zinc-500/30 text-zinc-400 hover:bg-zinc-500/20',
+      'bg-zinc-500/15 border border-zinc-500/30 text-muted-foreground hover:bg-zinc-500/20',
     barClass: 'bg-zinc-400',
-    scoreTextClass: 'text-zinc-400',
+    scoreTextClass: 'text-muted-foreground',
   };
 }
 
@@ -138,7 +138,7 @@ function getCompactScoreClass(score: number, isNew: boolean): string {
   if (score >= 90) return 'text-amber-400';
   if (score >= 75) return 'text-emerald-400';
   if (score >= 60) return 'text-blue-400';
-  return 'text-zinc-400';
+  return 'text-muted-foreground';
 }
 
 /** Nunca mostrar 0 — mínimo visual es MIN_DISPLAY_SCORE */
@@ -163,11 +163,11 @@ function BreakdownRow({ label, value, max, barClass }: BreakdownRowProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-20 flex-shrink-0 text-[11px] text-white/60 leading-none">
+      <span className="w-20 flex-shrink-0 text-[11px] text-muted-foreground leading-none">
         {label}
       </span>
       <div
-        className="relative flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden"
+        className="relative flex-1 h-1.5 rounded-full bg-muted overflow-hidden"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -179,7 +179,7 @@ function BreakdownRow({ label, value, max, barClass }: BreakdownRowProps) {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="w-10 flex-shrink-0 text-right text-[11px] text-white/40 tabular-nums leading-none">
+      <span className="w-10 flex-shrink-0 text-right text-[11px] text-muted-foreground tabular-nums leading-none">
         {value}/{max}
       </span>
     </div>
@@ -325,7 +325,7 @@ export function TrustScoreBadge({
         sideOffset={6}
         className={cn(
           'w-64 p-0 rounded-xl overflow-hidden',
-          'border border-white/10',
+          'border border-border',
           'bg-black/80 backdrop-blur-sm',
           'shadow-xl shadow-black/40',
           // override popover default background
@@ -338,9 +338,9 @@ export function TrustScoreBadge({
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         {/* Header */}
-        <div className="px-3.5 pt-3 pb-2.5 border-b border-white/8">
+        <div className="px-3.5 pt-3 pb-2.5 border-b border-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[12px] font-semibold text-white/90">
+            <span className="text-[12px] font-semibold text-foreground">
               Trust Score
             </span>
             <span
@@ -352,7 +352,7 @@ export function TrustScoreBadge({
 
           {/* Barra de progreso principal */}
           <div
-            className="relative h-2 w-full rounded-full bg-white/10 overflow-hidden"
+            className="relative h-2 w-full rounded-full bg-muted overflow-hidden"
             role="progressbar"
             aria-valuenow={isNew ? 0 : score}
             aria-valuemin={0}
@@ -371,24 +371,24 @@ export function TrustScoreBadge({
           </div>
 
           {/* Label de estado */}
-          <p className="mt-1.5 text-[11px] text-white/50">
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
             {config.label}
           </p>
         </div>
 
         {/* Rating tradicional (opcional) */}
         {showRating && ratingAvg !== undefined && ratingCount !== undefined && ratingCount > 0 && (
-          <div className="px-3.5 py-2 border-b border-white/8 flex items-center justify-between">
-            <span className="text-[11px] text-white/60">Rating de clientes</span>
+          <div className="px-3.5 py-2 border-b border-border flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground">Rating de clientes</span>
             <div
               className="flex items-center gap-1"
               aria-label={`Calificacion: ${ratingAvg.toFixed(1)} de 5, ${ratingCount} reseñas`}
             >
               <Star className="h-3 w-3 text-amber-400 fill-amber-400" aria-hidden="true" />
-              <span className="text-[12px] font-semibold text-white/90 tabular-nums">
+              <span className="text-[12px] font-semibold text-foreground tabular-nums">
                 {ratingAvg.toFixed(1)}
               </span>
-              <span className="text-[11px] text-white/40 tabular-nums">
+              <span className="text-[11px] text-muted-foreground tabular-nums">
                 ({ratingCount})
               </span>
             </div>
@@ -398,7 +398,7 @@ export function TrustScoreBadge({
         {/* Desglose por dimensión */}
         {breakdown && (
           <div className="px-3.5 py-3 space-y-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-white/30 mb-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60 mb-1">
               Desglose
             </p>
             {BREAKDOWN_ORDER.map((key) => (
@@ -416,7 +416,7 @@ export function TrustScoreBadge({
         {/* Footer explicativo para perfil nuevo */}
         {isNew && (
           <div className="px-3.5 pb-3 pt-2">
-            <p className="text-[11px] text-white/40 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
               El Trust Score se construye con el tiempo. Completa tu perfil y consigue tus primeros proyectos para comenzar.
             </p>
           </div>

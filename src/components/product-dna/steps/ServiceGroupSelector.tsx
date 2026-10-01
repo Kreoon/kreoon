@@ -28,7 +28,7 @@ export function ServiceGroupSelector({ groups, selectedGroup, onSelect }: Servic
                        transition-all duration-300 group ${
               isSelected
                 ? 'border-purple-500/50 bg-purple-500/10'
-                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                : 'border-border bg-muted/40 hover:bg-muted hover:border-border'
             }`}
           >
             {/* Background Gradient */}
@@ -53,25 +53,25 @@ export function ServiceGroupSelector({ groups, selectedGroup, onSelect }: Servic
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
+                <h3 className="text-lg font-semibold text-foreground mb-1 flex items-center gap-2">
                   {group.name}
                   <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform
                                            group-hover:translate-x-1 ${isSelected ? 'text-purple-400' : ''}`} />
                 </h3>
-                <p className="text-sm text-gray-400">{group.description}</p>
+                <p className="text-sm text-muted-foreground">{group.description}</p>
 
                 {/* Services Preview */}
                 <div className="mt-3 flex flex-wrap gap-1">
                   {group.services.slice(0, 3).map((service) => (
                     <span
                       key={service.id}
-                      className="px-2 py-0.5 rounded-full bg-white/5 text-xs text-gray-500"
+                      className="px-2 py-0.5 rounded-full bg-muted/40 text-xs text-muted-foreground"
                     >
                       {service.name}
                     </span>
                   ))}
                   {group.services.length > 3 && (
-                    <span className="px-2 py-0.5 rounded-full bg-white/5 text-xs text-gray-500">
+                    <span className="px-2 py-0.5 rounded-full bg-muted/40 text-xs text-muted-foreground">
                       +{group.services.length - 3} más
                     </span>
                   )}

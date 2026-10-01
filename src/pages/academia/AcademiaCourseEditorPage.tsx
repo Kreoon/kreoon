@@ -40,7 +40,7 @@ export default function AcademiaCourseEditorPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center text-zinc-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <Loader2 className="h-6 w-6 animate-spin mr-2" /> Cargando editor...
       </div>
     );
@@ -48,19 +48,19 @@ export default function AcademiaCourseEditorPage() {
 
   if (!course || !isOwner) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex flex-col items-center justify-center text-zinc-400 gap-3">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-muted-foreground gap-3">
         <BookOpen className="h-10 w-10" />
         <p>No tienes acceso a editar este curso.</p>
-        <Link to={`/academia/${spaceSlug}`} className="text-purple-400 hover:text-purple-300">Volver</Link>
+        <Link to={`/academia/${spaceSlug}`} className="text-primary hover:text-primary/80">Volver</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-zinc-100 flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Header */}
-      <div className="border-b border-white/10 bg-black/40 sticky top-0 z-20 backdrop-blur h-14 flex items-center px-4 md:px-6 gap-4 shrink-0">
-        <Link to={`/academia/${spaceSlug}/gestionar`} className="text-zinc-500 hover:text-zinc-200 transition-colors">
+      <div className="border-b border-border bg-background/80 sticky top-0 z-20 backdrop-blur h-14 flex items-center px-4 md:px-6 gap-4 shrink-0">
+        <Link to={`/academia/${spaceSlug}/gestionar`} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div
@@ -71,10 +71,10 @@ export default function AcademiaCourseEditorPage() {
         </div>
         <div className="flex-1 min-w-0">
           <h1 className="font-semibold text-sm truncate">{course.title}</h1>
-          <p className="text-xs text-zinc-500">Editor de curso</p>
+          <p className="text-xs text-muted-foreground">Editor de curso</p>
         </div>
         <Link to={`/academia/${spaceSlug}/${courseSlug}`} target="_blank">
-          <Button variant="outline" size="sm" className="gap-1.5 border-white/10 text-xs shrink-0">
+          <Button variant="outline" size="sm" className="gap-1.5 border-border text-xs shrink-0">
             <Eye className="h-3.5 w-3.5" /> Ver curso
           </Button>
         </Link>

@@ -164,7 +164,7 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
   if (creatorLoading) {
     return (
       <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
-        <p className="text-gray-400">Cargando creador...</p>
+        <p className="text-muted-foreground">Cargando creador...</p>
       </div>
     );
   }
@@ -172,7 +172,7 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
   if (!creator) {
     return (
       <div className="fixed inset-0 z-[100] bg-background flex items-center justify-center">
-        <p className="text-gray-400">Creador no encontrado</p>
+        <p className="text-muted-foreground">Creador no encontrado</p>
       </div>
     );
   }
@@ -183,18 +183,18 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
       <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-xl font-bold text-white">Contratar a {creator.display_name}</h1>
+            <h1 className="text-xl font-bold text-foreground">Contratar a {creator.display_name}</h1>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
             >
-              <X className="h-5 w-5 text-gray-400" />
+              <X className="h-5 w-5 text-muted-foreground" />
             </button>
           </div>
 
           <div className="text-center space-y-2 mb-8">
-            <h2 className="text-lg font-semibold text-white">Como deseas crear este proyecto?</h2>
-            <p className="text-sm text-gray-400">Elige la forma de enviar el brief al creador</p>
+            <h2 className="text-lg font-semibold text-foreground">Como deseas crear este proyecto?</h2>
+            <p className="text-sm text-muted-foreground">Elige la forma de enviar el brief al creador</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -213,11 +213,11 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
                   <Dna className="h-6 w-6 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
                     Brief Completo
                     <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                   </h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     Completa el formulario con toda la informacion del producto, objetivo, audiencia y referencias.
                   </p>
                 </div>
@@ -239,11 +239,11 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
                   <FileText className="h-6 w-6 text-green-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
                     Guion Directo
                     <ArrowRight className="h-4 w-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                   </h3>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     Ya tienes el guion listo. Pega directamente las instrucciones para el creador.
                   </p>
                 </div>
@@ -380,16 +380,16 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
           <div className="flex items-center justify-between mb-8">
             <button
               onClick={() => setCreationMode(null)}
-              className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               Volver
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
             >
-              <X className="h-5 w-5 text-gray-400" />
+              <X className="h-5 w-5 text-muted-foreground" />
             </button>
           </div>
 
@@ -400,8 +400,8 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
                 <Zap className="h-6 w-6 text-green-400" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">Creacion Rapida</h2>
-                <p className="text-sm text-gray-400">Proyecto con {creator.display_name}</p>
+                <h2 className="text-lg font-semibold text-foreground">Creacion Rapida</h2>
+                <p className="text-sm text-muted-foreground">Proyecto con {creator.display_name}</p>
               </div>
             </div>
 
@@ -415,9 +415,9 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
                 onChange={e => setManualTitle(e.target.value)}
                 placeholder="Ej: Video testimonial producto X"
                 autoFocus
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-base placeholder:text-gray-500 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50"
+                className="w-full bg-muted/50 border border-border rounded-lg px-4 py-3 text-foreground text-base placeholder:text-muted-foreground focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500/50"
               />
-              <p className="text-xs text-gray-500">Podras agregar mas detalles despues de crear el proyecto</p>
+              <p className="text-xs text-muted-foreground">Podras agregar mas detalles despues de crear el proyecto</p>
             </div>
 
             {/* Create button */}
@@ -441,7 +441,7 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
           </div>
 
           {/* Info */}
-          <p className="text-center text-xs text-gray-500 mt-6">
+          <p className="text-center text-xs text-muted-foreground mt-6">
             El proyecto se creara en estado borrador. Podras editarlo y agregar brief, paquete y forma de pago despues.
           </p>
         </div>
@@ -465,20 +465,20 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
   return (
     <div className="fixed inset-0 z-[100] bg-background overflow-y-auto">
       {/* Header */}
-      <div className="sticky top-0 bg-background/95 border-b border-white/10 z-10">
+      <div className="sticky top-0 bg-background/95 border-b border-border z-10">
         <div className="max-w-2xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-lg font-bold text-white">Contratar a {creator.display_name}</h1>
+            <h1 className="text-lg font-bold text-foreground">Contratar a {creator.display_name}</h1>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full hover:bg-muted flex items-center justify-center transition-colors"
             >
-              <X className="h-5 w-5 text-gray-400" />
+              <X className="h-5 w-5 text-muted-foreground" />
             </button>
           </div>
 
           {/* Progress bar */}
-          <div className="w-full bg-white/5 rounded-full h-1.5 mb-4">
+          <div className="w-full bg-muted/50 rounded-full h-1.5 mb-4">
             <div
               className="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
@@ -502,8 +502,8 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
                     isActive
                       ? 'bg-purple-500/20 text-purple-300'
                       : isDone
-                        ? 'text-gray-400 hover:text-foreground cursor-pointer'
-                        : 'text-gray-600 cursor-default',
+                        ? 'text-muted-foreground hover:text-foreground cursor-pointer'
+                        : 'text-muted-foreground cursor-default',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5" />
@@ -561,14 +561,14 @@ export default function HiringWizard({ creatorId, onClose, preferredServiceId }:
 
       {/* Bottom navigation */}
       {currentStep < 3 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-white/10 z-10 safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t border-border z-10 safe-area-bottom">
           <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <button
               onClick={() => {
                 if (currentStep === 0) onClose();
                 else setCurrentStep(prev => prev - 1);
               }}
-              className="flex items-center gap-1.5 text-gray-400 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               {currentStep === 0 ? 'Cancelar' : 'Anterior'}

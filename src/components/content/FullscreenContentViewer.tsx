@@ -277,7 +277,7 @@ export function FullscreenContentViewer({
       {/* Video Container */}
       <div className="relative w-full h-full md:w-auto md:h-[90vh] md:aspect-[9/16] max-w-full">
         {/* Video or Thumbnail */}
-        <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+        <div className="absolute inset-0 bg-card flex items-center justify-center">
           {isBunnyEmbed && currentVideoUrl ? (
             <iframe
               key={currentVideoUrl}

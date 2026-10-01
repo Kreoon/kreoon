@@ -301,7 +301,7 @@ export function TechKpiDialog({
                               </div>
 
                               {/* Row 2: title */}
-                              <h4 className="font-semibold text-sm text-white line-clamp-2 mb-1">
+                              <h4 className="font-semibold text-sm text-foreground line-clamp-2 mb-1">
                                 {item.title}
                               </h4>
 

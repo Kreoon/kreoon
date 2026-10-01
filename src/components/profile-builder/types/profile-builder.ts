@@ -34,13 +34,13 @@ export type BlockType =
   | 'columns'               // Grid de 2-6 columnas responsivas
   | 'container'             // Wrapper con ancho maximo
   // Contenido avanzado
-  | 'headline'              // Titulo con animacion y gradiente
+  | 'headline'              // Título con animacion y gradiente
   | 'button'                // CTA personalizable
   | 'icon_list'             // Lista con iconos
   | 'countdown'             // Contador regresivo
   // Conversion (landing page)
   | 'cta_banner'            // Banner de llamada a accion
-  | 'whatsapp_button'       // Boton flotante WhatsApp
+  | 'whatsapp_button'       // Botón flotante WhatsApp
   | 'case_study'            // Casos de exito con metricas (vertical)
   // Media avanzado
   | 'carousel'
@@ -314,7 +314,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
       showCTA: true,
       showSocialLinks: false,
       // CTA
-      ctaText: 'Ver Portfolio',
+      ctaText: 'Ver Portafolio',
       ctaAction: 'scroll-portfolio',
       ctaStyle: 'solid',
       ctaUrl: '',
@@ -369,9 +369,9 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   portfolio: {
     type: 'portfolio',
-    label: 'Portfolio',
+    label: 'Portafolio',
     icon: 'Grid3X3',
-    description: 'Galeria de trabajos y proyectos',
+    description: 'Galería de trabajos y proyectos',
     category: 'core',
     isRequired: false,
     isDeletable: true,
@@ -406,7 +406,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   stats: {
     type: 'stats',
-    label: 'Estadisticas Verificadas',
+    label: 'Estadísticas Verificadas',
     icon: 'BarChart3',
     description: 'KPIs de plataforma y redes sociales',
     category: 'core',
@@ -439,9 +439,9 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   reviews: {
     type: 'reviews',
-    label: 'Resenas Verificadas',
+    label: 'Reseñas Verificadas',
     icon: 'Star',
-    description: 'Resenas reales de clientes y agencias',
+    description: 'Reseñas reales de clientes y agencias',
     category: 'core',
     isRequired: false,
     isDeletable: true,
@@ -480,7 +480,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     type: 'contact',
     label: 'Contacto',
     icon: 'Mail',
-    description: 'Seccion de contacto y CTA',
+    description: 'Sección de contacto y CTA',
     category: 'core',
     isRequired: false,
     isDeletable: true,
@@ -533,9 +533,9 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
   },
   image_gallery: {
     type: 'image_gallery',
-    label: 'Galeria',
+    label: 'Galería',
     icon: 'Images',
-    description: 'Galeria de imagenes adicional',
+    description: 'Galería de imagenes adicional',
     category: 'media',
     isRequired: false,
     isDeletable: true,
@@ -692,7 +692,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
 
   section: {
     type: 'section',
-    label: 'Seccion',
+    label: 'Sección',
     icon: 'LayoutTemplate',
     description: 'Contenedor con fondo personalizable (imagen, video, gradiente)',
     category: 'layout',
@@ -759,15 +759,15 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
 
   headline: {
     type: 'headline',
-    label: 'Titulo Grande',
+    label: 'Título Grande',
     icon: 'Heading1',
-    description: 'Titulo destacado con animacion y gradiente opcional',
+    description: 'Título destacado con animacion y gradiente opcional',
     category: 'content',
     isRequired: false,
     isDeletable: true,
     maxInstances: 0,
     defaultConfig: {
-      text: 'Tu titulo aqui',
+      text: 'Tu titulo aquí',
       size: 'xl', // sm | md | lg | xl | 2xl
       tag: 'h2', // h1 | h2 | h3
       gradient: false,
@@ -783,15 +783,15 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
 
   button: {
     type: 'button',
-    label: 'Boton CTA',
+    label: 'Botón CTA',
     icon: 'MousePointerClick',
-    description: 'Boton de accion personalizable con icono',
+    description: 'Botón de accion personalizable con icono',
     category: 'content',
     isRequired: false,
     isDeletable: true,
     maxInstances: 0,
     defaultConfig: {
-      text: 'Click aqui',
+      text: 'Click aquí',
       url: '#',
       target: '_self', // _self | _blank
       variant: 'primary', // primary | secondary | outline | ghost
@@ -898,7 +898,7 @@ export const BLOCK_DEFINITIONS: Record<BlockType, BlockDefinition> = {
     type: 'whatsapp_button',
     label: 'WhatsApp',
     icon: 'MessageCircle',
-    description: 'Boton flotante de WhatsApp',
+    description: 'Botón flotante de WhatsApp',
     category: 'conversion',
     isRequired: false,
     isDeletable: true,

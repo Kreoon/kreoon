@@ -44,7 +44,7 @@ export function TransactionsPage() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver a Billetera
         </Button>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
           Historial de Transacciones
         </h1>
         <p className="text-muted-foreground mt-1">

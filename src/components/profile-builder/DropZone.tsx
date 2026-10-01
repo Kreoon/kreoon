@@ -19,7 +19,7 @@ export function DropZone({ id, className }: DropZoneProps) {
         'transition-colors duration-150',
         isOver
           ? 'border-purple-500 bg-purple-500/10 text-purple-400'
-          : 'border-zinc-700/50 bg-transparent text-zinc-600 hover:border-zinc-600 hover:text-zinc-500',
+          : 'border-border/50 bg-transparent text-muted-foreground hover:border-zinc-600 hover:text-muted-foreground',
         className,
       )}
       aria-label="Zona para soltar bloques"

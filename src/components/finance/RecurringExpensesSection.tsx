@@ -193,17 +193,17 @@ export function RecurringExpensesSection({ orgId }: Props) {
         ]}
       />
 
-      <Card className="bg-white/5 border-white/10">
+      <Card className="bg-muted/50 border-border">
         <div className="p-5 pb-3 flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <h3 className="text-base font-semibold text-white flex items-center gap-2">
+            <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
               <Repeat className="w-4 h-4 text-cyan-400" />
               Lista de gastos recurrentes
               <HelpTip text="Cada gasto se convierte automáticamente a su equivalente mensual para sumar el total." />
             </h3>
-            <p className="text-white/40 text-xs">
+            <p className="text-muted-foreground text-xs">
               {expenses.filter(e => e.is_active && e.currency === currency).length} activos en {currency} ·
-              Total mensual: <span className="text-white font-semibold">{formatCurrency(totalMonthly, currency)}</span>
+              Total mensual: <span className="text-foreground font-semibold">{formatCurrency(totalMonthly, currency)}</span>
             </p>
           </div>
           <Button size="sm" onClick={openNew} className="gap-1.5 h-7">
@@ -214,10 +214,10 @@ export function RecurringExpensesSection({ orgId }: Props) {
 
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : expenses.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-12 text-white/40 text-sm">
+          <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground text-sm">
             <Repeat className="h-8 w-8 opacity-30" />
             <p>No tienes gastos recurrentes definidos aún.</p>
             <Button variant="outline" size="sm" onClick={openNew} className="gap-2 mt-1">
@@ -228,23 +228,23 @@ export function RecurringExpensesSection({ orgId }: Props) {
         ) : (
           <Table>
             <TableHeader>
-              <TableRow className="border-white/10">
-                <TableHead className="text-white/60 text-xs">Nombre</TableHead>
-                <TableHead className="text-white/60 text-xs">Categoría</TableHead>
-                <TableHead className="text-white/60 text-xs">Frecuencia</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Monto</TableHead>
-                <TableHead className="text-white/60 text-xs text-right">Mensual eq.</TableHead>
-                <TableHead className="text-white/60 text-xs">Próx. pago</TableHead>
-                <TableHead className="text-white/60 text-xs">Estado</TableHead>
+              <TableRow className="border-border">
+                <TableHead className="text-muted-foreground text-xs">Nombre</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Categoría</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Frecuencia</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Monto</TableHead>
+                <TableHead className="text-muted-foreground text-xs text-right">Mensual eq.</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Próx. pago</TableHead>
+                <TableHead className="text-muted-foreground text-xs">Estado</TableHead>
                 <TableHead className="w-20" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {expenses.map(e => (
-                <TableRow key={e.id} className={`border-white/5 hover:bg-white/5 ${!e.is_active ? 'opacity-50' : ''}`}>
+                <TableRow key={e.id} className={`border-border hover:bg-muted/50 ${!e.is_active ? 'opacity-50' : ''}`}>
                   <TableCell>
                     <div>
-                      <p className="font-medium text-sm text-white">{e.name}</p>
+                      <p className="font-medium text-sm text-foreground">{e.name}</p>
                       {e.vendor && <p className="text-[10px] text-muted-foreground">{e.vendor}</p>}
                     </div>
                   </TableCell>
@@ -253,23 +253,23 @@ export function RecurringExpensesSection({ orgId }: Props) {
                       {COST_CATEGORY_LABELS[e.category as CostCategory] ?? e.category}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-white/70 text-xs">
+                  <TableCell className="text-muted-foreground text-xs">
                     {FREQUENCY_LABELS[e.frequency]}
                   </TableCell>
-                  <TableCell className="text-right text-sm font-medium text-white">
+                  <TableCell className="text-right text-sm font-medium text-foreground">
                     {formatCurrency(e.amount, e.currency)}
                   </TableCell>
-                  <TableCell className="text-right text-xs text-white/60">
+                  <TableCell className="text-right text-xs text-muted-foreground">
                     {formatCurrency(monthlyEquivalent(e), e.currency)}
                   </TableCell>
-                  <TableCell className="text-xs text-white/50">
+                  <TableCell className="text-xs text-muted-foreground">
                     {e.next_due_date ? format(parseISO(e.next_due_date), 'd MMM yyyy', { locale: es }) : '—'}
                   </TableCell>
                   <TableCell>
                     {e.is_active ? (
                       <Badge className="bg-green-500/15 text-green-300 border-green-500/30 text-[10px]">Activo</Badge>
                     ) : (
-                      <Badge className="bg-white/10 text-white/40 border-white/15 text-[10px]">Pausado</Badge>
+                      <Badge className="bg-muted text-muted-foreground border-border text-[10px]">Pausado</Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -295,7 +295,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
 
       {/* Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-[#0e0e0e] border-white/10 text-white">
+        <DialogContent className="sm:max-w-md bg-background border-border text-foreground">
           <DialogHeader>
             <DialogTitle>{editing ? 'Editar gasto recurrente' : 'Nuevo gasto recurrente'}</DialogTitle>
           </DialogHeader>
@@ -307,7 +307,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
                 value={form.name}
                 onChange={e => f('name', e.target.value)}
                 placeholder="Ej. Netflix, Arriendo oficina, Hosting Vercel"
-                className="bg-white/5 border-white/10"
+                className="bg-muted/50 border-border"
               />
             </div>
 
@@ -320,17 +320,17 @@ export function RecurringExpensesSection({ orgId }: Props) {
                   value={form.amount}
                   onChange={e => f('amount', e.target.value)}
                   placeholder="0"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Moneda</label>
                 <select value={form.currency} onChange={e => f('currency', e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white">
-                  <option value="COP" className="bg-[#111]">COP</option>
-                  <option value="USD" className="bg-[#111]">USD</option>
-                  <option value="EUR" className="bg-[#111]">EUR</option>
-                  <option value="MXN" className="bg-[#111]">MXN</option>
+                  className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground">
+                  <option value="COP" className="bg-background">COP</option>
+                  <option value="USD" className="bg-background">USD</option>
+                  <option value="EUR" className="bg-background">EUR</option>
+                  <option value="MXN" className="bg-background">MXN</option>
                 </select>
               </div>
             </div>
@@ -339,9 +339,9 @@ export function RecurringExpensesSection({ orgId }: Props) {
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Frecuencia *</label>
                 <select value={form.frequency} onChange={e => f('frequency', e.target.value as RecurringFrequency)}
-                  className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white">
+                  className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground">
                   {Object.entries(FREQUENCY_LABELS).map(([k, v]) => (
-                    <option key={k} value={k} className="bg-[#111]">{v}</option>
+                    <option key={k} value={k} className="bg-background">{v}</option>
                   ))}
                 </select>
               </div>
@@ -351,7 +351,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
                   type="date"
                   value={form.next_due_date}
                   onChange={e => f('next_due_date', e.target.value)}
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
             </div>
@@ -359,9 +359,9 @@ export function RecurringExpensesSection({ orgId }: Props) {
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Categoría</label>
               <select value={form.category} onChange={e => f('category', e.target.value as CostCategory)}
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-sm text-white">
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground">
                 {Object.entries(COST_CATEGORY_LABELS).map(([k, v]) => (
-                  <option key={k} value={k} className="bg-[#111]">{v}</option>
+                  <option key={k} value={k} className="bg-background">{v}</option>
                 ))}
               </select>
             </div>
@@ -373,7 +373,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
                   value={form.vendor}
                   onChange={e => f('vendor', e.target.value)}
                   placeholder="Ej. Vercel, Netflix"
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
               <div>
@@ -382,7 +382,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
                   value={form.payment_method}
                   onChange={e => f('payment_method', e.target.value)}
                   placeholder="Tarjeta, débito, etc."
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/50 border-border"
                 />
               </div>
             </div>
@@ -394,7 +394,7 @@ export function RecurringExpensesSection({ orgId }: Props) {
                 onChange={e => f('notes', e.target.value)}
                 placeholder="Detalles adicionales"
                 rows={2}
-                className="bg-white/5 border-white/10 resize-none"
+                className="bg-muted/50 border-border resize-none"
               />
             </div>
           </div>

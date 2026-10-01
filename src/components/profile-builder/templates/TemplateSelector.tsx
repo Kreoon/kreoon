@@ -35,7 +35,7 @@ const TIER_CONFIG: Record<
   creator_free: {
     label: 'Free',
     icon: Sparkles,
-    color: 'text-zinc-400',
+    color: 'text-muted-foreground',
     bgColor: 'bg-zinc-500/10',
   },
   creator_pro: {
@@ -85,7 +85,7 @@ function TemplateCard({
       onClick={isLocked ? undefined : onSelect}
     >
       {/* Preview Image - Muestra screenshot o miniatura generada */}
-      <div className="aspect-[4/3] bg-zinc-900 relative overflow-hidden">
+      <div className="aspect-[4/3] bg-card relative overflow-hidden">
         {template.preview ? (
           /* Imagen de mockup */
           <img
@@ -382,7 +382,7 @@ export function TemplateSelector({
           </DialogHeader>
 
           {previewTemplate && (
-            <div className="flex-1 overflow-y-auto bg-zinc-900/50">
+            <div className="flex-1 overflow-y-auto bg-card/50">
               {/* Preview - Imagen de mockup o generada */}
               <div className="p-6">
                 {previewTemplate.preview ? (
@@ -393,7 +393,7 @@ export function TemplateSelector({
                         <Monitor className="h-4 w-4 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">Vista previa del diseño</span>
                       </div>
-                      <div className="rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/10 bg-zinc-950">
+                      <div className="rounded-lg overflow-hidden shadow-2xl ring-1 ring-white/10 bg-background">
                         <img
                           src={previewTemplate.preview}
                           alt={previewTemplate.label}
@@ -425,8 +425,8 @@ export function TemplateSelector({
                       </div>
                       <div className="w-[220px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
                         {/* Phone frame */}
-                        <div className="bg-zinc-950 p-1">
-                          <div className="w-12 h-1 bg-zinc-800 rounded-full mx-auto mb-1" />
+                        <div className="bg-background p-1">
+                          <div className="w-12 h-1 bg-card rounded-full mx-auto mb-1" />
                           <TemplatePreview template={previewTemplate} className="rounded-lg" />
                         </div>
                       </div>
@@ -510,7 +510,7 @@ export function TemplateSelector({
                     }
                   }}
                   style={{ backgroundColor: previewTemplate.config.accentColor }}
-                  className="text-white"
+                  className="text-foreground"
                 >
                   {(() => {
                     const requiredTier = getRequiredTierForTemplate(previewTemplate.name);

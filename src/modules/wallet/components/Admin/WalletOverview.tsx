@@ -208,7 +208,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
           <Wallet className="h-8 w-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-white">Visión General de Wallets</h1>
+          <h1 className="text-2xl font-bold text-foreground">Visión General de Wallets</h1>
           <p className="text-muted-foreground">
             Administración de todos los wallets del sistema
           </p>
@@ -220,25 +220,25 @@ export function WalletOverview({ className }: WalletOverviewProps) {
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Total Wallets</p>
-            <p className="text-2xl font-bold text-white">{stats.total}</p>
+            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Activos</p>
-            <p className="text-2xl font-bold text-emerald-400">{stats.active}</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">{stats.active}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Congelados</p>
-            <p className="text-2xl font-bold text-amber-400">{stats.frozen}</p>
+            <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{stats.frozen}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Balance Total</p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-bold text-foreground">
               {formatCurrency(stats.totalBalance, 'USD')}
             </p>
           </CardContent>
@@ -350,7 +350,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                               </AvatarFallback>
                             </Avatar>
                             <div>
-                              <p className="font-medium text-white truncate max-w-[150px]">
+                              <p className="font-medium text-foreground truncate max-w-[150px]">
                                 {owner.name}
                               </p>
                               <p className="text-xs text-muted-foreground truncate max-w-[150px]">
@@ -365,12 +365,12 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="font-medium text-emerald-400">
+                          <span className="font-medium text-emerald-700 dark:text-emerald-400">
                             {formatCurrency(wallet.available_balance, wallet.currency)}
                           </span>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <span className="text-amber-400">
+                          <span className="text-amber-700 dark:text-amber-400">
                             {formatCurrency(wallet.pending_balance, wallet.currency)}
                           </span>
                         </TableCell>
@@ -380,7 +380,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                           </span>
                         </TableCell>
                         <TableCell>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-foreground">
                             {formatCurrency(wallet.total_balance, wallet.currency)}
                           </span>
                         </TableCell>
@@ -389,9 +389,9 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                             variant="outline"
                             className={cn(
                               'text-[10px]',
-                              wallet.status === 'active' && 'border-emerald-500/30 text-emerald-400',
-                              wallet.status === 'frozen' && 'border-amber-500/30 text-amber-400',
-                              wallet.status === 'suspended' && 'border-red-500/30 text-red-400'
+                              wallet.status === 'active' && 'border-emerald-500/30 text-emerald-700 dark:text-emerald-400',
+                              wallet.status === 'frozen' && 'border-amber-500/30 text-amber-700 dark:text-amber-400',
+                              wallet.status === 'suspended' && 'border-red-500/30 text-red-700 dark:text-red-400'
                             )}
                           >
                             {wallet.status === 'frozen' && <Lock className="h-3 w-3 mr-1" />}
@@ -417,7 +417,7 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => setFreezingWallet(wallet)}
-                                className={wallet.status === 'frozen' ? 'text-emerald-400' : 'text-amber-400'}
+                                className={wallet.status === 'frozen' ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}
                               >
                                 {wallet.status === 'frozen' ? (
                                   <>
@@ -461,8 +461,8 @@ export function WalletOverview({ className }: WalletOverviewProps) {
                     esté congelado.
                   </p>
                   <div className="flex items-start gap-2 p-3 rounded-sm bg-amber-500/10 border border-amber-500/20">
-                    <AlertTriangle className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-[hsl(270,30%,70%)]">
+                    <AlertTriangle className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-muted-foreground">
                       Esta acción debería utilizarse solo en casos de actividad sospechosa o
                       investigaciones en curso.
                     </p>

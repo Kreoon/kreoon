@@ -19,31 +19,31 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
   const fears = safeArray(psychographics.deepestFears);
 
   return (
-    <div className="bg-white/[0.03] border border-white/[0.06] rounded-sm overflow-hidden">
+    <div className="bg-muted/40 border border-border rounded-sm overflow-hidden">
       {/* Header - always visible */}
-      <button onClick={onToggle} className="w-full flex items-center justify-between p-4 hover:bg-white/[0.02] transition-colors text-left">
+      <button onClick={onToggle} className="w-full flex items-center justify-between p-4 hover:bg-muted/40 transition-colors text-left">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-300 text-sm font-bold shrink-0">
             {index + 1}
           </div>
           <div>
-            <p className="text-sm font-semibold text-white">{name}</p>
-            <p className="text-xs text-white/40">
+            <p className="text-sm font-semibold text-foreground">{name}</p>
+            <p className="text-xs text-muted-foreground/70">
               {[demographics.age, demographics.occupation, demographics.location].filter(Boolean).join(' · ')}
             </p>
           </div>
         </div>
-        {isExpanded ? <ChevronUp className="h-4 w-4 text-white/30" /> : <ChevronDown className="h-4 w-4 text-white/30" />}
+        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground/70" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/70" />}
       </button>
 
       {/* Expandable content */}
       {isExpanded && (
-        <div className="px-4 pb-4 space-y-4 border-t border-white/[0.06] pt-4">
+        <div className="px-4 pb-4 space-y-4 border-t border-border pt-4">
           {/* Situation */}
           {situation && (
             <div>
-              <h6 className="text-[10px] text-white/40 uppercase mb-1">Situacion Actual</h6>
-              <p className="text-sm text-white/70">{situation}</p>
+              <h6 className="text-[10px] text-muted-foreground/70 uppercase mb-1">Situacion Actual</h6>
+              <p className="text-sm text-muted-foreground">{situation}</p>
             </div>
           )}
 
@@ -54,7 +54,7 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
                 <h6 className="text-[10px] text-green-300/60 uppercase mb-1.5">Motivaciones</h6>
                 <ul className="space-y-1">
                   {drivers.map((d: any, i: number) => (
-                    <li key={i} className="text-xs text-white/60 flex gap-1.5"><span className="text-green-400 shrink-0">+</span>{safeStr(d)}</li>
+                    <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span className="text-green-400 shrink-0">+</span>{safeStr(d)}</li>
                   ))}
                 </ul>
               </div>
@@ -64,7 +64,7 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
                 <h6 className="text-[10px] text-red-300/60 uppercase mb-1.5">Objeciones</h6>
                 <ul className="space-y-1">
                   {objections.map((o: any, i: number) => (
-                    <li key={i} className="text-xs text-white/60 flex gap-1.5"><span className="text-red-400 shrink-0">-</span>{safeStr(o)}</li>
+                    <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span className="text-red-400 shrink-0">-</span>{safeStr(o)}</li>
                   ))}
                 </ul>
               </div>
@@ -89,7 +89,7 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
               <h6 className="text-[10px] text-purple-300/60 uppercase mb-1.5">Frases Reales</h6>
               <div className="space-y-1">
                 {phrases.slice(0, 3).map((p: any, i: number) => (
-                  <p key={i} className="text-xs text-white/50 italic border-l-2 border-purple-500/20 pl-2">"{safeStr(p)}"</p>
+                  <p key={i} className="text-xs text-muted-foreground italic border-l-2 border-purple-500/20 pl-2">"{safeStr(p)}"</p>
                 ))}
               </div>
             </div>
@@ -103,7 +103,7 @@ function AvatarCard({ avatar, index, isExpanded, onToggle }: { avatar: any; inde
               </span>
             )}
             {communication.preferredTone && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/50">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
                 Tono: {communication.preferredTone}
               </span>
             )}

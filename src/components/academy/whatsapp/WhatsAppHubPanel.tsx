@@ -32,13 +32,13 @@ export function WhatsAppHubPanel({ spaceId, spaceSlug, accentColor = '#8B5CF6' }
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 border-b border-white/5 pb-1">
+      <div className="flex gap-1 border-b border-border pb-1">
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setSubtab(t.id)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
-              subtab === t.id ? 'bg-white/10 text-zinc-100' : 'text-zinc-400 hover:bg-white/5'
+              subtab === t.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'
             }`}
             style={subtab === t.id ? { color: accentColor } : undefined}
           >
@@ -110,45 +110,45 @@ function GroupConfig({ spaceId, accentColor }: { spaceId: string; accentColor: s
     onSuccess: () => qc.invalidateQueries({ queryKey: ['academy-wa-group', spaceId] }),
   });
 
-  if (isLoading) return <div className="text-zinc-500 text-sm p-4">Cargando…</div>;
+  if (isLoading) return <div className="text-muted-foreground text-sm p-4">Cargando…</div>;
 
   return (
-    <Card className="bg-white/5 border-white/10 p-5 space-y-4">
+    <Card className="bg-muted/50 border-border p-5 space-y-4">
       <div>
-        <h3 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
           <Link2 className="h-4 w-4" style={{ color: accentColor }} />
           Conectar grupo de WhatsApp
         </h3>
-        <p className="text-xs text-zinc-400 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           Pega el invite link del grupo. Los nuevos miembros recibirán el link en el WA de bienvenida.
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-zinc-400">Nombre del grupo (opcional)</Label>
+        <Label className="text-xs text-muted-foreground">Nombre del grupo (opcional)</Label>
         <Input
           value={groupName}
           onChange={(e) => setGroupName(e.target.value)}
           placeholder="Comunidad CRION"
-          className="bg-white/5 border-white/10"
+          className="bg-muted/50 border-border"
         />
       </div>
 
       <div className="space-y-2">
-        <Label className="text-xs text-zinc-400">Invite URL</Label>
+        <Label className="text-xs text-muted-foreground">Invite URL</Label>
         <Input
           value={inviteUrl}
           onChange={(e) => setInviteUrl(e.target.value)}
           placeholder="https://chat.whatsapp.com/XXXXXX"
-          className="bg-white/5 border-white/10 font-mono text-xs"
+          className="bg-muted/50 border-border font-mono text-xs"
         />
       </div>
 
       {group && (
-        <div className="flex items-center justify-between border-t border-white/5 pt-3">
-          <div className="text-xs text-zinc-400">
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <div className="text-xs text-muted-foreground">
             <p>Auto-invite al inscribirse</p>
-            <p className="text-zinc-500 text-[10px]">Incluye el link en el template de bienvenida</p>
+            <p className="text-muted-foreground text-[10px]">Incluye el link en el template de bienvenida</p>
           </div>
           <Switch
             checked={group.auto_invite_on_join}
@@ -185,11 +185,11 @@ function SummariesPanel({ spaceId, spaceSlug }: { spaceId: string; spaceSlug: st
     },
   });
 
-  if (isLoading) return <div className="text-zinc-500 text-sm p-4">Cargando resúmenes…</div>;
+  if (isLoading) return <div className="text-muted-foreground text-sm p-4">Cargando resúmenes…</div>;
   if (!summaries?.length)
     return (
-      <Card className="bg-white/5 border-white/10 p-6 text-center text-zinc-400 text-sm">
-        <Sparkles className="h-8 w-8 mx-auto mb-2 text-zinc-600" />
+      <Card className="bg-muted/50 border-border p-6 text-center text-muted-foreground text-sm">
+        <Sparkles className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
         No hay resúmenes aún. Se generan automáticamente a las 20:00 UTC.
       </Card>
     );
@@ -197,25 +197,25 @@ function SummariesPanel({ spaceId, spaceSlug }: { spaceId: string; spaceSlug: st
   return (
     <div className="space-y-3">
       {summaries.map((s: any) => (
-        <Card key={s.id} className="bg-white/5 border-white/10 p-4 space-y-2">
+        <Card key={s.id} className="bg-muted/50 border-border p-4 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-medium text-zinc-100">
+            <span className="text-sm font-medium text-foreground">
               {new Date(s.summary_date).toLocaleDateString('es-CO', {
                 weekday: 'long',
                 day: 'numeric',
                 month: 'short',
               })}
             </span>
-            <div className="flex gap-2 text-xs text-zinc-400">
-              <Badge variant="outline" className="border-white/10 text-zinc-300">
+            <div className="flex gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 <Users className="h-3 w-3 mr-1" /> {s.active_members}
               </Badge>
-              <Badge variant="outline" className="border-white/10 text-zinc-300">
+              <Badge variant="outline" className="border-border text-muted-foreground">
                 <MessageCircle className="h-3 w-3 mr-1" /> {s.total_messages}
               </Badge>
             </div>
           </div>
-          <div className="prose prose-invert prose-sm max-w-none text-zinc-300 text-xs whitespace-pre-wrap">
+          <div className="prose prose-invert prose-sm max-w-none text-muted-foreground text-xs whitespace-pre-wrap">
             {s.summary_md}
           </div>
         </Card>

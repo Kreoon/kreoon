@@ -37,17 +37,17 @@ export function ServiceTypeSelector({
       case 'simple': return 'text-green-400 bg-green-500/10 border-green-500/20';
       case 'moderate': return 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
       case 'complex': return 'text-orange-400 bg-orange-500/10 border-orange-500/20';
-      default: return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
+      default: return 'text-muted-foreground bg-gray-500/10 border-gray-500/20';
     }
   };
 
   return (
     <div className="space-y-4">
       {/* Selection Counter */}
-      <div className="flex items-center justify-between p-4 rounded-sm bg-white/5 border border-white/10">
+      <div className="flex items-center justify-between p-4 rounded-sm bg-muted/40 border border-border">
         <div className="flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-purple-400" />
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-muted-foreground">
             Selecciona hasta {maxSelections} servicios
           </span>
         </div>
@@ -58,7 +58,7 @@ export function ServiceTypeSelector({
               className={`w-3 h-3 rounded-full transition-all ${
                 i < selected.length
                   ? 'bg-purple-500'
-                  : 'bg-white/10'
+                  : 'bg-muted'
               }`}
             />
           ))}
@@ -82,7 +82,7 @@ export function ServiceTypeSelector({
               className={`relative p-4 rounded-sm border text-left transition-all ${
                 isSelected
                   ? 'border-purple-500/50 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20'
+                  : 'border-border bg-muted/40 hover:bg-muted hover:border-border'
               }`}
             >
               {/* Selection Number */}
@@ -104,12 +104,12 @@ export function ServiceTypeSelector({
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-white">{service.name}</h4>
+                    <h4 className="font-medium text-foreground">{service.name}</h4>
                     {isSelected && (
                       <Check className="w-4 h-4 text-purple-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mb-2">{service.description}</p>
+                  <p className="text-xs text-muted-foreground mb-2">{service.description}</p>
 
                   {/* Meta */}
                   <div className="flex items-center gap-2">
@@ -117,7 +117,7 @@ export function ServiceTypeSelector({
                       {service.complexity === 'simple' ? 'Simple' :
                        service.complexity === 'moderate' ? 'Moderado' : 'Complejo'}
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-gray-500">
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="w-3 h-3" />
                       {service.estimatedTime}
                     </span>

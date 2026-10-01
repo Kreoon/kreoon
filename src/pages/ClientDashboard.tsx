@@ -814,10 +814,10 @@ export default function ClientDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0a0a0f]">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-background">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-          <span className="text-sm text-zinc-500">Cargando portal...</span>
+          <span className="text-sm text-muted-foreground">Cargando portal...</span>
         </div>
       </div>
     );
@@ -983,18 +983,18 @@ export default function ClientDashboard() {
     <div className="min-h-screen">
       {/* Header - Client selector (only shows if multiple clients) */}
       {userClients.length > 1 && (
-        <div className="sticky top-0 z-30 bg-white dark:bg-[#0f0f14] border-b border-zinc-200 dark:border-zinc-800">
+        <div className="sticky top-0 z-30 bg-white dark:bg-background border-b border-zinc-200 dark:border-border">
           <div className="flex items-center justify-end px-4 md:px-6">
             <div className="flex items-center gap-2 py-3">
               {/* Client Selector */}
               <div className="relative">
                 <button
                   onClick={() => setShowClientSelector(!showClientSelector)}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-sm hover:bg-zinc-100 dark:hover:bg-card transition-colors"
                 >
-                  <Building2 className="h-4 w-4 text-zinc-500" />
-                  <span className="hidden md:inline text-zinc-700 dark:text-zinc-300 truncate max-w-[120px]">{clientInfo.name}</span>
-                  <svg className={cn("h-4 w-4 text-zinc-400 transition-transform", showClientSelector && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="hidden md:inline text-zinc-700 dark:text-muted-foreground truncate max-w-[120px]">{clientInfo.name}</span>
+                  <svg className={cn("h-4 w-4 text-muted-foreground transition-transform", showClientSelector && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
@@ -1002,7 +1002,7 @@ export default function ClientDashboard() {
                 {showClientSelector && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowClientSelector(false)} />
-                    <div className="absolute top-full right-0 mt-1 z-50 w-56 bg-white dark:bg-[#14141f] border border-zinc-200 dark:border-zinc-800 rounded-sm shadow-lg overflow-hidden">
+                    <div className="absolute top-full right-0 mt-1 z-50 w-56 bg-white dark:bg-background border border-zinc-200 dark:border-border rounded-sm shadow-lg overflow-hidden">
                       <div className="p-2 max-h-64 overflow-y-auto">
                         {userClients.map(client => (
                           <button
@@ -1016,14 +1016,14 @@ export default function ClientDashboard() {
                               "w-full flex items-center gap-2 p-2 rounded-sm transition-colors text-left text-sm",
                               client.id === clientInfo.id
                                 ? "bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400"
-                                : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                : "hover:bg-zinc-100 dark:hover:bg-card"
                             )}
                           >
                             {client.logo_url ? (
                               <img src={client.logo_url} alt={client.name} className="h-6 w-6 rounded-sm object-cover" />
                             ) : (
-                              <div className="h-6 w-6 rounded-sm bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                                <Building2 className="h-3 w-3 text-zinc-500" />
+                              <div className="h-6 w-6 rounded-sm bg-zinc-100 dark:bg-card flex items-center justify-center">
+                                <Building2 className="h-3 w-3 text-muted-foreground" />
                               </div>
                             )}
                             <span className="truncate">{client.name}</span>

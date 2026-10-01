@@ -91,9 +91,9 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
                 transition={{ duration: 0.2 }}
               >
                 {isHidden ? (
-                  <div className="text-4xl font-bold text-white">•••••••</div>
+                  <div className="text-4xl font-bold text-foreground">•••••••</div>
                 ) : (
-                  <div className="text-4xl font-bold bg-gradient-to-r from-white via-[hsl(270,100%,85%)] to-[hsl(270,100%,70%)] bg-clip-text text-transparent">
+                  <div className="text-4xl font-bold bg-gradient-to-r from-foreground via-primary to-primary bg-clip-text text-transparent">
                     {wallet.formattedTotal}
                   </div>
                 )}
@@ -111,10 +111,10 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               {/* Available */}
               <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                  <TrendingUp className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400" />
                   <span className="text-xs text-muted-foreground">Disponible</span>
                 </div>
-                <p className="text-lg font-semibold text-emerald-400">
+                <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
                   {wallet.formattedAvailable}
                 </p>
               </div>
@@ -122,10 +122,10 @@ export function BalanceCard({ wallet, isLoading, showBreakdown = true, className
               {/* Pending */}
               <div className="p-3 rounded-sm bg-[hsl(270,100%,60%,0.08)] border border-[hsl(270,100%,60%,0.1)]">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Clock className="h-3.5 w-3.5 text-amber-400" />
+                  <Clock className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
                   <span className="text-xs text-muted-foreground">Pendiente</span>
                 </div>
-                <p className="text-lg font-semibold text-amber-400">
+                <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">
                   {wallet.formattedPending}
                 </p>
               </div>

@@ -13,6 +13,8 @@ interface PageHeaderProps {
   };
   action?: React.ReactNode;
   className?: string;
+  /** Una sola línea, sin caja: título + subtítulo corto a la izquierda y acciones a la derecha. */
+  compact?: boolean;
 }
 
 export function PageHeader({
@@ -21,8 +23,38 @@ export function PageHeader({
   subtitle,
   badge,
   action,
-  className
+  className,
+  compact = false
 }: PageHeaderProps) {
+  if (compact) {
+    return (
+      <div className={cn("flex flex-wrap items-center justify-between gap-x-4 gap-y-2", className)}>
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            aria-hidden="true"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-accent text-accent-foreground"
+          >
+            <Icon className="h-5 w-5" />
+          </span>
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
+            <h1 className="text-2xl font-semibold leading-tight tracking-tight text-foreground">{title}</h1>
+            <p className="hidden truncate text-sm text-muted-foreground sm:block">{subtitle}</p>
+          </div>
+        </div>
+        {(badge || action) && (
+          <div className="flex items-center gap-2">
+            {badge && (
+              <Badge variant={badge.variant || 'glow'} className="bg-accent text-accent-foreground">
+                {badge.text}
+              </Badge>
+            )}
+            {action}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}

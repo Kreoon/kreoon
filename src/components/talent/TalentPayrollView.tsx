@@ -200,10 +200,10 @@ export function TalentPayrollView() {
         <Card className="bg-gradient-to-br from-yellow-500/15 to-yellow-600/10 border-yellow-500/20 p-4">
           <div className="flex items-center gap-2 mb-1.5">
             <BadgeDollarSign className="w-4 h-4 text-yellow-400" />
-            <span className="text-white/60 text-[10px] uppercase tracking-wide">Por liquidar</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Por liquidar</span>
             <HelpTip text="Total que la agencia debe a creadores y editores. Suma de pagos pendientes + en transferencia." />
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {formatCurrency(payrollOverview?.to_settle ?? 0)}
           </p>
           <p className="text-yellow-400 text-[11px] mt-0.5">pendiente + en transferencia</p>
@@ -212,10 +212,10 @@ export function TalentPayrollView() {
         <Card className="bg-gradient-to-br from-blue-500/15 to-blue-600/10 border-blue-500/20 p-4">
           <div className="flex items-center gap-2 mb-1.5">
             <Zap className="w-4 h-4 text-blue-400" />
-            <span className="text-white/60 text-[10px] uppercase tracking-wide">En proceso</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">En proceso</span>
             <HelpTip text="Pagos que ya iniciaste pero que aún no confirmas con comprobante." />
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {formatCurrency(payrollOverview?.in_transfer ?? 0)}
           </p>
           <p className="text-blue-400 text-[11px] mt-0.5">transferencias iniciadas</p>
@@ -224,10 +224,10 @@ export function TalentPayrollView() {
         <Card className="bg-gradient-to-br from-green-500/15 to-green-600/10 border-green-500/20 p-4">
           <div className="flex items-center gap-2 mb-1.5">
             <TrendingUp className="w-4 h-4 text-green-400" />
-            <span className="text-white/60 text-[10px] uppercase tracking-wide">Pagado en período</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Pagado en período</span>
             <HelpTip text="TODO el dinero que salió a creadores y editores en el rango. Incluye pagos formales (talent_payments) Y los marcados directamente en cada proyecto (creator_paid/editor_paid). Sin doble conteo." />
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {formatCurrency(payrollOverview?.paid_in_period ?? 0)}
           </p>
           <p className="text-green-400 text-[11px] mt-0.5">
@@ -238,10 +238,10 @@ export function TalentPayrollView() {
         <Card className="bg-gradient-to-br from-purple-500/15 to-purple-600/10 border-purple-500/20 p-4">
           <div className="flex items-center gap-2 mb-1.5">
             <Activity className="w-4 h-4 text-purple-400" />
-            <span className="text-white/60 text-[10px] uppercase tracking-wide">Pago promedio</span>
+            <span className="text-muted-foreground text-[10px] uppercase tracking-wide">Pago promedio</span>
             <HelpTip text="Pagado en el período ÷ número de talentos que recibieron pago." />
           </div>
-          <p className="text-xl font-bold text-white">
+          <p className="text-xl font-bold text-foreground">
             {formatCurrency(payrollOverview?.avg_payment ?? 0)}
           </p>
           <p className="text-purple-400 text-[11px] mt-0.5">por talento en período</p>
@@ -249,13 +249,13 @@ export function TalentPayrollView() {
       </div>
 
       {/* ─── Filtros locales ───────────────────────────────────────── */}
-      <div className="flex items-center gap-2 flex-wrap p-3 rounded-md bg-white/[0.02] border border-white/5">
-        <span className="text-white/40 text-xs">Filtros:</span>
+      <div className="flex items-center gap-2 flex-wrap p-3 rounded-md bg-muted/40 border border-border">
+        <span className="text-muted-foreground text-xs">Filtros:</span>
 
         <select
           value={statusFilter}
           onChange={e => setStatusFilter(e.target.value as typeof statusFilter)}
-          className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+          className="bg-muted/50 border border-border rounded text-xs text-foreground px-2 py-1 h-7"
         >
           <option value="all" className="bg-[#111]">Todos los estados</option>
           <option value="pending" className="bg-[#111]">Pendientes</option>
@@ -266,7 +266,7 @@ export function TalentPayrollView() {
         <select
           value={roleFilter}
           onChange={e => setRoleFilter(e.target.value as typeof roleFilter)}
-          className="bg-white/5 border border-white/10 rounded text-xs text-white px-2 py-1 h-7"
+          className="bg-muted/50 border border-border rounded text-xs text-foreground px-2 py-1 h-7"
         >
           <option value="all" className="bg-[#111]">Todos los roles</option>
           <option value="creator" className="bg-[#111]">Solo creadores</option>
@@ -274,19 +274,19 @@ export function TalentPayrollView() {
         </select>
 
         <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-white/30" />
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/60" />
           <Input
             placeholder="Buscar talento"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="bg-white/5 border-white/10 text-white text-xs h-7 pl-7 w-44"
+            className="bg-muted/50 border-border text-foreground text-xs h-7 pl-7 w-44"
           />
         </div>
 
         {(statusFilter !== 'all' || roleFilter !== 'all' || search) && (
           <button
             onClick={() => { setStatusFilter('all'); setRoleFilter('all'); setSearch(''); }}
-            className="text-xs text-white/40 hover:text-white px-2 py-1"
+            className="text-xs text-muted-foreground hover:text-foreground px-2 py-1"
           >
             Limpiar
           </button>

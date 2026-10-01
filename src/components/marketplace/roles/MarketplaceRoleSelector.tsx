@@ -53,7 +53,7 @@ export function MarketplaceRoleSelector({
       {label && (
         <div className="flex items-center justify-between">
           <label className="text-foreground/80 text-sm font-medium">{label}</label>
-          <span className={cn('text-xs', atLimit ? 'text-orange-400' : 'text-gray-500')}>
+          <span className={cn('text-xs', atLimit ? 'text-orange-400' : 'text-muted-foreground')}>
             {selectedRoles.length}/{maxRoles}
           </span>
         </div>
@@ -76,7 +76,7 @@ export function MarketplaceRoleSelector({
       )}
 
       {showCategories ? (
-        <div className="border border-white/10 rounded-sm overflow-hidden divide-y divide-white/5">
+        <div className="border border-border rounded-sm overflow-hidden divide-y divide-white/5">
           {categories.map(([catId, catInfo]) => {
             const isExpanded = expandedCategories.has(catId);
             const catRoles = MARKETPLACE_ROLES.filter(r => r.category === catId);
@@ -86,15 +86,15 @@ export function MarketplaceRoleSelector({
               <div key={catId}>
                 <button
                   onClick={() => toggleCategory(catId)}
-                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset"
+                  className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset"
                   aria-expanded={isExpanded}
                   aria-label={`Categoría ${catInfo.label}, ${isExpanded ? 'expandida' : 'colapsada'}`}
                 >
                   <div className="flex items-center gap-2">
                     {isExpanded ? (
-                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-500" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     )}
                     <span className={cn('text-sm font-medium', catInfo.color)}>{catInfo.label}</span>
                     {selectedInCat > 0 && (
@@ -103,7 +103,7 @@ export function MarketplaceRoleSelector({
                       </span>
                     )}
                   </div>
-                  <span className="text-gray-600 text-xs">{catRoles.length} roles</span>
+                  <span className="text-muted-foreground text-xs">{catRoles.length} roles</span>
                 </button>
 
                 {isExpanded && (
@@ -124,14 +124,14 @@ export function MarketplaceRoleSelector({
                             isSelected
                               ? 'border-purple-500/50 bg-purple-500/10'
                               : isDisabled
-                              ? 'border-white/5 bg-white/[0.02] opacity-40 cursor-not-allowed'
-                              : 'border-white/10 bg-white/5 hover:border-white/20',
+                              ? 'border-border bg-muted/40 opacity-40 cursor-not-allowed'
+                              : 'border-border bg-muted/50 hover:border-border',
                           )}
                         >
-                          <p className={cn('text-xs font-medium', isSelected ? 'text-white' : 'text-foreground/80')}>
+                          <p className={cn('text-xs font-medium', isSelected ? 'text-foreground' : 'text-foreground/80')}>
                             {role.label}
                           </p>
-                          <p className="text-gray-500 text-[10px] mt-0.5">{role.description}</p>
+                          <p className="text-muted-foreground text-[10px] mt-0.5">{role.description}</p>
                         </button>
                       );
                     })}
@@ -156,10 +156,10 @@ export function MarketplaceRoleSelector({
                 className={cn(
                   'px-3 py-1.5 rounded-sm border text-xs font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
                   isSelected
-                    ? 'border-purple-500/50 bg-purple-500/10 text-white'
+                    ? 'border-purple-500/50 bg-purple-500/10 text-foreground'
                     : isDisabled
-                    ? 'border-white/5 text-gray-600 cursor-not-allowed'
-                    : 'border-white/10 text-gray-400 hover:border-white/20',
+                    ? 'border-border text-muted-foreground cursor-not-allowed'
+                    : 'border-border text-muted-foreground hover:border-border',
                 )}
               >
                 {role.label}

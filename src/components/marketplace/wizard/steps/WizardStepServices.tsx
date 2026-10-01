@@ -86,50 +86,50 @@ export function WizardStepServices({
     <div className="max-w-2xl mx-auto space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-white">Servicios y precios</h2>
-        <p className="text-gray-400 text-sm">Define que ofreces y a que precio</p>
+        <h2 className="text-2xl font-bold text-foreground">Servicios y precios</h2>
+        <p className="text-muted-foreground text-sm">Define que ofreces y a que precio</p>
       </div>
 
       {/* Pricing basics */}
-      <div className="bg-white/5 rounded-sm border border-white/10 p-6 space-y-5">
-        <h3 className="text-white font-medium text-sm">Configuracion general</h3>
+      <div className="bg-muted/50 rounded-sm border border-border p-6 space-y-5">
+        <h3 className="text-foreground font-medium text-sm">Configuracion general</h3>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Precio base</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Precio base</label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="number"
                 value={servicesData.base_price ?? ''}
                 onChange={(e) => onChange({ ...servicesData, base_price: e.target.value ? Number(e.target.value) : null })}
                 placeholder="0"
-                className="w-full bg-white/5 border border-white/10 rounded-sm pl-9 pr-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
+                className="w-full bg-muted/50 border border-border rounded-sm pl-9 pr-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm"
               />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Moneda</label>
-            <div className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white/60 text-sm">
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Moneda</label>
+            <div className="w-full bg-muted/50 border border-border rounded-sm px-4 py-2.5 text-muted-foreground text-sm">
               USD
             </div>
           </div>
         </div>
 
         {/* Exchange toggle */}
-        <div className="flex items-center justify-between p-4 rounded-sm bg-white/5 border border-white/10">
+        <div className="flex items-center justify-between p-4 rounded-sm bg-muted/50 border border-border">
           <div className="flex items-center gap-3">
             <Gift className="h-5 w-5 text-green-400" />
             <div>
-              <p className="text-white text-sm font-medium">Acepta canje de producto</p>
-              <p className="text-gray-500 text-xs">Recibe productos en lugar de pago</p>
+              <p className="text-foreground text-sm font-medium">Acepta canje de producto</p>
+              <p className="text-muted-foreground text-xs">Recibe productos en lugar de pago</p>
             </div>
           </div>
           <button
             onClick={() => onChange({ ...servicesData, accepts_exchange: !servicesData.accepts_exchange })}
             className={cn(
               'w-11 h-6 rounded-full transition-colors relative',
-              servicesData.accepts_exchange ? 'bg-green-500' : 'bg-white/20'
+              servicesData.accepts_exchange ? 'bg-green-500' : 'bg-muted'
             )}
           >
             <span className={cn(
@@ -141,13 +141,13 @@ export function WizardStepServices({
 
         {servicesData.accepts_exchange && (
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">Condiciones de canje</label>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Condiciones de canje</label>
             <textarea
               value={servicesData.exchange_conditions}
               onChange={(e) => onChange({ ...servicesData, exchange_conditions: e.target.value })}
               placeholder="Ej: Acepto productos de moda y skincare con valor minimo de $150.000 COP"
               rows={2}
-              className="w-full bg-white/5 border border-white/10 rounded-sm px-4 py-2.5 text-white placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
+              className="w-full bg-muted/50 border border-border rounded-sm px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500/50 text-sm resize-none"
             />
           </div>
         )}
@@ -156,7 +156,7 @@ export function WizardStepServices({
       {/* Services list */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-white font-medium text-sm">Tus servicios ({services.length})</h3>
+          <h3 className="text-foreground font-medium text-sm">Tus servicios ({services.length})</h3>
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 rounded-sm text-xs font-medium transition-colors"
@@ -169,17 +169,17 @@ export function WizardStepServices({
         {services.map(service => (
           <div
             key={service.id}
-            className="bg-white/5 rounded-sm border border-white/10 overflow-hidden"
+            className="bg-muted/50 rounded-sm border border-border overflow-hidden"
           >
             <button
               onClick={() => setExpandedService(expandedService === service.id ? null : service.id)}
-              className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+              className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
                 <Package className="h-4 w-4 text-purple-400" />
                 <div className="text-left">
-                  <p className="text-white text-sm font-medium">{service.title}</p>
-                  <p className="text-gray-500 text-xs">
+                  <p className="text-foreground text-sm font-medium">{service.title}</p>
+                  <p className="text-muted-foreground text-xs">
                     {SERVICE_TYPE_LABELS[service.service_type as keyof typeof SERVICE_TYPE_LABELS] || service.service_type}
                     {service.price_amount && ` · $${service.price_amount.toLocaleString()} ${service.price_currency}`}
                   </p>
@@ -190,28 +190,28 @@ export function WizardStepServices({
                   onClick={(e) => { e.stopPropagation(); onDeleteService(service.id); }}
                   className="p-1.5 hover:bg-red-500/20 rounded-sm transition-colors"
                 >
-                  <Trash2 className="h-3.5 w-3.5 text-gray-500 hover:text-red-400" />
+                  <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-red-400" />
                 </button>
                 {expandedService === service.id
-                  ? <ChevronUp className="h-4 w-4 text-gray-500" />
-                  : <ChevronDown className="h-4 w-4 text-gray-500" />
+                  ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                  : <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 }
               </div>
             </button>
 
             {expandedService === service.id && (
-              <div className="px-4 pb-4 border-t border-white/5 pt-3">
+              <div className="px-4 pb-4 border-t border-border pt-3">
                 {service.description && (
-                  <p className="text-gray-400 text-xs mb-2">{service.description}</p>
+                  <p className="text-muted-foreground text-xs mb-2">{service.description}</p>
                 )}
                 {service.deliverables.length > 0 && (
                   <div className="space-y-1.5">
-                    <p className="text-gray-500 text-[10px] uppercase tracking-wide">Incluye:</p>
+                    <p className="text-muted-foreground text-[10px] uppercase tracking-wide">Incluye:</p>
                     {(service.deliverables as ServicePackage[]).map((pkg, i) => (
                       <div key={i} className="pl-3 border-l-2 border-purple-500/30">
-                        <p className="text-white text-xs font-medium">{pkg.name}</p>
+                        <p className="text-foreground text-xs font-medium">{pkg.name}</p>
                         {pkg.includes?.map((inc, j) => (
-                          <p key={j} className="text-gray-500 text-[11px]">• {inc}</p>
+                          <p key={j} className="text-muted-foreground text-[11px]">• {inc}</p>
                         ))}
                       </div>
                     ))}
@@ -225,31 +225,31 @@ export function WizardStepServices({
 
       {/* Add service form */}
       {showForm && (
-        <div className="bg-white/5 rounded-sm border border-purple-500/30 p-6 space-y-4">
+        <div className="bg-muted/50 rounded-sm border border-purple-500/30 p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-white font-medium text-sm">Nuevo servicio</h3>
-            <button onClick={() => setShowForm(false)} className="p-1 hover:bg-white/10 rounded">
-              <X className="h-4 w-4 text-gray-400" />
+            <h3 className="text-foreground font-medium text-sm">Nuevo servicio</h3>
+            <button onClick={() => setShowForm(false)} className="p-1 hover:bg-muted rounded">
+              <X className="h-4 w-4 text-muted-foreground" />
             </button>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Titulo *</label>
+              <label className="block text-xs text-muted-foreground mb-1">Titulo *</label>
               <input
                 type="text"
                 value={form.title}
                 onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Ej: Video UGC Vertical"
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tipo *</label>
+              <label className="block text-xs text-muted-foreground mb-1">Tipo *</label>
               <select
                 value={form.service_type}
                 onChange={(e) => setForm(prev => ({ ...prev, service_type: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               >
                 <option value="" className="bg-card">Seleccionar...</option>
                 {Object.entries(SERVICE_TYPE_CATEGORIES).map(([, category]) => (
@@ -264,52 +264,52 @@ export function WizardStepServices({
           </div>
 
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Descripcion</label>
+            <label className="block text-xs text-muted-foreground mb-1">Descripcion</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Describe que incluye este servicio..."
               rows={2}
-              className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+              className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground placeholder:text-muted-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Precio</label>
+              <label className="block text-xs text-muted-foreground mb-1">Precio</label>
               <input
                 type="number"
                 value={form.price_amount}
                 onChange={(e) => setForm(prev => ({ ...prev, price_amount: e.target.value }))}
                 placeholder="0"
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Moneda</label>
-              <div className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white/60 text-sm">
+              <label className="block text-xs text-muted-foreground mb-1">Moneda</label>
+              <div className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-muted-foreground text-sm">
                 USD
               </div>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Entrega (dias)</label>
+              <label className="block text-xs text-muted-foreground mb-1">Entrega (dias)</label>
               <input
                 type="number"
                 value={form.delivery_days}
                 onChange={(e) => setForm(prev => ({ ...prev, delivery_days: e.target.value }))}
                 placeholder="7"
-                className="w-full bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
             </div>
           </div>
 
           {/* Includes */}
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Que incluye</label>
+            <label className="block text-xs text-muted-foreground mb-1">Que incluye</label>
             {form.includes.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {form.includes.map((inc, i) => (
-                  <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white text-[11px]">
+                  <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-foreground text-[11px]">
                     {inc}
                     <X className="h-2.5 w-2.5 cursor-pointer" onClick={() => setForm(prev => ({ ...prev, includes: prev.includes.filter((_, idx) => idx !== i) }))} />
                   </span>
@@ -323,9 +323,9 @@ export function WizardStepServices({
                 onChange={(e) => setNewInclude(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addInclude())}
                 placeholder="Ej: 1 video vertical 15-30s"
-                className="flex-1 bg-white/5 border border-white/10 rounded-sm px-3 py-2 text-white placeholder:text-gray-600 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="flex-1 bg-muted/50 border border-border rounded-sm px-3 py-2 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50"
               />
-              <button onClick={addInclude} className="px-3 py-2 bg-white/10 hover:bg-white/15 rounded-sm text-xs text-foreground/80">
+              <button onClick={addInclude} className="px-3 py-2 bg-muted hover:bg-muted rounded-sm text-xs text-foreground/80">
                 <Plus className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -334,7 +334,7 @@ export function WizardStepServices({
           <button
             onClick={handleCreateService}
             disabled={!form.title || !form.service_type}
-            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-sm text-sm font-medium transition-colors"
+            className="w-full py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-muted disabled:text-muted-foreground text-white rounded-sm text-sm font-medium transition-colors"
           >
             Crear servicio
           </button>
@@ -343,9 +343,9 @@ export function WizardStepServices({
 
       {services.length === 0 && !showForm && (
         <div className="text-center py-6">
-          <Package className="h-10 w-10 mx-auto text-gray-600 mb-3" />
-          <p className="text-gray-400 text-sm">Aun no tienes servicios</p>
-          <p className="text-gray-600 text-xs mt-1">Agrega al menos un servicio para que las marcas sepan que ofreces</p>
+          <Package className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+          <p className="text-muted-foreground text-sm">Aun no tienes servicios</p>
+          <p className="text-muted-foreground text-xs mt-1">Agrega al menos un servicio para que las marcas sepan que ofreces</p>
         </div>
       )}
     </div>

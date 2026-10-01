@@ -376,21 +376,21 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-white/10 bg-background/95">
+      <div className="flex-shrink-0 border-b border-border bg-background/95">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={handleSaveAndExit}
               aria-label="Guardar borrador y cerrar wizard"
-              className="p-2 rounded-sm hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="p-2 rounded-sm hover:bg-muted transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              <X className="h-5 w-5 text-gray-400" aria-hidden="true" />
+              <X className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             </button>
             <div>
-              <h1 className="text-white font-semibold text-lg">
+              <h1 className="text-foreground font-semibold text-lg">
                 {creatorProfile.exists ? 'Editar Perfil' : 'Crear Perfil del Marketplace'}
               </h1>
-              <p className="text-gray-500 text-xs mt-0.5">
+              <p className="text-muted-foreground text-xs mt-0.5">
                 Paso {currentStep + 1} de {STEPS.length}: {STEPS[currentStep].label}
               </p>
             </div>
@@ -399,7 +399,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
           <button
             onClick={handleSaveAndExit}
             aria-label="Guardar borrador y salir del wizard"
-            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-sm text-sm text-foreground/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="flex items-center gap-2 px-4 py-2 bg-muted/50 hover:bg-muted rounded-sm text-sm text-foreground/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Save className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">Guardar y salir</span>
@@ -408,7 +408,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
 
         {/* Progress bar */}
         <div
-          className="relative h-1 bg-white/5"
+          className="relative h-1 bg-muted/50"
           role="progressbar"
           aria-valuenow={Math.round(progress)}
           aria-valuemin={0}
@@ -438,8 +438,8 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                   'flex-1 py-1.5 px-2 rounded-sm text-xs font-medium transition-all',
                   'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                   isCompleted && 'bg-purple-500/20 text-purple-300 cursor-pointer hover:bg-purple-500/30',
-                  isCurrent && 'bg-white/10 text-white',
-                  !isCompleted && !isCurrent && 'text-gray-600 cursor-not-allowed'
+                  isCurrent && 'bg-muted text-foreground',
+                  !isCompleted && !isCurrent && 'text-muted-foreground cursor-not-allowed'
                 )}
               >
                 {step.label}
@@ -535,7 +535,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
       </div>
 
       {/* Footer navigation */}
-      <div className="flex-shrink-0 border-t border-white/10 bg-background/95">
+      <div className="flex-shrink-0 border-t border-border bg-background/95">
         <div className="max-w-4xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <button
             onClick={goBack}
@@ -545,8 +545,8 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
               'flex items-center gap-2 px-5 py-2.5 rounded-sm text-sm font-medium transition-colors',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               currentStep === 0
-                ? 'text-gray-600 cursor-not-allowed'
-                : 'text-foreground/80 hover:bg-white/10'
+                ? 'text-muted-foreground cursor-not-allowed'
+                : 'text-foreground/80 hover:bg-muted'
             )}
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
@@ -560,7 +560,7 @@ export default function CreatorProfileWizard({ isOpen, onClose, onComplete }: Cr
                 className={cn(
                   'w-2 h-2 rounded-full transition-colors',
                   index === currentStep ? 'bg-purple-500' :
-                  index < currentStep ? 'bg-purple-500/40' : 'bg-white/10'
+                  index < currentStep ? 'bg-purple-500/40' : 'bg-muted'
                 )}
                 aria-hidden="true"
               />

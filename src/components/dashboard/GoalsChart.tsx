@@ -163,7 +163,7 @@ export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endM
           />
           <Tooltip content={(props) => <CustomTooltip {...props} currency={currency} />} />
           <Legend
-            formatter={(value) => value === 'meta' ? 'Meta' : 'Real'}
+            formatter={(value) => <span className="text-sm text-foreground">{value === 'meta' ? 'Meta' : 'Real'}</span>}
             wrapperStyle={{ paddingTop: '10px' }}
           />
           <Bar
@@ -174,6 +174,7 @@ export function GoalsChart({ goals, actuals, metric, title, startMonth = 1, endM
           />
           <Bar
             dataKey="real"
+            fill="hsl(var(--info))"
             radius={[4, 4, 0, 0]}
           >
             {data.map((entry, index) => (

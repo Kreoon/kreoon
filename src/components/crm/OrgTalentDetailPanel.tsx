@@ -220,8 +220,8 @@ export function OrgTalentDetailPanel({
       {/* Loading indicator for full detail */}
       {fullLoading && (
         <div className="space-y-3">
-          <Skeleton className="h-16 rounded-sm bg-white/5" />
-          <Skeleton className="h-12 rounded-sm bg-white/5" />
+          <Skeleton className="h-16 rounded-sm bg-muted/40" />
+          <Skeleton className="h-12 rounded-sm bg-muted/40" />
         </div>
       )}
 
@@ -278,7 +278,7 @@ export function OrgTalentDetailPanel({
               'h-8 px-3 text-xs border transition-all',
               isFavorite
                 ? 'bg-pink-500/20 border-pink-500/30 text-pink-400 hover:bg-pink-500/30'
-                : 'bg-white/5 border-white/10 text-white/50 hover:text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/30',
+                : 'bg-muted/40 border-border text-muted-foreground/70 hover:text-pink-400 hover:bg-pink-500/10 hover:border-pink-500/30',
             )}
           >
             <Heart className={cn('h-3.5 w-3.5 mr-1.5', isFavorite && 'fill-current')} />
@@ -294,7 +294,7 @@ export function OrgTalentDetailPanel({
               'h-8 px-3 text-xs border transition-all',
               isBlocked
                 ? 'bg-red-500/20 border-red-500/30 text-red-400'
-                : 'bg-white/5 border-white/10 text-white/50 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30',
+                : 'bg-muted/40 border-border text-muted-foreground/70 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/30',
             )}
           >
             <Ban className="h-3.5 w-3.5 mr-1.5" />
@@ -306,20 +306,20 @@ export function OrgTalentDetailPanel({
       {/* Stats */}
       <DetailSection title="Estadísticas">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Colaboraciones</span>
-          <span className="text-white/70 font-medium flex items-center gap-1">
+          <span className="text-muted-foreground/70">Colaboraciones</span>
+          <span className="text-muted-foreground font-medium flex items-center gap-1">
             <Briefcase className="h-3 w-3 text-blue-400" />
             {creator.times_worked_together}
           </span>
-          <span className="text-white/40">Pagado</span>
-          <span className="text-white/70 font-medium flex items-center gap-1">
+          <span className="text-muted-foreground/70">Pagado</span>
+          <span className="text-muted-foreground font-medium flex items-center gap-1">
             <DollarSign className="h-3 w-3 text-green-400" />
             {formatCurrency(creator.total_paid)}
           </span>
           {creator.average_rating_given != null && (
             <>
-              <span className="text-white/40">Rating dado</span>
-              <span className="text-white/70 font-medium flex items-center gap-1">
+              <span className="text-muted-foreground/70">Rating dado</span>
+              <span className="text-muted-foreground font-medium flex items-center gap-1">
                 <Star className="h-3 w-3 text-amber-400" />
                 {creator.average_rating_given.toFixed(1)}
               </span>
@@ -327,9 +327,9 @@ export function OrgTalentDetailPanel({
           )}
           {creator.last_collaboration_at && (
             <>
-              <span className="text-white/40">Última colaboración</span>
-              <span className="text-white/70 flex items-center gap-1">
-                <Calendar className="h-3 w-3 text-white/30" />
+              <span className="text-muted-foreground/70">Última colaboración</span>
+              <span className="text-muted-foreground flex items-center gap-1">
+                <Calendar className="h-3 w-3 text-muted-foreground/70" />
                 {formatDistanceToNow(new Date(creator.last_collaboration_at), { addSuffix: true, locale: es })}
               </span>
             </>
@@ -405,14 +405,14 @@ export function OrgTalentDetailPanel({
               }
             }}
             placeholder="Agregar etiqueta..."
-            className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8 flex-1"
+            className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 text-xs h-8 flex-1"
           />
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={addTag}
-            className="h-8 w-8 bg-white/5 hover:bg-white/10 text-white/50"
+            className="h-8 w-8 bg-muted/40 hover:bg-muted text-muted-foreground/70"
           >
             <Plus className="h-3.5 w-3.5" />
           </Button>
@@ -441,10 +441,10 @@ export function OrgTalentDetailPanel({
           onChange={(e) => handleNotesChange(e.target.value)}
           placeholder="Notas sobre este talento..."
           rows={3}
-          className="bg-white/5 border-white/10 text-white placeholder:text-white/30 resize-none text-xs"
+          className="bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none text-xs"
         />
         {updateRelationship.isPending && (
-          <p className="text-[10px] text-white/30">Guardando...</p>
+          <p className="text-[10px] text-muted-foreground/70">Guardando...</p>
         )}
       </DetailSection>
 
@@ -456,10 +456,10 @@ export function OrgTalentDetailPanel({
         configAction={
           <button
             onClick={() => setShowFieldsConfig(true)}
-            className="p-1 rounded hover:bg-white/10 transition-colors"
+            className="p-1 rounded hover:bg-muted transition-colors"
             title="Configurar campos"
           >
-            <Settings className="h-3.5 w-3.5 text-white/40 hover:text-white/60" />
+            <Settings className="h-3.5 w-3.5 text-muted-foreground/70 hover:text-muted-foreground" />
           </button>
         }
       />
@@ -467,8 +467,8 @@ export function OrgTalentDetailPanel({
       {/* Info */}
       <DetailSection title="Info">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-          <span className="text-white/40">Creado</span>
-          <span className="text-white/70">
+          <span className="text-muted-foreground/70">Creado</span>
+          <span className="text-muted-foreground">
             {format(new Date(full?.created_at || creator.created_at), 'd MMM yyyy', { locale: es })}
           </span>
         </div>

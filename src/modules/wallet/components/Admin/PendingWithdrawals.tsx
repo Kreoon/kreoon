@@ -72,10 +72,10 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-sm bg-amber-500/10">
-                <Clock className="h-6 w-6 text-amber-400" />
+                <Clock className="h-6 w-6 text-amber-700 dark:text-amber-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{pendingCount}</p>
+                <p className="text-2xl font-bold text-foreground">{pendingCount}</p>
                 <p className="text-sm text-muted-foreground">Pendientes</p>
               </div>
             </div>
@@ -88,7 +88,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                 <Loader2 className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">{processingCount}</p>
+                <p className="text-2xl font-bold text-foreground">{processingCount}</p>
                 <p className="text-sm text-muted-foreground">Procesando</p>
               </div>
             </div>
@@ -101,7 +101,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                 <AlertCircle className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-bold text-foreground">
                   ${totalPendingAmount.toLocaleString()}
                 </p>
                 <p className="text-sm text-muted-foreground">Total por procesar</p>
@@ -167,7 +167,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
             </div>
           ) : filteredWithdrawals.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
-              <CheckCircle className="h-12 w-12 text-emerald-400/30 mb-4" />
+              <CheckCircle className="h-12 w-12 text-emerald-700 dark:text-emerald-400/30 mb-4" />
               <p className="text-muted-foreground">No hay solicitudes pendientes</p>
             </div>
           ) : (
@@ -199,7 +199,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
                       {/* Details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-white truncate">
+                          <p className="font-medium text-foreground truncate">
                             {profile?.full_name || 'Usuario'}
                           </p>
                           <Badge
@@ -219,7 +219,7 @@ export function PendingWithdrawals({ className }: PendingWithdrawalsProps) {
 
                       {/* Amount */}
                       <div className="text-right">
-                        <p className="text-lg font-bold text-white">
+                        <p className="text-lg font-bold text-foreground">
                           {withdrawal.formattedNetAmount}
                         </p>
                         <p className="text-xs text-muted-foreground">

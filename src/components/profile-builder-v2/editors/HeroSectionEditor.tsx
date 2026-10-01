@@ -24,7 +24,7 @@ export function HeroSectionEditor({
         label="Subtitulo"
         value={asString(content.subheadline)}
         rows={3}
-        placeholder="Breve descripcion de lo que haces"
+        placeholder="Breve descripción de lo que haces"
         onChange={(v) => patchContent(section, onUpdateBlock, "subheadline", v)}
       />
       <TextField

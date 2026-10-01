@@ -97,9 +97,9 @@ function EditableField({
 
   return (
     <div className="flex items-start gap-3 py-2">
-      {Icon && <Icon className="h-4 w-4 text-white/40 mt-0.5 shrink-0" />}
+      {Icon && <Icon className="h-4 w-4 text-muted-foreground/70 mt-0.5 shrink-0" />}
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-wide mb-1">{label}</p>
+        <p className="text-[10px] text-muted-foreground/70 uppercase tracking-wide mb-1">{label}</p>
         {isEditing ? (
           multiline ? (
             <Textarea
@@ -110,7 +110,7 @@ function EditableField({
               }}
               placeholder={placeholder}
               rows={3}
-              className="text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20 resize-none"
+              className="text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70 resize-none"
             />
           ) : (
             <Input
@@ -121,11 +121,11 @@ function EditableField({
               }}
               placeholder={placeholder}
               type={type}
-              className="h-8 text-sm bg-white/5 border-white/10 text-white placeholder:text-white/20"
+              className="h-8 text-sm bg-muted/40 border-border text-foreground placeholder:text-muted-foreground/70"
             />
           )
         ) : (
-          <p className="text-sm text-white/80 break-words">{value}</p>
+          <p className="text-sm text-muted-foreground break-words">{value}</p>
         )}
       </div>
     </div>
@@ -212,9 +212,9 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-[#0a0118] border-[#8b5cf6]/20 overflow-hidden">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-full max-w-4xl h-[90dvh] sm:h-[90vh] p-0 bg-background border-[#8b5cf6]/20 overflow-hidden">
         {/* Header */}
-        <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-white/10">
+        <DialogHeader className="p-4 sm:p-6 pb-4 border-b border-border">
           <div className="flex items-start gap-4">
             {/* Avatar */}
             <div className="relative shrink-0">
@@ -241,10 +241,10 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <DialogTitle className="text-xl font-semibold text-white truncate">
+              <DialogTitle className="text-xl font-semibold text-foreground truncate">
                 {creator.full_name}
               </DialogTitle>
-              <p className="text-sm text-white/50 truncate">
+              <p className="text-sm text-muted-foreground/70 truncate">
                 {creator.username ? `@${creator.username}` : creator.email}
               </p>
 
@@ -255,9 +255,9 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   <span className="font-semibold">
                     {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : 'N/A'}
                   </span>
-                  <span className="text-xs text-white/40">({creator.rating_count})</span>
+                  <span className="text-xs text-muted-foreground/70">({creator.rating_count})</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-white/70">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Briefcase className="h-4 w-4" />
                   <span>{creator.completed_projects} proyectos</span>
                 </div>
@@ -279,13 +279,13 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 )}
                 <span className={cn(
                   'px-2 py-0.5 rounded-full text-xs font-medium',
-                  creator.is_active ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/50'
+                  creator.is_active ? 'bg-green-500/20 text-green-400' : 'bg-muted text-muted-foreground/70'
                 )}>
                   {creator.is_active ? 'Activo' : 'Inactivo'}
                 </span>
                 <span className={cn(
                   'px-2 py-0.5 rounded-full text-xs font-medium',
-                  creator.is_available ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/50'
+                  creator.is_available ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground/70'
                 )}>
                   {creator.is_available ? 'Disponible' : 'No disponible'}
                 </span>
@@ -312,7 +312,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   'shrink-0 gap-2',
                   isEditing
                     ? 'bg-green-500/20 border-green-500/30 text-green-400 hover:bg-green-500/30'
-                    : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                    : 'bg-muted/40 border-border text-muted-foreground hover:bg-muted'
                 )}
               >
                 {isEditing ? <Check className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
@@ -324,32 +324,32 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
         {/* Tabs Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="px-4 sm:px-6 border-b border-white/10">
+          <div className="px-4 sm:px-6 border-b border-border">
             <TabsList className="bg-transparent h-12 p-0 gap-0">
               <TabsTrigger
                 value="general"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <User className="h-4 w-4" />
                 General
               </TabsTrigger>
               <TabsTrigger
                 value="portfolio"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Image className="h-4 w-4" />
                 Portafolio
               </TabsTrigger>
               <TabsTrigger
                 value="services"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Briefcase className="h-4 w-4" />
                 Servicios
               </TabsTrigger>
               <TabsTrigger
                 value="organization"
-                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
               >
                 <Building2 className="h-4 w-4" />
                 Organización
@@ -357,7 +357,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
               {isRoot && (
                 <TabsTrigger
                   value="admin"
-                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-white rounded-none px-4 text-white/60 gap-2"
+                  className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-pink-500 data-[state=active]:text-foreground rounded-none px-4 text-muted-foreground gap-2"
                 >
                   <Shield className="h-4 w-4" />
                   Admin
@@ -370,17 +370,17 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
             <div className="p-4 sm:p-6">
               {fullLoading && (
                 <div className="space-y-4">
-                  <Skeleton className="h-20 rounded-sm bg-white/5" />
-                  <Skeleton className="h-16 rounded-sm bg-white/5" />
-                  <Skeleton className="h-24 rounded-sm bg-white/5" />
+                  <Skeleton className="h-20 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-16 rounded-sm bg-muted/40" />
+                  <Skeleton className="h-24 rounded-sm bg-muted/40" />
                 </div>
               )}
 
               {/* GENERAL TAB */}
               <TabsContent value="general" className="mt-0 space-y-6">
                 {/* Personal Data */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <User className="h-4 w-4 text-pink-400" />
                     Datos Personales
                   </h3>
@@ -427,8 +427,8 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Bio */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Biografía</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Biografía</h3>
                   <EditableField
                     label="Tagline"
                     value={full?.tagline}
@@ -458,8 +458,8 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Social Links */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
                     <Link2 className="h-4 w-4 text-pink-400" />
                     Redes Sociales
                   </h3>
@@ -504,11 +504,11 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Specialization */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Especialización</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Especialización</h3>
                   {(full?.categories ?? creator.categories)?.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-white/40 mb-2">Categorías</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Categorías</p>
                       <div className="flex flex-wrap gap-2">
                         {(full?.categories ?? creator.categories).map((cat: string) => (
                           <Badge key={cat} variant="secondary" className="bg-pink-500/20 text-pink-300">
@@ -520,7 +520,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   )}
                   {(full?.content_types ?? creator.content_types)?.length > 0 && (
                     <div className="mb-4">
-                      <p className="text-xs text-white/40 mb-2">Tipos de contenido</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Tipos de contenido</p>
                       <div className="flex flex-wrap gap-2">
                         {(full?.content_types ?? creator.content_types).map((t: string) => (
                           <Badge key={t} variant="secondary" className="bg-purple-500/20 text-purple-300">
@@ -532,7 +532,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   )}
                   {(full?.marketplace_roles ?? creator.marketplace_roles)?.length > 0 && (
                     <div>
-                      <p className="text-xs text-white/40 mb-2">Roles Marketplace</p>
+                      <p className="text-xs text-muted-foreground/70 mb-2">Roles Marketplace</p>
                       <div className="flex flex-wrap gap-2">
                         {(full?.marketplace_roles ?? creator.marketplace_roles).map((role: string) => (
                           <Badge key={role} variant="secondary" className="bg-blue-500/20 text-blue-300">
@@ -545,51 +545,51 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 </div>
 
                 {/* Marketplace Stats */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Estadísticas Marketplace</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Estadísticas Marketplace</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-yellow-400">
                         {creator.rating_avg > 0 ? creator.rating_avg.toFixed(1) : '—'}
                       </p>
-                      <p className="text-xs text-white/50">Rating ({creator.rating_count})</p>
+                      <p className="text-xs text-muted-foreground/70">Rating ({creator.rating_count})</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-2xl font-bold text-white">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-2xl font-bold text-foreground">
                         {creator.completed_projects}
                       </p>
-                      <p className="text-xs text-white/50">Proyectos</p>
+                      <p className="text-xs text-muted-foreground/70">Proyectos</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
                       <p className="text-2xl font-bold text-green-400">
                         {formatCurrency(creator.total_earned)}
                       </p>
-                      <p className="text-xs text-white/50">Total ganado</p>
+                      <p className="text-xs text-muted-foreground/70">Total ganado</p>
                     </div>
-                    <div className="text-center p-3 rounded-sm bg-white/5">
-                      <p className="text-xl font-bold text-white">
+                    <div className="text-center p-3 rounded-sm bg-muted/40">
+                      <p className="text-xl font-bold text-foreground">
                         {formatCurrency(creator.base_price)}
                       </p>
-                      <p className="text-xs text-white/50">Precio base</p>
+                      <p className="text-xs text-muted-foreground/70">Precio base</p>
                     </div>
                   </div>
                   {full && (
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                       {full.response_time_hours && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
-                          <Clock className="h-4 w-4 text-white/40" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4 text-muted-foreground/70" />
                           <span>Respuesta: {full.response_time_hours}h</span>
                         </div>
                       )}
                       {full.on_time_delivery_pct && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Check className="h-4 w-4 text-green-400" />
                           <span>A tiempo: {full.on_time_delivery_pct}%</span>
                         </div>
                       )}
                       {full.repeat_clients_pct && (
-                        <div className="flex items-center gap-2 text-sm text-white/70">
-                          <Users className="h-4 w-4 text-white/40" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-4 w-4 text-muted-foreground/70" />
                           <span>Recurrentes: {full.repeat_clients_pct}%</span>
                         </div>
                       )}
@@ -604,7 +604,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {full.portfolio.map((item: any) => (
                       <div key={item.id} className="group relative">
-                        <div className="aspect-video rounded-sm bg-white/5 overflow-hidden">
+                        <div className="aspect-video rounded-sm bg-muted/40 overflow-hidden">
                           {hasValidUrl(item.thumbnail_url) ? (
                             <img
                               src={item.thumbnail_url}
@@ -614,23 +614,23 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
                               {item.media_type === 'video' ? (
-                                <Video className="h-8 w-8 text-white/20" />
+                                <Video className="h-8 w-8 text-muted-foreground/70" />
                               ) : (
-                                <Image className="h-8 w-8 text-white/20" />
+                                <Image className="h-8 w-8 text-muted-foreground/70" />
                               )}
                             </div>
                           )}
                         </div>
                         {item.is_featured && (
                           <div className="absolute top-2 right-2 bg-amber-500/90 rounded-full p-1">
-                            <Star className="h-3 w-3 text-white fill-white" />
+                            <Star className="h-3 w-3 text-foreground fill-white" />
                           </div>
                         )}
                         {item.title && (
-                          <p className="text-sm text-white/70 truncate mt-2">{item.title}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-2">{item.title}</p>
                         )}
                         {item.category && (
-                          <Badge variant="secondary" className="mt-1 text-[10px] bg-white/10">
+                          <Badge variant="secondary" className="mt-1 text-[10px] bg-muted">
                             {item.category}
                           </Badge>
                         )}
@@ -639,8 +639,8 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Image className="h-12 w-12 text-white/10 mx-auto mb-3" />
-                    <p className="text-white/40">Sin elementos en el portafolio</p>
+                    <Image className="h-12 w-12 text-muted-foreground/70 mx-auto mb-3" />
+                    <p className="text-muted-foreground/70">Sin elementos en el portafolio</p>
                   </div>
                 )}
               </TabsContent>
@@ -652,13 +652,13 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                     {full.services.map((service: any) => (
                       <div
                         key={service.id}
-                        className="rounded-sm border border-white/10 p-4 hover:border-pink-500/30 transition-colors"
+                        className="rounded-sm border border-border p-4 hover:border-pink-500/30 transition-colors"
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-white truncate">{service.title}</h4>
+                            <h4 className="font-medium text-foreground truncate">{service.title}</h4>
                             {service.description && (
-                              <p className="text-sm text-white/60 mt-1 line-clamp-2">
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                 {service.description}
                               </p>
                             )}
@@ -673,7 +673,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                               {formatCurrency(service.price)}
                             </p>
                             {service.delivery_time && (
-                              <p className="text-xs text-white/40">
+                              <p className="text-xs text-muted-foreground/70">
                                 {service.delivery_time} días
                               </p>
                             )}
@@ -684,8 +684,8 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Briefcase className="h-12 w-12 text-white/10 mx-auto mb-3" />
-                    <p className="text-white/40">Sin servicios configurados</p>
+                    <Briefcase className="h-12 w-12 text-muted-foreground/70 mx-auto mb-3" />
+                    <p className="text-muted-foreground/70">Sin servicios configurados</p>
                   </div>
                 )}
               </TabsContent>
@@ -694,7 +694,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
               <TabsContent value="organization" className="mt-0 space-y-6">
                 {/* Roles & Badges */}
                 {userDetail && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <RolesBadgesSection
                       roles={userDetail.roles}
                       badges={userDetail.badges}
@@ -705,7 +705,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
                 {/* Organizations */}
                 {userDetail && userId && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <OrganizationsListSection
                       organizations={userDetail.organizations || []}
                       userId={userId}
@@ -716,7 +716,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
 
                 {/* Companies */}
                 {userDetail && userId && (
-                  <div className="rounded-sm border border-white/10 p-4">
+                  <div className="rounded-sm border border-border p-4">
                     <CompaniesSection
                       companies={userDetail.companies || []}
                       userId={userId}
@@ -726,26 +726,26 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                 )}
 
                 {/* System Info */}
-                <div className="rounded-sm border border-white/10 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-4">Información del Sistema</h3>
+                <div className="rounded-sm border border-border p-4">
+                  <h3 className="text-sm font-semibold text-foreground mb-4">Información del Sistema</h3>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-xs text-white/40">Registrado</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Registrado</p>
+                      <p className="text-muted-foreground">
                         {format(new Date(creator.created_at), 'd MMM yyyy, HH:mm', { locale: es })}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Nivel</p>
-                      <p className="text-white/70 capitalize">{creator.level}</p>
+                      <p className="text-xs text-muted-foreground/70">Nivel</p>
+                      <p className="text-muted-foreground capitalize">{creator.level}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Moneda</p>
-                      <p className="text-white/70">{creator.currency}</p>
+                      <p className="text-xs text-muted-foreground/70">Moneda</p>
+                      <p className="text-muted-foreground">{creator.currency}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-white/40">Plataformas</p>
-                      <p className="text-white/70">
+                      <p className="text-xs text-muted-foreground/70">Plataformas</p>
+                      <p className="text-muted-foreground">
                         {creator.platforms?.join(', ') || 'No especificadas'}
                       </p>
                     </div>
@@ -763,7 +763,7 @@ export function TalentDetailDialog({ creator, open, onOpenChange, onUpdate }: Ta
                         Acciones Administrativas
                       </h3>
                     </div>
-                    <p className="text-xs text-white/50 mb-4">
+                    <p className="text-xs text-muted-foreground/70 mb-4">
                       Estas acciones afectan directamente al usuario. Úsalas con precaución.
                     </p>
                     <AdminActionsSection

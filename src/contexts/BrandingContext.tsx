@@ -28,6 +28,9 @@ export interface BrandingSettings {
   is_org_branded: boolean;
 }
 
+/** Colores por defecto de la plataforma: el heredado (#7700b8) y el de marca vigente. */
+const PLATFORM_DEFAULT_COLORS = ['#7700b8', '#6d4aff'];
+
 const DEFAULT_BRANDING: BrandingSettings = {
   platform_name: "KREOON",
   logo_url: "",
@@ -36,9 +39,9 @@ const DEFAULT_BRANDING: BrandingSettings = {
   pwa_icon_192: "",
   pwa_icon_512: "",
   og_image_url: "",
-  primary_color: "#7700b8",
+  primary_color: "#6D4AFF",
   secondary_color: "",
-  theme_color: "#7700b8",
+  theme_color: "#6D4AFF",
   studio_label: "KREOON STUDIO",
   marketplace_label: "KREOON MARKETPLACE",
   support_email: "soporte@kreoon.com",
@@ -247,15 +250,22 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
       faviconLink.href = settings.favicon_url;
     }
 
-    // 3. Update primary color CSS variable
-    if (settings.primary_color) {
+    // 3. Color primario. Los tokens de marca (src/index.css, contrastes validados en claro y oscuro)
+    //    son la fuente por defecto: solo se sobrescriben si la organización tiene white-label o un
+    //    color propio distinto de los dos valores por defecto de plataforma (el heredado #7700b8 sigue
+    //    guardado en app_settings y ya no debe pisar la paleta de marca).
+    const root = document.documentElement;
+    const isPlatformDefaultColor = !settings.primary_color || PLATFORM_DEFAULT_COLORS.includes(settings.primary_color.toLowerCase());
+    if (!isPlatformDefaultColor || settings.is_org_branded) {
       const hsl = hexToHSL(settings.primary_color);
       if (hsl) {
-        const root = document.documentElement;
         root.style.setProperty('--primary', `${hsl.h} ${hsl.s}% ${hsl.l}%`);
         const foregroundL = hsl.l > 50 ? 10 : 98;
         root.style.setProperty('--primary-foreground', `${hsl.h} ${Math.max(hsl.s - 20, 0)}% ${foregroundL}%`);
       }
+    } else {
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--primary-foreground');
     }
 
     // 4. Update theme color meta tag
@@ -266,7 +276,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         themeColorMeta.name = 'theme-color';
         document.head.appendChild(themeColorMeta);
       }
-      themeColorMeta.content = settings.theme_color;
+      themeColorMeta.content = PLATFORM_DEFAULT_COLORS.includes(settings.theme_color.toLowerCase()) ? '#6D4AFF' : settings.theme_color;
     }
 
     // 5. Update OG image meta tag
@@ -286,7 +296,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         name: settings.platform_name || 'KREOON',
         short_name: settings.platform_name || 'KREOON',
         description: `${settings.platform_name || 'KREOON'} - Content Platform`,
-        theme_color: settings.primary_color || '#7700b8',
+        theme_color: settings.primary_color || '#6D4AFF',
         background_color: '#09090B',
         display: 'standalone',
         start_url: '/',

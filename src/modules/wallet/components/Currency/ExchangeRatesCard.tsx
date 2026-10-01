@@ -48,11 +48,11 @@ export function ExchangeRatesCard({
   }
 
   return (
-    <Card className={cn('bg-[hsl(270,40%,6%)] border-[hsl(270,30%,18%)]', className)}>
+    <Card className={cn('bg-card border-border', className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-[hsl(270,80%,70%)]" />
+            <TrendingUp className="h-5 w-5 text-primary" />
             Tasas de Cambio
           </CardTitle>
           <div className="flex items-center gap-2">
@@ -63,7 +63,7 @@ export function ExchangeRatesCard({
             )}
             <button
               onClick={() => refetch()}
-              className="p-1.5 rounded-sm hover:bg-[hsl(270,30%,15%)] transition-colors"
+              className="p-1.5 rounded-sm hover:bg-muted transition-colors"
               title="Actualizar tasas"
             >
               <RefreshCw className={cn('h-4 w-4 text-muted-foreground', isLoading && 'animate-spin')} />
@@ -90,7 +90,7 @@ export function ExchangeRatesCard({
               return (
                 <div
                   key={currency}
-                  className="flex items-center justify-between p-3 rounded-sm bg-[hsl(270,30%,10%)] hover:bg-[hsl(270,30%,12%)] transition-colors"
+                  className="flex items-center justify-between p-3 rounded-sm bg-muted hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">{CURRENCY_FLAGS[currency]}</span>
@@ -117,7 +117,7 @@ export function ExchangeRatesCard({
 
         {/* Última actualización */}
         {filteredRates[0]?.fetched_at && (
-          <div className="mt-4 pt-3 border-t border-[hsl(270,30%,15%)] flex items-center justify-center gap-2 text-xs text-[hsl(270,30%,45%)]">
+          <div className="mt-4 pt-3 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
             <span>
               Actualizado: {new Date(filteredRates[0].fetched_at).toLocaleString('es-CO', {

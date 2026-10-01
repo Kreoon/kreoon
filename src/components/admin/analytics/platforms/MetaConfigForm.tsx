@@ -32,9 +32,9 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.pixel_id}
           onChange={(e) => update('pixel_id', e.target.value)}
           placeholder="Ej: 123456789012345"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           El ID numérico de tu Pixel de Facebook. Lo encuentras en Events Manager.
         </p>
       </div>
@@ -49,9 +49,9 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.access_token}
           onChange={(e) => update('access_token', e.target.value)}
           placeholder={hasExistingToken ? 'Dejar vacío para mantener el actual' : 'Token de acceso del sistema'}
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           System User Token con permisos de Conversions API. Genéralo en Business Settings → System Users.
         </p>
       </div>
@@ -63,17 +63,17 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
           value={data.dataset_id}
           onChange={(e) => update('dataset_id', e.target.value)}
           placeholder="Opcional para CAPI Gateway"
-          className="bg-gray-900/50 border-gray-700"
+          className="bg-card/50 border-border"
         />
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           Solo necesario si usas Conversions API Gateway. Déjalo vacío para CAPI estándar.
         </p>
       </div>
 
-      <div className="flex items-center justify-between p-3 rounded-sm bg-gray-800/30 border border-gray-700/30">
+      <div className="flex items-center justify-between p-3 rounded-sm bg-card/30 border border-border">
         <div>
           <Label className="text-foreground/80">Modo Test</Label>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Los eventos se envían con test_event_code y aparecen en Test Events de Meta
           </p>
         </div>
@@ -91,9 +91,9 @@ export function MetaConfigForm({ data, onChange, hasExistingToken }: MetaConfigF
             value={data.test_event_code}
             onChange={(e) => update('test_event_code', e.target.value)}
             placeholder="Ej: TEST12345"
-            className="bg-gray-900/50 border-gray-700"
+            className="bg-card/50 border-border"
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Código de Events Manager → Test Events. Los eventos con este código no afectan campañas.
           </p>
         </div>

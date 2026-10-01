@@ -254,11 +254,11 @@ function HeroBannerSettings({
       {/* Seccion: CTA */}
       {config.showCTA !== false && (
         <div className="space-y-3">
-          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Boton CTA</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Botón CTA</p>
 
           <FieldRow label="Texto del boton">
             <Input
-              value={(config.ctaText as string) || 'Ver Portfolio'}
+              value={(config.ctaText as string) || 'Ver Portafolio'}
               onChange={(e) => handleConfigChange('ctaText', e.target.value)}
               className="h-8 text-xs"
             />
@@ -273,7 +273,7 @@ function HeroBannerSettings({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="scroll-portfolio">Ver Portfolio</SelectItem>
+                <SelectItem value="scroll-portfolio">Ver Portafolio</SelectItem>
                 <SelectItem value="contact">Ir a Contacto</SelectItem>
                 <SelectItem value="link" disabled={!config.premiumCtaEnabled}>
                   Link externo {!config.premiumCtaEnabled && '(Premium)'}

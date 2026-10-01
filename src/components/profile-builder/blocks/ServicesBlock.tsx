@@ -132,7 +132,7 @@ function ServicesBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
     const newItem: ServiceItem = {
       id: crypto.randomUUID(),
       title: newTitle || 'Nuevo servicio',
-      description: 'Descripcion del servicio',
+      description: 'Descripción del servicio',
       price: '',
     };
     handleContentUpdate({ items: [...items, newItem] });
@@ -290,8 +290,8 @@ function ServicesBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
         }}
         initialContent={editingContent}
         onSave={handleSave}
-        title={editingField === 'title' ? 'Editar titulo' : editingField === 'description' ? 'Editar descripcion' : 'Editar texto'}
-        placeholder={editingField === 'title' ? 'Titulo...' : 'Descripcion...'}
+        title={editingField === 'title' ? 'Editar titulo' : editingField === 'description' ? 'Editar descripción' : 'Editar texto'}
+        placeholder={editingField === 'title' ? 'Título...' : 'Descripción...'}
         mode={editingField === 'title' ? 'inline' : 'block'}
       />
     </div>

@@ -27,7 +27,7 @@ export function KIROAssistant({ message, onDismiss }: KIROAssistantProps) {
 
         <button
           onClick={onDismiss}
-          className="text-gray-500 hover:text-white transition-colors flex-shrink-0"
+          className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </button>

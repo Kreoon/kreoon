@@ -122,7 +122,7 @@ export function KiroProgressBar({
             <span
               className={cn(
                 'absolute inset-0 flex items-center justify-center',
-                'text-[9px] font-bold text-white/90'
+                'text-[9px] font-bold text-foreground'
               )}
             >
               {progress}%

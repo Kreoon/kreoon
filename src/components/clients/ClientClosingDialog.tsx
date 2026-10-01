@@ -167,7 +167,7 @@ export function ClientClosingDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg bg-[#0e0e0e] border-white/10 text-white">
+      <DialogContent className="sm:max-w-lg bg-background border-border text-foreground">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-violet-400" />
@@ -183,14 +183,14 @@ export function ClientClosingDialog({
                 <Input
                   value={form.name}
                   onChange={e => f('name', e.target.value)}
-                  className="bg-white/5 border-white/10"
+                  className="bg-muted/40 border-border"
                 />
               </div>
 
               <div>
                 <Label className="text-xs text-muted-foreground mb-1 block">Moneda</Label>
                 <Select value={form.currency} onValueChange={v => f('currency', v)}>
-                  <SelectTrigger className="bg-white/5 border-white/10 h-9 w-28">
+                  <SelectTrigger className="bg-muted/40 border-border h-9 w-28">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -211,7 +211,7 @@ export function ClientClosingDialog({
                   {pendingItems.map(item => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 p-2.5 rounded border border-white/5 bg-white/3 hover:bg-white/6 cursor-pointer"
+                      className="flex items-center gap-3 p-2.5 rounded border border-border bg-muted/40 hover:bg-muted cursor-pointer"
                       onClick={() => toggleItem(item)}
                     >
                       <Checkbox
@@ -263,7 +263,7 @@ export function ClientClosingDialog({
                   onChange={e => f('notes', e.target.value)}
                   rows={2}
                   placeholder="Condiciones de pago, plazos..."
-                  className="bg-white/5 border-white/10 resize-none"
+                  className="bg-muted/40 border-border resize-none"
                 />
               </div>
             </div>

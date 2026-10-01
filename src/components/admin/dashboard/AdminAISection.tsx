@@ -92,14 +92,14 @@ interface StatBoxProps {
 
 function StatBox({ label, value, icon: Icon, color, subtitle }: StatBoxProps) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-sm bg-white/[0.02]">
+    <div className="flex items-center gap-3 p-3 rounded-sm bg-muted/40">
       <div className={cn("w-10 h-10 rounded-sm flex items-center justify-center", color)}>
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs text-white/50 truncate">{label}</p>
-        <p className="text-lg font-bold text-white">{value}</p>
-        {subtitle && <p className="text-xs text-white/30">{subtitle}</p>}
+        <p className="text-xs text-muted-foreground/70 truncate">{label}</p>
+        <p className="text-lg font-bold text-foreground">{value}</p>
+        {subtitle && <p className="text-xs text-muted-foreground/70">{subtitle}</p>}
       </div>
     </div>
   );
@@ -123,15 +123,15 @@ function ModuleBar({ module, calls, tokens, cost, maxCalls }: ModuleBarProps) {
   const displayName = MODULE_LABELS[module] || module.replace(/-/g, ' ').replace(/ai/gi, 'AI').replace(/_/g, ' ');
 
   return (
-    <div className="group hover:bg-white/[0.02] p-2 rounded-sm transition-colors">
+    <div className="group hover:bg-muted/40 p-2 rounded-sm transition-colors">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm text-white/80 capitalize truncate flex-1">{displayName}</span>
-        <div className="flex items-center gap-3 text-xs text-white/50">
+        <span className="text-sm text-muted-foreground capitalize truncate flex-1">{displayName}</span>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground/70">
           <span>{formatLargeNumber(calls)} calls</span>
           <span>${cost.toFixed(4)}</span>
         </div>
       </div>
-      <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+      <div className="h-2 bg-muted/40 rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-500"
           style={{
@@ -151,12 +151,12 @@ function ModuleBar({ module, calls, tokens, cost, maxCalls }: ModuleBarProps) {
 function BarTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-sm px-3 py-2 text-xs bg-[#0f0f14]/95 border border-purple-500/30">
-      <p className="text-white/60 mb-1 capitalize">{label?.replace(/-/g, ' ')}</p>
+    <div className="rounded-sm px-3 py-2 text-xs bg-background/95 border border-purple-500/30">
+      <p className="text-muted-foreground mb-1 capitalize">{label?.replace(/-/g, ' ')}</p>
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-white">{formatLargeNumber(p.value)} llamadas</span>
+          <span className="text-foreground">{formatLargeNumber(p.value)} llamadas</span>
         </div>
       ))}
     </div>
@@ -173,20 +173,20 @@ function AISectionSkeleton() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {[...Array(4)].map((_, i) => (
           <Card key={i} className="p-3 animate-pulse">
-            <div className="h-12 bg-white/5 rounded-sm" />
+            <div className="h-12 bg-muted/40 rounded-sm" />
           </Card>
         ))}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <Card className="p-4 md:p-6 animate-pulse">
-          <div className="h-5 w-32 bg-white/10 rounded mb-4" />
-          <div className="h-[200px] bg-white/5 rounded-sm" />
+          <div className="h-5 w-32 bg-muted rounded mb-4" />
+          <div className="h-[200px] bg-muted/40 rounded-sm" />
         </Card>
         <Card className="p-4 md:p-6 animate-pulse">
-          <div className="h-5 w-40 bg-white/10 rounded mb-4" />
+          <div className="h-5 w-40 bg-muted rounded mb-4" />
           <div className="space-y-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-10 bg-white/5 rounded-sm" />
+              <div key={i} className="h-10 bg-muted/40 rounded-sm" />
             ))}
           </div>
         </Card>
@@ -274,7 +274,7 @@ export function AdminAISection({ aiStats, isLoading }: AdminAISectionProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* Grafico de Uso por Modulo */}
         <Card className="p-4 md:p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Zap className="h-5 w-5 text-purple-400" />
             Uso por Modulo
           </h3>
@@ -301,7 +301,7 @@ export function AdminAISection({ aiStats, isLoading }: AdminAISectionProps) {
               </ResponsiveContainer>
             </LazyChartContainer>
           ) : (
-            <div className="h-[200px] flex items-center justify-center text-white/40">
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground/70">
               No hay datos de uso de IA
             </div>
           )}
@@ -309,7 +309,7 @@ export function AdminAISection({ aiStats, isLoading }: AdminAISectionProps) {
 
         {/* Lista de Modulos */}
         <Card className="p-4 md:p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
             <Brain className="h-5 w-5 text-blue-400" />
             Detalle por Modulo
           </h3>
@@ -326,19 +326,19 @@ export function AdminAISection({ aiStats, isLoading }: AdminAISectionProps) {
                 />
               ))
             ) : (
-              <div className="text-center text-white/40 py-8">
+              <div className="text-center text-muted-foreground/70 py-8">
                 No hay datos de modulos
               </div>
             )}
           </div>
           {aiStats.by_provider.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-white/10">
-              <p className="text-xs text-white/50 mb-2">Providers</p>
+            <div className="mt-4 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground/70 mb-2">Providers</p>
               <div className="flex flex-wrap gap-2">
                 {aiStats.by_provider.slice(0, 4).map((p, i) => (
                   <span
                     key={i}
-                    className="text-xs px-2 py-1 bg-white/5 rounded text-white/70"
+                    className="text-xs px-2 py-1 bg-muted/40 rounded text-muted-foreground"
                   >
                     {p.provider}: {p.calls}
                   </span>

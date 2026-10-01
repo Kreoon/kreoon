@@ -60,7 +60,7 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
       {canScrollLeft && (
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="absolute left-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -81,12 +81,12 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
               className={cn(
                 'flex items-center gap-2 px-4 py-2 rounded-sm text-sm font-medium whitespace-nowrap transition-all border',
                 isActive
-                  ? 'bg-purple-500/15 border-purple-500/40 text-white shadow-[0_0_12px_-3px_rgba(139,92,246,0.3)]'
-                  : 'border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/10',
+                  ? 'bg-purple-500/15 border-purple-500/40 text-foreground shadow-[0_0_12px_-3px_rgba(139,92,246,0.3)]'
+                  : 'border-border text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:border-border',
               )}
             >
               {Icon && (
-                <Icon className={cn('h-4 w-4', isActive ? item.color : 'text-gray-500')} />
+                <Icon className={cn('h-4 w-4', isActive ? item.color : 'text-muted-foreground')} />
               )}
               {item.label}
             </button>
@@ -97,7 +97,7 @@ export const RoleCategoryBar = memo(function RoleCategoryBar({ active, onChange 
       {canScrollRight && (
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+          className="absolute right-0 z-10 h-8 w-8 rounded-full bg-background/90 border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

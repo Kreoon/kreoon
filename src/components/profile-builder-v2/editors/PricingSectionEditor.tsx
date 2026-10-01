@@ -29,7 +29,7 @@ export function PricingSectionEditor({
   return (
     <div className="space-y-4">
       <TextField
-        label="Titulo de la seccion"
+        label="Título de la sección"
         value={asString(content.title)}
         placeholder="Precios"
         onChange={(v) => patchContent(section, onUpdateBlock, "title", v)}

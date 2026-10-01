@@ -33,7 +33,15 @@ export function getOptimizedImageUrl(
   try {
     const urlObj = new URL(url);
 
-    // Bunny CDN video thumbnails - already optimized, just return
+    // Pull zone propia con Bunny Optimizer activo: redimensiona en el edge (avatar 409 KB → 9 KB)
+    if (urlObj.hostname === 'cdn.kreoon.com' && !urlObj.searchParams.has('width')) {
+      urlObj.searchParams.set('width', String(width));
+      if (height) urlObj.searchParams.set('height', String(height));
+      urlObj.searchParams.set('quality', String(quality));
+      return urlObj.toString();
+    }
+
+    // Bunny Stream (b-cdn.net / mediadelivery.net) no redimensiona: usar getOptimizedThumbnail
     if (BUNNY_CDN_HOSTS.some(host => urlObj.hostname.includes(host))) {
       return url;
     }

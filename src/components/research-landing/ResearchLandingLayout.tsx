@@ -33,7 +33,7 @@ export function ResearchLandingLayout({ product }: ResearchLandingLayoutProps) {
   const jtbdData = marketResearch?.jtbd || null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <ResearchHeader
         productName={product.name}
         generatedAt={product.research_generated_at}
@@ -114,7 +114,7 @@ export function ResearchLandingLayout({ product }: ResearchLandingLayoutProps) {
             </ResearchSection>
 
             {/* Footer */}
-            <div className="text-center py-8 text-white/20 text-xs">
+            <div className="text-center py-8 text-muted-foreground/50 text-xs">
               Generado con Kreoon &middot; Powered by Perplexity AI
             </div>
           </main>

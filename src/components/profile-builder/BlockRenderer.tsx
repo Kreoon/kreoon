@@ -158,7 +158,7 @@ const BLOCK_COMPONENT_MAP: Record<BlockType, React.LazyExoticComponent<React.Com
 function BlockSkeleton() {
   return (
     <div
-      className="animate-pulse rounded-lg bg-zinc-800/50 h-32 w-full"
+      className="animate-pulse rounded-lg bg-muted/50 h-32 w-full"
       aria-hidden="true"
     />
   );
@@ -169,14 +169,14 @@ function BlockNotImplemented({ type }: { type: BlockType }) {
     <div
       className={cn(
         'flex items-center justify-center h-24 rounded-lg',
-        'border border-dashed border-zinc-700',
-        'bg-zinc-800/30',
+        'border border-dashed border-border',
+        'bg-muted/30',
       )}
       role="status"
       aria-label={`Bloque ${type} no implementado`}
     >
-      <p className="text-xs text-zinc-500">
-        Bloque <code className="font-mono text-zinc-400">{type}</code> no disponible aún
+      <p className="text-xs text-muted-foreground">
+        Bloque <code className="font-mono text-muted-foreground">{type}</code> no disponible aún
       </p>
     </div>
   );

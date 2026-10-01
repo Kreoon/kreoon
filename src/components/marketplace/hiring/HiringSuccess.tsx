@@ -25,8 +25,8 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
       </div>
 
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-white">Proyecto enviado</h2>
-        <p className="text-gray-400 max-w-md">
+        <h2 className="text-2xl font-bold text-foreground">Proyecto enviado</h2>
+        <p className="text-muted-foreground max-w-md">
           Tu proyecto con <span className="text-purple-400 font-semibold">{creatorName}</span> ha sido
           creado exitosamente. El creador recibira tu brief y comenzara pronto.
         </p>
@@ -41,8 +41,8 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
               <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
             </div>
             <div>
-              <p className="text-white text-sm font-medium">Brief enviado</p>
-              <p className="text-gray-500 text-xs">El creador revisara tu brief</p>
+              <p className="text-foreground text-sm font-medium">Brief enviado</p>
+              <p className="text-muted-foreground text-xs">El creador revisara tu brief</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -51,7 +51,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
             </div>
             <div>
               <p className="text-foreground/80 text-sm font-medium">Produccion</p>
-              <p className="text-gray-500 text-xs">El creador graba y edita tu contenido</p>
+              <p className="text-muted-foreground text-xs">El creador graba y edita tu contenido</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -60,7 +60,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
             </div>
             <div>
               <p className="text-foreground/80 text-sm font-medium">Entrega y revision</p>
-              <p className="text-gray-500 text-xs">Revisa, aprueba o pide cambios</p>
+              <p className="text-muted-foreground text-xs">Revisa, aprueba o pide cambios</p>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
         </button>
         <button
           onClick={() => navigate('/marketplace')}
-          className="flex-1 border border-white/20 text-white font-semibold py-3 px-5 rounded-sm text-sm hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+          className="flex-1 border border-border text-foreground font-semibold py-3 px-5 rounded-sm text-sm hover:bg-muted/50 transition-all flex items-center justify-center gap-2"
         >
           Marketplace
           <ArrowRight className="h-4 w-4" />
@@ -85,7 +85,7 @@ export function HiringSuccess({ creatorName, packageName }: HiringSuccessProps) 
       </div>
 
       {/* Package reminder */}
-      <p className="text-gray-600 text-xs">
+      <p className="text-muted-foreground text-xs">
         Paquete: {packageName}
       </p>
     </div>

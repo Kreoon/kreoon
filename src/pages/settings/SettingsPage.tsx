@@ -91,7 +91,10 @@ const SettingsPage = memo(() => {
   // Get section from URL or default
   const sectionFromUrl = sectionParam as SettingsSectionKey | null;
   const [activeSection, setActiveSection] = useState<SettingsSectionKey | null>(
-    sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
+    sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl)
+      ? sectionFromUrl
+      // Escritorio: abrir el perfil en vez de un panel vacío; móvil conserva el menú de tarjetas
+      : typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches ? 'profile' : null
   );
 
   // Normalize legacy 'marketplace' section key → 'profile'
@@ -117,7 +120,13 @@ const SettingsPage = memo(() => {
   // Update URL when section changes
   useEffect(() => {
     if (activeSection) {
-      setSearchParams({ section: activeSection }, { replace: true });
+      // Conservar los demás parámetros (p. ej. ?tab= del aviso de perfil incompleto)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (next.get('section') !== activeSection) next.delete('tab');
+        next.set('section', activeSection);
+        return next;
+      }, { replace: true });
     } else {
       setSearchParams({}, { replace: true });
     }
@@ -179,7 +188,7 @@ const SettingsPage = memo(() => {
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 p-4 md:p-6">
+        <main className="min-w-0 flex-1 p-4 md:p-6">
           {activeSection === null ? (
             <>
               {/* Mobile menu cards */}
