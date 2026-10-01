@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "nota": "Lo escribe scripts/hermes/cola.mjs. Una tarea ya enviada no se vuelve a enviar salvo --reenviar.",
+  "tareas": {
+    "001-comunicado-relanzamiento": { "id": "t_f1e6a3d2", "perfil": "estratega", "estado": "enviada" },
+    "002-autorizacion-imagen": { "id": "t_4cb143d9", "perfil": "ventas", "estado": "enviada", "duplicadas": ["t_42d5285a"] },
+    "003-calendario-7-piezas": { "id": "t_9633e3b3", "perfil": "redes", "estado": "enviada" },
+    "004-copys-anuncio-creadores": { "id": "t_ea233e0f", "perfil": "anuncios", "estado": "enviada" }
+  }
+}
