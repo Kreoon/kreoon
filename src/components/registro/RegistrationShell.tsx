@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { useBranding } from "@/contexts/BrandingContext";
 import { cn } from "@/lib/utils";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 
 interface RegistrationShellProps {
   children: React.ReactNode;
@@ -18,18 +19,16 @@ interface RegistrationShellProps {
 export function RegistrationShell({ children, orgName, orgLogoUrl, className }: RegistrationShellProps) {
   const { branding } = useBranding();
   const platformName = branding.platform_name || "Kreoon";
-  const platformLogo = branding.logo_url || "/favicon.png";
 
   return (
     <div className="brand-surface min-h-[100dvh] bg-background text-foreground">
       <div className="mx-auto flex min-h-[100dvh] w-full max-w-md flex-col px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:max-w-lg">
-        <header className="flex items-center gap-3 py-4">
-          {orgLogoUrl ? (
-            <img src={orgLogoUrl} alt="" className="h-9 w-9 rounded-xl object-cover" />
-          ) : (
-            <img src={platformLogo} alt="" className="h-9 w-9 rounded-xl object-cover" />
-          )}
-          <span className="text-base font-semibold tracking-tight">{orgName ?? platformName}</span>
+        {/* Solo el logo completo de Kreoon (ya incluye «by UGC Colombia»); el nombre de la organización
+            sigue en el título de la tarjeta */}
+        <header className="flex items-center py-4">
+          <Link to="/" aria-label="Kreoon, inicio">
+            <KreoonLogo heightClass="h-10" alt="Kreoon" eager />
+          </Link>
         </header>
 
         <main className={cn("flex flex-1 flex-col justify-center", className)}>
