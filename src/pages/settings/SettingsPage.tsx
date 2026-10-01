@@ -120,7 +120,13 @@ const SettingsPage = memo(() => {
   // Update URL when section changes
   useEffect(() => {
     if (activeSection) {
-      setSearchParams({ section: activeSection }, { replace: true });
+      // Conservar los demás parámetros (p. ej. ?tab= del aviso de perfil incompleto)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        if (next.get('section') !== activeSection) next.delete('tab');
+        next.set('section', activeSection);
+        return next;
+      }, { replace: true });
     } else {
       setSearchParams({}, { replace: true });
     }

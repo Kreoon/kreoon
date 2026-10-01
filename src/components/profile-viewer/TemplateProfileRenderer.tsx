@@ -9,7 +9,7 @@
  * mientras mantiene un fallback funcional para quienes no lo han hecho.
  */
 
-import { useMemo, Suspense } from 'react';
+import { useMemo } from 'react';
 import { Loader2, AlertCircle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,10 @@ import { useCreatorPublicProfile } from '@/hooks/useCreatorPublicProfile';
 import { usePublishedProfileBlocks } from '@/hooks/usePublishedProfileBlocks';
 import { PROFILE_TEMPLATES, getTemplateByName } from '@/lib/profile-builder/templates';
 import { generateBlocksFromTemplate, type CreatorDataForTemplate } from '@/lib/profile-builder/generateBlocksFromTemplate';
-import { CreatorThemeProvider } from './CreatorThemeProvider';
-import { PublicBlockRenderer } from './PublicBlockRenderer';
+
+
 import { ProfileHeader } from './ProfileHeader';
+import { StudioUgcProfile } from './StudioUgcProfile';
 import type { ProfileBlock, ProfileTemplate, BuilderConfig } from '@/components/profile-builder/types/profile-builder';
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -254,7 +255,6 @@ export function TemplateProfileRenderer({
     );
   }
 
-  const showBranding = builderConfig.showKreoonBranding !== false;
 
   return (
     <div className="min-h-screen bg-background">
@@ -265,46 +265,9 @@ export function TemplateProfileRenderer({
         />
       )}
 
-      <CreatorThemeProvider config={builderConfig}>
-        <main
-          className="w-full min-h-screen"
-          aria-label={`Perfil de ${creatorData.profile.display_name}`}
-        >
-          {/* Contenedor: full-width en móvil, centrado con max-width en tablet+ */}
-          <div className="w-full md:max-w-4xl md:mx-auto">
-            {/* Renderizar bloques de la plantilla */}
-            {visibleBlocks.length === 0 ? (
-              <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-zinc-500 mx-auto mb-3" />
-                  <p className="text-sm text-zinc-500">Cargando contenido...</p>
-                </div>
-              </div>
-            ) : (
-              <Suspense fallback={<div className="min-h-screen animate-pulse bg-card/50" />}>
-                <div className="py-8 space-y-8">
-                  {visibleBlocks.map((block) => (
-                    <PublicBlockRenderer
-                      key={block.id}
-                      block={block}
-                      creatorProfile={{
-                        id: creatorData.profile.id,
-                        user_id: creatorData.profile.user_id,
-                        display_name: creatorData.profile.display_name,
-                        categories: creatorData.profile.categories || [],
-                      }}
-                    />
-                  ))}
-                </div>
-              </Suspense>
-            )}
-
-          </div>
-
-          {/* Branding Kreoon */}
-          {showBranding && <KreoonBranding />}
-        </main>
-      </CreatorThemeProvider>
+      {/* Estilo único «Estudio UGC» (propuesta enlace profesional aprobada 2026-10-01).
+          Reemplaza el render por bloques del constructor en la página pública. */}
+      <StudioUgcProfile data={creatorData} />
     </div>
   );
 }

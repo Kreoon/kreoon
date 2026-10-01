@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { TrialBanner } from "./TrialBanner";
+import { ProfileCompletionBanner } from "./ProfileCompletionBanner";
 import { IntegratedNotificationHeader } from "@/components/notifications/IntegratedNotificationHeader";
 import { TourProvider } from "@/components/tour/TourProvider";
 import { AmbassadorCelebration } from "@/components/AmbassadorCelebration";
@@ -163,6 +164,7 @@ function PageWrapper({ children, locationKey }: { children: ReactNode; locationK
         exit="exit"
         variants={pageVariants}
       >
+        <ProfileCompletionBanner />
         {children}
       </motion.div>
     </AnimatePresence>

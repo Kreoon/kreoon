@@ -91,7 +91,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
           variant="ghost"
           size="icon"
           onClick={handleBack}
-          className="h-9 w-9 text-zinc-400 hover:text-foreground hover:bg-muted"
+          className="h-9 w-9 text-foreground/75 hover:text-foreground hover:bg-muted"
           aria-label="Volver"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -122,8 +122,8 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               onClick={handleSave}
               disabled={isSaving}
               className={cn(
-                'text-zinc-400 hover:text-foreground hover:bg-muted',
-                isSaved && 'text-purple-400 hover:text-purple-300'
+                'text-foreground/75 hover:text-foreground hover:bg-muted',
+                isSaved && 'text-primary hover:text-primary'
               )}
             >
               <Bookmark className={cn('h-4 w-4 mr-1.5', isSaved && 'fill-current')} />
@@ -134,7 +134,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-foreground hover:bg-muted"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
@@ -143,7 +143,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
             <Button
               size="sm"
               onClick={handleContact}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <MessageCircle className="h-4 w-4 mr-1.5" />
               Contactar
@@ -156,7 +156,7 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={handleShare}
-              className="text-zinc-400 hover:text-foreground hover:bg-muted"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
@@ -166,19 +166,19 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
               variant="ghost"
               size="sm"
               onClick={() => navigate('/auth')}
-              className="text-zinc-400 hover:text-foreground hover:bg-muted"
+              className="text-foreground/75 hover:text-foreground hover:bg-muted"
             >
               <LogIn className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Iniciar sesion</span>
+              <span className="hidden sm:inline">Iniciar sesión</span>
             </Button>
 
             <Button
               size="sm"
               onClick={() => navigate('/registro')}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Crear cuenta de creador</span>
+              <span className="sm:hidden">Crear cuenta</span><span className="hidden sm:inline">Crear cuenta de creador</span>
             </Button>
           </>
         )}

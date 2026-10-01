@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   User, Globe, Briefcase, FolderOpen, Save,
-  Loader2, Camera, ImageIcon, X, CheckCircle2, Circle, Dna, Lock, Info,
+  Loader2, Camera, ImageIcon, X, CheckCircle2, Circle, Dna, Lock, Info, Sparkles, Tag, ChevronRight,
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,8 +33,11 @@ import { cn } from '@/lib/utils';
 import { getRoleArea, type RoleArea, ROLE_AREA_LABELS } from '@/lib/permissionGroups';
 import {
   BrandSettingsTabs,
+  CreatorServicesTab,
   EXPERIENCE_LEVELS,
 } from '@/components/settings/MarketplaceSettings';
+import { useProfileCompletion, PROFILE_COMPLETION_QUERY_KEY } from '@/hooks/useProfileCompletion';
+import { useQueryClient } from '@tanstack/react-query';
 import { PortfolioTab } from '@/components/settings/PortfolioTab';
 import { SpecializationsTab } from '@/components/settings/SpecializationsTab';
 import { TalentDNAPage } from '@/components/talent-dna';
@@ -140,6 +143,11 @@ const ALL_TABS: TabDef[] = [
     visibleTo: ALL_AREAS,
   },
   {
+    value: 'public', icon: Sparkles, label: 'Presentación',
+    component: PublicProfileTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
+  {
     value: 'talent-dna', icon: Dna, label: 'ADN Talento',
     component: TalentDNATab,
     visibleTo: ALL_NON_CLIENT,
@@ -159,52 +167,50 @@ const ALL_TABS: TabDef[] = [
     component: PortfolioTab,
     visibleTo: ALL_NON_CLIENT,
   },
+  {
+    value: 'services', icon: Tag, label: 'Servicios',
+    component: CreatorServicesTab,
+    visibleTo: ALL_NON_CLIENT,
+  },
 ];
 
 // ─── Profile Completion Card ─────────────────────────────────────────────────
 
-function ProfileCompletionCard() {
-  const { profile: userProfile } = useProfile();
-  const { profile: creatorProfile } = useCreatorProfile();
+function ProfileCompletionCard({ onGoToTab }: { onGoToTab: (tab: string) => void }) {
+  const { items, pct, isComplete, isLoading } = useProfileCompletion();
 
-  const checks = useMemo(() => {
-    if (!userProfile) return [];
-    return [
-      { label: 'Nombre completo', done: !!userProfile.full_name, required: true },
-      { label: 'Foto de perfil', done: !!userProfile.avatar_url, required: true },
-      { label: 'Bio / Tagline', done: !!(creatorProfile?.bio), required: false },
-      { label: 'Al menos 1 rol', done: (creatorProfile?.marketplace_roles?.length || 0) > 0, required: false },
-      { label: 'Categorías', done: (creatorProfile?.categories?.length || 0) > 0, required: false },
-      { label: 'Portafolio', done: false, required: false }, // Would need portfolio count
-      { label: 'Al menos 1 servicio', done: false, required: false }, // Would need services count
-    ];
-  }, [userProfile, creatorProfile]);
-
-  const doneCount = checks.filter(c => c.done).length;
-  const pct = Math.round((doneCount / checks.length) * 100);
-
-  if (pct === 100) return null;
+  if (isLoading || isComplete || items.length === 0) return null;
 
   return (
     <Card className="border-primary/20 bg-primary/5">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium">Completitud del perfil</p>
+          <p className="text-sm font-medium">Completa tu perfil</p>
           <span className="text-xs font-semibold text-primary">{pct}%</span>
         </div>
-        <Progress value={pct} className="h-2 mb-3" />
-        <div className="grid grid-cols-2 gap-1">
-          {checks.map(check => (
-            <div key={check.label} className="flex items-center gap-1.5 text-xs">
-              {check.done ? (
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-              ) : (
-                <Circle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              )}
-              <span className={check.done ? 'text-muted-foreground line-through' : ''}>
-                {check.label}{check.required ? ' *' : ''}
-              </span>
-            </div>
+        <Progress value={pct} className="h-2 mb-2" />
+        <p className="mb-3 text-xs text-muted-foreground">
+          Un perfil completo aparece mejor en las búsquedas y acelera tu verificación.
+        </p>
+        <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+          {items.map(item => (
+            item.done ? (
+              <div key={item.key} className="flex items-center gap-1.5 px-1 py-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+                <span>{item.label}</span>
+              </div>
+            ) : (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => onGoToTab(item.tab)}
+                className="flex items-center gap-1.5 rounded-md px-1 py-1 text-left text-xs font-medium text-foreground hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <Circle className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="flex-1">{item.label}</span>
+                <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0" aria-hidden="true" />
+              </button>
+            )
           ))}
         </div>
       </CardContent>
@@ -215,7 +221,25 @@ function ProfileCompletionCard() {
 // ─── Creator Unified Profile ─────────────────────────────────────────────────
 
 function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
-  const [activeTab, setActiveTab] = useState('personal');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTabState] = useState(searchParams.get('tab') || 'personal');
+
+  // La pestaña viaja en la URL (?tab=) para que el aviso de perfil incompleto lleve directo
+  const setActiveTab = (tab: string) => {
+    setActiveTabState(tab);
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', tab);
+    setSearchParams(next, { replace: true });
+    // Al cambiar de pestaña, refrescar lo que falta (el usuario pudo haber guardado algo)
+    queryClient.invalidateQueries({ queryKey: [PROFILE_COMPLETION_QUERY_KEY] });
+  };
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && tab !== activeTab) setActiveTabState(tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const showCompletion = roleArea !== 'client';
 
   const visibleTabs = useMemo(
@@ -249,21 +273,8 @@ function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
         </div>
       </div>
 
-      {/* Banner de redirección al Profile Builder (solo para no-clientes) */}
-      {showCompletion && (
-        <Alert className="bg-primary/5 border-primary/20">
-          <Info className="h-4 w-4 text-primary" />
-          <AlertDescription className="text-sm">
-            Para configurar tu <strong>perfil público</strong>, <strong>servicios</strong> y <strong>disponibilidad</strong>,{' '}
-            <Link to="/profile-builder" className="text-primary underline hover:no-underline font-medium">
-              usa el Profile Builder →
-            </Link>
-          </AlertDescription>
-        </Alert>
-      )}
-
       {/* Completion indicator for creators/editors */}
-      {showCompletion && <ProfileCompletionCard />}
+      {showCompletion && <ProfileCompletionCard onGoToTab={setActiveTab} />}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="flex w-full h-auto p-1 overflow-x-auto">
