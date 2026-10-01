@@ -11,6 +11,35 @@ Hechos que las tareas pueden usar (verificados en el producto): el registro púb
 con Google o con correo; el perfil NO se publica solo; crear la cuenta no garantiza proyectos ni encargos; la organización
 donde hoy está abierto el ingreso es UGC Colombia; la marca es Kreoon (kreoon.com).
 
+## Scripts para correrlas (recomendado)
+
+En `scripts/hermes/`. Se ejecutan desde tu PC; envían `delegar.sh` al servidor por SSH (sin problemas de comillas ni de
+acentos). Haz siempre primero un ensayo.
+
+**Windows (PowerShell):**
+
+```powershell
+cd scripts\hermes
+.\delegar.ps1 -Ensayo            # muestra lo que haría, no crea nada
+.\delegar.ps1                    # crea las 4 tareas
+.\delegar.ps1 -Tareas 2          # solo la tarea 2 (autorización de imagen)
+.\ver.ps1 -Id <id>               # estado y resultado de una tarea
+```
+
+Si PowerShell bloquea el script: `powershell -ExecutionPolicy Bypass -File .\delegar.ps1 -Ensayo`.
+
+**Mac / Linux / WSL / Git Bash:**
+
+```bash
+cd scripts/hermes
+DRY=1 ./delegar-local.sh          # ensayo
+./delegar-local.sh                # las 4 tareas
+./delegar-local.sh 2 4            # solo la 2 y la 4
+```
+
+Cada tarea imprime el JSON con su `id`. Verificado: la sintaxis de bash y el ensayo local de `delegar.sh`. **No** se probó
+`delegar.ps1` (no hay PowerShell en la sesión) ni la llamada real a Hermes: por eso el `-Ensayo` primero.
+
 ## 1 · estratega · comunicado de relanzamiento
 
 ```bash
