@@ -147,6 +147,8 @@ export function CardFieldsCustomizer({
             className
           )}
           onClick={(e) => e.stopPropagation()}
+          aria-label="Personalizar campos de la tarjeta"
+          title="Personalizar campos de la tarjeta"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
         </Button>

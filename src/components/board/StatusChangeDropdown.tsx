@@ -1,379 +1,136 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
-import { ChevronDown, Check, Lock } from 'lucide-react';
-import { ContentStatus, STATUS_LABELS, STATUS_COLORS, AppRole } from '@/types/database';
-import { cn } from '@/lib/utils';
+import { memo, useState } from "react";
+import { AlertTriangle, Check, Clapperboard, Scissors, Send, ThumbsUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { AppRole, ContentStatus } from "@/types/database";
+import { cn } from "@/lib/utils";
 
-type StatusPermissionGroup = 'admin' | 'team_leader' | 'strategist' | 'creator' | 'editor' | 'client';
-
-function getStatusPermissionGroup(role: AppRole | null): StatusPermissionGroup {
-  if (!role) return 'client';
-  switch (role) {
-    case 'admin':
-      return 'admin';
-    case 'team_leader':
-      return 'team_leader';
-    case 'strategist':
-    case 'digital_strategist':
-    case 'creative_strategist':
-      return 'strategist';
-    case 'creator':
-    case 'content_creator':
-      return 'creator';
-    case 'editor':
-    case 'video_editor':
-      return 'editor';
-    case 'client':
-    default:
-      return 'client';
-  }
-}
-import { useContentAnalytics } from '@/analytics';
-
-interface StatusChangeDropdownProps {
-  currentStatus: ContentStatus;
-  contentId: string;
-  userRole: AppRole | null;
-  isAssignedCreator?: boolean;
-  isAssignedEditor?: boolean;
-  isAssignedStrategist?: boolean;
-  onStatusChange: (contentId: string, newStatus: ContentStatus) => Promise<void>;
-  disabled?: boolean;
-  size?: 'sm' | 'default';
-}
-
-// Define allowed status transitions per permission group
-const GROUP_ALLOWED_STATUSES: Record<StatusPermissionGroup, ContentStatus[]> = {
-  admin: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved', 'archived'
-  ],
-  team_leader: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved'
-  ],
-  strategist: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved'
-  ],
-  creator: ['recording', 'recorded', 'issue'],
-  editor: ['editing', 'delivered', 'issue', 'corrected'],
-  client: ['approved', 'issue'],
-};
-
-// Define which statuses each group can move FROM
-const GROUP_CAN_MOVE_FROM: Record<StatusPermissionGroup, ContentStatus[]> = {
-  admin: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected', 'approved', 'paid', 'archived'
-  ],
-  team_leader: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected'
-  ],
-  strategist: [
-    'draft', 'script_approved', 'assigned', 'recording', 'recorded',
-    'editing', 'delivered', 'issue', 'corrected'
-  ],
-  creator: ['assigned', 'recording', 'recorded', 'issue'],
-  editor: ['recorded', 'editing', 'issue', 'corrected'],
-  client: ['delivered', 'corrected'],
-};
-
-export function StatusChangeDropdown({
-  currentStatus,
-  contentId,
-  userRole,
-  isAssignedCreator = false,
-  isAssignedEditor = false,
-  isAssignedStrategist = false,
-  onStatusChange,
-  disabled = false,
-  size = 'default',
-}: StatusChangeDropdownProps) {
-  const [isChanging, setIsChanging] = useState(false);
-  const { trackContentApproved, trackContentRejected } = useContentAnalytics();
-
-  // Get allowed statuses for this user's role (resolved via status permission group)
-  const getAllowedStatuses = (): ContentStatus[] => {
-    if (!userRole) return [];
-
-    const group = getStatusPermissionGroup(userRole);
-    const allowedToStatuses = GROUP_ALLOWED_STATUSES[group];
-    const canMoveFrom = GROUP_CAN_MOVE_FROM[group];
-
-    // Check if user can move from current status
-    if (!canMoveFrom.includes(currentStatus) && group !== 'admin') {
-      // Special cases for assigned users
-      if (group === 'creator' && isAssignedCreator && ['assigned', 'recording', 'recorded', 'issue'].includes(currentStatus)) {
-        // Creator can move their assigned content
-      } else if (group === 'editor' && isAssignedEditor && ['recorded', 'editing', 'issue', 'corrected'].includes(currentStatus)) {
-        // Editor can move their assigned content
-      } else if (group === 'strategist' && isAssignedStrategist) {
-        // Strategist assigned to this content can always move it
-      } else {
-        return [];
-      }
-    }
-
-    // Filter out current status
-    return allowedToStatuses.filter(status => status !== currentStatus);
-  };
-
-  const allowedStatuses = getAllowedStatuses();
-  const canChangeStatus = allowedStatuses.length > 0 && !disabled;
-
-  const handleStatusChange = async (newStatus: ContentStatus) => {
-    if (!canChangeStatus || isChanging) return;
-
-    setIsChanging(true);
-    try {
-      await onStatusChange(contentId, newStatus);
-      if (newStatus === 'approved') {
-        trackContentApproved({ content_id: contentId, reviewer_role: userRole || 'client' });
-      } else if (newStatus === 'issue') {
-        trackContentRejected({ content_id: contentId, reviewer_role: userRole || 'client', reason: 'status_change' });
-      }
-    } finally {
-      setIsChanging(false);
-    }
-  };
-
-  if (!canChangeStatus) {
-    return (
-      <Badge 
-        variant="secondary" 
-        className={cn(
-          STATUS_COLORS[currentStatus],
-          size === 'sm' ? 'text-xs px-2 py-0.5' : 'text-sm px-3 py-1'
-        )}
-      >
-        {STATUS_LABELS[currentStatus]}
-      </Badge>
-    );
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size={size}
-          disabled={isChanging}
-          className={cn(
-            "gap-1 font-medium",
-            STATUS_COLORS[currentStatus],
-            size === 'sm' ? 'h-7 text-xs px-2' : 'h-9 text-sm px-3'
-          )}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {STATUS_LABELS[currentStatus]}
-          <ChevronDown className={cn(size === 'sm' ? 'h-3 w-3' : 'h-4 w-4')} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="start" 
-        className="w-48"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-          Cambiar estado a:
-        </div>
-        <DropdownMenuSeparator />
-        {allowedStatuses.map((status) => (
-          <DropdownMenuItem
-            key={status}
-            onClick={() => handleStatusChange(status)}
-            className="gap-2 cursor-pointer"
-            disabled={isChanging}
-          >
-            <div className={cn(
-              "w-2 h-2 rounded-full",
-              status === 'approved' && "bg-green-500",
-              status === 'issue' && "bg-red-500",
-              status === 'recording' && "bg-orange-500",
-              status === 'recorded' && "bg-cyan-500",
-              status === 'editing' && "bg-pink-500",
-              status === 'delivered' && "bg-emerald-500",
-              status === 'corrected' && "bg-blue-500",
-              status === 'draft' && "bg-gray-500",
-              status === 'script_approved' && "bg-blue-400",
-              status === 'assigned' && "bg-purple-500",
-              status === 'paid' && "bg-green-600",
-              status === 'archived' && "bg-slate-500",
-            )} />
-            {STATUS_LABELS[status]}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-// Quick action buttons for common status changes - more mobile friendly
+/**
+ * Acciones rápidas por rol (p. ej. «Iniciar grabación» para el creador asignado).
+ * Es el flujo principal de creador/editor/cliente en el tablero, así que se conserva con la
+ * misma lógica de visibilidad.
+ *
+ * El antiguo selector grande de estado (StatusChangeDropdown, con tablas GROUP_ALLOWED_STATUSES
+ * hardcodeadas que ignoraban las reglas de la organización) se reemplazó por el menú
+ * «Mover a…» de la tarjeta, que usa canMoveToStatusWithRules (las mismas reglas que el arrastre).
+ */
 interface QuickStatusButtonsProps {
   currentStatus: ContentStatus;
   contentId: string;
-  userRole: AppRole | null;
+  userRole: AppRole | string | null;
   isAssignedCreator?: boolean;
   isAssignedEditor?: boolean;
   onStatusChange: (contentId: string, newStatus: ContentStatus) => Promise<void>;
+  className?: string;
 }
 
-export function QuickStatusButtons({
+const BASE = "min-h-8 px-3 text-xs gap-1.5 [@media(pointer:coarse)]:min-h-10";
+const PRIMARY = cn(BASE, "bg-primary text-primary-foreground hover:bg-primary/90");
+const DANGER = cn(
+  BASE,
+  "border-destructive/60 bg-transparent text-[color:var(--kb-danger-ink,hsl(var(--destructive)))] hover:bg-destructive/10",
+);
+
+export function hasQuickActions(
+  currentStatus: string,
+  userRole: string | null | undefined,
+  isAssignedCreator: boolean,
+  isAssignedEditor: boolean,
+): boolean {
+  if (userRole === "creator" && isAssignedCreator) return currentStatus === "assigned" || currentStatus === "recording";
+  if (userRole === "editor" && isAssignedEditor) {
+    return ["recorded", "editing", "issue", "corrected"].includes(currentStatus);
+  }
+  if (userRole === "client") return currentStatus === "delivered" || currentStatus === "corrected";
+  return false;
+}
+
+export const QuickStatusButtons = memo(function QuickStatusButtons({
   currentStatus,
   contentId,
   userRole,
   isAssignedCreator = false,
   isAssignedEditor = false,
   onStatusChange,
+  className,
 }: QuickStatusButtonsProps) {
-  const [isChanging, setIsChanging] = useState<ContentStatus | null>(null);
+  const [busy, setBusy] = useState<ContentStatus | null>(null);
 
-  const handleChange = async (status: ContentStatus) => {
-    setIsChanging(status);
+  const go = async (status: ContentStatus) => {
+    if (busy) return;
+    setBusy(status);
     try {
       await onStatusChange(contentId, status);
     } finally {
-      setIsChanging(null);
+      setBusy(null);
     }
   };
 
-  // Creator quick actions
-  if (userRole === 'creator' && isAssignedCreator) {
-    if (currentStatus === 'assigned') {
-      return (
-        <Button
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); handleChange('recording'); }}
-          disabled={!!isChanging}
-          className="h-8 text-xs bg-orange-500 hover:bg-orange-600"
-        >
-          {isChanging === 'recording' ? '...' : '🎬 Iniciar Grabación'}
-        </Button>
-      );
-    }
-    if (currentStatus === 'recording') {
-      return (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleChange('recorded'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs bg-cyan-500 hover:bg-cyan-600"
-          >
-            {isChanging === 'recorded' ? '...' : '✅ Grabado'}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => { e.stopPropagation(); handleChange('issue'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
-          >
-            ⚠️
-          </Button>
-        </div>
+  const btn = (status: ContentStatus, label: string, Icon: typeof Check, variant: "primary" | "danger" = "primary") => (
+    <Button
+      key={status + label}
+      type="button"
+      size="sm"
+      variant={variant === "danger" ? "outline" : "default"}
+      disabled={!!busy}
+      aria-busy={busy === status}
+      data-no-click
+      data-no-drag
+      onClick={(e) => {
+        e.stopPropagation();
+        void go(status);
+      }}
+      className={variant === "danger" ? DANGER : PRIMARY}
+    >
+      <Icon aria-hidden="true" />
+      {busy === status ? "Guardando…" : label}
+    </Button>
+  );
+
+  let content: React.ReactNode = null;
+
+  // Creador asignado
+  if (userRole === "creator" && isAssignedCreator) {
+    if (currentStatus === "assigned") content = btn("recording", "Iniciar grabación", Clapperboard);
+    else if (currentStatus === "recording") {
+      content = (
+        <>
+          {btn("recorded", "Grabado", Check)}
+          {btn("issue", "Novedad", AlertTriangle, "danger")}
+        </>
       );
     }
   }
 
-  // Editor quick actions
-  if (userRole === 'editor' && isAssignedEditor) {
-    if (currentStatus === 'recorded') {
-      return (
-        <Button
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); handleChange('editing'); }}
-          disabled={!!isChanging}
-          className="h-8 text-xs bg-pink-500 hover:bg-pink-600"
-        >
-          {isChanging === 'editing' ? '...' : '✂️ Iniciar Edición'}
-        </Button>
+  // Editor asignado
+  if (!content && userRole === "editor" && isAssignedEditor) {
+    if (currentStatus === "recorded") content = btn("editing", "Iniciar edición", Scissors);
+    else if (currentStatus === "editing") {
+      content = (
+        <>
+          {btn("delivered", "Entregar", Send)}
+          {btn("issue", "Novedad", AlertTriangle, "danger")}
+        </>
       );
-    }
-    if (currentStatus === 'editing') {
-      return (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleChange('delivered'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600"
-          >
-            {isChanging === 'delivered' ? '...' : '📤 Entregar'}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => { e.stopPropagation(); handleChange('issue'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
-          >
-            ⚠️
-          </Button>
-        </div>
-      );
-    }
-    // Editor can also work on corrected content or issues
-    if (currentStatus === 'issue' || currentStatus === 'corrected') {
-      return (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleChange('editing'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs bg-pink-500 hover:bg-pink-600"
-          >
-            {isChanging === 'editing' ? '...' : '✂️ Editar'}
-          </Button>
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleChange('delivered'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs bg-emerald-500 hover:bg-emerald-600"
-          >
-            {isChanging === 'delivered' ? '...' : '📤 Entregar'}
-          </Button>
-        </div>
+    } else if (currentStatus === "issue" || currentStatus === "corrected") {
+      content = (
+        <>
+          {btn("editing", "Editar", Scissors)}
+          {btn("delivered", "Entregar", Send)}
+        </>
       );
     }
   }
 
-  // Client quick actions
-  if (userRole === 'client') {
-    if (currentStatus === 'delivered' || currentStatus === 'corrected') {
-      return (
-        <div className="flex gap-1">
-          <Button
-            size="sm"
-            onClick={(e) => { e.stopPropagation(); handleChange('approved'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs bg-green-500 hover:bg-green-600"
-          >
-            {isChanging === 'approved' ? '...' : '✅ Aprobar'}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={(e) => { e.stopPropagation(); handleChange('issue'); }}
-            disabled={!!isChanging}
-            className="h-8 text-xs border-red-500 text-red-500 hover:bg-red-500/10"
-          >
-            ❌ Novedad
-          </Button>
-        </div>
-      );
-    }
+  // Cliente
+  if (!content && userRole === "client" && (currentStatus === "delivered" || currentStatus === "corrected")) {
+    content = (
+      <>
+        {btn("approved", "Aprobar", ThumbsUp)}
+        {btn("issue", "Novedad", AlertTriangle, "danger")}
+      </>
+    );
   }
 
-  return null;
-}
+  if (!content) return null;
+  return <div className={cn("kb-quick", className)}>{content}</div>;
+});

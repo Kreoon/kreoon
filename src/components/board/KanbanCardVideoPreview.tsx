@@ -20,7 +20,7 @@ const VIDEO_AREA_STATUSES: (ContentStatus | string)[] = [
   "editing", // En edición - editor puede haber subido preview
 ];
 
-function getPrimaryVideoUrl(content: Content): string | null {
+export function getPrimaryVideoUrl(content: Content): string | null {
   const urls = (content as any).video_urls;
   if (urls?.length > 0) {
     const first = urls.find((u: string) => u?.trim());
@@ -57,7 +57,7 @@ export function getContentThumbnail(content: Content): string | null {
   return content.thumbnail_url || null;
 }
 
-function isBunnyUrl(url: string): boolean {
+export function isBunnyUrl(url: string): boolean {
   return (
     url.includes("mediadelivery.net") ||
     url.includes("b-cdn.net") ||
@@ -65,11 +65,11 @@ function isBunnyUrl(url: string): boolean {
   );
 }
 
-function isDirectVideoUrl(url: string): boolean {
+export function isDirectVideoUrl(url: string): boolean {
   return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.includes("supabase.co/storage");
 }
 
-function buildBunnyEmbedUrl(
+export function buildBunnyEmbedUrl(
   libraryId: string,
   videoId: string,
   autoplay: boolean
