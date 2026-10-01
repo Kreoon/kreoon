@@ -1,3 +1,5 @@
+> **Actualización 2026-10-01:** esta propuesta queda superada en contacto, redes y enlaces. En esta fase el portafolio público no publica redes sociales, teléfono, correo, WhatsApp ni enlaces externos personalizados (ver `restriccion-contacto.md`). Las plantillas `estudio-ugc.html`, `cine.html` y `editorial.html` ya no tienen «Mi enlace en bio», servicios con precio ni CTA de contacto, y usan la galería compartida `portafolio-muestra.js` (carruseles + «Ver todo»). Resultados de QA en `docs/hermes/qa/qa-portafolios-2026-10-01.md`.
+
 # Propuesta: enlace profesional de Kreoon
 
 Un solo perfil del creador, dos presentaciones:

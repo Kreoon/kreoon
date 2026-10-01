@@ -3,185 +3,244 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Editorial · Plantilla de enlace profesional · Kreoon</title>
+<title>Editorial · Prototipo de portafolio · Kreoon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="portafolio-muestra.css">
 <style>
 :root{
-  --brand:#6D4AFF; --ivory:#FAF8F5; --white:#FFFFFF; --text:#242135; --muted:#4A4660; --line:#E4E1EA;
-  --ph:#E4E1EA; --ph-text:#4A4660;
-  --accent:#1F5C45; --accent-soft:#E5EFE9;
+  /* Base Kreoon con personalidad de revista: serifa, líneas finas, acento verde del creador */
+  --brand:#6D4AFF; --bg:#FAF8F5; --surface:#FFFFFF; --surface-2:#F2EFEA; --tx:#242135; --mu:#4A4660; --ln:#DCD7CF; --focus:#6D4AFF;
+  --matte:#EFEBE4;
+  --ac:#1F5C45; --ac-ink:#FFFFFF; --ac-tx:#1F5C45;
   --serif:Georgia,"Times New Roman",serif;
-  --radius:16px; --shadow:0 2px 8px rgba(36,33,53,.08);
+  --r-card:4px; --r-ctl:4px;
 }
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--ivory);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.55}
-a{color:inherit}
-:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
-.chrome{background:var(--white);border-bottom:1px solid var(--line)}
-.chrome-in{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
-.chrome b{color:var(--brand);font-size:18px}
-.chip{display:inline-flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:999px;background:#EFEBFF;color:var(--text);font-size:14px}
-.wrap{max-width:1200px;margin:0 auto;padding:24px 20px 56px}
-h1.t{font-size:24px;margin:8px 0 4px}
-p.sub{margin:0 0 20px;color:var(--muted);max-width:70ch}
-h2.vista{font-size:18px;margin:32px 0 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.escritorio{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.barra{display:flex;gap:6px;align-items:center;padding:10px 14px;background:#F1EFF5;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
-.barra i{width:10px;height:10px;border-radius:50%;background:#B8B3C8;display:inline-block}
-.barra span{margin-left:8px;background:var(--white);border-radius:999px;padding:2px 12px;border:1px solid var(--line)}
-.movil{width:390px;max-width:100%;margin:0 auto;background:var(--ivory);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
-.ph{background:var(--ph);color:var(--ph-text);display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px;font-weight:600;padding:8px;border-radius:4px}
-.kicker{font-size:14px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--accent)}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 24px;font-weight:700;font-size:16px;text-decoration:none;border:2px solid var(--accent);border-radius:4px}
-.btn.p{background:var(--accent);color:#fff}
-.btn.s{background:transparent;color:var(--accent)}
-/* Portafolio editorial: sin tarjetas, líneas finas y mucho aire */
-.e{background:var(--white);padding:0 56px}
-.mast{display:flex;justify-content:space-between;gap:16px;border-bottom:2px solid var(--text);padding:20px 0 12px;font-size:14px;flex-wrap:wrap}
-.mast b{font-family:var(--serif);font-size:18px}
-.mast nav{display:flex;gap:20px;flex-wrap:wrap}
-.mast nav a{display:inline-flex;align-items:center;min-height:44px}
-.portada{display:grid;grid-template-columns:1.3fr 1fr;gap:48px;padding:48px 0 40px;border-bottom:1px solid var(--line)}
-.portada h2{font-family:var(--serif);font-weight:400;font-size:72px;line-height:1;margin:12px 0 20px;letter-spacing:-.02em}
-.portada .valor{font-family:var(--serif);font-size:24px;line-height:1.4;font-style:italic;margin:0 0 24px;max-width:28ch;border-left:4px solid var(--accent);padding-left:16px}
-.portada .foto{aspect-ratio:4/5;width:100%}
-.seccion{display:grid;grid-template-columns:200px 1fr;gap:32px;padding:40px 0;border-bottom:1px solid var(--line)}
-.seccion>h3{font-family:var(--serif);font-weight:400;font-size:28px;margin:0}
-.seccion>h3 small{display:block;font-family:system-ui,sans-serif;font-size:14px;color:var(--muted);margin-top:6px}
-.obra{display:grid;grid-template-columns:48px 1.2fr 1fr;gap:24px;align-items:center;padding:20px 0;border-top:1px solid var(--line)}
-.obra:first-child{border-top:0;padding-top:0}
-.obra .n{font-family:var(--serif);font-size:32px;color:var(--accent)}
-.obra .ph{aspect-ratio:3/2;width:100%}
-.obra h4{font-family:var(--serif);font-weight:400;font-size:24px;margin:0 0 4px}
-.obra p{margin:0;color:var(--muted)}
-.obra.inv .ph{order:3}
-.servs{margin:0;padding:0;list-style:none}
-.servs li{display:flex;justify-content:space-between;gap:16px;padding:16px 0;border-top:1px solid var(--line);flex-wrap:wrap}
-.servs li:first-child{border-top:0;padding-top:0}
-.servs strong{font-family:var(--serif);font-size:20px;font-weight:400}
-.servs span{color:var(--muted)}
-.dos-col{columns:2;column-gap:32px;color:var(--text);font-size:17px}
+body{background:var(--bg);color:var(--tx);font:400 16px/1.6 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{font-family:var(--serif);font-weight:400;line-height:1.05;letter-spacing:-.01em}
+.in{max-width:1200px;margin:0 auto;padding:0 24px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:4px;font:700 16px Manrope,system-ui,sans-serif;text-decoration:none;cursor:pointer;border:2px solid transparent}
+.btn-p{background:var(--ac);color:var(--ac-ink)}
+.btn-s{background:transparent;color:var(--tx);border-color:var(--tx)}
+.btn-s:hover{background:var(--surface-2)}
+.kicker{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--ac-tx);margin:0}
+
+.mast{border-bottom:2px solid var(--tx)}
+.mast .in{display:flex;align-items:center;gap:16px;min-height:64px}
+.mast-nombre{font:400 20px var(--serif);margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mast nav{display:flex;gap:4px}
+.mast nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 10px;color:var(--tx);text-decoration:none;font-weight:600;font-size:15px}
+.mast nav a:hover{text-decoration:underline}
+.mast .btn{min-height:44px;padding:8px 16px;font-size:15px}
+
+.portada .in{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.65fr);gap:56px;align-items:end;padding-top:48px;padding-bottom:40px;border-bottom:1px solid var(--ln)}
+.portada h1{font-size:clamp(48px,6.6vw,92px);margin:14px 0 18px}
+.valor{font:italic 24px/1.4 var(--serif);margin:0 0 26px;max-width:30ch;border-left:4px solid var(--ac);padding-left:16px}
+.acts{display:flex;gap:12px;flex-wrap:wrap}
+.foto{aspect-ratio:4/5;overflow:hidden;background:var(--matte)}
+.foto img{width:100%;height:100%;object-fit:cover;display:block}
+.foto figcaption{font-size:13px;color:var(--mu);padding-top:6px}
+
+/* Galería: mismas reglas, tono de revista */
+.galeria{padding:36px 0 8px}
+.gf{border-top:1px solid var(--ln);padding-top:16px}
+.gf:first-child{border-top:0;padding-top:0}
+.gf-titulo{font-size:clamp(28px,3vw,40px)}
+.pie b{font:400 18px/1.25 var(--serif)}
+.vc-titulo{font-family:var(--serif)}
+
+.sobre-sec .in{display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-top:40px;padding-bottom:40px;border-top:1px solid var(--ln)}
+.sobre-sec h2{font-size:36px;margin:0}
+.dos-col{columns:2;column-gap:36px;font-size:17px}
 .dos-col p{margin:0 0 12px}
-.dos-col p:first-child::first-letter{font-family:var(--serif);font-size:56px;float:left;line-height:.9;padding:4px 8px 0 0;color:var(--accent)}
-.contacto{padding:48px 0;text-align:left}
-.contacto h3{font-family:var(--serif);font-weight:400;font-size:40px;margin:0 0 12px;max-width:18ch;line-height:1.1}
-.contacto .acts{display:flex;gap:12px;flex-wrap:wrap}
-.pie{padding:16px 0 24px;color:var(--muted);font-size:14px;border-top:2px solid var(--text)}
-/* Enlace en bio editorial: texto primero, lista numerada subrayada */
-.b{padding:28px 24px 28px}
-.b .foto{aspect-ratio:4/3;width:100%;margin-bottom:16px}
-.b h2{font-family:var(--serif);font-weight:400;font-size:36px;line-height:1.05;margin:0 0 6px;letter-spacing:-.01em}
-.b .esp{margin:0 0 12px}
-.b .desc{font-family:var(--serif);font-size:18px;font-style:italic;margin:0 0 16px;color:var(--text)}
-.redes{display:flex;gap:4px 16px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--text)}
-.redes a{display:inline-flex;align-items:center;min-height:44px;font-weight:700;color:var(--accent)}
-.lista{list-style:none;margin:0 0 20px;padding:0}
-.lista li{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line);min-height:56px}
-.lista .num{font-family:var(--serif);color:var(--accent);width:32px;font-size:18px}
-.lista a{flex:1;display:flex;align-items:center;min-height:44px;font-family:var(--serif);font-size:20px;text-decoration:none}
-.lista button{width:44px;height:44px;border:0;background:transparent;color:var(--text);font-size:18px;cursor:pointer;border-radius:4px}
-.lista button:hover{background:var(--accent-soft)}
-.b .video{aspect-ratio:16/9;width:100%;margin-bottom:6px}
-.b small{display:block;color:var(--muted);margin-bottom:20px}
-.b .btn{width:100%;margin-bottom:10px}
-.nota{margin:12px auto 0;max-width:640px;background:var(--white);border:1px dashed #B8B3C8;border-radius:12px;padding:12px 16px;color:var(--muted);font-size:14px}
-@media (max-width:860px){
-  .e{padding:0 20px}
-  .portada{grid-template-columns:1fr;gap:24px;padding:32px 0}
-  .portada h2{font-size:46px}
-  .seccion{grid-template-columns:1fr;gap:16px;padding:32px 0}
-  .obra{grid-template-columns:32px 1fr;gap:12px}
-  .obra .ph,.obra.inv .ph{order:0;grid-column:1 / -1}
-  .obra>div:last-child{grid-column:1 / -1}
+.dos-col p:first-child::first-letter{font:56px/.9 var(--serif);float:left;padding:4px 8px 0 0;color:var(--ac)}
+.indice{list-style:none;margin:24px 0 0;padding:0;border-top:1px solid var(--tx)}
+.indice li{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--ln)}
+.indice b{font:400 20px var(--serif)}
+.indice span{color:var(--mu);font-size:14px;white-space:nowrap}
+.muestra-nota{font-size:14px;color:var(--mu);font-style:italic}
+
+.pie-pf{border-top:2px solid var(--tx)}
+.pie-pf .in{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-top:20px;padding-bottom:36px}
+.firma{color:var(--mu);font-size:14px;margin:0}
+.firma b{color:var(--brand)}
+
+@media (max-width:767px){
+  .in{padding:0 20px}
+  .mast nav{display:none}
+  .portada .in{grid-template-columns:1fr;gap:14px;padding-top:20px;padding-bottom:24px}
+  .foto{order:-1;width:104px}
+  .portada h1{font-size:42px;margin:8px 0 10px}
+  .valor{font-size:19px;margin-bottom:18px}
+  .acts .btn{flex:1 1 auto}
+  .foto figcaption{display:none}
+  .sobre-sec .in{grid-template-columns:1fr;gap:16px}
   .dos-col{columns:1}
-  .contacto h3{font-size:32px}
 }
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<header class="chrome"><div class="chrome-in">
-  <b>Kreoon</b>
-  <span class="chip">Vista previa de plantilla · todo el texto es de ejemplo</span>
-</div></header>
 
-<main class="wrap">
-  <h1 class="t">Editorial</h1>
-  <p class="sub">La tipografía y la fotografía mandan. Sin tarjetas: líneas finas, mucho aire y trabajos a ancho completo en formato horizontal. Pensado para creadores que cuidan la imagen y quieren que se lea como una revista.</p>
+<div class="proto" role="region" aria-label="Controles del prototipo">
+  <div class="proto-in">
+    <b>Prototipo · Editorial · contenido de muestra</b>
+    <fieldset><legend>Piezas:</legend>
+      <label><input type="radio" name="n" value="1"> 1</label>
+      <label><input type="radio" name="n" value="4"> 4</label>
+      <label><input type="radio" name="n" value="6"> 6</label>
+      <label><input type="radio" name="n" value="20"> 20</label>
+      <label><input type="radio" name="n" value="30"> 30</label>
+      <label><input type="radio" name="n" value="100"> 100</label>
+    </fieldset>
+    <fieldset><legend>Vista:</legend>
+      <label><input type="radio" name="vista" value="publica"> Visitante</label>
+      <label><input type="radio" name="vista" value="editor"> Editor</label>
+    </fieldset>
+  </div>
+</div>
 
-  <h2 class="vista"><span class="chip">1</span> Mi portafolio · escritorio (1440 px)</h2>
-  <div class="escritorio" role="region" aria-label="Mi portafolio, vista de escritorio">
-    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>kreoon.com/nombre-del-creador</span></div>
-    <div class="e">
-      <div class="mast"><b>Nombre del creador</b>
-        <nav aria-label="Secciones"><a href="#obras">Trabajos</a><a href="#servicios">Servicios</a><a href="#sobre">Sobre mí</a><a href="#contacto">Contacto</a></nav>
+<section class="editor" id="editor" aria-label="Panel del editor" hidden>
+  <div class="editor-in"><h2>Panel del editor (el visitante no ve esta sección)</h2><div id="editor-cont" style="display:contents"></div></div>
+</section>
+
+<div id="publico">
+  <header class="mast">
+    <div class="in">
+      <span class="mast-nombre">Lucía Herrera · muestra</span>
+      <nav aria-label="Secciones del portafolio">
+        <a href="#trabajos">Trabajos</a>
+        <a href="#sobre">Sobre mí</a>
+      </nav>
+      <button type="button" class="btn btn-s" data-compartir>Compartir</button>
+    </div>
+  </header>
+
+  <main id="inicio">
+    <section class="portada" aria-labelledby="nombre">
+      <div class="in">
+        <div>
+          <p class="kicker">Fotografía y video de producto</p>
+          <h1 id="nombre">Lucía Herrera</h1>
+          <p class="valor">Imágenes cuidadas para marcas que quieren contar algo con calma.</p>
+          <div class="acts">
+            <a class="btn btn-p" href="#trabajos">Ver mis trabajos</a>
+            <button type="button" class="btn btn-s" data-compartir>Compartir portafolio</button>
+          </div>
+        </div>
+        <figure class="foto" id="foto" style="margin:0"></figure>
       </div>
+    </section>
 
-      <section class="portada" aria-label="Portada">
+    <section class="galeria" id="trabajos" aria-label="Trabajos">
+      <div class="in" id="carruseles"></div>
+    </section>
+
+    <section class="sobre-sec" id="sobre" aria-labelledby="t-sobre">
+      <div class="in">
+        <h2 id="t-sobre">Sobre mí</h2>
         <div>
-          <span class="kicker">Especialidad del creador</span>
-          <h2>Nombre del creador</h2>
-          <p class="valor">Tu propuesta de valor, escrita como una frase de revista.</p>
-          <a class="btn p" href="#contacto">Hablemos de tu marca</a>
+          <div class="dos-col">
+            <p>Trabajo con luz natural y objetos reales. Me interesa que el producto se vea como es, con detalles que invitan a mirarlo dos veces.</p>
+            <p>Combino fotografía fija con piezas cortas en video vertical para que una misma sesión sirva en varios formatos.</p>
+          </div>
+          <p class="muestra-nota">Biografía de muestra.</p>
+          <ol class="indice" id="indice" aria-label="Lo que produzco"></ol>
         </div>
-        <div class="ph foto" role="img" aria-label="Espacio para la foto del creador">Foto del creador</div>
-      </section>
+      </div>
+    </section>
+  </main>
 
-      <section class="seccion" id="obras" aria-label="Trabajos destacados">
-        <h3>Trabajos destacados<small>Hasta 3 historias</small></h3>
-        <div>
-          <article class="obra"><span class="n">01</span><div class="ph" role="img" aria-label="Espacio para foto o video horizontal">Foto o video 3:2</div><div><h4>Título del trabajo de ejemplo</h4><p>Descripción corta de ejemplo del resultado y de tu aporte.</p></div></article>
-          <article class="obra inv"><span class="n">02</span><div class="ph" role="img" aria-label="Espacio para foto o video horizontal">Foto o video 3:2</div><div><h4>Título del trabajo de ejemplo</h4><p>Descripción corta de ejemplo del resultado y de tu aporte.</p></div></article>
-          <article class="obra"><span class="n">03</span><div class="ph" role="img" aria-label="Espacio para foto o video horizontal">Foto o video 3:2</div><div><h4>Título del trabajo de ejemplo</h4><p>Descripción corta de ejemplo del resultado y de tu aporte.</p></div></article>
-        </div>
-      </section>
+  <main id="vista" hidden></main>
 
-      <section class="seccion" id="servicios" aria-label="Servicios">
-        <h3>Servicios<small>En una lista simple</small></h3>
-        <ul class="servs">
-          <li><strong>Nombre del servicio 1</strong><span>Descripción corta de ejemplo · Precio: a convenir</span></li>
-          <li><strong>Nombre del servicio 2</strong><span>Descripción corta de ejemplo · Precio: a convenir</span></li>
-          <li><strong>Nombre del servicio 3</strong><span>Descripción corta de ejemplo · Precio: a convenir</span></li>
-        </ul>
-      </section>
-
-      <section class="seccion" id="sobre" aria-label="Presentación">
-        <h3>Sobre mí<small>Máximo 3 frases</small></h3>
-        <div class="dos-col">
-          <p>Presentación breve de ejemplo: de dónde eres, qué te gusta crear y cómo trabajas con las marcas.</p>
-          <p>Segunda frase de ejemplo sobre tu forma de trabajar y lo que una marca puede esperar de ti.</p>
-        </div>
-      </section>
-
-      <section class="contacto" id="contacto" aria-label="Contacto">
-        <h3>¿Trabajamos juntos?</h3>
-        <div class="acts"><a class="btn p" href="#">Escríbeme por WhatsApp</a><a class="btn s" href="#">Enviar un correo</a></div>
-      </section>
-      <div class="pie">Hecho con Kreoon · texto de ejemplo</div>
+  <footer class="pie-pf">
+    <div class="in">
+      <p class="firma">Portafolio en <b>Kreoon</b></p>
+      <button type="button" class="btn btn-s" data-compartir>Compartir portafolio</button>
     </div>
-  </div>
-  <p class="nota"><b>Solo si existen:</b> «Marcas» y «Reseñas» entran como una línea de texto al final de «Sobre mí» cuando hay datos reales. Sin datos, no se muestran.</p>
+  </footer>
+</div>
 
-  <h2 class="vista"><span class="chip">2</span> Mi enlace en bio · móvil (390 px)</h2>
-  <div class="movil" role="region" aria-label="Mi enlace en bio, vista móvil">
-    <div class="b">
-      <div class="ph foto" role="img" aria-label="Espacio para la foto del creador">Foto del creador</div>
-      <h2>Nombre del creador</h2>
-      <p class="esp"><span class="kicker">Especialidad del creador</span></p>
-      <p class="desc">Descripción breve de ejemplo en una o dos líneas.</p>
-      <div class="redes"><a href="#">Instagram</a><a href="#">TikTok</a><a href="#">YouTube</a></div>
-      <ol class="lista" style="list-style:none;padding:0;margin:0 0 20px" aria-label="Mis enlaces">
-        <li><span class="num">01</span><a href="#">Enlace personalizado 1</a><button type="button" aria-label="Subir enlace 1">↑</button><button type="button" aria-label="Bajar enlace 1">↓</button></li>
-        <li><span class="num">02</span><a href="#">Enlace personalizado 2</a><button type="button" aria-label="Subir enlace 2">↑</button><button type="button" aria-label="Bajar enlace 2">↓</button></li>
-        <li><span class="num">03</span><a href="#">Enlace personalizado 3</a><button type="button" aria-label="Subir enlace 3">↑</button><button type="button" aria-label="Bajar enlace 3">↓</button></li>
-      </ol>
-      <div class="ph video" role="img" aria-label="Espacio para el video destacado">Video destacado 16:9</div>
-      <small>Video destacado (opcional)</small>
-      <a class="btn p" href="#">Ver mi portafolio</a>
-      <a class="btn s" href="#">Escríbeme por WhatsApp</a>
-    </div>
-  </div>
-  <p class="nota">Los botones ↑ ↓ son la forma principal de ordenar. Arrastrar es una ayuda extra, nunca la única opción.</p>
-</main>
+<script src="portafolio-muestra.js"></script>
+<script>
+(function () {
+  'use strict';
+  var PM = window.PortafolioMuestra, el = PM.el;
+  var URL_PORTAFOLIO = 'kreoon.com/p/lucia-herrera-muestra';
+  var COLECCIONES = ['Editorial', 'Producto', 'Retrato', 'Lugares', 'Detrás de cámaras'];
+  var qs = PM.params();
+  var st = {
+    n: [1, 4, 6, 20, 30, 100].indexOf(+qs.get('n')) >= 0 ? +qs.get('n') : 20,
+    vista: qs.get('vista') === 'editor' ? 'editor' : 'publica'
+  };
+  var retrato = { w: 1080, h: 1350, formato: '4:5', coleccion: 'Retrato', sujeto: { tipo: 'persona', x: 0.5, y: 0.36 }, foco: { x: 0.5, y: 0.36 }, nombre: 'tu retrato' };
+  retrato.src = PM.poster(retrato);
+  var unidades = [], destacadas = [];
+
+  function linea(it) { return it.clase + (it.duracion ? ' · ' + PM.mmss(it.duracion) : ''); }
+  function unidad(it) {
+    return {
+      id: it.id, portada: it, titulo: it.titulo, linea: linea(it), coleccion: it.coleccion,
+      aria: it.titulo + '. ' + (it.tipo === 'video' ? 'Video' : 'Foto') + ', ' + linea(it) + '. Abrir.',
+      entradas: function () { return [{ item: it, titulo: it.titulo, detalle: linea(it) + ' · ' + it.coleccion + ' · formato ' + it.formato }]; }
+    };
+  }
+  var galeria = new PM.Galeria({
+    inicio: document.getElementById('inicio'), vista: document.getElementById('vista'), carruseles: document.getElementById('carruseles'),
+    lote: 12, maxCarrusel: 10, maxColecciones: 3, umbralFila: 4,
+    filtros: [
+      { clave: 'video', etiqueta: 'Videos', fn: function (u) { return u.portada.tipo === 'video'; } },
+      { clave: 'foto', etiqueta: 'Fotos', fn: function (u) { return u.portada.tipo === 'foto'; } }
+    ]
+  });
+
+  function pintarPortada() {
+    var f = document.getElementById('foto'); f.textContent = '';
+    var img = el('img', { src: retrato.src, alt: 'Retrato de muestra de la creadora', width: retrato.w, height: retrato.h, fetchpriority: 'high' });
+    img.style.objectPosition = Math.round(retrato.foco.x * 100) + '% ' + Math.round(retrato.foco.y * 100) + '%';
+    f.append(img, el('figcaption', { text: 'Retrato de muestra.' }));
+  }
+  function pintarIndice() {
+    var ol = document.getElementById('indice'); ol.textContent = '';
+    var c = {}; unidades.forEach(function (u) { c[u.portada.clase] = (c[u.portada.clase] || 0) + 1; });
+    Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).forEach(function (k) {
+      ol.appendChild(el('li', null, [el('b', { text: k }), el('span', { text: c[k] + (c[k] === 1 ? ' pieza' : ' piezas') })]));
+    });
+  }
+  function pintarEditor() {
+    var ed = document.getElementById('editor');
+    ed.hidden = st.vista !== 'editor';
+    if (ed.hidden) { document.getElementById('editor-cont').textContent = ''; return; }
+    PM.panelEditor(document.getElementById('editor-cont'), {
+      retrato: retrato,
+      alFoco: function (fc) { retrato.foco = fc; var i = document.querySelector('#foto img'); if (i) i.style.objectPosition = Math.round(fc.x * 100) + '% ' + Math.round(fc.y * 100) + '%'; },
+      destacados: function () { return unidades.length > 4 ? destacadas.map(function (u) { return u.portada; }) : []; },
+      mover: function (i, d) { var t = destacadas[i]; destacadas[i] = destacadas[i + d]; destacadas[i + d] = t; galeria.pintarInicio(); }
+    });
+  }
+  function cargar() {
+    unidades = PM.piezasEditorial(st.n).map(unidad);
+    destacadas = unidades.filter(function (u) { return u.portada.destacado; });
+    pintarPortada(); pintarIndice(); pintarEditor();
+    galeria.datos({ unidades: unidades, destacadas: destacadas, colecciones: COLECCIONES });
+  }
+  function sincronizarURL() {
+    var p = new URLSearchParams(location.search); p.set('n', st.n); p.set('vista', st.vista);
+    history.replaceState(null, '', '?' + p.toString() + location.hash);
+  }
+  document.querySelectorAll('[data-compartir]').forEach(function (b) {
+    b.addEventListener('click', function () { PM.compartir('https://' + URL_PORTAFOLIO, 'Lucía Herrera · portafolio en Kreoon'); });
+  });
+  document.querySelectorAll('input[name="n"]').forEach(function (r) {
+    r.checked = +r.value === st.n;
+    r.addEventListener('change', function () { st.n = +r.value; sincronizarURL(); cargar(); });
+  });
+  document.querySelectorAll('input[name="vista"]').forEach(function (r) {
+    r.checked = r.value === st.vista;
+    r.addEventListener('change', function () { st.vista = r.value; sincronizarURL(); pintarEditor(); });
+  });
+  cargar();
+})();
+</script>
 </body>
 </html>
