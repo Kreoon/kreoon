@@ -1,251 +1,181 @@
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { LucideIcon, TrendingUp, TrendingDown } from "lucide-react";
-import { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import type { KeyboardEvent, ReactNode } from "react";
+
+/**
+ * Tarjetas de dashboard sobre tokens semánticos (bg-card, text-foreground, border-border, shadow-soft):
+ * se ven bien en claro y en oscuro sin depender de --nova-*. Sin orbes, brillos ni animaciones infinitas.
+ * El API se mantiene porque lo usan los dashboards de creador, editor y estratega.
+ */
 
 interface DashboardKpiCardProps {
   title: string;
   value: ReactNode;
   icon: LucideIcon;
+  /** Color del icono (chip). Es el único color de la tarjeta. */
   iconColor?: string;
   onClick?: () => void;
   subtitle?: ReactNode;
   trend?: number;
   children?: ReactNode;
   className?: string;
+  /** @deprecated El contorno ya no se colorea; se conserva para no romper llamadas existentes. */
   borderColor?: string;
+}
+
+function activateOnKey(onClick?: () => void) {
+  return (e: KeyboardEvent<HTMLElement>) => {
+    if (!onClick) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick();
+    }
+  };
 }
 
 export function DashboardKpiCard({
   title,
   value,
   icon: Icon,
-  iconColor = "var(--nova-accent-primary)",
+  iconColor,
   onClick,
   subtitle,
   trend,
   children,
   className,
-  borderColor
 }: DashboardKpiCardProps) {
   return (
-    <motion.div
+    <div
       onClick={onClick}
+      onKeyDown={activateOnKey(onClick)}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={cn(
-        "group relative overflow-hidden rounded-sm p-4",
-        "bg-[var(--nova-bg-elevated)]",
-        "border border-[var(--nova-border-default)] transition-all duration-500",
-        onClick && "cursor-pointer",
-        className
+        "rounded-card border border-border bg-card p-5 shadow-soft",
+        onClick &&
+          "cursor-pointer transition-[box-shadow,background-color] duration-150 hover:bg-[hsl(var(--surface-hover))] hover:shadow-raised motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        className,
       )}
-      style={{
-        borderColor: borderColor || "var(--nova-border-default)",
-      }}
-      whileHover={onClick ? {
-        scale: 1.02,
-        boxShadow: "var(--nova-shadow-glow)",
-      } : undefined}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
     >
-      {/* Animated gradient orb */}
-      <motion.div
-        className="absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl pointer-events-none"
-        style={{ background: `radial-gradient(circle, rgba(139, 92, 246, 0.3), transparent 70%)` }}
-        animate={{
-          scale: [1, 1.3, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{ duration: 3, repeat: Infinity }}
-      />
-
-
-      {/* Content */}
-      <div className="relative z-10">
-        <div className="flex items-center gap-2 mb-2">
-          <motion.div
-            className="p-2 rounded-sm"
-            style={{
-              background: "rgba(139, 92, 246, 0.15)",
-              border: "1px solid var(--nova-border-accent)",
-            }}
-            whileHover={{
-              boxShadow: "var(--nova-shadow-glow)",
-            }}
-          >
-            <Icon className="h-5 w-5 text-[var(--nova-accent-primary)]" style={{ color: iconColor }} />
-          </motion.div>
-          <span className="text-sm text-[var(--nova-text-secondary)]">{title}</span>
-        </div>
-
-        <div className="text-3xl font-bold text-[var(--nova-text-bright)] mb-1" style={{ textShadow: "0 0 20px rgba(139, 92, 246, 0.3)" }}>
-          {value}
-        </div>
-
-        {subtitle && (
-          <div className="text-sm text-[var(--nova-text-secondary)]">{subtitle}</div>
-        )}
-
-        {trend !== undefined && trend !== 0 && (
-          <motion.div
-            className="flex items-center gap-1 mt-2"
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className={cn(
-              "flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
-              "border",
-              trend > 0
-                ? "bg-[var(--nova-success-bg)] border-[var(--nova-success)] text-[var(--nova-success)]"
-                : "bg-[var(--nova-error-bg)] border-[var(--nova-error)] text-[var(--nova-error)]"
-            )}>
-              {trend > 0 ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              {trend > 0 && "+"}{trend}%
-            </div>
-          </motion.div>
-        )}
-
-        {children}
+      <div className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control bg-accent text-accent-foreground"
+        >
+          <Icon className="h-[18px] w-[18px]" style={iconColor ? { color: iconColor } : undefined} />
+        </span>
+        <span className="text-sm font-medium text-[hsl(var(--text-secondary))]">{title}</span>
       </div>
 
-      {/* Bottom accent */}
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-px"
-        style={{ background: "linear-gradient(90deg, transparent, var(--nova-accent-primary), transparent)" }}
-        animate={{ opacity: [0.3, 0.7, 0.3] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      />
-    </motion.div>
+      <div className="mt-4 text-[28px] font-semibold leading-none tracking-tight text-foreground tabular-nums">
+        {value}
+      </div>
+
+      {subtitle && <div className="mt-2 text-sm text-muted-foreground">{subtitle}</div>}
+
+      {trend !== undefined && trend !== 0 && (
+        <div
+          className={cn(
+            "mt-3 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+            trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive",
+          )}
+        >
+          {trend > 0 ? <TrendingUp className="h-3 w-3" aria-hidden="true" /> : <TrendingDown className="h-3 w-3" aria-hidden="true" />}
+          {trend > 0 && "+"}
+          {trend}%
+        </div>
+      )}
+
+      {children}
+    </div>
   );
 }
 
-// Animated progress bar with glow - Nova Design System
+// Barra de progreso hacia una meta (sin brillo ni destello animado)
 export function TechProgress({
   value,
   max = 100,
-  color = "var(--nova-accent-primary)",
   label,
-  showPercent = true
+  showPercent = true,
 }: {
   value: number;
   max?: number;
+  /** @deprecated El color ya no se parametriza: usa el primario. */
   color?: string;
   label?: string;
   showPercent?: boolean;
 }) {
-  const percent = Math.min((value / max) * 100, 100);
-
+  const percent = max > 0 ? Math.min((value / max) * 100, 100) : 0;
   return (
-    <div className="mt-2 space-y-1">
-      <div className="flex justify-between text-xs">
-        <span className="text-[var(--nova-text-secondary)]">{label || 'Meta'}: {max.toLocaleString()}</span>
-        {showPercent && (
-          <span className="font-medium text-[var(--nova-accent-primary)]">
-            {Math.round(percent)}%
-          </span>
-        )}
+    <div className="mt-3 space-y-1.5">
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>
+          {label || "Meta"}: <span className="tabular-nums">{max.toLocaleString()}</span>
+        </span>
+        {showPercent && <span className="font-medium tabular-nums text-foreground">{Math.round(percent)}%</span>}
       </div>
-      <div className="h-2 bg-[var(--nova-bg-surface)] rounded-full overflow-hidden border border-[var(--nova-border-subtle)]">
-        <motion.div
-          className="h-full rounded-full relative overflow-hidden"
-          style={{
-            background: "linear-gradient(90deg, var(--nova-accent-primary), var(--nova-accent-secondary))",
-            boxShadow: "var(--nova-shadow-glow)",
-          }}
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        >
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ duration: 1.5, repeat: Infinity, delay: 1 }}
-          />
-        </motion.div>
+      <div
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percent)}
+        aria-label={`${label || "Meta"}: ${Math.round(percent)}%`}
+        className="h-2 overflow-hidden rounded-full bg-muted"
+      >
+        <div className="h-full rounded-full bg-primary" style={{ width: `${percent}%` }} />
       </div>
     </div>
   );
 }
 
-// Pipeline item with glow - Nova Design System
+// Mini-tarjeta de estado del pipeline
 export function PipelineItem({
   icon: Icon,
   value,
   label,
   color,
-  onClick
+  onClick,
 }: {
   icon: LucideIcon;
   value: number;
   label: string;
-  color: string;
+  /** Color del icono (único acento). */
+  color?: string;
   onClick?: () => void;
 }) {
+  const Tag = onClick ? "button" : "div";
   return (
-    <motion.div
-      onClick={onClick}
+    <Tag
+      {...(onClick ? { type: "button" as const, onClick } : {})}
       className={cn(
-        "p-3 rounded-sm text-center transition-all cursor-pointer",
-        "border border-[var(--nova-border-default)]",
-        "bg-[var(--nova-bg-elevated)]",
-        "hover:border-[var(--nova-border-accent)]"
+        "flex w-full flex-col items-center gap-1 rounded-control bg-[hsl(var(--surface-hover))] p-3 text-center",
+        onClick &&
+          "transition-colors hover:bg-[hsl(var(--surface-selected))] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
       )}
-      whileHover={{
-        scale: 1.05,
-        boxShadow: "var(--nova-shadow-glow)",
-      }}
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
     >
-      <Icon className="h-4 w-4 mx-auto mb-1 text-[var(--nova-accent-primary)]" style={{ color }} />
-      <motion.p
-        className="text-xl font-bold text-[var(--nova-text-bright)]"
-        style={{ color, textShadow: "0 0 10px rgba(139, 92, 246, 0.5)" }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        {value}
-      </motion.p>
-      <p className="text-[10px] text-[var(--nova-text-secondary)]">{label}</p>
-    </motion.div>
+      <Icon className="h-4 w-4 text-[hsl(var(--text-secondary))]" style={color ? { color } : undefined} aria-hidden="true" />
+      <span className="text-xl font-semibold tabular-nums text-foreground">{value}</span>
+      <span className="text-xs text-[hsl(var(--text-secondary))]">{label}</span>
+    </Tag>
   );
 }
 
-// Section header with glow - Nova Design System
+// Encabezado de sección
 export function TechSectionHeader({
   icon: Icon,
   title,
-  action
+  action,
 }: {
   icon: LucideIcon;
   title: string;
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-sm font-semibold flex items-center gap-2">
-        <motion.div
-          animate={{
-            boxShadow: [
-              "0 0 0 0 rgba(139, 92, 246, 0)",
-              "0 0 10px 2px rgba(139, 92, 246, 0.3)",
-              "0 0 0 0 rgba(139, 92, 246, 0)"
-            ]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="p-1.5 rounded-sm bg-[rgba(139,92,246,0.1)]"
-        >
-          <Icon className="h-4 w-4 text-[var(--nova-accent-primary)]" />
-        </motion.div>
-        <span className="text-[var(--nova-accent-primary)]">
-          {title}
-        </span>
+    <div className="mb-3 flex items-center justify-between">
+      <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+        <Icon className="h-4 w-4 text-[hsl(var(--text-secondary))]" aria-hidden="true" />
+        {title}
       </h3>
       {action}
     </div>
