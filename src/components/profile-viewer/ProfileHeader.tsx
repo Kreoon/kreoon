@@ -1,12 +1,12 @@
 /**
  * Header para la vista de perfil del creador en el marketplace.
  *
- * - Usuario autenticado: Volver, Logo, Guardar, Compartir, Contactar, Avatar
+ * - Usuario autenticado: Volver, Guardar, Compartir (sin contacto en esta fase)
  * - No autenticado: Volver, Logo, Iniciar sesión, Crear cuenta de creador, Busco Talento
  */
 
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bookmark, Share2, MessageCircle, LogIn, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bookmark, Share2, LogIn, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useBranding } from '@/contexts/BrandingContext';
@@ -17,10 +17,11 @@ import { cn } from '@/lib/utils';
 interface ProfileHeaderProps {
   creatorId: string;
   creatorName: string;
+  /** @deprecated En esta fase no hay contacto directo desde el perfil público */
   onContact?: () => void;
 }
 
-export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHeaderProps) {
+export function ProfileHeader({ creatorId, creatorName }: ProfileHeaderProps) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { branding } = useBranding();
@@ -63,17 +64,6 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
     toggleSave();
   };
 
-  const handleContact = () => {
-    if (onContact) {
-      onContact();
-    } else {
-      // Scroll al bloque de contacto si existe
-      const contactSection = document.querySelector('[data-block-type="contact"]');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
 
   return (
     <header
@@ -138,15 +128,6 @@ export function ProfileHeader({ creatorId, creatorName, onContact }: ProfileHead
             >
               <Share2 className="h-4 w-4 mr-1.5" />
               <span className="hidden sm:inline">Compartir</span>
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={handleContact}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              <MessageCircle className="h-4 w-4 mr-1.5" />
-              Contactar
             </Button>
           </>
         ) : (
