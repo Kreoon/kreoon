@@ -30,6 +30,13 @@ quedó bloqueado por el control de permisos de la sesión de Claude, así que es
 6. **Fase 6** — `supabase/migrations/20260930160000_brand_members_insert_scope.sql` (después del paso 3:
    «Unirse con código» del frontend nuevo usa `join_brand_with_code`, que crea esta fase).
 
+## Bunny (de la sesión de prototipos)
+
+- Las funciones `bunny-*` ya están desplegadas en producción y aceptan el frontend viejo.
+- Después del paso 3: probar subidas de video y material, luego `supabase secrets set BUNNY_UPLOAD_LEGACY_COMPAT=off`
+  y rotar las claves de Bunny (antes se entregaban al navegador).
+- El service worker pasa a `kreoon-v7`: los usuarios reciben logos e íconos nuevos al activarse.
+
 ## Después de las pruebas
 
 - Notificaciones: siguen pausadas (`NOTIFICATIONS_PAUSED=true` en funciones y plantillas de WhatsApp en
