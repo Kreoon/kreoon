@@ -30,7 +30,6 @@ export interface ContentBoardKanbanViewProps {
   /** ¿Puede este usuario mover la producción a esa etapa? (reglas de la organización) */
   canMove: (content: Content, targetStatus: string) => boolean;
   onMove: (contentId: string, targetStatus: string, origin: "drag" | "keyboard") => void;
-  /** Contador de estados sin columna (no aparecen en el tablero). */
   className?: string;
 }
 

@@ -133,15 +133,6 @@ export const AssigneeSlot = memo(function AssigneeSlot({
     );
   }
 
-  return (
-    <span
-      className="kb-unassigned"
-      role="img"
-      aria-label={`Sin ${meta.label} asignado`}
-      title={`Sin ${meta.label} asignado`}
-      data-no-click
-    >
-      <span className="kb-unassigned__dot" aria-hidden="true" />
-    </span>
-  );
+  // Sin persona y sin permiso para asignar: no se dibuja nada (solo un texto para lectores de pantalla).
+  return <span className="sr-only">{`Sin ${meta.label} asignado`}</span>;
 });

@@ -50,7 +50,7 @@ const CARD_CUSTOMIZABLE_FIELDS: { key: BoardFieldKey; label: string; description
   { key: "sales_angle", label: "Ángulo de ventas", description: "Estrategia de venta", category: "Campaña" },
 
   // === Indicadores ===
-  { key: "progress", label: "Progreso", description: "Barra de progreso", category: "Indicadores" },
+  { key: "progress", label: "Avance del flujo", description: "Posición de la etapa en el flujo (vista Lista; en Kanban lo indica la columna)", category: "Indicadores" },
   { key: "indicators", label: "Indicadores", description: "Video, script, raw video", category: "Indicadores" },
   { key: "video", label: "Preview video", description: "Área de reproducción", category: "Indicadores" },
   { key: "points", label: "Puntos UP", description: "Sistema de puntos", category: "Indicadores" },

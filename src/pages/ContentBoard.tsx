@@ -479,7 +479,7 @@ export default function ContentBoard() {
     userId: targetUserId,
     userRole: primaryRole as string,
     // Igual que antes: handlers solo para admin (sin suplantar otro rol) o team_leader, y el rol efectivo debe poder asignar
-    canAssign: (showAdminControls || primaryRole === 'team_leader') && CAN_ASSIGN_ROLES.includes(primaryRole as string),
+    canAssign: (showAdminControls || (primaryRole as string) === 'team_leader') && CAN_ASSIGN_ROLES.includes(primaryRole as string),
     creators: assignableCreators,
     editors: assignableEditors,
     getMoveTargets: move.getMoveTargets,
@@ -551,8 +551,8 @@ export default function ContentBoard() {
                   onClick={() => setShowBulkDrawer(true)}
                 >
                   <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
-                  <span className="hidden md:inline">Generar en lote</span>
-                  <span className="sr-only md:hidden">Generar en lote</span>
+                  <span className="hidden xl:inline">Generar en lote</span>
+                  <span className="sr-only xl:hidden">Generar en lote</span>
                 </Button>
               )}
               {canCreate && (
@@ -655,8 +655,8 @@ export default function ContentBoard() {
                     title="Analizar tablero con IA"
                   >
                     <Brain className="h-4 w-4 text-primary" aria-hidden="true" />
-                    <span className="hidden lg:inline">Analizar IA</span>
-                    <span className="sr-only lg:hidden">Analizar tablero con IA</span>
+                    <span className="hidden 2xl:inline">Analizar IA</span>
+                    <span className="sr-only 2xl:hidden">Analizar tablero con IA</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -666,8 +666,8 @@ export default function ContentBoard() {
                     title="Configurar tablero"
                   >
                     <Settings2 className="h-4 w-4" aria-hidden="true" />
-                    <span className="hidden lg:inline">Configurar</span>
-                    <span className="sr-only lg:hidden">Configurar tablero</span>
+                    <span className="hidden 2xl:inline">Configurar</span>
+                    <span className="sr-only 2xl:hidden">Configurar tablero</span>
                   </Button>
                 </>
               )}

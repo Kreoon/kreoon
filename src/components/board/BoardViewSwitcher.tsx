@@ -40,7 +40,7 @@ export function BoardViewSwitcher({ currentView, onViewChange }: BoardViewSwitch
             )}
           >
             <Icon className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">{view.label}</span>
+            <span className="hidden xl:inline">{view.label}</span>
           </button>
         );
       })}

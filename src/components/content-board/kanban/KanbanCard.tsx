@@ -131,9 +131,12 @@ export const KanbanCardView = memo(function KanbanCardView({
   const hasVideo = !!content.video_url || (content.video_urls?.length ?? 0) > 0;
   const hasRawVideo = (content.raw_video_urls?.length ?? 0) > 0;
   const shareable = SHAREABLE_STATUSES.includes(String(content.status));
-  const showPeople = has("creator") || has("editor") || has("responsible");
   const showCreator = has("creator") || has("responsible");
   const showEditor = has("editor") || has("responsible");
+  // La fila de responsables solo aparece si hay alguien asignado o si el usuario puede asignar (sin círculos vacíos de relleno)
+  const showPeople =
+    (showCreator || showEditor) &&
+    (ctx.canAssign || (showCreator && !!(content.creator || content.creator_id)) || (showEditor && !!(content.editor || content.editor_id)));
 
   const isAssignedCreator = !!ctx.userId && content.creator_id === ctx.userId;
   const isAssignedEditor = !!ctx.userId && content.editor_id === ctx.userId;
@@ -150,7 +153,9 @@ export const KanbanCardView = memo(function KanbanCardView({
 
   const payC = has("creator_payment") && content.creator_payment != null;
   const payE = has("editor_payment") && content.editor_payment != null;
-  const points = has("points") && content.up_points != null;
+  // up_points existe en la fila (RPC get_org_content) aunque el tipo Content aún no lo declare
+  const upPoints = (content as unknown as { up_points?: number | null }).up_points;
+  const points = has("points") && upPoints != null;
   const views = has("views_count") && content.views_count != null;
 
   const hasChips =
@@ -207,11 +212,11 @@ export const KanbanCardView = memo(function KanbanCardView({
 
       {/* Título: botón que abre el detalle y cubre la tarjeta (sin anidar botones) */}
       <div className="flex items-start gap-3">
-        <h4 className="min-w-0 flex-1">
+        <h3 className="min-w-0 flex-1">
           <button type="button" className="kb-open" onClick={handleOpen} title={title} tabIndex={overlay ? -1 : undefined}>
             {title}
           </button>
-        </h4>
+        </h3>
         {showMedia && mediaInfo && (
           <MediaThumb title={title} info={mediaInfo} hooksCount={content.hooks_count} onPlay={() => setPlaying(true)} />
         )}
@@ -307,9 +312,9 @@ export const KanbanCardView = memo(function KanbanCardView({
             </span>
           )}
           {points && (
-            <span className="kb-chip" title="Puntos UP" aria-label={`${content.up_points} puntos UP`}>
+            <span className="kb-chip" title="Puntos UP" aria-label={`${upPoints} puntos UP`}>
               <Star aria-hidden="true" />
-              <span>{content.up_points}</span>
+              <span>{upPoints}</span>
             </span>
           )}
           {views && (

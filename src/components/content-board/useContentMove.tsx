@@ -103,8 +103,8 @@ export function useContentMove({
       setMoving(id, false);
 
       if (result.ok) {
-        if (target === "approved") l.trackContentApproved({ content_id: id, reviewer_role: l.primaryRole || "client" });
-        else if (target === "issue") l.trackContentRejected({ content_id: id, reviewer_role: l.primaryRole || "client", reason: "status_change" });
+        if (target === "approved") l.trackContentApproved({ content_id: id, review_action: "approve", feedback_provided: false });
+        else if (target === "issue") l.trackContentRejected({ content_id: id, review_action: "reject", feedback_provided: false, reason: "status_change" });
 
         const moved = { ...item, status: target } as Content;
         const hiddenBy = describeHidingFilter(moved, l.filters);

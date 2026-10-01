@@ -127,9 +127,9 @@ export const KanbanColumn = memo(function KanbanColumn({
     >
       <header className="kb-col__head">
         <span className="kb-col__dot" aria-hidden="true" />
-        <h3 id={titleId} className="kb-col__title">
+        <h2 id={titleId} className="kb-col__title">
           {column.title}
-        </h3>
+        </h2>
         {overdueCount > 0 && (
           <span
             className="kb-col__alert"

@@ -57,7 +57,7 @@ export function BoardToolbar({
       className="space-y-3 rounded-[var(--radius-card,1.25rem)] border border-border/50 bg-card p-3 shadow-[var(--shadow-soft,0_1px_2px_rgb(0_0_0/0.06))] md:p-4"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <div className="relative min-w-0 flex-1 basis-full sm:basis-64 md:max-w-md">
+        <div className="relative min-w-0 flex-1 basis-44 sm:basis-64 md:max-w-md">
           <label htmlFor={searchId} className="sr-only">
             Buscar producción
           </label>
@@ -127,8 +127,8 @@ export function BoardToolbar({
                   )}
                 >
                   <Icon className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden lg:inline">{label}</span>
-                  <span className="sr-only lg:hidden">{label}</span>
+                  <span className="hidden 2xl:inline">{label}</span>
+                  <span className="sr-only 2xl:hidden">{label}</span>
                 </button>
               ))}
             </div>

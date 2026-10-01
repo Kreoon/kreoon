@@ -40,8 +40,11 @@
   scrollbar-width: thin;
   height: clamp(26rem, calc(100dvh - 15.5rem), 90rem);
 }
-.kb-scroller[data-snap="true"] {
-  scroll-snap-type: x proximity;
+/* El ajuste al desplazar solo se usa en pantallas estrechas (columnas a casi todo el ancho) y se apaga al arrastrar */
+@media (max-width: 1023px) {
+  .kb-scroller[data-snap="true"] {
+    scroll-snap-type: x proximity;
+  }
 }
 .kb-scroller[data-dragging="true"] {
   scroll-snap-type: none;
@@ -156,12 +159,20 @@
 }
 .kb-col__hint {
   display: none;
-  margin: 0.25rem 0.5rem 0;
-  padding: 0.5rem 0.75rem;
+  position: absolute;
+  z-index: 6;
+  top: 3.25rem;
+  left: 0.625rem;
+  right: 0.625rem;
+  margin: 0;
+  padding: 0.375rem 0.75rem;
   border-radius: var(--kb-radius-control);
   font-size: 0.8125rem;
   font-weight: 600;
   text-align: center;
+  pointer-events: none; /* flota sobre la lista: no desplaza las tarjetas al empezar a arrastrar */
+  background: hsl(var(--accent));
+  box-shadow: var(--kb-shadow-soft);
 }
 .kb-col[data-drop="allowed"] .kb-col__hint,
 .kb-col[data-drop="over"] .kb-col__hint {
@@ -172,6 +183,7 @@
 .kb-col[data-drop="blocked"] .kb-col__hint {
   display: block;
   color: var(--kb-muted);
+  background: hsl(var(--card));
   border: 1px dashed var(--kb-line-strong);
 }
 .kb-col__empty {
@@ -440,19 +452,6 @@ button.kb-assignee:focus-visible { outline: 2px solid hsl(var(--ring)); outline-
 .kb-assign-pill:hover { background: hsl(var(--accent)); }
 .kb-assign-pill:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 1px; }
 .kb-assign-pill svg { width: 0.75rem; height: 0.75rem; }
-.kb-unassigned {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  min-height: 1.75rem;
-  font-size: 0.75rem;
-  color: var(--kb-muted);
-}
-.kb-unassigned__dot {
-  width: 1.75rem; height: 1.75rem; border-radius: 9999px;
-  border: 1px dashed var(--kb-line-strong);
-}
-
 /* Pie */
 .kb-foot {
   display: flex;
