@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudio UGC · Plantilla de enlace profesional · Kreoon</title>
+<style>
+:root{
+  --brand:#6D4AFF; --ivory:#FAF8F5; --white:#FFFFFF; --text:#242135; --muted:#4A4660; --line:#E4E1EA;
+  --ph:#E4E1EA; --ph-text:#4A4660;
+  --accent:#C2410C; --accent-soft:#FFEBDD; --accent-ink:#9A3412;
+  --radius:16px; --shadow:0 2px 8px rgba(36,33,53,.08);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ivory);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:16px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.chrome{background:var(--white);border-bottom:1px solid var(--line)}
+.chrome-in{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.chrome b{color:var(--brand);font-size:18px}
+.chip{display:inline-flex;align-items:center;min-height:32px;padding:4px 12px;border-radius:999px;background:#EFEBFF;color:var(--text);font-size:14px}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 20px 56px}
+h1.t{font-size:24px;margin:8px 0 4px}
+p.sub{margin:0 0 20px;color:var(--muted);max-width:70ch}
+h2.vista{font-size:18px;margin:32px 0 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* Marcos de vista */
+.escritorio{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.barra{display:flex;gap:6px;align-items:center;padding:10px 14px;background:#F1EFF5;border-bottom:1px solid var(--line);font-size:14px;color:var(--muted)}
+.barra i{width:10px;height:10px;border-radius:50%;background:#B8B3C8;display:inline-block}
+.barra span{margin-left:8px;background:var(--white);border-radius:999px;padding:2px 12px;border:1px solid var(--line)}
+.movil{width:390px;max-width:100%;margin:0 auto;background:var(--white);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:hidden}
+/* Piezas */
+.ph{background:var(--ph);color:var(--ph-text);display:flex;align-items:center;justify-content:center;text-align:center;font-size:14px;font-weight:600;padding:8px;border-radius:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 22px;border-radius:999px;font-weight:700;font-size:16px;text-decoration:none;border:2px solid var(--accent);cursor:pointer}
+.btn.p{background:var(--accent);color:#fff}
+.btn.s{background:var(--white);color:var(--accent-ink)}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.tag{display:inline-block;background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:14px;border-radius:999px;padding:4px 12px}
+/* Portafolio */
+.p-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;padding:48px 48px 32px;background:linear-gradient(180deg,var(--accent-soft) 0,var(--white) 100%)}
+.p-hero h2{font-size:44px;line-height:1.1;margin:12px 0 8px}
+.p-hero p{font-size:18px;color:var(--muted);margin:0 0 20px;max-width:46ch}
+.p-hero .acts{display:flex;gap:12px;flex-wrap:wrap}
+.p-hero .vid{display:flex;gap:16px;justify-content:center;align-items:flex-end}
+.p-hero .vid .ph{aspect-ratio:9/16;width:46%}
+.p-hero .vid .ph.dos{width:38%;margin-bottom:28px}
+.sec{padding:32px 48px}
+.sec h3{font-size:26px;margin:0 0 4px}
+.sec .lead{color:var(--muted);margin:0 0 20px}
+.trabajos{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.trabajo .ph{aspect-ratio:9/16;width:100%}
+.trabajo h4{margin:10px 0 2px;font-size:16px}
+.trabajo p{margin:0;color:var(--muted);font-size:14px}
+.servicios{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.servicio{padding:20px}
+.servicio h4{margin:8px 0 6px;font-size:18px}
+.servicio p{margin:0 0 8px;color:var(--muted)}
+.servicio .pr{font-weight:700;color:var(--accent-ink)}
+.sobre{display:grid;grid-template-columns:180px 1fr;gap:24px;align-items:center}
+.sobre .ph{aspect-ratio:1/1;border-radius:50%}
+.contacto{background:var(--accent-soft);text-align:center;padding:40px 24px}
+.contacto h3{font-size:28px;margin:0 0 6px}
+.contacto p{margin:0 0 16px;color:var(--text)}
+.contacto .acts{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+/* Enlace en bio */
+.b{padding:28px 20px 24px;background:linear-gradient(180deg,var(--accent-soft) 0,var(--white) 220px);text-align:center}
+.b .foto{width:112px;height:112px;border-radius:50%;margin:0 auto 12px;font-size:13px}
+.b h2{font-size:24px;margin:0}
+.b .esp{margin:2px 0 8px;color:var(--accent-ink);font-weight:700}
+.b .desc{margin:0 auto 14px;color:var(--muted);max-width:32ch}
+.redes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.red{display:inline-flex;align-items:center;justify-content:center;min-height:44px;min-width:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--white);font-weight:600;font-size:14px;text-decoration:none}
+.lista{list-style:none;margin:0 0 16px;padding:0;display:grid;gap:10px;text-align:left}
+.fila{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 16px;min-height:56px}
+.fila a{flex:1;font-weight:700;text-decoration:none;min-height:44px;display:flex;align-items:center}
+.mov{display:flex;gap:4px}
+.mov button{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--ivory);color:var(--text);font-size:18px;cursor:pointer}
+.destacado{margin:0 auto 18px;max-width:200px}
+.destacado .ph{aspect-ratio:9/16;width:100%}
+.destacado small{display:block;margin-top:6px;color:var(--muted)}
+.b .btn{width:100%;margin-bottom:10px}
+.nota{margin:12px auto 0;max-width:640px;background:var(--white);border:1px dashed #B8B3C8;border-radius:12px;padding:12px 16px;color:var(--muted);font-size:14px}
+@media (max-width:860px){
+  .p-hero{grid-template-columns:1fr;padding:32px 20px 24px}
+  .p-hero h2{font-size:34px}
+  .sec{padding:28px 20px}
+  .trabajos{grid-template-columns:repeat(2,1fr)}
+  .servicios{grid-template-columns:1fr}
+  .sobre{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .sobre .ph{width:140px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="chrome"><div class="chrome-in">
+  <b>Kreoon</b>
+  <span class="chip">Vista previa de plantilla · todo el texto es de ejemplo</span>
+</div></header>
+
+<main class="wrap">
+  <h1 class="t">Estudio UGC</h1>
+  <p class="sub">Cercano y directo. Los trabajos se ven en vertical (9:16), como el creador los publica en TikTok e Instagram. Pensado para que una marca entienda en segundos qué tipo de video puede pedirte.</p>
+
+  <h2 class="vista"><span class="chip">1</span> Mi portafolio · escritorio (1440 px)</h2>
+  <div class="escritorio" role="region" aria-label="Mi portafolio, vista de escritorio">
+    <div class="barra" aria-hidden="true"><i></i><i></i><i></i><span>kreoon.com/nombre-del-creador</span></div>
+
+    <section class="p-hero" aria-label="Portada">
+      <div>
+        <span class="tag">Especialidad del creador</span>
+        <h2>Nombre del creador</h2>
+        <p>Aquí va tu propuesta de valor en una frase, por ejemplo: «Videos verticales que se sienten reales».</p>
+        <div class="acts">
+          <a class="btn p" href="#contacto">Hablemos de tu marca</a>
+          <a class="btn s" href="#trabajos">Ver mis trabajos</a>
+        </div>
+      </div>
+      <div class="vid" aria-hidden="false">
+        <div class="ph" role="img" aria-label="Espacio para el video 9:16 principal">Video 9:16<br>principal</div>
+        <div class="ph dos" role="img" aria-label="Espacio para la foto del creador">Foto del creador</div>
+      </div>
+    </section>
+
+    <section class="sec" id="trabajos" aria-label="Trabajos destacados">
+      <h3>Trabajos destacados</h3>
+      <p class="lead">Hasta 4 videos verticales. Toca uno para verlo completo.</p>
+      <div class="trabajos">
+        <article class="trabajo"><div class="ph" role="img" aria-label="Espacio para video 9:16">Video 9:16</div><h4>Título del trabajo de ejemplo</h4><p>Tipo de video · Marca de ejemplo</p></article>
+        <article class="trabajo"><div class="ph" role="img" aria-label="Espacio para video 9:16">Video 9:16</div><h4>Título del trabajo de ejemplo</h4><p>Tipo de video · Marca de ejemplo</p></article>
+        <article class="trabajo"><div class="ph" role="img" aria-label="Espacio para video 9:16">Video 9:16</div><h4>Título del trabajo de ejemplo</h4><p>Tipo de video · Marca de ejemplo</p></article>
+        <article class="trabajo"><div class="ph" role="img" aria-label="Espacio para video 9:16">Video 9:16</div><h4>Título del trabajo de ejemplo</h4><p>Tipo de video · Marca de ejemplo</p></article>
+      </div>
+    </section>
+
+    <section class="sec" aria-label="Servicios">
+      <h3>Lo que hago</h3>
+      <p class="lead">Cada servicio con una línea clara y un precio o «a convenir».</p>
+      <div class="servicios">
+        <article class="card servicio"><span class="tag">Servicio 1</span><h4>Nombre del servicio</h4><p>Descripción corta de ejemplo de lo que incluye.</p><span class="pr">Precio: a convenir</span></article>
+        <article class="card servicio"><span class="tag">Servicio 2</span><h4>Nombre del servicio</h4><p>Descripción corta de ejemplo de lo que incluye.</p><span class="pr">Precio: a convenir</span></article>
+        <article class="card servicio"><span class="tag">Servicio 3</span><h4>Nombre del servicio</h4><p>Descripción corta de ejemplo de lo que incluye.</p><span class="pr">Precio: a convenir</span></article>
+      </div>
+    </section>
+
+    <section class="sec" aria-label="Presentación">
+      <div class="card" style="padding:24px">
+        <div class="sobre">
+          <div class="ph" role="img" aria-label="Espacio para la foto del creador">Foto del creador</div>
+          <div>
+            <h3>Un poco sobre mí</h3>
+            <p style="margin:0;color:var(--muted)">Presentación breve de ejemplo: de dónde eres, qué te gusta crear y cómo trabajas con las marcas. Máximo 3 frases.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="contacto" id="contacto" aria-label="Contacto">
+      <h3>¿Trabajamos juntos?</h3>
+      <p>Cuéntame qué necesitas y te respondo pronto.</p>
+      <div class="acts">
+        <a class="btn p" href="#">Escríbeme por WhatsApp</a>
+        <a class="btn s" href="#">Enviar un correo</a>
+      </div>
+    </section>
+  </div>
+  <p class="nota"><b>Solo si existen:</b> la sección «Marcas con las que he trabajado» y las reseñas no aparecen hasta que el creador agregue datos reales. Esta plantilla no muestra cifras ni opiniones de ejemplo.</p>
+
+  <h2 class="vista"><span class="chip">2</span> Mi enlace en bio · móvil (390 px)</h2>
+  <div class="movil" role="region" aria-label="Mi enlace en bio, vista móvil">
+    <div class="b">
+      <div class="ph foto" role="img" aria-label="Espacio para la foto del creador">Foto del creador</div>
+      <h2>Nombre del creador</h2>
+      <p class="esp">Especialidad del creador</p>
+      <p class="desc">Descripción breve de ejemplo en una o dos líneas.</p>
+      <div class="redes" aria-label="Redes">
+        <a class="red" href="#">Instagram</a><a class="red" href="#">TikTok</a><a class="red" href="#">YouTube</a>
+      </div>
+      <ul class="lista" aria-label="Mis enlaces">
+        <li class="card fila"><a href="#">Enlace personalizado 1</a><span class="mov"><button type="button" aria-label="Subir enlace 1">↑</button><button type="button" aria-label="Bajar enlace 1">↓</button></span></li>
+        <li class="card fila"><a href="#">Enlace personalizado 2</a><span class="mov"><button type="button" aria-label="Subir enlace 2">↑</button><button type="button" aria-label="Bajar enlace 2">↓</button></span></li>
+        <li class="card fila"><a href="#">Enlace personalizado 3</a><span class="mov"><button type="button" aria-label="Subir enlace 3">↑</button><button type="button" aria-label="Bajar enlace 3">↓</button></span></li>
+      </ul>
+      <div class="destacado">
+        <div class="ph" role="img" aria-label="Espacio para el video destacado 9:16">Video 9:16<br>destacado</div>
+        <small>Video destacado (opcional)</small>
+      </div>
+      <a class="btn p" href="#">Ver mi portafolio</a>
+      <a class="btn s" href="#">Escríbeme por WhatsApp</a>
+    </div>
+  </div>
+  <p class="nota">Los botones ↑ ↓ son la forma principal de ordenar. Arrastrar es una ayuda extra, nunca la única opción.</p>
+</main>
+</body>
+</html>

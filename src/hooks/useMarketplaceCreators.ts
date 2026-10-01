@@ -1,3 +1,4 @@
+import { MARKETPLACE_CATEGORY_VARIANTS } from '@/components/marketplace/types/marketplace';
 import { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -668,8 +669,11 @@ export function useMarketplaceCreators(filters?: MarketplaceFilters) {
 
     // Category
     if (filters.category) {
-      const cat = filters.category.toLowerCase();
-      result = result.filter(c => c.categories.some(cc => cc.toLowerCase() === cat));
+      // Todas las variantes guardadas de la categoría («moda», «Moda & Estilo», «fashion»…)
+      const variants = new Set(
+        (MARKETPLACE_CATEGORY_VARIANTS[filters.category] ?? [filters.category]).map(v => v.toLowerCase()),
+      );
+      result = result.filter(c => c.categories.some(cc => variants.has(cc.toLowerCase())));
     }
 
     // Country - búsqueda flexible

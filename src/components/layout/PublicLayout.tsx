@@ -14,7 +14,7 @@ export function PublicLayout({
   children,
   showFooter = true,
   minimalFooter = false,
-  transparentHeader = true,
+  transparentHeader = false,
 }: PublicLayoutProps) {
   const [authModal, setAuthModal] = useState<{
     open: boolean;

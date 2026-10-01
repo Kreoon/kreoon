@@ -22,7 +22,7 @@ export function LandingLayout({ children, onOpenAuth }: LandingLayoutProps) {
 
   return (
     <div className="relative z-10 min-h-screen bg-transparent">
-      <PublicHeader onOpenAuth={onOpenAuth} transparent={true} />
+      <PublicHeader onOpenAuth={onOpenAuth} transparent={false} />
       <main className="scroll-smooth pt-16">{children}</main>
       <PublicFooter />
     </div>

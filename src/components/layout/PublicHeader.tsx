@@ -35,7 +35,8 @@ function Logo({ className }: { className?: string }) {
   );
 }
 
-export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderProps) {
+// Sólida por defecto: transparente sobre los fondos animados oscuros de /portafolio y /blog era ilegible (QA 2026-10-01)
+export function PublicHeader({ onOpenAuth, transparent = false }: PublicHeaderProps) {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const location = useLocation();
