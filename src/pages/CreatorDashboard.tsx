@@ -187,12 +187,17 @@ export default function CreatorDashboard() {
   const totalPaidCOP = studioPaidCOP + (mktPaidByCurrency['COP'] || 0);
   const pendingUSD = mktPendingByCurrency['USD'] || 0;
   const paidUSD = mktPaidByCurrency['USD'] || 0;
-  const approvedVideos = useMemo(() =>
-    [...content]
-      .filter(c => ['approved', 'paid', 'archived'].includes(c.status))
-      .sort((a, b) => new Date(b.updated_at || b.created_at || 0).getTime() - new Date(a.updated_at || a.created_at || 0).getTime())
-      .slice(0, 6),
-  [content]);
+  // Aprobados recientes: solo los de los últimos 7, 15 o 30 días (fecha de aprobación)
+  const [approvedDays, setApprovedDays] = useState<7 | 15 | 30>(30);
+  const approvedVideos = useMemo(() => {
+    const approvedTime = (c: (typeof content)[number]) =>
+      new Date(c.approved_at || c.updated_at || c.created_at || 0).getTime();
+    const since = Date.now() - approvedDays * 86_400_000;
+    return [...content]
+      .filter(c => ['approved', 'paid', 'archived'].includes(c.status) && approvedTime(c) >= since)
+      .sort((a, b) => approvedTime(b) - approvedTime(a));
+  }, [content, approvedDays]);
+  const hasAnyApproved = content.some(c => ['approved', 'paid', 'archived'].includes(c.status));
 
   if (loading) {
     return (
@@ -428,9 +433,9 @@ export default function CreatorDashboard() {
           )}
 
           {/* Videos aprobados */}
-          {approvedVideos.length > 0 && (
+          {hasAnyApproved && (
             <div className="rounded-lg border border-zinc-200 dark:border-border bg-white dark:bg-background p-4">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-green-500" />
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-foreground">
@@ -438,18 +443,42 @@ export default function CreatorDashboard() {
                   </h3>
                   <span className="text-xs text-muted-foreground">({approvedVideos.length})</span>
                 </div>
-                <button
-                  onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
-                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  Ver todos
-                </button>
+                <div className="flex items-center gap-2">
+                  <div className="flex rounded-full bg-muted p-0.5" role="group" aria-label="Periodo">
+                    {([7, 15, 30] as const).map(d => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setApprovedDays(d)}
+                        aria-pressed={approvedDays === d}
+                        className={cn(
+                          'h-7 rounded-full px-2.5 text-xs font-medium transition-colors',
+                          approvedDays === d ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {d} días
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => openKpiDialog('Aprobados', approvedContent, mktApproved)}
+                    className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                  >
+                    Ver todos
+                  </button>
+                </div>
               </div>
-              <NovaVerticalVideoGrid
-                videos={approvedVideos}
-                onVideoClick={setVideoViewer}
-                maxItems={6}
-              />
+              {approvedVideos.length > 0 ? (
+                <NovaVerticalVideoGrid
+                  videos={approvedVideos}
+                  onVideoClick={setVideoViewer}
+                  maxItems={12}
+                />
+              ) : (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  No tienes videos aprobados en los últimos {approvedDays} días.
+                </p>
+              )}
             </div>
           )}
 
