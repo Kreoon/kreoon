@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { Button } from "@/components/ui/button";
 import { HomePicture } from "./HomePicture";
 
@@ -61,10 +62,7 @@ export function HomeClosing({ onLogin }: HomeClosingProps) {
 
       <footer className="border-t border-border/60">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl object-cover" />
-            <span className="text-xl font-bold tracking-tight">kreoon</span>
-          </div>
+          <KreoonLogo heightClass="h-9" alt="Kreoon" />
           <nav aria-label="Pie de página" className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
             <button type="button" onClick={onLogin} className="min-h-11 font-medium text-primary underline-offset-4 hover:underline">
               Iniciar sesión

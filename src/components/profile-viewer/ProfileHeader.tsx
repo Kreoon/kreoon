@@ -6,6 +6,7 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { ArrowLeft, Bookmark, Share2, LogIn, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -93,10 +94,16 @@ export function ProfileHeader({ creatorId, creatorName }: ProfileHeaderProps) {
             onClick={() => navigate('/marketplace')}
             className="flex items-center gap-2"
           >
-            <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
-              <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
-            </div>
-            <span className="text-sm font-bold text-foreground hidden sm:inline">{platformName}</span>
+            {branding.logo_url ? (
+              <>
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden">
+                  <img src={logoUrl} alt={platformName} className="h-7 w-7 object-cover" loading="lazy" />
+                </div>
+                <span className="text-sm font-bold text-foreground hidden sm:inline">{platformName}</span>
+              </>
+            ) : (
+              <KreoonLogo heightClass="h-8" alt={platformName} eager />
+            )}
           </button>
         )}
       </div>

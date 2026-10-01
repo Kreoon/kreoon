@@ -1,4 +1,5 @@
 import * as React from "react";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -37,8 +38,7 @@ export function HomeHeader({ onLogin }: HomeHeaderProps) {
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link to="/" className="flex items-center gap-2 rounded-xl" aria-label="Kreoon, inicio">
-          <img src="/favicon.png" alt="" width={36} height={36} className="h-9 w-9 rounded-xl object-cover" />
-          <span className="text-2xl font-bold tracking-tight">kreoon</span>
+          <KreoonLogo heightClass="h-9 sm:h-10" alt="Kreoon" eager />
         </Link>
 
         <nav aria-label="Principal" className="hidden items-center gap-1 md:flex">

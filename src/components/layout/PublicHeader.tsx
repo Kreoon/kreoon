@@ -1,4 +1,5 @@
 import * as React from "react";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -21,16 +22,8 @@ interface PublicHeaderProps {
 
 function Logo({ className }: { className?: string }) {
   return (
-    <Link to="/" className={cn("flex items-center gap-3 group", className)}>
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-sm border border-kreoon-purple-500/30 bg-gradient-to-br from-kreoon-purple-500/30 to-kreoon-purple-500/10 shadow-kreoon-glow-sm transition-all group-hover:shadow-kreoon-glow">
-        <img src="/favicon.png" alt="Kreoon" className="h-10 w-10 object-cover" />
-      </div>
-      <div className="flex flex-col">
-        <span className="font-bold tracking-tight text-xl text-foreground">KREOON</span>
-        <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-primary">
-          AI Platform
-        </span>
-      </div>
+    <Link to="/" className={cn("flex items-center group", className)} aria-label="Kreoon, inicio">
+      <KreoonLogo heightClass="h-9 md:h-10" alt="Kreoon" eager />
     </Link>
   );
 }

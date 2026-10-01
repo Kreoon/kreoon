@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Menu, X, ChevronDown, Sparkles } from 'lucide-react';
@@ -64,14 +65,7 @@ export function LandingHeader({ onLogin, onRegister, activeSection, onSectionCli
             onClick={() => handleNavClick('inicio')}
             className="flex items-center gap-3 group"
           >
-            <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-gradient-to-br from-primary/30 to-primary/10 border border-primary/30 shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all">
-              <img src="/favicon.png" alt="KREOON" className="h-10 w-10 object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-foreground font-bold text-xl tracking-tight">KREOON</span>
-              <span className="text-[9px] uppercase tracking-[0.2em] text-primary/60 font-medium">AI Platform</span>
-            </div>
+            <KreoonLogo heightClass="h-9 md:h-10" alt="Kreoon" eager />
           </button>
 
           {/* Desktop Navigation - Tech Style */}

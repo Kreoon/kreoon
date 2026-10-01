@@ -1,4 +1,5 @@
 import * as React from "react";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { motion } from "framer-motion";
 import { KreoonPageWrapper } from "@/components/ui/kreoon";
 import { TechGrid, TechParticles, TechOrb } from "@/components/ui/tech-effects";
@@ -79,14 +80,20 @@ export function AuthLayout({
                     custom={0}
                     className="flex items-center gap-3"
                   >
-                    <img
-                      src={logoUrl}
-                      alt={platformName}
-                      className="h-10 w-10 rounded-sm object-cover"
-                    />
-                    <span className="text-xl font-bold tracking-tight text-foreground">
-                      {platformName}
-                    </span>
+                    {branding.logo_url ? (
+                      <>
+                        <img
+                          src={logoUrl}
+                          alt={platformName}
+                          className="h-10 w-10 rounded-sm object-cover"
+                        />
+                        <span className="text-xl font-bold tracking-tight text-foreground">
+                          {platformName}
+                        </span>
+                      </>
+                    ) : (
+                      <KreoonLogo heightClass="h-11" alt={platformName} eager />
+                    )}
                   </motion.div>
                   <motion.div
                     variants={leftColumnVariants}

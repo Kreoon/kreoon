@@ -1,4 +1,5 @@
 import { ReactNode, Suspense, useState, useEffect } from "react";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
@@ -694,12 +695,7 @@ export function MainLayout({
       <header className="sticky top-0 z-50 flex h-14 items-center border-b border-border bg-background px-3 md:hidden">
         <MobileNav />
         <div className="flex-1 flex justify-center min-w-0">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-sm overflow-hidden flex-shrink-0">
-              <img src="/favicon.png" alt="KREOON" className="h-7 w-7 object-cover" loading="lazy" />
-            </div>
-            <span className="text-sm font-bold truncate">KREOON</span>
-          </div>
+          <KreoonLogo heightClass="h-8" alt="Kreoon" eager />
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <MobileNotificationsBell />

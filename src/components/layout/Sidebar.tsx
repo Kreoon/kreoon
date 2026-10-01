@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { KreoonLogo } from "@/components/ui/kreoon-logo";
 import { useAuthAnalytics } from "@/analytics";
 import {
   LayoutDashboard,
@@ -621,12 +622,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                 </div>
               </div>
             ) : (
-              /* /logo.png tiene el wordmark en blanco sobre transparente: invisible sobre fondo claro.
-                 Se usa el icono + wordmark en tinta, legible en ambos temas. */
-              <div className="flex items-center gap-2.5">
-                <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
-                <span className="text-xl font-semibold tracking-tight text-foreground">kreoon</span>
-              </div>
+              /* Logo 2026: letras negras en tema claro, blancas en oscuro */
+              <KreoonLogo heightClass="h-9" alt="Kreoon" eager />
             )
           )}
           {collapsed && (
