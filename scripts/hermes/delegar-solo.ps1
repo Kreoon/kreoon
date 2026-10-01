@@ -77,4 +77,5 @@ $OutputEncoding = New-Object System.Text.UTF8Encoding $false
 $lista = ($Tareas | ForEach-Object { [string][int]$_ }) -join ' '
 $prefijo = if ($Ensayo) { 'DRY=1 ' } else { '' }
 Write-Host ("Enviando a {0}: tareas {1}{2}" -f $Servidor, $lista, $(if ($Ensayo) { ' (ENSAYO)' } else { '' }))
-$contenido | ssh $Servidor "${prefijo}bash -s -- $lista"
+# tr -d "\r": PowerShell añade un salto de línea de Windows al final del texto enviado; así bash no lo ve.
+$contenido | ssh $Servidor "tr -d '\r' | ${prefijo}bash -s -- $lista"
