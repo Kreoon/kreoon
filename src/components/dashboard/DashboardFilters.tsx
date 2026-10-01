@@ -120,6 +120,7 @@ export function DashboardFilters(props: DashboardFiltersProps) {
               presets={[...MOBILE_PRESETS]}
               numberOfMonths={1}
               align="start"
+              unsetLabel={dateRange ? undefined : "Todo el período"}
             />
             {entitySelects}
           </div>
@@ -144,6 +145,7 @@ export function DashboardFilters(props: DashboardFiltersProps) {
         onChange={onDateRangeChange}
         presets={[...DESKTOP_PRESETS]}
         align="start"
+        unsetLabel={dateRange ? undefined : "Todo el período"}
       />
       {entitySelects}
       {hasActiveFilters && (
