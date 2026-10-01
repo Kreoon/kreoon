@@ -151,7 +151,9 @@ export default {
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)',
   			xl: 'calc(var(--radius) + 4px)',
-  			'2xl': 'calc(var(--radius) + 8px)'
+  			'2xl': 'calc(var(--radius) + 8px)',
+  			card: 'var(--radius-card)',
+  			control: 'var(--radius-control)'
   		},
   		keyframes: {
   			'accordion-down': {
@@ -429,6 +431,8 @@ export default {
   			'kreoon-gradient-dark': 'linear-gradient(135deg, #1a1a24 0%, #0a0a0f 100%)'
   		},
   		boxShadow: {
+  			soft: 'var(--shadow-soft)',
+  			raised: 'var(--shadow-raised)',
   			glow: 'var(--shadow-glow)',
   			violet: 'var(--shadow-violet)',
   			'glow-sm': '0 0 15px hsl(282 100% 36% / 0.2)',

@@ -38,6 +38,20 @@
      usuario tenga el tema oscuro activo. */
   :root,
   .brand-surface {
+    /* Sistema "estudio creativo con superficies suaves": profundidad sutil, color reservado a lo importante. */
+    --shadow-soft: 0 1px 2px hsl(249 23% 17% / 0.05), 0 8px 24px -14px hsl(249 23% 17% / 0.14);
+    --shadow-raised: 0 2px 4px hsl(249 23% 17% / 0.06), 0 18px 40px -18px hsl(249 23% 17% / 0.22);
+    --radius-card: 1.25rem;               /* 20 px: paneles principales */
+    --radius-control: 0.75rem;            /* 12 px: botones, inputs, selects */
+    --text-secondary: 249 14% 36%;        /* #52506A sobre blanco ≈ 7.6:1 */
+    --surface-selected: 256 100% 95%;     /* lavanda #EEE8FF */
+    --surface-hover: 250 30% 96%;
+    --chart-1: 252 100% 64%;              /* violeta  #6D4AFF */
+    --chart-2: 9 78% 58%;                 /* coral    #E8604C */
+    --chart-3: 160 72% 32%;               /* menta oscura #167A55 */
+    --chart-4: 38 92% 38%;                /* ámbar    #BA7A05 */
+    --chart-5: 217 82% 50%;               /* azul     #1769E0 */
+    --chart-6: 292 56% 46%;               /* ciruela  #9A33B5 */
     --background: 36 33% 97%;            /* #FAF8F5 */
     --foreground: 249 23% 17%;            /* #242135 */
 
@@ -144,6 +158,17 @@
 
   /* ===== DARK THEME ===== */
   .dark {
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.3), 0 8px 24px -14px hsl(0 0% 0% / 0.5);
+    --shadow-raised: 0 2px 4px hsl(0 0% 0% / 0.35), 0 18px 40px -18px hsl(0 0% 0% / 0.6);
+    --text-secondary: 250 20% 74%;
+    --surface-selected: 252 30% 24%;
+    --surface-hover: 249 22% 20%;
+    --chart-1: 252 100% 75%;
+    --chart-2: 9 100% 74%;
+    --chart-3: 149 57% 62%;
+    --chart-4: 42 95% 62%;
+    --chart-5: 213 94% 68%;
+    --chart-6: 292 70% 72%;
     --background: 249 25% 11%;
     --foreground: 253 47% 96%;
 

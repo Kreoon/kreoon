@@ -279,3 +279,50 @@
     transparent 70%
   );
 }
+
+
+/* =============================================================================
+   Variante CLARA de los tokens nova (tema por defecto). Antes solo existía la oscura, y las tarjetas
+   que los usan salían casi negras en la plataforma clara. Con `.dark` se conservan los valores originales.
+   Textos semánticos sobre blanco con contraste AA (≥ 4.5:1).
+   ============================================================================= */
+:root:not(.dark) {
+  --nova-bg-void: #FAF8F5;
+  --nova-bg-deep: #FAF8F5;
+  --nova-bg-surface: #FFFFFF;
+  --nova-bg-elevated: #FFFFFF;
+  --nova-bg-hover: #F3EFFB;
+
+  --nova-accent-primary: #6D4AFF;
+  --nova-accent-primary-hover: #5A38E6;
+  --nova-accent-secondary: #167A55;
+  --nova-accent-secondary-hover: #0F6246;
+  --nova-accent-glow: #C6B8FF;
+
+  --nova-text-bright: #242135;
+  --nova-text-primary: #342F4B;
+  --nova-text-secondary: #52506A;
+  --nova-text-muted: #6B6784;
+  --nova-text-disabled: #A29EB8;
+
+  --nova-border-subtle: rgba(36, 33, 53, 0.06);
+  --nova-border-default: rgba(36, 33, 53, 0.1);
+  --nova-border-accent: rgba(109, 74, 255, 0.3);
+  --nova-border-focus: rgba(109, 74, 255, 0.55);
+
+  --nova-success: #0B7A55;
+  --nova-success-bg: rgba(16, 185, 129, 0.12);
+  --nova-warning: #8A5A00;
+  --nova-warning-bg: rgba(245, 158, 11, 0.14);
+  --nova-error: #C42B2B;
+  --nova-error-bg: rgba(239, 68, 68, 0.1);
+  --nova-info: #1D4ED8;
+  --nova-info-bg: rgba(59, 130, 246, 0.1);
+
+  --nova-shadow-sm: 0 1px 2px rgba(36, 33, 53, 0.06);
+  --nova-shadow-md: 0 8px 24px -14px rgba(36, 33, 53, 0.16);
+  --nova-shadow-lg: 0 18px 40px -18px rgba(36, 33, 53, 0.24);
+  --nova-shadow-glow: 0 10px 30px -12px rgba(109, 74, 255, 0.3);
+  --nova-shadow-glow-intense: 0 14px 40px -12px rgba(109, 74, 255, 0.4);
+  --nova-shadow-glow-cyan: 0 10px 30px -12px rgba(22, 122, 85, 0.3);
+}
