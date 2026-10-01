@@ -89,3 +89,36 @@ describe("Home de Kreoon", () => {
     expect(within(container).getAllByText(/Vista ilustrativa/i).length).toBeGreaterThan(0);
   });
 });
+
+describe("Imágenes de la home", () => {
+  it("la imagen LCP es única, con prioridad alta y sin lazy; todas tienen dimensiones explícitas", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <CreatorHome onLogin={() => {}} />
+      </MemoryRouter>,
+    );
+    const imgs = [...container.querySelectorAll("img")].filter((i) => i.getAttribute("src")?.startsWith("/home/"));
+    expect(imgs.length).toBeGreaterThan(8);
+    const priority = imgs.filter((i) => i.getAttribute("fetchpriority") === "high");
+    expect(priority).toHaveLength(1);
+    expect(priority[0].getAttribute("loading")).toBe("eager");
+    for (const img of imgs) {
+      expect(img.getAttribute("width"), img.src).toBeTruthy();
+      expect(img.getAttribute("height"), img.src).toBeTruthy();
+      if (img !== priority[0]) expect(img.getAttribute("loading"), img.src).toBe("lazy");
+    }
+  });
+
+  it("las fotografías informativas rotulan que son ilustrativas y las decorativas llevan alt vacío", () => {
+    const { container } = render(
+      <MemoryRouter>
+        <CreatorHome onLogin={() => {}} />
+      </MemoryRouter>,
+    );
+    const imgs = [...container.querySelectorAll("img")].filter((i) => i.getAttribute("src")?.startsWith("/home/"));
+    for (const img of imgs) {
+      const alt = img.getAttribute("alt") ?? "";
+      if (alt !== "") expect(alt, img.src).toMatch(/Imagen ilustrativa\.$/);
+    }
+  });
+});

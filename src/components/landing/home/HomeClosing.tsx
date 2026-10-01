@@ -21,23 +21,36 @@ export function HomeClosing({ onLogin }: HomeClosingProps) {
             </Button>
           </div>
 
-          <div className="relative mx-auto hidden w-full max-w-xs md:block" aria-hidden>
+          <div className="relative mx-auto hidden w-full max-w-[16rem] md:block" aria-hidden>
             <div
-              className="home-float relative aspect-[4/3] overflow-hidden rounded-3xl bg-gradient-to-br from-background to-[hsl(var(--brand-coral)/0.3)] shadow-lg"
+              className="home-float relative aspect-[3/4] overflow-hidden rounded-3xl bg-gradient-to-br from-background to-[hsl(var(--brand-coral)/0.3)] shadow-raised"
               style={{ ["--r" as string]: "3deg", ["--d" as string]: "0.6s" }}
             >
               <HomePicture
-                name="detalle"
-                widths={[480, 800]}
-                ratio={4 / 3}
-                sizes="320px"
+                name="persona-beauty"
+                widths={[360, 540]}
+                ratio={3 / 4}
+                sizes="256px"
                 alt=""
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </div>
             <div
-              className="home-float absolute -bottom-4 -left-6 rounded-2xl border border-border bg-card px-3 py-2 shadow-md"
-              style={{ ["--r" as string]: "-3deg", ["--d" as string]: "1.8s" }}
+              className="home-float absolute -bottom-5 -left-10 aspect-[3/4] w-24 overflow-hidden rounded-2xl border-4 border-accent bg-card shadow-raised"
+              style={{ ["--r" as string]: "-5deg", ["--d" as string]: "1.8s" }}
+            >
+              <HomePicture
+                name="persona-viajes"
+                widths={[240, 360]}
+                ratio={3 / 4}
+                sizes="96px"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+            <div
+              className="home-float absolute -right-6 top-6 rounded-2xl border border-border bg-card px-3 py-2 shadow-md"
+              style={{ ["--r" as string]: "4deg", ["--d" as string]: "0.9s" }}
             >
               <p className="text-xs font-semibold">Tu espacio creativo</p>
               <p className="text-[10px] text-muted-foreground">Vista ilustrativa</p>
