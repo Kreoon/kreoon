@@ -176,7 +176,7 @@ export function CreatorSignupForm(props: CreatorSignupFormProps) {
         <ConsentBlock documents={documents} checked={consented} onCheckedChange={onConsentChange} disabled={busy} />
         {touched && !consented ? (
           <p className="-mt-2 text-xs text-destructive" role="alert">
-            Para crear tu cuenta necesitas aceptar estos documentos.
+            Para crear tu cuenta necesitas aceptar las dos casillas.
           </p>
         ) : null}
 

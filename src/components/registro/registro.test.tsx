@@ -74,6 +74,7 @@ describe("CreatorSignupForm", () => {
     const onSubmit = vi.fn();
     render(<Harness onSubmit={onSubmit} />);
     fireEvent.click(document.getElementById("creator-consent")!);
+    fireEvent.click(document.getElementById("creator-consent-privacy")!);
     fill("A", "no-es-correo", "corta");
     fireEvent.click(screen.getByRole("button", { name: "Crear mi cuenta" }));
     expect(onSubmit).not.toHaveBeenCalled();
@@ -86,6 +87,7 @@ describe("CreatorSignupForm", () => {
     const onGoogle = vi.fn();
     render(<Harness onSubmit={onSubmit} onGoogle={onGoogle} />);
     fireEvent.click(document.getElementById("creator-consent")!);
+    fireEvent.click(document.getElementById("creator-consent-privacy")!);
     fill("  Ana Creadora ", " ana@test.co ", "clave-segura-123");
     fireEvent.click(screen.getByRole("button", { name: "Crear mi cuenta" }));
     expect(onSubmit).toHaveBeenCalledWith({ name: "Ana Creadora", email: "ana@test.co", password: "clave-segura-123" });
@@ -102,12 +104,24 @@ describe("CreatorSignupForm", () => {
     expect(screen.getByRole("button", { name: "Ocultar contraseña" }).getAttribute("aria-pressed")).toBe("true");
   });
 
-  it("la casilla de consentimiento nunca viene premarcada y enlaza cada documento con su versión", () => {
+  it("las dos casillas nunca vienen premarcadas y «Leer los términos» enlaza cada documento con su versión", () => {
     render(<Harness />);
     expect((document.getElementById("creator-consent") as HTMLElement).getAttribute("data-state")).toBe("unchecked");
+    expect((document.getElementById("creator-consent-privacy") as HTMLElement).getAttribute("data-state")).toBe("unchecked");
+    expect((screen.getByRole("link", { name: "Leer la política" }) as HTMLAnchorElement).getAttribute("href")).toBe("/privacy");
+    fireEvent.click(screen.getByRole("button", { name: "Leer los términos" }));
     const link = screen.getByRole("link", { name: "Términos Generales" }) as HTMLAnchorElement;
     expect(link.getAttribute("href")).toBe("/legal/general_terms");
     expect(link.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("con una sola casilla marcada no deja crear la cuenta", () => {
+    const onSubmit = vi.fn();
+    render(<Harness onSubmit={onSubmit} />);
+    fireEvent.click(document.getElementById("creator-consent")!);
+    fill("Ana Creadora", "ana@test.co", "clave-segura-123");
+    fireEvent.click(screen.getByRole("button", { name: "Crear mi cuenta" }));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
 
