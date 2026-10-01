@@ -627,13 +627,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             )
           )}
           {collapsed && (
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-control overflow-hidden bg-accent">
-              <img
-                src={isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? effectiveLogoUrl : '/favicon.png'}
-                alt={effectivePlatformName}
-                className="h-8 w-8 object-contain"
-              />
-            </div>
+            <img
+              src={isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? effectiveLogoUrl : '/favicon.png'}
+              alt={effectivePlatformName}
+              className="h-10 w-10 rounded-xl object-cover shadow-sm"
+            />
           )}
         </div>
 
