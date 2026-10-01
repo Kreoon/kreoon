@@ -630,7 +630,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             <img
               src={isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? effectiveLogoUrl : '/favicon.png'}
               alt={effectivePlatformName}
-              className="h-10 w-10 rounded-xl object-cover shadow-sm"
+              className="h-10 w-10 object-contain"
             />
           )}
         </div>
