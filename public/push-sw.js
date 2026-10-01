@@ -113,3 +113,18 @@ self.addEventListener('message', (event) => {
 // We intentionally do NOT call skipWaiting() or clients.claim() to avoid unexpected
 // controller takeovers that can feel like a full reload.
 
+
+// Privacidad (2026-10-01): el SW anterior cacheaba respuestas autenticadas de Supabase
+// (`supabase-rest-v2`: REST por URL, sin usuario; `supabase-storage-v1`: URLs firmadas).
+// Al activarse este SW se borran; la app también las borra al arrancar y al cerrar sesión.
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((names) =>
+      Promise.all(
+        names
+          .filter((name) => /supabase-(rest|functions)|supabase-storage-v1|supabase-api/i.test(name))
+          .map((name) => caches.delete(name))
+      )
+    ).catch(() => undefined)
+  );
+});

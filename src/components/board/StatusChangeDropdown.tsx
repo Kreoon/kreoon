@@ -3,6 +3,7 @@ import { AlertTriangle, Check, Clapperboard, Scissors, Send, ThumbsUp } from "lu
 import { Button } from "@/components/ui/button";
 import type { AppRole, ContentStatus } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { normalizeRole } from "@/lib/roles";
 
 /**
  * Acciones rápidas por rol (p. ej. «Iniciar grabación» para el creador asignado).
@@ -36,11 +37,13 @@ export function hasQuickActions(
   isAssignedCreator: boolean,
   isAssignedEditor: boolean,
 ): boolean {
-  if (userRole === "creator" && isAssignedCreator) return currentStatus === "assigned" || currentStatus === "recording";
-  if (userRole === "editor" && isAssignedEditor) {
+  // El tablero pasa el rol activo crudo: `content_creator` (canónico) o `creator` (legado) son el mismo.
+  const role = normalizeRole(userRole);
+  if (role === "content_creator" && isAssignedCreator) return currentStatus === "assigned" || currentStatus === "recording";
+  if (role === "editor" && isAssignedEditor) {
     return ["recorded", "editing", "issue", "corrected"].includes(currentStatus);
   }
-  if (userRole === "client") return currentStatus === "delivered" || currentStatus === "corrected";
+  if (role === "client") return currentStatus === "delivered" || currentStatus === "corrected";
   return false;
 }
 
@@ -87,9 +90,10 @@ export const QuickStatusButtons = memo(function QuickStatusButtons({
   );
 
   let content: React.ReactNode = null;
+  const role = normalizeRole(userRole);
 
-  // Creador asignado
-  if (userRole === "creator" && isAssignedCreator) {
+  // Creador asignado (acepta `content_creator` y el legado `creator`)
+  if (role === "content_creator" && isAssignedCreator) {
     if (currentStatus === "assigned") content = btn("recording", "Iniciar grabación", Clapperboard);
     else if (currentStatus === "recording") {
       content = (
@@ -102,7 +106,7 @@ export const QuickStatusButtons = memo(function QuickStatusButtons({
   }
 
   // Editor asignado
-  if (!content && userRole === "editor" && isAssignedEditor) {
+  if (!content && role === "editor" && isAssignedEditor) {
     if (currentStatus === "recorded") content = btn("editing", "Iniciar edición", Scissors);
     else if (currentStatus === "editing") {
       content = (
@@ -122,7 +126,7 @@ export const QuickStatusButtons = memo(function QuickStatusButtons({
   }
 
   // Cliente
-  if (!content && userRole === "client" && (currentStatus === "delivered" || currentStatus === "corrected")) {
+  if (!content && role === "client" && (currentStatus === "delivered" || currentStatus === "corrected")) {
     content = (
       <>
         {btn("approved", "Aprobar", ThumbsUp)}

@@ -7,7 +7,7 @@ import { useOrgOwner } from '@/hooks/useOrgOwner';
 import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
 import { getPermissionGroup, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
-import { getDashboardPathForRoles } from '@/lib/routing/postAuth';
+import { buildAuthPath, getDashboardPathForRoles } from '@/lib/routing/postAuth';
 import { isBlockedForProduction, isProductionOnlyTalent } from '@/lib/creatorScope';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -160,7 +160,8 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   }
 
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    // Conserva el destino: tras iniciar sesión, Auth vuelve aquí (?volver= validado, sin open redirect).
+    return <Navigate to={buildAuthPath(`${location.pathname}${location.search}${location.hash}`)} replace />;
   }
 
   // ─── STUDENT GUARD ───────────────────────────────────────────────────

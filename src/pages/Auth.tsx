@@ -9,9 +9,8 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { useBranding } from "@/contexts/BrandingContext";
 import { supabase } from "@/integrations/supabase/client";
-import { sanitizeReturnTo } from "@/lib/registration/returnTo";
 import { REGISTRATION_BASE } from "@/lib/registration/paths";
-import { getPostAuthDestination } from "@/lib/routing/postAuth";
+import { getPostAuthDestination, readReturnTo } from "@/lib/routing/postAuth";
 
 export type AuthView = "login" | "forgot-password";
 
@@ -34,8 +33,8 @@ export default function Auth() {
   const { user, loading: authLoading, rolesLoaded, roles, activeRole, profile } = useAuth();
 
   const tabParam = searchParams.get("tab");
-  // Destino de retorno: solo rutas internas validadas (evita open redirect)
-  const nextParam = sanitizeReturnTo(searchParams.get("next"));
+  // Destino de retorno (?volver=, o el heredado ?next=): solo rutas internas validadas (evita open redirect)
+  const nextParam = readReturnTo(searchParams);
 
   const [view, setView] = useState<AuthView>(() => getInitialView(tabParam));
   const [direction, setDirection] = useState(0);

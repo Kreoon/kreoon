@@ -68,3 +68,21 @@ export function getPostAuthDestination(i: PostAuthInput): string {
   // Identidad sin membresía: se la lleva a confirmar su alta como creador (nunca a elegir marca).
   return "/registro";
 }
+
+/**
+ * Parámetro de retorno a la pantalla de acceso. `volver` es el nombre canónico; `next` se sigue
+ * aceptando para enlaces anteriores. Siempre se valida con sanitizeReturnTo (solo rutas internas
+ * relativas: nada de `https://…`, `//…`, `javascript:` ni rutas de acceso/registro).
+ */
+export const RETURN_TO_PARAM = "volver";
+
+export function readReturnTo(params: URLSearchParams): string | null {
+  return sanitizeReturnTo(params.get(RETURN_TO_PARAM)) ?? sanitizeReturnTo(params.get("next"));
+}
+
+/** `/auth?volver=<ruta>` si la ruta es un destino interno válido; si no, `/auth`. */
+export function buildAuthPath(returnTo?: string | null): string {
+  const safe = sanitizeReturnTo(returnTo);
+  if (!safe || safe === "/") return "/auth";
+  return `/auth?${RETURN_TO_PARAM}=${encodeURIComponent(safe)}`;
+}

@@ -7,6 +7,8 @@ import { AlertCircle, CheckCircle2, Loader2, ArrowRight, ArrowLeft, ChevronDown 
 import { useOnboardingGate, ProfileData, City, Country } from '@/hooks/useOnboardingGate';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { scopedGet, scopedRemove, scopedSet } from '@/lib/storage/scopedStorage';
 import { OnboardingShell, TALENT_STEPS, CLIENT_STEPS } from './OnboardingShell';
 
 // ─── Schema ────────────────────────────────────────────────────────────────────
@@ -265,7 +267,22 @@ function FieldError({ message }: { message?: string }) {
   );
 }
 
-const STORAGE_KEY = 'kreoon_onboarding_quiz';
+/**
+ * Borrador del cuestionario: en sessionStorage (muere con la pestaña), con clave por usuario y SIN
+ * datos de identificación (documento, fecha de nacimiento, dirección). Antes iba completo a una clave
+ * global de localStorage que podía leer la siguiente persona del equipo.
+ */
+const DRAFT_BASE = 'onboarding_quiz';
+const LEGACY_STORAGE_KEY = 'kreoon_onboarding_quiz';
+const DRAFT_EXCLUDED_FIELDS = ['document_type', 'document_number', 'date_of_birth', 'address'] as const;
+
+type QuizDraft = { step: number; values?: Partial<ProfileFormData> };
+
+function stripIdentityFields(values: Partial<ProfileFormData>): Partial<ProfileFormData> {
+  const copy: Record<string, unknown> = { ...values };
+  for (const f of DRAFT_EXCLUDED_FIELDS) delete copy[f];
+  return copy as Partial<ProfileFormData>;
+}
 
 // ─── Componente principal ──────────────────────────────────────────────────────
 export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow = true }: NovaProfileDataStepProps) {
@@ -281,14 +298,13 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
     checkUsernameAvailable,
     isSavingProfile,
   } = useOnboardingGate();
+  const { user } = useAuth();
+  const draftScope = { userId: user?.id };
 
-  // Restaurar paso del quiz desde localStorage si hay progreso guardado
-  const [quizStep, setQuizStep] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) return JSON.parse(saved).step ?? 0;
-    } catch {}
-    return 0;
+  // Restaurar paso del quiz desde el borrador de la sesión (si hay progreso guardado)
+  const [quizStep, setQuizStep] = useState<number>(() => {
+    try { localStorage.removeItem(LEGACY_STORAGE_KEY); } catch { /* almacenamiento no disponible */ }
+    return scopedGet<QuizDraft>(DRAFT_BASE, { userId: user?.id }, 'session')?.step ?? 0;
   });
   const [direction, setDirection] = useState(1);
   const [availableCities, setAvailableCities] = useState<City[]>([]);
@@ -362,14 +378,13 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
     return () => clearTimeout(t);
   }, [usernameValue, existingProfileData.username, checkUsernameAvailable]);
 
-  // Restaurar valores del formulario desde localStorage al montar
+  // Restaurar valores del formulario desde el borrador de la sesión al montar
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return;
-      const parsed = JSON.parse(saved) as { step: number; values?: Partial<ProfileFormData> };
-      if (!parsed.values) return;
-      reset(parsed.values as ProfileFormData, { keepDefaultValues: false });
+      const parsed = scopedGet<QuizDraft>(DRAFT_BASE, draftScope, 'session');
+      if (!parsed?.values) return;
+      // Los campos de identificación nunca se guardan: se completan con los datos existentes.
+      reset({ ...watch(), ...stripIdentityFields(parsed.values) } as ProfileFormData, { keepDefaultValues: false });
       // Restaurar estado del selector de teléfono
       if (parsed.values.phone) {
         const match = countries.find(c => parsed.values!.phone!.startsWith(c.dial_code));
@@ -381,13 +396,12 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
     } catch {}
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Guardar progreso en localStorage después de avanzar cada paso
+  // Guardar progreso (sin datos de identificación) después de avanzar cada paso
+  const userId = user?.id;
   const saveProgress = useCallback((nextStep: number) => {
-    try {
-      const values = watch() as Partial<ProfileFormData>;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ step: nextStep, values }));
-    } catch {}
-  }, [watch]);
+    const values = stripIdentityFields(watch() as Partial<ProfileFormData>);
+    scopedSet(DRAFT_BASE, { userId }, { step: nextStep, values } satisfies QuizDraft, 'session');
+  }, [watch, userId]);
 
   // Avanzar al siguiente paso del quiz
   const handleNext = useCallback(async () => {
@@ -448,7 +462,7 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
           };
           await saveProfileData(payload);
           // Limpiar progreso guardado al completar exitosamente
-          try { localStorage.removeItem(STORAGE_KEY); } catch {}
+          scopedRemove(DRAFT_BASE, { userId }, 'session');
           toast.success('¡Perfil guardado!');
           onComplete();
         } catch (err: unknown) {
@@ -463,7 +477,7 @@ export function NovaProfileDataStep({ onComplete, onBack, onLogout, isTalentFlow
         }
       })();
     }
-  }, [quizStep, trigger, watch, setValue, usernameStatus, dialCode, localPhone, handleSubmit, saveProfileData, saveProgress, onComplete, isTalentFlow]);
+  }, [quizStep, trigger, watch, setValue, usernameStatus, dialCode, localPhone, handleSubmit, saveProfileData, saveProgress, onComplete, isTalentFlow, userId]);
 
   const handlePrev = useCallback(() => {
     if (quizStep === 0) {

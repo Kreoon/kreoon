@@ -112,15 +112,23 @@ export default defineConfig(({ mode }) => ({
       // We'll prompt the user instead (prevents disruptive full-page refreshes).
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'favicon.png', 'robots.txt'],
+      // Único manifest de la app: el plugin lo genera e inyecta su <link rel="manifest"> en index.html
+      // (se retiraron el enlace manual y public/manifest.webmanifest, que duplicaban y servían lang "en").
       manifest: {
+        // `id` fijo = identidad de la app instalada. Antes no existía y se derivaba de start_url ('/');
+        // se fija en '/' para que cambiar start_url no cree una "app distinta" en quien ya la instaló.
+        id: '/',
         name: 'KREOON',
         short_name: 'KREOON',
         description: 'El sistema operativo creativo. Gestiona creadores, contenido, proyectos y resultados.',
+        lang: 'es',
+        dir: 'ltr',
         theme_color: '#6D4AFF',
         background_color: '#FAF8F5',
         display: 'standalone',
-        orientation: 'portrait-primary',
-        start_url: '/',
+        // Sin `orientation`: no se fuerza vertical (tablets, teclado externo, vídeo en horizontal).
+        // Entrada de la app instalada: /inicio decide destino por sesión/rol (sin sesión → /auth).
+        start_url: '/inicio?source=pwa',
         scope: '/',
         icons: [
           {
@@ -159,7 +167,8 @@ export default defineConfig(({ mode }) => ({
         navigationPreload: false,
         // Force cache invalidation by using a unique cache name prefix
         // v6: Added Creator layout + migrated creator→content_creator (2026-04-06)
-        cacheId: 'kreoon-v6',
+        // v7: privacidad (2026-10-01) — sin caché de REST autenticado ni de URLs firmadas de Storage
+        cacheId: 'kreoon-v7',
         // Clean up old caches (including v2 bloated ones)
         cleanupOutdatedCaches: true,
         // Fase 2.5 Frente C: generateSW no permite listeners custom directos (push/notificationclick),
@@ -190,29 +199,17 @@ export default defineConfig(({ mode }) => ({
               }
             }
           },
+          // Supabase REST (/rest/v1/) NO tiene regla a propósito: son respuestas autenticadas con
+          // datos de la persona y la caché de Workbox va por URL, sin usuario (la regla anterior
+          // `supabase-rest-v2` podía servir datos de una sesión a otra). Sin ruta, el SW no intercepta.
+          // Lo mismo para Storage firmado (/object/sign/) y autenticado (/object/authenticated/):
+          // URLs con token que caducan y archivos privados → solo red.
           {
-            // Supabase REST (solo GET). NetworkFirst: datos actuales siempre; el caché solo sirve sin red.
-            // Antes StaleWhileRevalidate mostraba respuestas de hasta 1 h (estados, permisos, registro cerrado…).
-            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-rest-v2',
-              networkTimeoutSeconds: 6,
-              expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 60 * 60 // 1 hour
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Supabase Storage (avatars, uploads) – rarely changes, cache aggressively
-            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/.*/i,
+            // Supabase Storage PÚBLICO (avatares, portadas, miniaturas públicas): CacheFirst.
+            urlPattern: /^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/(?:object|render\/image)\/public\//i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'supabase-storage-v1',
+              cacheName: 'supabase-storage-public-v2',
               expiration: {
                 maxEntries: 150,
                 maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days

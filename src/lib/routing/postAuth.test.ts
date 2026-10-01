@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPostAuthDestination, getDashboardPathForRoles } from "./postAuth";
+import { getPostAuthDestination, getDashboardPathForRoles, buildAuthPath, readReturnTo } from "./postAuth";
 
 describe("getPostAuthDestination", () => {
   it("respeta un next interno válido", () => {
@@ -46,5 +46,26 @@ describe("getPostAuthDestination", () => {
     expect(getPostAuthDestination({ roles: [], isBrandMember: true })).toBe("/marketplace");
     expect(getPostAuthDestination({ roles: [], hasCreatorProfile: true })).toBe("/marketplace");
     expect(getPostAuthDestination({ roles: [] })).toBe("/registro");
+  });
+});
+
+describe("?volver= (retorno tras iniciar sesión)", () => {
+  it("construye /auth?volver= con la ruta interna", () => {
+    expect(buildAuthPath("/board?item=1")).toBe("/auth?volver=%2Fboard%3Fitem%3D1");
+    expect(buildAuthPath("/")).toBe("/auth");
+    expect(buildAuthPath(null)).toBe("/auth");
+  });
+
+  it("rechaza destinos externos o de acceso (sin open redirect)", () => {
+    expect(buildAuthPath("https://evil.com")).toBe("/auth");
+    expect(buildAuthPath("//evil.com")).toBe("/auth");
+    expect(readReturnTo(new URLSearchParams("volver=https://evil.com"))).toBeNull();
+    expect(readReturnTo(new URLSearchParams("volver=%2F%2Fevil.com"))).toBeNull();
+    expect(readReturnTo(new URLSearchParams("volver=/auth"))).toBeNull();
+  });
+
+  it("lee volver (y el heredado next)", () => {
+    expect(readReturnTo(new URLSearchParams("volver=%2Fboard"))).toBe("/board");
+    expect(readReturnTo(new URLSearchParams("next=/settings"))).toBe("/settings");
   });
 });

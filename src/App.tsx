@@ -1,12 +1,11 @@
-import { Suspense, lazy, ComponentType } from "react";
+import { Suspense, lazy, ComponentType, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   QueryClient,
   QueryClientProvider,
-  dehydrate,
-  hydrate,
+  useQueryClient,
 } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
@@ -43,8 +42,17 @@ import { PageLoader } from "./components/PageLoader";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { MainLayout } from "./components/layout/MainLayout";
 import { MarketplaceLayout } from "./components/layout/MarketplacePublicLayout";
-import { ProfileLayout } from "./components/profile-viewer/ProfileLayout";
 import { AdminOnlyFeature } from "./components/common/AdminOnlyFeature";
+import {
+  CatchAllRoute,
+  LegacyCreatorProfileRoute,
+} from "./components/routing/PublicProfileRoutes";
+import { getPostAuthDestination } from "@/lib/routing/postAuth";
+import {
+  attachScopedQueryPersistence,
+  removeLegacyQueryCache,
+} from "@/lib/storage/queryCachePersistence";
+import { purgeAuthenticatedCaches } from "@/lib/storage/scopedStorage";
 
 // Helper: detect chunk/module load failures (stale hashes after deploy)
 function isChunkLoadError(error: unknown): boolean {
@@ -151,9 +159,6 @@ const OrgPortfolioPage = lazyWithRetry(
 );
 const OrgContentShowcase = lazyWithRetry(
   () => import("./pages/OrgContentShowcase"),
-);
-const CreatorProfilePage_Marketplace = lazyWithRetry(
-  () => import("./components/marketplace/profile/CreatorProfilePage"),
 );
 const HiringWizardPage = lazyWithRetry(
   () => import("./pages/HiringWizardPage"),
@@ -407,50 +412,47 @@ const queryClient = new QueryClient({
   },
 });
 
-// ── localStorage persistence: cache survives page refresh / tab close ──
-const RQ_CACHE_KEY = "kreoon-rq-v1";
-const RQ_CACHE_MAX_AGE = 60 * 60 * 1000; // 1 hour – matches gcTime
+// ── Caché persistida de React Query: SOLO catálogo no sensible y con ámbito usuario+organización ──
+// (ver src/lib/storage/queryCachePersistence.ts). La clave global heredada `kreoon-rq-v1` se borra
+// al arrancar, igual que las cachés del service worker antiguo que guardaban respuestas autenticadas.
+removeLegacyQueryCache();
+void purgeAuthenticatedCaches();
 
-// Restore on startup
-try {
-  const raw = localStorage.getItem(RQ_CACHE_KEY);
-  if (raw) {
-    const { ts, state } = JSON.parse(raw);
-    if (Date.now() - ts < RQ_CACHE_MAX_AGE) {
-      hydrate(queryClient, state);
-    } else {
-      localStorage.removeItem(RQ_CACHE_KEY);
-    }
-  }
-} catch {
-  localStorage.removeItem(RQ_CACHE_KEY);
+/** Rehidrata/persiste la caché de catálogo solo para la sesión actual (usuario + organización). */
+function ScopedQueryPersistence() {
+  const client = useQueryClient();
+  const { user, profile, loading } = useAuth();
+  const userId = user?.id ?? null;
+  const orgId = profile?.current_organization_id ?? null;
+
+  useEffect(() => {
+    if (loading || !userId) return;
+    return attachScopedQueryPersistence(client, userId, orgId);
+  }, [client, loading, userId, orgId]);
+
+  return null;
 }
 
-// Persist on changes (debounced 3s to avoid thrashing)
-let _rqPersistTimer: ReturnType<typeof setTimeout> | null = null;
-queryClient.getQueryCache().subscribe(() => {
-  if (_rqPersistTimer) clearTimeout(_rqPersistTimer);
-  _rqPersistTimer = setTimeout(() => {
-    try {
-      const state = dehydrate(queryClient, {
-        shouldDehydrateQuery: (q) => {
-          if (q.state.status !== "success") return false;
-          // Skip large datasets (content lists 240+ items) to keep cache small
-          const d = q.state.data;
-          if (Array.isArray(d) && d.length > 100) return false;
-          return true;
-        },
-      });
-      const payload = JSON.stringify({ ts: Date.now(), state });
-      // Safety: don't exceed 4 MB in localStorage
-      if (payload.length < 4 * 1024 * 1024) {
-        localStorage.setItem(RQ_CACHE_KEY, payload);
-      }
-    } catch {
-      /* localStorage full – silently ignore */
-    }
-  }, 3000);
-});
+/**
+ * Entrada de la app instalada (`start_url: /inicio?source=pwa`): con sesión va al inicio del rol
+ * (postAuth.ts); sin sesión, a la pantalla de acceso — nunca a la landing.
+ */
+function InicioRoute() {
+  const { user, loading, rolesLoaded, roles, activeRole } = useAuth();
+
+  if (loading || (user && !rolesLoaded)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background" role="status" aria-label="Cargando">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!user) return <Navigate to="/auth" replace />;
+  // Sin roles, /auth ya resuelve el destino (marca, perfil de talento o completar el alta).
+  if (roles.length === 0) return <Navigate to="/auth" replace />;
+  return <Navigate to={getPostAuthDestination({ roles, activeRole })} replace />;
+}
 
 // Component to redirect /profile to settings profile
 function ProfileRedirect() {
@@ -513,16 +515,8 @@ function AppRoutes() {
             </TalentGate>
           }
         />
-        <Route
-          path="/marketplace/creator/:id"
-          element={
-            <TalentGate>
-              <ProfileLayout>
-                <CreatorProfilePage_Marketplace />
-              </ProfileLayout>
-            </TalentGate>
-          }
-        />
+        {/* Enlace heredado: redirige a la URL pública única /p/:slug (sin slug, muestra el perfil igual) */}
+        <Route path="/marketplace/creator/:id" element={<LegacyCreatorProfileRoute />} />
         <Route
           path="/marketplace/org/:slug"
           element={
@@ -642,8 +636,10 @@ function AppRoutes() {
         />
         <Route path="/company/:username" element={<CompanyProfilePage />} />
         <Route path="/profile" element={<ProfileRedirect />} />
+        {/* URL pública ÚNICA del perfil de creador. /@slug se redirige desde la ruta comodín */}
         <Route path="/p/:username" element={<PublicCreatorPage />} />
-        <Route path="/@:username" element={<PublicCreatorPage />} />
+        {/* Entrada de la app instalada (manifest start_url) */}
+        <Route path="/inicio" element={<InicioRoute />} />
         <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
@@ -1291,7 +1287,7 @@ function AppRoutes() {
         <Route path="/wallet" element={<Navigate to="/creator-dashboard" replace />} />
         <Route path="/wallet/*" element={<Navigate to="/creator-dashboard" replace />} />
         <Route path="/admin/wallets" element={<Navigate to="/admin/payouts" replace />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<CatchAllRoute fallback={<NotFound />} />} />
       </Routes>
     </Suspense>
   );
@@ -1306,6 +1302,7 @@ function AppContent() {
         <BrandingProvider>
           <AuthProvider>
             <AuthStoreBridge />
+            <ScopedQueryPersistence />
             <OnboardingGateProvider>
               <RoleLegalGateProvider>
                 <CurrencyProvider>

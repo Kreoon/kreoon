@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { getPublicProfileUrl } from '@/lib/routing/publicProfile';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -81,7 +82,8 @@ export function ProfileShareDialog({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = `https://kreoon.com/@${profile.slug}`;
+  // URL pública única del perfil (decisión 2026-10-01): /p/:slug
+  const shareUrl = getPublicProfileUrl(profile.slug);
   const shareText = `${profile.display_name}${profile.primary_role ? ` - ${profile.primary_role}` : ''} en Kreoon`;
 
   const handleCopyLink = async () => {
