@@ -277,7 +277,7 @@ function CreatorUnifiedProfile({ roleArea }: { roleArea: RoleArea }) {
       {showCompletion && <ProfileCompletionCard onGoToTab={setActiveTab} />}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="flex w-full h-auto p-1 overflow-x-auto">
+        <TabsList className="flex w-full h-auto justify-start p-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {visibleTabs.map(tab => (
             <TabsTrigger
               key={tab.value}
