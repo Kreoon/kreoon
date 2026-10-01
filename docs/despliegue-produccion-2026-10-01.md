@@ -17,8 +17,7 @@ quedó bloqueado por el control de permisos de la sesión de Claude, así que es
 > en la carpeta (`20261001140000_endurecer_consentimientos_legados.sql`, de la sesión de prototipos).
 > Aplicar cada archivo pegándolo en el SQL Editor de Supabase.
 
-1. **Fase 7** — `supabase/migrations/20260930170000_profiles_guard_current_organization.sql`.
-   No depende del frontend. Verificado: el resto de la función es idéntico a la versión viva.
+1. ~~**Fase 7**~~ — **aplicada y verificada** (2026-10-01, tarde).
 2. **Fase 3** — `supabase/migrations/20260930130000_creator_onboarding_and_unpublished_profiles.sql`.
    Ya trae `publish_profile_blocks` fusionada con la versión de borradores de estilo (no hay que re-aplicar
    nada después). Efecto: los perfiles de creador NUEVOS nacen sin publicar hasta que la persona publica.
