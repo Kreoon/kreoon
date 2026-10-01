@@ -6,6 +6,8 @@ export type BoardView = 'kanban' | 'list' | 'calendar' | 'table';
 interface BoardViewSwitcherProps {
   currentView: BoardView;
   onViewChange: (view: BoardView) => void;
+  /** Subconjunto de vistas a ofrecer (por defecto todas) */
+  views?: BoardView[];
 }
 
 const VIEWS: { value: BoardView; label: string; icon: typeof LayoutGrid }[] = [
@@ -16,10 +18,10 @@ const VIEWS: { value: BoardView; label: string; icon: typeof LayoutGrid }[] = [
 ];
 
 /** Selector de vista (Kanban / Lista / Calendario / Tabla). Conserva búsqueda y filtros: solo cambia la presentación. */
-export function BoardViewSwitcher({ currentView, onViewChange }: BoardViewSwitcherProps) {
+export function BoardViewSwitcher({ currentView, onViewChange, views }: BoardViewSwitcherProps) {
   return (
     <div role="group" aria-label="Tipo de vista" className="inline-flex items-center gap-0.5 rounded-[var(--radius-control,0.75rem)] bg-muted p-1">
-      {VIEWS.map(view => {
+      {VIEWS.filter(v => !views || views.includes(v.value)).map(view => {
         const Icon = view.icon;
         const active = currentView === view.value;
         return (

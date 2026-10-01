@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { LazyRichTextEditor as RichTextEditor } from '@/components/ui/lazy-rich-text-editor';
 import { RichTextViewer } from '@/components/scripts/RichTextViewer';
+import { SceneScriptView } from '../SceneScriptView';
 import { TeleprompterMode } from '@/components/content/TeleprompterMode';
 import { CommentsSection } from '@/components/content/CommentsSection';
 import { SectionCard } from '../../components/SectionCard';
@@ -92,7 +93,12 @@ export function ScriptSubTab({
               features={editorFeatures}
             />
           ) : hasScript ? (
-            <RichTextViewer content={formData.script || ''} maxHeight="" />
+            isReadOnly ? (
+              // Quien graba necesita el guión por escenas, no el documento completo
+              <SceneScriptView html={formData.script || ''} />
+            ) : (
+              <RichTextViewer content={formData.script || ''} maxHeight="" />
+            )
           
           
           ) : (
@@ -108,7 +114,7 @@ export function ScriptSubTab({
       </SectionCard>
 
       {/* AI Chat for Script Refinement - Available for clients, strategists, and admins */}
-      {hasScript && content?.id && (
+      {hasScript && content?.id && !isReadOnly && (
         <SectionCard title="Refinar Guión con IA" iconEmoji="💬" icon={MessageSquare}>
           <ScriptAIChat
             contentId={content.id}

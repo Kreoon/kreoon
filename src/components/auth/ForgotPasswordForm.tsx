@@ -125,7 +125,7 @@ export function ForgotPasswordForm({ onBack, onSuccess }: ForgotPasswordFormProp
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-kreoon-purple-500/20 text-kreoon-purple-400"
+          className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-kreoon-purple-500/20 text-primary"
         >
           <Mail className="h-8 w-8" />
         </motion.div>
@@ -135,13 +135,13 @@ export function ForgotPasswordForm({ onBack, onSuccess }: ForgotPasswordFormProp
           transition={{ delay: 0.15 }}
           className="space-y-2"
         >
-          <h2 className="text-2xl font-bold text-kreoon-text-primary">
+          <h2 className="text-2xl font-bold text-foreground">
             ¡Revisa tu correo!
           </h2>
-          <p className="text-kreoon-text-primary">
+          <p className="text-foreground">
             Enviamos las instrucciones a <strong>{email}</strong>
           </p>
-          <p className="text-sm text-kreoon-text-secondary">
+          <p className="text-sm text-muted-foreground">
             Si no lo ves, revisa tu carpeta de spam
           </p>
         </motion.div>
@@ -159,7 +159,7 @@ export function ForgotPasswordForm({ onBack, onSuccess }: ForgotPasswordFormProp
             type="button"
             onClick={handleResend}
             disabled={cooldown > 0}
-            className="text-sm text-kreoon-purple-400 hover:text-kreoon-purple-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="text-sm text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {cooldown > 0
               ? `Reenviar en ${cooldown}s`
@@ -173,14 +173,14 @@ export function ForgotPasswordForm({ onBack, onSuccess }: ForgotPasswordFormProp
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex flex-col items-center gap-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-kreoon-purple-500/20 text-kreoon-purple-400">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-kreoon-purple-500/20 text-primary">
           <Lock className="h-7 w-7" />
         </div>
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold text-kreoon-text-primary">
+          <h2 className="text-2xl font-bold text-foreground">
             ¿Olvidaste tu contraseña?
           </h2>
-          <p className="text-sm text-kreoon-text-secondary">
+          <p className="text-sm text-muted-foreground">
             No te preocupes, te enviaremos instrucciones para recuperarla
           </p>
         </div>
@@ -219,7 +219,7 @@ export function ForgotPasswordForm({ onBack, onSuccess }: ForgotPasswordFormProp
       <button
         type="button"
         onClick={onBack}
-        className="w-full text-center text-sm text-kreoon-purple-400 hover:text-kreoon-purple-300 transition-colors"
+        className="w-full text-center text-sm text-primary hover:text-primary/80 transition-colors"
       >
         Volver al login
       </button>

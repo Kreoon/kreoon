@@ -291,7 +291,7 @@ function TestimonialsBlockComponent({ block, isEditing, isSelected, onUpdate, us
         initialContent={editingContent}
         onSave={handleSave}
         title={editingField === 'title' ? 'Editar titulo' : 'Editar testimonio'}
-        placeholder={editingField === 'title' ? 'Titulo de la seccion...' : 'Escribe el testimonio...'}
+        placeholder={editingField === 'title' ? 'Título de la sección...' : 'Escribe el testimonio...'}
         mode={editingField === 'text' ? 'block' : 'inline'}
       />
 

@@ -191,12 +191,13 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // Supabase REST API reads (GET only – POST/PATCH are ignored by Workbox)
-            // StaleWhileRevalidate: serve cached data INSTANTLY, refresh in background
+            // Supabase REST (solo GET). NetworkFirst: datos actuales siempre; el caché solo sirve sin red.
+            // Antes StaleWhileRevalidate mostraba respuestas de hasta 1 h (estados, permisos, registro cerrado…).
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-rest-v1',
+              cacheName: 'supabase-rest-v2',
+              networkTimeoutSeconds: 6,
               expiration: {
                 maxEntries: 200,
                 maxAgeSeconds: 60 * 60 // 1 hour

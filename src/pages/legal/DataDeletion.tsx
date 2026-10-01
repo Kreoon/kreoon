@@ -75,7 +75,7 @@ export default function DataDeletion() {
           </div>
         ) : (
           <>
-            <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground mb-8">
+            <div className="prose max-w-none [--tw-prose-body:hsl(var(--foreground))] [--tw-prose-headings:hsl(var(--foreground))] [--tw-prose-bold:hsl(var(--foreground))] [--tw-prose-links:hsl(var(--primary))] [--tw-prose-bullets:hsl(var(--muted-foreground))] [--tw-prose-counters:hsl(var(--muted-foreground))] [--tw-prose-th-borders:hsl(var(--border))] [--tw-prose-td-borders:hsl(var(--border))] space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground mb-8">
               <h2 className="text-xl font-semibold mt-8">Su derecho a eliminar sus datos</h2>
               <p>
                 De acuerdo con las regulaciones de protección de datos y los requisitos de las plataformas de redes sociales, usted tiene derecho a solicitar la eliminación completa de sus datos de Kreoon.

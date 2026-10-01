@@ -277,7 +277,7 @@ export function generateBlocksFromProfile(data: CreatorDataForBlocks): ProfileBl
         {
           id: 'faq-1',
           question: 'Como es tu proceso de trabajo?',
-          answer: 'Describe aqui tu proceso paso a paso.',
+          answer: 'Describe aquí tu proceso paso a paso.',
         },
         {
           id: 'faq-2',

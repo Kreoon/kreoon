@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Lock, Eye, Video, Link as LinkIcon, ExternalLink } from 'lucide-react';
@@ -33,6 +33,22 @@ interface ScriptsTabContainerProps extends TabProps {
   onProductChange: (productId: string) => void;
 }
 
+/** Campo de salida de cada subpestaña generada (para ocultarla si está vacía y es solo lectura) */
+const OUTPUT_FIELD: Partial<Record<ScriptSubTab, string>> = {
+  director: 'director_output',
+  broll: 'broll_output',
+  marketing: 'marketing_output',
+  captions: 'captions',
+};
+
+function isEmptyOutput(v: unknown): boolean {
+  if (v == null) return true;
+  if (typeof v === 'string') return v.replace(/<[^>]*>/g, '').trim() === '';
+  if (Array.isArray(v)) return v.length === 0;
+  if (typeof v === 'object') return Object.keys(v as object).length === 0;
+  return false;
+}
+
 export function ScriptsTabContainer({
   content,
   formData,
@@ -54,9 +70,14 @@ export function ScriptsTabContainer({
       // Must pass BOTH checks: script permissions AND block visibility
       const hasScriptPermission = scriptPerms.canView(tab.key);
       const isBlockVisible = blockConfig.canViewBlock(blockKey);
-      return hasScriptPermission && isBlockVisible;
+      if (!hasScriptPermission || !isBlockVisible) return false;
+      // Quien solo puede leer no necesita ver pestañas vacías («Sin captions generados»…)
+      const outputField = OUTPUT_FIELD[tab.key];
+      const readOnly = scriptPerms.isReadOnly(tab.key) || blockConfig.isBlockLocked(blockKey) || !blockConfig.canEditBlock(blockKey);
+      if (outputField && readOnly && isEmptyOutput((formData as unknown as Record<string, unknown> | undefined)?.[outputField])) return false;
+      return true;
     }).map(tab => tab.key);
-  }, [scriptPerms, blockConfig]);
+  }, [scriptPerms, blockConfig, formData]);
 
   // Reference video URL (visible to everyone when present)
   // Use formData as source of truth (may be '' after user clears it); only fall back to content if formData has no key
@@ -69,6 +90,15 @@ export function ScriptsTabContainer({
     // Default to first visible tab
     return effectiveVisibleTabs[0] || 'script';
   });
+
+  // Los permisos cargan después del primer render: si la pestaña activa no es accesible,
+  // saltar a la primera disponible (antes el creador caía en «IA» con «No tienes acceso»)
+  useEffect(() => {
+    if (activeTab === 'reference') return;
+    if (effectiveVisibleTabs.length > 0 && !effectiveVisibleTabs.includes(activeTab as ScriptSubTab)) {
+      setActiveTab(effectiveVisibleTabs[0]);
+    }
+  }, [effectiveVisibleTabs, activeTab]);
 
   // Check if tab is locked via block config
   const isTabLocked = (tabKey: ScriptSubTab): boolean => {
@@ -143,12 +173,9 @@ export function ScriptsTabContainer({
     <TooltipProvider>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Sub-tab navigation */}
-        <TabsList className="w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-4 sm:flex sm:flex-wrap sm:justify-start bg-muted/50 p-0.5 sm:p-1 rounded-sm mb-4">
-          {SCRIPT_SUB_TABS.map((tab) => {
-            const blockKey = SUBTAB_TO_BLOCK[tab.key];
-            const canViewScript = scriptPerms.canView(tab.key);
-            const canViewBlock = blockConfig.canViewBlock(blockKey);
-            const canView = canViewScript && canViewBlock;
+        <TabsList className={cn("w-full h-auto gap-0.5 sm:gap-1 grid grid-cols-4 sm:flex sm:flex-wrap sm:justify-start bg-muted/50 p-0.5 sm:p-1 rounded-sm mb-4", effectiveVisibleTabs.length <= 1 && !hasReferenceVideo && "!hidden")}>
+          {SCRIPT_SUB_TABS.filter((tab) => effectiveVisibleTabs.includes(tab.key)).map((tab) => {
+            const canView = true; // solo se listan las pestañas accesibles
             const isReadOnly = isEffectiveReadOnly(tab.key);
             const isLocked = isTabLocked(tab.key);
             const isActive = activeTab === tab.key;
@@ -172,7 +199,6 @@ export function ScriptsTabContainer({
                       <span className="hidden sm:inline">{tab.label}</span>
                       {!canView && <Lock className="h-3 w-3 text-muted-foreground" />}
                       {isLocked && canView && <Lock className="h-3 w-3 text-warning" />}
-                      {isReadOnly && canView && !isLocked && <Eye className="h-3 w-3 text-muted-foreground" />}
                     </TabsTrigger>
                   </div>
                 </TooltipTrigger>

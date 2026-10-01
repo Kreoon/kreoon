@@ -120,7 +120,7 @@ function TextBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPro
         initialContent={editingContent}
         onSave={handleSave}
         title={editingField === 'title' ? 'Editar titulo' : 'Editar contenido'}
-        placeholder={editingField === 'title' ? 'Titulo...' : 'Escribe tu contenido aqui...'}
+        placeholder={editingField === 'title' ? 'Título...' : 'Escribe tu contenido aquí...'}
         mode={editingField === 'title' ? 'inline' : 'block'}
       />
     </>

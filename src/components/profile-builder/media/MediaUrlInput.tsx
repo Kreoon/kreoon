@@ -264,7 +264,7 @@ export function MediaUrlInput({ allowedTypes = ['image', 'video'], onConfirm }: 
             {detectedType === 'image' ? (
               <img
                 src={url.trim()}
-                alt="Preview"
+                alt="Vista previa"
                 className="w-full h-full object-contain"
                 crossOrigin="anonymous"
               />

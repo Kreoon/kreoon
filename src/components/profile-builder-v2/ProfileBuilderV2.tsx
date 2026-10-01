@@ -39,6 +39,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     isSaving,
     saveBlocksAsync,
     saveBuilderConfigAsync,
+    publishBlocksAsync,
     generatePreviewTokenAsync,
   } = useProfileBuilderData(profileId);
 
@@ -142,7 +143,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
         toast({
           title: "No se pudo aplicar",
           description:
-            "Aun no se cargaron tus datos. Intenta de nuevo en unos segundos.",
+            "Aún no se cargaron tus datos. Intenta de nuevo en unos segundos.",
           variant: "destructive",
         });
         return;
@@ -174,7 +175,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
   // ─── Guardado silencioso (autosave) ────────────────────────────────────────
   const persist = useCallback(
     async (isDraft: boolean) => {
-      await saveBuilderConfigAsync(builderConfig);
+      await saveBuilderConfigAsync(builderConfig, { isDraft });
       await saveBlocksAsync(blocks, isDraft);
       setIsDirty(false);
     },
@@ -193,7 +194,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     if (!blocks.length) {
       toast({
         title: "No hay secciones",
-        description: "Agrega al menos una seccion antes de guardar.",
+        description: "Agrega al menos una sección antes de guardar.",
         variant: "destructive",
       });
       return;
@@ -217,13 +218,16 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     if (!blocks.length) {
       toast({
         title: "No hay secciones",
-        description: "Agrega al menos una seccion antes de publicar.",
+        description: "Agrega al menos una sección antes de publicar.",
         variant: "destructive",
       });
       return;
     }
     try {
-      await persist(false);
+      // publish_profile_blocks borra los publicados y promueve los borradores: primero guardar como
+      // borrador y luego publicar (antes guardaba directo como publicado y nunca llamaba a publicar).
+      await persist(true);
+      await publishBlocksAsync();
       toast({
         title: "Perfil publicado",
         description: "Tu portafolio ya es visible en el marketplace.",
@@ -235,7 +239,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
         variant: "destructive",
       });
     }
-  }, [blocks.length, persist, toast]);
+  }, [blocks.length, persist, publishBlocksAsync, toast]);
 
   const handlePreview = useCallback(async () => {
     const token = await generatePreviewTokenAsync();

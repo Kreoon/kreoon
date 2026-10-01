@@ -115,7 +115,7 @@ function FeatureItem({ included, label }: { included: boolean | string; label?: 
   if (typeof included === 'boolean') {
     return included ? (
       <div className="flex items-center gap-2">
-        <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+        <Check className="h-4 w-4 text-emerald-600 shrink-0" />
         {label && <span className="text-sm text-muted-foreground">{label}</span>}
       </div>
     ) : (
@@ -127,7 +127,7 @@ function FeatureItem({ included, label }: { included: boolean | string; label?: 
   }
   return (
     <div className="flex items-center gap-2">
-      <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+      <Check className="h-4 w-4 text-emerald-600 shrink-0" />
       <span className="text-sm text-muted-foreground">{included}</span>
     </div>
   );
@@ -137,7 +137,7 @@ function ComparisonCell({ value }: { value: string | boolean }) {
   if (typeof value === 'boolean') {
     return value ? (
       <div className="flex justify-center">
-        <Check className="h-5 w-5 text-emerald-400" />
+        <Check className="h-5 w-5 text-emerald-600" />
       </div>
     ) : (
       <div className="flex justify-center">
@@ -178,7 +178,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 flex flex-col gap-4">
       <div className="flex items-start gap-3">
-        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-sm font-bold text-white shrink-0">
+        <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center text-sm font-bold text-white shrink-0">
           {testimonial.avatar}
         </div>
         <div>
@@ -190,8 +190,8 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
             variant="outline"
             className={
               testimonial.plan === 'premium'
-                ? 'border-amber-500/40 text-amber-400 text-xs'
-                : 'border-violet-500/40 text-violet-400 text-xs'
+                ? 'border-primary/40 text-primary text-xs'
+                : 'border-primary/40 text-primary text-xs'
             }
           >
             {testimonial.plan === 'premium' ? 'Premium' : 'Pro'}
@@ -200,7 +200,7 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed italic">"{testimonial.quote}"</p>
       <div className="mt-auto pt-3 border-t border-border">
-        <p className="text-xs font-semibold text-emerald-400">{testimonial.metric}</p>
+        <p className="text-xs font-semibold text-primary">{testimonial.metric}</p>
       </div>
     </div>
   );
@@ -236,7 +236,7 @@ export default function CreatorPricingPage() {
               </Button>
             </Link>
             <Link to="/registro">
-              <Button size="sm" className="bg-amber-500 hover:bg-amber-400 text-black font-semibold text-sm">
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm">
                 Empezar gratis
               </Button>
             </Link>
@@ -248,13 +248,13 @@ export default function CreatorPricingPage() {
 
         {/* ── Header ── */}
         <section className="pt-16 pb-10 text-center">
-          <Badge variant="outline" className="border-amber-500/40 text-amber-400 mb-4 text-xs px-3 py-1">
+          <Badge variant="outline" className="border-primary/40 text-primary mb-4 text-xs px-3 py-1">
             <Sparkles className="h-3 w-3 mr-1.5 inline" />
             Planes para Creadores
           </Badge>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
             Elige el plan que{' '}
-            <span className="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
+            <span className="text-primary">
               impulsa tu carrera
             </span>
           </h1>
@@ -269,11 +269,11 @@ export default function CreatorPricingPage() {
               checked={isAnnual}
               onCheckedChange={setIsAnnual}
               aria-label="Cambiar entre facturación mensual y anual"
-              className="data-[state=checked]:bg-amber-500"
+              className="data-[state=checked]:bg-primary"
             />
             <span className={`text-sm font-medium ${isAnnual ? 'text-foreground' : 'text-muted-foreground'}`}>
               Anual
-              <Badge className="ml-2 bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs">
+              <Badge className="ml-2 bg-primary/10 text-primary border-primary/30 text-xs">
                 -20%
               </Badge>
             </span>
@@ -321,11 +321,11 @@ export default function CreatorPricingPage() {
           </div>
 
           {/* Card: Pro */}
-          <div className="relative bg-card border border-violet-500/40 rounded-2xl p-6 flex flex-col hover:border-violet-500/70 transition-colors">
+          <div className="relative bg-card border border-primary/40 rounded-2xl p-6 flex flex-col hover:border-primary/70 transition-colors">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-1">
-                <Zap className="h-4 w-4 text-violet-400" />
-                <span className="text-xs font-semibold uppercase tracking-widest text-violet-400">Creator Pro</span>
+                <Zap className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">Creator Pro</span>
               </div>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold text-foreground">${displayPro}</span>
@@ -355,7 +355,7 @@ export default function CreatorPricingPage() {
 
             <Link to="/registro" className="w-full">
               <Button
-                className="w-full bg-violet-600 hover:bg-violet-500 text-white font-semibold"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
                 aria-label="Hacer upgrade al plan Creator Pro"
               >
                 Upgrade a Pro
@@ -365,21 +365,21 @@ export default function CreatorPricingPage() {
           </div>
 
           {/* Card: Premium (destacado) */}
-          <div className="relative rounded-2xl p-px bg-gradient-to-b from-amber-400 via-orange-500 to-transparent flex flex-col">
+          <div className="relative rounded-2xl p-px bg-gradient-to-b from-primary via-primary/60 to-transparent flex flex-col">
             <div className="relative bg-card rounded-[calc(1rem-1px)] p-6 flex flex-col h-full">
 
               {/* Badge Más popular */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-                  <Star className="h-3 w-3 fill-black" />
+                <span className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                  <Star className="h-3 w-3 fill-primary-foreground" />
                   Mas popular
                 </span>
               </div>
 
               <div className="mb-6 mt-2">
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="h-4 w-4 text-amber-400" />
-                  <span className="text-xs font-semibold uppercase tracking-widest text-amber-400">Creator Premium</span>
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-semibold uppercase tracking-widest text-primary">Creator Premium</span>
                 </div>
                 <div className="mt-3 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-foreground">${displayPremium}</span>
@@ -410,7 +410,7 @@ export default function CreatorPricingPage() {
 
               <Link to="/registro" className="w-full">
                 <Button
-                  className="w-full bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-bold shadow-lg shadow-amber-500/20 transition-all hover:shadow-amber-500/40"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-lg shadow-primary/20 transition-all"
                   aria-label="Hacer upgrade al plan Creator Premium"
                 >
                   Ir Premium
@@ -439,11 +439,11 @@ export default function CreatorPricingPage() {
                     <p className="text-xs text-muted-foreground font-normal">$0/mes</p>
                   </th>
                   <th className="px-4 py-4 text-center">
-                    <span className="text-sm font-semibold text-violet-400">Pro</span>
+                    <span className="text-sm font-semibold text-primary">Pro</span>
                     <p className="text-xs text-muted-foreground font-normal">${displayPro}/mes</p>
                   </th>
-                  <th className="px-4 py-4 text-center bg-amber-500/5">
-                    <span className="text-sm font-semibold text-amber-400">Premium</span>
+                  <th className="px-4 py-4 text-center bg-primary/5">
+                    <span className="text-sm font-semibold text-primary">Premium</span>
                     <p className="text-xs text-muted-foreground font-normal">${displayPremium}/mes</p>
                   </th>
                 </tr>
@@ -452,11 +452,11 @@ export default function CreatorPricingPage() {
                 {categoriesInOrder.map((category) => {
                   const rows = COMPARISON_FEATURES.filter((f) => f.category === category);
                   const categoryIcons: Record<string, React.ReactNode> = {
-                    'Inteligencia Artificial': <Sparkles className="h-3.5 w-3.5 text-violet-400" />,
-                    'Perfil': <Palette className="h-3.5 w-3.5 text-blue-400" />,
-                    'Visibilidad': <Eye className="h-3.5 w-3.5 text-emerald-400" />,
-                    'Analytics': <BarChart3 className="h-3.5 w-3.5 text-amber-400" />,
-                    'Extras': <Star className="h-3.5 w-3.5 text-orange-400" />,
+                    'Inteligencia Artificial': <Sparkles className="h-3.5 w-3.5 text-primary" />,
+                    'Perfil': <Palette className="h-3.5 w-3.5 text-primary" />,
+                    'Visibilidad': <Eye className="h-3.5 w-3.5 text-emerald-600" />,
+                    'Analytics': <BarChart3 className="h-3.5 w-3.5 text-primary" />,
+                    'Extras': <Star className="h-3.5 w-3.5 text-primary" />,
                   };
 
                   return (
@@ -481,7 +481,7 @@ export default function CreatorPricingPage() {
                           <td className="px-4 py-3">
                             <ComparisonCell value={row.pro} />
                           </td>
-                          <td className="px-4 py-3 bg-amber-500/[0.03]">
+                          <td className="px-4 py-3 bg-primary/[0.03]">
                             <ComparisonCell value={row.premium} />
                           </td>
                         </tr>
@@ -534,7 +534,7 @@ export default function CreatorPricingPage() {
             <Link to="/registro">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-300 hover:to-orange-400 text-black font-bold px-8 shadow-lg shadow-amber-500/20"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 shadow-lg shadow-primary/20"
                 aria-label="Crear cuenta gratuita en Kreoon"
               >
                 Crear cuenta gratis

@@ -13,7 +13,7 @@ import { REGISTRATION_BASE } from '@/lib/registration/paths';
 import { attributionToSearchParams, pickAttribution } from '@/lib/registration/attribution';
 import { validateCouponCode, type CouponPlan } from '@/hooks/academy/useAcademyCoupons';
 
-const KREOON_PURPLE = '#7c3aed';
+const KREOON_PURPLE = '#6D4AFF';
 
 interface SpaceJoinGateProps {
   space: any;
@@ -356,7 +356,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   onClick={handleAnonRegister}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >
@@ -374,7 +374,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   disabled={checkoutLoading}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >
@@ -401,7 +401,7 @@ export function SpaceJoinGate({ space }: SpaceJoinGateProps) {
                   disabled={join.isPending}
                   className="w-full h-14 rounded-2xl font-bold text-white text-base shadow-lg"
                   style={{
-                    background: `linear-gradient(135deg, ${KREOON_PURPLE}, #a855f7)`,
+                    background: KREOON_PURPLE,
                     boxShadow: `0 8px 24px -4px ${KREOON_PURPLE}80`,
                   }}
                 >

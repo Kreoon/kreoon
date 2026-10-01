@@ -24,6 +24,8 @@ interface BoardToolbarProps {
   actions?: ReactNode;
   /** Línea de estado: conteos, alcance, carga, guardado. */
   statusLine?: ReactNode;
+  /** Modo simple (creador/editor): solo Kanban/Lista, sin densidad */
+  simple?: boolean;
 }
 
 /**
@@ -45,6 +47,7 @@ export function BoardToolbar({
   hideArchived,
   actions,
   statusLine,
+  simple,
 }: BoardToolbarProps) {
   const searchId = useId();
   const hintId = useId();
@@ -104,7 +107,7 @@ export function BoardToolbar({
         )}
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
-          {view === "kanban" && (
+          {view === "kanban" && !simple && (
             <div role="group" aria-label="Densidad de las tarjetas" className="inline-flex items-center gap-0.5 rounded-[var(--radius-control,0.75rem)] bg-muted p-1">
               {(
                 [
@@ -133,7 +136,7 @@ export function BoardToolbar({
               ))}
             </div>
           )}
-          <BoardViewSwitcher currentView={view} onViewChange={onViewChange} />
+          <BoardViewSwitcher currentView={view} onViewChange={onViewChange} views={simple ? ['kanban', 'list'] : undefined} />
           {actions}
         </div>
       </div>

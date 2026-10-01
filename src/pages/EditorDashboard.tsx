@@ -17,7 +17,6 @@ import { UnifiedKpiDialog } from '@/components/dashboard/UnifiedKpiDialog';
 import { useMarketplaceProjects } from '@/hooks/useMarketplaceProjects';
 import type { MarketplaceProject } from '@/components/marketplace/types/marketplace';
 import { UnifiedProjectModal } from '@/components/projects/UnifiedProjectModal';
-import { PortfolioButton } from '@/components/portfolio/PortfolioButton';
 import { AmbassadorBadge } from '@/components/ui/ambassador-badge';
 import { ThisMonthFilter, useThisMonthFilter } from '@/components/dashboard/ThisMonthFilter';
 import { NovaKpiCard, NovaVerticalVideoGrid } from '@/components/client-dashboard';
@@ -211,7 +210,6 @@ export default function EditorDashboard() {
         <div className="flex items-center gap-2 flex-shrink-0">
           {profile?.is_ambassador && <AmbassadorBadge size="md" />}
           <ThisMonthFilter isActive={thisMonthActive} onToggle={setThisMonthActive} />
-          {user && <PortfolioButton userId={user.id} />}
         </div>
       </div>
 
@@ -418,7 +416,7 @@ export default function EditorDashboard() {
                 </div>
                 <button
                   onClick={() => openKpiDialog('Aprobados', approvedContent, mktDelivered)}
-                  className="text-xs text-purple-500 hover:text-purple-400 transition-colors"
+                  className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                 >
                   Ver todos
                 </button>

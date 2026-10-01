@@ -58,30 +58,8 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isVisible, setIsVisible] = useState(eager);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-
-  // Intersection Observer para lazy loading (solo si no es eager)
-  useEffect(() => {
-    if (eager) return;
-
-    const element = containerRef.current;
-    if (!element) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "300px", threshold: 0.1 }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [eager]);
+  const [isMuted, setIsMuted] = useState(false);
 
   // Generar thumbnail optimizado
   const thumbnailUrl = useMemo(() => {
@@ -103,8 +81,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
       if (url.protocol !== "https:" && url.protocol !== "http:") return "";
       url.searchParams.set("autoplay", "true");
       url.searchParams.set("loop", "true");
-      url.searchParams.set("muted", "true");
-      url.searchParams.set("preload", "true");
+      url.searchParams.set("preload", "false");
       return url.toString();
     } catch {
       return "";
@@ -148,54 +125,54 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
         className="relative overflow-hidden rounded-xl bg-card shadow-lg hover:shadow-kreoon-glow-sm transition-shadow"
         style={{ aspectRatio: "9/16" }}
       >
-        {/* Thumbnail - siempre visible hasta que el video cargue */}
-        {thumbnailUrl && !isPlaying && (
-          <img
-            src={thumbnailUrl}
-            alt={`Video de ${content.creator_name}`}
-            loading={eager ? "eager" : "lazy"}
-            fetchpriority={eager ? "high" : "auto"}
-            className="absolute inset-0 w-full h-full object-cover z-[1]"
-          />
+        {/* Póster: se muestra hasta que el usuario pulsa play */}
+        {!isPlaying && (
+          <>
+            {thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt={`Video de ${content.creator_name}`}
+                loading={eager ? "eager" : "lazy"}
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover z-[1]"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-muted z-[1]" aria-hidden="true" />
+            )}
+            {embedUrl && (
+              <button
+                type="button"
+                onClick={() => setIsPlaying(true)}
+                aria-label={`Reproducir video de ${content.creator_name}: ${content.title}`}
+                className="absolute inset-0 z-[5] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <span className="rounded-full p-4 bg-primary/90 backdrop-blur-sm">
+                  <Play className="h-6 w-6 text-primary-foreground fill-current" />
+                </span>
+              </button>
+            )}
+          </>
         )}
 
-        {/* Play button overlay cuando no está reproduciendo */}
-        {!isPlaying && isVisible && (
-          <div className="absolute inset-0 flex items-center justify-center z-[5]">
-            <div className="rounded-full p-4 bg-kreoon-purple-500/80 backdrop-blur-sm">
-              <Play className="h-6 w-6 text-white fill-white" />
-            </div>
-          </div>
-        )}
-
-        {/* Loading spinner cuando está visible pero no ha cargado */}
-        {isVisible && !isPlaying && !thumbnailUrl && (
-          <div className="absolute inset-0 flex items-center justify-center bg-card z-[2]">
-            <Loader2 className="h-6 w-6 animate-spin text-kreoon-purple-500" />
-          </div>
-        )}
-
-        {/* Video iframe - solo se renderiza cuando es visible */}
-        {isVisible && (
+        {/* Iframe: solo se monta tras el clic */}
+        {isPlaying && embedUrl && (
           <iframe
             ref={iframeRef}
             src={embedUrl}
-            loading={eager ? "eager" : "lazy"}
-            onLoad={() => setIsPlaying(true)}
+            title={`Video de ${content.creator_name}`}
             allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-            className="absolute left-1/2 top-1/2 pointer-events-none z-[3]"
+            className="absolute left-1/2 top-1/2 z-[3]"
             style={{
               border: 0,
               width: "103%",
               height: "103%",
               transform: "translate(-50%, -50%)",
-              opacity: isPlaying ? 1 : 0,
             }}
           />
         )}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none z-[6]" />
 
         {/* Creator info */}
         <div className="absolute inset-x-0 bottom-0 p-3 z-10">
@@ -211,7 +188,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
                 {content.creator_name[0]}
               </div>
             )}
-            <span className="text-xs font-medium text-foreground truncate">
+            <span className="text-xs font-medium text-white truncate">
               {content.creator_name}
             </span>
           </div>
@@ -222,6 +199,7 @@ function VideoCard({ content, index, eager = false }: { content: PortfolioConten
           <button
             type="button"
             onClick={toggleMute}
+            aria-label={isMuted ? "Activar sonido" : "Silenciar"}
             className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-black/60 backdrop-blur-sm text-white hover:bg-black/80 transition-colors"
           >
             {isMuted ? (

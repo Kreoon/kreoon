@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
 
 export default {
   darkMode: ["class"],
@@ -90,7 +91,8 @@ export default {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			},
-  			violet: 'hsl(var(--violet))',
+  			// Objeto (no string): un string anulaba toda la escala violet-50…950 y dejaba botones invisibles en ~59 archivos
+  			violet: { ...colors.violet, DEFAULT: 'hsl(var(--violet))' },
   			bronze: 'hsl(var(--level-bronze))',
   			silver: 'hsl(var(--level-silver))',
   			gold: 'hsl(var(--level-gold))',

@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
           Última actualización: 19 de febrero de 2026
         </p>
 
-        <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground">
+        <div className="prose max-w-none [--tw-prose-body:hsl(var(--foreground))] [--tw-prose-headings:hsl(var(--foreground))] [--tw-prose-bold:hsl(var(--foreground))] [--tw-prose-links:hsl(var(--primary))] [--tw-prose-bullets:hsl(var(--muted-foreground))] [--tw-prose-counters:hsl(var(--muted-foreground))] [--tw-prose-th-borders:hsl(var(--border))] [--tw-prose-td-borders:hsl(var(--border))] space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground">
           <h2 className="text-xl font-semibold mt-8">1. Introducción</h2>
           <p>
             Kreoon ("nosotros", "nuestro" o "la Plataforma") se compromete a proteger la privacidad de sus usuarios. Esta Política de Privacidad describe cómo recopilamos, utilizamos, almacenamos y compartimos su información personal cuando utiliza nuestra plataforma en <strong>kreoon.com</strong> y servicios relacionados.

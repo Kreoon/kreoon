@@ -249,7 +249,7 @@ function RecommendedTalentBlockComponent({ block, isEditing, isSelected, onUpdat
             Este bloque ayuda a otros creadores a ser descubiertos.
             Puedes moverlo pero no eliminarlo con el plan Free.
             <br />
-            <span className="font-medium">Upgrade a Pro o Premium para eliminarlo.</span>
+            <span className="font-medium">Mejorar plan a Pro o Premium para eliminarlo.</span>
           </p>
         </div>
       )}

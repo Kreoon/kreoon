@@ -64,6 +64,17 @@ export function ContentBoardKanbanView({
 
   const activeContent = activeId ? contentById.get(activeId) ?? null : null;
 
+  // Menos ruido: las etapas vacías se ocultan, pero reaparecen al arrastrar para poder soltar en cualquiera
+  const [showEmpty, setShowEmpty] = useState(false);
+  const emptyCount = useMemo(
+    () => columns.filter((c) => !(grouped.byStatus.get(c.status)?.length)).length,
+    [columns, grouped],
+  );
+  const visibleColumns = useMemo(() => {
+    if (showEmpty || activeId || emptyCount === columns.length) return columns;
+    return columns.filter((c) => grouped.byStatus.get(c.status)?.length);
+  }, [columns, grouped, showEmpty, activeId, emptyCount]);
+
   // Pulso breve de la tarjeta recién movida (se retira solo)
   const [pulseId, setPulseId] = useState<string | null>(null);
   useEffect(() => {
@@ -149,7 +160,7 @@ export function ContentBoardKanbanView({
       {/* Selector de etapas: navegación directa entre columnas cuando no caben todas */}
       <div className="mb-1 lg:hidden">
         <nav className="kb-stages" aria-label="Ir a una etapa">
-          {columns.map((col) => (
+          {visibleColumns.map((col) => (
             <button
               key={col.status}
               type="button"
@@ -164,6 +175,18 @@ export function ContentBoardKanbanView({
           ))}
         </nav>
       </div>
+
+      {emptyCount > 0 && emptyCount < columns.length && (
+        <div className="mb-2 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setShowEmpty((v) => !v)}
+            className="text-xs font-medium text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            {showEmpty ? "Ocultar etapas vacías" : `Mostrar etapas vacías (${emptyCount})`}
+          </button>
+        </div>
+      )}
 
       <DndContext
         sensors={sensors}
@@ -182,7 +205,7 @@ export function ContentBoardKanbanView({
           aria-label="Tablero de producciones por etapa"
           tabIndex={-1}
         >
-          {columns.map((col) => (
+          {visibleColumns.map((col) => (
             <KanbanColumn
               key={col.status}
               column={col}

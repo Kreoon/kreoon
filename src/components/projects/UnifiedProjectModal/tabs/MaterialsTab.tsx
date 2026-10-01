@@ -4,6 +4,7 @@ import { FolderOpen, ExternalLink, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { markLocalUpdate } from '@/hooks/useContent';
 import type { UnifiedTabProps } from '../types';
+import { flattenScenes, splitScriptIntoScenes } from '@/components/content/ContentDetailDialog/scripts/sceneScript';
 
 export default function MaterialsTab({
   project,
@@ -14,13 +15,13 @@ export default function MaterialsTab({
   readOnly = false,
 }: UnifiedTabProps) {
   const canEdit = permissions.can('project.materials', 'edit') && !readOnly;
-  const effectiveEditMode = editMode && !readOnly;
 
   // Content source: show RawAssetsUploader + Google Drive URL
   if (project.source === 'content') {
     const orgId = project.organizationId || project.contentData?.organization_id || '';
     const clientId = project.clientId || project.contentData?.client_id || '';
     const driveUrl = formData.drive_url || '';
+    const scenes = flattenScenes(splitScriptIntoScenes(formData.script)).map(({ number, title }) => ({ number, title }));
 
     const autoSaveDriveUrl = (url: string) => {
       if (!project.id) return;
@@ -47,16 +48,18 @@ export default function MaterialsTab({
             contentId={project.id}
             organizationId={orgId}
             clientId={clientId}
-            disabled={!effectiveEditMode}
+            // Subir y asignar escena se guardan al instante: no exigir el modo «Editar»
+            disabled={!canEdit}
             canUpload={canEdit}
             canDelete={canEdit}
+            scenes={scenes}
           />
         </div>
 
         {/* Google Drive URL */}
         <div className="rounded-sm border p-4 space-y-3">
           <h4 className="font-medium text-sm">Google Drive</h4>
-          {effectiveEditMode && canEdit ? (
+          {canEdit ? (
             <Input
               value={driveUrl}
               onChange={(e) => setFormData((prev: Record<string, any>) => ({ ...prev, drive_url: e.target.value }))}

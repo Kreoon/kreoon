@@ -18,7 +18,8 @@ import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { KREOON_ORG_ID } from "@/lib/kreoon-org";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
-import { Content, KANBAN_COLUMNS } from "@/types/database";
+import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_LABELS } from "@/types/database";
+import { isProductionOnlyTalent } from "@/lib/creatorScope";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type SearchableSelectOption } from "@/components/ui/searchable-select";
@@ -265,7 +266,8 @@ export default function ContentBoard() {
       .sort((a, b) => a.sort_order - b.sort_order)
       .map(s => ({
         status: s.status_key,
-        title: s.label,
+        // Si la org guardó la clave cruda como nombre ("archived"), mostrar la etiqueta en español
+        title: !s.label || s.label === s.status_key ? STATUS_LABELS[s.status_key as ContentStatus] || s.label : s.label,
         color: s.color || '#6b7280',
         sortOrder: s.sort_order,
       }));
@@ -277,9 +279,10 @@ export default function ContentBoard() {
     const key = `board-hide-paid-${currentOrgId || 'default'}`;
     try {
       const v = localStorage.getItem(key);
-      setHidePaidContentState(v === null ? false : v === 'true');
+      // Creador/editor: por defecto solo el trabajo activo; el historial queda a un clic
+      setHidePaidContentState(v === null ? isProductionOnlyTalent(roles) : v === 'true');
     } catch { /* ignore */ }
-  }, [currentOrgId]);
+  }, [currentOrgId, roles]);
   const setHidePaidContent = useCallback((v: boolean) => {
     setHidePaidContentState(v);
     const key = `board-hide-paid-${currentOrgId || 'default'}`;
@@ -498,11 +501,11 @@ export default function ContentBoard() {
   const loadedCount = content.length;
   const searchHint = (() => {
     // Un error de carga NUNCA se presenta como «0 producciones»
-    if (error && loadedCount === 0) return 'No se pudieron cargar las producciones.';
+    if (error && loadedCount === 0) return 'No se pudieron cargar los proyectos.';
     const shown = filteredContent.length;
     const base = shown === loadedCount
-      ? `${loadedCount} ${loadedCount === 1 ? 'producción' : 'producciones'}`
-      : `${shown} de ${loadedCount} producciones cargadas`;
+      ? `${loadedCount} ${loadedCount === 1 ? 'proyecto' : 'proyectos'}`
+      : `${shown} de ${loadedCount} proyectos`;
     const orphan = currentView === 'kanban' && grouped.orphanCount > 0
       ? ` · ${grouped.orphanCount} en estados sin etapa configurada (no se muestran en el tablero)`
       : '';
@@ -521,10 +524,10 @@ export default function ContentBoard() {
       {hasMore && (
         <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => void loadMore()} disabled={loadingMore}>
           {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-          Cargar más producciones
+          Cargar más proyectos
         </Button>
       )}
-      {persistence.lastSaved && (
+      {persistence.lastSaved && !isProductionOnlyTalent(roles) && (
         <span title="Última vez que se guardaron la vista y los filtros de este tablero">
           Vista guardada {formatDistanceToNow(persistence.lastSaved, { addSuffix: true, locale: es })}
         </span>
@@ -533,14 +536,20 @@ export default function ContentBoard() {
   );
 
   const boardIsEmpty = !loading && !error && content.length === 0 && activeFilterCount === 0;
+  // Creador/editor: tablero en modo simple (sin densidad, vistas guardadas ni calendario/tabla)
+  const talentView = isProductionOnlyTalent(roles);
+  useEffect(() => {
+    if (talentView && currentView !== 'kanban' && currentView !== 'list') setCurrentView('kanban');
+  }, [talentView, currentView, setCurrentView]);
+  const archivedCount = useMemo(() => content.filter(c => c.status === 'archived').length, [content]);
 
   return (
     <div className="min-h-screen">
       <div className="space-y-4 p-4 md:p-6">
         <PageHeader
           icon={Scroll}
-          title="Kreoon Producciones"
-          subtitle="Centro de control de tus videos"
+          title="Proyectos"
+          subtitle="Tus videos y en qué etapa va cada uno"
           action={
             <div className="flex items-center gap-2">
               {(isAdmin || isClient) && (
@@ -600,7 +609,8 @@ export default function ContentBoard() {
           onDensityChange={setDensity}
           hideArchived={showAdminControls ? { checked: hidePaidContent, onChange: setHidePaidContent } : undefined}
           statusLine={statusLine}
-          actions={
+          simple={talentView}
+          actions={talentView ? undefined : 
             <>
               <ViewSelector
                 savedViews={savedViews}
@@ -720,7 +730,33 @@ export default function ContentBoard() {
           </div>
         )}
 
-        {!showSkeleton && !boardIsEmpty && !(error && content.length === 0) && (
+        {/* Historial oculto y nada activo: decirlo claro en vez de un tablero vacío */}
+        {!showSkeleton && !boardIsEmpty && hidePaidContent && filteredContent.length === 0 && archivedCount > 0 && (
+          <div className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center">
+            <div className="flex-1">
+              <p className="font-semibold text-foreground">No tienes trabajos pendientes</p>
+              <p className="text-sm text-muted-foreground">Tus trabajos terminados y pagados están en el historial.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setHidePaidContent(false)}>
+              Ver trabajos anteriores ({archivedCount})
+            </Button>
+          </div>
+        )}
+
+        {/* Creador/editor con historial visible: volver a solo pendientes */}
+        {!showSkeleton && !boardIsEmpty && !showAdminControls && !hidePaidContent && archivedCount > 0 && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setHidePaidContent(true)}
+              className="text-xs font-medium text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            >
+              Ver solo pendientes
+            </button>
+          </div>
+        )}
+
+        {!showSkeleton && !boardIsEmpty && !(error && content.length === 0) && !(hidePaidContent && filteredContent.length === 0 && archivedCount > 0) && (
           <>
             {currentView === 'kanban' && (
               <ContentBoardKanbanView

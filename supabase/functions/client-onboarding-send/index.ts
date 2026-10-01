@@ -10,6 +10,7 @@
 // registro al crear la empresa). Devuelve { ok, sent_to }.
 // ============================================================================
 
+import { guardedResend } from "../_shared/notification-guard.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.46.2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/cors.ts";
@@ -138,7 +139,7 @@ Deno.serve(async (req) => {
       <p style="font-size:12px;color:#666">El link vence el ${new Date(form.expires_at).toLocaleDateString("es-CO", { day: "numeric", month: "long", year: "numeric" })}.</p>
     </div>`;
 
-  const resend = new Resend(resendKey);
+  const resend = guardedResend(resendKey);
   const { error: sendError } = await resend.emails.send({
     from: "KREOON <noreply@kreoon.com>",
     to: destinatario,

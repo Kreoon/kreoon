@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Sparkles, Wallet, Settings, MoreHorizontal } from 'lucide-react';
+import { Sparkles, Wallet, Settings, MoreHorizontal, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Drawer,
@@ -31,9 +31,9 @@ export function MoreMenuSheet({ dashboardHref, items: itemsProp, className }: Mo
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
+  // Creador/editor: mismo alcance que el menú lateral (sin Academia ni Guionizador; decisión 2026-10-01)
   const items: MoreMenuItem[] = itemsProp ?? [
-    { name: 'Academia', href: '/academia', icon: GraduationCap },
-    { name: 'Kreoon IA', href: '/scripts', icon: Sparkles },
+    { name: 'Portafolio', href: '/content', icon: FileText },
     { name: 'Mis Cobros', href: `${dashboardHref}?tab=wallet`, icon: Wallet },
     { name: 'Configuración', href: '/settings', icon: Settings },
   ];

@@ -105,7 +105,7 @@ export function MediaInput({
             ) : (
               <img
                 src={value}
-                alt="Preview"
+                alt="Vista previa"
                 className="absolute inset-0 w-full h-full object-cover"
                 crossOrigin="anonymous"
               />

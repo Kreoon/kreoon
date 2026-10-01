@@ -94,7 +94,7 @@ export const KreoonEmptyState = React.forwardRef<
       {/* Área del icono */}
       <motion.div
         className={cn(
-          "mb-4 flex shrink-0 items-center justify-center rounded-full bg-muted text-kreoon-text-muted",
+          "mb-4 flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
           config.iconWrapper
         )}
         initial={{ y: 0 }}
@@ -107,7 +107,7 @@ export const KreoonEmptyState = React.forwardRef<
       >
         {React.isValidElement(IconElement)
           ? React.cloneElement(IconElement as React.ReactElement<{ className?: string }>, {
-              className: cn("text-kreoon-text-muted", IconElement.props?.className),
+              className: cn("text-muted-foreground", IconElement.props?.className),
             })
           : IconElement}
       </motion.div>
@@ -127,7 +127,7 @@ export const KreoonEmptyState = React.forwardRef<
       {description && (
         <p
           className={cn(
-            "text-kreoon-text-secondary max-w-sm",
+            "text-muted-foreground max-w-sm",
             config.description,
             action || secondaryAction ? "mb-6" : "mb-0"
           )}
@@ -152,7 +152,7 @@ export const KreoonEmptyState = React.forwardRef<
           <button
             type="button"
             onClick={secondaryAction.onClick}
-            className="text-sm text-kreoon-text-secondary underline decoration-kreoon-border underline-offset-2 transition-colors hover:text-kreoon-purple-400 hover:decoration-kreoon-purple-400"
+            className="text-sm text-muted-foreground underline decoration-kreoon-border underline-offset-2 transition-colors hover:text-primary hover:decoration-primary"
           >
             {secondaryAction.label}
           </button>

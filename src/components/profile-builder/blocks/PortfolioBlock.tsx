@@ -1,3 +1,4 @@
+import { getOptimizedThumbnail } from '@/lib/imageOptimization';
 /**
  * Portfolio Block - Profile Builder
  *
@@ -24,6 +25,7 @@ import {
   Loader2,
   ImageOff,
   Camera,
+  Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -157,6 +159,7 @@ function PortfolioItemCard({
 }: PortfolioItemCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [playing, setPlaying] = useState(false);
 
   const thumbnailUrl = getOptimalThumbnail(item);
   const isVideo = item.type === 'video';
@@ -183,11 +186,12 @@ function PortfolioItemCard({
       )}
       onClick={isEditing ? onClick : undefined}
     >
-      {/* VIDEO: Usar reproductor oficial de Bunny con miniatura integrada */}
-      {isVideo && item.url && (
+      {/* VIDEO: miniatura liviana primero; el reproductor de Bunny (iframe + HLS) solo se carga al pulsar.
+          Antes se montaba un iframe por video al abrir la página: rectángulos negros y mucho peso. */}
+      {isVideo && item.url && playing && (
         <BunnyStreamPlayer
           videoUrl={item.url}
-          autoplay={false}
+          autoplay={true}
           muted={false}
           loop={false}
           preload={true}
@@ -195,6 +199,32 @@ function PortfolioItemCard({
           className="absolute inset-0 w-full h-full"
           borderRadius="none"
         />
+      )}
+      {isVideo && item.url && !playing && (
+        <button
+          type="button"
+          onClick={(e) => { if (isEditing) return; e.stopPropagation(); setPlaying(true); }}
+          className="absolute inset-0 flex h-full w-full items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          aria-label={`Reproducir ${item.title || 'video'}`}
+        >
+          {thumbnailUrl && !imageError ? (
+            <img
+              src={getOptimizedThumbnail(thumbnailUrl, 480)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageError(true)}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <span className="absolute inset-0 flex items-end bg-muted p-3 text-left text-xs text-muted-foreground">
+              {item.title || 'Video'}
+            </span>
+          )}
+          <span className="relative flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white shadow-lg transition-transform group-hover:scale-110">
+            <Play className="ml-0.5 h-5 w-5 fill-current" aria-hidden="true" />
+          </span>
+        </button>
       )}
 
       {/* IMAGEN: Mostrar thumbnail con efectos */}
@@ -211,7 +241,7 @@ function PortfolioItemCard({
           {!imageError ? (
             <img
               src={thumbnailUrl}
-              alt={item.title || 'Portfolio item'}
+              alt={item.title || 'Portafolio item'}
               className={cn(
                 'w-full h-full object-cover transition-opacity duration-300 cursor-pointer',
                 imageLoaded ? 'opacity-100' : 'opacity-0',
@@ -607,7 +637,7 @@ function PortfolioBlockComponent({
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-foreground">Portfolio</h2>
+        <h2 className="text-xl font-semibold text-foreground">Portafolio</h2>
         {isEditing && isSelected && items.length < config.maxItems && userId && (
           <Button
             variant="outline"

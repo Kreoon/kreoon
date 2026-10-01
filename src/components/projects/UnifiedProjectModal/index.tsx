@@ -21,6 +21,8 @@ import { WorkflowProgressBar } from './WorkflowProgressBar';
 import { CreationModeSelector } from './components/CreationModeSelector';
 import type { UnifiedProjectModalProps } from './types';
 import type { UnifiedSectionKey, CreationMode } from '@/types/unifiedProject.types';
+import { STATUS_LABELS, type ContentStatus } from '@/types/database';
+import { useAuth } from '@/hooks/useAuth';
 
 // Sphere phase configuration for content projects
 const SPHERE_PHASES_CONFIG = [
@@ -170,6 +172,21 @@ function TabSkeleton() {
   );
 }
 
+function hasValue(v: unknown): boolean {
+  if (v == null) return false;
+  if (typeof v === 'string') return v.trim() !== '' && v.trim() !== '-';
+  if (Array.isArray(v)) return v.some(hasValue);
+  if (typeof v === 'object') return Object.values(v as object).some(hasValue);
+  return true;
+}
+
+/** Brief sin respuestas de ADN, sin audio y sin otros campos con contenido */
+function isBriefEmpty(brief: unknown): boolean {
+  if (!brief || typeof brief !== 'object') return true;
+  const { dna, ...rest } = brief as { dna?: { responses?: unknown; audio_url?: unknown } } & Record<string, unknown>;
+  return !hasValue(dna?.responses) && !hasValue(dna?.audio_url) && !hasValue(rest);
+}
+
 export function UnifiedProjectModal({
   source,
   projectId,
@@ -182,6 +199,7 @@ export function UnifiedProjectModal({
   createProjectType,
 }: UnifiedProjectModalProps) {
   const isCreateMode = mode === 'create';
+  const { isAdmin } = useAuth();
   const { currentOrg } = useOrganizations();
   const [activeTab, setActiveTab] = useState<string>('workspace');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
@@ -232,8 +250,13 @@ export function UnifiedProjectModal({
   // Determine visible sections based on permissions + type config
   const displaySections = useMemo(() => {
     if (isCreateMode) return typeConfig.visibleTabs;
-    return permissions.visibleSections.filter(s => typeConfig.visibleTabs.includes(s));
-  }, [isCreateMode, typeConfig.visibleTabs, permissions.visibleSections]);
+    return permissions.visibleSections.filter(s => {
+      if (!typeConfig.visibleTabs.includes(s)) return false;
+      // Brief vacío + solo lectura: es un cuestionario para el cliente que no aporta nada a quien lo lee
+      if (s === 'brief' && permissions.isReadOnly('project.brief' as any) && isBriefEmpty(formData?.brief)) return false;
+      return true;
+    });
+  }, [isCreateMode, typeConfig.visibleTabs, permissions, formData?.brief]);
 
   // Workflow phases for progress bar (must be before early return to respect Rules of Hooks)
   const workflow = useMemo(
@@ -343,7 +366,7 @@ export function UnifiedProjectModal({
             <span className="text-xs font-semibold truncate flex-1">{project?.title || formData.title || 'Proyecto'}</span>
             {!isCreateMode && project?.status && (
               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                {statusOptions.find(s => s.key === project?.status)?.label || project?.status}
+                {statusOptions.find(s => s.key === project?.status)?.label || STATUS_LABELS[project?.status as ContentStatus] || project?.status}
               </Badge>
             )}
             {!isCreateMode && permissions.canEnterEditMode && (
@@ -402,17 +425,28 @@ export function UnifiedProjectModal({
                     <span className="hidden sm:inline">Nuevo Proyecto</span>
                     <span className="sm:hidden">Nuevo</span>
                   </Badge>
-                ) : permissions.can('project.status', 'edit') ? (
+                ) : permissions.can('project.status', 'edit') && project?.status !== 'archived' ? (
                   <SearchableSelect
                     value={project?.status || ''}
                     onValueChange={handleStatusChange}
-                    options={statusOptions.map(state => ({ value: state.key, label: state.label }))}
+                    options={[
+                      // «Archivado» es automático: no se ofrece como opción manual
+                      ...statusOptions.filter(state => state.key !== 'archived').map(state => ({ value: state.key, label: state.label })),
+                      // El estado actual puede no estar en el flujo (p. ej. «archived»): mostrarlo igual
+                      ...(project?.status && !statusOptions.some(s => s.key === project.status)
+                        ? [{ value: project.status, label: STATUS_LABELS[project.status as ContentStatus] || project.status }]
+                        : []),
+                    ]}
                     placeholder="Estado..."
                     triggerClassName="min-w-[100px] sm:min-w-[140px] h-7 sm:h-9 text-xs sm:text-sm font-medium"
                   />
                 ) : (
-                  <Badge variant="secondary" className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 shrink-0 truncate max-w-[120px] sm:max-w-none">
-                    {statusOptions.find(s => s.key === project?.status)?.label || project?.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <Badge
+                    variant="secondary"
+                    title={project?.status === 'archived' ? 'Se archivó automáticamente: el cliente aprobó y ya se pagó a creador y editor' : undefined}
+                    className="text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1 shrink-0 truncate max-w-[120px] sm:max-w-none"
+                  >
+                    {statusOptions.find(s => s.key === project?.status)?.label || STATUS_LABELS[project?.status as ContentStatus] || project?.status?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                   </Badge>
                 )}
               </div>
@@ -499,7 +533,8 @@ export function UnifiedProjectModal({
             {/* Meta info: participants + content metadata */}
             <div className="flex flex-wrap items-center gap-1.5 sm:gap-3 mt-2 sm:mt-4 text-xs sm:text-sm">
               {/* Client selector/badge */}
-              {source === 'content' && (editMode || isCreateMode) ? (
+              {/* Cambiar el cliente de una tarjeta es tarea de admin */}
+              {source === 'content' && isAdmin && (editMode || isCreateMode) ? (
                 <SearchableSelect
                   value={formData.client_id || ''}
                   onValueChange={(val) => setFormData((prev: Record<string, any>) => ({ ...prev, client_id: val }))}
@@ -593,7 +628,6 @@ export function UnifiedProjectModal({
                         )}
                       >
                         {config.label}
-                        {readOnly && <Eye className="h-3 w-3 text-muted-foreground" />}
                       </TabsTrigger>
                     );
                   })}

@@ -137,7 +137,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
                 {isUnlimited
                   ? 'Bloques ilimitados'
                   : isAtLimit
-                    ? 'Limite alcanzado. Upgrade para mas bloques.'
+                    ? 'Limite alcanzado. Mejorar plan para mas bloques.'
                     : isNearLimit
                       ? `Solo ${blocksRemaining} bloque${blocksRemaining > 1 ? 's' : ''} restante${blocksRemaining > 1 ? 's' : ''}`
                       : `Tienes ${blocksRemaining} bloques disponibles`}
@@ -203,7 +203,7 @@ export function PlanStatusBar({ currentBlockCount, onUpgradeClick }: PlanStatusB
               className="h-7 text-xs gap-1.5 border-amber-500/50 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300"
             >
               <Crown className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Upgrade</span>
+              <span className="hidden sm:inline">Mejorar plan</span>
             </Button>
           )}
 

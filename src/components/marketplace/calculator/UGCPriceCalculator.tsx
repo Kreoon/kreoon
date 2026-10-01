@@ -99,7 +99,7 @@ export default function UGCPriceCalculator() {
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-16">
         {/* Hero */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-purple-500/10 text-purple-300 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4">
             <Calculator className="h-4 w-4" />
             Calculadora de Precios
           </div>
@@ -125,7 +125,7 @@ export default function UGCPriceCalculator() {
                     className={cn(
                       'flex flex-col items-center gap-1 p-3 rounded-sm border text-center transition-all',
                       contentType === opt.id
-                        ? 'border-purple-500 bg-purple-500/10'
+                        ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-border',
                     )}
                   >
@@ -148,7 +148,7 @@ export default function UGCPriceCalculator() {
                 max={50}
                 value={creatorCount}
                 onChange={e => setCreatorCount(Number(e.target.value))}
-                className="w-full accent-purple-500"
+                className="w-full accent-primary"
               />
               <div className="flex justify-between text-xs text-muted-foreground mt-1">
                 <span>1</span><span>25</span><span>50</span>
@@ -166,7 +166,7 @@ export default function UGCPriceCalculator() {
                     className={cn(
                       'px-4 py-2 rounded-full text-sm border transition-all',
                       platforms.includes(opt.id)
-                        ? 'border-purple-500 bg-purple-500/10 text-purple-300'
+                        ? 'border-primary bg-primary/10 text-primary'
                         : 'border-border text-muted-foreground hover:border-border',
                     )}
                   >
@@ -190,7 +190,7 @@ export default function UGCPriceCalculator() {
                     className={cn(
                       'flex-1 py-2.5 rounded-sm text-sm border transition-all',
                       duration === opt.days
-                        ? 'border-purple-500 bg-purple-500/10 text-purple-300 font-semibold'
+                        ? 'border-primary bg-primary/10 text-primary font-semibold'
                         : 'border-border text-muted-foreground hover:border-border',
                     )}
                   >
@@ -211,7 +211,7 @@ export default function UGCPriceCalculator() {
                     className={cn(
                       'w-full flex items-center justify-between p-3 rounded-sm border transition-all',
                       tier === opt.id
-                        ? 'border-purple-500 bg-purple-500/10'
+                        ? 'border-primary bg-primary/10'
                         : 'border-border hover:border-border',
                     )}
                   >
@@ -244,7 +244,7 @@ export default function UGCPriceCalculator() {
                 </div>
                 <div className="border-t border-border pt-3 flex justify-between">
                   <span className="text-foreground font-semibold">Total estimado</span>
-                  <span className="text-2xl font-bold text-purple-400">${estimate.total.toLocaleString()}</span>
+                  <span className="text-2xl font-bold text-primary">${estimate.total.toLocaleString()}</span>
                 </div>
                 <p className="text-muted-foreground text-xs">USD | Los precios pueden variar segun el creador</p>
               </div>
@@ -252,7 +252,7 @@ export default function UGCPriceCalculator() {
               {/* CTA */}
               <button
                 onClick={handleFindCreators}
-                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-sm transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-3 rounded-sm transition-colors"
               >
                 <Zap className="h-4 w-4" />
                 Buscar Creadores
@@ -274,7 +274,7 @@ export default function UGCPriceCalculator() {
                       value={email}
                       onChange={e => setEmail(e.target.value)}
                       placeholder="tu@email.com"
-                      className="flex-1 bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-purple-500/50"
+                      className="flex-1 bg-muted/50 border border-border rounded-sm px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
                     />
                     <button
                       onClick={handleCaptureLead}

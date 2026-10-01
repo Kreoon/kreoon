@@ -12,6 +12,7 @@ import { registrationContinuePath } from '@/lib/registration/paths';
 const EXEMPT_ROUTES = [
   '/legal/',       // Páginas legales
   '/auth',         // Auth callback y logout
+  '/reset-password', // Recuperación: primero la nueva contraseña, luego el onboarding
   '/registro',     // Registro de creadores: el paso /continuar necesita sesión y corre ANTES del onboarding
   '/terms',        // Términos legacy
   '/privacy',      // Privacy legacy

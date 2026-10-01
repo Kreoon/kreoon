@@ -22,7 +22,7 @@ export default function TermsOfService() {
           Última actualización: 19 de febrero de 2026
         </p>
 
-        <div className="prose prose-invert max-w-none space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground">
+        <div className="prose max-w-none [--tw-prose-body:hsl(var(--foreground))] [--tw-prose-headings:hsl(var(--foreground))] [--tw-prose-bold:hsl(var(--foreground))] [--tw-prose-links:hsl(var(--primary))] [--tw-prose-bullets:hsl(var(--muted-foreground))] [--tw-prose-counters:hsl(var(--muted-foreground))] [--tw-prose-th-borders:hsl(var(--border))] [--tw-prose-td-borders:hsl(var(--border))] space-y-6 text-muted-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground">
           <h2 className="text-xl font-semibold mt-8">1. Aceptación de los términos</h2>
           <p>
             Al acceder y utilizar Kreoon ("la Plataforma"), usted acepta estos Términos de Servicio. Si no está de acuerdo con estos términos, no utilice la plataforma. Kreoon se reserva el derecho de modificar estos términos en cualquier momento, notificándole los cambios significativos.

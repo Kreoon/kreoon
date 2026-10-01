@@ -90,20 +90,26 @@ export function LegalDocumentPage() {
 
   if (isLoading || loadingHtml) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (error || !document || !htmlContent) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background text-foreground px-4 text-center">
         <FileText className="w-16 h-16 text-muted-foreground" />
         <h1 className="text-2xl font-semibold">Documento no encontrado</h1>
         <p className="text-muted-foreground">
           El documento legal solicitado no existe o no está disponible.
         </p>
+        {docType === 'privacy-request' && (
+          <p className="text-muted-foreground">
+            Para ejercer tus derechos sobre tus datos personales escríbenos a{' '}
+            <a href="mailto:dpo@kreoon.com" className="text-primary underline">dpo@kreoon.com</a>.
+          </p>
+        )}
         <Button asChild>
           <Link to="/">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -145,7 +151,7 @@ export function LegalDocumentPage() {
 
       {/* Content */}
       <main className="container max-w-4xl mx-auto px-4 py-8">
-        <article className="legal-document prose prose-invert prose-purple max-w-none">
+        <article className="legal-document prose max-w-none [--tw-prose-body:hsl(var(--foreground))] [--tw-prose-headings:hsl(var(--foreground))] [--tw-prose-bold:hsl(var(--foreground))] [--tw-prose-links:hsl(var(--primary))] [--tw-prose-bullets:hsl(var(--muted-foreground))] [--tw-prose-counters:hsl(var(--muted-foreground))] [--tw-prose-th-borders:hsl(var(--border))] [--tw-prose-td-borders:hsl(var(--border))]">
           {/* Si el contenido es HTML, renderizarlo */}
           {htmlContent && htmlContent.startsWith('<') ? (
             <div
@@ -155,15 +161,15 @@ export function LegalDocumentPage() {
                 "[&_h1]:text-3xl [&_h1]:font-bold [&_h1]:mb-6 [&_h1]:text-foreground",
                 "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-8 [&_h2]:mb-4 [&_h2]:text-foreground",
                 "[&_h3]:text-lg [&_h3]:font-medium [&_h3]:mt-6 [&_h3]:mb-3 [&_h3]:text-foreground",
-                "[&_p]:text-foreground/80 [&_p]:leading-relaxed [&_p]:mb-4",
+                "[&_p]:text-foreground [&_p]:leading-relaxed [&_p]:mb-4",
                 "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-4 [&_ul]:space-y-2",
                 "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-4 [&_ol]:space-y-2",
-                "[&_li]:text-foreground/80",
-                "[&_a]:text-purple-400 [&_a]:underline [&_a]:hover:text-purple-300",
-                "[&_table]:w-full [&_table]:border-collapse [&_table]:mb-6",
+                "[&_li]:text-foreground [&_strong]:text-foreground",
+                "[&_a]:text-primary [&_a]:underline [&_a]:hover:text-primary/80",
+                "[&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto [&_table]:border-collapse [&_table]:mb-6",
                 "[&_th]:bg-muted/50 [&_th]:border [&_th]:border-border [&_th]:p-3 [&_th]:text-left [&_th]:font-medium",
                 "[&_td]:border [&_td]:border-border [&_td]:p-3",
-                "[&_address]:not-italic [&_address]:text-foreground/70",
+                "[&_address]:not-italic [&_address]:text-foreground",
                 "[&_.legal-meta]:text-sm [&_.legal-meta]:text-muted-foreground [&_.legal-meta]:mb-8 [&_.legal-meta]:p-4 [&_.legal-meta]:bg-muted/50 [&_.legal-meta]:rounded-sm",
                 "[&_.legal-warning]:bg-orange-500/10 [&_.legal-warning]:border [&_.legal-warning]:border-orange-500/30 [&_.legal-warning]:p-4 [&_.legal-warning]:rounded-sm [&_.legal-warning]:my-4",
                 "[&_.legal-highlight]:bg-purple-500/10 [&_.legal-highlight]:border [&_.legal-highlight]:border-purple-500/30 [&_.legal-highlight]:p-4 [&_.legal-highlight]:rounded-sm [&_.legal-highlight]:my-4",
@@ -172,7 +178,7 @@ export function LegalDocumentPage() {
                 "[&_section]:mb-8",
                 "[&_dl]:space-y-4 [&_dl]:mb-6",
                 "[&_dt]:font-medium [&_dt]:text-foreground",
-                "[&_dd]:text-foreground/70 [&_dd]:ml-4 [&_dd]:mb-3"
+                "[&_dd]:text-foreground [&_dd]:ml-4 [&_dd]:mb-3"
               )}
             />
           ) : (

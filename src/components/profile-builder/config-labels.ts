@@ -9,7 +9,7 @@ export const CONFIG_LABELS: Record<string, string> = {
   showRole: 'Mostrar rol/especialidad',
   showName: 'Mostrar nombre',
   showTagline: 'Mostrar tagline',
-  showBio: 'Mostrar biografia',
+  showBio: 'Mostrar biografía',
   showCTA: 'Mostrar boton CTA',
   ctaText: 'Texto del boton',
   ctaAction: 'Accion del boton',
@@ -23,7 +23,7 @@ export const CONFIG_LABELS: Record<string, string> = {
   // ─── Recommended Talent ─────────────────────────────────────────────────────
   maxItems: 'Maximo de elementos',
   showRating: 'Mostrar calificacion',
-  showCategory: 'Mostrar categoria',
+  showCategory: 'Mostrar categoría',
 
   // ─── Portfolio ──────────────────────────────────────────────────────────────
   showTitles: 'Mostrar titulos',
@@ -33,7 +33,7 @@ export const CONFIG_LABELS: Record<string, string> = {
   showFollowers: 'Seguidores (redes)',
   showProjects: 'Proyectos completados',
   showClients: 'Clientes unicos',
-  showYears: 'Anos de experiencia',
+  showYears: 'Años de experiencia',
   showTeamSize: 'Tamano del equipo',
   showReach: 'Alcance total',
   showEngagement: 'Engagement total',
@@ -127,7 +127,7 @@ export const CONFIG_LABELS: Record<string, string> = {
   showHours: 'Mostrar horas',
   showMinutes: 'Mostrar minutos',
   showSeconds: 'Mostrar segundos',
-  title: 'Titulo del contador',
+  title: 'Título del contador',
   completedText: 'Texto al completar',
   accentColor: 'Color de acento',
 
@@ -136,7 +136,7 @@ export const CONFIG_LABELS: Record<string, string> = {
   aspectRatio: 'Relacion de aspecto',
 
   // ─── CTA Banner ─────────────────────────────────────────────────────────────
-  headline: 'Titulo principal',
+  headline: 'Título principal',
   subtext: 'Subtitulo',
   buttonUrl: 'URL del boton',
   showSecondaryButton: 'Mostrar boton secundario',
@@ -298,14 +298,14 @@ export const OPTION_LABELS: Record<string, Record<string, string>> = {
     auto: 'Automatico',
   },
   tag: {
-    h1: 'H1 - Titulo principal',
+    h1: 'H1 - Título principal',
     h2: 'H2 - Subtitulo',
-    h3: 'H3 - Seccion',
+    h3: 'H3 - Sección',
     h4: 'H4 - Subseccion',
     p: 'Parrafo',
   },
   ctaAction: {
-    'scroll-portfolio': 'Ver Portfolio',
+    'scroll-portfolio': 'Ver Portafolio',
     contact: 'Ir a Contacto',
     link: 'Link externo',
     whatsapp: 'WhatsApp',

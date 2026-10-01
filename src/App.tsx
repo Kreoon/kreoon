@@ -144,6 +144,7 @@ const SignupClosedPage = lazyWithRetry(
   () => import("./pages/registro/SignupClosedPage"),
 );
 const AuthCallback = lazyWithRetry(() => import("./pages/auth/AuthCallback"));
+const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
 const ResearchLanding = lazyWithRetry(() => import("./pages/ResearchLanding"));
 const OrgPortfolioPage = lazyWithRetry(
   () => import("./pages/OrgPortfolioPage"),
@@ -646,6 +647,8 @@ function AppRoutes() {
         <Route path="/review/:token" element={<PublicReviewPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+        {/* Recuperación: fijar contraseña ANTES de cualquier onboarding; maneja enlaces vencidos (otp_expired) */}
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/no-company" element={<NoCompany />} />
         <Route path="/no-organization" element={<NoOrganization />} />
         <Route path="/pending-access" element={<PendingAccess />} />

@@ -8,6 +8,7 @@ import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
 import { getPermissionGroup, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
 import { getDashboardPathForRoles } from '@/lib/routing/postAuth';
+import { isBlockedForProduction, isProductionOnlyTalent } from '@/lib/creatorScope';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -264,6 +265,17 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
     CLIENT_BLOCKED_ROUTES.some(route => location.pathname.startsWith(route))
   ) {
     return <Navigate to="/client-dashboard" replace />;
+  }
+
+  // Creador/editor: solo lo esencial; el resto tampoco por URL directa (ver lib/creatorScope.ts)
+  if (
+    isProductionOnlyTalent(realRoles) &&
+    !isPlatformAdmin &&
+    !isPlatformRoot &&
+    !isImpersonating &&
+    isBlockedForProduction(location.pathname)
+  ) {
+    return <Navigate to={getDashboardPath(realRoles)} replace />;
   }
 
   // Routes that require a company/brand to be set up

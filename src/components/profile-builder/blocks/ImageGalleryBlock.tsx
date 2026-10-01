@@ -188,7 +188,7 @@ function ImageGalleryBlockComponent({ block, isEditing, isSelected, onUpdate, us
           type="text"
           value={content.title || ''}
           onChange={(e) => handleContentUpdate({ title: e.target.value })}
-          placeholder="Galeria (opcional)"
+          placeholder="Galería (opcional)"
           className="text-xl md:text-2xl font-bold text-foreground bg-transparent border-none w-full mb-6 focus:outline-none focus:ring-1 focus:ring-primary rounded"
         />
       ) : content.title ? (

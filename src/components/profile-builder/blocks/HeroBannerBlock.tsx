@@ -467,7 +467,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
                 className="bg-white text-zinc-900 hover:bg-white/90 font-semibold px-8 shadow-lg"
                 onClick={handleCtaClick}
               >
-                {config.ctaText || 'Ver Portfolio'}
+                {config.ctaText || 'Ver Portafolio'}
               </Button>
             </div>
           )}
@@ -484,7 +484,7 @@ function HeroBannerBlockComponent({ block, isEditing, isSelected, onUpdate, user
         placeholder={
           editingField === 'headline'
             ? 'Tu nombre o titulo...'
-            : 'Una breve descripcion de lo que haces...'
+            : 'Una breve descripción de lo que haces...'
         }
         mode={editingField === 'headline' ? 'inline' : 'block'}
       />

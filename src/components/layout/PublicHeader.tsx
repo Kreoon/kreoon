@@ -26,8 +26,8 @@ function Logo({ className }: { className?: string }) {
         <img src="/favicon.png" alt="Kreoon" className="h-10 w-10 object-cover" />
       </div>
       <div className="flex flex-col">
-        <span className="font-bold tracking-tight text-xl text-white">KREOON</span>
-        <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-kreoon-purple-400">
+        <span className="font-bold tracking-tight text-xl text-foreground">KREOON</span>
+        <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-primary">
           AI Platform
         </span>
       </div>
@@ -68,12 +68,12 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
         initial={false}
         animate={{
           backgroundColor: scrolled || !transparent
-            ? "rgba(10, 10, 15, 0.95)"
-            : "rgba(10, 10, 15, 0)",
+            ? "hsl(var(--background) / 0.95)"
+            : "hsl(var(--background) / 0)",
           backdropFilter: scrolled || !transparent ? "blur(16px)" : "blur(0px)",
           borderBottomColor: scrolled || !transparent
-            ? "rgba(148, 163, 184, 0.1)"
-            : "rgba(148, 163, 184, 0)",
+            ? "hsl(var(--border))"
+            : "hsl(var(--border) / 0)",
         }}
         transition={{ duration: 0.3 }}
         className="fixed left-0 right-0 top-0 z-50 border-b border-transparent"
@@ -83,12 +83,12 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
             <Logo />
           </div>
 
-          <nav className="hidden flex-1 items-center justify-center gap-6 lg:gap-8 md:flex">
+          <nav className="hidden flex-1 items-center justify-center gap-6 lg:gap-8 lg:flex">
             <Link
               to="/"
               className={cn(
-                "text-sm transition-colors hover:text-white",
-                location.pathname === "/" ? "text-white" : "text-kreoon-text-secondary"
+                "text-sm transition-colors hover:text-foreground",
+                location.pathname === "/" ? "text-foreground font-medium" : "text-muted-foreground"
               )}
             >
               Inicio
@@ -98,8 +98,8 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
                 key={item.label}
                 to={item.to}
                 className={cn(
-                  "text-sm transition-colors hover:text-white",
-                  location.pathname === item.to ? "text-white" : "text-kreoon-text-secondary"
+                  "text-sm transition-colors hover:text-foreground",
+                  location.pathname === item.to ? "text-foreground font-medium" : "text-muted-foreground"
                 )}
               >
                 {item.label}
@@ -107,7 +107,7 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
             ))}
           </nav>
 
-          <div className="hidden shrink-0 items-center gap-3 md:flex">
+          <div className="hidden shrink-0 items-center gap-3 lg:flex">
             <KreoonButton variant="ghost" size="md" onClick={() => handleAuth("login")}>
               Iniciar sesión
             </KreoonButton>
@@ -119,7 +119,7 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
           <button
             type="button"
             aria-label="Abrir menú"
-            className="flex h-10 w-10 items-center justify-center rounded-sm text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white md:hidden"
+            className="flex h-10 w-10 items-center justify-center rounded-sm text-muted-foreground hover:bg-kreoon-purple-500/10 hover:text-foreground lg:hidden"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="h-6 w-6" />
@@ -136,7 +136,7 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-black/60 md:hidden"
+              className="fixed inset-0 z-50 bg-foreground/40 lg:hidden"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
@@ -144,14 +144,14 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
-              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-kreoon-bg-secondary border-l border-kreoon-border shadow-2xl md:hidden"
+              className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm flex-col bg-background border-l border-border shadow-2xl lg:hidden"
             >
-              <div className="flex h-16 items-center justify-between border-b border-kreoon-border px-4">
+              <div className="flex h-16 items-center justify-between border-b border-border px-4">
                 <Logo />
                 <button
                   type="button"
                   aria-label="Cerrar menú"
-                  className="flex h-10 w-10 items-center justify-center rounded-sm text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                  className="flex h-10 w-10 items-center justify-center rounded-sm text-muted-foreground hover:bg-kreoon-purple-500/10 hover:text-foreground"
                   onClick={() => setMobileOpen(false)}
                 >
                   <X className="h-6 w-6" />
@@ -161,25 +161,25 @@ export function PublicHeader({ onOpenAuth, transparent = true }: PublicHeaderPro
                 <Link
                   to="/"
                   onClick={() => setMobileOpen(false)}
-                  className="block rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                  className="block rounded-sm px-4 py-3 text-muted-foreground hover:bg-kreoon-purple-500/10 hover:text-foreground"
                 >
                   Inicio
                 </Link>
 
-                <div className="border-t border-kreoon-border/50 pt-2 mt-2">
+                <div className="border-t border-border/50 pt-2 mt-2">
                   {NAV_LINKS.slice(1).map((item) => (
                     <Link
                       key={item.label}
                       to={item.to}
                       onClick={() => setMobileOpen(false)}
-                      className="block rounded-sm px-4 py-3 text-kreoon-text-secondary hover:bg-kreoon-purple-500/10 hover:text-white"
+                      className="block rounded-sm px-4 py-3 text-muted-foreground hover:bg-kreoon-purple-500/10 hover:text-foreground"
                     >
                       {item.label}
                     </Link>
                   ))}
                 </div>
 
-                <div className="mt-4 flex flex-col gap-2 border-t border-kreoon-border pt-4">
+                <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4">
                   <KreoonButton
                     variant="ghost"
                     className="w-full justify-center"

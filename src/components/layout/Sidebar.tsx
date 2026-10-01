@@ -94,12 +94,15 @@ const ORG_MORE_ITEMS: NavItem[] = [
   PLAN_ITEM,
 ];
 
-// Secundarios de creador y editor (no gestionan clientes, finanzas ni talento)
-const TALENT_MORE_ITEMS: NavItem[] = [
+// Creador y editor: solo lo esencial (decisión 2026-10-01). Sin marketplace de otros creadores,
+// planes, Social Hub, Guionizador ni Academia: volverán como complementos de pago.
+// «Campañas» = invitaciones de marcas mientras se reconstruye el módulo de campañas abiertas.
+// Las rutas vedadas también se bloquean por URL (src/lib/creatorScope.ts).
+const talentCoreItems = (projectsHref: string): NavItem[] => [
+  { name: "Proyectos", href: projectsHref, icon: Kanban, tourId: "sidebar-board" },
+  { name: "Campañas", href: "/marketplace/invitations", icon: Megaphone, tourId: "sidebar-campaigns" },
   { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
-  SOCIAL_HUB_ITEM,
-  AD_GENERATOR_ITEM,
-  PLAN_ITEM,
+  SETTINGS_ITEM,
 ];
 
 const adminSections: NavSection[] = [
@@ -152,13 +155,9 @@ const editorSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/editor-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Proyectos", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Guiones", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
-  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const creatorSections: NavSection[] = [
@@ -166,13 +165,9 @@ const creatorSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Proyectos", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Guiones", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
-  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const clientSections: NavSection[] = [
@@ -204,19 +199,7 @@ const basicTalentInOrgSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
-      { name: "Proyectos", href: "/board", icon: Kanban, tourId: "sidebar-board" },
-      { name: "Guiones", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
-    ]
-  },
-  {
-    label: "MÁS",
-    items: [
-      { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
-      { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      SOCIAL_HUB_ITEM,
-      PLAN_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
 ];
@@ -226,20 +209,8 @@ const freelanceSections: NavSection[] = [
   {
     label: "",
     items: [
-      { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-freelancer-dash" },
-      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban, tourId: "sidebar-freelancer-board" },
-      { name: "Marketplace", href: "/marketplace", icon: Store, tourId: "sidebar-mkt-browse" },
-      { name: "Guiones", href: "/scripts", icon: Sparkles, tourId: "sidebar-scripts" },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
-    ]
-  },
-  {
-    label: "MÁS",
-    items: [
-      { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart, tourId: "sidebar-mkt-favoritos" },
-      SOCIAL_HUB_ITEM,
-      PLAN_ITEM,
+      { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard, tourId: "sidebar-dashboard" },
+      ...talentCoreItems("/board?view=marketplace"),
     ]
   },
 ];
@@ -557,8 +528,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
         return { ...section, items: filteredItems };
       }).filter(section => section.items.length > 0);
 
-    // Los clientes ya llevan su marketplace ("Buscar talento") en la sección principal
-    if (activeIsClient) {
+    // Los clientes ya llevan su marketplace ("Buscar talento") en la sección principal.
+    // Creador y editor no exploran el marketplace (ven su perfil público desde el encabezado).
+    if (activeIsClient || ((activeIsCreator || activeIsEditor) && !activeIsAdmin && !activeIsStrategist)) {
       return filtered;
     }
 
@@ -767,8 +739,8 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
           })}
         </nav>
 
-        {/* Tokens IA */}
-        {profile && (
+        {/* Tokens IA — creador/editor no usan herramientas de IA por ahora (sin guionizador) */}
+        {profile && !((activeIsCreator || activeIsEditor) && !activeIsAdmin && !activeIsStrategist) && (
           <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
               organizationId={null}

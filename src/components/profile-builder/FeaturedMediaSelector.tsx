@@ -223,7 +223,7 @@ export function FeaturedMediaSelector({
                     >
                       <img
                         src={thumbUrl}
-                        alt={item.title || 'Portfolio item'}
+                        alt={item.title || 'Portafolio item'}
                         className="w-full h-full object-cover"
                       />
                       {item.media_type === 'video' && (

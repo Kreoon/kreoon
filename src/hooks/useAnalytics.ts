@@ -75,7 +75,19 @@ const parseClickIds = (url: string): ClickIds => {
   }
 };
 
+// Consentimiento (Ley 1581 / GDPR): sin aceptación expresa de analítica no se guardan identificadores
+// ni se envían eventos. Fuente: banner de cookies (kreoon_cookie_consent).
+const hasAnalyticsConsent = (): boolean => {
+  try {
+    const c = JSON.parse(localStorage.getItem('kreoon_cookie_consent') || 'null');
+    return c?.analytics === true;
+  } catch {
+    return false;
+  }
+};
+
 const getOrCreateAnonymousId = (): string => {
+  if (!hasAnalyticsConsent()) return generateId();
   try {
     let id = localStorage.getItem(ANONYMOUS_ID_KEY);
     if (!id) {
@@ -89,6 +101,7 @@ const getOrCreateAnonymousId = (): string => {
 };
 
 const getOrCreateSessionId = (): string => {
+  if (!hasAnalyticsConsent()) return generateId();
   try {
     const stored = localStorage.getItem(SESSION_ID_KEY);
     if (stored) {
@@ -195,7 +208,7 @@ export function useAnalytics(): AnalyticsReturnType {
         first_seen: Date.now(),
       };
       try {
-        localStorage.setItem(VISITOR_DATA_KEY, JSON.stringify(visitorData));
+        if (hasAnalyticsConsent()) localStorage.setItem(VISITOR_DATA_KEY, JSON.stringify(visitorData));
       } catch { /* ignore */ }
     }
 
@@ -204,7 +217,7 @@ export function useAnalytics(): AnalyticsReturnType {
     if (Object.values(currentClickIds).some(Boolean)) {
       visitorData.click_ids = { ...visitorData.click_ids, ...currentClickIds };
       try {
-        localStorage.setItem(VISITOR_DATA_KEY, JSON.stringify(visitorData));
+        if (hasAnalyticsConsent()) localStorage.setItem(VISITOR_DATA_KEY, JSON.stringify(visitorData));
       } catch { /* ignore */ }
     }
 
@@ -222,6 +235,10 @@ export function useAnalytics(): AnalyticsReturnType {
   // Flush eventos a kae-track Edge Function
   const flushEvents = useCallback(async () => {
     if (eventQueue.current.length === 0) return;
+    if (!hasAnalyticsConsent()) {
+      eventQueue.current = [];
+      return;
+    }
 
     const eventsToSend = eventQueue.current.splice(0, MAX_BATCH_SIZE);
 
@@ -481,7 +498,7 @@ export function useAnalytics(): AnalyticsReturnType {
         }
       }
 
-      if (eventQueue.current.length > 0 && contextRef.current) {
+      if (eventQueue.current.length > 0 && contextRef.current && hasAnalyticsConsent()) {
         const eventsToSend = eventQueue.current.splice(0, MAX_BATCH_SIZE);
         const url = `${import.meta.env.VITE_SUPABASE_URL || 'https://wjkbqcrxwsmvtxmqgiqc.supabase.co'}/functions/v1/kae-track`;
         try {

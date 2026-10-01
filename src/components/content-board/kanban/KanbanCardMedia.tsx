@@ -10,6 +10,7 @@ import {
   isDirectVideoUrl,
 } from "@/components/board/KanbanCardVideoPreview";
 import type { Content } from "@/types/database";
+import { getOptimizedThumbnail } from "@/lib/imageOptimization";
 
 // El reproductor (HLS) solo se descarga cuando alguien pulsa play.
 const BunnyVideoPlayer = lazy(() => import("@/components/video/BunnyVideoPlayer"));
@@ -53,7 +54,7 @@ export function MediaThumb({ title, info, hooksCount, onPlay }: MediaThumbProps)
     <div className="kb-media kb-lift" data-video-trigger>
       {showImg ? (
         <img
-          src={info.thumbnailUrl!}
+          src={getOptimizedThumbnail(info.thumbnailUrl, 144, 256)}
           alt=""
           loading="lazy"
           decoding="async"

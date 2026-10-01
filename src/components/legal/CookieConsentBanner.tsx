@@ -24,8 +24,8 @@ const DEFAULT_PREFERENCES: CookiePreferences = {
   version: COOKIE_CONSENT_VERSION,
   timestamp: new Date().toISOString(),
   essential: true,
-  analytics: true,      // Activas por defecto - el usuario puede desactivar en "Personalizar"
-  marketing: true,      // Activas por defecto - el usuario puede desactivar en "Personalizar"
+  analytics: false,     // Consentimiento previo: desactivadas hasta que la persona las acepte
+  marketing: false,     // Consentimiento previo: desactivadas hasta que la persona las acepte
   personalization: true, // Activas por defecto - el usuario puede desactivar en "Personalizar"
 };
 

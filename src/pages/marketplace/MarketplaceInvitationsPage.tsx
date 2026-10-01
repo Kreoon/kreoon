@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { UserPlus, Send, Inbox, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { isProductionOnlyTalent } from '@/lib/creatorScope';
 import {
   useOrgSentInvitations,
   useCreatorReceivedInvitations,
@@ -15,10 +16,10 @@ import { Badge } from '@/components/ui/badge';
 type InvTab = 'sent' | 'received';
 
 const STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500/15 text-yellow-400',
-  accepted: 'bg-green-500/15 text-green-400',
-  declined: 'bg-red-500/15 text-red-400',
-  cancelled: 'bg-gray-500/15 text-gray-400',
+  pending: 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-400',
+  accepted: 'bg-green-500/15 text-green-800 dark:text-green-400',
+  declined: 'bg-red-500/15 text-red-800 dark:text-red-400',
+  cancelled: 'bg-muted text-muted-foreground',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,9 +40,11 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function MarketplaceInvitationsPage() {
-  const { profile, user } = useAuth();
+  const { profile, user, roles } = useAuth();
   const orgId = profile?.current_organization_id || null;
-  const [tab, setTab] = useState<InvTab>('sent');
+  // Creador/editor solo reciben invitaciones: ven «Campañas» directo en Recibidas, sin pestaña Enviadas
+  const talentView = isProductionOnlyTalent(roles);
+  const [tab, setTab] = useState<InvTab>(talentView ? 'received' : 'sent');
 
   const { invitations: sent, loading: sentLoading } = useOrgSentInvitations(orgId);
   const { invitations: received, loading: receivedLoading } = useCreatorReceivedInvitations(user?.id);
@@ -59,25 +62,27 @@ export default function MarketplaceInvitationsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <UserPlus className="h-6 w-6 text-purple-400" />
-            Invitaciones de Reclutamiento
+            <UserPlus className="h-6 w-6 text-primary" />
+            {talentView ? 'Campañas' : 'Invitaciones de reclutamiento'}
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Gestiona invitaciones de reclutamiento del marketplace</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {talentView ? 'Marcas que quieren trabajar contigo' : 'Gestiona las invitaciones de reclutamiento del marketplace'}
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 border-b border-white/5 mb-6">
+        <div className={cn('flex gap-1 border-b border-border mb-6', talentView && 'hidden')}>
           <button
             onClick={() => setTab('sent')}
             className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-              tab === 'sent' ? 'text-foreground border-purple-500' : 'text-gray-500 border-transparent hover:text-foreground')}
+              tab === 'sent' ? 'text-foreground border-primary' : 'text-muted-foreground border-transparent hover:text-foreground')}
           >
             <Send className="h-4 w-4" /> Enviadas {sent.length > 0 && `(${sent.length})`}
           </button>
           <button
             onClick={() => setTab('received')}
             className={cn('flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all',
-              tab === 'received' ? 'text-foreground border-purple-500' : 'text-gray-500 border-transparent hover:text-foreground')}
+              tab === 'received' ? 'text-foreground border-primary' : 'text-muted-foreground border-transparent hover:text-foreground')}
           >
             <Inbox className="h-4 w-4" /> Recibidas {received.length > 0 && `(${received.length})`}
           </button>
@@ -86,19 +91,24 @@ export default function MarketplaceInvitationsPage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center p-12">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : invitations.length === 0 ? (
           <div className="text-center py-16">
-            <UserPlus className="h-12 w-12 mx-auto text-gray-600 mb-3" />
-            <p className="text-gray-400">
-              {tab === 'sent' ? 'No has enviado invitaciones aún' : 'No tienes invitaciones recibidas'}
+            <UserPlus className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <p className="font-medium text-foreground">
+              {tab === 'sent' ? 'No has enviado invitaciones aún' : 'Aún no tienes invitaciones'}
             </p>
+            {tab === 'received' && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cuando una marca te invite a trabajar con ella, la verás aquí y podrás aceptarla o rechazarla.
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
             {invitations.map(inv => (
-              <div key={inv.id} className="flex items-center gap-4 p-4 rounded-sm border border-white/5 bg-white/[0.02]">
+              <div key={inv.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card shadow-sm">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={
                     tab === 'sent'
@@ -122,8 +132,8 @@ export default function MarketplaceInvitationsPage() {
                   <p className="text-xs text-purple-400">
                     Rol: {ROLE_LABELS[inv.proposed_role] || inv.proposed_role}
                   </p>
-                  {inv.message && <p className="text-xs text-gray-500 truncate mt-0.5">{inv.message}</p>}
-                  <p className="text-xs text-gray-600 mt-0.5">
+                  {inv.message && <p className="text-xs text-muted-foreground truncate mt-0.5">{inv.message}</p>}
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {new Date(inv.created_at).toLocaleDateString('es-CO')}
                   </p>
                 </div>
@@ -138,7 +148,7 @@ export default function MarketplaceInvitationsPage() {
                     <button
                       onClick={() => cancelMutation.mutate(inv.id)}
                       disabled={cancelMutation.isPending}
-                      className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-400 border border-white/10 rounded-sm hover:bg-white/5 hover:text-red-400 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground border border-border rounded-sm hover:bg-muted hover:text-destructive transition-colors"
                     >
                       <XCircle className="h-3.5 w-3.5" />
                       Cancelar

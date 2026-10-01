@@ -41,7 +41,7 @@ const KreoonSectionTitle = React.forwardRef<
         {...props}
       >
         <div className={cn("space-y-1.5", align === "center" && "flex flex-col items-center")}>
-          <h2 className="text-2xl font-bold tracking-tight text-kreoon-text-primary md:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground md:text-3xl">
             {title}
           </h2>
           {accent ? (
@@ -55,7 +55,7 @@ const KreoonSectionTitle = React.forwardRef<
           ) : null}
         </div>
         {subtitle ? (
-          <p className="text-sm text-kreoon-text-secondary md:text-base max-w-2xl">
+          <p className="text-sm text-muted-foreground md:text-base max-w-2xl">
             {subtitle}
           </p>
         ) : null}

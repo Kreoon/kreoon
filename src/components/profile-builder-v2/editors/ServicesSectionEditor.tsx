@@ -23,7 +23,7 @@ export function ServicesSectionEditor({
   return (
     <div className="space-y-4">
       <TextField
-        label="Titulo de la seccion"
+        label="Título de la sección"
         value={asString(content.title)}
         placeholder="Mis servicios"
         onChange={(v) => patchContent(section, onUpdateBlock, "title", v)}
@@ -34,7 +34,7 @@ export function ServicesSectionEditor({
           Servicios actuales
         </p>
         {items.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Aun no hay servicios.</p>
+          <p className="text-xs text-muted-foreground">Aún no hay servicios.</p>
         ) : (
           <ul className="space-y-1">
             {items.map((item, index) => (

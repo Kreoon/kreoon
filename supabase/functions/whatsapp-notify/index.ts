@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logPaused, notificationsPaused } from "../_shared/notification-guard.ts";
 
 /**
  * whatsapp-notify — Envío de mensajes WhatsApp vía Botcake API (plantillas Meta aprobadas)
@@ -122,6 +123,15 @@ Deno.serve(async (req) => {
     console.warn(`[whatsapp-notify] Template "${event_type}" inactivo (pendiente aprobación Meta) — omitiendo`);
     return new Response(
       JSON.stringify({ success: false, reason: "Template not active" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Interruptor global de pruebas: no enviar WhatsApp a nadie
+  if (notificationsPaused()) {
+    logPaused("whatsapp", { skipped: true });
+    return new Response(
+      JSON.stringify({ success: true, skipped: true, reason: "notifications_paused" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

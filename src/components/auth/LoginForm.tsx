@@ -162,13 +162,13 @@ export function LoginForm({
         <div className="space-y-1.5">
           <label
             htmlFor="login-password"
-            className="block text-sm font-medium text-kreoon-text-secondary"
+            className="block text-sm font-medium text-muted-foreground"
           >
             Contraseña
           </label>
           <div className="relative">
             <div
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-kreoon-text-muted pointer-events-none"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
               aria-hidden
             >
               <Lock className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function LoginForm({
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-kreoon-text-muted hover:text-kreoon-text-secondary transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground transition-colors"
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
               tabIndex={-1}
             >
@@ -209,7 +209,7 @@ export function LoginForm({
           <button
             type="button"
             onClick={onForgotPassword}
-            className="text-sm text-kreoon-purple-400 hover:text-kreoon-purple-300 transition-colors"
+            className="text-sm text-primary hover:text-primary/80 transition-colors"
           >
             ¿Olvidaste tu contraseña?
           </button>
@@ -228,7 +228,7 @@ export function LoginForm({
 
         <div className="relative flex items-center gap-3">
           <KreoonDivider className="flex-1" glow />
-          <span className="text-xs text-kreoon-text-muted shrink-0">
+          <span className="text-xs text-muted-foreground shrink-0">
             o continúa con
           </span>
           <KreoonDivider className="flex-1" glow />
@@ -264,12 +264,12 @@ export function LoginForm({
           Google
         </KreoonButton>
 
-        <p className="text-center text-sm text-kreoon-text-secondary">
+        <p className="text-center text-sm text-muted-foreground">
           ¿No tienes cuenta?{" "}
           <button
             type="button"
             onClick={onSwitchToRegister}
-            className="font-medium text-kreoon-purple-400 hover:text-kreoon-purple-300 transition-colors underline underline-offset-2"
+            className="font-medium text-primary hover:text-primary/80 transition-colors underline underline-offset-2"
           >
             Regístrate
           </button>

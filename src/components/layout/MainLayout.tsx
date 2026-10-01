@@ -12,6 +12,7 @@ import { AccountMenu } from "./AccountMenu";
 import { MoreMenuSheet, type MoreMenuItem } from "./MoreMenuSheet";
 import { AcademiaMoreMenuSheet } from "./AcademiaMoreMenuSheet";
 import { MobileNotificationsBell } from "@/components/notifications/MobileNotificationsBell";
+import { isProductionOnlyTalent } from "@/lib/creatorScope";
 import { MOBILE_BOTTOM_NAV_CSS_VAR, MOBILE_BOTTOM_NAV_HEIGHT_PX } from "@/lib/layoutConstants";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrgMarketplace } from "@/hooks/useOrgMarketplace";
@@ -21,7 +22,7 @@ import { useClientRealtimeNotifications } from "@/hooks/useClientRealtimeNotific
 import { useClientPendingReviews } from "@/hooks/useClientPendingReviews";
 import { NavLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Kanban, Settings, Scissors, Briefcase, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Settings, Scissors, Eye, Clapperboard, Compass, GraduationCap, BookOpen, Rss, CalendarDays, Store, Megaphone, Users, Building2, Dna, Package, Receipt, Heart, Wallet, Users2, DollarSign, Trash2, Blocks, LayoutList, FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -63,17 +64,18 @@ interface MainLayoutProps {
 
 // Editor navigation items for mobile bottom bar - Kreoon Tech theme
 // Kreoon IA/Config viven en "Mas" (MoreMenuSheet) para no perder acceso a nada.
+// Mismos nombres que el menú lateral; sin marketplace para creador/editor (decisión 2026-10-01)
 const editorMobileNavigation = [
-  { name: "Edición", href: "/editor-dashboard", icon: LayoutDashboard },
-  { name: "Producciones", href: "/board", icon: Kanban },
-  { name: "Market", href: "/marketplace", icon: Briefcase },
+  { name: "Inicio", href: "/editor-dashboard", icon: LayoutDashboard },
+  { name: "Proyectos", href: "/board", icon: Kanban },
+  { name: "Campañas", href: "/marketplace/invitations", icon: Megaphone },
 ];
 
 // Creator navigation items for mobile bottom bar
 const creatorMobileNavigation = [
-  { name: "Hub", href: "/creator-dashboard", icon: LayoutDashboard },
-  { name: "Producciones", href: "/board", icon: Kanban },
-  { name: "Market", href: "/marketplace", icon: Briefcase },
+  { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
+  { name: "Proyectos", href: "/board", icon: Kanban },
+  { name: "Campañas", href: "/marketplace/invitations", icon: Megaphone },
 ];
 
 // Client/marca navigation items for mobile bottom bar.
@@ -170,9 +172,21 @@ function PageWrapper({ children, locationKey }: { children: ReactNode; locationK
 export function MainLayout({
   children
 }: MainLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { isClient, isAdmin, activeRole, profile, user } = useAuth();
+  // En tablet y laptops pequeñas (< 1280px) el menú completo (288px) aplastaba el contenido:
+  // arranca contraído y se adapta al cruzar el punto de corte; el usuario puede abrirlo igual.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1279px)').matches
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 1279px)');
+    const onChange = (e: MediaQueryListEvent) => setSidebarCollapsed(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+  const { isClient, isAdmin, activeRole, profile, user, roles: rolesForKiro, isPlatformAdmin: isPlatformAdminForKiro } = useAuth();
   const { marketplaceEnabled, clientMarketplaceEnabled } = useOrgMarketplace();
+  // Creador/editor: sin Kiro ni ✨ (decisión 2026-10-01); sus notificaciones van en la campana del encabezado
+  const hideKiro = !isPlatformAdminForKiro && isProductionOnlyTalent(rolesForKiro);
   const { isPlatformRoot } = useOrgOwner();
   const location = useLocation();
   const navigate = useNavigate();
@@ -237,7 +251,7 @@ export function MainLayout({
             <span className="text-sm font-bold truncate">Academia</span>
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
-            <KiroHeaderButton />
+            {!hideKiro && <KiroHeaderButton />}
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -291,7 +305,7 @@ export function MainLayout({
           </Suspense>
         </main>
 
-        <KiroWidget hideFloatingButton />
+        {!hideKiro && <KiroWidget hideFloatingButton />}
       </div>
     );
   }
@@ -317,7 +331,7 @@ export function MainLayout({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <MobileNotificationsBell />
-            <KiroHeaderButton />
+            {!hideKiro && <KiroHeaderButton />}
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -388,7 +402,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget hideFloatingButton />
+        {!hideKiro && <KiroWidget hideFloatingButton />}
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -419,7 +433,7 @@ export function MainLayout({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <MobileNotificationsBell />
-            <KiroHeaderButton />
+            {!hideKiro && <KiroHeaderButton />}
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -490,7 +504,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget hideFloatingButton />
+        {!hideKiro && <KiroWidget hideFloatingButton />}
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -570,7 +584,7 @@ export function MainLayout({
           </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <MobileNotificationsBell />
-            <KiroHeaderButton />
+            {!hideKiro && <KiroHeaderButton />}
             <AccountMenu
               trigger={
                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -645,7 +659,7 @@ export function MainLayout({
         </main>
 
         {/* KIRO AI Assistant */}
-        <KiroWidget hideFloatingButton />
+        {!hideKiro && <KiroWidget hideFloatingButton />}
 
         {/* Ambassador Celebration */}
         <AmbassadorCelebration />
@@ -687,7 +701,7 @@ export function MainLayout({
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
           <MobileNotificationsBell />
-          <KiroHeaderButton />
+          {!hideKiro && <KiroHeaderButton />}
           <AccountMenu
             trigger={
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full p-0">
@@ -768,7 +782,7 @@ export function MainLayout({
       </main>
 
       {/* KIRO AI Assistant */}
-      <KiroWidget hideFloatingButton />
+      {!hideKiro && <KiroWidget hideFloatingButton />}
 
       {/* Tour Provider */}
       <TourProvider />

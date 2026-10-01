@@ -1,3 +1,4 @@
+import { guardedResend } from "../_shared/notification-guard.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "https://esm.sh/resend@4.0.0";
@@ -21,7 +22,7 @@ import { getOrgEmailConfig } from "../_shared/resend-client.ts";
  *   Client:  script_pending, content_delivered, content_corrected (WhatsApp real-time)
  */
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const resend = guardedResend(Deno.env.get("RESEND_API_KEY"));
 const KREOON_LOGO = '<img src="https://kreoon.com/favicon.png" alt="KREOON" width="48" height="48" style="display:block;margin:0 auto 16px;border-radius:12px" />';
 const FROM = "KREOON <noreply@kreoon.com>";
 

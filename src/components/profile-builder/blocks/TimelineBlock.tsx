@@ -72,7 +72,7 @@ function TimelineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
     const newEvent: TimelineEvent = {
       id: crypto.randomUUID(),
       title: 'Nuevo hito',
-      description: 'Descripcion del evento o logro.',
+      description: 'Descripción del evento o logro.',
       date: new Date().getFullYear().toString(),
     };
     handleContentUpdate({ events: [...events, newEvent] });
@@ -126,7 +126,7 @@ function TimelineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
                         <Input
                           value={event.title}
                           onChange={(e) => handleUpdateEvent(event.id, { title: e.target.value })}
-                          placeholder="Titulo del hito"
+                          placeholder="Título del hito"
                           className="font-semibold bg-transparent border-border/50 flex-1"
                         />
                         <Input
@@ -141,7 +141,7 @@ function TimelineBlockComponent({ block, isEditing, isSelected, onUpdate }: Bloc
                         onChange={(e) =>
                           handleUpdateEvent(event.id, { description: e.target.value })
                         }
-                        placeholder="Descripcion del evento"
+                        placeholder="Descripción del evento"
                         className="text-sm text-muted-foreground bg-transparent border-border/50 resize-none"
                         rows={2}
                       />

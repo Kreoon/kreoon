@@ -203,7 +203,7 @@ Deno.serve(async (req: Request) => {
     const senderName = org.sender_name || org.name;
     const from = `${senderName} <${org.sender_email}>`;
 
-    const resend = getResend();
+    const resend = getResend({ essential: true }); // correos de acceso: nunca se pausan
     const { data: sendData, error: sendError } = await resend.emails.send({
       from,
       to: [email],

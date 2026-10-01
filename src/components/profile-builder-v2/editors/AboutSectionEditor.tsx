@@ -14,9 +14,9 @@ export function AboutSectionEditor({
   return (
     <div className="space-y-4">
       <TextField
-        label="Titulo"
+        label="Título"
         value={asString(content.title)}
-        placeholder="Sobre mi"
+        placeholder="Sobre mí"
         onChange={(v) => patchContent(section, onUpdateBlock, "title", v)}
       />
       <TextAreaField

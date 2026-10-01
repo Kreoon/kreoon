@@ -68,7 +68,7 @@ export const TEMPLATE_MINIMALISTA: ProfileTemplate = {
       layout: 'centered',
     }),
     createTemplateBlock('about', 1, {}, {
-      title: 'Sobre mi',
+      title: 'Sobre mí',
       text: 'Profesional apasionado por crear experiencias excepcionales.',
     }),
     createTemplateBlock('portfolio', 2, {

@@ -209,6 +209,29 @@ export const MARKETPLACE_CATEGORIES = [
   { id: 'finanzas', label: 'Finanzas', icon: 'TrendingUp' },
 ] as const;
 
+/**
+ * Variantes guardadas por categoría. Los perfiles mezclan etiqueta («Moda & Estilo»), clave («moda») e
+ * inglés («fashion»): el filtro del chip debe buscar todas (antes «Moda» solo encontraba la clave exacta).
+ * Pendiente aparte: normalizar creator_profiles.categories/niches en la base.
+ */
+export const MARKETPLACE_CATEGORY_VARIANTS: Record<string, string[]> = {
+  ugc: ['ugc', 'UGC'],
+  fitness: ['fitness', 'Fitness & Deporte', 'deporte'],
+  moda: ['moda', 'Moda & Estilo', 'moda accesible', 'fashion'],
+  tech: ['tech', 'Tecnología', 'technology', 'tecnologia'],
+  belleza: ['belleza', 'Belleza & Skincare', 'beauty', 'Beauty', 'Maquillaje', 'skincare', 'belleza y maquillaje', 'Cuidado Personal'],
+  food: ['food', 'Food & Cocina', 'cocina'],
+  hogar: ['hogar', 'Hogar & Decoración'],
+  educacion: ['educacion', 'Educación', 'education'],
+  gaming: ['gaming', 'Gaming'],
+  mascotas: ['mascotas', 'Mascotas', 'pets'],
+  bebes: ['bebes', 'Bebés & Maternidad', 'maternidad'],
+  salud: ['salud', 'Salud & Bienestar', 'bienestar'],
+  musica: ['musica', 'Música', 'music'],
+  viajes: ['viajes', 'Viajes & Turismo', 'travel'],
+  finanzas: ['finanzas', 'Finanzas & Inversión', 'finance'],
+};
+
 export const COUNTRIES = [
   { code: 'CO', label: 'Colombia', flag: '🇨🇴' },
   { code: 'MX', label: 'México', flag: '🇲🇽' },

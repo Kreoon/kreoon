@@ -1,3 +1,5 @@
+import { isProductionOnlyTalent } from '@/lib/creatorScope';
+import { useAuth } from '@/hooks/useAuth';
 import { memo, useMemo } from 'react';
 import {
   User, Bell, Shield, HelpCircle, Building2, History,
@@ -67,6 +69,8 @@ const ALL_SECTIONS: SectionGroup[] = [
   },
 ];
 
+const TALENT_HIDDEN_SECTIONS: string[] = ['client_company', 'my_plan', 'mcp_integrations'];
+
 interface SettingsSidebarProps {
   activeSection: SettingsSectionKey | null;
   onSectionChange: (section: SettingsSectionKey) => void;
@@ -81,11 +85,17 @@ export const SettingsSidebar = memo(({
   variant = 'nav' 
 }: SettingsSidebarProps) => {
   const navigate = useNavigate();
+  const { roles } = useAuth();
+  // Creador/editor: solo ajustes de su cuenta (sin empresa, plan ni integraciones técnicas)
+  const talentView = isProductionOnlyTalent(roles);
   // Filter groups based on permissions
   const visibleGroups = useMemo(() => {
     return ALL_SECTIONS.map(group => ({
       ...group,
-      sections: group.sections.map(section => ({
+      title: talentView && group.id === 'user' ? 'Tu cuenta' : group.title,
+      sections: group.sections
+        .filter(section => !(talentView && TALENT_HIDDEN_SECTIONS.includes(section.key)))
+        .map(section => ({
         ...section,
         permission: permissions.getPermission(section.key),
       })),
@@ -95,7 +105,7 @@ export const SettingsSidebar = memo(({
       }
       return true;
     });
-  }, [permissions]);
+  }, [permissions, talentView]);
 
   // Cards variant for mobile
   if (variant === 'cards') {

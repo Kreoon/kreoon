@@ -1,3 +1,4 @@
+import { guardedResend } from "../_shared/notification-guard.ts";
 import { escapeHtml } from "../_shared/escapeHtml.ts";
 /**
  * Public Registration API - Widget de registro para ugccolombia.co
@@ -29,7 +30,8 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@4.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Esencial: el correo de bienvenida lleva el enlace de acceso y solo lo recibe quien se registra
+const resend = guardedResend(Deno.env.get("RESEND_API_KEY"), { essential: true });
 
 // UGC Colombia slugs
 const UGC_COLOMBIA_ORG_SLUG = "ugc-colombia";

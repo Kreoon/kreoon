@@ -139,7 +139,7 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
               <p className="text-lg text-foreground">{config.subtext}</p>
             )
           ) : isEditing && isSelected ? (
-            <span className="text-muted-foreground italic">Haz clic para agregar descripcion...</span>
+            <span className="text-muted-foreground italic">Haz clic para agregar descripción...</span>
           ) : null}
           {isEditing && isSelected && config.subtext && (
             <Pencil className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -194,8 +194,8 @@ function CTABannerBlockComponent({ block, isEditing, isSelected, onUpdate }: Blo
         onOpenChange={(open) => !open && closeEditor()}
         initialContent={editingContent}
         onSave={handleSave}
-        title={editingField === 'headline' ? 'Editar titulo' : 'Editar descripcion'}
-        placeholder={editingField === 'headline' ? 'Escribe tu titulo...' : 'Escribe una descripcion...'}
+        title={editingField === 'headline' ? 'Editar titulo' : 'Editar descripción'}
+        placeholder={editingField === 'headline' ? 'Escribe tu titulo...' : 'Escribe una descripción...'}
         mode={editingField === 'headline' ? 'inline' : 'block'}
       />
     </div>

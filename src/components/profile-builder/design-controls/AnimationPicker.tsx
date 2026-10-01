@@ -259,7 +259,7 @@ export function AnimationPicker({ value, onChange, className }: AnimationPickerP
           {/* Duracion */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label className="text-xs text-muted-foreground">Duracion</Label>
+              <Label className="text-xs text-muted-foreground">Duración</Label>
               <span className="text-xs font-mono text-muted-foreground">
                 {value.duration || 500}ms
               </span>

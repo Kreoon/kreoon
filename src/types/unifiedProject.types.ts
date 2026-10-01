@@ -190,7 +190,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
   // -------------------------------------------------------
   content_creation: {
     type: 'content_creation',
-    label: 'Creacion de Contenido',
+    label: 'Creación de contenido',
     icon: 'Video',
     color: 'text-purple-600',
     bgColor: 'bg-purple-100 dark:bg-purple-900/30',
@@ -609,7 +609,7 @@ export const PROJECT_TYPE_REGISTRY: Record<ProjectType, ProjectTypeConfig> = {
       states: [
         { key: 'pending', label: 'Pendiente', color: 'gray' },
         { key: 'planning', label: 'Planificacion', color: 'yellow' },
-        { key: 'content_creation', label: 'Creacion de Contenido', color: 'blue' },
+        { key: 'content_creation', label: 'Creación de contenido', color: 'blue' },
         { key: 'review', label: 'Revision', color: 'orange' },
         { key: 'published', label: 'Publicado', color: 'green' },
         { key: 'completed', label: 'Completado', color: 'emerald' },
@@ -1054,7 +1054,7 @@ export interface UnifiedTabConfig {
 }
 
 export const SECTION_TAB_CONFIG: Record<UnifiedSectionKey, UnifiedTabConfig> = {
-  workspace: { key: 'workspace', label: 'Workspace', icon: 'PenTool' },
+  workspace: { key: 'workspace', label: 'Guión', icon: 'PenTool' },
   brief: { key: 'brief', label: 'Brief', icon: 'FileText' },
   video: { key: 'video', label: 'Video', icon: 'Video' },
   deliverables: { key: 'deliverables', label: 'Entregables', icon: 'Package' },

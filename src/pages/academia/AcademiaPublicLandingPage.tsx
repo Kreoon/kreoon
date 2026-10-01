@@ -226,7 +226,10 @@ export default function AcademiaPublicLandingPage() {
                   <div className="p-4">
                     <h3 className="font-semibold text-base">{c.title}</h3>
                     {c.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{c.description}</p>
+                      <div
+                        className="text-xs text-muted-foreground mt-2 line-clamp-2 [&_p]:m-0"
+                        dangerouslySetInnerHTML={{ __html: sanitizeHTML(c.description) }}
+                      />
                     )}
                   </div>
                 </Card>

@@ -91,7 +91,10 @@ const SettingsPage = memo(() => {
   // Get section from URL or default
   const sectionFromUrl = sectionParam as SettingsSectionKey | null;
   const [activeSection, setActiveSection] = useState<SettingsSectionKey | null>(
-    sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl) ? sectionFromUrl : null
+    sectionFromUrl && sectionFromUrl !== 'organization_plans' && permissions.canAccess(sectionFromUrl)
+      ? sectionFromUrl
+      // Escritorio: abrir el perfil en vez de un panel vacío; móvil conserva el menú de tarjetas
+      : typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches ? 'profile' : null
   );
 
   // Normalize legacy 'marketplace' section key → 'profile'

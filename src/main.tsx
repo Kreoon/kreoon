@@ -1,3 +1,5 @@
+// Debe ir primero: guarda el enlace de Auth (token/errores) antes de que Supabase limpie la URL
+import "./lib/auth/initialAuthUrl";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";

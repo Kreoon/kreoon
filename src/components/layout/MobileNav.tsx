@@ -87,11 +87,15 @@ const ORG_MORE_ITEMS: NavItem[] = [
 ];
 
 // Secundarios de creador y editor (no gestionan clientes, finanzas ni talento)
-const TALENT_MORE_ITEMS: NavItem[] = [
+// Creador y editor: solo lo esencial (decisión 2026-10-01). Sin marketplace de otros creadores,
+// planes, Social Hub, Guionizador ni Academia: volverán como complementos de pago.
+// «Campañas» = invitaciones de marcas mientras se reconstruye el módulo de campañas abiertas.
+// Las rutas vedadas también se bloquean por URL (src/lib/creatorScope.ts).
+const talentCoreItems = (projectsHref: string): NavItem[] => [
+  { name: "Proyectos", href: projectsHref, icon: Kanban },
+  { name: "Campañas", href: "/marketplace/invitations", icon: Megaphone },
   { name: "Portafolio", href: "/content", icon: FileText },
-  SOCIAL_HUB_ITEM,
-  AD_GENERATOR_ITEM,
-  PLAN_ITEM,
+  SETTINGS_ITEM,
 ];
 
 const adminSections: NavSection[] = [
@@ -144,13 +148,9 @@ const editorSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/editor-dashboard", icon: LayoutDashboard },
-      { name: "Proyectos", href: "/board", icon: Kanban },
-      { name: "Guiones", href: "/scripts", icon: Sparkles },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
-  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const creatorSections: NavSection[] = [
@@ -158,13 +158,9 @@ const creatorSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Proyectos", href: "/board", icon: Kanban },
-      { name: "Guiones", href: "/scripts", icon: Sparkles },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
-  { label: "MÁS", items: TALENT_MORE_ITEMS },
 ];
 
 const clientSections: NavSection[] = [
@@ -195,19 +191,7 @@ const freelanceSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Mis Proyectos", href: "/board?view=marketplace", icon: Kanban },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
-      { name: "Guiones", href: "/scripts", icon: Sparkles },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
-    ]
-  },
-  {
-    label: "MÁS",
-    items: [
-      { name: "Favoritos", href: "/marketplace/favoritos", icon: Heart },
-      SOCIAL_HUB_ITEM,
-      PLAN_ITEM,
+      ...talentCoreItems("/board?view=marketplace"),
     ]
   },
 ];
@@ -219,19 +203,7 @@ const basicTalentInOrgSections: NavSection[] = [
     label: "",
     items: [
       { name: "Inicio", href: "/creator-dashboard", icon: LayoutDashboard },
-      { name: "Proyectos", href: "/board", icon: Kanban },
-      { name: "Guiones", href: "/scripts", icon: Sparkles },
-      ACADEMIA_ITEM,
-      SETTINGS_ITEM,
-    ]
-  },
-  {
-    label: "MÁS",
-    items: [
-      { name: "Portafolio", href: "/content", icon: FileText },
-      { name: "Marketplace", href: "/marketplace", icon: Store },
-      SOCIAL_HUB_ITEM,
-      PLAN_ITEM,
+      ...talentCoreItems("/board"),
     ]
   },
 ];
@@ -506,8 +478,9 @@ export function MobileNav() {
         })
       })).filter(section => section.items.length > 0);
 
-    // Los clientes ya llevan su marketplace ("Buscar talento") en la sección principal
-    if (activeIsClient) {
+    // Los clientes ya llevan su marketplace ("Buscar talento") en la sección principal.
+    // Creador y editor no exploran el marketplace (igual que Sidebar.tsx).
+    if (activeIsClient || ((activeIsCreator || activeIsEditor) && !activeIsAdmin && !activeIsStrategist)) {
       return filtered;
     }
 
@@ -680,7 +653,7 @@ export function MobileNav() {
           </nav>
 
           {/* AI Tokens — only if has org and not client (use personal coins if usePersonalCoins is true) */}
-          {profile?.current_organization_id && !activeIsClient && (
+          {profile?.current_organization_id && !activeIsClient && !((activeIsCreator || activeIsEditor) && !activeIsAdmin && !activeIsStrategist) && (
             <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
               <AITokensPanelTrigger
                 organizationId={usePersonalCoins ? null : profile.current_organization_id}

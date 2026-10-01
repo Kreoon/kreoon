@@ -68,7 +68,7 @@ function AboutBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPr
     xl: 'my-8',
   };
 
-  const titleContent = content.title || 'Sobre mi';
+  const titleContent = content.title || 'Sobre mí';
   const textContent = content.text || '';
 
   return (
@@ -124,7 +124,7 @@ function AboutBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPr
             )
           ) : (
             <span className="italic text-muted-foreground/50">
-              {isEditing ? 'Haz clic para agregar tu biografia...' : 'Agrega una descripcion sobre ti...'}
+              {isEditing ? 'Haz clic para agregar tu biografía...' : 'Agrega una descripción sobre ti...'}
             </span>
           )}
           {isEditing && isSelected && (
@@ -139,8 +139,8 @@ function AboutBlockComponent({ block, isEditing, isSelected, onUpdate }: BlockPr
         onOpenChange={(open) => !open && closeEditor()}
         initialContent={editingContent}
         onSave={handleSave}
-        title={editingField === 'title' ? 'Editar titulo' : 'Editar descripcion'}
-        placeholder={editingField === 'title' ? 'Titulo de la seccion...' : 'Escribe tu biografia aqui...'}
+        title={editingField === 'title' ? 'Editar titulo' : 'Editar descripción'}
+        placeholder={editingField === 'title' ? 'Título de la sección...' : 'Escribe tu biografía aquí...'}
         mode={editingField === 'title' ? 'inline' : 'block'}
       />
     </>

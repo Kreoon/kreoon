@@ -331,7 +331,7 @@ export function MediaLibraryUploader({
             />
             <div>
               <p className="text-sm font-medium text-foreground">
-                {isDragOver ? 'Suelta aqui' : 'Arrastra tu archivo o haz clic para seleccionar'}
+                {isDragOver ? 'Suelta aquí' : 'Arrastra tu archivo o haz clic para seleccionar'}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 {allowedTypes.includes('image') && allowedTypes.includes('video')

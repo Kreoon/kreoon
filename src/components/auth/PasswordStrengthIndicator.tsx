@@ -114,7 +114,7 @@ export function PasswordStrengthIndicator({
       )}
 
       {showRequirements && (
-        <ul className="space-y-1 text-xs text-kreoon-text-muted">
+        <ul className="space-y-1 text-xs text-muted-foreground">
           {requirements.map((req) => (
             <li
               key={req.key}
@@ -123,9 +123,9 @@ export function PasswordStrengthIndicator({
               {req.met ? (
                 <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
               ) : (
-                <X className="h-3.5 w-3.5 shrink-0 text-kreoon-text-muted opacity-60" />
+                <X className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-60" />
               )}
-              <span className={req.met ? "text-kreoon-text-secondary" : ""}>
+              <span className={req.met ? "text-muted-foreground" : ""}>
                 {req.label}
               </span>
             </li>

@@ -16,6 +16,13 @@ export function MetaPixel({ pixelId, enabled }: MetaPixelProps) {
   useEffect(() => {
     if (!enabled || !pixelId) return;
     if (typeof window === 'undefined') return;
+    // Píxel de marketing: solo con consentimiento expreso de cookies de marketing (Ley 1581 / GDPR)
+    try {
+      const consent = JSON.parse(localStorage.getItem('kreoon_cookie_consent') || 'null');
+      if (consent?.marketing !== true) return;
+    } catch {
+      return;
+    }
 
     // Evitar doble carga
     if ((window as any).__metaPixelId === pixelId) return;

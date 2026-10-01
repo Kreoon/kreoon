@@ -1,3 +1,4 @@
+import { MARKETPLACE_CATEGORY_VARIANTS } from '@/components/marketplace/types/marketplace';
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { MarketplaceFilters, MarketplaceCreator } from '../types/marketplace';
@@ -126,7 +127,7 @@ export function useCreatorSearch(filters: MarketplaceFilters) {
         p_roles: filters.marketplace_roles.length > 0 ? filters.marketplace_roles : null,
         p_location_country: filters.country,
         p_location_city: filters.city,
-        p_niches: filters.category ? [filters.category] : null,
+        p_niches: filters.category ? (MARKETPLACE_CATEGORY_VARIANTS[filters.category] ?? [filters.category]) : null,
         p_specializations: filters.specializations.length > 0 ? filters.specializations : null,
         p_min_rating: filters.rating_min,
         p_max_price: filters.price_max,

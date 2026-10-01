@@ -212,7 +212,7 @@ function TemplatePreviewComponent({ template, className }: TemplatePreviewProps)
         <div className="p-3 border-t border-border">
           <p className="text-[9px] font-medium mb-2 text-muted-foreground">Paquetes</p>
           <div className="grid grid-cols-3 gap-1.5">
-            {['Basico', 'Pro', 'Premium'].map((plan, i) => (
+            {['Básico', 'Pro', 'Premium'].map((plan, i) => (
               <div
                 key={i}
                 className={cn(
