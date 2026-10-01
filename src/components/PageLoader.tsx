@@ -6,6 +6,10 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const SPLASH_DURATION_MS = 2000;
 
+/** Rutas de entrada pública donde el splash retrasaría la acción principal. */
+const skipsSplash = (pathname: string) =>
+  pathname === "/" || pathname.startsWith("/registro") || pathname.startsWith("/bienvenida");
+
 function KiroLoader({ size = 140 }: { size?: number }) {
   return (
     <motion.div
@@ -225,16 +229,14 @@ function KiroLoader({ size = 140 }: { size?: number }) {
 
 export function PageLoader() {
   const location = useLocation();
-  const startsOnCreatorJourney =
-    typeof window !== "undefined" &&
-    (window.location.pathname.startsWith("/registro") || window.location.pathname.startsWith("/bienvenida"));
-  const [visible, setVisible] = useState(!startsOnCreatorJourney);
+  const startsWithoutSplash = typeof window !== "undefined" && skipsSplash(window.location.pathname);
+  const [visible, setVisible] = useState(!startsWithoutSplash);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   useEffect(() => {
-    // El splash de 2 s no aplica al viaje del nuevo creador (registro → continuar → bienvenida):
-    // retrasa la acción principal y choca con la marca en claro.
-    if (location.pathname.startsWith("/registro") || location.pathname.startsWith("/bienvenida")) {
+    // El splash de 2 s no aplica a la home pública ni al viaje del nuevo creador (registro →
+    // continuar → bienvenida): retrasa la acción principal y el LCP, y choca con la marca en claro.
+    if (skipsSplash(location.pathname)) {
       setVisible(false);
       setIsFirstLoad(false);
       return;
