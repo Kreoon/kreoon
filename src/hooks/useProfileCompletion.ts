@@ -30,6 +30,8 @@ export const MIN_WORKS = 3;
 export const PROFILE_COMPLETION_QUERY_KEY = 'creator-profile-checklist';
 
 export function profileCompletionHref(tab: CompletionTab) {
+  // Lo que se ve en el portafolio público se edita en «Mi portafolio»; el resto, en Configuración
+  if (tab === 'public' || tab === 'portfolio') return '/mi-portafolio';
   return `/settings?section=profile&tab=${tab}`;
 }
 
