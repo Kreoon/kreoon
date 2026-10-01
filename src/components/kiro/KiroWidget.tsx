@@ -639,8 +639,10 @@ export function KiroWidget({ hideFloatingButton = false }: KiroWidgetProps = {})
         />
 
         {/* KIRO 3D avatar */}
+        {/* Compacto cuando está cerrado (64 px) para no tapar acciones inferiores como «Configurar»;
+            MainLayout reserva además espacio inferior (md:pb-24). Abierto conserva 100 px. */}
         <Kiro3D
-          size={100}
+          size={isOpen ? 100 : 64}
           mouseAngle={mouseAngle}
           state={kiroState}
           expression={expression}

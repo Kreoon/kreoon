@@ -624,9 +624,9 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
     <aside
       className={cn(
         "fixed left-4 top-4 bottom-4 z-50 flex flex-col",
-        "rounded-2xl border border-border",
+        "rounded-card border border-border",
         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        "bg-white dark:bg-background shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.05)]",
+        "bg-card shadow-soft",
         collapsed ? "w-[72px]" : "w-64"
       )}
     >
@@ -634,26 +634,31 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
       <div className="h-full flex flex-col">
         {/* Logo - fixed at top */}
         <div className={cn(
-          "shrink-0 flex h-16 items-center border-b border-border/50 px-4 bg-transparent",
+          "shrink-0 flex h-16 items-center border-b border-border px-4 bg-transparent",
           collapsed ? "justify-center" : "justify-between"
         )}>
           {/* hasCustomLogo: white-label activo Y hay un logo real (no el favicon por defecto) */}
           {!collapsed && (
             isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? (
               <div className="flex items-center gap-3">
-                <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 dark:bg-purple-500/10 border border-purple-500/20">
+                <div className="relative flex h-10 w-10 items-center justify-center rounded-control overflow-hidden bg-accent">
                   <img src={effectiveLogoUrl} alt={effectivePlatformName} className="h-8 w-8 object-cover" />
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-base font-bold text-zinc-900 dark:text-white">{effectivePlatformName}</h1>
+                  <p className="text-base font-semibold text-foreground">{effectivePlatformName}</p>
                 </div>
               </div>
             ) : (
-              <img src="/logo.png" alt="KREOON" className="h-10 object-contain" />
+              /* /logo.png tiene el wordmark en blanco sobre transparente: invisible sobre fondo claro.
+                 Se usa el icono + wordmark en tinta, legible en ambos temas. */
+              <div className="flex items-center gap-2.5">
+                <img src="/favicon.png" alt="" aria-hidden="true" className="h-9 w-9 object-contain" />
+                <span className="text-xl font-semibold tracking-tight text-foreground">kreoon</span>
+              </div>
             )
           )}
           {collapsed && (
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-sm overflow-hidden bg-purple-500/10 border border-purple-500/20">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-control overflow-hidden bg-accent">
               <img
                 src={isWhiteLabelActive && effectiveLogoUrl !== '/favicon.png' ? effectiveLogoUrl : '/favicon.png'}
                 alt={effectivePlatformName}
@@ -675,11 +680,11 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                     onClick={() => toggleSection(section.label)}
                     className="w-full flex items-center justify-between px-3 mb-1.5 group/section cursor-pointer"
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 group-hover/section:text-zinc-700 dark:text-zinc-500 dark:group-hover/section:text-zinc-400 transition-colors">
+                    <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-hover/section:text-foreground transition-colors">
                       {section.label}
                     </span>
                     <ChevronDown className={cn(
-                      "h-3 w-3 text-zinc-400 group-hover/section:text-zinc-600 dark:text-zinc-600 dark:group-hover/section:text-zinc-400 transition-all duration-150",
+                      "h-3 w-3 text-muted-foreground group-hover/section:text-foreground transition-all duration-150",
                       isSectionCollapsed && "-rotate-90"
                     )} />
                   </button>
@@ -716,23 +721,19 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                       <NavLink
                         key={item.name}
                         to={href}
+                        aria-current={isActive ? "page" : undefined}
                         data-tour={item.tourId}
                         className={cn(
-                          "group relative flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+                          "group relative flex items-center gap-3 rounded-control px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           isActive
-                            ? "bg-purple-500/10 text-zinc-900 dark:text-white"
-                            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-white",
+                            ? "bg-[hsl(var(--surface-selected))] text-accent-foreground"
+                            : "text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-hover))] hover:text-foreground",
                           collapsed && "justify-center px-2"
                         )}
                       >
-                        {/* Active indicator */}
-                        {isActive && (
-                          <div className="absolute -left-0.5 top-1/2 -translate-y-1/2 w-1 h-5 bg-purple-500 rounded-full" />
-                        )}
-                        <item.icon className={cn(
-                          "h-5 w-5 shrink-0 transition-colors duration-150",
-                          isActive ? "text-purple-500" : "text-zinc-500 group-hover:text-purple-500"
-                        )} />
+                        {/* Iconos neutros: heredan el color del texto (violeta solo en el ítem activo) */}
+                        <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                         {!collapsed && (
                           <span className="flex items-center gap-1.5">
                             {item.name}
@@ -741,9 +742,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                                 className={cn(
                                   "inline-flex items-center px-1.5 py-0.5 rounded-full",
                                   "text-[9px] font-bold uppercase tracking-wider",
-                                  "bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white",
-                                  "shadow-sm shadow-purple-500/50",
-                                  "animate-pulse"
+                                  "bg-primary text-primary-foreground"
                                 )}
                                 aria-label="Nuevo"
                               >
@@ -755,7 +754,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
                         {/* Indicador NUEVO en modo collapsed: punto pulsante */}
                         {collapsed && item.isNew && (
                           <span
-                            className="absolute top-1 right-1 h-2 w-2 rounded-full bg-fuchsia-500 animate-pulse shadow-sm shadow-fuchsia-500/80"
+                            className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"
                             aria-label="Nuevo"
                           />
                         )}
@@ -770,7 +769,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
         {/* Tokens IA */}
         {profile && (
-          <div className="border-t border-zinc-200 dark:border-zinc-800 px-3 py-2">
+          <div className="border-t border-border px-3 py-2">
             <AITokensPanelTrigger
               organizationId={null}
               variant={collapsed ? "compact" : "header"}
@@ -783,7 +782,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
 
 
         {/* User & Actions - fixed at bottom */}
-        <div className="shrink-0 border-t border-zinc-200 dark:border-zinc-800 py-2 px-3 bg-white dark:bg-background space-y-1">
+        <div className="shrink-0 rounded-b-card border-t border-border bg-card py-2 px-3 space-y-1">
           {/* Email */}
           {!collapsed && profile && (
             <div className="px-3 py-1 text-xs text-muted-foreground truncate font-mono">
@@ -814,7 +813,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
               size="sm"
               onClick={() => setShowClientSelector(true)}
               className={cn(
-                "w-full text-muted-foreground hover:bg-accent hover:text-primary border border-transparent hover:border-primary/20 rounded-sm transition-all text-xs",
+                "w-full text-muted-foreground hover:bg-accent hover:text-primary border border-transparent hover:border-primary/20 rounded-control transition-all text-xs",
                 collapsed && "px-2"
               )}
               title={collapsed ? `${currentClientName || 'Cambiar Empresa'}` : undefined}
@@ -830,7 +829,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             size="sm"
             onClick={() => onCollapsedChange(!collapsed)}
             className={cn(
-              "w-full text-muted-foreground/70 hover:bg-accent hover:text-muted-foreground rounded-sm transition-all text-xs",
+              "w-full text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-control transition-all text-xs",
               collapsed && "px-2"
             )}
           >
@@ -850,7 +849,7 @@ export function Sidebar({ collapsed, onCollapsedChange }: SidebarProps) {
             size="sm"
             onClick={handleSignOut}
             className={cn(
-              "w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/20 rounded-sm transition-all text-xs",
+              "w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive border border-transparent hover:border-destructive/20 rounded-control transition-all text-xs",
               collapsed && "px-2"
             )}
           >

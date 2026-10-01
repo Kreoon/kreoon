@@ -8,7 +8,7 @@ import { markLocalUpdate as markLocalUpdateNew } from '@/hooks/realtime/useRealt
 import type { ProfileCache } from '@/hooks/realtime/types';
 
 // Default page size for content queries to prevent statement timeouts
-const CONTENT_PAGE_SIZE = 500;
+export const CONTENT_PAGE_SIZE = 500;
 
 // Re-export markLocalUpdate from new module for backward compatibility
 // This allows other hooks (like useContentDetail) to continue using it

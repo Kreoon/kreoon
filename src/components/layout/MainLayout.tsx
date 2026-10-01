@@ -282,7 +282,7 @@ export function MainLayout({
         {/* Main Content */}
         <main
           id="main-content"
-          className="pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0"
+          className="pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-24"
         >
           <Suspense fallback={<ContentAreaLoader />}>
             <PageWrapper locationKey={location.pathname}>
@@ -373,7 +373,7 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-24 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
             "md:pt-14"
           )}
@@ -475,7 +475,7 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-24 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
             "md:pt-14"
           )}
@@ -630,7 +630,7 @@ export function MainLayout({
         <main
           id="main-content"
           className={cn(
-            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
+            "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-24 transition-all duration-300",
             sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]"
           )}
           style={{ paddingTop: hasBanner ? bannerHeight + 56 : 56 }} // 56px = h-14 del header
@@ -704,6 +704,7 @@ export function MainLayout({
             variant="ghost"
             size="icon"
             onClick={() => navigate('/settings')}
+            aria-label="Configuración"
             className="h-8 w-8 rounded-full"
           >
             <Settings className="h-4 w-4" />
@@ -752,7 +753,7 @@ export function MainLayout({
       <main
         id="main-content"
         className={cn(
-          "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-0 transition-all duration-300",
+          "pb-[calc(var(--kreoon-bottom-nav-h,0px)+env(safe-area-inset-bottom))] md:pb-24 transition-all duration-300",
           sidebarCollapsed ? "md:ml-[104px]" : "md:ml-[288px]",
           "md:pt-14"
         )}

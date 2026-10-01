@@ -101,16 +101,17 @@ function RootModePopover() {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-amber-500 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600"
+          aria-label="Modo Root"
+          className="h-10 gap-2 rounded-full border-warning/60 bg-warning/15 px-4 text-foreground hover:bg-warning/25"
         >
-          <Eye className="h-4 w-4" />
+          <Eye className="h-4 w-4" aria-hidden="true" />
           <span className="hidden sm:inline">Modo Root</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end" sideOffset={8}>
-        <div className="p-4 border-b border-border bg-amber-50 dark:bg-amber-950/20">
+        <div className="p-4 border-b border-border bg-warning/10">
           <div className="flex items-center gap-2">
-            <Eye className="h-5 w-5 text-amber-600" />
+            <Eye className="h-5 w-5 text-foreground" />
             <div>
               <h3 className="font-semibold text-sm">Modo Simulación</h3>
               <p className="text-xs text-muted-foreground">Ver plataforma como otro usuario</p>
@@ -265,23 +266,24 @@ export function IntegratedNotificationHeader({
       <button
         onClick={() => navigate('/settings?section=marketplace')}
         className={cn(
-          "flex items-center gap-2 px-3 py-1.5 rounded-sm",
-          "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-          "transition-colors duration-150 group"
+          "group flex h-10 items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-4",
+          "hover:bg-[hsl(var(--surface-hover))]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "transition-colors duration-150"
         )}
         aria-label="Ver mi perfil"
       >
         <Avatar className="h-8 w-8">
           <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'Usuario'} />
-          <AvatarFallback className="text-xs bg-purple-500/10 text-purple-500">
+          <AvatarFallback className="bg-accent text-xs font-medium text-accent-foreground">
             {profile?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'U'}
           </AvatarFallback>
         </Avatar>
-        <div className="hidden sm:flex flex-col items-start">
-          <span className="text-sm font-medium text-zinc-900 dark:text-white truncate max-w-[120px]">
+        <div className="hidden sm:flex flex-col items-start leading-tight">
+          <span className="max-w-[140px] truncate text-sm font-medium text-foreground">
             {profile?.full_name || 'Usuario'}
           </span>
-          <span className="text-[10px] text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             Mi Perfil
           </span>
         </div>
@@ -297,19 +299,21 @@ export function IntegratedNotificationHeader({
         variant="outline"
         size="sm"
         onClick={() => navigate('/marketplace')}
-        className="gap-2 rounded-sm border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors duration-150"
+        className="h-10 gap-2 rounded-full border-border bg-card px-4 text-foreground hover:bg-[hsl(var(--surface-hover))] transition-colors duration-150"
+        aria-label="Marketplace"
       >
-        <Briefcase className="h-4 w-4 text-purple-500" />
+        <Briefcase className="h-4 w-4 text-[hsl(var(--text-secondary))]" aria-hidden="true" />
         <span className="hidden sm:inline font-medium">Marketplace</span>
       </Button>
 
       {/* Theme Toggle */}
       <Button
-        variant="ghost"
+        variant="outline"
         size="icon"
         onClick={() => setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark')}
-        className="h-9 w-9 rounded-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-all"
+        className="h-10 w-10 rounded-full border-border bg-card text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--surface-hover))] hover:text-foreground transition-colors"
         title={theme === 'dark' ? 'Cambiar a Claro' : theme === 'light' ? 'Cambiar a Sistema' : 'Cambiar a Oscuro'}
+        aria-label={theme === 'dark' ? 'Cambiar a tema claro' : theme === 'light' ? 'Cambiar a tema del sistema' : 'Cambiar a tema oscuro'}
       >
         {theme === 'dark' ? <Moon className="h-4 w-4" /> : theme === 'light' ? <Sun className="h-4 w-4" /> : <Monitor className="h-4 w-4" />}
       </Button>
