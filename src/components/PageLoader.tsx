@@ -10,7 +10,32 @@ const SPLASH_DURATION_MS = 2000;
 const skipsSplash = (pathname: string) =>
   pathname === "/" || pathname.startsWith("/registro") || pathname.startsWith("/bienvenida");
 
+// Kiro nuevo (render 3D de la marca). Si el archivo aún no está en public/brand/, se usa el dibujo SVG.
+const KIRO_IMAGE_SRC = "/brand/kiro.png";
+
 function KiroLoader({ size = 140 }: { size?: number }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  if (!imageFailed) {
+    return (
+      <motion.img
+        src={KIRO_IMAGE_SRC}
+        alt=""
+        width={size}
+        height={size}
+        onError={() => setImageFailed(true)}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1, y: [0, -6, 0] }}
+        transition={{
+          scale: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          opacity: { duration: 0.5 },
+          y: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+        }}
+        style={{ width: size, height: size, objectFit: "contain", filter: "drop-shadow(0 12px 24px rgba(109, 74, 255, 0.35))" }}
+      />
+    );
+  }
+
   return (
     <motion.div
       initial={{ scale: 0.8, opacity: 0 }}
