@@ -69,15 +69,24 @@ BEGIN
     RAISE EXCEPTION 'No autorizado';
   END IF;
 
-  DELETE FROM profile_builder_blocks
-  WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = false;
+  -- Fusionado 2026-10-01 con 20261001100000_profile_builder_config_draft (ya aplicada en producción):
+  -- solo reemplaza lo publicado si hay borradores y promueve también el estilo en borrador.
+  IF EXISTS (
+    SELECT 1 FROM profile_builder_blocks
+    WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = true
+  ) THEN
+    DELETE FROM profile_builder_blocks
+    WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = false;
 
-  UPDATE profile_builder_blocks
-  SET is_draft = false
-  WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = true;
+    UPDATE profile_builder_blocks
+    SET is_draft = false
+    WHERE profile_builder_blocks.profile_id = publish_profile_blocks.profile_id AND is_draft = true;
+  END IF;
 
   UPDATE creator_profiles
-  SET builder_has_draft = false,
+  SET builder_config = COALESCE(builder_config_draft, builder_config),
+      builder_config_draft = NULL,
+      builder_has_draft = false,
       is_active = true,
       is_published = true
   WHERE id = publish_profile_blocks.profile_id;
