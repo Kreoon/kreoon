@@ -123,7 +123,7 @@ export const KanbanCardView = memo(function KanbanCardView({
   const overdue = due.kind === "overdue";
   const stale = staleDays != null && !overdue;
 
-  const mediaInfo = useMemo(() => (compact ? null : getCardMediaInfo(content)), [compact, content]);
+  const mediaInfo = useMemo(() => getCardMediaInfo(content), [content]);
   const productName = has("product") ? getProductName(content) : null;
   const clientName = has("client") ? content.client?.name : null;
   const contextText = [clientName, productName].filter(Boolean).join(" · ");
@@ -168,7 +168,7 @@ export const KanbanCardView = memo(function KanbanCardView({
   const handleOpen = useCallback(() => ctx.onOpen(content), [ctx, content]);
   const guarded = useMemo(() => guardListeners(drag?.listeners), [drag?.listeners]);
 
-  const showMedia = !compact && !!mediaInfo?.hasMedia && !playing;
+  const showMedia = !!mediaInfo?.hasMedia && !playing;
 
   return (
     <li

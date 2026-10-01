@@ -71,6 +71,13 @@ describe("KanbanCardView", () => {
     expect(ctx.onOpen).toHaveBeenCalledWith(c);
   });
 
+  it("muestra la previsualización del trabajo (miniatura + play) también en densidad compacta", () => {
+    const c = content({ thumbnail_url: "https://cdn.test/thumb.jpg", video_url: "https://cdn.test/v.mp4" } as Partial<Content>);
+    const { container } = view(c, ctxOf());
+    expect(container.querySelector(".kb-media img")?.getAttribute("src")).toBe("https://cdn.test/thumb.jpg");
+    expect(screen.getByRole("button", { name: /Reproducir video/ })).toBeTruthy();
+  });
+
   it("no anida botones dentro de botones", () => {
     const { container } = view(content(), ctxOf());
     expect(container.querySelectorAll("button button").length).toBe(0);

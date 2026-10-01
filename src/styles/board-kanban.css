@@ -482,6 +482,7 @@ button.kb-assignee:focus-visible { outline: 2px solid hsl(var(--ring)); outline-
   background: hsl(var(--accent));
   border: 1px solid var(--kb-line);
 }
+.kb-card[data-density="compact"] .kb-media { width: 3.75rem; }
 .kb-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .kb-media__play {
   position: absolute; inset: 0; z-index: 2;
