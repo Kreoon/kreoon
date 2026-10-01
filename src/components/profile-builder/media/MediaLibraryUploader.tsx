@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { bunnyFunctionHeaders, uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 import { UploadCloud, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -95,7 +96,7 @@ export function MediaLibraryUploader({
         // Step 1: Crear video en Bunny Stream
         const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await bunnyFunctionHeaders(),
           body: JSON.stringify({
             action: 'create',
             user_id: userId,
@@ -117,29 +118,13 @@ export function MediaLibraryUploader({
         }
 
         // Step 2: Subir archivo directamente a Bunny Stream
-        const uploadSuccess = await new Promise<boolean>((resolve) => {
-          const xhr = new XMLHttpRequest();
-
-          xhr.upload.addEventListener('progress', (event) => {
-            if (event.lengthComputable) {
-              // TODO: Actualizar UI con progreso si se implementa state
-              // const percent = Math.round((event.loaded / event.total) * 100);
-            }
+        // Subida directa a Bunny Stream vía TUS firmado (la API key no sale del servidor)
+        const uploadSuccess = await uploadToBunnyStreamTus(file, createData.tus)
+          .then(() => true)
+          .catch((err) => {
+            console.error('[MediaLibraryUploader] TUS upload error:', err);
+            return false;
           });
-
-          xhr.addEventListener('load', () => {
-            resolve(xhr.status >= 200 && xhr.status < 300);
-          });
-
-          xhr.addEventListener('error', () => resolve(false));
-          xhr.addEventListener('abort', () => resolve(false));
-
-          xhr.open('PUT', createData.upload_url);
-          xhr.setRequestHeader('AccessKey', createData.access_key);
-          xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-          xhr.timeout = 600000; // 10 min
-          xhr.send(file);
-        });
 
         if (!uploadSuccess) {
           setValidationError('Error al subir video a Bunny');

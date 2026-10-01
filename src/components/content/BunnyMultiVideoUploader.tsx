@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { bunnyFunctionHeaders, uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
@@ -257,7 +258,7 @@ export function BunnyMultiVideoUploader({
       // Step 3a: Create video entry in Bunny via edge function (lightweight JSON call)
       const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await bunnyFunctionHeaders(),
         body: JSON.stringify({
           action: 'create',
           user_id: userId,
@@ -279,38 +280,15 @@ export function BunnyMultiVideoUploader({
       console.log('[BunnyMultiVideoUploader] Video created in Bunny:', createData.video_id);
 
       // Step 3b: Upload file DIRECTLY to Bunny (bypasses edge function memory limit)
-      const xhr = new XMLHttpRequest();
 
-      await new Promise<void>((resolve, reject) => {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const percentComplete = Math.round((event.loaded / event.total) * 90);
-            setUploads(prev => prev.map(u =>
-              u.id === uploadId ? { ...u, progress: percentComplete } : u
-            ));
-          }
-        });
-
-        xhr.addEventListener('load', () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
-          } else {
-            reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
-          }
-        });
-
-        xhr.addEventListener('error', () => {
-          console.error('[BunnyMultiVideoUploader] XHR error:', { readyState: xhr.readyState, status: xhr.status, uploadUrl: createData.upload_url });
-          reject(new Error(`Error de conexión (estado: ${xhr.readyState}). Verifica tu internet y desactiva VPN/bloqueadores.`));
-        });
-        xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
-        xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado (10 min). Verifica tu conexión.')));
-
-        xhr.open('PUT', createData.upload_url);
-        xhr.setRequestHeader('AccessKey', createData.access_key);
-        xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-        xhr.timeout = 600000; // 10 minutes for large files
-        xhr.send(file);
+      // Subida directa a Bunny Stream vía TUS firmado (la API key no sale del servidor)
+      await uploadToBunnyStreamTus(file, createData.tus, {
+        onProgress: (sent, total) => {
+          const percentComplete = Math.round((sent / total) * 90);
+          setUploads(prev => prev.map(u =>
+          u.id === uploadId ? { ...u, progress: percentComplete } : u
+          ));
+        },
       });
 
       console.log('[BunnyMultiVideoUploader] File uploaded directly to Bunny');
@@ -319,7 +297,7 @@ export function BunnyMultiVideoUploader({
       if (fileHash) {
         fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: await bunnyFunctionHeaders(),
           body: JSON.stringify({
             action: 'save-hash',
             file_hash: fileHash,

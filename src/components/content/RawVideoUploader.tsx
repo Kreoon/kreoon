@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { bunnyFunctionHeaders, uploadToBunnyStreamTus } from '@/lib/bunnyStreamTus';
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase, SUPABASE_FUNCTIONS_URL } from "@/integrations/supabase/client";
@@ -104,7 +105,7 @@ export function RawVideoUploader({
           // === Step 1: Create video entry in Bunny (lightweight JSON call) ===
           const createRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await bunnyFunctionHeaders(),
             body: JSON.stringify({
               action: 'create',
               user_id: userId,
@@ -126,52 +127,22 @@ export function RawVideoUploader({
           console.log('[RawVideoUploader] Video created in Bunny:', createData.video_id);
 
           // === Step 2: Upload file DIRECTLY to Bunny (XHR with real progress) ===
-          const embedUrl = await new Promise<string>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-
-            xhr.upload.addEventListener('progress', (event) => {
-              if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 90);
-                setUploads(prev => prev.map(u =>
-                  u.id === uploadId ? { ...u, progress: percentComplete } : u
-                ));
-              }
-            });
-
-            xhr.addEventListener('load', () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(createData.embed_url);
-              } else {
-                reject(new Error(`Error subiendo a Bunny: ${xhr.status}`));
-              }
-            });
-
-            xhr.addEventListener('error', () => {
-              console.error('[RawVideoUploader] XHR error event:', {
-                readyState: xhr.readyState,
-                status: xhr.status,
-                statusText: xhr.statusText,
-                responseURL: xhr.responseURL,
-                uploadUrl: createData.upload_url,
-              });
-              reject(new Error(`Error de conexión (estado: ${xhr.readyState}). Verifica tu internet y desactiva VPN/bloqueadores si los tienes.`));
-            });
-            xhr.addEventListener('abort', () => reject(new Error('Subida cancelada')));
-            xhr.addEventListener('timeout', () => reject(new Error('Tiempo de espera agotado (10 min). Verifica tu conexión.')));
-
-            xhr.open('PUT', createData.upload_url);
-            xhr.setRequestHeader('AccessKey', createData.access_key);
-            xhr.setRequestHeader('Content-Type', 'application/octet-stream');
-            xhr.timeout = 600000; // 10 minutes for large files
-            xhr.send(file);
-          });
+          // Subida directa a Bunny Stream vía TUS firmado (la API key no sale del servidor)
+          const embedUrl = await uploadToBunnyStreamTus(file, createData.tus, {
+            onProgress: (sent, total) => {
+              const percentComplete = Math.round((sent / total) * 90);
+              setUploads(prev => prev.map(u =>
+              u.id === uploadId ? { ...u, progress: percentComplete } : u
+              ));
+            },
+          }).then(() => createData.embed_url as string);
 
           console.log('[RawVideoUploader] File uploaded directly to Bunny');
 
           // === Step 3: Save URL to database via edge function ===
           const saveRes = await fetch(`${SUPABASE_FUNCTIONS_URL}/functions/v1/bunny-portfolio-upload`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: await bunnyFunctionHeaders(),
             body: JSON.stringify({
               action: 'save-raw-video',
               content_id: contentId,

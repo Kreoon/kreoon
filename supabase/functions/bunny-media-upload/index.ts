@@ -1,6 +1,20 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { getCorsHeaders, handleCorsOptions } from '../_shared/cors.ts';
+import {
+  createProxyToken,
+  forwardPutToBunny,
+  functionUrl,
+  getRequestUser,
+  isOrgMember,
+  jsonResponse,
+  uploadCorsHeaders,
+  verifyProxyToken,
+} from '../_shared/bunnyUploadSecurity.ts';
+
+const FN = 'bunny-media-upload';
+// Imágenes, documentos, audio y adjuntos de chat. Archivos más grandes deben ir
+// por Bunny Stream (TUS) o por el flujo de material crudo.
+const PROXY_MAX_BYTES = 200 * 1024 * 1024;
 
 /**
  * Unified media upload to Bunny CDN Storage Zones
@@ -127,96 +141,87 @@ function getOptimizedCdnUrl(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight with secure whitelist
   if (req.method === 'OPTIONS') {
-    return handleCorsOptions(req);
+    return new Response(null, { headers: uploadCorsHeaders });
   }
 
-  const corsHeaders = getCorsHeaders(req);
-
   try {
-    // Verify authentication internally (bypass gateway JWT issues)
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: 'No authorization header provided' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // === PUT: proxy con token de un solo destino (la contraseña nunca sale) ===
+    if (req.method === 'PUT') {
+      const token = req.headers.get('AccessKey') || '';
+      const payload = await verifyProxyToken(token, FN);
+      if (!payload || payload.kind !== 'storage') {
+        return jsonResponse({ success: false, error: 'Token de subida inválido o vencido' }, 401);
+      }
+      const sep = payload.target.indexOf(':');
+      const zoneKey = payload.target.slice(0, sep) as 'images' | 'assets';
+      const path = payload.target.slice(sep + 1);
+      const zone = ZONES[zoneKey];
+      if (!zone || !zone.password || !path) {
+        return jsonResponse({ success: false, error: 'Destino inválido' }, 400);
+      }
+      const ct = (req.headers.get('content-type') || 'application/octet-stream').slice(0, 120);
+      return await forwardPutToBunny(req, `https://${zone.hostname}/${zone.name}/${path}`, zone.password, payload.max, ct);
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      console.error('[bunny-media-upload] Auth error:', authError?.message);
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired session' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const admin = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const user = await getRequestUser(req, admin);
+    if (!user) {
+      return jsonResponse({ error: 'Invalid or expired session' }, 401);
     }
 
     const body: UploadRequest = await req.json();
-    const { type, fileName, contentType, userId, organizationId } = body;
+    const { type, fileName, contentType, organizationId } = body;
 
     if (!type || !fileName || !contentType) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: type, fileName, contentType' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ error: 'Missing required fields: type, fileName, contentType' }, 400);
     }
 
-    // Get zone configuration
+    // La organización de la ruta solo se acepta si el usuario es miembro.
+    if (organizationId && !(await isOrgMember(admin, user.id, organizationId))) {
+      return jsonResponse({ error: 'forbidden: not a member of this organization' }, 403);
+    }
+
     const zone = getZoneForType(type);
+    const zoneKey = zone === ZONES.assets ? 'assets' : 'images';
 
     if (!zone.password) {
       console.error(`Missing password for zone: ${zone.name}`);
-      return new Response(
-        JSON.stringify({ error: 'Storage zone not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return jsonResponse({ error: 'Storage zone not configured' }, 500);
     }
 
-    // Generate path
-    const path = getPathForType(type, fileName, userId, organizationId);
-
-    // Build upload URL for direct browser upload
-    const uploadUrl = `https://${zone.hostname}/${zone.name}/${path}`;
-
-    // Build CDN URL (with optimization params if applicable)
+    // userId SIEMPRE es el usuario autenticado (antes venía del body).
+    const path = getPathForType(type, fileName, user.id, organizationId);
     const cdnUrl = getOptimizedCdnUrl(zone.cdn, path, type, contentType);
 
+    const accessKey = await createProxyToken({
+      fn: FN,
+      kind: 'storage',
+      target: `${zoneKey}:${path}`,
+      max: PROXY_MAX_BYTES,
+      uid: user.id,
+    });
+
     const response: UploadResponse = {
-      uploadUrl,
+      uploadUrl: functionUrl(FN),
       cdnUrl,
       path,
       zone: zone.name,
     };
 
-    // Return upload credentials and URLs
-    return new Response(
-      JSON.stringify({
-        ...response,
-        accessKey: zone.password,
-        headers: {
-          'AccessKey': zone.password,
-          'Content-Type': contentType,
-        },
-      }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    // `accessKey` es un token de proxy, NO la contraseña de la zona.
+    return jsonResponse({
+      ...response,
+      accessKey,
+      headers: {
+        'AccessKey': accessKey,
+        'Content-Type': contentType,
+      },
+    });
 
   } catch (error) {
     console.error('bunny-media-upload error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return jsonResponse({ error: error instanceof Error ? error.message : 'Internal server error' }, 500);
   }
 });
