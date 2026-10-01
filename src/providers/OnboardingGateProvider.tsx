@@ -8,6 +8,7 @@ import { NovaOnboardingWizard } from '@/components/onboarding/NovaOnboardingWiza
 const EXEMPT_ROUTES = [
   '/legal/',       // Páginas legales
   '/auth',         // Auth callback y logout
+  '/reset-password', // Recuperación: primero la nueva contraseña, luego el onboarding
   '/terms',        // Términos legacy
   '/privacy',      // Privacy legacy
   '/data-deletion',
