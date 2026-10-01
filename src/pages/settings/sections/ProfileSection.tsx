@@ -479,7 +479,8 @@ function PersonalInfoTab() {
 
 // ─── Tab 2: Public Profile ───────────────────────────────────────────────────
 
-function PublicProfileTab() {
+/** simple: solo lo que se ve en el portafolio público (sin visibilidad, banner ni nivel); publicar va aparte. */
+export function PublicProfileTab({ simple = false }: { simple?: boolean } = {}) {
   const {
     profile: userProfile, loading: profileLoading, saving: profileSaving,
     usernameError, checkingUsername, updateField: updateProfileField, save: saveProfile, uploadAvatar,
@@ -623,7 +624,7 @@ function PublicProfileTab() {
           .update({
             bio: tagline,
             bio_full: bioExtended,
-            is_active: marketplaceEnabled,
+            ...(simple ? {} : { is_active: marketplaceEnabled }),
             banner_url: bannerUrl,
             display_name: userProfile?.full_name || creatorProfile.display_name,
             avatar_url: creatorProfile.avatar_url || userProfile?.avatar_url,
@@ -668,6 +669,7 @@ function PublicProfileTab() {
         <CardDescription>Información visible para marcas y otros creadores en el marketplace</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+{!simple && (<>
         {/* Marketplace enabled */}
         <div className="flex items-center justify-between p-4 rounded-sm bg-muted">
           <div>
@@ -677,6 +679,8 @@ function PublicProfileTab() {
           <Switch checked={marketplaceEnabled} onCheckedChange={setMarketplaceEnabled} />
         </div>
 
+        </>)}
+{!simple && (<>
         {/* Banner */}
         <div className="space-y-2">
           <Label>Banner de perfil</Label>
@@ -735,6 +739,7 @@ function PublicProfileTab() {
           <p className="text-xs text-muted-foreground">Se mostrará en la parte superior de tu perfil público. Max 5MB.</p>
         </div>
 
+        </>)}
         {/* Avatar + username */}
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <div className="relative group">
@@ -837,6 +842,7 @@ function PublicProfileTab() {
           <p className="text-xs text-muted-foreground text-right">{bioExtended.length}/1000</p>
         </div>
 
+{!simple && (<>
         {/* Experience level */}
         <div className="space-y-3">
           <Label>Nivel de experiencia</Label>
@@ -879,6 +885,7 @@ function PublicProfileTab() {
             )}
           </Button>
         </div>
+        </>)}
       </CardContent>
     </Card>
   );

@@ -33,7 +33,7 @@ export function MoreMenuSheet({ dashboardHref, items: itemsProp, className }: Mo
 
   // Creador/editor: mismo alcance que el menú lateral (sin Academia ni Guionizador; decisión 2026-10-01)
   const items: MoreMenuItem[] = itemsProp ?? [
-    { name: 'Portafolio', href: '/content', icon: FileText },
+    { name: 'Portafolio', href: '/mi-portafolio', icon: FileText },
     { name: 'Mis Cobros', href: `${dashboardHref}?tab=wallet`, icon: Wallet },
     { name: 'Configuración', href: '/settings', icon: Settings },
   ];

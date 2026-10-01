@@ -102,7 +102,7 @@ const ORG_MORE_ITEMS: NavItem[] = [
 const talentCoreItems = (projectsHref: string): NavItem[] => [
   { name: "Proyectos", href: projectsHref, icon: Kanban, tourId: "sidebar-board" },
   { name: "Campañas", href: "/marketplace/invitations", icon: Megaphone, tourId: "sidebar-campaigns" },
-  { name: "Portafolio", href: "/content", icon: FileText, tourId: "sidebar-content" },
+  { name: "Portafolio", href: "/mi-portafolio", icon: FileText, tourId: "sidebar-content" },
   SETTINGS_ITEM,
 ];
 

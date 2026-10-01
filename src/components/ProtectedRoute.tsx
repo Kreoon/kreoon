@@ -8,7 +8,7 @@ import { useOrgMarketplace } from '@/hooks/useOrgMarketplace';
 import { AppRole } from '@/types/database';
 import { getPermissionGroup, getDashboardForAccountType, type PermissionGroup } from '@/lib/permissionGroups';
 import { buildAuthPath, getDashboardPathForRoles } from '@/lib/routing/postAuth';
-import { isBlockedForProduction, isProductionOnlyTalent } from '@/lib/creatorScope';
+import { isBlockedForProduction, isProductionOnlyTalent, productionRedirectFor } from '@/lib/creatorScope';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -269,13 +269,12 @@ export function ProtectedRoute({ children, allowedRoles, requiresOrg, allowNoRol
   }
 
   // Creador/editor: solo lo esencial; el resto tampoco por URL directa (ver lib/creatorScope.ts)
-  if (
-    isProductionOnlyTalent(realRoles) &&
-    !isPlatformAdmin &&
-    !isPlatformRoot &&
-    !isImpersonating &&
-    isBlockedForProduction(location.pathname)
-  ) {
+  const productionOnly = isProductionOnlyTalent(realRoles) && !isPlatformAdmin && !isPlatformRoot && !isImpersonating;
+  const productionRedirect = productionOnly ? productionRedirectFor(location.pathname) : null;
+  if (productionRedirect) {
+    return <Navigate to={productionRedirect} replace />;
+  }
+  if (productionOnly && isBlockedForProduction(location.pathname)) {
     return <Navigate to={getDashboardPath(realRoles)} replace />;
   }
 
