@@ -20,6 +20,20 @@ export const PRODUCTION_BLOCKED_ROUTES = [
   '/marketplace/dashboard',
 ];
 
+/**
+ * Pantallas que para creador/editor se reemplazan por otra más simple.
+ * El constructor de bloques no aplica: el portafolio público tiene diseño fijo (Estudio UGC) y se edita
+ * en /mi-portafolio (decisión 2026-10-01).
+ */
+export const PRODUCTION_REDIRECTS: Record<string, string> = {
+  '/profile-builder': '/mi-portafolio',
+};
+
+export function productionRedirectFor(pathname: string): string | null {
+  const key = Object.keys(PRODUCTION_REDIRECTS).find((r) => pathname === r || pathname.startsWith(`${r}/`));
+  return key ? PRODUCTION_REDIRECTS[key] : null;
+}
+
 /** Páginas del marketplace para explorar a otros creadores (públicas para visitantes y marcas) */
 export const MARKETPLACE_BROWSE_ROUTES = ['/marketplace', '/marketplace/explore', '/marketplace/videos'];
 

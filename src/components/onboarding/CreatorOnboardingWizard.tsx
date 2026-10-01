@@ -138,7 +138,7 @@ export function CreatorOnboardingWizard() {
       await refetchUserData();
       await qc.invalidateQueries({ queryKey: ["profile-completion"] });
     }, () => {
-      navigate(destination === "portfolio" ? "/profile-builder" : next ?? "/creator-dashboard", { replace: true });
+      navigate(destination === "portfolio" ? "/mi-portafolio" : next ?? "/creator-dashboard", { replace: true });
     });
 
   const progressIndex = step ? Math.min(ORDER.indexOf(step), 3) : 0;

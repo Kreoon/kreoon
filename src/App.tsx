@@ -113,6 +113,7 @@ const Creators = lazyWithRetry(() => import("./pages/Creators"));
 const Scripts = lazyWithRetry(() => import("./pages/Scripts"));
 const Settings = lazyWithRetry(() => import("./pages/Settings"));
 const Team = lazyWithRetry(() => import("./pages/Team"));
+const MyPortfolioPage = lazyWithRetry(() => import("./pages/creator/MyPortfolioPage"));
 const CreatorDashboard = lazyWithRetry(
   () => import("./pages/CreatorDashboard"),
 );
@@ -1021,6 +1022,16 @@ function AppRoutes() {
         <Route
           path="/freelancer-dashboard"
           element={<Navigate to="/creator-dashboard" replace />}
+        />
+        <Route
+          path="/mi-portafolio"
+          element={
+            <ProtectedRoute allowNoRoles>
+              <MainLayout>
+                <MyPortfolioPage />
+              </MainLayout>
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/creator-dashboard"
