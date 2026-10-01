@@ -1,8 +1,10 @@
-import { useState, useCallback, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { useSearchParams } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
 import { ProjectTypeSelector } from "@/components/projects/ProjectTypeSelector";
 import { FillmakerDialog } from "@/components/clients/FillmakerDialog";
-import { Search, Plus, Settings2, Scroll, RotateCcw, Brain, ShoppingBag, Zap } from "lucide-react";
+import { AlertTriangle, Brain, Loader2, Plus, RefreshCw, Scroll, Settings2, Zap } from "lucide-react";
 import type { ProjectType } from "@/types/unifiedProject.types";
 
 const UnifiedProjectModal = lazy(() => import('@/components/projects/UnifiedProjectModal'));
@@ -16,41 +18,62 @@ import { useContentWithFilters } from "@/hooks/useContent";
 import { useOrgOwner } from "@/hooks/useOrgOwner";
 import { KREOON_ORG_ID } from "@/lib/kreoon-org";
 import { useInternalOrgContent } from "@/hooks/useInternalOrgContent";
-import { Content, ContentStatus, KANBAN_COLUMNS, STATUS_LABELS, Product } from "@/types/database";
+import { Content, KANBAN_COLUMNS } from "@/types/database";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type SearchableSelectOption } from "@/components/ui/searchable-select";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { updateContentStatusWithUP } from "@/hooks/useContentStatusWithUP";
-import { cn } from "@/lib/utils";
 import { type DateRangeValue } from "@/lib/date-presets";
 import {
-  BoardViewSwitcher,
   BoardView,
   BoardConfigDialog,
   BoardCalendarView,
   BoardTableView,
   BoardListView,
   BoardAIPanel,
-  ViewSelector
+  ViewSelector,
+  CardFieldsCustomizer,
 } from "@/components/board";
 import { useBoardSettings } from "@/hooks/useBoardSettings";
 import { useBoardPersistence } from "@/hooks/useBoardPersistence";
 import { useBoardUserPreferences } from "@/hooks/useBoardUserPreferences";
 import { useOrgAssignableUsers } from "@/hooks/useOrgAssignableUsers";
-import { AutoSaveIndicator } from "@/components/ui/autosave-indicator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useContentSocialStatus } from "@/modules/social/hooks/useContentSocialStatus";
-import { canMoveToStatusWithRules } from "@/lib/contentBoardPermissions";
 import { ContentBoardFilters } from "@/components/content-board/ContentBoardFilters";
 import { ContentBoardKanbanView } from "@/components/content-board/ContentBoardKanbanView";
+import { BoardToolbar } from "@/components/content-board/BoardToolbar";
+import { ShareContentDialog } from "@/components/content-board/ShareContentDialog";
+import { useContentMove } from "@/components/content-board/useContentMove";
+import { restoreFocusToCard } from "@/components/content-board/kanban/kanbanFocus";
+import { DEFAULT_VISIBLE_FIELDS, groupContentByStatus, matchesClientFilters, type BoardClientFilters } from "@/components/content-board/kanban/kanbanUtils";
+import type {
+  AssigneeKind,
+  BoardColumnDef,
+  KanbanCardContext,
+  KanbanDensity,
+  ShareMode,
+} from "@/components/content-board/kanban/kanbanTypes";
+
+/** Colores de respaldo cuando la etapa viene de KANBAN_COLUMNS (clases CSS → hex). */
+const FALLBACK_COLORS: Record<string, string> = {
+  'bg-muted-foreground': '#6b7280',
+  'bg-info': '#3b82f6',
+  'bg-purple-500': '#8b5cf6',
+  'bg-purple-600': '#9333ea',
+  'bg-orange-500': '#f97316',
+  'bg-cyan-500': '#06b6d4',
+  'bg-pink-500': '#ec4899',
+  'bg-emerald-500': '#10b981',
+  'bg-destructive': '#ef4444',
+  'bg-blue-500': '#3b82f6',
+  'bg-success': '#22c55e',
+};
+
+const CAN_ASSIGN_ROLES = ["admin", "team_leader"];
 
 export default function ContentBoard() {
   const { user, profile, isAdmin, isStrategist, isCreator, isEditor, isClient, activeRole: realActiveRole, roles } = useAuth();
-  const { effectiveUserId, effectiveRoles, isImpersonating, impersonationTarget } = useImpersonation();
+  const { effectiveUserId, isImpersonating, impersonationTarget } = useImpersonation();
   const { isPlatformRoot } = useOrgOwner();
   // Derive org ID directly from profile — available immediately without waiting for the RPC
   const currentOrgId = profile?.current_organization_id ?? KREOON_ORG_ID;
@@ -65,33 +88,31 @@ export default function ContentBoard() {
     ? impersonationTarget.role
     : realActiveRole;
 
-  // Single-org mode: always show internal content board
-  const boardMode = 'content' as const;
-
   // Get ambassador IDs for the organization
   const { ambassadors } = useInternalOrgContent();
   const ambassadorIds = useMemo(() => new Set(ambassadors.map(a => a.id)), [ambassadors]);
-  
+
   // Show admin controls only when user is admin AND not impersonating a non-admin role
   const showAdminControls = isAdmin && (!isImpersonating || impersonationTarget.role === 'admin');
-  
+
   // Board persistence hook - saves view, filters, scroll, selected content
   const persistence = useBoardPersistence({ organizationId: currentOrgId });
-  
+
   // Filtros - using persisted values
   const [filterCreatorId, setFilterCreatorId] = useState<string>(persistence.filters.creatorId);
   const [filterEditorId, setFilterEditorId] = useState<string>(persistence.filters.editorId);
   const [filterClientId, setFilterClientId] = useState<string>(persistence.filters.clientId);
   const [filterProductId, setFilterProductId] = useState<string>(persistence.filters.productId);
   const [searchTerm, setSearchTerm] = useState(persistence.filters.searchTerm);
+  // Rango sobre la fecha de CREACIÓN (created_at). Las claves persistidas (startDate/deadline) se conservan por compatibilidad.
   const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeValue | null>(
     persistence.filters.startDate && persistence.filters.deadline
       ? { preset: 'custom' as const, from: new Date(persistence.filters.startDate), to: new Date(persistence.filters.deadline) }
       : null
   );
-  const startDateFilter = dateRangeFilter?.from;
-  const deadlineFilter = dateRangeFilter?.to;
-  
+  const createdFromFilter = dateRangeFilter?.from;
+  const createdToFilter = dateRangeFilter?.to;
+
   // Sync filters to persistence
   useEffect(() => {
     persistence.setFilters({
@@ -103,8 +124,9 @@ export default function ContentBoard() {
       startDate: dateRangeFilter?.from?.toISOString(),
       deadline: dateRangeFilter?.to?.toISOString(),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, searchTerm, dateRangeFilter]);
-  
+
   // Listas para filtros
   const [creators, setCreators] = useState<{id: string; name: string}[]>([]);
   const [editors, setEditors] = useState<{id: string; name: string}[]>([]);
@@ -154,23 +176,9 @@ export default function ContentBoard() {
     ...products.map(p => ({ value: p.id, label: p.name, hint: p.client_name })),
   ], [products]);
 
-  // Limit visible cards per column to reduce DOM/network load (240+ cards → ~80 visible)
-  // El limite en si (CARDS_PER_COLUMN) vive en ContentBoardKanbanView.tsx junto al render.
-  const [expandedColumns, setExpandedColumns] = useState<Set<string>>(new Set());
-  const toggleColumnExpand = useCallback((status: string) => {
-    setExpandedColumns(prev => {
-      const next = new Set(prev);
-      if (next.has(status)) next.delete(status); else next.add(status);
-      return next;
-    });
-  }, []);
-
-  // Estado de drag
-  const [draggingContent, setDraggingContent] = useState<Content | null>(null);
-  const [dropTarget, setDropTarget] = useState<ContentStatus | string | null>(null);
-  
-  // Dialog para detalle - using persisted selected content
+  // Detalle: UN solo modal montado (antes había dos idénticos). Se recuerda qué tarjeta lo abrió para devolver el foco.
   const [selectedContent, setSelectedContent] = useState<Content | null>(null);
+  const returnFocusIdRef = useRef<string | null>(null);
 
   // Deeplink: ?item=ID abre automáticamente el item (usado por la extensión)
   const [searchParams, setSearchParams] = useSearchParams();
@@ -185,12 +193,15 @@ export default function ContentBoard() {
   const [showUnifiedCreate, setShowUnifiedCreate] = useState(false);
   const [createProjectType, setCreateProjectType] = useState<ProjectType | null>(null);
   const [showFillmakerFromBoard, setShowFillmakerFromBoard] = useState(false);
-  
+
   // AI Panel state
   const [showAIPanel, setShowAIPanel] = useState(false);
   const [aiPanelMode, setAIPanelMode] = useState<'card' | 'board'>('board');
   const [aiContentId, setAIContentId] = useState<string | undefined>();
   const [aiContentTitle, setAIContentTitle] = useState<string | undefined>();
+
+  // Compartir (diálogo único, solo montado cuando hay una producción seleccionada)
+  const [shareTarget, setShareTarget] = useState<{ content: Content; mode: ShareMode } | null>(null);
 
   // Vista actual y configuración del board - using persisted view
   const currentView = persistence.currentView;
@@ -198,32 +209,13 @@ export default function ContentBoard() {
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
   const [listGroupBy, setListGroupBy] = useState<string>('status');
-  
-  // Autosave status
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  
-  // Show saving indicator
-  useEffect(() => {
-    if (persistence.isDirty) {
-      setSaveStatus('saving');
-    }
-  }, [persistence.isDirty]);
-  
-  useEffect(() => {
-    if (persistence.lastSaved) {
-      setSaveStatus('saved');
-      const timer = setTimeout(() => setSaveStatus('idle'), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [persistence.lastSaved]);
-  
+
   // Reset filters handler
   const handleResetFilters = useCallback(() => {
     setFilterCreatorId('all');
     setFilterEditorId('all');
     setFilterClientId('all');
     setFilterProductId('all');
-    setFilterCampaignWeek('');
     setSearchTerm('');
     setDateRangeFilter(null);
     persistence.resetFilters();
@@ -232,26 +224,15 @@ export default function ContentBoard() {
       description: "Todos los filtros han sido eliminados"
     });
   }, [persistence, toast]);
-  
-  // Check if any filter is active
-  const hasActiveFilters = useMemo(() => {
-    return filterCreatorId !== 'all' ||
-           filterEditorId !== 'all' ||
-           filterClientId !== 'all' ||
-           filterProductId !== 'all' ||
-           searchTerm !== '' ||
-           dateRangeFilter !== null;
-  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, searchTerm, dateRangeFilter]);
-  
+
   // Board settings hook
-  const { settings, statuses: orgStatuses, rules, loading: settingsLoading, refetch: refetchSettings, updateSettings } = useBoardSettings(currentOrgId);
+  const { settings, statuses: orgStatuses, rules, refetch: refetchSettings, updateSettings } = useBoardSettings(currentOrgId);
   const { creators: assignableCreators, editors: assignableEditors, refetch: refetchAssignable } = useOrgAssignableUsers(currentOrgId);
 
   // User board preferences hook (hybrid localStorage + Supabase sync)
   const {
     savedViews,
     activeViewId,
-    activeView,
     tableConfig,
     preferences: userPreferences,
     isSyncing: isPreferencesSyncing,
@@ -268,13 +249,15 @@ export default function ContentBoard() {
     ? impersonationTarget.role
     : (activeRole ||
        (isAdmin ? 'admin' : isStrategist ? 'strategist' : isClient ? 'client' : isCreator ? 'creator' : isEditor ? 'editor' : 'client'));
-  
+
   // UNIFICADO: Todos los roles ven TODAS las columnas. La diferencia está en el CONTENIDO, no en las columnas.
-  const allBoardColumns = useMemo(() => {
+  const allBoardColumns = useMemo<BoardColumnDef[]>(() => {
     if (orgStatuses.length === 0) {
-      return KANBAN_COLUMNS.map(col => ({
-        ...col,
-        sortOrder: KANBAN_COLUMNS.indexOf(col)
+      return KANBAN_COLUMNS.map((col, i) => ({
+        status: col.status as string,
+        title: col.title,
+        color: FALLBACK_COLORS[col.color] || '#6b7280',
+        sortOrder: i,
       }));
     }
     return orgStatuses
@@ -284,11 +267,11 @@ export default function ContentBoard() {
         status: s.status_key,
         title: s.label,
         color: s.color || '#6b7280',
-        sortOrder: s.sort_order
+        sortOrder: s.sort_order,
       }));
   }, [orgStatuses]);
 
-  // Toggle "Ocultar pagados" — oculta contenido con creator_paid y editor_paid = true (persistido en localStorage)
+  // Toggle "Ocultar archivados" — oculta contenido con status 'archived' (persistido en localStorage)
   const [hidePaidContent, setHidePaidContentState] = useState(false);
   useEffect(() => {
     const key = `board-hide-paid-${currentOrgId || 'default'}`;
@@ -303,32 +286,52 @@ export default function ContentBoard() {
     try { localStorage.setItem(key, String(v)); } catch { /* ignore */ }
   }, [currentOrgId]);
 
-  // Toggle "Solo mis asignaciones" para editor/creador (persistido en localStorage)
-  const [showOnlyAssigned, setShowOnlyAssignedState] = useState(true);
+  // Densidad Cómoda/Compacta: preferencia VISUAL por usuario (localStorage). No cambia datos ni permisos.
+  const densityKey = `kreoon:board-density:${currentOrgId || 'default'}`;
+  const [density, setDensityState] = useState<KanbanDensity>('compact');
   useEffect(() => {
-    const key = `board-show-only-assigned-${currentOrgId || 'default'}`;
     try {
-      const v = localStorage.getItem(key);
-      setShowOnlyAssignedState(v === null ? true : v === 'true');
+      const v = localStorage.getItem(densityKey);
+      if (v === 'comfortable' || v === 'compact') setDensityState(v);
     } catch { /* ignore */ }
-  }, [currentOrgId]);
-  const setShowOnlyAssigned = useCallback((v: boolean) => {
-    setShowOnlyAssignedState(v);
-    const key = `board-show-only-assigned-${currentOrgId || 'default'}`;
-    try { localStorage.setItem(key, String(v)); } catch { /* ignore */ }
-  }, [currentOrgId]);
+  }, [densityKey]);
+  const setDensity = useCallback((d: KanbanDensity) => {
+    setDensityState(d);
+    try { localStorage.setItem(densityKey, d); } catch { /* ignore */ }
+  }, [densityKey]);
 
   // Fetch content según rol - use targetUserId for impersonation
   // For external clients, force their client_id filter
   const effectiveClientId = externalClientId || (filterClientId !== 'all' ? filterClientId : undefined);
 
-  const { content, loading, updateContentStatus, deleteContent, refetch } = useContentWithFilters({
+  const {
+    content, loading, error, deleteContent, refetch, moveContentStatus, hasMore, loadingMore, loadMore,
+  } = useContentWithFilters({
     userId: targetUserId,
     role: primaryRole as any,
     creatorId: filterCreatorId !== 'all' && filterCreatorId !== '__unassigned__' ? filterCreatorId : undefined,
     editorId: filterEditorId !== 'all' && filterEditorId !== '__unassigned__' ? filterEditorId : undefined,
     clientId: effectiveClientId
   });
+
+  // Los refetch (filtros de servidor, asignar, cerrar el detalle) mantienen el tablero montado para no perder
+  // búsqueda, foco ni posición de scroll; el esqueleto solo aparece cuando aún no hay nada que mostrar.
+  // Cargando y sin nada que mostrar → esqueleto (nunca columnas en cero ni «sin producciones» mientras se carga).
+  const showSkeleton = loading && content.length === 0;
+  const refreshing = loading && !showSkeleton;
+
+  // Abrir detalle recordando qué tarjeta lo abrió (para devolver el foco al cerrar)
+  const openDetail = useCallback((c: Content) => {
+    returnFocusIdRef.current = c.id;
+    setSelectedContent(c);
+  }, []);
+
+  const handleDetailOpenChange = useCallback((open: boolean) => {
+    if (open) return;
+    setSelectedContent(null);
+    // El detalle es un diálogo sin disparador asociado: al cerrarse el foco cae en <body>; se devuelve a la tarjeta.
+    if (returnFocusIdRef.current) restoreFocusToCard(returnFocusIdRef.current);
+  }, []);
 
   // Deeplink: ?item=ID abre automáticamente el item (usado por la extensión Kreoon Capture)
   useEffect(() => {
@@ -339,6 +342,7 @@ export default function ContentBoard() {
       setSelectedContent(found);
       setSearchParams(p => { p.delete('item'); return p; }, { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, content, loading]);
 
   const handleDeleteContent = async (contentId: string) => {
@@ -387,206 +391,152 @@ export default function ContentBoard() {
   const allContentIds = useMemo(() => content.map(c => c.id), [content]);
   const { data: socialStatusMap } = useContentSocialStatus(allContentIds);
 
-  // Filtrar contenido por búsqueda, fechas y producto (sin filtrar por visibilidad de estado - todos ven todas las columnas)
-  const filteredContent = useMemo(() => content.filter(c => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const matchesSearch = (
-        (c.title ?? '').toLowerCase().includes(term) ||
-        c.description?.toLowerCase().includes(term) ||
-        c.client?.name?.toLowerCase().includes(term)
-      );
-      if (!matchesSearch) return false;
-    }
+  // Filtros de cliente (sobre lo cargado). Creador/Editor/Cliente concretos ya vienen resueltos por el servidor.
+  const clientFilters = useMemo<BoardClientFilters>(() => ({
+    searchTerm,
+    createdFrom: createdFromFilter,
+    createdTo: createdToFilter,
+    creatorId: filterCreatorId,
+    editorId: filterEditorId,
+    productId: filterProductId,
+    hideArchived: hidePaidContent,
+  }), [searchTerm, createdFromFilter, createdToFilter, filterCreatorId, filterEditorId, filterProductId, hidePaidContent]);
 
-    if (startDateFilter || deadlineFilter) {
-      const contentDate = c.created_at ? new Date(c.created_at) : null;
-      if (!contentDate) return false;
-      if (startDateFilter && contentDate < startDateFilter) return false;
-      if (deadlineFilter && contentDate > deadlineFilter) return false;
-    }
+  const filteredContent = useMemo(
+    () => content.filter(c => matchesClientFilters(c, clientFilters)),
+    [content, clientFilters],
+  );
 
-    // Filtro especial: sin creador asignado
-    if (filterCreatorId === '__unassigned__' && c.creator_id) return false;
+  // Agrupar por estado UNA sola vez (un recorrido), no un filter() por columna en cada render
+  const columnKeys = useMemo(() => allBoardColumns.map(c => c.status), [allBoardColumns]);
+  const grouped = useMemo(() => groupContentByStatus(filteredContent, columnKeys), [filteredContent, columnKeys]);
+  const contentById = useMemo(() => new Map(content.map(c => [c.id, c])), [content]);
 
-    // Filtro especial: sin editor asignado
-    if (filterEditorId === '__unassigned__' && c.editor_id) return false;
+  // Filtros activos (para «Quitar filtros»): incluye los de servidor y de cliente
+  const activeFilterCount = useMemo(() => {
+    let n = 0;
+    if (filterCreatorId !== 'all') n++;
+    if (filterEditorId !== 'all') n++;
+    if (filterClientId !== 'all') n++;
+    if (filterProductId !== 'all') n++;
+    if (searchTerm !== '') n++;
+    if (dateRangeFilter !== null) n++;
+    return n;
+  }, [filterCreatorId, filterEditorId, filterClientId, filterProductId, searchTerm, dateRangeFilter]);
 
-    // Filtro por producto
-    if (filterProductId !== 'all') {
-      if (c.product_id !== filterProductId) return false;
-    }
+  // Cambios de estado: arrastre, «Mover a…» y acciones rápidas comparten el mismo flujo
+  const handleShare = useCallback((c: Content, mode: ShareMode) => setShareTarget({ content: c, mode }), []);
+  const move = useContentMove({
+    contentById,
+    columns: allBoardColumns,
+    userId: targetUserId,
+    primaryRole: primaryRole as string,
+    roles,
+    orgStatuses,
+    rules,
+    moveContentStatus,
+    filters: clientFilters,
+    onOpenDetail: openDetail,
+    onShare: handleShare,
+  });
 
-    // Ocultar contenido archivado (pagado al 100% y cerrado)
-    if (hidePaidContent && c.status === 'archived') return false;
+  const { requestMove } = move;
+  const handleMove = useCallback((contentId: string, target: string) => requestMove(contentId, target), [requestMove]);
 
-    return true;
-  }), [content, searchTerm, dateRangeFilter, filterCreatorId, filterEditorId, filterProductId, hidePaidContent]);
-
-  // Agrupar contenido por estado (soporta status personalizados)
-  const getContentByStatus = (status: ContentStatus | string) => {
-    return filteredContent.filter(c => c.status === status);
-  };
-
-  // Handlers de drag and drop
-  const handleDragStart = useCallback((e: React.DragEvent, content: Content) => {
-    setDraggingContent(content);
-    e.dataTransfer.effectAllowed = 'move';
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  }, []);
-
-  const handleDrop = useCallback(async (e: React.DragEvent, targetStatus: ContentStatus | string) => {
-    e.preventDefault();
-    setDropTarget(null);
-
-    if (!draggingContent || !user) {
-      setDraggingContent(null);
-      return;
-    }
-
-    if (draggingContent.status === targetStatus) {
-      setDraggingContent(null);
-      return;
-    }
-
-    const canMove = canMoveToStatusWithRules(
-      primaryRole,
-      draggingContent.status,
-      targetStatus,
-      draggingContent,
-      user.id,
-      orgStatuses,
-      rules,
-      roles // Pasar todos los roles para usuarios con permisos combinados
-    );
-
-    if (!canMove) {
-      toast({
-        title: 'Movimiento no permitido',
-        description: 'No tienes permisos para realizar este cambio de estado',
-        variant: 'destructive'
-      });
-      setDraggingContent(null);
-      return;
-    }
-
-    try {
-      await updateContentStatus(draggingContent.id, targetStatus as ContentStatus);
-      // Get label from orgStatuses for custom statuses, fallback to STATUS_LABELS
-      const statusLabel = orgStatuses.find(s => s.status_key === targetStatus)?.label || STATUS_LABELS[targetStatus as ContentStatus] || targetStatus;
-      toast({
-        title: 'Estado actualizado',
-        description: `Movido a ${statusLabel}`
-      });
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado',
-        variant: 'destructive'
-      });
-    }
-
-    setDraggingContent(null);
-  }, [draggingContent, user, primaryRole, updateContentStatus, toast, orgStatuses, rules]);
-
-  const handleDragEnter = useCallback((status: ContentStatus | string) => {
-    setDropTarget(status);
-  }, []);
-
-  // Handler for creator status change (assigned -> recording -> recorded) with UP integration
-  const handleCreatorStatusChange = useCallback(async (contentId: string, newStatus: 'recording' | 'recorded') => {
-    try {
-      // Use centralized RPC that handles everything server-side (no prior SELECT needed)
-      await updateContentStatusWithUP({
-        contentId,
-        oldStatus: 'assigned' as ContentStatus, // Will be obtained server-side
-        newStatus: newStatus as ContentStatus
-      });
-
-      // Refresh the content list
-      refetch();
-
-      const statusLabels: Record<string, string> = {
-        'recording': 'En Grabación',
-        'recorded': 'Grabado'
-      };
-      toast({
-        title: 'Estado actualizado',
-        description: `Cambiado a: ${statusLabels[newStatus]}`
-      });
-    } catch (error) {
-      console.error('Error updating status:', error);
-      toast({
-        title: 'Error',
-        description: 'No se pudo actualizar el estado',
-        variant: 'destructive'
-      });
-    }
-  }, [refetch, toast]);
-
-  const handleAssignCreator = useCallback(
-    async (contentId: string, userId: string) => {
+  const handleAssign = useCallback(
+    async (kind: AssigneeKind, contentId: string, userId: string) => {
+      const field = kind === 'creator' ? 'creator_id' : 'editor_id';
+      const label = kind === 'creator' ? 'Creador' : 'Editor';
       try {
         // Si userId está vacío, desasignar (poner null)
-        const creatorId = userId || null;
+        const value = userId || null;
         const { error } = await supabase.rpc('update_content_by_id', {
           p_content_id: contentId,
-          p_updates: { creator_id: creatorId, updated_at: new Date().toISOString() }
+          p_updates: { [field]: value, updated_at: new Date().toISOString() },
         });
         if (error) throw error;
         refetch();
         refetchAssignable();
-        toast({ title: creatorId ? "Creador asignado" : "Creador removido" });
+        toast({ title: value ? `${label} asignado` : `${label} removido` });
       } catch (err) {
-        console.error("Error assigning creator:", err);
-        toast({ title: "Error al asignar", variant: "destructive" });
+        console.error(`Error assigning ${kind}:`, err);
+        toast({ title: "Error al asignar", description: "No se guardó el cambio. Inténtalo de nuevo.", variant: "destructive" });
       }
     },
     [refetch, refetchAssignable, toast]
   );
 
-  const handleAssignEditor = useCallback(
-    async (contentId: string, userId: string) => {
-      try {
-        // Si userId está vacío, desasignar (poner null)
-        const editorId = userId || null;
-        const { error } = await supabase.rpc('update_content_by_id', {
-          p_content_id: contentId,
-          p_updates: { editor_id: editorId, updated_at: new Date().toISOString() }
-        });
-        if (error) throw error;
-        refetch();
-        refetchAssignable();
-        toast({ title: editorId ? "Editor asignado" : "Editor removido" });
-      } catch (err) {
-        console.error("Error assigning editor:", err);
-        toast({ title: "Error al asignar", variant: "destructive" });
-      }
-    },
-    [refetch, refetchAssignable, toast]
+  const handleAnalyze = useCallback((contentId: string, title: string) => {
+    setAIPanelMode('card');
+    setAIContentId(contentId);
+    setAIContentTitle(title);
+    setShowAIPanel(true);
+  }, []);
+
+  // Contexto ESTABLE de las tarjetas (memoizado: no se recrea en cada render del tablero)
+  const cardCtx = useMemo<KanbanCardContext>(() => ({
+    columns: allBoardColumns,
+    userId: targetUserId,
+    userRole: primaryRole as string,
+    // Igual que antes: handlers solo para admin (sin suplantar otro rol) o team_leader, y el rol efectivo debe poder asignar
+    canAssign: (showAdminControls || (primaryRole as string) === 'team_leader') && CAN_ASSIGN_ROLES.includes(primaryRole as string),
+    creators: assignableCreators,
+    editors: assignableEditors,
+    getMoveTargets: move.getMoveTargets,
+    onOpen: openDetail,
+    onMove: handleMove,
+    onQuickStatus: move.quickStatus,
+    onAssign: handleAssign,
+    onShare: handleShare,
+    onAnalyze: showAdminControls ? handleAnalyze : undefined,
+  }), [allBoardColumns, targetUserId, primaryRole, showAdminControls, assignableCreators, assignableEditors,
+    move.getMoveTargets, move.quickStatus, openDetail, handleMove, handleAssign, handleShare, handleAnalyze]);
+
+  const visibleFields = settings?.visible_fields && settings.visible_fields.length > 0 ? settings.visible_fields : DEFAULT_VISIBLE_FIELDS;
+
+  const canCreate = showAdminControls;
+  const loadedCount = content.length;
+  const searchHint = (() => {
+    // Un error de carga NUNCA se presenta como «0 producciones»
+    if (error && loadedCount === 0) return 'No se pudieron cargar las producciones.';
+    const shown = filteredContent.length;
+    const base = shown === loadedCount
+      ? `${loadedCount} ${loadedCount === 1 ? 'producción' : 'producciones'}`
+      : `${shown} de ${loadedCount} producciones cargadas`;
+    const orphan = currentView === 'kanban' && grouped.orphanCount > 0
+      ? ` · ${grouped.orphanCount} en estados sin etapa configurada (no se muestran en el tablero)`
+      : '';
+    const scope = hasMore ? ' · Hay más sin cargar: la búsqueda y los filtros de fecha/producto solo cubren las ya cargadas.' : '';
+    return `${base}${orphan}${scope}`;
+  })();
+
+  const statusLine = (
+    <>
+      {refreshing && (
+        <span className="inline-flex items-center gap-1.5" role="status">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+          Actualizando…
+        </span>
+      )}
+      {hasMore && (
+        <Button type="button" variant="outline" size="sm" className="h-9" onClick={() => void loadMore()} disabled={loadingMore}>
+          {loadingMore ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+          Cargar más producciones
+        </Button>
+      )}
+      {persistence.lastSaved && (
+        <span title="Última vez que se guardaron la vista y los filtros de este tablero">
+          Vista guardada {formatDistanceToNow(persistence.lastSaved, { addSuffix: true, locale: es })}
+        </span>
+      )}
+    </>
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => (
-            <Skeleton key={i} className="h-32 rounded-sm" />
-          ))}
-        </div>
-        <Skeleton className="h-96 rounded-sm" />
-      </div>
-    );
-  }
+  const boardIsEmpty = !loading && !error && content.length === 0 && activeFilterCount === 0;
 
   return (
     <div className="min-h-screen">
-      <div className="p-4 md:p-6 space-y-6">
-        {/* Page Header - Kreoon Tech */}
+      <div className="space-y-4 p-4 md:p-6">
         <PageHeader
           icon={Scroll}
           title="Kreoon Producciones"
@@ -597,144 +547,61 @@ export default function ContentBoard() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 h-9 hidden sm:flex"
+                  className="hidden h-10 gap-1.5 sm:flex"
                   onClick={() => setShowBulkDrawer(true)}
                 >
-                  <Zap className="h-4 w-4 text-primary" />
-                  <span className="hidden md:inline">Generar en lote</span>
+                  <Zap className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <span className="hidden xl:inline">Generar en lote</span>
+                  <span className="sr-only xl:hidden">Generar en lote</span>
                 </Button>
               )}
-              <div className="relative hidden sm:block">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Buscar producción..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-9 md:h-10 w-40 md:w-64 rounded-sm border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-[hsl(270,100%,60%,0.3)] transition-all placeholder:text-[hsl(270,30%,45%)]"
-                />
-              </div>
+              {canCreate && (
+                <Button
+                  size="sm"
+                  className="h-10 gap-1.5"
+                  onClick={() => guardAction(() => setShowTypeSelector(true))}
+                  disabled={isReadOnly}
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Nueva producción
+                </Button>
+              )}
             </div>
           }
         />
 
-        {/* Mobile search */}
-        <div className="sm:hidden">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Buscar producción..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-9 w-full rounded-sm border border-border bg-card pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all placeholder:text-[hsl(270,30%,45%)]"
+        <BoardToolbar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchHint={searchHint}
+          filters={showAdminControls ? (
+            <ContentBoardFilters
+              dateRangeFilter={dateRangeFilter}
+              setDateRangeFilter={setDateRangeFilter}
+              filterCreatorId={filterCreatorId}
+              setFilterCreatorId={setFilterCreatorId}
+              creatorOptions={creatorOptions}
+              filterEditorId={filterEditorId}
+              setFilterEditorId={setFilterEditorId}
+              editorOptions={editorOptions}
+              filterClientId={filterClientId}
+              setFilterClientId={setFilterClientId}
+              clientOptions={clientOptions}
+              filterProductId={filterProductId}
+              setFilterProductId={setFilterProductId}
+              productOptions={productOptions}
             />
-          </div>
-        </div>
-
-        <>
-        {/* Filtros para admin */}
-        {showAdminControls && (
-          <ContentBoardFilters
-            dateRangeFilter={dateRangeFilter}
-            setDateRangeFilter={setDateRangeFilter}
-            filterCreatorId={filterCreatorId}
-            setFilterCreatorId={setFilterCreatorId}
-            creatorOptions={creatorOptions}
-            filterEditorId={filterEditorId}
-            setFilterEditorId={setFilterEditorId}
-            editorOptions={editorOptions}
-            filterClientId={filterClientId}
-            setFilterClientId={setFilterClientId}
-            clientOptions={clientOptions}
-            filterProductId={filterProductId}
-            setFilterProductId={setFilterProductId}
-            productOptions={productOptions}
-          />
-        )}
-        {/* Board Header with View Switcher - 2 rows layout */}
-        <div className="rounded-sm border border-border bg-card p-3 md:p-4">
-          {/* Row 1: Title + badges */}
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2 className="text-base md:text-lg font-semibold text-card-foreground">Flujo de Trabajo</h2>
-              <Badge variant="outline" className="text-xs">{filteredContent.length} videos</Badge>
-              {settings && settings.card_size !== 'normal' && (
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Settings2 className="h-3 w-3" />
-                  {settings.card_size === 'compact' ? 'Compacta' : 'Grande'}
-                </Badge>
-              )}
-              <AutoSaveIndicator status={saveStatus} lastSaved={persistence.lastSaved} />
-            </div>
-            {/* Primary action buttons always visible */}
-            {showAdminControls && (
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setShowConfigDialog(true)}
-                >
-                  <Settings2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Configurar</span>
-                </Button>
-                <Button
-                  variant="glow"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => guardAction(() => setShowTypeSelector(true))}
-                  disabled={isReadOnly}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Nueva Producción</span>
-                  <span className="sm:hidden">+</span>
-                </Button>
-              </div>
-            )}
-          </div>
-          {/* Row 2: View controls + secondary actions */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {hasActiveFilters && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="gap-1.5 text-muted-foreground hover:text-foreground"
-                      onClick={handleResetFilters}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                      <span className="hidden sm:inline">Quitar filtros</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Restablecer todos los filtros</TooltipContent>
-                </Tooltip>
-              )}
-              {['creator', 'editor'].includes(primaryRole as string) && (
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="show-only-assigned"
-                    checked={showOnlyAssigned}
-                    onCheckedChange={setShowOnlyAssigned}
-                  />
-                  <Label htmlFor="show-only-assigned" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
-                    Solo mis asignaciones
-                  </Label>
-                </div>
-              )}
-              {showAdminControls && (
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="hide-paid-content"
-                    checked={hidePaidContent}
-                    onCheckedChange={setHidePaidContent}
-                  />
-                  <Label htmlFor="hide-paid-content" className="text-xs md:text-sm cursor-pointer whitespace-nowrap">
-                    Ocultar archivados
-                  </Label>
-                </div>
-              )}
+          ) : undefined}
+          activeFilterCount={activeFilterCount}
+          onResetFilters={handleResetFilters}
+          view={currentView as BoardView}
+          onViewChange={setCurrentView}
+          density={density}
+          onDensityChange={setDensity}
+          hideArchived={showAdminControls ? { checked: hidePaidContent, onChange: setHidePaidContent } : undefined}
+          statusLine={statusLine}
+          actions={
+            <>
               <ViewSelector
                 savedViews={savedViews}
                 activeViewId={activeViewId}
@@ -766,132 +633,174 @@ export default function ContentBoard() {
                 onDeleteView={deleteView}
                 isSyncing={isPreferencesSyncing}
               />
-              <BoardViewSwitcher currentView={currentView} onViewChange={setCurrentView} />
+              {currentView === 'kanban' && (
+                <CardFieldsCustomizer
+                  visibleFields={visibleFields}
+                  onFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
+                  className="h-10 w-10 border border-border/60 bg-background text-muted-foreground opacity-100 hover:bg-muted hover:text-foreground"
+                />
+              )}
               {showAdminControls && (
                 <>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="gap-1.5"
-                        onClick={() => {
-                          setAIPanelMode('board');
-                          setAIContentId(undefined);
-                          setAIContentTitle(undefined);
-                          setShowAIPanel(true);
-                        }}
-                      >
-                        <Brain className="h-4 w-4 text-primary" />
-                        <span className="hidden sm:inline">Analizar IA</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Analizar tablero con IA</TooltipContent>
-                  </Tooltip>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 gap-1.5"
+                    onClick={() => {
+                      setAIPanelMode('board');
+                      setAIContentId(undefined);
+                      setAIContentTitle(undefined);
+                      setShowAIPanel(true);
+                    }}
+                    title="Analizar tablero con IA"
+                  >
+                    <Brain className="h-4 w-4 text-primary" aria-hidden="true" />
+                    <span className="hidden 2xl:inline">Analizar IA</span>
+                    <span className="sr-only 2xl:hidden">Analizar tablero con IA</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-10 gap-1.5"
+                    onClick={() => setShowConfigDialog(true)}
+                    title="Configurar tablero"
+                  >
+                    <Settings2 className="h-4 w-4" aria-hidden="true" />
+                    <span className="hidden 2xl:inline">Configurar</span>
+                    <span className="sr-only 2xl:hidden">Configurar tablero</span>
+                  </Button>
                 </>
               )}
-            </div>
+            </>
+          }
+        />
 
-          {/* Kanban View - Tech/IA aesthetic - Hierarchical layout */}
-          {currentView === 'kanban' && (
-            <ContentBoardKanbanView
-              allBoardColumns={allBoardColumns}
-              getContentByStatus={getContentByStatus}
-              dropTarget={dropTarget}
-              draggingContent={draggingContent}
-              primaryRole={primaryRole as string}
-              targetUserId={targetUserId}
-              orgStatuses={orgStatuses}
-              rules={rules}
-              roles={roles}
-              handleDragOver={handleDragOver}
-              handleDrop={handleDrop}
-              handleDragEnter={handleDragEnter}
-              handleDragStart={handleDragStart}
-              expandedColumns={expandedColumns}
-              toggleColumnExpand={toggleColumnExpand}
-              settings={settings}
-              updateSettings={updateSettings}
-              setSelectedContent={setSelectedContent}
-              showAdminControls={showAdminControls}
-              ambassadorIds={ambassadorIds}
-              updateContentStatus={updateContentStatus}
-              refetch={refetch}
-              setAIPanelMode={setAIPanelMode}
-              setAIContentId={setAIContentId}
-              setAIContentTitle={setAIContentTitle}
-              setShowAIPanel={setShowAIPanel}
-              assignableCreators={assignableCreators}
-              assignableEditors={assignableEditors}
-              handleAssignCreator={handleAssignCreator}
-              handleAssignEditor={handleAssignEditor}
-              socialStatusMap={socialStatusMap}
-            />
-          )}
-          
-          {/* List View - conectado a preferencias de usuario */}
-          {currentView === 'list' && (
-            <BoardListView
-              content={filteredContent}
-              onContentClick={setSelectedContent}
-              cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
-              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
-              organizationStatuses={orgStatuses}
-              ambassadorIds={ambassadorIds}
-              showFieldsCustomizer={true}
-              groupBy={listGroupBy}
-              onGroupByChange={setListGroupBy}
-            />
-          )}
-          
-          {/* Calendar View - conectado a preferencias de usuario */}
-          {currentView === 'calendar' && (
-            <BoardCalendarView
-              content={filteredContent}
-              currentDate={calendarDate}
-              onDateChange={setCalendarDate}
-              onContentClick={setSelectedContent}
-              cardSize={settings?.card_size || 'normal'}
-              visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
-              onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
-              organizationStatuses={orgStatuses}
-              ambassadorIds={ambassadorIds}
-              showFieldsCustomizer={true}
-            />
-          )}
-          
-          {/* Table View - conectado a preferencias de usuario */}
-          {currentView === 'table' && (
-            <BoardTableView
-              content={filteredContent}
-              onContentClick={setSelectedContent}
-              visibleFields={
-                tableConfig.visibleColumns.length > 0
-                  ? tableConfig.visibleColumns
-                  : settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
-              }
-              organizationStatuses={orgStatuses}
-              ambassadorIds={ambassadorIds}
-              columnOrder={tableConfig.columnOrder}
-              columnWidths={tableConfig.columnWidths}
-              onColumnOrderChange={(order) => updateTableConfig({ columnOrder: order })}
-              onColumnWidthsChange={(widths) => updateTableConfig({ columnWidths: widths })}
-              onVisibleFieldsChange={(fields) => updateTableConfig({ visibleColumns: fields })}
-              enableReorder={true}
-              enableResize={true}
-              initialSortField={userPreferences.defaultSort?.field as 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at' || 'created_at'}
-              initialSortDirection={userPreferences.defaultSort?.direction || 'desc'}
-              onSortChange={(field, direction) => updatePreferences({ defaultSort: { field, direction } })}
-            />
-          )}
-        </div>
-      </>
+        {/* Error de carga: nunca se muestra como «0 producciones» */}
+        {error && (
+          <div
+            role="alert"
+            className="flex flex-wrap items-center gap-3 rounded-[var(--radius-control,0.75rem)] border border-destructive/40 bg-destructive/5 p-3 text-sm text-foreground"
+          >
+            <AlertTriangle className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />
+            <span className="min-w-0 flex-1">
+              {content.length === 0
+                ? 'No se pudieron cargar las producciones. Esto no significa que no existan.'
+                : 'No se pudo actualizar el tablero. Se muestran los datos cargados antes y pueden estar desactualizados.'}
+            </span>
+            <Button type="button" size="sm" variant="outline" className="h-9 gap-1.5" onClick={() => void refetch()}>
+              <RefreshCw className="h-4 w-4" aria-hidden="true" />
+              Reintentar
+            </Button>
+          </div>
+        )}
+
+        {boardIsEmpty && currentView === 'kanban' && (
+          <div className="rounded-[var(--radius-card,1.25rem)] border border-dashed border-border bg-card/60 p-8 text-center">
+            <p className="text-base font-semibold text-foreground">Aún no hay producciones</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {canCreate ? 'Crea la primera producción para verla en el tablero.' : 'Cuando te asignen una producción aparecerá aquí.'}
+            </p>
+            {canCreate && (
+              <Button className="mt-4 gap-1.5" onClick={() => guardAction(() => setShowTypeSelector(true))} disabled={isReadOnly}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                Nueva producción
+              </Button>
+            )}
+          </div>
+        )}
+
+        {showSkeleton && (
+          <div className="flex gap-3 overflow-hidden" role="status" aria-busy="true" aria-label="Cargando producciones">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="w-72 shrink-0 space-y-2 rounded-[var(--radius-card,1.25rem)] bg-muted/40 p-2">
+                <Skeleton className="h-6 w-32" />
+                {[0, 1, 2].map(j => <Skeleton key={j} className="h-36 w-full rounded-[var(--radius-control,0.75rem)]" />)}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!showSkeleton && !boardIsEmpty && !(error && content.length === 0) && (
+          <>
+            {currentView === 'kanban' && (
+              <ContentBoardKanbanView
+                columns={allBoardColumns}
+                grouped={grouped}
+                contentById={contentById}
+                density={density}
+                visibleFields={visibleFields}
+                ctx={cardCtx}
+                socialStatusMap={socialStatusMap}
+                movingIds={move.movingIds}
+                pinnedId={move.pinnedId}
+                canMove={move.canMove}
+                onMove={handleMove}
+              />
+            )}
+
+            {/* List View - conectado a preferencias de usuario */}
+            {currentView === 'list' && (
+              <BoardListView
+                content={filteredContent}
+                onContentClick={openDetail}
+                cardSize={settings?.card_size || 'normal'}
+                visibleFields={settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']}
+                onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
+                organizationStatuses={orgStatuses}
+                ambassadorIds={ambassadorIds}
+                showFieldsCustomizer={true}
+                groupBy={listGroupBy}
+                onGroupByChange={setListGroupBy}
+              />
+            )}
+
+            {/* Calendar View - conectado a preferencias de usuario */}
+            {currentView === 'calendar' && (
+              <BoardCalendarView
+                content={filteredContent}
+                currentDate={calendarDate}
+                onDateChange={setCalendarDate}
+                onContentClick={openDetail}
+                cardSize={settings?.card_size || 'normal'}
+                visibleFields={settings?.visible_fields || ['title', 'status', 'responsible']}
+                onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
+                organizationStatuses={orgStatuses}
+                ambassadorIds={ambassadorIds}
+                showFieldsCustomizer={true}
+              />
+            )}
+
+            {/* Table View - conectado a preferencias de usuario */}
+            {currentView === 'table' && (
+              <BoardTableView
+                content={filteredContent}
+                onContentClick={openDetail}
+                visibleFields={
+                  tableConfig.visibleColumns.length > 0
+                    ? tableConfig.visibleColumns
+                    : settings?.visible_fields || ['title', 'thumbnail', 'status', 'client', 'responsible', 'deadline']
+                }
+                organizationStatuses={orgStatuses}
+                ambassadorIds={ambassadorIds}
+                columnOrder={tableConfig.columnOrder}
+                columnWidths={tableConfig.columnWidths}
+                onColumnOrderChange={(order) => updateTableConfig({ columnOrder: order })}
+                onColumnWidthsChange={(widths) => updateTableConfig({ columnWidths: widths })}
+                onVisibleFieldsChange={(fields) => updateTableConfig({ visibleColumns: fields })}
+                enableReorder={true}
+                enableResize={true}
+                initialSortField={userPreferences.defaultSort?.field as 'title' | 'status' | 'client' | 'creator' | 'deadline' | 'created_at' || 'created_at'}
+                initialSortDirection={userPreferences.defaultSort?.direction || 'desc'}
+                onSortChange={(field, direction) => updatePreferences({ defaultSort: { field, direction } })}
+              />
+            )}
+          </>
+        )}
       </div>
 
       {/* Config Dialog */}
       {showAdminControls && (
-        <BoardConfigDialog 
+        <BoardConfigDialog
           organizationId={currentOrgId}
           open={showConfigDialog}
           onOpenChange={setShowConfigDialog}
@@ -899,26 +808,30 @@ export default function ContentBoard() {
         />
       )}
 
+      {/* Detalle: un único modal (UnifiedProjectModal conserva todas sus acciones) */}
       <Suspense fallback={null}>
         <UnifiedProjectModal
           source="content"
           projectId={selectedContent?.id}
           open={!!selectedContent}
-          onOpenChange={(open) => !open && setSelectedContent(null)}
+          onOpenChange={handleDetailOpenChange}
           onUpdate={refetch}
           onDelete={handleDeleteContent}
         />
       </Suspense>
 
-      <Suspense fallback={null}>
-        <UnifiedProjectModal
-          source="content"
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          onUpdate={refetch}
-          mode="create"
-        />
-      </Suspense>
+      {/* Crear producción: solo se monta al abrirse */}
+      {showCreateDialog && (
+        <Suspense fallback={null}>
+          <UnifiedProjectModal
+            source="content"
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            onUpdate={refetch}
+            mode="create"
+          />
+        </Suspense>
+      )}
 
       {/* Project type selector */}
       <ProjectTypeSelector
@@ -962,6 +875,13 @@ export default function ContentBoard() {
           />
         </Suspense>
       )}
+
+      {/* Compartir en redes (un solo diálogo para todo el tablero) */}
+      <ShareContentDialog
+        content={shareTarget?.content ?? null}
+        mode={shareTarget?.mode ?? 'full'}
+        onOpenChange={(open) => { if (!open) setShareTarget(null); }}
+      />
 
       {/* AI Analysis Panel */}
       {showAdminControls && currentOrgId && (

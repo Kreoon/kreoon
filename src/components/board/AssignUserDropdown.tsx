@@ -1,117 +1,84 @@
 import { useState } from "react";
-import { Search, Check, X } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Check, UserMinus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { getInitials } from "@/components/content-board/kanban/kanbanUtils";
 import type { AssignableUser } from "@/hooks/useOrgAssignableUsers";
 
 interface AssignUserDropdownProps {
   users: AssignableUser[];
   currentUserId?: string | null;
+  /** user = elegido; null = quitar la asignación */
   onSelect: (user: AssignableUser | null) => void;
+  /** Elemento disparador (se renderiza con asChild: debe ser un único <button>). */
   trigger: React.ReactNode;
   placeholder?: string;
   disabled?: boolean;
-  /** Mostrar opcion de quitar asignacion cuando hay usuario actual */
+  /** Mostrar «Quitar asignación» cuando hay usuario actual */
   allowUnassign?: boolean;
+  /** Título accesible del selector (p. ej. «Asignar creador») */
+  label?: string;
 }
 
+/**
+ * Selector de persona con búsqueda. Popover + cmdk: navegable con teclado (flechas, Enter, Esc),
+ * con colores por tokens (sirve en claro y oscuro). El contenido va en portal, así que ningún
+ * puntero/clic sobre la lista llega a la tarjeta que lo abre.
+ */
 export function AssignUserDropdown({
   users,
   currentUserId,
   onSelect,
   trigger,
-  placeholder = "Buscar...",
+  placeholder = "Buscar persona…",
   disabled,
   allowUnassign = true,
+  label = "Asignar persona",
 }: AssignUserDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
 
-  const filtered = users.filter((u) =>
-    (u.full_name || "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  const handleSelect = (user: AssignableUser | null) => {
-    onSelect(user);
+  const choose = (user: AssignableUser | null) => {
     setOpen(false);
-    setSearch("");
+    onSelect(user);
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild disabled={disabled}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild disabled={disabled}>
         {trigger}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="start"
-        className="w-64 bg-popover border-[#8b5cf6]/30"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="p-2 border-b border-border">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94a3b8]" />
-            <Input
-              placeholder={placeholder}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 bg-muted/50 border-border text-sm text-[#f8fafc]"
-            />
-          </div>
-        </div>
-        <ScrollArea className="h-[200px]">
-          <div className="p-1">
-            {/* Opcion de quitar asignacion */}
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-64 p-0" data-no-drag aria-label={label}>
+        <Command>
+          <CommandInput placeholder={placeholder} aria-label={label} />
+          <CommandList>
+            <CommandEmpty>No hay personas con ese nombre.</CommandEmpty>
             {allowUnassign && currentUserId && (
-              <button
-                type="button"
-                onClick={() => handleSelect(null)}
-                className="w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors hover:bg-red-500/20 text-red-400 mb-1 border-b border-border pb-2"
-              >
-                <X className="h-4 w-4" />
-                <span className="text-sm">Quitar asignacion</span>
-              </button>
+              <CommandItem value="__quitar__ quitar asignación" onSelect={() => choose(null)} className="gap-2 text-destructive">
+                <UserMinus className="h-4 w-4" />
+                Quitar asignación
+              </CommandItem>
             )}
-            {filtered.map((user) => (
-              <button
+            {users.map((user) => (
+              <CommandItem
                 key={user.id}
-                type="button"
-                onClick={() => handleSelect(user)}
-                className={cn(
-                  "w-full flex items-center gap-2 px-2 py-2 rounded-sm text-left transition-colors",
-                  "hover:bg-muted text-[#f8fafc]",
-                  currentUserId === user.id && "bg-primary/20"
-                )}
+                value={`${user.full_name || "Sin nombre"} ${user.id}`}
+                onSelect={() => choose(user)}
+                className="gap-2"
               >
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarImage src={user.avatar_url || undefined} />
-                  <AvatarFallback className="text-xs bg-primary/30 text-primary">
-                    {(user.full_name || "?").charAt(0).toUpperCase()}
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarImage src={user.avatar_url || undefined} alt="" />
+                  <AvatarFallback className="text-[11px] font-semibold bg-accent text-accent-foreground">
+                    {getInitials(user.full_name)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="flex-1 truncate text-sm">
-                  {user.full_name || "Sin nombre"}
-                </span>
-                {currentUserId === user.id && (
-                  <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                )}
-              </button>
+                <span className="flex-1 truncate">{user.full_name || "Sin nombre"}</span>
+                {currentUserId === user.id && <Check className="h-4 w-4 text-primary shrink-0" aria-label="Asignado actualmente" />}
+              </CommandItem>
             ))}
-            {filtered.length === 0 && (
-              <div className="py-6 text-center text-sm text-[#94a3b8]">
-                No hay usuarios
-              </div>
-            )}
-          </div>
-        </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

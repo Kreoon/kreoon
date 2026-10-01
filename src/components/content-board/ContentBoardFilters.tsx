@@ -1,5 +1,4 @@
-import { Filter, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { CalendarDays, X } from "lucide-react";
 import { SearchableSelect, type SearchableSelectOption } from "@/components/ui/searchable-select";
 import { DateRangePresetPicker } from "@/components/ui/date-range-preset-picker";
 import { resolvePreset, type DateRangeValue } from "@/lib/date-presets";
@@ -21,6 +20,12 @@ export interface ContentBoardFiltersProps {
   productOptions: SearchableSelectOption[];
 }
 
+const SELECT = "h-10 min-w-[10rem] flex-1 sm:flex-none sm:w-[11.5rem] text-sm rounded-[var(--radius-control,0.75rem)] border-border/60 bg-background";
+
+/**
+ * Filtros del tablero (solo admin). Creador, editor y cliente se resuelven en el servidor;
+ * producto, fecha de CREACIÓN, «sin creador/editor» y archivados, en el cliente sobre lo cargado.
+ */
 export function ContentBoardFilters({
   dateRangeFilter, setDateRangeFilter,
   filterCreatorId, setFilterCreatorId, creatorOptions,
@@ -29,22 +34,36 @@ export function ContentBoardFilters({
   filterProductId, setFilterProductId, productOptions,
 }: ContentBoardFiltersProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2 md:gap-3 px-4 md:px-6 pb-4 overflow-x-auto">
-      <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-
-      <DateRangePresetPicker
-        value={dateRangeFilter ?? { preset: 'last_30', ...resolvePreset('last_30') }}
-        onChange={setDateRangeFilter}
-        presets={['today', 'yesterday', 'last_7', 'last_15', 'last_30', 'this_week', 'this_month', 'last_month', 'custom']}
-        align="start"
-      />
-      {dateRangeFilter && (
-        <Button variant="ghost" size="icon" className="h-7 w-7 md:h-8 md:w-8 flex-shrink-0" onClick={() => setDateRangeFilter(null)}>
-          <X className="h-3 w-3 md:h-4 md:w-4" />
-        </Button>
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filtros del tablero">
+      {dateRangeFilter ? (
+        <div className="flex items-center gap-1">
+          <span className="text-xs font-medium text-muted-foreground">Creadas:</span>
+          <DateRangePresetPicker
+            value={dateRangeFilter}
+            onChange={setDateRangeFilter}
+            presets={['today', 'yesterday', 'last_7', 'last_15', 'last_30', 'this_week', 'this_month', 'last_month', 'custom']}
+            align="start"
+          />
+          <button
+            type="button"
+            onClick={() => setDateRangeFilter(null)}
+            aria-label="Quitar filtro de fecha de creación"
+            title="Quitar filtro de fecha de creación"
+            className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setDateRangeFilter({ preset: 'last_30', ...resolvePreset('last_30') })}
+          className="inline-flex h-10 items-center gap-2 rounded-[var(--radius-control,0.75rem)] border border-border/60 bg-background px-3 text-sm text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+        >
+          <CalendarDays className="h-4 w-4" aria-hidden="true" />
+          Fecha de creación: cualquiera
+        </button>
       )}
-
-      <div className="h-6 w-px bg-border hidden md:block" />
 
       <SearchableSelect
         value={filterCreatorId}
@@ -52,36 +71,31 @@ export function ContentBoardFilters({
         options={creatorOptions}
         placeholder="Creadores"
         searchPlaceholder="Buscar creador..."
-        triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+        triggerClassName={SELECT}
       />
-
       <SearchableSelect
         value={filterEditorId}
         onValueChange={setFilterEditorId}
         options={editorOptions}
         placeholder="Editores"
         searchPlaceholder="Buscar editor..."
-        triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+        triggerClassName={SELECT}
       />
-
       <SearchableSelect
         value={filterClientId}
         onValueChange={setFilterClientId}
         options={clientOptions}
         placeholder="Clientes"
         searchPlaceholder="Buscar cliente..."
-        triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+        triggerClassName={SELECT}
       />
-
-      <div className="h-6 w-px bg-border hidden md:block" />
-
       <SearchableSelect
         value={filterProductId}
         onValueChange={setFilterProductId}
         options={productOptions}
         placeholder="Productos"
         searchPlaceholder="Buscar producto..."
-        triggerClassName="w-[130px] md:w-[180px] h-8 md:h-9 text-xs md:text-sm"
+        triggerClassName={SELECT}
       />
     </div>
   );

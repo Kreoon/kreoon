@@ -1,187 +1,229 @@
-import { EnhancedKanbanColumn, EnhancedContentCard } from "@/components/board";
-import { Content, ContentStatus } from "@/types/database";
-import { canMoveToStatusWithRules, OrgStatus, StatusRule } from "@/lib/contentBoardPermissions";
-
-interface BoardColumn {
-  status: string;
-  title: string;
-  color: string;
-  sortOrder: number;
-}
-
-interface BoardSettings {
-  card_size?: string;
-  visible_fields?: string[];
-}
-
-const CARDS_PER_COLUMN = 8;
-
-const FALLBACK_COLORS: Record<string, string> = {
-  'bg-muted-foreground': '#6b7280',
-  'bg-info': '#3b82f6',
-  'bg-purple-500': '#8b5cf6',
-  'bg-purple-600': '#9333ea',
-  'bg-orange-500': '#f97316',
-  'bg-cyan-500': '#06b6d4',
-  'bg-pink-500': '#ec4899',
-  'bg-emerald-500': '#10b981',
-  'bg-destructive': '#ef4444',
-  'bg-blue-500': '#3b82f6',
-  'bg-success': '#22c55e',
-};
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DndContext, DragOverlay, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
+import "@/styles/board-kanban.css";
+import type { Content } from "@/types/database";
+import { cn } from "@/lib/utils";
+import { KanbanCardView } from "./kanban/KanbanCard";
+import { CARDS_PAGE, INITIAL_CARDS_PER_COLUMN, KanbanColumn } from "./kanban/KanbanColumn";
+import { createAnnouncements, kanbanCollision, SCREEN_READER_INSTRUCTIONS, useKanbanSensors } from "./kanban/kanbanDnd";
+import { focusCard } from "./kanban/kanbanFocus";
+import type { GroupedContent } from "./kanban/kanbanUtils";
+import type {
+  BoardColumnDef,
+  ContentSocialStatus,
+  KanbanCardContext,
+  KanbanDensity,
+} from "./kanban/kanbanTypes";
 
 export interface ContentBoardKanbanViewProps {
-  allBoardColumns: BoardColumn[];
-  getContentByStatus: (status: ContentStatus | string) => Content[];
-  dropTarget: ContentStatus | string | null;
-  draggingContent: Content | null;
-  primaryRole: string;
-  targetUserId: string | undefined;
-  orgStatuses: OrgStatus[];
-  rules: StatusRule[];
-  roles: string[];
-  handleDragOver: (e: React.DragEvent) => void;
-  handleDrop: (e: React.DragEvent, targetStatus: ContentStatus | string) => void;
-  handleDragEnter: (status: ContentStatus | string) => void;
-  handleDragStart: (e: React.DragEvent, content: Content) => void;
-  expandedColumns: Set<string>;
-  toggleColumnExpand: (status: string) => void;
-  settings: BoardSettings | null | undefined;
-  updateSettings: (settings: Partial<BoardSettings>) => void;
-  setSelectedContent: (content: Content | null) => void;
-  showAdminControls: boolean;
-  ambassadorIds: Set<string>;
-  updateContentStatus: (contentId: string, newStatus: ContentStatus) => Promise<void>;
-  refetch: () => void;
-  setAIPanelMode: (mode: 'card' | 'board') => void;
-  setAIContentId: (id: string | undefined) => void;
-  setAIContentTitle: (title: string | undefined) => void;
-  setShowAIPanel: (show: boolean) => void;
-  assignableCreators: any[];
-  assignableEditors: any[];
-  handleAssignCreator?: (contentId: string, userId: string) => Promise<void>;
-  handleAssignEditor?: (contentId: string, userId: string) => Promise<void>;
-  socialStatusMap: Record<string, any> | undefined;
+  columns: BoardColumnDef[];
+  grouped: GroupedContent;
+  /** Todas las producciones cargadas, por id (para resolver la que se arrastra). */
+  contentById: ReadonlyMap<string, Content>;
+  density: KanbanDensity;
+  visibleFields: string[];
+  ctx: KanbanCardContext;
+  socialStatusMap: Record<string, ContentSocialStatus> | undefined;
+  movingIds: ReadonlySet<string>;
+  /** Última producción movida: se garantiza que su tarjeta esté visible y se anima un instante. */
+  pinnedId: string | null;
+  /** ¿Puede este usuario mover la producción a esa etapa? (reglas de la organización) */
+  canMove: (content: Content, targetStatus: string) => boolean;
+  onMove: (contentId: string, targetStatus: string, origin: "drag" | "keyboard") => void;
+  className?: string;
 }
 
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Tablero Kanban con arrastre real (@dnd-kit): ratón/lápiz con umbral, táctil con pulsación larga,
+ * teclado con anuncios en español, copia flotante (DragOverlay), auto-desplazamiento y navegación
+ * entre etapas en pantallas estrechas.
+ */
 export function ContentBoardKanbanView({
-  allBoardColumns, getContentByStatus, dropTarget, draggingContent, primaryRole, targetUserId,
-  orgStatuses, rules, roles, handleDragOver, handleDrop, handleDragEnter, handleDragStart,
-  expandedColumns, toggleColumnExpand, settings, updateSettings, setSelectedContent,
-  showAdminControls, ambassadorIds, updateContentStatus, refetch, setAIPanelMode, setAIContentId,
-  setAIContentTitle, setShowAIPanel,
-  assignableCreators, assignableEditors, handleAssignCreator, handleAssignEditor, socialStatusMap,
+  columns,
+  grouped,
+  contentById,
+  density,
+  visibleFields,
+  ctx,
+  socialStatusMap,
+  movingIds,
+  pinnedId,
+  canMove,
+  onMove,
+  className,
 }: ContentBoardKanbanViewProps) {
+  const sensors = useKanbanSensors();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeWidth, setActiveWidth] = useState<number | undefined>();
+  const [limits, setLimits] = useState<Record<string, number>>({});
+  const [currentStage, setCurrentStage] = useState<string | null>(columns[0]?.status ?? null);
+
+  const activeContent = activeId ? contentById.get(activeId) ?? null : null;
+
+  // Pulso breve de la tarjeta recién movida (se retira solo)
+  const [pulseId, setPulseId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pinnedId) return;
+    setPulseId(pinnedId);
+    const t = setTimeout(() => setPulseId(null), 1500);
+    return () => clearTimeout(t);
+  }, [pinnedId]);
+
+  // Lecturas actualizadas para los anuncios sin recrear el objeto en cada render
+  const lookups = useRef({ contentById, columns });
+  lookups.current = { contentById, columns };
+  const announcements = useMemo(
+    () =>
+      createAnnouncements({
+        getTitle: (id) => lookups.current.contentById.get(id)?.title || "producción",
+        getStageTitle: (s) => lookups.current.columns.find((c) => c.status === s)?.title || s,
+        getStageOf: (id) => lookups.current.contentById.get(id)?.status as string | undefined,
+      }),
+    [],
+  );
+
+  const handleDragStart = useCallback((e: DragStartEvent) => {
+    setActiveId(String(e.active.id));
+    setActiveWidth(e.active.rect.current.initial?.width);
+  }, []);
+
+  const handleDragEnd = useCallback(
+    (e: DragEndEvent) => {
+      setActiveId(null);
+      const { active, over } = e;
+      if (!over) return;
+      const id = String(active.id);
+      const target = String(over.id);
+      const item = contentById.get(id);
+      if (!item || item.status === target) return;
+      const fromKeyboard = typeof KeyboardEvent !== "undefined" && e.activatorEvent instanceof KeyboardEvent;
+      onMove(id, target, fromKeyboard ? "keyboard" : "drag");
+      // Con teclado la tarjeta se vuelve a montar en otra columna: devolver el foco a su asa.
+      if (fromKeyboard) focusCard(id, "handle");
+    },
+    [contentById, onMove],
+  );
+
+  const handleDragCancel = useCallback(() => setActiveId(null), []);
+
+  const canDrop = useCallback(
+    (content: Content, target: string) => (content.status === target ? true : canMove(content, target)),
+    [canMove],
+  );
+
+  const showMore = useCallback((status: string) => {
+    setLimits((p) => ({ ...p, [status]: (p[status] ?? INITIAL_CARDS_PER_COLUMN) + CARDS_PAGE }));
+  }, []);
+  const showLess = useCallback((status: string) => {
+    setLimits((p) => ({ ...p, [status]: INITIAL_CARDS_PER_COLUMN }));
+  }, []);
+
+  // Etapa visible (para el selector de etapas en pantallas estrechas)
+  useEffect(() => {
+    const root = scrollerRef.current;
+    if (!root || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const best = entries.filter((en) => en.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        const key = (best?.target as HTMLElement | undefined)?.dataset.kbColumn;
+        if (key) setCurrentStage(key);
+      },
+      { root, threshold: [0.5, 0.8] },
+    );
+    root.querySelectorAll("[data-kb-column]").forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [columns]);
+
+  const goToStage = useCallback((status: string) => {
+    const el = scrollerRef.current?.querySelector<HTMLElement>(`[data-kb-column="${CSS.escape(status)}"]`);
+    el?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", inline: "start", block: "nearest" });
+    setCurrentStage(status);
+  }, []);
+
   return (
-    <div className="relative w-full overflow-hidden rounded-sm">
-      <div
-        className="flex overflow-x-auto gap-3 p-3 md:p-4 scroll-smooth"
-        style={{
-          background: "linear-gradient(180deg, #0a0118 0%, #0d0220 100%)",
-          height: "calc(100vh - 180px)",
-          minHeight: "450px",
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(139, 92, 246, 0.3) transparent",
-        }}
-      >
-        {allBoardColumns.map(column => {
-          const columnContent = getContentByStatus(column.status);
-          const isCurrentDropTarget = dropTarget === column.status;
-          const canDropHere = draggingContent
-            ? canMoveToStatusWithRules(primaryRole, draggingContent.status, column.status, draggingContent, targetUserId || '', orgStatuses, rules, roles)
-            : true;
-
-          // Get dynamic color and title from organization settings
-          const orgStatus = orgStatuses.find(s => s.status_key === column.status);
-          const columnTitle = orgStatus?.label || column.title;
-
-          // Convert CSS class to hex for fallback, or use orgStatus color
-          const columnColor = orgStatus?.color || FALLBACK_COLORS[column.color] || column.color || '#6b7280';
-
-          return (
-            <EnhancedKanbanColumn
-              key={column.status}
-              id={column.status}
-              title={columnTitle}
-              count={columnContent.length}
-              color={columnColor}
-              onDragOver={handleDragOver}
-              onDrop={(e) => handleDrop(e, column.status)}
-              onDragEnter={() => handleDragEnter(column.status)}
-              isDropTarget={isCurrentDropTarget}
-              canDrop={canDropHere}
+    <div className={cn("kb-root", className)}>
+      {/* Selector de etapas: navegación directa entre columnas cuando no caben todas */}
+      <div className="mb-1 lg:hidden">
+        <nav className="kb-stages" aria-label="Ir a una etapa">
+          {columns.map((col) => (
+            <button
+              key={col.status}
+              type="button"
+              className="kb-stage"
+              aria-current={currentStage === col.status ? "true" : undefined}
+              onClick={() => goToStage(col.status)}
             >
-              {(() => {
-                const isExpanded = expandedColumns.has(column.status);
-                const visibleItems = isExpanded ? columnContent : columnContent.slice(0, CARDS_PER_COLUMN);
-                const hiddenCount = columnContent.length - CARDS_PER_COLUMN;
-                return (
-                  <>
-                    {visibleItems.map(item => (
-                      <EnhancedContentCard
-                        key={item.id}
-                        content={item}
-                        cardSize={settings?.card_size || 'normal'}
-                        visibleFields={settings?.visible_fields || ['title', 'status', 'client', 'deadline', 'responsible']}
-                        showFieldsCustomizer={true}
-                        onVisibleFieldsChange={(fields) => updateSettings({ visible_fields: fields })}
-                        onClick={() => setSelectedContent(item)}
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        isDragging={draggingContent?.id === item.id}
-                        showAIIndicators={showAdminControls}
-                        organizationStatuses={orgStatuses}
-                        userRole={primaryRole as any}
-                        userId={targetUserId}
-                        onStatusChange={async (contentId, newStatus) => {
-                          await updateContentStatus(contentId, newStatus);
-                          refetch();
-                        }}
-                        showStatusControls={true}
-                        ambassadorIds={ambassadorIds}
-                        onAnalyzeWithAI={showAdminControls ? (contentId, title) => {
-                          setAIPanelMode('card');
-                          setAIContentId(contentId);
-                          setAIContentTitle(title);
-                          setShowAIPanel(true);
-                        } : undefined}
-                        creators={assignableCreators}
-                        editors={assignableEditors}
-                        onAssignCreator={showAdminControls || primaryRole === "team_leader" ? handleAssignCreator : undefined}
-                        onAssignEditor={showAdminControls || primaryRole === "team_leader" ? handleAssignEditor : undefined}
-                        onUpdate={refetch}
-                        socialStatus={socialStatusMap?.[item.id]}
-                      />
-                    ))}
-                    {!isExpanded && hiddenCount > 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                        className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#a78bfa] hover:text-[#c4b5fd] transition-colors"
-                        style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px dashed rgba(139, 92, 246, 0.25)' }}
-                      >
-                        Ver {hiddenCount} más
-                      </button>
-                    )}
-                    {isExpanded && hiddenCount > 0 && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); toggleColumnExpand(column.status); }}
-                        className="w-full py-2 px-3 rounded-sm text-xs font-medium text-[#64748b] hover:text-[#94a3b8] transition-colors"
-                        style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px dashed rgba(255, 255, 255, 0.1)' }}
-                      >
-                        Mostrar menos
-                      </button>
-                    )}
-                  </>
-                );
-              })()}
-              {columnContent.length === 0 && (
-                <div className="border-2 border-dashed border-border rounded-sm p-4 md:p-8 text-center text-muted-foreground text-xs md:text-sm">
-                  Sin contenido
-                </div>
-              )}
-            </EnhancedKanbanColumn>
-          );
-        })}
+              <span className="kb-col__dot" style={{ ["--col" as string]: col.color }} aria-hidden="true" />
+              <span className="max-w-[9rem] truncate">{col.title}</span>
+              <b>{grouped.byStatus.get(col.status)?.length ?? 0}</b>
+            </button>
+          ))}
+        </nav>
       </div>
+
+      <DndContext
+        sensors={sensors}
+        collisionDetection={kanbanCollision}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+        accessibility={{ announcements, screenReaderInstructions: SCREEN_READER_INSTRUCTIONS }}
+      >
+        <div
+          ref={scrollerRef}
+          className="kb-scroller"
+          data-dragging={activeId ? "true" : "false"}
+          data-snap={activeId ? "false" : "true"}
+          role="region"
+          aria-label="Tablero de producciones por etapa"
+          tabIndex={-1}
+        >
+          {columns.map((col) => (
+            <KanbanColumn
+              key={col.status}
+              column={col}
+              items={grouped.byStatus.get(col.status) ?? EMPTY}
+              overdueCount={grouped.overdueByStatus.get(col.status) ?? 0}
+              limit={limits[col.status] ?? INITIAL_CARDS_PER_COLUMN}
+              activeContent={activeContent}
+              canDrop={canDrop}
+              density={density}
+              visibleFields={visibleFields}
+              ctx={ctx}
+              socialStatusMap={socialStatusMap}
+              movingIds={movingIds}
+              pinnedId={pinnedId}
+              pulseId={pulseId}
+              onShowMore={showMore}
+              onShowLess={showLess}
+            />
+          ))}
+        </div>
+
+        <DragOverlay
+          dropAnimation={prefersReducedMotion() ? null : { duration: 160, easing: "cubic-bezier(0.2, 0.8, 0.2, 1)" }}
+        >
+          {activeContent ? (
+            <ul role="presentation" className="kb-root m-0 list-none p-0" style={{ width: activeWidth }}>
+              <KanbanCardView
+                content={activeContent}
+                density={density}
+                visibleFields={visibleFields}
+                ctx={ctx}
+                social={socialStatusMap?.[activeContent.id]}
+                isAmbassador={activeContent.is_ambassador_content}
+                overlay
+              />
+            </ul>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }
+
+const EMPTY: Content[] = [];

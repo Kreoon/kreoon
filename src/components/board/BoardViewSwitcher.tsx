@@ -1,5 +1,4 @@
 import { LayoutGrid, List, Calendar as CalendarIcon, Table2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export type BoardView = 'kanban' | 'list' | 'calendar' | 'table';
@@ -16,25 +15,33 @@ const VIEWS: { value: BoardView; label: string; icon: typeof LayoutGrid }[] = [
   { value: 'table', label: 'Tabla', icon: Table2 },
 ];
 
+/** Selector de vista (Kanban / Lista / Calendario / Tabla). Conserva búsqueda y filtros: solo cambia la presentación. */
 export function BoardViewSwitcher({ currentView, onViewChange }: BoardViewSwitcherProps) {
   return (
-    <div className="flex items-center gap-1 bg-muted/50 rounded-sm p-1">
+    <div role="group" aria-label="Tipo de vista" className="inline-flex items-center gap-0.5 rounded-[var(--radius-control,0.75rem)] bg-muted p-1">
       {VIEWS.map(view => {
         const Icon = view.icon;
+        const active = currentView === view.value;
         return (
-          <Button
+          <button
             key={view.value}
-            variant="ghost"
-            size="sm"
-            className={cn(
-              "gap-1.5 px-2.5 h-8",
-              currentView === view.value && "bg-background shadow-sm"
-            )}
+            type="button"
+            aria-pressed={active}
+            aria-label={view.label}
+            title={view.label}
             onClick={() => onViewChange(view.value)}
+            className={cn(
+              "inline-flex min-h-9 items-center gap-1.5 rounded-[calc(var(--radius-control,0.75rem)-4px)] px-2.5 text-xs font-semibold transition-colors",
+              "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring",
+              "[@media(pointer:coarse)]:min-h-10",
+              active
+                ? "bg-card text-foreground shadow-[var(--shadow-soft,0_1px_2px_rgb(0_0_0/0.08))]"
+                : "text-muted-foreground hover:text-foreground",
+            )}
           >
-            <Icon className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs">{view.label}</span>
-          </Button>
+            <Icon className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden xl:inline">{view.label}</span>
+          </button>
         );
       })}
     </div>
