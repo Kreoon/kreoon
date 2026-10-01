@@ -25,7 +25,9 @@
 - **Riesgo:** rompe los 4 uploaders actuales si no se cambian a la vez → coordinar con la Ola 9 o desplegar primero un modo compatible.
 - **Aceptación:** sin JWT → 401; con JWT ajeno a la organización → 403; ninguna respuesta contiene claves.
 
-## Ola 1 — Privacidad local y sesión (sin cambio visual) ← **primera ola recomendada**
+## Ola 1 — Privacidad local y sesión (sin cambio visual) ✅ **HECHA (2026-10-01, sin commit, pendiente de QA con 2 cuentas)**
+
+> **Resultado:** `src/lib/storage/scopedStorage.ts` + `queryCachePersistence.ts` (caché `kreoon-rq-v2:<usuario>:<org>` solo con lista blanca de catálogo; `kreoon-rq-v1` se borra al arrancar); limpieza centralizada en `useAuth` (cerrar sesión, evento `SIGNED_OUT`, cambio de cuenta, baneo); Workbox `kreoon-v7` sin regla para `/rest/v1/` ni Storage firmado/autenticado (solo `/object/public/` en caché); manifest único (`id:"/"`, `lang:"es"`, sin `orientation`, `start_url:"/inicio?source=pwa"`); ruta `/inicio`; `/auth?volver=`; borrador del cuestionario en sessionStorage por usuario sin documento/fecha de nacimiento/dirección; hotfix de `StatusChangeDropdown` con test. También D1 («Campañas»), D2 (`/p/:slug` única: `/@slug` y `/marketplace/creator/:id` redirigen) y D4 (`/inicio?source=pwa`) quedaron decididas por Alexander.
 **Por qué primero:** cierra 3 hallazgos críticos (P1–P3) y 1 alto (P4/N2) con pocos archivos, es prerrequisito de la PWA y no choca con las sesiones que están tocando UI.
 
 | Archivo | Cambio |
