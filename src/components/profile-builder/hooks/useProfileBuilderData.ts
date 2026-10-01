@@ -61,6 +61,12 @@ export function useProfileBuilderData(profileId: string | undefined) {
       }
 
       const result = rpcData as unknown as ProfileBuilderData;
+      // get_profile_builder_data devuelve borradores Y publicados mezclados. El editor trabaja sobre el
+      // borrador si existe; si no, sobre lo publicado. Sin este filtro, tras un autoguardado el editor
+      // cargaba ambas copias (secciones duplicadas) y el siguiente guardado las duplicaba en la BD.
+      if (Array.isArray(result?.blocks) && result.blocks.some((b) => b.isDraft)) {
+        result.blocks = result.blocks.filter((b) => b.isDraft);
+      }
       // El editor trabaja sobre el estilo en BORRADOR si existe (builder_config_draft, migración 20261001100000)
       const { data: draftRow, error: draftError } = await supabase
         .from('creator_profiles')

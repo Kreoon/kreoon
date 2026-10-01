@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useProfileBuilderData } from "@/components/profile-builder/hooks/useProfileBuilderData";
 import { useCreatorPlanFeatures } from "@/hooks/useCreatorPlanFeatures";
@@ -7,7 +8,10 @@ import {
   type CreatorDataForTemplate,
 } from "@/lib/profile-builder/generateBlocksFromTemplate";
 import {
+  BLOCK_DEFINITIONS,
   DEFAULT_BUILDER_CONFIG,
+  createBlock,
+  type BlockType,
   type BuilderConfig,
   type ProfileBlock,
   type ProfileTemplate,
@@ -17,19 +21,26 @@ import { LeftToolRail } from "./LeftToolRail";
 import { CanvasPreview } from "./CanvasPreview";
 import { ContextPanel } from "./ContextPanel";
 import { useBuilderAutosave } from "./hooks/useBuilderAutosave";
+import { NewEditorNotice } from "./NewEditorNotice";
 import { blocksToSections, getSelectedSection } from "./section-adapter";
 import type { ApplyMode } from "./panels/TemplatesPanel";
 import type { BuilderPanel, DevicePreview } from "./types";
 
 interface ProfileBuilderV2Props {
   profileId: string;
+  /** Panel inicial (p. ej. `?tab=templates` desde «Guardar como plantilla»). */
+  initialPanel?: BuilderPanel;
 }
 
 const AUTOSAVE_DELAY_MS = 1500;
 
-export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
+export function ProfileBuilderV2({
+  profileId,
+  initialPanel = "sections",
+}: ProfileBuilderV2Props) {
   const { toast } = useToast();
-  const { isPro, isPremium } = useCreatorPlanFeatures();
+  const navigate = useNavigate();
+  const { isPro, isPremium, canUseBlock } = useCreatorPlanFeatures();
   const {
     profile,
     blocks: loadedBlocks,
@@ -45,27 +56,34 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
 
   const [blocks, setBlocks] = useState<ProfileBlock[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [activePanel, setActivePanel] = useState<BuilderPanel>("sections");
+  const [activePanel, setActivePanel] = useState<BuilderPanel>(initialPanel);
+  // Solo < md: el panel contextual se abre como hoja inferior
+  const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   const [device, setDevice] = useState<DevicePreview>("desktop");
   const [builderConfig, setBuilderConfig] = useState<BuilderConfig>(
     DEFAULT_BUILDER_CONFIG,
   );
   const [isDirty, setIsDirty] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [configHydrated, setConfigHydrated] = useState(false);
 
-  // ─── Sincronizar datos cargados al estado local ────────────────────────────
+  // ─── Cargar los datos guardados UNA sola vez ───────────────────────────────
+  // Antes se sincronizaba en cada cambio de `loadedBlocks`: (a) cada autoguardado invalida la query y
+  // el refetch pisaba lo que el creador escribía mientras tanto; (b) sin bloques guardados,
+  // `loadedBlocks` se genera desde plantilla con ids nuevos en cada render → bucle de renders.
   useEffect(() => {
-    if (loadedBlocks && loadedBlocks.length > 0) {
-      setBlocks(loadedBlocks);
-      setHydrated(true);
-    }
-  }, [loadedBlocks]);
+    if (hydrated || isLoading) return;
+    setBlocks(loadedBlocks ?? []);
+    setHydrated(true);
+  }, [hydrated, isLoading, loadedBlocks]);
 
   useEffect(() => {
+    if (configHydrated || isLoading) return;
     if (profile?.builder_config) {
-      setBuilderConfig(profile.builder_config);
+      setBuilderConfig({ ...DEFAULT_BUILDER_CONFIG, ...profile.builder_config });
     }
-  }, [profile?.builder_config]);
+    setConfigHydrated(true);
+  }, [configHydrated, isLoading, profile?.builder_config]);
 
   // ─── Acciones sobre bloques ────────────────────────────────────────────────
   const updateBlock = useCallback(
@@ -115,6 +133,61 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
     setSelectedBlockId((current) => (current === blockId ? null : current));
     setIsDirty(true);
   }, []);
+
+  // ─── Añadir sección tocando (sin arrastrar) ─────────────────────────────────
+  const addSection = useCallback(
+    (type: BlockType) => {
+      if (!canUseBlock(type)) {
+        toast({
+          title: "Sección no disponible",
+          description: "Esta sección requiere un plan superior.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const definition = BLOCK_DEFINITIONS[type];
+      const count = blocks.filter((block) => block.type === type).length;
+      if (definition.maxInstances > 0 && count >= definition.maxInstances) {
+        toast({
+          title: "Ya tienes esta sección",
+          description: `«${definition.label}» solo se puede añadir una vez.`,
+        });
+        return;
+      }
+      const newBlock = createBlock(type, blocks.length);
+      setBlocks((current) => [
+        ...current,
+        { ...newBlock, orderIndex: current.length },
+      ]);
+      setSelectedBlockId(newBlock.id);
+      setActivePanel("sections");
+      setIsDirty(true);
+    },
+    [blocks, canUseBlock, toast],
+  );
+
+  const handleSelectBlock = useCallback((blockId: string | null) => {
+    setSelectedBlockId(blockId);
+    if (blockId) {
+      setActivePanel("sections");
+      setIsMobilePanelOpen(true);
+    }
+  }, []);
+
+  const handlePanelChange = useCallback(
+    (panel: BuilderPanel) => {
+      // En móvil, tocar la pestaña activa con la hoja abierta la cierra
+      setIsMobilePanelOpen((open) => !(open && panel === activePanel));
+      setActivePanel(panel);
+      if (panel !== "sections") setSelectedBlockId(null);
+    },
+    [activePanel],
+  );
+
+  const handleExit = useCallback(() => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/creator-dashboard");
+  }, [navigate]);
 
   const handleConfigChange = useCallback((updates: Partial<BuilderConfig>) => {
     setBuilderConfig((current) => ({ ...current, ...updates }));
@@ -277,8 +350,9 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
       <TopToolbarV2
+        onExit={handleExit}
         statusLabel={statusLabel}
         isSaving={isSaving}
         device={device}
@@ -287,12 +361,13 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
         onPreview={handlePreview}
         onPublish={handlePublish}
       />
-      <div className="flex min-h-0 flex-1">
+      <NewEditorNotice userId={profile?.user_id} />
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
         <LeftToolRail
           activePanel={activePanel}
-          onPanelChange={setActivePanel}
+          onPanelChange={handlePanelChange}
         />
-        <main className="flex-1 overflow-y-auto bg-muted/30 p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-2 sm:p-4 md:p-6">
           <CanvasPreview
             blocks={blocks}
             selectedBlockId={selectedBlockId}
@@ -300,7 +375,7 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
             builderConfig={builderConfig}
             userId={profile?.user_id}
             creatorProfileId={profileId}
-            onSelectBlock={setSelectedBlockId}
+            onSelectBlock={handleSelectBlock}
             onUpdateBlock={updateBlock}
           />
         </main>
@@ -316,6 +391,10 @@ export function ProfileBuilderV2({ profileId }: ProfileBuilderV2Props) {
           canUsePremium={isPremium}
           isSaving={isSaving}
           onSelectSection={setSelectedBlockId}
+          onClearSelection={() => setSelectedBlockId(null)}
+          onAddSection={addSection}
+          isMobileOpen={isMobilePanelOpen}
+          onCloseMobile={() => setIsMobilePanelOpen(false)}
           onToggleVisibility={toggleVisibility}
           onMoveSection={moveSection}
           onDeleteSection={deleteSection}

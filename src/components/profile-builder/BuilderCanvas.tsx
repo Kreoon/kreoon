@@ -87,6 +87,8 @@ interface BuilderCanvasProps {
   // Para contenedores
   onAddBlockToContainer?: (parentId: string, columnIndex?: number) => void;
   onRemoveFromContainer?: (parentId: string, blockId: string) => void;
+  /** Texto del estado vacío (V2 añade tocando, no arrastrando). */
+  emptyStateHint?: string;
 }
 
 export function BuilderCanvas({
@@ -97,6 +99,7 @@ export function BuilderCanvas({
   onReorderBlocks,
   onDeleteBlock,
   previewDevice,
+  emptyStateHint = 'Arrastra bloques desde el panel izquierdo para crear tu portafolio y empezar a vender tus servicios',
   builderConfig = DEFAULT_BUILDER_CONFIG,
   userId,
   creatorProfileId,
@@ -234,7 +237,7 @@ export function BuilderCanvas({
                 Construye tu perfil profesional
               </h3>
               <p className="text-sm text-muted-foreground max-w-sm">
-                Arrastra bloques desde el panel izquierdo para crear tu portafolio y empezar a vender tus servicios
+                {emptyStateHint}
               </p>
             </div>
 

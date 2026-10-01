@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Trash2,
   Lock,
+  Plus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BuilderSection } from "../types";
@@ -17,6 +18,7 @@ interface SectionsPanelProps {
   onMoveUp: (blockId: string) => void;
   onMoveDown: (blockId: string) => void;
   onDelete: (blockId: string) => void;
+  onAddClick: () => void;
 }
 
 export function SectionsPanel({
@@ -27,16 +29,32 @@ export function SectionsPanel({
   onMoveUp,
   onMoveDown,
   onDelete,
+  onAddClick,
 }: SectionsPanelProps) {
+  const addButton = (
+    <button
+      type="button"
+      onClick={onAddClick}
+      className="flex min-h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-primary/50 px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+    >
+      <Plus className="h-4 w-4" />
+      Añadir sección
+    </button>
+  );
+
   if (sections.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        Aun no hay secciones. Aplica una plantilla para comenzar.
-      </p>
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Aún no hay secciones. Añade una o aplica una plantilla para comenzar.
+        </p>
+        {addButton}
+      </div>
     );
   }
 
   return (
+    <div className="space-y-3">
     <ul className="space-y-1.5">
       {sections.map((section, index) => {
         const isSelected = section.blockId === selectedBlockId;
@@ -110,6 +128,8 @@ export function SectionsPanel({
         );
       })}
     </ul>
+    {addButton}
+    </div>
   );
 }
 
@@ -136,7 +156,7 @@ function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors",
+        "flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors md:h-7 md:w-7",
         "hover:bg-muted hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent",
         destructive && "hover:bg-destructive/10 hover:text-destructive",
       )}
