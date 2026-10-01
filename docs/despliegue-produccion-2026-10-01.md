@@ -13,16 +13,16 @@ quedó bloqueado por el control de permisos de la sesión de Claude, así que es
 
 ## Pendiente, en este orden
 
-> No usar `supabase db push`: el historial remoto tiene otras versiones y hay una migración ajena sin probar
-> en la carpeta (`20261001140000_endurecer_consentimientos_legados.sql`, de la sesión de prototipos).
+> No usar `supabase db push`: el historial remoto tiene otras versiones (las migraciones se aplicaron con
+> otros timestamps) y se re-aplicarían.
 > Aplicar cada archivo pegándolo en el SQL Editor de Supabase.
 
 1. ~~**Fase 7**~~ — **aplicada y verificada** (2026-10-01, tarde).
 2. **Fase 3** — `supabase/migrations/20260930130000_creator_onboarding_and_unpublished_profiles.sql`.
    Ya trae `publish_profile_blocks` fusionada con la versión de borradores de estilo (no hay que re-aplicar
    nada después). Efecto: los perfiles de creador NUEVOS nacen sin publicar hasta que la persona publica.
-3. **Fusionar el PR de la rama a `main`** → Vercel publica el frontend. Solo va lo commiteado; el trabajo a
-   medias de la otra sesión (funciones `bunny-*`, constructor V2, rutas `/p`) no está en la rama.
+3. **Fusionar el PR #59 a `main`** → Vercel publica el frontend. La rama ya incluye el trabajo terminado de la
+   sesión de prototipos (Bunny, `/p/:slug`, constructor V2, móvil ola 1); build OK.
 4. Comprobar en producción: `/registro/ugc-colombia` crea la cuenta, Inicio del creador, perfil público.
 5. **Fase 1** — `supabase/migrations/20260930100000_lockdown_membership_paths.sql` (después del paso 3:
    el registro de `main` viejo usaba la función que esta fase endurece).
