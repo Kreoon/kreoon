@@ -20,7 +20,8 @@ interface ConsentBlockProps {
 /**
  * Consentimiento del registro (diseño docs/legal/registro-2026-10/consentimiento-ux.md):
  *   - Aviso breve de privacidad antes de las casillas.
- *   - Dos casillas, ninguna premarcada: (1) mayoría de edad + términos, (2) tratamiento de datos.
+ *   - Dos casillas, ninguna premarcada: (1) mayoría de edad + términos, (2) lectura de la Política de privacidad
+ *     (informativa hasta que el servidor registre la autorización con versión).
  *   - Los enlaces van FUERA de los <label>, en su propia línea, para que tocarlos no marque la casilla.
  *   - «Leer los términos» abre un panel con cada documento vigente (lista y versiones del servidor,
  *     legal_consent_requirements) sin perder lo escrito en el formulario.
@@ -86,7 +87,9 @@ export function ConsentBlock({ documents, checked, onCheckedChange, disabled, id
             className="mt-0.5 h-5 w-5"
           />
           <label htmlFor={privacyId} className="text-sm leading-snug">
-            Autorizo el tratamiento de mis datos para crear y gestionar mi cuenta de creador, según la Política de privacidad.
+            {/* Informativa: la autorización con versión y evidencia en servidor llega con las migraciones 01–03
+                de docs/legal/registro-2026-10 (hoy la política está deprecated en legal_documents). */}
+            He leído la Política de privacidad.
           </label>
         </div>
         <a
