@@ -299,6 +299,8 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   publish_to_social: 'social:write',
   // Operations (content board)
   get_content_item: 'campaigns:read',
+  list_content_assets: 'campaigns:read',
+  get_content_asset_download: 'campaigns:read',
   approve_content_script: 'campaigns:write',
   record_content_delivery: 'campaigns:write',
   mark_content_payment: 'campaigns:write',

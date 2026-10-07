@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { AuthContext, ToolResult } from "../types.js";
 
@@ -22,6 +23,35 @@ export const operationsToolDefinitions = [
         content_id: { type: "string", description: "UUID del ítem de contenido" },
       },
       required: ["content_id"],
+    },
+  },
+  {
+    name: "list_content_assets",
+    description:
+      "📦 LISTAR MATERIAL CRUDO de un ítem (pestaña Material de Kreoon). " +
+      "Cuándo usarla: el usuario pide 'qué material subió el creador', 'qué tomas hay', 'archivos del guion X'. " +
+      "Devuelve por archivo: nombre, tipo, tamaño, escena (scene_number), quién lo subió y la ruta de storage. " +
+      "Es solo metadata: NO descarga el archivo (el storage de Bunny es privado).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+      },
+      required: ["content_id"],
+    },
+  },
+  {
+    name: "get_content_asset_download",
+    description:
+      "⬇️ ENLACE DE DESCARGA de un archivo de Material Crudo (usa el asset id de list_content_assets). " +
+      "Devuelve una URL firmada que vence en 10 minutos. Para descargarla hay que enviar el header " +
+      "'Authorization: Bearer <anon key pública de Supabase>' (la función verifica además la firma del token).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        asset_id: { type: "string", description: "UUID del archivo (campo id de list_content_assets)" },
+      },
+      required: ["asset_id"],
     },
   },
   {
@@ -216,6 +246,8 @@ export async function handleOperationsTool(
 ): Promise<ToolResult> {
   switch (toolName) {
     case "get_content_item":       return getContentItem(args, auth);
+    case "list_content_assets":    return listContentAssets(args, auth);
+    case "get_content_asset_download": return getContentAssetDownload(args, auth);
     case "approve_content_script": return approveContentScript(args, auth);
     case "record_content_delivery":return recordContentDelivery(args, auth);
     case "mark_content_payment":   return markContentPayment(args, auth);
@@ -385,7 +417,7 @@ async function assignContentTeam(args: Record<string, unknown>, auth: AuthContex
 async function getContentItem(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
   const { data, error } = await supabase
     .from("content")
-    .select("id, title, description, status, target_platform, content_type, product_id, client_id, creator_id, editor_id, strategist_id, script, deadline, creator_payment, editor_payment, creator_paid, editor_paid, video_url, video_urls, notes, funnel_stage, hook, cta, created_at, updated_at, delivered_at, approved_at_v2, published_at")
+    .select("id, title, description, status, target_platform, content_type, product_id, client_id, creator_id, editor_id, strategist_id, script, deadline, creator_payment, editor_payment, creator_paid, editor_paid, video_url, video_urls, raw_video_urls, bunny_embed_url, drive_url, thumbnail_url, reference_url, video_duration, video_processing_status, director_output, broll_output, captions, caption, marketing_output, editor_guidelines, creator_type, target_country, change_requests, notes, funnel_stage, hook, cta, created_at, updated_at, recorded_at, delivered_at, approved_at_v2, published_at")
     .eq("id", args.content_id)
     .eq("organization_id", auth.org_id)
     .is("deleted_at", null)
@@ -393,6 +425,69 @@ async function getContentItem(args: Record<string, unknown>, auth: AuthContext):
 
   if (error || !data) return { success: false, error: "Contenido no encontrado o sin acceso" };
   return { success: true, data };
+}
+
+async function listContentAssets(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  // Verifica primero que el ítem pertenezca a la organización del caller.
+  const { data: item, error: itemError } = await supabase
+    .from("content")
+    .select("id, title")
+    .eq("id", args.content_id)
+    .eq("organization_id", auth.org_id)
+    .is("deleted_at", null)
+    .single();
+
+  if (itemError || !item) return { success: false, error: "Contenido no encontrado o sin acceso" };
+
+  const { data, error } = await supabase
+    .from("project_raw_assets")
+    .select("id, original_filename, custom_filename, file_type, file_size, scene_number, storage_path, uploaded_by, created_at")
+    .eq("project_id", item.id)
+    .eq("organization_id", auth.org_id)
+    .order("created_at", { ascending: true });
+
+  if (error) return { success: false, error: `list_content_assets: ${error.message}` };
+  return { success: true, data: { content_id: item.id, title: item.title, count: data?.length ?? 0, assets: data ?? [] } };
+}
+
+const ASSET_TOKEN_TTL_SECONDS = 600;
+
+async function getContentAssetDownload(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const secret = process.env.MCP_ASSET_SIGNING_SECRET;
+  if (!secret) return { success: false, error: "MCP_ASSET_SIGNING_SECRET no está configurado en el servidor" };
+
+  // El asset debe pertenecer a la organización del caller y a un contenido no borrado.
+  const { data: asset, error } = await supabase
+    .from("project_raw_assets")
+    .select("id, project_id, custom_filename, original_filename, file_type, file_size")
+    .eq("id", args.asset_id)
+    .eq("organization_id", auth.org_id)
+    .single();
+  if (error || !asset) return { success: false, error: "Archivo no encontrado o sin acceso" };
+
+  const { data: item } = await supabase
+    .from("content")
+    .select("id")
+    .eq("id", asset.project_id)
+    .eq("organization_id", auth.org_id)
+    .is("deleted_at", null)
+    .single();
+  if (!item) return { success: false, error: "Archivo no encontrado o sin acceso" };
+
+  const expiresAt = Math.floor(Date.now() / 1000) + ASSET_TOKEN_TTL_SECONDS;
+  const payload = Buffer.from(JSON.stringify({ a: asset.id, o: auth.org_id, e: expiresAt })).toString("base64url");
+  const signature = createHmac("sha256", secret).update(payload).digest("base64url");
+
+  return {
+    success: true,
+    data: {
+      filename: asset.custom_filename || asset.original_filename,
+      file_type: asset.file_type,
+      file_size: asset.file_size,
+      expires_at: new Date(expiresAt * 1000).toISOString(),
+      download_url: `${process.env.SUPABASE_URL}/functions/v1/mcp-asset-download?t=${payload}.${signature}`,
+    },
+  };
 }
 
 async function approveContentScript(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
