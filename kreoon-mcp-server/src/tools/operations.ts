@@ -55,6 +55,22 @@ export const operationsToolDefinitions = [
     },
   },
   {
+    name: "get_content_video_upload",
+    description:
+      "⬆️ SUBIR VIDEOS FINALES de un ítem a Bunny Stream (pestaña Video de Kreoon). " +
+      "Devuelve una URL firmada (30 min) de la función mcp-video-upload, atada a ESE contenido. Con ella: " +
+      "POST {action:'create', title} -> credenciales TUS para subir el archivo directo a Bunny; " +
+      "POST {action:'set-final-videos', urls:[embed_url,...]} -> guarda la lista de finales en content.video_urls. " +
+      "Enviar header 'Authorization: Bearer <anon key pública de Supabase>'.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        content_id: { type: "string", description: "UUID del ítem de contenido" },
+      },
+      required: ["content_id"],
+    },
+  },
+  {
     name: "approve_content_script",
     description:
       "Aprueba o solicita cambios en el guión de un ítem de contenido. " +
@@ -248,6 +264,7 @@ export async function handleOperationsTool(
     case "get_content_item":       return getContentItem(args, auth);
     case "list_content_assets":    return listContentAssets(args, auth);
     case "get_content_asset_download": return getContentAssetDownload(args, auth);
+    case "get_content_video_upload": return getContentVideoUpload(args, auth);
     case "approve_content_script": return approveContentScript(args, auth);
     case "record_content_delivery":return recordContentDelivery(args, auth);
     case "mark_content_payment":   return markContentPayment(args, auth);
@@ -486,6 +503,33 @@ async function getContentAssetDownload(args: Record<string, unknown>, auth: Auth
       file_size: asset.file_size,
       expires_at: new Date(expiresAt * 1000).toISOString(),
       download_url: `${process.env.SUPABASE_URL}/functions/v1/mcp-asset-download?t=${payload}.${signature}`,
+    },
+  };
+}
+
+async function getContentVideoUpload(args: Record<string, unknown>, auth: AuthContext): Promise<ToolResult> {
+  const secret = process.env.MCP_ASSET_SIGNING_SECRET;
+  if (!secret) return { success: false, error: "MCP_ASSET_SIGNING_SECRET no está configurado en el servidor" };
+
+  const { data: item } = await supabase
+    .from("content")
+    .select("id, title")
+    .eq("id", args.content_id)
+    .eq("organization_id", auth.org_id)
+    .is("deleted_at", null)
+    .single();
+  if (!item) return { success: false, error: "Contenido no encontrado o sin acceso" };
+
+  const expiresAt = Math.floor(Date.now() / 1000) + 1800;
+  const payload = Buffer.from(JSON.stringify({ k: "vu", c: item.id, o: auth.org_id, e: expiresAt })).toString("base64url");
+  const signature = createHmac("sha256", secret).update(payload).digest("base64url");
+  return {
+    success: true,
+    data: {
+      content_id: item.id,
+      title: item.title,
+      expires_at: new Date(expiresAt * 1000).toISOString(),
+      upload_api_url: `${process.env.SUPABASE_URL}/functions/v1/mcp-video-upload?t=${payload}.${signature}`,
     },
   };
 }

@@ -301,6 +301,7 @@ const TOOL_SCOPES: Record<string, AuthScope> = {
   get_content_item: 'campaigns:read',
   list_content_assets: 'campaigns:read',
   get_content_asset_download: 'campaigns:read',
+  get_content_video_upload: 'campaigns:write',
   approve_content_script: 'campaigns:write',
   record_content_delivery: 'campaigns:write',
   mark_content_payment: 'campaigns:write',
