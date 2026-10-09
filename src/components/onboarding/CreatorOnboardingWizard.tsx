@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
 import { uploadAvatar } from "@/lib/bunnyUpload";
+import { optimizeImage, OPTIMIZE_PRESETS } from "@/lib/imageOptimizer";
 import { CONTENT_TYPES } from "@/components/marketplace/types/marketplace";
 import { ConsentBlock } from "@/components/registro/ConsentBlock";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,10 @@ import { getCreatorStartStep, type CreatorStep } from "@/lib/onboarding/track";
 import { sanitizeReturnTo } from "@/lib/registration/returnTo";
 
 const ORDER: CreatorStep[] = ["name", "photo", "content", "done"];
-const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+// Tope de cordura sobre el original; la imagen se optimiza (WebP 256px) antes de subir.
+const MAX_AVATAR_BYTES = 50 * 1024 * 1024;
+// Si la optimización falla y el archivo original sigue siendo grande, no se sube.
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 /**
  * Asistente ÚNICO de onboarding de creadores (vive dentro de OnboardingGateProvider, sustituyendo
@@ -111,9 +115,11 @@ export function CreatorOnboardingWizard() {
   const onPickFile = async (file: File | undefined) => {
     if (!file || !user) return;
     if (!file.type.startsWith("image/")) return setError("Elige una imagen (JPG, PNG o WebP).");
-    if (file.size > MAX_AVATAR_BYTES) return setError("La imagen no debe superar los 5 MB.");
+    if (file.size > MAX_AVATAR_BYTES) return setError("La imagen es demasiado grande. Prueba con otra foto.");
     await run(async () => {
-      const res = await uploadAvatar(file, user.id);
+      const { file: optimized } = await optimizeImage(file, OPTIMIZE_PRESETS.avatar);
+      if (optimized.size > MAX_UPLOAD_BYTES) throw new Error("No pudimos optimizar la imagen. Prueba con otra foto (JPG, PNG o WebP).");
+      const res = await uploadAvatar(optimized, user.id);
       await saveCreatorOnboardingProgress({ avatarUrl: res.cdnUrl });
       setAvatarUrl(res.cdnUrl);
     }, () => go("content"));
